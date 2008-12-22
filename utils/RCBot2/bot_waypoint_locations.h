@@ -1,0 +1,155 @@
+/*
+ *    This file is part of RCBot.
+ *
+ *    RCBot by Paul Murphy adapted from Botman's HPB Bot 2 template.
+ *
+ *    RCBot is free software; you can redistribute it and/or modify it
+ *    under the terms of the GNU General Public License as published by the
+ *    Free Software Foundation; either version 2 of the License, or (at
+ *    your option) any later version.
+ *
+ *    RCBot is distributed in the hope that it will be useful, but
+ *    WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with RCBot; if not, write to the Free Software Foundation,
+ *    Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *    In addition, as a special exception, the author gives permission to
+ *    link the code of this program with the Half-Life Game Engine ("HL
+ *    Engine") and Modified Game Libraries ("MODs") developed by Valve,
+ *    L.L.C ("Valve").  You must obey the GNU General Public License in all
+ *    respects for all of the code used other than the HL Engine and MODs
+ *    from Valve.  If you modify this file, you may extend this exception
+ *    to your version of the file, but you are not obligated to do so.  If
+ *    you do not wish to do so, delete this exception statement from your
+ *    version.
+ *
+ */
+#ifndef __RCBOT_WAYPOINT_LOC_H__
+#define __RCBOT_WAYPOINT_LOC_H__
+
+//#include <dataUnconstArray>
+//using namespace std;
+
+#include "bot_genclass.h"
+#include "bot_waypoint.h"
+
+/*#define WAYPOINT_LOC(x)\
+	{\
+	m_iLocations[i][j][k].x;\
+	}\
+
+#define EACH_WAYPOINT_LOC(x)\
+	{\
+			int i,j,k;\
+\
+		for ( i = 0; i < MAX_WPT_BUCKETS; i ++ )\
+		{\
+			for ( j = 0; j < MAX_WPT_BUCKETS; j ++ )\
+			{\
+				for ( k = 0; k < MAX_WPT_BUCKETS; k ++ )\
+				{\
+					x;\
+				}\
+			}\
+		}\
+	}\*/
+
+class CWaypoint;
+
+class CWaypointLocations
+// Hash table of waypoint indexes accross certian
+// buckets in the map on X/Y Co-ords for quicker
+// nearest waypoint finding and waypoint displaying.
+{
+public:
+
+	static const int REACHABLE_RANGE = 512;
+
+	// max map size is 32768
+	static const int HALF_MAX_MAP_SIZE = 16384; // need to know half (negative + positive halves = max)
+	/*
+	// want bucket spacing of 256 units
+	static const int MAX_WPT_BUCKETS = 128;
+	*/
+	// want bucket spacing of 512 units
+	static const int MAX_WPT_BUCKETS = 64;
+
+	static const int BUCKET_SPACING = (HALF_MAX_MAP_SIZE*2)/MAX_WPT_BUCKETS;
+
+	static int g_iFailedWaypoints [ CWaypoints::MAX_WAYPOINTS ];
+	
+	static void AddWptLocation ( CWaypoint *pWaypoint, int iIndex );
+
+	CWaypointLocations()
+	{
+		Init();
+	}
+
+	static void Init()
+	{
+		int i,j,k;
+
+		for ( i = 0; i < MAX_WPT_BUCKETS; i ++ )
+		{
+			for ( j = 0; j < MAX_WPT_BUCKETS; j ++ )
+			{
+				for ( k = 0; k < MAX_WPT_BUCKETS; k ++ )
+				{
+					m_iLocations[i][j][k].Init();//.Init();
+				}
+			}
+		}
+	}
+
+	static void Clear ()
+	{
+		int i,j,k;
+
+		for ( i = 0; i < MAX_WPT_BUCKETS; i ++ )
+		{
+			for ( j = 0; j < MAX_WPT_BUCKETS; j ++ )
+			{
+				for ( k = 0; k < MAX_WPT_BUCKETS; k ++ )
+				{
+					m_iLocations[i][j][k].Destroy();//.Destroy();
+				}
+			}
+		}
+	}
+
+	static void getMinMaxs ( int iLoc, int jLoc, int kLoc, 
+									    int *iMinLoc, int *jMinLoc, int *kMinLoc,
+									    int *iMaxLoc, int *jMaxLoc, int *kMaxLoc );
+
+	static int GetCoverWaypoint ( Vector vPlayerOrigin, Vector vCoverFrom, dataUnconstArray<int> *iIgnoreWpts, Vector *vGoalOrigin = NULL );
+
+	static void FindNearestCoverWaypointInBucket ( int i, int j, int k, const Vector &vOrigin, float *pfMinDist, int *piIndex, dataUnconstArray<int> *iIgnoreWpts, int iCoverFromWpt, Vector *vGoalOrigin = NULL );
+
+	static void AddWptLocation ( int iIndex, const float *fOrigin );
+
+	static void FindNearestInBucket ( int i, int j, int k, const Vector &vOrigin, float *pfMinDist, int *piIndex,int iIgnoreWpt, bool bGetVisible = true, bool bGetUnreachable = false, bool bIsBot = false, dataUnconstArray<int> *iFailedWpts = NULL, bool bNearestAimingOnly = false );
+
+	static void DrawWaypoints ( edict_t *pEntity, Vector &vOrigin, float fDist, bool bDrawPaths, unsigned short int iDrawType );
+	
+	static void DeleteWptLocation ( int iIndex, const float *fOrigin );
+	
+	static int NearestWaypoint ( const Vector &vOrigin, float fDist, int iIgnoreWpt, bool bGetVisible = true, bool bGetUnreachable = false, bool bIsBot = false, dataUnconstArray<int> *iFailedWpts = NULL, bool bNearestAimingOnly = false );
+
+	static void GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, dataUnconstArray<int> *iVisible );
+
+	///////////
+
+	static void AutoPath ( int iWpt );
+
+	static void AutoPathInBucket ( int i, int j, int k, int iWpt );
+	
+private:
+	
+	//static dataStack<int> m_iLocations[MAX_WPT_BUCKETS][MAX_WPT_BUCKETS][MAX_WPT_BUCKETS];
+	static dataUnconstArray<int> m_iLocations[MAX_WPT_BUCKETS][MAX_WPT_BUCKETS][MAX_WPT_BUCKETS];
+};
+#endif
