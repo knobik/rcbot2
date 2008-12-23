@@ -144,7 +144,7 @@ void CWaypointNavigator :: open ( AStarNode *pNode )
 	if ( !pNode->isOpen() )
 	{
 		pNode->open();
-		m_theOpenList.push(pNode);
+		m_theOpenList.push_back(pNode);
 	}
 }
 
@@ -154,12 +154,43 @@ AStarNode *CWaypointNavigator :: nextNode ()
 
 	if ( !m_theOpenList.empty() )
 	{
-		pNode = m_theOpenList.top();
+		// Find node with least cost
+		float mincost = 0;
+		float cost;
+		unsigned int i;
+		AStarNode *pTemp;
+
+		for ( i = 0; i < m_theOpenList.size(); i ++ )
+		{
+			pTemp = m_theOpenList[i];
+
+			cost = pTemp->getCost() + pTemp->getHeuristic();
+
+			if ( !pNode || (cost < mincost) )
+			{
+				pNode = pTemp;
+				mincost = cost;
+			}
+		}
 
 		if ( pNode )
+		{
+			
+			vector<AStarNode*> temp;
+
 			pNode->unOpen();
 
-		m_theOpenList.pop();
+			for ( i = 0; i < m_theOpenList.size(); i ++ )
+			{
+				if ( m_theOpenList[i] != pNode )
+					temp.push_back(m_theOpenList[i]);
+			}
+
+			m_theOpenList.clear();
+
+			m_theOpenList = temp;
+			
+		}
 	}
 
 	return pNode;
@@ -168,8 +199,10 @@ AStarNode *CWaypointNavigator :: nextNode ()
 // clears the AStar open list
 void CWaypointNavigator :: clearOpenList ()
 {
-	while ( !m_theOpenList.empty() )
-		m_theOpenList.pop();
+	for ( unsigned int i = 0; i < m_theOpenList.size(); i ++ )
+		m_theOpenList[i]->unOpen();
+
+	m_theOpenList.clear();
 }
 // find route using A* algorithm
 bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart, bool bNoInterruptions )

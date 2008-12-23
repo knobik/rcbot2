@@ -93,7 +93,7 @@ public:
 	//////////////////////////////////////////////////////	
 	inline void setHeuristic ( float fHeuristic ) { m_fHeuristic = fHeuristic; setFlag(FL_HEURISTIC_SET); }
 	inline bool heuristicSet () { return hasFlag(FL_HEURISTIC_SET); }
-	inline float getHeuristic () { return m_fHeuristic; }
+	inline const float getHeuristic () { return m_fHeuristic; } const
 	
 	////////////////////////////////////////////////////////
 	inline void setFlag ( int iFlag ) { m_iFlags |= iFlag; }
@@ -111,13 +111,13 @@ public:
 			setFlag(FL_ASTAR_PARENT);
 	}
 	////////////////////////////////////////////////////////
-	inline float getCost () { return m_fCost; }
+	inline const float getCost () { return m_fCost; } const
 	inline void setCost ( float fCost ) { m_fCost = fCost; }
 	////////////////////////////////////////////////////////
 	// for comparison
-	bool betterCost ( AStarNode *other )
+	bool betterCost ( AStarNode *other ) const
 	{
-		return (m_fCost+m_fHeuristic) < (other->getCost()+other->getHeuristic());
+		return (m_fCost+m_fHeuristic) < (other->getCost() + other->getHeuristic());
 	}
 	void setWaypoint ( int iWpt ) { m_iWaypoint = iWpt; }
 	inline int getWaypoint () { return m_iWaypoint; }
@@ -127,15 +127,6 @@ private:
 	unsigned char m_iFlags;
 	short int m_iParent;
 	int m_iWaypoint;
-};
-
-class CompareAStar
-{
-public:
-	bool operator()(AStarNode *a, AStarNode *b)
-	{
-		return a->betterCost(b);
-	}
 };
 
 class CWaypointNavigator : public IBotNavigator
@@ -198,7 +189,7 @@ private:
 
 	float m_fBelief [CWaypoints::MAX_WAYPOINTS];
 
-	priority_queue<AStarNode*,vector<AStarNode*>,CompareAStar> m_theOpenList;
+	vector<AStarNode*> m_theOpenList;
 };
 
 class CNavMeshNavigator : public IBotNavigator
