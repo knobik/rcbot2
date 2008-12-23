@@ -66,6 +66,11 @@ void CClient :: think ()
 {
 	if ( isWaypointOn() )
 		CWaypoints::drawWaypoints(this);
+
+	if ( isDebugging() && m_pDebugBot )
+	{
+		//m_pDebugBot->canAvoid();
+	}
 }
 
 const char *CClient :: getName ()
@@ -232,6 +237,12 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg )
 
 	switch ( iLev )
 	{
+	case BOT_DEBUG_BOT:
+		szDebugLev = "bot";
+		break;
+	case BOT_DEBUG_NAV:
+		szDebugLev = "navigation";
+		break;
 	case BOT_DEBUG_GAME_EVENT:
 		szDebugLev = "game_event";
 		break;

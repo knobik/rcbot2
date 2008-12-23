@@ -41,6 +41,8 @@
 #define BOT_WPT_TOUCH_DIST 72 // distance for bot to touch waypoint
 
 #define BOT_DEBUG_GAME_EVENT 1
+#define BOT_DEBUG_NAV 2
+#define BOT_DEBUG_BOT 3
 
 typedef enum
 {

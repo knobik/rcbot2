@@ -383,6 +383,19 @@ public:
 	CDebugCommand();
 };
 
+class CDebugNavCommand : public CBotCommand
+{
+public:
+	CDebugNavCommand ()
+	{
+		setName("nav");
+		setHelp("usage \"nav 1 or 0, 1 on, 0 off\" : shows navigation output");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 class CDebugGameEventCommand : public CBotCommand
 {
 public:
