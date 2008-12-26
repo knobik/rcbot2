@@ -676,21 +676,15 @@ float CBotGlobals :: yawAngleFromEdict (edict_t *pEntity,Vector vOrigin)
 {
 	float fAngle;
 	QAngle qBotAngles = entityEyeAngles(pEntity);
-	QAngle qAngles;
-	Vector vAngles;
+	Vector v1;
+	Vector v2 = (vOrigin - entityOrigin(pEntity));
 
-	vAngles = vOrigin - entityOrigin(pEntity);
+	v2 = v2 / v2.Length();
 
-	// Just get the angles from world
-	VectorAngles(vAngles,qAngles);
-	
-	// NEED to put 0-360 angles from -180 to 180 to get negative and positive values
-	fixFloatAngle(&qBotAngles.y);
-	fixFloatAngle(&qAngles.y);
-	//fAngle = qAngles.y; // world angles
-	fAngle = qBotAngles.y - qAngles.y;
+	AngleVectors(qBotAngles,&v1);
 
-	fixFloatAngle(&fAngle);
+	fAngle = atan2(v2.y,v2.x) - atan2(v1.y,v1.x);
+	fAngle = RAD2DEG(fAngle);
 
-	return fAngle;
+	return (float)fAngle;
 }

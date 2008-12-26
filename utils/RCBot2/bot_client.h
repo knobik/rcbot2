@@ -34,6 +34,7 @@
 #include "bot_const.h"
 
 struct edict_t;
+class CBot;
 
 class CClient
 {
@@ -87,6 +88,7 @@ public:
 	bool isDebugging () { return (m_iDebugLevels != 0); }
 
 	inline void setDebugBot ( CBot *pBot ) { m_pDebugBot = pBot; }	
+	inline bool isDebuggingBot ( CBot *pBot ) { return m_pDebugBot == pBot; }
 
 	void think ();
 
@@ -139,7 +141,7 @@ public:
 	static bool noListenServerClient () { return m_pListenServerClient == NULL; }
 	static void clientThink ();
 	static bool clientsDebugging ();
-	static void clientDebugMsg ( int iLev, const char *szMsg );
+	static void clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot = NULL );
 	static CClient *findClientBySteamID ( char *szSteamID );
 
 private:

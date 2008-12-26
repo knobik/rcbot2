@@ -150,6 +150,8 @@ public:
 
 	CBot();
 
+	void debugMsg ( int iLev, const char *szMsg );
+
 	virtual unsigned int maxEntityIndex ( ) { return MAX_PLAYERS; }
 
 	float distanceFrom ( Vector vOrigin );

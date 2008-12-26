@@ -670,6 +670,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\public\mathlib\mathlib.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\public\tier0\mem.h"
 				>
 			</File>
@@ -698,7 +702,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\public\vector.h"
+				RelativePath="..\..\public\mathlib\vector.h"
 				>
 			</File>
 			<File

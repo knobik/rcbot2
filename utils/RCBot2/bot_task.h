@@ -90,6 +90,7 @@ protected:
 	//Vector m_vVector;
 };
 ///////////////////////////////////
+
 class CFindPathTask : public CBotTask
 {
 public:
@@ -120,6 +121,7 @@ public:
 
 	virtual void debugString ( char *string );
 private:
+
 	bool m_bNoInterruptions;
 	bool m_bGetPassedVector;
 	bool m_bDontLookAtWaypoints;

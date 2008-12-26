@@ -82,7 +82,6 @@ void CFindPathTask :: debugString ( char *string )
 	sprintf(string,"Find Path (%d) (%0.4f,%0.4f,%0.4f)",m_iInt,m_vVector.x,m_vVector.y,m_vVector.z);
 }
 
-
 void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 {	
 	bool bFail = false;
@@ -99,21 +98,35 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 			m_iInt = 2;
 		else
 			m_iInt = 1;
+
+		pBot->debugMsg(BOT_DEBUG_NAV,"Trying to work out route");
 	}
 
 	if ( bFail )
+	{
+		pBot->debugMsg(BOT_DEBUG_NAV,"Route failed");
 		fail();
+	}
 	else if ( m_iInt == 2 )
 	{		
 		if ( m_bNoInterruptions )
+		{
+			pBot->debugMsg(BOT_DEBUG_NAV,"Found route");
 			complete(); // ~fin~
+		}
 
 		if ( !pBot->getNavigator()->hasNextPoint() )
+		{
+			pBot->debugMsg(BOT_DEBUG_NAV,"Nowhere to go");
 			complete(); // reached goal
+		}
 		else
 		{			
 			if ( pBot->moveFailed() )
+			{
+				pBot->debugMsg(BOT_DEBUG_NAV,"moveFailed() == true");
 				fail();
+			}
 
 			// running path
 			pBot->setLookAtTask(LOOK_WAYPOINT);

@@ -374,6 +374,18 @@ void CBot :: currentlyDead ()
 	return;
 }
 
+void CBot :: debugMsg ( int iLev, const char *szMsg )
+{
+	if ( CClients::clientsDebugging () )
+	{
+		char szMsg2[512];
+
+		sprintf(szMsg2,"(%s):%s",m_pPlayerInfo->GetName(),szMsg);
+
+		CClients::clientDebugMsg (iLev,szMsg2,this);
+	}
+}
+
 void CBot :: think ()
 {
 	float fTime = engine->Time();

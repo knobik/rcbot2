@@ -229,7 +229,7 @@ CClient *CClients :: findClientBySteamID ( char *szSteamID )
 	return NULL;
 }
 
-void CClients :: clientDebugMsg ( int iLev, const char *szMsg )
+void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 {
 	CClient *pClient;
 
@@ -237,9 +237,6 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg )
 
 	switch ( iLev )
 	{
-	case BOT_DEBUG_BOT:
-		szDebugLev = "bot";
-		break;
 	case BOT_DEBUG_NAV:
 		szDebugLev = "navigation";
 		break;
@@ -259,6 +256,8 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg )
 			continue;
 		if ( !pClient->isDebugOn(iLev) )
 			continue;		
+		if ( pBot && !pClient->isDebuggingBot(pBot) )
+			continue;
 
 		CBotGlobals::botMessage(pClient->getPlayer(),0,"[DEBUG %s] %s",szDebugLev,szMsg);
 	}
