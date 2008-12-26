@@ -71,6 +71,7 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointClearCommand());
 	add(new CWaypointGiveTypeCommand());
 	add(new CWaypointDrawTypeCommand());
+	add(new CWaypointAngleCommand());
 }
 
 CUsersCommand :: CUsersCommand ()
@@ -395,6 +396,28 @@ eBotCommandResult CPathWaypointRemove2Command :: execute ( CClient *pClient, con
 	return COMMAND_ACCESSED;	
 }
 
+CWaypointAngleCommand :: CWaypointAngleCommand()
+{
+	setName("angle");
+}
+
+eBotCommandResult CWaypointAngleCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient && pClient->getPlayer() )
+	{
+		pClient->updateCurrentWaypoint();
+
+		CWaypoint *pWpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+		if ( pWpt )
+		{
+			QAngle eye = CBotGlobals::playerAngles(pClient->getPlayer());
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"Waypoint Angle == %0.3f deg, (Eye == %0.3f)",CBotGlobals::yawAngleFromEdict(pClient->getPlayer(),pWpt->getOrigin()),eye.y);
+		}
+	}
+
+	return COMMAND_ACCESSED;
+}
 
 CWaypointInfoCommand :: CWaypointInfoCommand()
 {

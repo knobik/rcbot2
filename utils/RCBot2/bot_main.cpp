@@ -84,6 +84,7 @@ IEffects *g_pEffects = NULL;
 IBotManager *g_pBotManager = NULL;
 CGlobalVars *gpGlobals = NULL;
 IVDebugOverlay *debugoverlay = NULL;
+IServerGameEnts *servergameents = NULL; // for accessing the server game entities
 
 // 
 // The plugin is a static singleton that is exported as an interface
@@ -176,6 +177,7 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	LOAD_INTERFACE(filesystem,IFileSystem,FILESYSTEM_INTERFACE_VERSION);
 	LOAD_INTERFACE(helpers,IServerPluginHelpers,INTERFACEVERSION_ISERVERPLUGINHELPERS);
 	LOAD_INTERFACE(enginetrace,IEngineTrace,INTERFACEVERSION_ENGINETRACE_SERVER);
+	LOAD_GAME_SERVER_INTERFACE(servergameents,IServerGameEnts,INTERFACEVERSION_SERVERGAMEENTS);
 	LOAD_GAME_SERVER_INTERFACE(g_pEffects,IEffects,IEFFECTS_INTERFACE_VERSION);
 	LOAD_GAME_SERVER_INTERFACE(g_pBotManager,IBotManager,INTERFACEVERSION_PLAYERBOTMANAGER);
 

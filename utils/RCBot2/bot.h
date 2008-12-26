@@ -523,7 +523,7 @@ public:
 	static int getMinBots () { return m_iMinBots; }
 
 private:
-	static CBot *m_Bots;
+	static CBot **m_Bots;
 
 	//config
 	static int m_iMaxBots;

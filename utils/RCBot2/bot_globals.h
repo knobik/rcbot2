@@ -54,6 +54,8 @@ public:
 
 	static QAngle entityEyeAngles ( edict_t *pEntity );
 
+	static QAngle playerAngles ( edict_t *pPlayer );
+
 	static void freeMemory ();
 
 	static bool walkableFromTo (Vector v_src, Vector v_dest);
@@ -128,7 +130,7 @@ public:
 	static bool isVisible ( Vector vSrc, edict_t *pDest);
 	static bool isVisible ( Vector vSrc, Vector vDest);
 	static void traceLine ( Vector vSrc, Vector vDest, unsigned int mask, ITraceFilter *pFilter);
-	static bool traceVisible ();
+	static bool traceVisible (edict_t *pEnt);
 	////////
 	static Vector entityOrigin ( edict_t *pEntity );
 	static int getTeam ( edict_t *pEntity );

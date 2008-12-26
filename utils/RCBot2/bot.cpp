@@ -81,7 +81,7 @@
 #include "tier0/memdbgon.h"
 
 // instantiate bots -- make different for different mods
-CBot *CBots::m_Bots = NULL;
+CBot **CBots::m_Bots = NULL;
 
 const float CBot :: m_fAttackLowestHoldTime = 0.1f;
 const float CBot :: m_fAttackHighestHoldTime = 0.6f;
@@ -196,7 +196,7 @@ bool CBot :: FVisible ( edict_t *pEdict )
 
 QAngle CBot :: eyeAngles ()
 {
-	return m_pController->GetLocalAngles();
+	return CBotGlobals::playerAngles(m_pEdict);
 }
 
 Vector CBot :: getEyePosition ()
@@ -250,7 +250,7 @@ void CBot :: checkStuck ()
 		return; // not stuck
 	float fPercentMoved = fSpeed/fIdealSpeed;
 
-	if ( fPercentMoved < 0.1 )
+	if ( fPercentMoved < 0.3 )
 	{
 		m_pButtons->jump();
 		m_pButtons->duck(0.25f,0.25f);
@@ -496,6 +496,7 @@ void CBot :: init (bool bVarInit)
 	m_pWeapons = NULL;
 	m_fTimeCreated = 0;	
 	m_pProfile = NULL;
+	m_szBotName[0] = 0;
 
 	if ( bVarInit )
 		spawnInit();
@@ -830,7 +831,7 @@ void CBot :: doMove ()
 		float flMove = 0.0;
 		float flSide = 0.0;
 		// fAngle is got from world realting to bots origin, not angles
-		float fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo);;
+		float fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo);
 
 		if ( m_pAvoidEntity )
 		{
@@ -1252,7 +1253,7 @@ bool CBots :: createBot ()
 	if ( pEdict == NULL )
 		return false;
 
-	return ( m_Bots[slotOfEdict(pEdict)].createBotFromEdict(pEdict,pBotProfile) );
+	return ( m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,pBotProfile) );
 }
 
 int CBots :: slotOfEdict ( edict_t *pEdict )
@@ -1262,34 +1263,40 @@ int CBots :: slotOfEdict ( edict_t *pEdict )
 
 void CBots :: init ()
 {
+	unsigned int i;
 
-	switch ( CBotGlobals::getCurrentMod()->getBotType() )
+	m_Bots = (CBot**)malloc(sizeof(CBot*) * MAX_PLAYERS);
+
+	for ( i = 0; i < MAX_PLAYERS; i ++ )
 	{
-	case BOTTYPE_CSS:
-		m_Bots = new CCSSBot[MAX_PLAYERS];
-		break;
-	case BOTTYPE_HL2DM:
-		m_Bots = new CHLDMBot[MAX_PLAYERS];
-		break;
-	case BOTTYPE_HL1DM:
-		m_Bots = new CHL1DMSrcBot[MAX_PLAYERS];
-		break;
-	case BOTTYPE_COOP:
-		m_Bots = new CBotCoop[MAX_PLAYERS];
-		break;
-	case BOTTYPE_TF2:
-		m_Bots = new CBotTF2[MAX_PLAYERS];
-		//CBotGlobals::setEventVersion(2);
-		break;
-	case BOTTYPE_FF:
-		m_Bots = new CBotFF[MAX_PLAYERS];
-		break;
-	case BOTTYPE_ZOMBIE:
-		m_Bots = new CBotZombie[MAX_PLAYERS];
-		break;
-	default:
-		m_Bots = new CBot[MAX_PLAYERS];
-		break;
+		switch ( CBotGlobals::getCurrentMod()->getBotType() )
+		{
+		case BOTTYPE_CSS:
+			m_Bots[i] = new CCSSBot();
+			break;
+		case BOTTYPE_HL2DM:
+			m_Bots[i] = new CHLDMBot();
+			break;
+		case BOTTYPE_HL1DM:
+			m_Bots[i] = new CHL1DMSrcBot();
+			break;
+		case BOTTYPE_COOP:
+			m_Bots[i] = new CBotCoop();
+			break;
+		case BOTTYPE_TF2:
+			m_Bots[i] = new CBotTF2();//MAX_PLAYERS];
+			//CBotGlobals::setEventVersion(2);
+			break;
+		case BOTTYPE_FF:
+			m_Bots[i] = new CBotFF();
+			break;
+		case BOTTYPE_ZOMBIE:
+			m_Bots[i] = new CBotZombie();
+			break;
+		default:
+			m_Bots[i] = new CBot();
+			break;
+		}
 	}
 }
 int CBots :: numBots ()
@@ -1300,7 +1307,7 @@ int CBots :: numBots ()
 
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		pBot = &m_Bots[i];
+		pBot = m_Bots[i];
 
 		if ( pBot->inUse() )
 			iCount++;		
@@ -1315,7 +1322,7 @@ CBot *CBots :: findBotByProfile ( CBotProfile *pProfile )
 
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		pBot = &m_Bots[i];
+		pBot = m_Bots[i];
 
 		if ( pBot->inUse() )
 		{
@@ -1333,7 +1340,7 @@ void CBots :: botThink ()
 
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		pBot = &m_Bots[i];
+		pBot = m_Bots[i];
 
 		if ( pBot->inUse() )
 		{
@@ -1357,7 +1364,7 @@ CBot *CBots :: getBotPointer ( edict_t *pEdict )
 	if ( !pEdict )
 		return NULL;
 
-	CBot *pBot = &m_Bots[slotOfEdict(pEdict)];
+	CBot *pBot = m_Bots[slotOfEdict(pEdict)];
 
 	if ( pBot->inUse() )
 		return pBot;
@@ -1371,7 +1378,7 @@ void CBots :: freeMapMemory ()
 	// just incase do this 
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		m_Bots[i].freeMapMemory();
+		m_Bots[i]->freeMapMemory();
 	}
 }
 
@@ -1382,7 +1389,8 @@ void CBots :: freeAllMemory ()
 
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		m_Bots[i].freeAllMemory();
+		m_Bots[i]->freeAllMemory();
+		delete m_Bots[i];
 	}
 
 	delete[] m_Bots;
@@ -1393,8 +1401,8 @@ void CBots :: roundStart ()
 {
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		if ( m_Bots[i].inUse() )
-			m_Bots[i].spawnInit();
+		if ( m_Bots[i]->inUse() )
+			m_Bots[i]->spawnInit();
 	}
 }
 
@@ -1433,7 +1441,7 @@ void CBots :: kickRandomBot ()
 	//gather list of bots
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		if ( m_Bots[i].inUse() )
+		if ( m_Bots[i]->inUse() )
 			list.Add(i);
 	}
 
@@ -1446,7 +1454,7 @@ void CBots :: kickRandomBot ()
 	index = list.Random();
 	list.Clear();
 	
-	tokick = &m_Bots[index];
+	tokick = m_Bots[index];
 	
 	sprintf(szCommand,"kickid %d\n",tokick->getPlayerID());
 
@@ -1464,9 +1472,9 @@ void CBots :: kickRandomBotOnTeam ( int team )
 	//gather list of bots
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		if ( m_Bots[i].inUse() )
+		if ( m_Bots[i]->inUse() )
 		{
-			if ( m_Bots[i].getTeam() == team )
+			if ( m_Bots[i]->getTeam() == team )
 				list.Add(i);
 		}
 	}
@@ -1480,7 +1488,7 @@ void CBots :: kickRandomBotOnTeam ( int team )
 	index = list.Random();
 	list.Clear();
 	
-	tokick = &m_Bots[index];
+	tokick = m_Bots[index];
 	
 	sprintf(szCommand,"kickid %d\n",tokick->getPlayerID());
 

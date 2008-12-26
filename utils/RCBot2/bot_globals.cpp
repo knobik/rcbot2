@@ -43,6 +43,8 @@
 #include <fcntl.h>
 #endif
 
+extern IServerGameEnts *servergameents;
+
 ///////////
 trace_t CBotGlobals :: m_TraceResult;
 char * CBotGlobals :: m_szGameFolder = NULL;
@@ -167,20 +169,20 @@ float CBotGlobals :: DotProductFromOrigin ( edict_t *pEdict, Vector &pOrigin )
 
 bool CBotGlobals :: isVisible ( Vector vSrc, edict_t *pDest )
 {
-	CTraceFilterWorldOnly filter;//	CTraceFilterHitAll filter;
+	CTraceFilterWorldAndPropsOnly filter;//	CTraceFilterHitAll filter;
 
 	traceLine (vSrc,entityOrigin(pDest),MASK_SOLID_BRUSHONLY,&filter);
 
-	return (traceVisible());// || (m_TraceResult.m_pEnt == CBaseEntity::Instance(pDest)));
+	return (traceVisible(pDest));// || (m_TraceResult.m_pEnt == CBaseEntity::Instance(pDest)));
 }
 
 bool CBotGlobals :: isVisible (Vector vSrc, Vector vDest)
 {
-	CTraceFilterWorldOnly filter;
+	CTraceFilterWorldAndPropsOnly filter;
 
 	traceLine (vSrc,vDest,MASK_SOLID_BRUSHONLY,&filter);
 
-	return traceVisible();
+	return traceVisible(NULL);
 }
 
 void CBotGlobals :: traceLine (Vector vSrc, Vector vDest, unsigned int mask, ITraceFilter *pFilter)
@@ -191,9 +193,9 @@ void CBotGlobals :: traceLine (Vector vSrc, Vector vDest, unsigned int mask, ITr
 	enginetrace->TraceRay( ray, mask, pFilter, &m_TraceResult );
 }
 
-bool CBotGlobals :: traceVisible ()
+bool CBotGlobals :: traceVisible (edict_t *pEnt)
 {
-	return (m_TraceResult.fraction >= 1.0);
+	return (m_TraceResult.fraction >= 1.0)||(m_TraceResult.m_pEnt && pEnt && (m_TraceResult.m_pEnt==servergameents->EdictToBaseEntity(pEnt)));
 }
 
 void CBotGlobals :: freeMemory ()
@@ -363,15 +365,14 @@ bool CBotGlobals :: entityIsValid ( edict_t *pEntity )
 
 Vector CBotGlobals :: entityOrigin ( edict_t *pEntity )
 {
-	float *fOrigin;// = Vector(0,0,0);
-	// crash upon GetIServerEntity
-	//fOrigin = pEntity->GetIServerEntity()->GetNetworkable()->GetPVSInfo()->m_vCenter;
-	if ( pEntity && isNetworkable(pEntity) )//fix?
-		fOrigin = pEntity->m_pNetworkable->GetPVSInfo()->m_vCenter;// (pEntity->GetCollideable()->OBBMaxs() + pEntity->GetCollideable()->OBBMins())/2;// pEntity->GetIServerEntity()->GetNetworkable()->GetPVSInfo()->m_vCenter;
-	else
-		return Vector(0,0,0);
+	Vector vOrigin;
 
-	return Vector(fOrigin[0],fOrigin[1],fOrigin[2]);
+	if ( pEntity && pEntity->GetIServerEntity() && pEntity->GetIServerEntity()->GetCollideable() )//fix?
+		vOrigin = pEntity->GetIServerEntity()->GetCollideable()->GetCollisionOrigin();
+	else
+		vOrigin = Vector(0,0,0);
+
+	return vOrigin;
 }
 
 // TO DO :: put into CClient
@@ -450,7 +451,7 @@ bool CBotGlobals :: walkableFromTo (Vector v_src, Vector v_dest)
 						// check jump height again
 						CBotGlobals::traceLine(v_checkpoint,v_checkpoint-Vector(0,0,45.0f),MASK_SOLID_BRUSHONLY,&filter);
 
-						if ( CBotGlobals::traceVisible() )
+						if ( CBotGlobals::traceVisible(NULL) )
 						{
 							debugoverlay->AddTextOverlay(tr->endpos,0,3,"step/jump fail");
 							return false;
@@ -644,6 +645,13 @@ void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const ch
 	}
 }
 
+QAngle CBotGlobals::playerAngles ( edict_t *pPlayer )
+{
+	IPlayerInfo *pPlayerInfo = playerinfomanager->GetPlayerInfo(pPlayer);
+	CBotCmd lastCmd = pPlayerInfo->GetLastUserCommand();
+	return lastCmd.viewangles;
+}
+
 QAngle CBotGlobals :: entityEyeAngles ( edict_t *pEntity )
 {
 	return playerinfomanager->GetPlayerInfo(pEntity)->GetAbsAngles();
@@ -674,17 +682,42 @@ void CBotGlobals :: fixFloatDegrees360 ( float *pFloat )
 
 float CBotGlobals :: yawAngleFromEdict (edict_t *pEntity,Vector vOrigin)
 {
+	/*
 	float fAngle;
 	QAngle qBotAngles = entityEyeAngles(pEntity);
-	Vector v1;
-	Vector v2 = (vOrigin - entityOrigin(pEntity));
+	Vector v2;
+	Vector v1 = (vOrigin - entityOrigin(pEntity));
+	Vector t;
 
-	v2 = v2 / v2.Length();
+	v1 = v1 / v1.Length();
 
-	AngleVectors(qBotAngles,&v1);
+	AngleVectors(qBotAngles,&v2);
 
-	fAngle = atan2(v2.y,v2.x) - atan2(v1.y,v1.x);
+	fAngle = atan2((v1.x*v2.y) - (v1.y*v2.x), (v1.x*v2.x) + (v1.y * v2.y));
+
 	fAngle = RAD2DEG(fAngle);
 
-	return (float)fAngle;
+	return (float)fAngle;*/
+
+	float fAngle;
+	float fYaw;
+	QAngle qBotAngles = playerAngles(pEntity);
+	QAngle qAngles;
+	Vector vAngles;
+	Vector vPlayerOrigin;;
+
+	gameclients->ClientEarPosition(pEntity,&vPlayerOrigin);
+	vAngles = vOrigin - vPlayerOrigin;
+
+	VectorAngles(vAngles/vAngles.Length(),qAngles);
+
+	fYaw = qAngles.y;
+	CBotGlobals::fixFloatAngle(&fYaw);
+
+	fAngle = qBotAngles.y - fYaw;
+
+	CBotGlobals::fixFloatAngle(&fAngle);
+
+	return fAngle;
+
 }

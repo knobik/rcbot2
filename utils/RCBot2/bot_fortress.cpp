@@ -98,7 +98,15 @@ bool CBotFortress :: isEnemy ( edict_t *pEdict )
 
 void CBotFortress :: modThink ()
 {
+	if ( m_fCallMedic < engine->Time() )
+	{
+		if ( ((float)m_pPlayerInfo->GetHealth() / m_pPlayerInfo->GetMaxHealth()) < 0.5 )
+		{
+			m_fCallMedic = engine->Time() + RandomFloat(10.0f,30.0f);
 
+			callMedic();
+		}
+	}
 }
 
 
@@ -120,24 +128,50 @@ void CBotFortress :: selectClass ()
 	TF_Class _class = (TF_Class)RandomInt(1,9);
 
 	if ( _class == TF_CLASS_SCOUT )
+	{
 		sprintf(buffer,"joinclass scout");
+		m_fIdealMoveSpeed = 320;
+	}
 	else if ( _class == TF_CLASS_ENGINEER )
+	{
 		sprintf(buffer,"joinclass engineer");
+		m_fIdealMoveSpeed = 280;
+	}
 	else if ( _class == TF_CLASS_DEMOMAN )
+	{
 		sprintf(buffer,"joinclass demoman");
+		m_fIdealMoveSpeed = 260;
+	}
 	else if ( _class == TF_CLASS_SOLDIER )
+	{
 		sprintf(buffer,"joinclass soldier");
+		m_fIdealMoveSpeed = 230;
+	}
 	else if ( _class == TF_CLASS_HWGUY )
+	{
 		sprintf(buffer,"joinclass heavyweapons");
+		m_fIdealMoveSpeed = 210;
+	}
 	else if ( _class == TF_CLASS_MEDIC )
+	{
 		sprintf(buffer,"joinclass medic");
+		m_fIdealMoveSpeed = 300;
+	}
 	else if ( _class == TF_CLASS_SPY )
+	{
 		sprintf(buffer,"joinclass spy");
+		m_fIdealMoveSpeed = 300;
+	}
 	else if ( _class == TF_CLASS_PYRO )
+	{
 		sprintf(buffer,"joinclass pyro");
+		m_fIdealMoveSpeed = 280;
+	}
 	else
+	{
 		sprintf(buffer,"joinclass sniper");
-
+		m_fIdealMoveSpeed = 280;
+	}
 	helpers->ClientCommand(m_pEdict,buffer);
 }
 
@@ -195,9 +229,20 @@ bool CBotTF2 :: hasEngineerBuilt ( eEngiBuild iBuilding )
 	return false;
 }
 
+void CBotFortress :: callMedic ()
+{
+	helpers->ClientCommand (m_pEdict,"saveme");
+}
+
+void CBotTF2 :: callMedic ()
+{
+	helpers->ClientCommand (m_pEdict,"voicemenu 0 0");
+}
+
 void CBotTF2 :: modThink ()
 {
 // mod specific think code here
+CBotFortress :: modThink();
 }
 
 bool CBotTF2 :: isEnemy ( edict_t *pEdict )
@@ -221,6 +266,7 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict )
 void CBotFF :: modThink ()
 {
 // mod specific think code here
+	CBotFortress :: modThink();
 }
 
 bool CBotFF :: isEnemy ( edict_t *pEdict )

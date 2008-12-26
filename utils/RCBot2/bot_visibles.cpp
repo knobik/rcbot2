@@ -141,12 +141,13 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 	// update
 	if ( CBotGlobals::entityIsValid(pEntity) )
 	{
-		// update tick
-		*iTicks = *iTicks + 1;
-
 		// if in view cone
 		if ( m_pBot->FInViewCone(pEntity) )
 		{
+
+			// update tick
+			*iTicks = *iTicks + 1;
+
 			// from Valve developer community wiki
 			// http://developer.valvesoftware.com/wiki/Transforming_the_Multiplayer_SDK_into_Coop
 
@@ -162,7 +163,9 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 			playerInPVS = engine->CheckOriginInPVS(vEntityOrigin,m_bPvs,sizeof(m_bPvs));//engine->CheckBoxInPVS( vectorSurroundMins, vectorSurroundMaxs, m_bPvs, sizeof( m_bPvs ) );
 
 			if ( playerInPVS )
+			{
 				*bVisible = m_pBot->FVisible(pEntity);
+			}
 		}
 	}
 }

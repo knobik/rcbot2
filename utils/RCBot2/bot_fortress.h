@@ -42,8 +42,11 @@ typedef enum
 
 class CBotFortress : public CBot
 {
-public:
-	virtual unsigned int maxEntityIndex ( ) { return 1024; }
+public:	
+
+	CBotFortress() { CBot(); m_fCallMedic = 0; }
+
+	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
 	virtual void init (bool bVarInit=false);
 	// setup buttons and data structures
@@ -71,11 +74,19 @@ protected:
 	virtual void selectTeam ();
 
 	virtual void selectClass ();
+
+	virtual void callMedic ();
+
+	float m_fCallMedic;
+
+	
 };
 
 class CBotTF2 : public CBotFortress
 {
 public:
+
+	CBotTF2() { CBotFortress(); }
 
 	void modThink ();
 
@@ -84,6 +95,8 @@ public:
 	bool isTF () { return true; }
 
 	void taunt ();
+
+	void callMedic ();
 
 	void engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd );
 
@@ -96,6 +109,8 @@ public:
 class CBotFF : public CBotFortress
 {
 public:
+
+	CBotFF() { CBotFortress(); }
 
 	void modThink ();
 
