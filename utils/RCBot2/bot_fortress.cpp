@@ -33,6 +33,10 @@
 #include "bot_buttons.h"
 #include "bot_globals.h"
 #include "bot_profile.h"
+#include "bot_schedule.h"
+#include "bot_task.h"
+#include "bot_waypoint.h"
+#include "bot_navigator.h"
 
 #include "vstdlib/random.h" // for random functions
 
@@ -245,9 +249,83 @@ void CBotTF2 :: modThink ()
 CBotFortress :: modThink();
 }
 
+bool CBotTF2 :: hasFlag ()
+{
+	return false;
+}
+
+void CBotTF2 :: getTasks ( unsigned int iIgnore )
+{
+	// look for tasks
+	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	{		
+		if ( !m_pSchedules->isCurrentSchedule(SCHED_ATTACK) && !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
+		{
+			m_pSchedules->removeSchedule(SCHED_ATTACK);
+			m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
+
+			m_pSchedules->addFront(new CBotAttackSched(m_pEnemy));
+			m_pSchedules->addFront(new CGotoHideSpotSched(m_pEnemy));
+
+			return;
+		}
+
+		m_bLookedForEnemyLast = false;
+	}
+	else if ( !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy) )
+	{
+		if ( wantToFollowEnemy() )
+		{
+			CBotSchedule *pSchedule = new CBotSchedule();
+			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);		
+			pSchedule->addTask(pFindPath);
+			pSchedule->addTask(new CFindLastEnemy());
+
+			//////////////
+			pFindPath->setNoInterruptions();
+
+			m_pSchedules->add(pSchedule);
+
+			m_bLookedForEnemyLast = true;
+		}
+	}
+
+	if ( !m_pSchedules->isEmpty() )
+		return; // already got some tasks left
+
+	if ( hasFlag () )
+	{
+		// Goto capture point
+
+		// roam
+		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint());
+
+		if ( pWaypoint )
+		{
+			m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+		}
+	}
+	else
+	{
+		// Find enemy flag or defend flag or roam
+
+		// roam
+		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint());
+
+		if ( pWaypoint )
+		{
+			m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+		}
+	}
+
+}
+
 bool CBotTF2 :: isEnemy ( edict_t *pEdict )
 {
 	if ( pEdict == m_pEdict )
+		return false;
+
+	if ( !CBotGlobals::entityIsValid(pEdict) )
 		return false;
 
 	if ( !ENTINDEX(pEdict) || (ENTINDEX(pEdict) > CBotGlobals::maxClients()) )
@@ -282,3 +360,31 @@ bool CBotFF :: isEnemy ( edict_t *pEdict )
 
 	return true;	
 }
+
+
+// --------------------------------------------------------------------------
+// Hackathon tiem
+
+// Auto reconstructed from vtable block @ 0x00D3D380
+// from "server_i486.so", by ida_vtables.idc
+/*
+#define TF_GetServerClass 9
+
+class VfuncEmptyClass {}; 
+
+void VFuncs_GetServerClass(CBaseEntity *pThisPtr)
+{
+	void **this_ptr = *(void ***)&pThisPtr;
+	void **vtable = *(void ***)pThisPtr;
+	void *func = vtable[TF_GetServerClass]; 
+ 
+	union {CBaseEntity *(VfuncEmptyClass::*mfpnew)( void );
+	#ifndef __linux__
+			void *addr;	} u; 	u.addr = func;
+	#else // GCC's member function pointers all contain a this pointer adjustor. You'd probably set it to 0 
+				struct {void *addr; intptr_t adjustor;} s; } u; u.s.addr = func; u.s.adjustor = 0;
+	#endif
+ 
+	return(int)(reinterpret_cast<VfuncEmptyClass*>(this_ptr)->*u.mfpnew)();
+}
+*/

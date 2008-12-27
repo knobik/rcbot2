@@ -44,6 +44,8 @@ class CBotFortress : public CBot
 {
 public:	
 
+	virtual bool hasFlag () { return false; }
+
 	CBotFortress() { CBot(); m_fCallMedic = 0; }
 
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
@@ -51,6 +53,8 @@ public:
 	virtual void init (bool bVarInit=false);
 	// setup buttons and data structures
 	virtual void setup ();
+
+	virtual void getTasks ( unsigned int iIgnore = 0 ) { CBot :: getTasks(iIgnore); }
 
 	virtual void died ( edict_t *pKiller );
 
@@ -94,6 +98,8 @@ public:
 
 	bool isTF () { return true; }
 
+	bool hasFlag ();
+
 	void taunt ();
 
 	void callMedic ();
@@ -103,6 +109,8 @@ public:
 	void spyDisguise ( int iTeam, int iClass );
 
 	bool hasEngineerBuilt ( eEngiBuild iBuilding );
+
+	void getTasks ( unsigned int iIgnore = 0 );
 
 };
 

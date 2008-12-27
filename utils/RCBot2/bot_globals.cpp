@@ -133,47 +133,13 @@ edict_t *CBotGlobals :: findPlayerByTruncName ( const char *name )
 	return NULL;
 }
 
-
-/*bool CBotGlobals :: FInViewCone ( edict_t *pEdict, Vector vOrigin )
-{	
-	return ( DotProductFromOrigin(pEdict, vOrigin) > 0.422618f ); // 65 degree field of view   
-}
-
-Vector CBotGlobals :: entityEyePosition ( edict_t *pEdict )
-{
-	IPlayerInfo *playerinfo = playerinfomanager->GetPlayerInfo( pEdict );
-
-	playerinfo->
-}
-
-
-float CBotGlobals :: DotProductFromOrigin ( edict_t *pEdict, Vector &pOrigin )
-{
-	static Vector vecLOS;
-	static float flDot;
-	
-	Vector vForward;
-
-	// in fov? Check angle to edict
-	AngleVectors(CBotGlobals::entityEyeAngles(pEdict),&vForward);
-	
-	vecLOS = pOrigin - CBotGlobals::getEyePosition();
-	vecLOS = vecLOS/VectorDistance(vecLOS);
-	
-	flDot = DotProduct (vecLOS , vForward );
-	
-	return flDot; 
-
-	//return m_pBaseEdict->FInViewCone(CBaseEntity::Instance(pEntity));
-}*/
-
 bool CBotGlobals :: isVisible ( Vector vSrc, edict_t *pDest )
 {
 	CTraceFilterWorldAndPropsOnly filter;//	CTraceFilterHitAll filter;
 
 	traceLine (vSrc,entityOrigin(pDest),MASK_SOLID_BRUSHONLY,&filter);
 
-	return (traceVisible(pDest));// || (m_TraceResult.m_pEnt == CBaseEntity::Instance(pDest)));
+	return (traceVisible(pDest));
 }
 
 bool CBotGlobals :: isVisible (Vector vSrc, Vector vDest)
@@ -195,7 +161,7 @@ void CBotGlobals :: traceLine (Vector vSrc, Vector vDest, unsigned int mask, ITr
 
 bool CBotGlobals :: traceVisible (edict_t *pEnt)
 {
-	return (m_TraceResult.fraction >= 1.0)||(m_TraceResult.m_pEnt && pEnt && (m_TraceResult.m_pEnt==servergameents->EdictToBaseEntity(pEnt)));
+	return (m_TraceResult.fraction >= 1.0)||(m_TraceResult.m_pEnt && pEnt && (m_TraceResult.m_pEnt==pEnt->GetUnknown()->GetBaseEntity()));
 }
 
 void CBotGlobals :: freeMemory ()

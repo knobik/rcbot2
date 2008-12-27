@@ -900,9 +900,12 @@ float CBot :: DotProductFromOrigin ( Vector &pOrigin )
 	static float flDot;
 	
 	Vector vForward;
+	QAngle eyes;
+
+	eyes = eyeAngles();
 
 	// in fov? Check angle to edict
-	AngleVectors(eyeAngles(),&vForward);
+	AngleVectors(eyes,&vForward);
 	
 	vecLOS = pOrigin - getEyePosition();
 	vecLOS = vecLOS/VectorDistance(vecLOS);
