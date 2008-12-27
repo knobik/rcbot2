@@ -144,7 +144,6 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 		// if in view cone
 		if ( m_pBot->FInViewCone(pEntity) )
 		{
-
 			// update tick
 			*iTicks = *iTicks + 1;
 
@@ -154,10 +153,6 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 			clusterIndex = engine->GetClusterForOrigin( m_pBot->getOrigin() );
 			engine->GetPVSForCluster( clusterIndex, sizeof(m_bPvs), m_bPvs );
 			
-			//pEntity->GetCollideable()->WorldSpaceSurroundingBounds( &vectorSurroundMins, &vectorSurroundMaxs );
-
-			//vectorSurroundMaxs = playerinfomanager->GetPlayerInfo(pEntity)->GetPlayerMaxs();
-			//vectorSurroundMins = playerinfomanager->GetPlayerInfo(pEntity)->GetPlayerMins();
 			vEntityOrigin = CBotGlobals::entityOrigin(pEntity);
 
 			playerInPVS = engine->CheckOriginInPVS(vEntityOrigin,m_bPvs,sizeof(m_bPvs));//engine->CheckBoxInPVS( vectorSurroundMins, vectorSurroundMaxs, m_bPvs, sizeof( m_bPvs ) );
@@ -194,7 +189,7 @@ void CBotVisibles :: updateVisibles ()
 	}
 
 	// we'll start searching some players first for quick player checking
-	while ( iTicks < 2 )
+	while ( iTicks < 4 )
 	{
 		pEntity = INDEXENT(m_iCurPlayer);
 

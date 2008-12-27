@@ -130,47 +130,47 @@ void CBotFortress :: selectClass ()
 	if ( _class == TF_CLASS_SCOUT )
 	{
 		sprintf(buffer,"joinclass scout");
-		m_fIdealMoveSpeed = 320;
+		m_fIdealMoveSpeed = 300;
 	}
 	else if ( _class == TF_CLASS_ENGINEER )
 	{
 		sprintf(buffer,"joinclass engineer");
-		m_fIdealMoveSpeed = 280;
+		m_fIdealMoveSpeed = 270;
 	}
 	else if ( _class == TF_CLASS_DEMOMAN )
 	{
 		sprintf(buffer,"joinclass demoman");
-		m_fIdealMoveSpeed = 260;
+		m_fIdealMoveSpeed = 250;
 	}
 	else if ( _class == TF_CLASS_SOLDIER )
 	{
 		sprintf(buffer,"joinclass soldier");
-		m_fIdealMoveSpeed = 230;
+		m_fIdealMoveSpeed = 220;
 	}
 	else if ( _class == TF_CLASS_HWGUY )
 	{
 		sprintf(buffer,"joinclass heavyweapons");
-		m_fIdealMoveSpeed = 210;
+		m_fIdealMoveSpeed = 200;
 	}
 	else if ( _class == TF_CLASS_MEDIC )
 	{
 		sprintf(buffer,"joinclass medic");
-		m_fIdealMoveSpeed = 300;
+		m_fIdealMoveSpeed = 280;
 	}
 	else if ( _class == TF_CLASS_SPY )
 	{
 		sprintf(buffer,"joinclass spy");
-		m_fIdealMoveSpeed = 300;
+		m_fIdealMoveSpeed = 280;
 	}
 	else if ( _class == TF_CLASS_PYRO )
 	{
 		sprintf(buffer,"joinclass pyro");
-		m_fIdealMoveSpeed = 280;
+		m_fIdealMoveSpeed = 270;
 	}
 	else
 	{
 		sprintf(buffer,"joinclass sniper");
-		m_fIdealMoveSpeed = 280;
+		m_fIdealMoveSpeed = 270;
 	}
 	helpers->ClientCommand(m_pEdict,buffer);
 }

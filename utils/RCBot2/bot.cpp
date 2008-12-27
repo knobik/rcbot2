@@ -497,6 +497,7 @@ void CBot :: init (bool bVarInit)
 	m_fTimeCreated = 0;	
 	m_pProfile = NULL;
 	m_szBotName[0] = 0;
+	m_fIdealMoveSpeed = 320;
 
 	if ( bVarInit )
 		spawnInit();
@@ -588,7 +589,6 @@ void CBot :: spawnInit ()
 	m_fUpSpeed = 0;
 	m_iConditions = 0;
 	m_fStrafeTime = 0;
-	m_fIdealMoveSpeed = 320;
 
 	m_vMoveTo = Vector(0,0,0);
 	m_bMoveToIsValid = false;
@@ -839,33 +839,20 @@ void CBot :: doMove ()
 				m_pAvoidEntity = NULL;
 			else
 			{
+				// Fixed origin as the same as the avoid entity
 				Vector vOrigin = getOrigin();
 				Vector vMoveTo = m_vMoveTo-getOrigin();
 				Vector vAvoid = vOrigin-CBotGlobals::entityOrigin(m_pAvoidEntity);
-				Vector vAvoidMoveTo = ((vMoveTo/VectorDistance(vMoveTo)) + (vAvoid/VectorDistance(vAvoid))) * 80;
-				vAvoidMoveTo = vOrigin + vAvoidMoveTo;
-				vAvoidMoveTo.z = vOrigin.z;
 
-				fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,vAvoidMoveTo);
-				/*
-				Vector vAvoid = CBotGlobals::entityOrigin(m_pAvoidEntity);
-				Vector vOrigin = getOrigin();
-				Vector vCross = CrossProduct((vAvoid-vOrigin),Vector(0,0,1));
+				if ( vAvoid.Length() > 1 )
+				{
+					Vector vAvoidMoveTo = ((vMoveTo/vMoveTo.Length()) + (vAvoid/vAvoid.Length())) * 80;
+					vAvoidMoveTo = vOrigin + vAvoidMoveTo;
+					vAvoidMoveTo.z = vOrigin.z;
 
-				vCross = vCross/VectorDistance(vCross);
-				vCross = vCross * (distanceFrom(vAvoid)*2);
-
-				vCross = vAvoid + vCross;
-
-				fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,vCross);*/
+					fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,vAvoidMoveTo);
+				}
 			}
-			/*
-			Vector vOrigin = getOrigin();
-			Vector newMoveTo = (m_vMoveTo-vOrigin)+(vOrigin-CBotGlobals::entityOrigin(m_pAvoidEntity));
-			newMoveTo = getOrigin()+((newMoveTo/VectorDistance(newMoveTo))*m_fIdealMoveSpeed);
-
-			// avoiding so don't make moveTo = avoidVector as bot doesn't really want to go there
-			fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,newMoveTo);*/
 		}
 
 		/////////
@@ -1136,18 +1123,25 @@ void CBot :: doButtons ()
 	m_iButtons = m_pButtons->getBitMask();
 }
 
-void CBot :: primaryAttack ()
+void CBot :: primaryAttack ( bool bHold )
 {
 	float fLetGoTime = 0.15;
+	float fHoldTime = 0.12;
+
+	if ( bHold )
+	{
+		fLetGoTime = 0.0;
+		fHoldTime = 1.0;
+	}
 
 	// not currently in "letting go" stage?
-	if ( m_pButtons->canPressButton(IN_ATTACK) )
+	if ( bHold || m_pButtons->canPressButton(IN_ATTACK) )
 	{
 		m_pButtons->holdButton
 			(
 				IN_ATTACK,
 				0/* reaction time? (time to press)*/,
-				0.12/* hold time*/,
+				fHoldTime/* hold time*/,
 				fLetGoTime/*let go time*/
 			); 
 	}

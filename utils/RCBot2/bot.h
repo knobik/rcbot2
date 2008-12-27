@@ -334,7 +334,7 @@ public:
 		return m_bHasGoal;
 	}
 
-	void primaryAttack ();
+	void primaryAttack (bool bHold = false);
 	void jump ();
 	void duck ( bool hold = false );
 

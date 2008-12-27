@@ -46,12 +46,6 @@ public:
 
 	static void gameStart ();	
 
-	static bool isMod ( eModId iMod );
-
-	static char *gameFolder ();
-
-	static char *modFolder ();
-
 	static QAngle entityEyeAngles ( edict_t *pEntity );
 
 	static QAngle playerAngles ( edict_t *pPlayer );
@@ -120,8 +114,6 @@ public:
 		const Vector &bmins, const Vector &bmaxs );
 	////////////////////////////////////////////////////////////////////////
 
-	static void setEventVersion ( int iVersion );
-	static bool isEventVersion ( int iVersion );
 	/*static Vector forwardVec ();
 	static Vector rightVec ();
 	static Vector upVec ();*/
@@ -135,12 +127,27 @@ public:
 	static Vector entityOrigin ( edict_t *pEntity );
 	static int getTeam ( edict_t *pEntity );
 	static bool entityIsAlive ( edict_t *pEntity );
-	static void setClientMax ( int iMaxClients );
-	static int maxClients ();
 	static int numClients ();
-	static bool getTeamplayOn ();
-	static void setTeamplay(bool bOn);
+
 	static void levelInit();
+
+	static inline void setClientMax ( int iMaxClients ) { m_iMaxClients = iMaxClients; }
+
+	static inline void setEventVersion ( int iVersion ){m_iEventVersion = iVersion;}
+
+	static inline bool isEventVersion ( int iVersion ){return (m_iEventVersion == iVersion);}
+
+	static inline bool getTeamplayOn (){return m_bTeamplay;}
+
+	static inline void setTeamplay ( bool bOn ){m_bTeamplay = bOn;}
+
+	static inline bool isMod ( eModId iMod ) { 	return m_iCurrentMod == iMod; }
+
+	static inline char *gameFolder (){return m_szGameFolder;}
+
+	static inline char *modFolder (){return m_szModFolder;}
+
+	static inline int maxClients () {return m_iMaxClients;}
 
 	static edict_t *playerByUserId(int iUserId);
 

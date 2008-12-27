@@ -246,50 +246,9 @@ void CBotGlobals :: gameStart ()
 	CBots::init();
 }
 
-void CBotGlobals :: setEventVersion ( int iVersion )
-{
-	m_iEventVersion = iVersion;
-}
-
-bool CBotGlobals :: isEventVersion ( int iVersion )
-{
-	return (m_iEventVersion == iVersion);
-}
-
-bool CBotGlobals :: getTeamplayOn ()
-{
-	return m_bTeamplay;
-}
-
-void CBotGlobals :: setTeamplay ( bool bOn )
-{
-	m_bTeamplay = bOn;
-}
-
 void CBotGlobals :: levelInit ()
 {
 
-}
-
-
-bool CBotGlobals :: isMod ( eModId iMod ) 
-{ 
-	return m_iCurrentMod == iMod; 
-}
-
-char *CBotGlobals :: gameFolder ()
-{
-	return m_szGameFolder;
-}
-
-char *CBotGlobals :: modFolder ()
-{
-	return m_szModFolder;
-}
-
-void CBotGlobals :: setClientMax ( int iMaxClients )
-{
-    m_iMaxClients = iMaxClients;
 }
 
 int CBotGlobals :: numClients ()
@@ -308,11 +267,6 @@ int CBotGlobals :: numClients ()
 	}
 
 	return iCount;
-}
-
-int CBotGlobals :: maxClients ()
-{
-	return m_iMaxClients;
 }
 
 bool CBotGlobals :: entityIsAlive ( edict_t *pEntity )
