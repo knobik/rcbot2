@@ -39,12 +39,17 @@ typedef enum
 	ENGI_DESTROY
 }eEngiCmd;
 
+typedef enum
+{
+	TF_MAP_DM = 0,
+	TF_MAP_CTF,
+	TF_MAP_CP,
+	TF_MAP_CART
+}eTFMapType;
 
 class CBotFortress : public CBot
 {
 public:	
-
-	virtual bool hasFlag () { return false; }
 
 	CBotFortress() { CBot(); m_fCallMedic = 0; }
 
@@ -72,7 +77,17 @@ public:
 
 	bool isTF () { return true; }
 
-	//virtual TF_Class getClass () = 0;
+	virtual TF_Class getClass () { return TF_CLASS_CIVILIAN; }
+
+	virtual void updateClass () { };
+
+	virtual void currentlyDead ();
+
+	inline void pickedUpFlag () { m_bHasFlag = true; }
+
+	inline bool hasFlag () { return m_bHasFlag; }
+
+	inline void droppedFlag () { m_bHasFlag = false; }
 
 protected:
 	virtual void selectTeam ();
@@ -82,6 +97,12 @@ protected:
 	virtual void callMedic ();
 
 	float m_fCallMedic;
+
+	TF_Class m_iClass;
+
+	float m_fUpdateClass;
+
+	bool m_bHasFlag;
 
 	
 };
@@ -98,8 +119,6 @@ public:
 
 	bool isTF () { return true; }
 
-	bool hasFlag ();
-
 	void taunt ();
 
 	void callMedic ();
@@ -111,6 +130,10 @@ public:
 	bool hasEngineerBuilt ( eEngiBuild iBuilding );
 
 	void getTasks ( unsigned int iIgnore = 0 );
+
+	TF_Class getClass ();
+
+	void updateClass ();
 
 };
 

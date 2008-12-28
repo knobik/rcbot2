@@ -101,7 +101,7 @@ public:
 		setMod(MOD_CSS);
 	}
 
-	void execute ( IBotEventInterface *event );
+	void execute ( IBotEventInterface *pEvent );
 };
 
 class CPlayerHurtEvent : public CBotEvent
@@ -112,7 +112,7 @@ public:
 		setType("player_hurt");
 	}
 
-	void execute ( IBotEventInterface *event );
+	void execute ( IBotEventInterface *pEvent );
 };
 
 class CPlayerDeathEvent : public CBotEvent
@@ -123,7 +123,7 @@ public:
 		setType("player_death");
 	}
 
-	void execute ( IBotEventInterface *event );
+	void execute ( IBotEventInterface *pEvent );
 };
 
 class CBombPickupEvent : public CBotEvent
@@ -135,7 +135,7 @@ public:
 		setMod(MOD_CSS);
 	}
 
-	void execute ( IBotEventInterface *event );
+	void execute ( IBotEventInterface *pEvent );
 };
 
 class CPlayerFootstepEvent : public CBotEvent
@@ -146,7 +146,7 @@ public:
 		setType("player_footstep");
 	}
 
-	void execute ( IBotEventInterface *event );
+	void execute ( IBotEventInterface *pEvent );
 };
 
 class CBombDroppedEvent : public CBotEvent
@@ -158,7 +158,7 @@ public:
 		setMod(MOD_CSS);
 	}
 
-	void execute ( IBotEventInterface *event );
+	void execute ( IBotEventInterface *pEvent );
 };
 
 
@@ -170,7 +170,7 @@ public:
 		setType("weapon_fire");
 	}
 
-	void execute ( IBotEventInterface *event );
+	void execute ( IBotEventInterface *pEvent );
 };
 
 class CBulletImpactEvent : public CBotEvent
@@ -181,7 +181,29 @@ public:
 		setType("bullet_impact");
 	}
 
-	void execute ( IBotEventInterface *event );
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CFlagEvent : public CBotEvent
+{
+public:
+	CFlagEvent()
+	{
+		setType("teamplay_flag_event");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CFlagCaptured : public CBotEvent
+{
+public:
+	CFlagCaptured()
+	{
+		setType("ctf_flag_captured");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
 };
 
 typedef enum
@@ -262,11 +284,11 @@ class CBotEvents
 public:
 	static void setupEvents ();
 
-	static void executeEvent( void *event, eBotEventType iType );
+	static void executeEvent( void *pEvent, eBotEventType iType );
 
 	static void freeMemory ();
 
-	static void addEvent ( CBotEvent *event );
+	static void addEvent ( CBotEvent *pEvent );
 
 private:
 	static vector<CBotEvent*> m_theEvents;

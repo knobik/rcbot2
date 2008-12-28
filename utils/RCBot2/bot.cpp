@@ -331,21 +331,26 @@ bool CBot :: isVisible ( edict_t *pEdict )
 
 bool CBot :: canAvoid ( edict_t *pEntity )
 {
+	float distance;
+
 	if ( !CBotGlobals::entityIsValid(pEntity) )
 		return false;
 	if ( m_pEdict == pEntity ) // can't avoid self!!!
 		return false;
-	if ( m_pEnemy == pEntity )
-	{
-		return distanceFrom(CBotGlobals::entityOrigin(pEntity)) < 128;
-	}
-	else
-	{
-		int ind = ENTINDEX(pEntity);
 
-		if ( ind && (ind <= CBotGlobals::maxClients()) )
+	distance = distanceFrom(CBotGlobals::entityOrigin(pEntity));
+
+	if ( ( distance > 16 ) && ( distance < 128 ) )
+	{
+		//int ind = ENTINDEX(pEntity);
+
+		//if ( ind && (ind <= CBotGlobals::maxClients()) )
+		//{
+		SolidType_t solid = pEntity->GetCollideable()->GetSolid() ;
+
+		if ( (solid == SOLID_BBOX) || (solid == SOLID_VPHYSICS) )
 		{
-			return distanceFrom(CBotGlobals::entityOrigin(pEntity)) < 100;
+			return true;
 		}
 	}
 

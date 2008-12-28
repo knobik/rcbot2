@@ -347,7 +347,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 	/////////
 	if ( iLoops == iMaxLoops )
 	{
-		*bFail = true;
+		//*bFail = true;
 		return false; // not finished yet, wait for next iteration
 	}
 	

@@ -33,22 +33,23 @@
 #include "bot_event.h"
 #include "bot_strings.h"
 #include "bot_globals.h"
+#include "bot_fortress.h"
 
 vector<CBotEvent*> CBotEvents :: m_theEvents;
 ///////////////////////////////////////////////////////
 
-void CRoundStartEvent :: execute ( IBotEventInterface *event )
+void CRoundStartEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBots::roundStart();
 }
 
-void CPlayerHurtEvent :: execute ( IBotEventInterface *event )
+void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
-	edict_t *pAttacker = CBotGlobals::playerByUserId(event->getInt("attacker"));
+	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
 
 	if ( pBot )
-		pBot->hurt(pAttacker,event->getInt("health"));
+		pBot->hurt(pAttacker,pEvent->getInt("health"));
 
 	pBot = CBots::getBotPointer(pAttacker);
 
@@ -56,11 +57,11 @@ void CPlayerHurtEvent :: execute ( IBotEventInterface *event )
 		pBot->shot(m_pActivator);
 }
 
-void CPlayerDeathEvent :: execute ( IBotEventInterface *event )
+void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 
-	edict_t *pAttacker = CBotGlobals::playerByUserId(event->getInt("attacker"));
+	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
 
 	if ( pBot )
 		pBot->died(pAttacker);
@@ -71,23 +72,23 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *event )
 		pBot->killed(m_pActivator);
 }
 
-void CBombPickupEvent :: execute ( IBotEventInterface *event )
+void CBombPickupEvent :: execute ( IBotEventInterface *pEvent )
 {
 }
 
-void CPlayerFootstepEvent :: execute ( IBotEventInterface *event )
+void CPlayerFootstepEvent :: execute ( IBotEventInterface *pEvent )
 {
 }
 
-void CBombDroppedEvent :: execute ( IBotEventInterface *event )
+void CBombDroppedEvent :: execute ( IBotEventInterface *pEvent )
 {
 }
 
-void CWeaponFireEvent :: execute ( IBotEventInterface *event )
+void CWeaponFireEvent :: execute ( IBotEventInterface *pEvent )
 {
 }
 
-void CBulletImpactEvent :: execute ( IBotEventInterface *event )
+void CBulletImpactEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 
@@ -96,6 +97,37 @@ void CBulletImpactEvent :: execute ( IBotEventInterface *event )
 		pBot->shotmiss();
 	}
 }
+
+void CFlagEvent :: execute ( IBotEventInterface *pEvent )
+{
+	int type = pEvent->getInt("eventtype");
+
+	int player = pEvent->getInt("player");
+
+	CBot *pBot = CBots::getBotPointer(CBotGlobals::playerByUserId(player));
+
+	if ( pBot && pBot->isTF() )
+	{
+		switch ( type )
+		{
+		case 1: // pickup
+			((CBotTF2*)pBot)->pickedUpFlag();
+			break;
+		case 2:
+		case 4: // drop
+			((CBotTF2*)pBot)->droppedFlag();
+			break;
+		default:	
+			break;
+		}
+	}
+}
+
+void CFlagCaptured :: execute ( IBotEventInterface *pEvent )
+{
+
+}
+
 ///////////////////////////////////////////////////////
 
 void CBotEvent :: setType ( char *szType )
@@ -123,17 +155,18 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CBombDroppedEvent());
 	addEvent(new CWeaponFireEvent());
 	addEvent(new CBulletImpactEvent());
+	addEvent(new CFlagEvent());
 }
 
-void CBotEvents :: addEvent ( CBotEvent *event )
+void CBotEvents :: addEvent ( CBotEvent *pEvent )
 {
 	extern IGameEventManager2 *gameeventmanager;
 	extern CRCBotPlugin g_RCBOTServerPlugin;
 
 	if ( gameeventmanager )
-		gameeventmanager->AddListener( g_RCBOTServerPlugin.getEventListener(), event->getName(), true );
+		gameeventmanager->AddListener( g_RCBOTServerPlugin.getEventListener(), pEvent->getName(), true );
 
-	m_theEvents.push_back(event);
+	m_theEvents.push_back(pEvent);
 }
 
 void CBotEvents :: freeMemory ()
@@ -146,7 +179,7 @@ void CBotEvents :: freeMemory ()
 	m_theEvents.clear();
 }
 
-void CBotEvents :: executeEvent( void *event, eBotEventType iType )
+void CBotEvents :: executeEvent( void *pEvent, eBotEventType iType )
 {
 	CBotEvent *pFound;
 	int iEventId = -1; 
@@ -155,9 +188,9 @@ void CBotEvents :: executeEvent( void *event, eBotEventType iType )
 	IBotEventInterface *pInterface = NULL;
 
 	if ( iType == TYPE_KEYVALUES )
-		pInterface = new CGameEventInterface1((KeyValues*)event);
+		pInterface = new CGameEventInterface1((KeyValues*)pEvent);
 	else if ( iType == TYPE_IGAMEEVENT )
-		pInterface = new CGameEventInterface2((IGameEvent*)event);
+		pInterface = new CGameEventInterface2((IGameEvent*)pEvent);
 
 	if ( pInterface == NULL )
 		return;
@@ -169,7 +202,7 @@ void CBotEvents :: executeEvent( void *event, eBotEventType iType )
 	{
 		pFound = m_theEvents[i];
 
-		// if it has an event id stored just check that
+		// if it has an pEvent id stored just check that
 		//if ( ( iType != TYPE_IGAMEEVENT ) && pFound->hasEventId() )
 		//	bFound = pFound->isEventId(iEventId);
 		//else
@@ -177,7 +210,7 @@ void CBotEvents :: executeEvent( void *event, eBotEventType iType )
 
 		if ( bFound )	
 		{
-			// set event id for quick checking
+			// set pEvent id for quick checking
 			pFound->setEventId(iEventId);
 
 			pFound->setActivator(CBotGlobals::playerByUserId(pInterface->getInt("userid")));

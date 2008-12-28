@@ -74,7 +74,9 @@ void CBotFortress :: killed ( edict_t *pVictim )
 
 void CBotFortress :: died ( edict_t *pKiller )
 {
-	spawnInit();
+	CBot::spawnInit();
+
+	droppedFlag();
 
 	if ( RandomInt(0,1) )
 		m_pButtons->attack();
@@ -99,9 +101,16 @@ bool CBotFortress :: isEnemy ( edict_t *pEdict )
 	return true;	
 }
 
+void CBotFortress :: currentlyDead ()
+{
+	m_fUpdateClass = engine->Time() + 0.1f;
+}
+
 
 void CBotFortress :: modThink ()
 {
+	updateClass();
+
 	if ( m_fCallMedic < engine->Time() )
 	{
 		if ( ((float)m_pPlayerInfo->GetHealth() / m_pPlayerInfo->GetMaxHealth()) < 0.5 )
@@ -130,6 +139,8 @@ void CBotFortress :: selectClass ()
 	char buffer[32];
 
 	TF_Class _class = (TF_Class)RandomInt(1,9);
+
+	m_iClass = _class;
 
 	if ( _class == TF_CLASS_SCOUT )
 	{
@@ -212,6 +223,40 @@ void CBotTF2 :: spyDisguise ( int iTeam, int iClass )
 	helpers->ClientCommand(m_pEdict,cmd);
 }
 
+void CBotTF2 :: updateClass ()
+{
+	if ( m_fUpdateClass < engine->Time() )
+	{
+		const char *model = m_pPlayerInfo->GetModelName();
+
+		if ( strcmp(model,"soldier") )
+			m_iClass = TF_CLASS_SOLDIER;
+		else if ( strcmp(model,"sniper") )
+			m_iClass = TF_CLASS_SNIPER;
+		else if ( strcmp(model,"heavyweapons") )
+			m_iClass = TF_CLASS_HWGUY;
+		else if ( strcmp(model,"medic") )
+			m_iClass = TF_CLASS_MEDIC;
+		else if ( strcmp(model,"pyro") )
+			m_iClass = TF_CLASS_PYRO;
+		else if ( strcmp(model,"spy") )
+			m_iClass = TF_CLASS_SPY;
+		else if ( strcmp(model,"scout") )
+			m_iClass = TF_CLASS_SCOUT;
+		else if ( strcmp(model,"engineer") )
+			m_iClass = TF_CLASS_ENGINEER;
+		else if ( strcmp(model,"demoman") )
+			m_iClass = TF_CLASS_DEMOMAN;
+		else
+			m_iClass = TF_CLASS_CIVILIAN;
+	}
+}
+
+TF_Class CBotTF2 :: getClass ()
+{
+	return m_iClass;
+}
+
 bool CBotTF2 :: hasEngineerBuilt ( eEngiBuild iBuilding )
 {
 	switch ( iBuilding )
@@ -228,7 +273,7 @@ bool CBotTF2 :: hasEngineerBuilt ( eEngiBuild iBuilding )
 	case ENGI_EXIT:
 		return false; // TODO
 		break;
-	}
+	}	
 
 	return false;
 }
@@ -247,11 +292,6 @@ void CBotTF2 :: modThink ()
 {
 // mod specific think code here
 CBotFortress :: modThink();
-}
-
-bool CBotTF2 :: hasFlag ()
-{
-	return false;
 }
 
 void CBotTF2 :: getTasks ( unsigned int iIgnore )

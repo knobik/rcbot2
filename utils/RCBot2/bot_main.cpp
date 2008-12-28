@@ -53,7 +53,7 @@
 #include "convar.h"
 #include "Color.h"
 #include "ndebugoverlay.h"
-
+#include "time.h"
 #include "bot.h"
 #include "bot_commands.h"
 #include "bot_client.h"
@@ -203,6 +203,8 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	CWaypoints::setupVisibility();
 
 	CRCBotPlugin::ShowLicense();	
+
+	RandomSeed((unsigned int)time(NULL));
 
 	return true;
 }

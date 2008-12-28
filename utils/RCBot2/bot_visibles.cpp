@@ -141,12 +141,12 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 	// update
 	if ( CBotGlobals::entityIsValid(pEntity) )
 	{
+		// update tick
+		*iTicks = *iTicks + 1;
+
 		// if in view cone
 		if ( m_pBot->FInViewCone(pEntity) )
 		{
-			// update tick
-			*iTicks = *iTicks + 1;
-
 			// from Valve developer community wiki
 			// http://developer.valvesoftware.com/wiki/Transforming_the_Multiplayer_SDK_into_Coop
 
