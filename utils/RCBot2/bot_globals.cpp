@@ -62,6 +62,30 @@ bool CBotGlobals :: m_bTeamplay = false;
 
 extern IVDebugOverlay *debugoverlay;
 
+class CTraceFilterVis : public CTraceFilter
+{
+public:
+	CTraceFilterVis(edict_t *pPlayer, edict_t *pHit = NULL )
+	{
+		m_pPlayer = pPlayer;
+		m_pHit = pHit;
+	}
+
+	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
+	{ 
+		if ( pServerEntity == (IHandleEntity*)m_pPlayer->GetIServerEntity() )
+			return false;
+
+		if ( m_pHit && (pServerEntity == (IHandleEntity*)m_pHit->GetIServerEntity()) )
+			return false;
+
+		return true; 
+	}
+private:
+	edict_t *m_pPlayer;
+	edict_t *m_pHit;
+};
+
 CBotGlobals :: CBotGlobals ()
 {
 	init();
@@ -133,9 +157,20 @@ edict_t *CBotGlobals :: findPlayerByTruncName ( const char *name )
 	return NULL;
 }
 
-bool CBotGlobals :: isVisible ( Vector vSrc, edict_t *pDest )
+bool CBotGlobals :: isVisible ( edict_t *pPlayer, Vector vSrc, Vector vDest)
 {
-	CTraceFilterWorldAndPropsOnly filter;//	CTraceFilterHitAll filter;
+	CTraceFilterWorldAndPropsOnly filter;
+
+	traceLine (vSrc,vDest,MASK_SOLID_BRUSHONLY,&filter);
+
+	return (traceVisible(NULL));
+}
+
+bool CBotGlobals :: isVisible ( edict_t *pPlayer, Vector vSrc, edict_t *pDest )
+{
+	//CTraceFilterWorldAndPropsOnly filter;//	CTraceFilterHitAll filter;
+
+	CTraceFilterWorldAndPropsOnly filter;
 
 	traceLine (vSrc,entityOrigin(pDest),MASK_SOLID_BRUSHONLY,&filter);
 
@@ -307,7 +342,7 @@ bool CBotGlobals :: setWaypointDisplayType ( int iType )
 	return false;
 }
 
-bool CBotGlobals :: walkableFromTo (Vector v_src, Vector v_dest)
+bool CBotGlobals :: walkableFromTo (edict_t *pPlayer, Vector v_src, Vector v_dest)
 {   
 	float fDistance = sqrt((v_dest - v_src).LengthSqr());
 
@@ -324,19 +359,19 @@ bool CBotGlobals :: walkableFromTo (Vector v_src, Vector v_dest)
 		return true;
 	}
 
-	CTraceFilterWorldAndPropsOnly filter;//	CTraceFilterHitAll filter;
+	CTraceFilterVis filter = CTraceFilterVis(pPlayer);//	CTraceFilterHitAll filter;
 
-	CBotGlobals::traceLine(v_src,v_src-Vector(0,0,256.0),MASK_SOLID_BRUSHONLY,&filter);
+	CBotGlobals::traceLine(v_src,v_src-Vector(0,0,256.0),MASK_NPCSOLID_BRUSHONLY,&filter);
 	debugoverlay->AddLineOverlay(v_src,v_src-Vector(0,0,256.0),255,0,255,false,3);
 
 	Vector v_ground_src = CBotGlobals::getTraceResult()->endpos + Vector(0,0,1);
 
-	CBotGlobals::traceLine(v_dest,v_dest-Vector(0,0,256.0),MASK_SOLID_BRUSHONLY,&filter);
+	CBotGlobals::traceLine(v_dest,v_dest-Vector(0,0,256.0),MASK_NPCSOLID_BRUSHONLY,&filter);
 	debugoverlay->AddLineOverlay(v_dest,v_dest-Vector(0,0,256.0),255,255,0,false,3);
 
 	Vector v_ground_dest = CBotGlobals::getTraceResult()->endpos + Vector(0,0,1);
 
-	if ( !CBotGlobals::isVisible(v_ground_src,v_ground_dest) )
+	if ( !CBotGlobals::isVisible(pPlayer,v_ground_src,v_ground_dest) )
 	{
 		debugoverlay->AddLineOverlay(v_ground_src,v_ground_dest,0,255,255,false,3);		
 
@@ -347,7 +382,7 @@ bool CBotGlobals :: walkableFromTo (Vector v_src, Vector v_dest)
 		{
 			debugoverlay->AddTextOverlay((v_ground_src+v_ground_dest)/2,0,3,"ground fail");
 
-			CBotGlobals::traceLine(tr->endpos,tr->endpos-Vector(0,0,45),MASK_SOLID_BRUSHONLY,&filter);
+			CBotGlobals::traceLine(tr->endpos,tr->endpos-Vector(0,0,45),MASK_NPCSOLID_BRUSHONLY,&filter);
 
 			Vector v_jsrc = tr->endpos;
 
@@ -369,7 +404,7 @@ bool CBotGlobals :: walkableFromTo (Vector v_src, Vector v_dest)
 						Vector v_checkpoint = v_src + (v_norm * fDistCheck);
 
 						// check jump height again
-						CBotGlobals::traceLine(v_checkpoint,v_checkpoint-Vector(0,0,45.0f),MASK_SOLID_BRUSHONLY,&filter);
+						CBotGlobals::traceLine(v_checkpoint,v_checkpoint-Vector(0,0,45.0f),MASK_NPCSOLID_BRUSHONLY,&filter);
 
 						if ( CBotGlobals::traceVisible(NULL) )
 						{

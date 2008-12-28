@@ -108,6 +108,7 @@ public:
 	static const int W_FL_NOBLU = 64;
 	static const int W_FL_NORED = 128;
 	static const int W_FL_HEALTH = 256;
+	static const int W_FL_OPENS_LATER = 512;
 
 	static void setup ();
 
@@ -294,7 +295,7 @@ public:
 
 	static void addWaypoint ( CClient *pClient );
 
-	static void addWaypoint ( Vector vOrigin, int iFlags = CWaypointTypes::W_FL_NONE, bool bAutoPath = false, int iYaw = 0 );
+	static void addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags = CWaypointTypes::W_FL_NONE, bool bAutoPath = false, int iYaw = 0 );
 
 	static void removeWaypoint ( int iIndex );
 

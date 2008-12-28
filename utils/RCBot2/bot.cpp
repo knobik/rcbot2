@@ -191,7 +191,7 @@ bool CBot :: FVisible ( Vector &vOrigin )
 
 bool CBot :: FVisible ( edict_t *pEdict )
 {
-	return CBotGlobals::isVisible(getEyePosition(),pEdict);
+	return CBotGlobals::isVisible(m_pEdict,getEyePosition(),pEdict);
 }
 
 QAngle CBot :: eyeAngles ()
@@ -349,8 +349,8 @@ bool CBot :: canAvoid ( edict_t *pEntity )
 		SolidType_t solid = pEntity->GetCollideable()->GetSolid() ;
 
 		if ( (solid == SOLID_BBOX) || (solid == SOLID_VPHYSICS) )
-		{
-			return true;
+		{			
+			return pEntity == m_pEnemy;
 		}
 	}
 

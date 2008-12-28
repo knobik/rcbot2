@@ -77,7 +77,7 @@ void CWaypointLocations :: getMinMaxs ( int iLoc, int jLoc, int kLoc,
 }
 ///////////////
 // return nearest waypoint that can be used to cover from vCoverFrom vector
-void CWaypointLocations :: AutoPath ( int iWpt )
+void CWaypointLocations :: AutoPath ( edict_t *pPlayer, int iWpt )
 {
 	CWaypoint *pWpt = CWaypoints::getWaypoint(iWpt);
 	Vector vOrigin = pWpt->getOrigin();
@@ -100,7 +100,7 @@ void CWaypointLocations :: AutoPath ( int iWpt )
 			{		
 				// check each area around the current area
 				// for closer waypoints
-				AutoPathInBucket(i,j,k,iWpt);
+				AutoPathInBucket(pPlayer, i,j,k,iWpt);
 			}
 		}
 	}
@@ -140,7 +140,7 @@ void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, 
 	}
 }
 
-void CWaypointLocations :: AutoPathInBucket ( int i, int j, int k, int iWptFrom )
+void CWaypointLocations :: AutoPathInBucket ( edict_t *pPlayer, int i, int j, int k, int iWptFrom )
 {
 	//dataStack <int> tempStack = m_iLocations[i][j][k];
 	int iWpt;
@@ -176,12 +176,12 @@ void CWaypointLocations :: AutoPathInBucket ( int i, int j, int k, int iWptFrom 
 
 		if ( CBotGlobals::isVisible(vWptOrigin,vOtherWptOrigin) )
 		{
-			if ( CBotGlobals::walkableFromTo(vWptOrigin,vOtherWptOrigin) )
+			if ( CBotGlobals::walkableFromTo(pPlayer, vWptOrigin,vOtherWptOrigin) )
 			{
 				pWpt->addPathTo(iWpt);			
 			}
 
-			if ( CBotGlobals::walkableFromTo(vOtherWptOrigin,vWptOrigin) )
+			if ( CBotGlobals::walkableFromTo(pPlayer,vOtherWptOrigin,vWptOrigin) )
 			{
 				pOtherWpt->addPathTo(iWptFrom);		
 			}

@@ -52,7 +52,7 @@ public:
 
 	static void freeMemory ();
 
-	static bool walkableFromTo (Vector v_src, Vector v_dest);
+	static bool walkableFromTo (edict_t *pPlayer,Vector v_src, Vector v_dest);
 
 	static float yawAngleFromEdict(edict_t *pEntity,Vector vOrigin);
 	//static float getAvoidAngle(edict_t *pEdict,Vector origin);
@@ -119,7 +119,8 @@ public:
 	static Vector upVec ();*/
 	////////
 	static trace_t *getTraceResult () { return &m_TraceResult; }
-	static bool isVisible ( Vector vSrc, edict_t *pDest);
+	static bool isVisible ( edict_t *pPlayer, Vector vSrc, Vector vDest);
+	static bool isVisible ( edict_t *pPlayer, Vector vSrc, edict_t *pDest);
 	static bool isVisible ( Vector vSrc, Vector vDest);
 	static void traceLine ( Vector vSrc, Vector vDest, unsigned int mask, ITraceFilter *pFilter);
 	static bool traceVisible (edict_t *pEnt);

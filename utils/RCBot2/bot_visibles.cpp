@@ -208,7 +208,17 @@ void CBotVisibles :: updateVisibles ()
 		pEntity = INDEXENT(m_iCurPlayer);
 
 		if ( pEntity == m_pBot->getEdict() )
+		{
+			m_iCurPlayer++;
+
+			if ( m_iCurPlayer > CBotGlobals::maxClients() )
+				m_iCurPlayer = 1;
+
+			if ( iStartPlayerIndex == m_iCurPlayer )
+				break;
+
 			continue;
+		}
 
 		checkVisible(pEntity,&iTicks,&bVisible);
 		setVisible(pEntity,bVisible);
@@ -249,9 +259,6 @@ void CBotVisibles :: updateVisibles ()
 		bVisible = false;
 
 		pEntity = INDEXENT(m_iCurrentIndex);
-
-		if ( pEntity == m_pBot->getEdict() )
-			continue;
 
 		checkVisible(pEntity,&iTicks,&bVisible);
 

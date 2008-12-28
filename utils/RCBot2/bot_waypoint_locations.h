@@ -143,9 +143,9 @@ public:
 
 	///////////
 
-	static void AutoPath ( int iWpt );
+	static void AutoPath ( edict_t *pPlayer, int iWpt );
 
-	static void AutoPathInBucket ( int i, int j, int k, int iWpt );
+	static void AutoPathInBucket ( edict_t *pPlayer, int i, int j, int k, int iWpt );
 	
 private:
 	

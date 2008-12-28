@@ -315,6 +315,11 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 
 			if ( !succWpt->forTeam(m_pBot->getTeam()) )
 				continue;
+			if ( succWpt->hasFlag(CWaypointTypes::W_FL_OPENS_LATER) )
+			{
+				if ( !CBotGlobals::isVisible(m_pBot->getEdict(),currWpt->getOrigin(),succWpt->getOrigin()) )
+					continue;
+			}
 
 			fCost = curr->getCost()+(succWpt->distanceFrom(vOrigin));
 
@@ -919,10 +924,10 @@ void CWaypoints :: addWaypoint ( CClient *pClient )
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 		iFlags |= CWaypoint::W_FL_CROUCH;		*/
 
-	addWaypoint(vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y); // sort flags out
+	addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y); // sort flags out
 }
 
-void CWaypoints :: addWaypoint ( Vector vOrigin, int iFlags, bool bAutoPath, int iYaw )
+void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw )
 {
 	int iIndex = freeWaypointIndex();
 
@@ -945,7 +950,7 @@ void CWaypoints :: addWaypoint ( Vector vOrigin, int iFlags, bool bAutoPath, int
 	m_pVisibilityTable->workVisibilityForWaypoint(iIndex,true);
 
 	if ( bAutoPath )
-		CWaypointLocations::AutoPath(iIndex);
+		CWaypointLocations::AutoPath(pPlayer,iIndex);
 }
 
 void CWaypoints :: removeWaypoint ( int iIndex )
@@ -1121,6 +1126,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_NOBLU,"noblueteam","blue team can't use this waypoint",WptColor(255,0,0)));
 	addType(new CWaypointType(W_FL_NORED,"noredteam","red team can't use this waypoint",WptColor(0,0,128)));
 	addType(new CWaypointType(W_FL_HEALTH,"health","bot can get health here",WptColor(255,255,255)));
+	addType(new CWaypointType(W_FL_OPENS_LATER,"openslater","this waypoint is available when a door is open only",WptColor(100,100,200)));
 }
 
 void CWaypointTypes :: freeMemory ()
