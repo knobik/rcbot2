@@ -43,6 +43,8 @@
 #define BOT_DEBUG_GAME_EVENT 1
 #define BOT_DEBUG_NAV 2
 #define BOT_DEBUG_SPEED 4
+#define BOT_DEBUG_VIS 8
+#define BOT_DEBUG_TASK 16
 
 typedef enum
 {

@@ -49,7 +49,9 @@ typedef enum
 	SCHED_ATTACK,
 	SCHED_RUN_FOR_COVER,
 	SCHED_GOTO_ORIGIN,
-	SCHED_GOOD_HIDE_SPOT
+	SCHED_GOOD_HIDE_SPOT,
+	SCHED_TF2_GET_FLAG,
+	SCHED_TF2_GET_HEALTH
 }eBotSchedule;
 
 class CBotSchedule
@@ -235,6 +237,22 @@ private:
 };
 
 //////////////////////////////////
+
+class CBotTF2GetHealthSched : public CBotSchedule
+{
+public:
+	CBotTF2GetHealthSched ( Vector vOrigin );
+
+	void init ();
+};
+
+class CBotTF2GetFlagSched : public CBotSchedule
+{
+public:
+	CBotTF2GetFlagSched ( Vector vOrigin );
+
+	void init ();
+};
 
 class CBotGotoOriginSched : public CBotSchedule
 {

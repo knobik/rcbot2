@@ -36,8 +36,85 @@
 #include "bot_waypoint_locations.h"
 #include "bot_globals.h"
 
+#include "bot_fortress.h"
+
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Tasks
+
+
+CBotTF2WaitHealthTask :: CBotTF2WaitHealthTask ( Vector vOrigin )
+{
+	m_vOrigin = vOrigin;
+	m_fWaitTime = 0;
+}
+
+void CBotTF2WaitHealthTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( !m_fWaitTime )
+		m_fWaitTime = engine->Time() + 40.0f;
+
+	 if ( pBot->getHealthPercent() > 0.9 )
+		complete();
+	 else if ( m_fWaitTime < engine->Time() )
+		 fail();
+	else
+	{
+		pBot->setLookAtTask(LOOK_AROUND);
+
+		if ( pBot->distanceFrom(m_vOrigin) > 32 )
+			pBot->setMoveTo(m_vOrigin);
+		else
+			pBot->stopMoving();
+
+		if ( pBot->isTF() )
+			((CBotTF2*)pBot)->taunt();
+	}
+}
+
+void CBotTF2WaitHealthTask :: debugString ( char *string )
+{
+	sprintf(string,"Wait Health (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
+}
+
+
+CBotTF2WaitFlagTask :: CBotTF2WaitFlagTask ( Vector vOrigin )
+{
+	m_vOrigin = vOrigin;
+	m_fWaitTime = 0;
+}
+
+void CBotTF2WaitFlagTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( !m_fWaitTime )
+		m_fWaitTime = engine->Time() + 70.0f;
+
+	if ( ((CBotTF2*)pBot)->hasFlag() )
+		complete();
+	else if ( pBot->getHealthPercent() < 0.2 )
+		fail();
+	else if ( m_fWaitTime < engine->Time() )
+		fail();
+	else
+	{		
+		pBot->setLookAtTask(LOOK_AROUND);
+
+		if ( pBot->distanceFrom(m_vOrigin) > 32 )
+			pBot->setMoveTo(m_vOrigin);
+		else
+			pBot->stopMoving();
+
+		if ( pBot->isTF() )
+			((CBotTF2*)pBot)->taunt();
+	}
+}
+
+void CBotTF2WaitFlagTask :: debugString ( char *string )
+{
+	sprintf(string,"Wait Flag (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
+}
+
+
+///////////////////////////////////////////////////////
 
 CFindGoodHideSpot :: CFindGoodHideSpot ( edict_t *pEntity )		
 {

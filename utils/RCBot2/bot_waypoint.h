@@ -91,6 +91,9 @@ public:
 	void removeTypeFromWaypoint ( CWaypoint *pWaypoint );
 };*/
 
+#define TEAM_BLUE 3
+#define TEAM_RED 2
+
 class CWaypointTypes
 {
 public:
@@ -100,6 +103,11 @@ public:
 	static const int W_FL_CROUCH = 2;
 	static const int W_FL_UNREACHABLE = 4;
 	static const int W_FL_LADDER = 8;
+	static const int W_FL_FLAG = 16;
+	static const int W_FL_CAPPOINT = 32;
+	static const int W_FL_NOBLU = 64;
+	static const int W_FL_NORED = 128;
+	static const int W_FL_HEALTH = 256;
 
 	static void setup ();
 
@@ -246,10 +254,16 @@ public:
 		return m_iFlags;
 	}
 
-	/*int getID ()
+	bool forTeam ( int iTeam )
 	{
-		return m_iId;
-	}*/
+		if ( iTeam == TEAM_BLUE )
+			return (m_iFlags & CWaypointTypes::W_FL_NOBLU)==0;
+		else if ( iTeam == TEAM_RED )
+			return (m_iFlags & CWaypointTypes::W_FL_NORED)==0;
+
+		return true;	
+	}
+
 private:
 	Vector m_vOrigin;
 	// aim of vector (used with certain waypoint types)
@@ -259,8 +273,6 @@ private:
 	bool m_bUsed;
 	// paths to other waypoints
 	dataUnconstArray<int> m_thePaths;
-	//dataStack<int> m_thePaths;
-	//int m_iId; // waypoint ID
 };
 
 class CWaypoints
@@ -310,9 +322,9 @@ public:
 
 	static void freeMemory ();
 
-	static int nearestWaypointGoal ( int iFlags, Vector &origin, float fDist );
-	static int randomWaypointGoal ( int iFlags );
-	static int randomFlaggedWaypoint ();
+	static int nearestWaypointGoal ( int iFlags, Vector &origin, float fDist, int iTeam = 0 );
+	static int randomWaypointGoal ( int iFlags, int iTeam = 0 );
+	static int randomFlaggedWaypoint (int iTeam = 0);
 
 	static CWaypointVisibilityTable *getVisiblity () { return m_pVisibilityTable; }
 	static void setupVisibility ();

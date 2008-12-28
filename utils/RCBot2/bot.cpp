@@ -215,6 +215,10 @@ void CBot :: checkStuck ()
 	float fSpeed;
 	float fIdealSpeed;
 
+	if ( !moveToIsValid() )
+		return;
+
+
 	fTime = engine->Time();
 
 	if ( m_fLastWaypointVisible == 0 )
@@ -342,10 +346,6 @@ bool CBot :: canAvoid ( edict_t *pEntity )
 
 	if ( ( distance > 16 ) && ( distance < 128 ) )
 	{
-		//int ind = ENTINDEX(pEntity);
-
-		//if ( ind && (ind <= CBotGlobals::maxClients()) )
-		//{
 		SolidType_t solid = pEntity->GetCollideable()->GetSolid() ;
 
 		if ( (solid == SOLID_BBOX) || (solid == SOLID_VPHYSICS) )
@@ -549,6 +549,11 @@ int CBot :: getHealth ()
 	return m_pPlayerInfo->GetHealth();
 }
 
+float CBot :: getHealthPercent ()
+{
+	return (((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth());
+}
+
 void CBot :: spawnInit ()
 {
 	if ( m_pSchedules != NULL )
@@ -556,6 +561,7 @@ void CBot :: spawnInit ()
 	if ( m_pVisibles != NULL )
 		m_pVisibles->reset();
 
+	m_fLookAroundTime = 0.0f;
 	m_bLookedForEnemyLast = false;
 	////////////////////////
 	m_iPrevHealth = 0;  // 
@@ -730,7 +736,7 @@ bool CBot :: isAlive ()
 
 int CBot :: getTeam ()
 {
-	return CBotGlobals::getTeam(m_pEdict);
+	return m_pPlayerInfo->GetTeamIndex();
 }
 
 void CBot :: freeMapMemory ()
@@ -896,7 +902,9 @@ void CBot :: doMove ()
 
 bool CBot :: FInViewCone ( edict_t *pEntity )
 {	
-	return ( DotProductFromOrigin(CBotGlobals::entityOrigin(pEntity)) > 0 ); // 90 degree !! 0.422618f ); // 65 degree field of view   
+	Vector origin = CBotGlobals::entityOrigin(pEntity);
+
+	return ( ((origin - getOrigin()).Length()>1) && (DotProductFromOrigin(origin) > 0) ); // 90 degree !! 0.422618f ); // 65 degree field of view   
 }
 
 float CBot :: DotProductFromOrigin ( Vector &pOrigin )
@@ -1016,7 +1024,14 @@ void CBot :: getLookAtVector ()
 		break;
 	case LOOK_AROUND:
 		{
+			
+			if ( m_fLookAroundTime < engine->Time() )
+			{
+				setLookAt(getEyePosition()+Vector(RandomFloat(-128,128),RandomFloat(-128,128),RandomFloat(0,32)));
+				m_fLookAroundTime = engine->Time() + RandomFloat(8.0f,18.0f);
+			//setLookAt();
 			//setLookAt(...);
+			}
 		}
 		break;
 	case LOOK_HURT_ORIGIN:
@@ -1217,7 +1232,7 @@ void CBot :: getTasks (unsigned int iIgnore)
 		return; // already got some tasks left
 
 	// roam
-	CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint());
+	CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint(getTeam()));
 
 	if ( pWaypoint )
 	{
@@ -1256,6 +1271,15 @@ bool CBots :: createBot ()
 		return false;
 
 	return ( m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,pBotProfile) );
+}
+
+void CBots :: botFunction ( IBotFunction *function )
+{
+	for ( unsigned int i = 0; i < MAX_PLAYERS; i ++ )
+	{
+		if ( m_Bots[i]->inUse() )
+			function->execute (m_Bots[i]);
+	}
 }
 
 int CBots :: slotOfEdict ( edict_t *pEdict )

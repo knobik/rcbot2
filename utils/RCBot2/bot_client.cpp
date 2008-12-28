@@ -69,6 +69,7 @@ void CClient :: think ()
 
 	if ( isDebugging() && m_pDebugBot )
 	{
+		//this->cm_pDebugBot->getTaskDebug();
 		//m_pDebugBot->canAvoid();
 	}
 }
@@ -237,6 +238,9 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 
 	switch ( iLev )
 	{
+	case BOT_DEBUG_TASK:
+		szDebugLev = "task";
+		break;
 	case BOT_DEBUG_NAV:
 		szDebugLev = "navigation";
 		break;

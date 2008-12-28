@@ -149,6 +149,18 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CPlayerSpawnEvent : public CBotEvent
+{
+public:
+	CPlayerSpawnEvent()
+	{
+		setType("player_spawn");
+		setMod(MOD_TF2);
+	}
+	
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CBombDroppedEvent : public CBotEvent
 {
 public:
@@ -190,6 +202,7 @@ public:
 	CFlagEvent()
 	{
 		setType("teamplay_flag_event");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -201,6 +214,7 @@ public:
 	CFlagCaptured()
 	{
 		setType("ctf_flag_captured");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );

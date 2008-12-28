@@ -53,6 +53,9 @@ public:
 	void _init();
 	virtual void init ();
 	virtual void execute ( CBot *pBot, CBotSchedule *pSchedule );
+
+	//void setTimeout ();
+
 	bool hasFailed ();
 	bool isComplete ();
 	//void setVector ( Vector vOrigin );
@@ -128,6 +131,31 @@ private:
 	Vector m_vVector;
 	edict_t *m_pEdict;
 	int m_iInt;
+};
+
+class CBotTF2WaitHealthTask : public CBotTask
+{
+public:
+	CBotTF2WaitHealthTask ( Vector vOrigin );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	Vector m_vOrigin;
+	float m_fWaitTime;
+};
+
+
+class CBotTF2WaitFlagTask : public CBotTask
+{
+public:
+	CBotTF2WaitFlagTask ( Vector vOrigin );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	Vector m_vOrigin;
+	float m_fWaitTime;
 };
 
 class CAttackEntityTask : public CBotTask

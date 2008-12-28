@@ -31,7 +31,31 @@
 #include "bot.h"
 #include "bot_schedule.h"
 #include "bot_task.h"
+#include "bot_client.h"
 
+/////////////////////////////////////////////
+
+CBotTF2GetHealthSched :: CBotTF2GetHealthSched ( Vector vOrigin )
+{
+	addTask(new CFindPathTask(vOrigin)); // first
+	addTask(new CBotTF2WaitHealthTask(vOrigin)); // second
+}
+
+void CBotTF2GetHealthSched :: init ()
+{
+	setID(SCHED_TF2_GET_HEALTH);
+}
+
+CBotTF2GetFlagSched :: CBotTF2GetFlagSched ( Vector vOrigin )
+{
+	addTask(new CFindPathTask(vOrigin)); // first
+	addTask(new CBotTF2WaitFlagTask(vOrigin)); // second
+}
+
+void CBotTF2GetFlagSched :: init ()
+{
+	setID(SCHED_TF2_GET_FLAG);
+}
 /////////////////////////////////////////////
 
 CBotGotoOriginSched :: CBotGotoOriginSched ( Vector vOrigin )
@@ -116,6 +140,15 @@ void CBotSchedule :: execute ( CBot *pBot )
 			pTask->fail(); // fail
 		else
 		{			
+			if ( CClients::clientsDebugging() )
+			{
+				char dbg[512];
+
+				pTask->debugString(dbg);
+
+				CClients::clientDebugMsg(BOT_DEBUG_TASK,dbg,pBot);
+			}
+
 			pTask->execute(pBot,this); // run
 		}
 	}

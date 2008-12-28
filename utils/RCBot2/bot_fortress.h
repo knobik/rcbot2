@@ -47,11 +47,32 @@ typedef enum
 	TF_MAP_CART
 }eTFMapType;
 
+class CBroadcastFlagDropped : public IBotFunction
+{
+public:
+	CBroadcastFlagDropped (int iTeam, Vector origin) { m_iTeam = iTeam; m_vOrigin = origin; }
+	void execute ( CBot *pBot );
+
+private:
+	Vector m_vOrigin;
+	int m_iTeam;
+};
+
+class CBroadcastFlagCaptured : public IBotFunction
+{
+public:
+	CBroadcastFlagCaptured(int iTeam) { m_iTeam = iTeam; }
+
+	void execute ( CBot *pBot );
+private:
+	int m_iTeam;
+};
+
 class CBotFortress : public CBot
 {
 public:	
 
-	CBotFortress() { CBot(); m_fCallMedic = 0; }
+	CBotFortress() { CBot(); m_fCallMedic = 0; m_fTauntTime = 0; m_fTaunting = 0; m_fLastKnownFlagTime = 0.0f; m_bHasFlag = false; }
 
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
@@ -89,6 +110,12 @@ public:
 
 	inline void droppedFlag () { m_bHasFlag = false; }
 
+	bool isAlive ();
+
+	void flagDropped ( Vector vOrigin );
+
+	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
+
 protected:
 	virtual void selectTeam ();
 
@@ -97,6 +124,14 @@ protected:
 	virtual void callMedic ();
 
 	float m_fCallMedic;
+	float m_fTauntTime;
+	float m_fTaunting;
+
+	// valid flag point area
+	Vector m_vLastKnownFlagPoint;
+
+	// 1 minute wait
+	float m_fLastKnownFlagTime;
 
 	TF_Class m_iClass;
 
@@ -130,6 +165,14 @@ public:
 	bool hasEngineerBuilt ( eEngiBuild iBuilding );
 
 	void getTasks ( unsigned int iIgnore = 0 );
+
+	void died ( edict_t *pKiller );
+
+	void killed ( edict_t *pVictim );
+
+	void capturedFlag ();
+
+	void capturedPoint ();
 
 	TF_Class getClass ();
 

@@ -346,6 +346,8 @@ public:
 	int getPlayerID (); // return player ID on server
 	int getHealth ();
 
+	float getHealthPercent ();
+
 	CBotSchedules *getSchedule () { return m_pSchedules; }
 
 	void reachedCoverSpot ();
@@ -408,6 +410,7 @@ protected:
 	float m_fLookAtTimeEnd;
 	// Look task can't be changed if this is greater than Time()
 	float m_fLookSetTime; 
+	float m_fLookAroundTime;
 
 	// Origin a second ago to check if stuck
 	Vector m_vLastOrigin;
@@ -481,6 +484,12 @@ protected:
 	char m_szBotName[64];
 };
 
+class IBotFunction
+{
+public:
+	virtual void execute ( CBot *pBot ) = 0;
+};
+
 class CBots
 {
 public:
@@ -521,6 +530,8 @@ public:
 	static void setMinBots ( int iMin ) { m_iMinBots = iMin; }
 
 	static int getMinBots () { return m_iMinBots; }
+
+	static void botFunction ( IBotFunction *function );
 
 private:
 	static CBot **m_Bots;

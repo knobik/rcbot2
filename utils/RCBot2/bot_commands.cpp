@@ -90,6 +90,9 @@ CDebugCommand :: CDebugCommand()
 	add(new CDebugGameEventCommand());
 	add(new CDebugBotCommand());
 	add(new CDebugNavCommand());
+	add(new CDebugVisCommand());
+	add(new CDebugTaskCommand());
+
 }
 /////////////////////
 CWaypointOnCommand::CWaypointOnCommand()
@@ -466,12 +469,32 @@ eBotCommandResult CDebugGameEventCommand :: execute ( CClient *pClient, const ch
 	return COMMAND_ACCESSED;
 }
 
+eBotCommandResult CDebugVisCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( !pcmd || !*pcmd )
+		return COMMAND_ERROR;
+
+	pClient->setDebug(BOT_DEBUG_VIS,atoi(pcmd)>0);
+
+	return COMMAND_ACCESSED;
+}
+
 eBotCommandResult CDebugNavCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( !pcmd || !*pcmd )
 		return COMMAND_ERROR;
 
 	pClient->setDebug(BOT_DEBUG_NAV,atoi(pcmd)>0);
+
+	return COMMAND_ACCESSED;
+}
+
+eBotCommandResult CDebugTaskCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( !pcmd || !*pcmd )
+		return COMMAND_ERROR;
+
+	pClient->setDebug(BOT_DEBUG_TASK,atoi(pcmd)>0);
 
 	return COMMAND_ACCESSED;
 }

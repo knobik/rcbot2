@@ -41,9 +41,24 @@
 #include "vstdlib/random.h" // for random functions
 
 
+void CBroadcastFlagDropped :: execute ( CBot *pBot )
+{
+	if ( pBot->getTeam() == m_iTeam )
+		((CBotTF2*)pBot)->flagDropped(m_vOrigin);
+}
+
+void CBroadcastFlagCaptured :: execute ( CBot *pBot )
+{
+	if ( pBot->getTeam() == m_iTeam )
+		((CBotTF2*)pBot)->flagReset();
+}
+
 void CBotFortress :: init (bool bVarInit)
 {
 	CBot::init(bVarInit);
+
+	m_bHasFlag = false;
+
 }
 
 void CBotFortress :: setup ()
@@ -65,6 +80,11 @@ bool CBotFortress :: startGame()
 		return true;
 
 	return false;
+}
+
+bool CBotFortress :: isAlive ()
+{
+	return !m_pPlayerInfo->IsDead()&&!m_pPlayerInfo->IsObserver();
 }
 
 void CBotFortress :: killed ( edict_t *pVictim )
@@ -196,7 +216,12 @@ void CBotFortress :: selectClass ()
 
 void CBotTF2 :: taunt ()
 {
-	helpers->ClientCommand(m_pEdict,"taunt");
+	if ( !m_pEnemy && (m_fTauntTime < engine->Time()) )
+	{
+		helpers->ClientCommand(m_pEdict,"taunt");
+		m_fTauntTime = engine->Time() + RandomFloat(40.0,100.0);
+		m_fTaunting = engine->Time() + 3.0;
+	}
 }
 
 void CBotTF2 :: engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd )
@@ -212,6 +237,26 @@ void CBotTF2 :: engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd )
 	sprintf(cmd,"%s %d",buffer,iBuilding);
 
 	helpers->ClientCommand(m_pEdict,cmd);
+}
+
+void CBotTF2 :: died ( edict_t *pKiller )
+{
+
+}
+
+void CBotTF2 :: killed ( edict_t *pVictim )
+{
+	taunt();
+}
+
+void CBotTF2 :: capturedFlag ()
+{
+	taunt();
+}
+
+void CBotTF2 :: capturedPoint ()
+{
+	taunt();
 }
 
 void CBotTF2 :: spyDisguise ( int iTeam, int iClass )
@@ -278,6 +323,12 @@ bool CBotTF2 :: hasEngineerBuilt ( eEngiBuild iBuilding )
 	return false;
 }
 
+void CBotFortress :: flagDropped ( Vector vOrigin )
+{ 
+	m_vLastKnownFlagPoint = vOrigin; 
+	m_fLastKnownFlagTime = engine->Time() + 60.0f;
+}
+
 void CBotFortress :: callMedic ()
 {
 	helpers->ClientCommand (m_pEdict,"saveme");
@@ -290,8 +341,11 @@ void CBotTF2 :: callMedic ()
 
 void CBotTF2 :: modThink ()
 {
-// mod specific think code here
-CBotFortress :: modThink();
+	// mod specific think code here
+	CBotFortress :: modThink();
+
+	if ( m_fTaunting > engine->Time() )
+		stopMoving();
 }
 
 void CBotTF2 :: getTasks ( unsigned int iIgnore )
@@ -299,13 +353,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	// look for tasks
 	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{		
-		if ( !m_pSchedules->isCurrentSchedule(SCHED_ATTACK) && !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
+		if ( !m_pSchedules->isCurrentSchedule(SCHED_ATTACK) )
 		{
 			m_pSchedules->removeSchedule(SCHED_ATTACK);
-			m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-
 			m_pSchedules->addFront(new CBotAttackSched(m_pEnemy));
-			m_pSchedules->addFront(new CGotoHideSpotSched(m_pEnemy));
 
 			return;
 		}
@@ -338,24 +389,70 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		// Goto capture point
 
 		// roam
-		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint());
+		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam()));
 
 		if ( pWaypoint )
 		{
 			m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+		}
+		else
+		{
+			// roam
+			CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint(getTeam()));
+
+			if ( pWaypoint )
+				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
 		}
 	}
 	else
 	{
+		CWaypoint *pWaypoint = NULL;
 		// Find enemy flag or defend flag or roam
 
-		// roam
-		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint());
+		// Pickup health
+		if ( ((float)m_pPlayerInfo->GetHealth()/m_pPlayerInfo->GetMaxHealth()) < 0.6f )
+		{
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_HEALTH,getOrigin(),4096.0,getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotTF2GetHealthSched(pWaypoint->getOrigin()));
+				return;
+			}
+		}
+
+		if ( !pWaypoint && m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time()) )
+		{
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(-1,m_vLastKnownFlagPoint,512.0,getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotGotoOriginSched(m_vLastKnownFlagPoint));
+				return;
+			}
+		}
+
+		// Pickup flag
+		if ( !pWaypoint )
+		{
+			// roam
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_FLAG,getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotTF2GetFlagSched(pWaypoint->getOrigin()));
+				return;
+			}
+		}
+
+		if ( !pWaypoint )
+		{
+			// roam
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint(getTeam()));
+		}
 
 		if ( pWaypoint )
-		{
 			m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
-		}
 	}
 
 }

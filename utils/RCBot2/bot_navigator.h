@@ -176,6 +176,7 @@ private:
 	int m_iCurrentWaypoint;
 	int m_iNextWaypoint;
 	int m_iGoalWaypoint;
+	bool m_bWorkingRoute;
 
 	dataStack<int> m_currentRoute;
 

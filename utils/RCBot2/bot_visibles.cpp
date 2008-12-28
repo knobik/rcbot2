@@ -33,6 +33,10 @@
 #include "bot_genclass.h"
 #include "bot_globals.h"
 #include "bot_profile.h"
+#include "bot_client.h"
+
+#include "ndebugoverlay.h"
+extern IVDebugOverlay *debugoverlay;
 ////////////////////////////////////////////
 
 byte CBotVisibles :: m_bPvs[MAX_MAP_CLUSTERS/8];
@@ -144,6 +148,9 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 		// update tick
 		*iTicks = *iTicks + 1;
 
+		if ( CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()) )
+			debugoverlay->AddLineOverlay(m_pBot->getOrigin(),CBotGlobals::entityOrigin(pEntity),255,255,255,false,1);			
+
 		// if in view cone
 		if ( m_pBot->FInViewCone(pEntity) )
 		{
@@ -160,8 +167,15 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 			if ( playerInPVS )
 			{
 				*bVisible = m_pBot->FVisible(pEntity);
+
+				if ( CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()))
+					debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,3,"VISIBLE");
 			}
+			else if ( CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()))
+				debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,3,"INVISIBLE: playerInPVS false");
 		}
+		else if ( CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()) )
+			debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,3,"INVISIBLE: FInViewCone false");
 	}
 }
 
@@ -192,6 +206,9 @@ void CBotVisibles :: updateVisibles ()
 	while ( iTicks < 4 )
 	{
 		pEntity = INDEXENT(m_iCurPlayer);
+
+		if ( pEntity == m_pBot->getEdict() )
+			continue;
 
 		checkVisible(pEntity,&iTicks,&bVisible);
 		setVisible(pEntity,bVisible);
@@ -232,6 +249,9 @@ void CBotVisibles :: updateVisibles ()
 		bVisible = false;
 
 		pEntity = INDEXENT(m_iCurrentIndex);
+
+		if ( pEntity == m_pBot->getEdict() )
+			continue;
 
 		checkVisible(pEntity,&iTicks,&bVisible);
 

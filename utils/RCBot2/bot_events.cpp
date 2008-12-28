@@ -88,6 +88,14 @@ void CWeaponFireEvent :: execute ( IBotEventInterface *pEvent )
 {
 }
 
+void CPlayerSpawnEvent :: execute ( IBotEventInterface *pEvent )
+{
+	CBot *pBot = CBots::getBotPointer(m_pActivator);
+
+	if ( pBot )
+		pBot->spawnInit();
+}
+
 void CBulletImpactEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
@@ -104,23 +112,60 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 
 	int player = pEvent->getInt("player");
 
-	CBot *pBot = CBots::getBotPointer(CBotGlobals::playerByUserId(player));
+	edict_t *pPlayer = INDEXENT(player);
 
-	if ( pBot && pBot->isTF() )
+	CBot *pBot = CBots::getBotPointer(pPlayer);
+
+	switch ( type )
 	{
-		switch ( type )
-		{
-		case 1: // pickup
+	case 1: // pickup
+		if ( pBot && pBot->isTF() )
 			((CBotTF2*)pBot)->pickedUpFlag();
-			break;
-		case 2:
-		case 4: // drop
-			((CBotTF2*)pBot)->droppedFlag();
-			break;
-		default:	
-			break;
+		break;
+	case 2: // captured
+		{
+			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+			if ( p )
+			{
+				CBroadcastFlagCaptured *captured = new CBroadcastFlagCaptured(p->GetTeamIndex());
+				CBots::botFunction(captured);
+				delete captured;
+			}
+
+			if ( pBot && pBot->isTF() )
+			{
+				((CBotTF2*)pBot)->capturedFlag();	
+				((CBotTF2*)pBot)->droppedFlag();	
+			}
+		
+			
+
+			
 		}
+		break;
+	case 4: // drop
+		{
+			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+			if ( p )
+			{
+				CBroadcastFlagDropped *dropped = new CBroadcastFlagDropped(p->GetTeamIndex(),CBotGlobals::entityOrigin(pPlayer));
+				CBots::botFunction(dropped);
+				delete dropped;
+			}
+
+			if ( pBot && pBot->isTF() )
+				((CBotTF2*)pBot)->droppedFlag();
+
+			
+			
+		}
+		break;
+	default:	
+		break;
 	}
+
 }
 
 void CFlagCaptured :: execute ( IBotEventInterface *pEvent )
@@ -156,6 +201,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CWeaponFireEvent());
 	addEvent(new CBulletImpactEvent());
 	addEvent(new CFlagEvent());
+	addEvent(new CPlayerSpawnEvent());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

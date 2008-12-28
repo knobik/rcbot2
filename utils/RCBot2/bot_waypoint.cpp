@@ -73,6 +73,7 @@ void CWaypointNavigator :: init ()
 	m_currentRoute.Destroy();
 
 	m_iLastFailedWpt = -1;
+	m_bWorkingRoute = false;
 
 	memset(m_fBelief,0,sizeof(int)*CWaypoints::MAX_WAYPOINTS);
 
@@ -210,7 +211,9 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 	if ( bRestart )
 	{
 		*bFail = false;
-		m_iGoalWaypoint = CWaypointLocations::NearestWaypoint(vTo,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,false,false,false,&m_iFailedGoals);
+
+		m_bWorkingRoute = true;
+		m_iGoalWaypoint = CWaypointLocations::NearestWaypoint(vTo,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,&m_iFailedGoals,false,m_pBot->getTeam());
 
 		if ( m_iGoalWaypoint == -1 )
 		{
@@ -218,7 +221,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			return true;
 		}
 
-		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true);
+		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());
 
 		if ( m_iCurrentWaypoint == -1 )
 		{
@@ -305,10 +308,13 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			if ( iSucc == iLastNode )
 				continue;
 			if ( iSucc == iCurrentNode ) // argh?
-				continue;
+				continue;			
 
 			succ = &paths[iSucc];
 			succWpt = CWaypoints::getWaypoint(iSucc);
+
+			if ( !succWpt->forTeam(m_pBot->getTeam()) )
+				continue;
 
 			fCost = curr->getCost()+(succWpt->distanceFrom(vOrigin));
 
@@ -367,6 +373,8 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 
 	m_currentRoute.Destroy();
 
+	m_bWorkingRoute = false;
+
 	iLoops = 0;
 
 	int iNumWaypoints = CWaypoints::numWaypoints();
@@ -421,26 +429,30 @@ void CWaypointNavigator :: updatePosition ()
 
 	vWptOrigin = pWaypoint->getOrigin();
 
-	if ( pWaypoint->touched(m_pBot->getOrigin()) )
+	if ( !m_bWorkingRoute )
 	{
-		pWaypoint->botTouch(m_pBot);
-
-		if ( m_currentRoute.IsEmpty() ) // reached goal!!
+		if ( pWaypoint->touched(m_pBot->getOrigin()) )
 		{
-			m_iCurrentWaypoint = -1;
+			pWaypoint->botTouch(m_pBot);
 
-			if ( m_pBot->getSchedule()->hasSchedule(SCHED_RUN_FOR_COVER) )
-				m_pBot->reachedCoverSpot();
-		}
-		else
-		{
-			m_iCurrentWaypoint = m_currentRoute.Pop();
-
-			if ( m_iCurrentWaypoint != -1 )
+			if ( m_currentRoute.IsEmpty() ) // reached goal!!
 			{
-				vWptOrigin = CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
+				m_iCurrentWaypoint = -1;
+
+				if ( m_pBot->getSchedule()->hasSchedule(SCHED_RUN_FOR_COVER) )
+					m_pBot->reachedCoverSpot();
+			}
+			else
+			{
+				m_iCurrentWaypoint = m_currentRoute.Pop();
+
+				if ( m_iCurrentWaypoint != -1 )
+				{
+					vWptOrigin = CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
+				}
 			}
 		}
+
 	}
 
 	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_CROUCH) )
@@ -949,7 +961,7 @@ int CWaypoints :: numWaypoints ()
 
 ///////////
 
-int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist )
+int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist, int iTeam )
 {
 	int i = 0;
 	int size = numWaypoints();
@@ -957,19 +969,29 @@ int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist 
 	float distance;
 	int iwpt = -1;
 
+	CWaypoint *pWpt;
+
 	for ( i = 0; i < size; i ++ )
 	{
-		if ( (distance = m_theWaypoints[i].distanceFrom(origin)) < fDist)
+		pWpt = &m_theWaypoints[i];
+
+		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) )
 		{
-			fDist = distance;
-			iwpt = i;
+			if ( (iFlags == -1) || pWpt->hasFlag(iFlags) )
+			{
+				if ( (distance = pWpt->distanceFrom(origin)) < fDist)
+				{
+					fDist = distance;
+					iwpt = i;
+				}
+			}
 		}
 	}
 
 	return iwpt;
 }
 
-int CWaypoints :: randomWaypointGoal ( int iFlags )
+int CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam )
 {
 	int i = 0;
 	int size = numWaypoints();
@@ -978,10 +1000,11 @@ int CWaypoints :: randomWaypointGoal ( int iFlags )
 
 	for ( i = 0; i < size; i ++ )
 	{
-		if ( m_theWaypoints[i].isUsed() )
-		{
-			//if ( m_theWaypoints[i].hasFlag(iFlags) )
+		if ( m_theWaypoints[i].isUsed() && m_theWaypoints[i].forTeam(iTeam) )
+		{			
+			if ( (iFlags == -1) || (m_theWaypoints[i].hasFlag(iFlags)) )
 				goals.Add(i);
+			
 		}
 	}
 
@@ -995,9 +1018,9 @@ int CWaypoints :: randomWaypointGoal ( int iFlags )
 	return iwpt;
 }
 
-int CWaypoints :: randomFlaggedWaypoint ()
+int CWaypoints :: randomFlaggedWaypoint (int iTeam)
 {
-	return randomWaypointGoal(-1);
+	return randomWaypointGoal(-1,iTeam);
 }
 
 ///////////
@@ -1093,6 +1116,11 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_CROUCH,"crouch","bot will duck here",WptColor(200,100,0)));
 	addType(new CWaypointType(W_FL_UNREACHABLE,"unreachable","bot can't go here (used for visibility only)",WptColor(200,200,200)));
 	addType(new CWaypointType(W_FL_LADDER,"ladder","bot will climb a ladder",WptColor(255,255,0)));
+	addType(new CWaypointType(W_FL_FLAG,"flag","bot will find a flag here",WptColor(255,255,0)));
+	addType(new CWaypointType(W_FL_CAPPOINT,"capture","bot will find a capture point here",WptColor(255,255,0)));
+	addType(new CWaypointType(W_FL_NOBLU,"noblueteam","blue team can't use this waypoint",WptColor(255,0,0)));
+	addType(new CWaypointType(W_FL_NORED,"noredteam","red team can't use this waypoint",WptColor(0,0,128)));
+	addType(new CWaypointType(W_FL_HEALTH,"health","bot can get health here",WptColor(255,255,255)));
 }
 
 void CWaypointTypes :: freeMemory ()
