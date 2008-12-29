@@ -40,7 +40,7 @@
 vector <CBotProfile*> CBotProfiles :: m_Profiles;
 CBotProfile *CBotProfiles :: m_pDefaultProfile = NULL;
 
-CBotProfile :: CBotProfile (const char *szName, const char *szModel,int iTeam,const char *szWeapon, int iVisionTicks, int iPathTicks)
+CBotProfile :: CBotProfile (const char *szName, const char *szModel,int iTeam,const char *szWeapon, int iVisionTicks, int iPathTicks, int iClass)
 {
 	m_szName = CStrings::getString(szName);
 	m_szModel = CStrings::getString(szModel);
@@ -48,6 +48,7 @@ CBotProfile :: CBotProfile (const char *szName, const char *szModel,int iTeam,co
 	m_iPathTicks = iPathTicks;
 	m_iVisionTicks = iVisionTicks;
 	m_iTeam = iTeam;
+	m_iClass = iClass;
 }
 
 void CBotProfiles :: deleteProfiles ()

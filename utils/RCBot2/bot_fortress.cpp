@@ -37,6 +37,7 @@
 #include "bot_task.h"
 #include "bot_waypoint.h"
 #include "bot_navigator.h"
+#include "bot_mods.h"
 
 #include "vstdlib/random.h" // for random functions
 
@@ -157,8 +158,12 @@ void CBotFortress :: selectTeam ()
 void CBotFortress :: selectClass ()
 {
 	char buffer[32];
+	TF_Class _class;
 
-	TF_Class _class = (TF_Class)RandomInt(1,9);
+	if ( m_iDesiredClass == 0 )
+		_class = (TF_Class)RandomInt(1,9);
+	else
+		_class = (TF_Class)m_iDesiredClass;
 
 	m_iClass = _class;
 
@@ -232,11 +237,140 @@ void CBotTF2 :: engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd )
 	if ( iEngiCmd == ENGI_BUILD )
 		strcpy(buffer,"build");
 	else
+	{
 		strcpy(buffer,"destroy");
+
+		switch ( iBuilding )
+		{
+		case ENGI_DISP :
+			m_pDispenser = NULL;
+			break;
+		case ENGI_SENTRY :
+			m_pSentryGun = NULL;
+			break;
+		case ENGI_ENTRANCE :
+			m_pTeleEntrance = NULL;
+			break;
+		case ENGI_EXIT :
+			m_pTeleExit = NULL;
+			break;
+		default:
+			return;
+			break;
+		}
+	}
 
 	sprintf(cmd,"%s %d",buffer,iBuilding);
 
 	helpers->ClientCommand(m_pEdict,cmd);
+}
+
+void CBotTF2 :: checkBuildingsValid ()
+{
+	if ( m_pSentryGun )
+	{
+		if ( !CBotGlobals::entityIsValid(m_pSentryGun) || !CBotGlobals::entityIsAlive(m_pSentryGun) || !CTeamFortress2Mod::isSentry(m_pSentryGun,getTeam()) )
+			m_pSentryGun = NULL;
+	}
+
+	if ( m_pDispenser )
+	{
+		if ( !CBotGlobals::entityIsValid(m_pDispenser) || !CBotGlobals::entityIsAlive(m_pDispenser) || !CTeamFortress2Mod::isDispenser(m_pDispenser,getTeam()) )
+			m_pDispenser = NULL;
+	}
+
+	if ( m_pTeleEntrance )
+	{
+		if ( !CBotGlobals::entityIsValid(m_pTeleEntrance) || !CBotGlobals::entityIsAlive(m_pTeleEntrance) || !CTeamFortress2Mod::isTeleporterEntrance(m_pTeleEntrance,getTeam()) )
+			m_pTeleEntrance = NULL;
+	}
+
+	if ( m_pTeleExit )
+	{
+		if ( !CBotGlobals::entityIsValid(m_pTeleExit) || !CBotGlobals::entityIsAlive(m_pTeleExit) || !CTeamFortress2Mod::isTeleporterExit(m_pTeleExit,getTeam()) )
+			m_pTeleExit = NULL;
+	}
+}
+
+
+edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding )
+{
+	int i;
+
+	QAngle eye = CBotGlobals::playerAngles(m_pEdict);
+	Vector vForward;
+	Vector vOrigin;
+	edict_t *pEntity;
+	edict_t *pBest = NULL;
+	float fDistance;
+	float fMinDistance = 100;
+	bool bValid;
+	int team;
+
+	team = getTeam();
+
+	AngleVectors(eye,&vForward);
+
+	vOrigin = getOrigin() + (vForward*100);
+
+	for ( i = gpGlobals->maxClients+1; i < gpGlobals->maxEntities; i ++ )
+	{
+		pEntity = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pEntity) )
+		{
+			bValid = false;
+			fDistance = (CBotGlobals::entityOrigin(pEntity) - vOrigin).Length();
+
+			if ( fDistance < fMinDistance )
+			{
+				switch ( iBuilding )
+				{
+				case ENGI_DISP :
+					bValid = CTeamFortress2Mod::isDispenser(pEntity,team);
+					break;
+				case ENGI_ENTRANCE :
+					bValid = CTeamFortress2Mod::isTeleporterEntrance(pEntity,team);
+					break;
+				case ENGI_EXIT:
+					bValid = CTeamFortress2Mod::isTeleporterExit(pEntity,team);
+					break;
+				case ENGI_SENTRY :
+					bValid = CTeamFortress2Mod::isSentry(pEntity,team);
+					break;
+				}
+
+				if ( bValid )
+				{
+					fMinDistance = fDistance;
+					pBest = pEntity;
+				}
+			}
+		}
+	}
+
+	if ( pBest )
+	{
+			switch ( iBuilding )
+			{
+			case ENGI_DISP :
+				m_pDispenser = pBest;
+				break;
+			case ENGI_ENTRANCE :
+				m_pTeleEntrance = pBest;
+				break;
+			case ENGI_EXIT:
+				m_pTeleExit = pBest;
+				break;
+			case ENGI_SENTRY :
+				m_pSentryGun = pBest;
+				break;
+			default:
+				return NULL;
+			}
+	}
+
+	return pBest;
 }
 
 void CBotTF2 :: died ( edict_t *pKiller )
@@ -267,12 +401,22 @@ void CBotTF2 :: spyDisguise ( int iTeam, int iClass )
 
 	helpers->ClientCommand(m_pEdict,cmd);
 }
+// Test
+bool CBotTF2 :: isCloaked ()
+{
+	return m_pController->IsEFlagSet(EF_NODRAW);
+}
+// Test
+bool CBotTF2 :: isDisguised ()
+{
+	return (m_pEdict->GetIServerEntity()->GetModelIndex() != 0);
+}
 
 void CBotTF2 :: updateClass ()
 {
-	if ( m_fUpdateClass < engine->Time() )
+	if ( m_fUpdateClass && (m_fUpdateClass < engine->Time()) )
 	{
-		const char *model = m_pPlayerInfo->GetModelName();
+		/*const char *model = m_pPlayerInfo->GetModelName();
 
 		if ( strcmp(model,"soldier") )
 			m_iClass = TF_CLASS_SOLDIER;
@@ -294,6 +438,9 @@ void CBotTF2 :: updateClass ()
 			m_iClass = TF_CLASS_DEMOMAN;
 		else
 			m_iClass = TF_CLASS_CIVILIAN;
+			*/
+
+		m_fUpdateClass = 0;
 	}
 }
 
@@ -302,21 +449,26 @@ TF_Class CBotTF2 :: getClass ()
 	return m_iClass;
 }
 
+void CBotTF2 :: engiBuildSuccess ( eEngiBuild iBuilding )
+{
+	findEngineerBuiltObject(iBuilding);
+}
+
 bool CBotTF2 :: hasEngineerBuilt ( eEngiBuild iBuilding )
 {
 	switch ( iBuilding )
 	{
 	case ENGI_SENTRY:
-		return false; // TODO
+		return m_pSentryGun!=NULL; // TODO
 		break;
 	case ENGI_DISP:
-		return false; // TODO
+		return m_pDispenser!=NULL; // TODO
 		break;
 	case ENGI_ENTRANCE:
-		return false; // TODO
+		return m_pTeleEntrance!=NULL; // TODO
 		break;
 	case ENGI_EXIT:
-		return false; // TODO
+		return m_pTeleExit!=NULL; // TODO
 		break;
 	}	
 
@@ -332,6 +484,24 @@ void CBotFortress :: flagDropped ( Vector vOrigin )
 void CBotFortress :: callMedic ()
 {
 	helpers->ClientCommand (m_pEdict,"saveme");
+}
+
+bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint)
+{
+	if ( CBot::canGotoWaypoint(vPrevWaypoint,pWaypoint) )
+	{
+		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_ROCKET_JUMP) )
+		{
+			if ( (getClass() == TF_CLASS_SOLDIER) && (getHealthPercent() > 0.7) )
+				return true;
+
+			return false;
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 void CBotTF2 :: callMedic ()
@@ -421,6 +591,29 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			}
 		}
 
+		if ( getClass() == TF_CLASS_ENGINEER )
+		{
+			checkBuildingsValid();
+
+			if ( !m_pSentryGun )
+			{
+				pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(-1,getTeam()));
+
+				if ( pWaypoint )
+				{
+					m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,pWaypoint->getOrigin()));
+					return;
+				}
+			}
+			else
+			{
+				if ( CTeamFortress2Mod::getSentryLevel(m_pSentryGun) < 3 )
+				{
+					// upgrade it !
+				}
+			}
+		}
+
 		if ( !pWaypoint && m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time()) )
 		{
 			pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(-1,m_vLastKnownFlagPoint,512.0,getTeam()));
@@ -459,19 +652,26 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 bool CBotTF2 :: isEnemy ( edict_t *pEdict )
 {
-	if ( pEdict == m_pEdict )
+	int iEnemyTeam;
+
+	if ( !CBotGlobals::entityIsAlive(pEdict) )
 		return false;
 
-	if ( !CBotGlobals::entityIsValid(pEdict) )
-		return false;
+	if ( ENTINDEX(pEdict) <= CBotGlobals::maxClients() )
+		return CBotGlobals::getTeam(pEdict) != getTeam();
 
-	if ( !ENTINDEX(pEdict) || (ENTINDEX(pEdict) > CBotGlobals::maxClients()) )
-		return false;
+	iEnemyTeam = CTeamFortress2Mod::getEnemyTeam(getTeam());
 
-	if ( CBotGlobals::getTeam(pEdict) == getTeam() )
-		return false;
+	if ( CTeamFortress2Mod::isSentry(pEdict,iEnemyTeam) )
+		return true;
+	if ( CTeamFortress2Mod::isDispenser(pEdict,iEnemyTeam) )
+		return true;
+	if ( CTeamFortress2Mod::isTeleporterEntrance(pEdict,iEnemyTeam) )
+		return true;
+	if ( CTeamFortress2Mod::isTeleporterExit(pEdict,iEnemyTeam) )
+		return true;
 
-	return true;	
+	return false;	
 }
 
 /////////////////////////////////////////////////////////////////////////

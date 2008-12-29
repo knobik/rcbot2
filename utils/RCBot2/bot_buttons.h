@@ -41,19 +41,22 @@ public:
 	{
 		memset(this,0,sizeof(CBotButton));
 		m_iButtonId = iId;
+		m_bTapped = false;
 	}
+
+	inline void tap () { m_bTapped = true; }
 
 	inline bool held ( float fTime )
 	{
-		return (fTime >= m_fTimeStart) && (fTime <= m_fTimeEnd);// && (!m_fLetGoTime||(fTime > m_fLetGoTime));
+		return m_bTapped || ((fTime >= m_fTimeStart) && (fTime <= m_fTimeEnd));// && (!m_fLetGoTime||(fTime > m_fLetGoTime));
 	}
 
 	inline bool canPress (float fTime)
 	{
-		return m_fLetGoTime < fTime;
+		return !m_bTapped || (m_fLetGoTime < fTime);
 	}
 
-	int getID ()
+	inline int getID ()
 	{
 		return m_iButtonId;
 	}
@@ -63,7 +66,10 @@ public:
 		m_fTimeStart = 0.0f;
 		m_fTimeEnd = 0.0f;
 		m_fLetGoTime = 0.04f; // bit of latency
+		m_bTapped = false;
 	}
+
+	inline void unTap () { m_bTapped = false; }
 
 	void hold ( float fFrom = 0.0, float fFor = 1.0f, float m_fLetGoTime = 0.0f );
 private:
@@ -71,6 +77,8 @@ private:
 	float m_fTimeStart;
 	float m_fTimeEnd;
 	float m_fLetGoTime;
+
+	bool m_bTapped;
 };
 
 class CBotButtons
@@ -94,6 +102,8 @@ public:
 
 	bool holdingButton ( int iButtonId );
 	bool canPressButton ( int iButtonId );
+
+	void tap ( int iButtonId );
 
 	int getBitMask ();
 

@@ -35,6 +35,19 @@
 
 /////////////////////////////////////////////
 
+CBotTFEngiBuild :: CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin )
+{
+	addTask(new CFindPathTask(vOrigin)); // first
+	addTask(new CBotTFEngiBuildTask(iObject,vOrigin)); // second
+}
+
+void CBotTFEngiBuild :: init ()
+{
+	setID(SCHED_TF_BUILD);
+}
+
+//////////////////////////////////////////////////
+
 CBotTF2GetHealthSched :: CBotTF2GetHealthSched ( Vector vOrigin )
 {
 	addTask(new CFindPathTask(vOrigin)); // first

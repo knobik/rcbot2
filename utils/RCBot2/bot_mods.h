@@ -195,6 +195,15 @@ public:
 	}
 };
 
+typedef enum
+{
+	TF_MAP_DM = 0,
+	TF_MAP_CTF,
+	TF_MAP_CP,
+	TF_MAP_TC,
+	TF_MAP_CART
+}eTFMapType;
+
 class CTeamFortress2Mod : public CBotMod
 {
 public:
@@ -202,11 +211,32 @@ public:
 	{
 		setup("tf","team fortress 2",MOD_TF2,BOTTYPE_TF2);
 	}
-private:
 
+	void mapInit ();
+
+	static int getTeam ( edict_t *pEntity );
+
+	static int getSentryLevel ( edict_t *pSentry );
+
+	static bool isDispenser ( edict_t *pEntity, int iTeam );
+
+	static bool isSentry ( edict_t *pEntity, int iTeam );
+
+	static bool isTeleporterEntrance ( edict_t *pEntity, int iTeam );
+
+	static bool isTeleporterExit ( edict_t *pEntity, int iTeam );
+
+	static inline bool isMapType ( eTFMapType iMapType ) { return iMapType == m_MapType; }
+
+	static bool isFlag ( edict_t *pEntity, int iTeam );
+
+	static int getEnemyTeam ( int iTeam );
+
+private:
+	static eTFMapType m_MapType;
 };
 
-class CTeamFortress2ModDedicated : public CBotMod
+class CTeamFortress2ModDedicated : public CTeamFortress2Mod
 {
 public:
 	CTeamFortress2ModDedicated()

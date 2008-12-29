@@ -272,12 +272,18 @@ int CBotGlobals :: numClients ()
 
 bool CBotGlobals :: entityIsAlive ( edict_t *pEntity )
 {
-	IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pEntity);
+	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients )
+	{
+		IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pEntity);
 
-	if ( !p )
-		return false;
+		if ( !p )
+			return false;
 
-	return (!p->IsDead() && (p->GetHealth()>0));
+		return (!p->IsDead() && (p->GetHealth()>0));
+
+	}
+
+	return ( pEntity->GetIServerEntity() && pEntity->GetClassName() && *pEntity->GetClassName() );
 	//CBaseEntity *pBaseEntity = CBaseEntity::Instance(pEntity);
 	//return pBaseEntity->IsAlive();
 }

@@ -58,6 +58,7 @@ void CBotButton :: hold ( float fFrom, float fFor, float fLetGoTime )
 CBotButtons :: CBotButtons()
 {
 	add(new CBotButton(IN_ATTACK));
+	add(new CBotButton(IN_ATTACK2));
 	add(new CBotButton(IN_DUCK));
 	add(new CBotButton(IN_JUMP));
 }
@@ -83,7 +84,10 @@ int CBotButtons :: getBitMask ()
 	for (unsigned int i = 0; i < m_theButtons.size(); i ++ )
 	{			
 		if ( m_theButtons[i]->held(fTime) )
+		{
+			m_theButtons[i]->unTap();
 			iBitMask |= m_theButtons[i]->getID();
+		}
 	}
 
 	return iBitMask;
@@ -111,5 +115,19 @@ bool CBotButtons :: holdingButton ( int iButtonId )
 		if ( m_theButtons[i]->getID() == iButtonId )
 			return m_theButtons[i]->held(engine->Time());
 	}
+
 	return false;
+}
+
+void CBotButtons :: tap ( int iButtonId )
+{
+	for ( unsigned int i = 0; i < m_theButtons.size(); i ++ )
+	{
+		if ( m_theButtons[i]->getID() == iButtonId )
+		{
+			 m_theButtons[i]->tap();
+
+			return;
+		}
+	}
 }

@@ -153,6 +153,12 @@ public:
 	CConfigCommand();
 };
 
+class CUtilCommand : public CBotCommandContainer
+{
+public:
+	CUtilCommand();
+};
+
 ///////////////////////
 // command
 
@@ -455,6 +461,20 @@ public:
 
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
+//////////////////////////////////
+
+class CSearchCommand : public CBotCommand
+{
+public:
+	CSearchCommand ()
+	{
+		setName("search");
+		setAccessLevel(CMD_ACCESS_UTIL);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 /////////////////////////////////
 class CKickBotCommand : public CBotCommand
 {

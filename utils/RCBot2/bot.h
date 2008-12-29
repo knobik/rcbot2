@@ -138,6 +138,7 @@ class IBotNavigator;
 class CFindEnemyFunc;
 class CBotWeapons;
 class CBotProfile;
+class CWaypoint;
 
 class CBot 
 {
@@ -338,10 +339,12 @@ public:
 	void jump ();
 	void duck ( bool hold = false );
 
+	virtual void setVisible ( edict_t *pEntity, bool bVisible );
+
 	virtual void hurt ( edict_t *pAttacker, int iHealthNow );
 	virtual void shot ( edict_t *pEnemy );
 	virtual void shotmiss ();
-	inline void setAvoidEntity (edict_t *pEntity) { m_pAvoidEntity = pEntity; };
+	//inline void setAvoidEntity (edict_t *pEntity) { m_pAvoidEntity = pEntity; };
 	
 	int getPlayerID (); // return player ID on server
 	int getHealth ();
@@ -359,6 +362,10 @@ public:
 	bool isUsingProfile ( CBotProfile *pProfile );
 
 	inline CBotProfile *getProfile () { return m_pProfile; }
+
+	virtual bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint );
+
+	void tapButton ( int iButton );
 
 protected:
 	/////////////////////////
@@ -451,7 +458,7 @@ protected:
 	edict_t *m_pOldEnemy;
 	Vector m_vLastSeeEnemy;
 	edict_t *m_pLastEnemy; // enemy we were fighting before we lost it
-	edict_t *m_pAvoidEntity; // avoid this guy
+	//edict_t *m_pAvoidEntity; // avoid this guy
 	Vector m_vHurtOrigin;
 
 	Vector m_vMoveTo;
@@ -474,6 +481,9 @@ protected:
 	bool m_bFailNextMove;
 
 	int m_iSelectWeapon;
+
+	int m_iDesiredTeam;
+	int m_iDesiredClass;
 
 	// bots profile data
 	CBotProfile *m_pProfile;
@@ -505,7 +515,7 @@ public:
 
 	static void init ();
 
-	static bool createBot ();
+	static bool createBot (const char *szClass, const char *szTeam, const char *szName);
 
 	static int numBots ();
 

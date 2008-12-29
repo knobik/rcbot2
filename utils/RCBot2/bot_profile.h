@@ -8,7 +8,7 @@ class CBotProfile
 {
 public:
 	// setup profile
-	CBotProfile (const char *szName, const char *szModel, int iTeam, const char *szWeapon, int m_iVisionTicks, int m_iPathTicks );
+	CBotProfile (const char *szName, const char *szModel, int iTeam, const char *szWeapon, int m_iVisionTicks, int m_iPathTicks, int iClass = 0 );
 
 	inline char *getName ()	 { return m_szName; }
 	inline char *getModel () { return m_szModel; }
@@ -16,6 +16,10 @@ public:
 	inline char *getWeapon () { return m_szWeapon; }
 	inline int getVisionTicks () { return m_iVisionTicks; }
 	inline int getPathTicks () { return m_iPathTicks; }
+	inline int getClass () { return m_iClass; }
+
+	inline void setTeam (int iTeam) { m_iTeam = iTeam; }
+	inline void setClass (int iClass) { m_iClass = iClass; }
 
 private:
 	// bot's name
@@ -26,6 +30,7 @@ private:
 	char *m_szWeapon;
 	int m_iVisionTicks;
 	int m_iPathTicks;
+	int m_iClass;
 };
 
 class CBotProfiles

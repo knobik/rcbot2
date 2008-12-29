@@ -31,6 +31,9 @@
 #include "bot.h"
 #include "bot_mods.h"
 #include "bot_globals.h"
+#include "bot_fortress.h"
+
+eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 /*
 CBot *CCounterStrikeSourceMod :: makeNewBots ()
 {
@@ -365,3 +368,63 @@ void CBotMod :: entitySpawn ( edict_t *pEntity )
 
 }
 
+/////////////////////////////////////////////////////////////
+
+int CTeamFortress2Mod :: getTeam ( edict_t *pEntity )
+{
+	return *((int*)(pEntity->GetIServerEntity()->GetBaseEntity())+110);
+}
+
+int CTeamFortress2Mod :: getSentryLevel ( edict_t *pSentry )
+{
+	string_t model = pSentry->GetIServerEntity()->GetModelName();
+	const char *szmodel = model.ToCStr();
+
+	return (szmodel[24] - '1')+1;
+	//if ( pSentry && pSentry->
+}
+
+int CTeamFortress2Mod :: getEnemyTeam ( int iTeam )
+{
+	if ( iTeam == TF2_TEAM_BLUE )
+		return TF2_TEAM_RED;
+	return TF2_TEAM_BLUE;
+}
+
+bool CTeamFortress2Mod :: isDispenser ( edict_t *pEntity, int iTeam )
+{
+	return (strcmp(pEntity->GetClassName(),"obj_dispenser")==0) && (!iTeam || (iTeam == getTeam(pEntity)));
+}
+
+bool CTeamFortress2Mod :: isSentry ( edict_t *pEntity, int iTeam )
+{
+	return (strcmp(pEntity->GetClassName(),"obj_sentrygun")==0) && (!iTeam || (iTeam == getTeam(pEntity)));
+}
+
+bool CTeamFortress2Mod :: isTeleporterEntrance ( edict_t *pEntity, int iTeam )
+{
+	return (strcmp(pEntity->GetClassName(),"obj_teleporter_entrance")==0) && (!iTeam || (iTeam == getTeam(pEntity)));
+}
+
+bool CTeamFortress2Mod :: isTeleporterExit ( edict_t *pEntity, int iTeam )
+{
+	return (strcmp(pEntity->GetClassName(),"obj_teleporter_exit")==0) && (!iTeam || (iTeam == getTeam(pEntity)));
+}
+
+void CTeamFortress2Mod :: mapInit ()
+{
+	string_t mapname = gpGlobals->mapname;
+
+	const char *szmapname = mapname.ToCStr();
+
+	if ( strncmp(szmapname,"ctf_",4) == 0 )
+		m_MapType = TF_MAP_CTF;
+	else if ( strncmp(szmapname,"cp_",3) == 0 )
+		m_MapType = TF_MAP_CP;
+	else if ( strncmp(szmapname,"tc_",3) == 0 )
+		m_MapType = TF_MAP_TC;
+	else if ( strncmp(szmapname,"pl_",3) == 0 )
+		m_MapType = TF_MAP_CART;
+	else
+		m_MapType = TF_MAP_DM;
+}

@@ -37,14 +37,7 @@ struct edict_t;
 
 #include "bot.h"
 #include "bot_const.h"
-
-/*typedef enum
-{
-	TASK_NONE,
-	TASK_ATTACK,
-	TASK_FIND_PATH,
-	TASK_BUY
-}eTaskID;*/
+#include "bot_fortress.h"
 
 class CBotTask
 {
@@ -131,6 +124,23 @@ private:
 	Vector m_vVector;
 	edict_t *m_pEdict;
 	int m_iInt;
+};
+
+class CBotTFEngiBuildTask : public CBotTask
+{
+public:
+	CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	virtual void debugString ( char *string );
+
+private:
+	Vector m_vOrigin;
+	eEngiBuild m_iObject;
+	int m_iState;
+	float m_fTime;
+	int m_iTries;
 };
 
 class CBotTF2WaitHealthTask : public CBotTask

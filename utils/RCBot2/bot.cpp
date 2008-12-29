@@ -178,6 +178,9 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 			sprintf(szModel,"models/humans/Group03/female_0%d.mdl",iModel);
 	}
 
+	m_iDesiredTeam = pProfile->getTeam();
+	m_iDesiredClass = pProfile->getClass();
+
 	engine->SetFakeClientConVarValue(pEdict,"cl_playermodel",szModel);
 	/////////////////////////////
 
@@ -362,6 +365,12 @@ void CBot :: reachedCoverSpot ()
 
 }
 
+// something now visiable or not visible anymore
+void CBot :: setVisible ( edict_t *pEntity, bool bVisible )
+{
+	
+}
+
 bool CBot :: isUsingProfile ( CBotProfile *pProfile )
 {
 	return (m_pProfile == pProfile);
@@ -544,6 +553,21 @@ void CBot :: updateConditions ()
 	}
 }
 
+// Called when working out route
+bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint )
+{
+	if ( !pWaypoint->forTeam(getTeam()) )
+		return false;
+
+	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_OPENS_LATER) )
+	{
+		if ( !CBotGlobals::isVisible(m_pEdict,vPrevWaypoint,pWaypoint->getOrigin()) )
+			return false;
+	}
+
+	return true;
+}
+
 int CBot :: getHealth ()
 {
 	return m_pPlayerInfo->GetHealth();
@@ -586,7 +610,7 @@ void CBot :: spawnInit ()
 
 	m_vLastSeeEnemy = Vector(0,0,0);
 	m_pLastEnemy = NULL; // enemy we were fighting before we lost it
-	m_pAvoidEntity = NULL; // avoid this guy
+	//m_pAvoidEntity = NULL; // avoid this guy
 	m_fLastWaypointVisible = 0;
 	m_vGoal = Vector(0,0,0);
 	m_bHasGoal = false;
@@ -844,16 +868,16 @@ void CBot :: doMove ()
 		// fAngle is got from world realting to bots origin, not angles
 		float fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo);
 
-		if ( m_pAvoidEntity )
+		if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 		{
-			if ( m_pAvoidEntity == m_pEdict ) // WTF??? :o
+			/*if ( m_pAvoidEntity == m_pEdict ) // WTF??? :o
 				m_pAvoidEntity = NULL;
 			else
-			{
+			{*/
 				// Fixed origin as the same as the avoid entity
 				Vector vOrigin = getOrigin();
 				Vector vMoveTo = m_vMoveTo-getOrigin();
-				Vector vAvoid = vOrigin-CBotGlobals::entityOrigin(m_pAvoidEntity);
+				Vector vAvoid = vOrigin-CBotGlobals::entityOrigin(m_pEnemy);
 
 				if ( vAvoid.Length() > 1 )
 				{
@@ -863,7 +887,7 @@ void CBot :: doMove ()
 
 					fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,vAvoidMoveTo);
 				}
-			}
+			//}
 		}
 
 		/////////
@@ -1170,6 +1194,11 @@ void CBot :: primaryAttack ( bool bHold )
 	}
 }
 
+void CBot :: tapButton ( int iButton )
+{
+	m_pButtons->tap(iButton);
+}
+
 void CBot :: jump ()
 {
 	if ( m_pButtons->canPressButton(IN_JUMP) )
@@ -1243,10 +1272,12 @@ void CBot :: getTasks (unsigned int iIgnore)
 
 ///////////////////////
 
-bool CBots :: createBot ()
+bool CBots :: createBot (const char *szClass, const char *szTeam, const char *szName)
 {		
 	edict_t *pEdict;	
 	CBotProfile *pBotProfile;
+
+	char *szOVName = "";
 
 	if ( (m_iMaxBots != -1) && (CBotGlobals::numClients() >= m_iMaxBots) )
 		CBotGlobals::botMessage(NULL,0,"Can't create bot, max_bots reached");
@@ -1265,7 +1296,24 @@ bool CBots :: createBot ()
 			return false;
 	}
 
-	pEdict = g_pBotManager->CreateBot( pBotProfile->getName() );
+	if ( szClass && *szClass )
+	{
+		pBotProfile->setClass(atoi(szClass));
+	}
+
+	if ( szTeam && *szTeam )
+	{
+		pBotProfile->setTeam(atoi(szTeam));
+	}
+	
+	if ( szName && *szName )
+	{
+		szOVName = (char*)szName;
+	}
+	else
+		szOVName = pBotProfile->getName();
+
+	pEdict = g_pBotManager->CreateBot( szOVName );
 
 	if ( pEdict == NULL )
 		return false;
@@ -1377,7 +1425,7 @@ void CBots :: botThink ()
 	
 	if ( needToAddBot () )
 	{
-		createBot();
+		createBot(NULL,NULL,NULL);
 	}
 	else if ( needToKickBot () )
 	{

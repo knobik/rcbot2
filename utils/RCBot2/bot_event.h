@@ -196,6 +196,18 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2BuiltObjectEvent : public CBotEvent
+{
+public:
+	CTF2BuiltObjectEvent()
+	{
+		setType("player_builtobject");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+
 class CFlagEvent : public CBotEvent
 {
 public:

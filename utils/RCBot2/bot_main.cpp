@@ -326,7 +326,12 @@ void CRCBotPlugin::LevelInit( char const *pMapName )
 
 	CBotEvents::setupEvents();
 
-	CBots::mapInit();	
+	CBots::mapInit();
+
+	CBotMod *pMod = CBotGlobals::getCurrentMod();
+	
+	if ( pMod )
+		pMod->mapInit();
 }
 
 //---------------------------------------------------------------------------------

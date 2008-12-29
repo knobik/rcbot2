@@ -91,9 +91,6 @@ public:
 	void removeTypeFromWaypoint ( CWaypoint *pWaypoint );
 };*/
 
-#define TEAM_BLUE 3
-#define TEAM_RED 2
-
 class CWaypointTypes
 {
 public:
@@ -109,6 +106,8 @@ public:
 	static const int W_FL_NORED = 128;
 	static const int W_FL_HEALTH = 256;
 	static const int W_FL_OPENS_LATER = 512;
+	static const int W_FL_ROCKET_JUMP = 1024;
+	static const int W_FL_SNIPER = 2048;
 
 	static void setup ();
 
@@ -255,15 +254,7 @@ public:
 		return m_iFlags;
 	}
 
-	bool forTeam ( int iTeam )
-	{
-		if ( iTeam == TEAM_BLUE )
-			return (m_iFlags & CWaypointTypes::W_FL_NOBLU)==0;
-		else if ( iTeam == TEAM_RED )
-			return (m_iFlags & CWaypointTypes::W_FL_NORED)==0;
-
-		return true;	
-	}
+	bool forTeam ( int iTeam );
 
 private:
 	Vector m_vOrigin;

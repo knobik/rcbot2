@@ -41,6 +41,28 @@ public:
 	virtual void execute ( edict_t *pEntity ) { return; }
 };
 
+class CTF2FindFlagFunc : public CVisibleFunc
+{
+public:
+	CTF2FindFlagFunc ( CBot *pBot ) 
+	{ 
+		m_pFlag = NULL;
+	}
+
+	edict_t *getFlag ( Vector &vOrigin )
+	{
+		return m_pFlag;
+	}
+
+	void init ();
+
+	void execute ( edict_t *pEntity );
+private:
+	CBot *m_pBot;
+	edict_t *m_pFlag;
+};
+
+
 class CFindEnemyFunc : public CVisibleFunc
 {
 public:

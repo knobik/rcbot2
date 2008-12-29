@@ -105,6 +105,16 @@ void CBulletImpactEvent :: execute ( IBotEventInterface *pEvent )
 		pBot->shotmiss();
 	}
 }
+/////////////////////////////////////////
+void CTF2BuiltObjectEvent :: execute ( IBotEventInterface *pEvent )
+{
+	CBot *pBot = CBots::getBotPointer(m_pActivator);
+
+	if ( pBot && pBot->isTF() )
+	{
+		((CBotFortress*)pBot)->engiBuildSuccess((eEngiBuild)pEvent->getInt("object"));
+	}
+}
 
 void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 {
@@ -202,6 +212,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CBulletImpactEvent());
 	addEvent(new CFlagEvent());
 	addEvent(new CPlayerSpawnEvent());
+	addEvent(new CTF2BuiltObjectEvent());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

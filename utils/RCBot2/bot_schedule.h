@@ -34,6 +34,7 @@
 #include "bot.h"
 #include "bot_task.h"
 #include "bot_genclass.h"
+#include "bot_fortress.h"
 
 class CBotTask;
 class CAttackEntityTask;
@@ -51,7 +52,8 @@ typedef enum
 	SCHED_GOTO_ORIGIN,
 	SCHED_GOOD_HIDE_SPOT,
 	SCHED_TF2_GET_FLAG,
-	SCHED_TF2_GET_HEALTH
+	SCHED_TF2_GET_HEALTH,
+	SCHED_TF_BUILD
 }eBotSchedule;
 
 class CBotSchedule
@@ -237,6 +239,14 @@ private:
 };
 
 //////////////////////////////////
+
+class CBotTFEngiBuild : public CBotSchedule
+{
+public:
+	CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin );
+
+	void init ();
+};
 
 class CBotTF2GetHealthSched : public CBotSchedule
 {

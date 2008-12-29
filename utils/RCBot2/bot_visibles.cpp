@@ -43,6 +43,22 @@ byte CBotVisibles :: m_bPvs[MAX_MAP_CLUSTERS/8];
 
 ////////////////////////////////////////
 
+/*
+void CTF2FindFlagFunc :: execute ( edict_t *pEntity )
+{
+	if ( m_pBot->
+	if ( strcmp(pEntity->GetClassName(),"");
+}
+
+void CTF2FindFlagFunc :: init ()
+{
+	m_pBest = NULL;
+	m_fBestFactor = 0;
+}*/
+
+
+////////////////////////////////////////
+
 void CFindEnemyFunc :: execute ( edict_t *pEntity )
 {
 	if ( m_pBot->isEnemy(pEntity) )
@@ -188,9 +204,9 @@ void CBotVisibles :: updateVisibles ()
 	int iMaxTicks = m_pBot->getProfile()->getVisionTicks();
 	int iStartIndex = m_iCurrentIndex;
 
-	edict_t *pAvoidEntity = NULL;
-	float fNearestAvoidEntity = 0;
-	float fDist;
+	//edict_t *pAvoidEntity = NULL;
+//	float fNearestAvoidEntity = 0;
+//	float fDist;
 
 	int iStartPlayerIndex = m_iCurPlayer;
 
@@ -207,34 +223,11 @@ void CBotVisibles :: updateVisibles ()
 	{
 		pEntity = INDEXENT(m_iCurPlayer);
 
-		if ( pEntity == m_pBot->getEdict() )
+		if ( CBotGlobals::entityIsValid(pEntity) && (pEntity != m_pBot->getEdict()) )
 		{
-			m_iCurPlayer++;
-
-			if ( m_iCurPlayer > CBotGlobals::maxClients() )
-				m_iCurPlayer = 1;
-
-			if ( iStartPlayerIndex == m_iCurPlayer )
-				break;
-
-			continue;
-		}
-
-		checkVisible(pEntity,&iTicks,&bVisible);
-		setVisible(pEntity,bVisible);
-
-		if ( bVisible )
-		{
-			if ( m_pBot->canAvoid(pEntity) )
-			{
-				fDist = m_pBot->distanceFrom(CBotGlobals::entityOrigin(pEntity));
-
-				if ( !pAvoidEntity || (fDist < fNearestAvoidEntity) )
-				{
-					pAvoidEntity = pEntity;
-					fNearestAvoidEntity = fDist;
-				}
-			}
+			checkVisible(pEntity,&iTicks,&bVisible);
+			setVisible(pEntity,bVisible);
+			m_pBot->setVisible(pEntity,bVisible);
 		}
 
 		m_iCurPlayer++;
@@ -249,7 +242,7 @@ void CBotVisibles :: updateVisibles ()
 	if ( iMaxTicks > m_iMaxIndex )
 		iMaxTicks = m_iMaxIndex;
 
-	m_pBot->setAvoidEntity(pAvoidEntity);
+//	m_pBot->setAvoidEntity(pAvoidEntity);
 
 	if ( m_iCurPlayer >= m_iCurrentIndex )
 		return;
@@ -260,9 +253,13 @@ void CBotVisibles :: updateVisibles ()
 
 		pEntity = INDEXENT(m_iCurrentIndex);
 
-		checkVisible(pEntity,&iTicks,&bVisible);
+		if ( CBotGlobals::entityIsValid(pEntity) )
+		{		
+			checkVisible(pEntity,&iTicks,&bVisible);
 
-		setVisible(pEntity,bVisible);
+			setVisible(pEntity,bVisible);
+			m_pBot->setVisible(pEntity,bVisible);
+		}
 
 		m_iCurrentIndex ++;
 

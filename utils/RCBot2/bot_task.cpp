@@ -35,6 +35,7 @@
 #include "bot_navigator.h"
 #include "bot_waypoint_locations.h"
 #include "bot_globals.h"
+#include "in_buttons.h"
 
 #include "bot_fortress.h"
 
@@ -111,6 +112,102 @@ void CBotTF2WaitFlagTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 void CBotTF2WaitFlagTask :: debugString ( char *string )
 {
 	sprintf(string,"Wait Flag (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
+}
+
+//////////
+
+CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin )
+{
+	m_iObject = iObject;
+	m_vOrigin = vOrigin;
+	m_iState = 0;
+	m_fTime = 0;
+	m_iTries = 0;
+}
+	
+void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	CBotFortress *tfBot;
+
+	if ( !pBot->isTF() )
+		fail();
+
+	tfBot = (CBotFortress*)pBot;
+
+	if ( tfBot->getClass() != TF_CLASS_ENGINEER )
+		fail();
+
+	if ( pBot->distanceFrom(m_vOrigin) > 100 )
+		pBot->setMoveTo(m_vOrigin);
+	else
+	{
+		if ( m_iState == 0 )
+		{
+			if ( tfBot->hasEngineerBuilt(m_iObject) )
+			{
+				tfBot->engineerBuild(m_iObject,ENGI_DESTROY);
+			}
+
+			m_iState = 1;
+		}
+		else if ( m_iState == 1 )
+		{
+			tfBot->engineerBuild(m_iObject,ENGI_BUILD);
+			m_iState ++;
+		}
+		else if ( m_iState == 2 )
+		{
+			pBot->tapButton(IN_ATTACK2);
+			m_iState ++;
+		}
+		else if ( m_iState == 3 )
+		{
+			pBot->tapButton(IN_ATTACK2);
+			m_iState ++;
+		}
+		else if ( m_iState == 4 )
+		{
+			pBot->tapButton(IN_ATTACK);
+
+			m_fTime = engine->Time() + 1.0f;
+
+			m_iState++;
+		}
+		else if ( m_iState == 5 )
+		{
+			// Check if sentry built OK
+			// Wait for Built object message
+
+			if ( tfBot->hasEngineerBuilt(m_iObject) )
+			{
+				m_iState++;				
+				m_fTime = engine->Time() + RandomFloat(2.0f,4.0f);
+			}
+			else if ( m_fTime < engine->Time() )
+			{
+				if ( m_iTries > 3 )
+					fail();
+				else
+				{
+					m_iState = 4;
+					m_iTries ++;
+				}
+			}
+		}
+		else
+		{
+			// whack it for a while
+			if ( m_fTime < engine->Time() )
+				complete();
+			else
+				pBot->tapButton(IN_ATTACK);
+		}
+	}
+}
+
+void CBotTFEngiBuildTask :: debugString ( char *string )
+{
+	sprintf(string,"CBotTFEngiBuildTask (%d,%0.4f,%0.4f,%0.4f)",m_iObject,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
 }
 
 

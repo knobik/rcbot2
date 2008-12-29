@@ -54,6 +54,7 @@ CRCBotCommand :: CRCBotCommand ()
 	add(new CConfigCommand());
 	add(new CKickBotCommand());
 	add(new CUsersCommand());
+	add(new CUtilCommand());
 }
 
 CWaypointCommand :: CWaypointCommand()
@@ -258,7 +259,7 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 	//else
 	//bOkay = CBots::createBot();
 
-	if ( CBots::createBot() )
+	if ( CBots::createBot(pcmd,arg1,arg2) )
 		CBotGlobals::botMessage(pEntity,0,"bot added");
 	else
 		CBotGlobals::botMessage(pEntity,0,"error: couldn't create bot! (Check maxplayers)");
@@ -532,6 +533,12 @@ eBotCommandResult CDebugBotCommand :: execute ( CClient *pClient, const char *pc
 ///////////////////////
 // command
 
+CUtilCommand :: CUtilCommand()
+{
+	setName("util");
+	add(new CSearchCommand());
+}
+
 CConfigCommand :: CConfigCommand()
 {
 	setName("config");
@@ -658,6 +665,43 @@ eBotCommandResult CMinBotsCommand :: execute ( CClient *pClient, const char *pcm
 	return COMMAND_ACCESSED;
 }
 
+eBotCommandResult CSearchCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	int i = 0;
+
+	edict_t *pPlayer = pClient->getPlayer();
+	edict_t *pEdict;
+	float fDistance;
+	string_t model;
+
+	for ( i = 0; i < gpGlobals->maxEntities; i ++ )
+	{
+		pEdict = INDEXENT(i);
+
+		if ( pEdict )
+		{
+			if ( !pEdict->IsFree() )
+			{
+				if ( pEdict->m_pNetworkable && pEdict->GetIServerEntity() )
+				{				
+					if ( (fDistance=(CBotGlobals::entityOrigin(pEdict) - CBotGlobals::entityOrigin(pPlayer)).Length()) < 128 )
+					{
+						model = pEdict->GetIServerEntity()->GetModelName();
+
+						CBaseEntity *p = pEdict->GetNetworkable()->GetBaseEntity();
+
+						
+						
+						CBotGlobals::botMessage(pPlayer,0,"D:%0.2f C:'%s', MI:%d, MN:'%s'",fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr());
+					}
+				}
+			}
+		}
+	}
+
+	return COMMAND_ACCESSED;
+
+}
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////

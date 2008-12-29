@@ -1,6 +1,9 @@
 #ifndef __BOT_FORTRESS_H__
 #define __BOT_FORTRESS_H__
 
+#define TF2_TEAM_BLUE 3
+#define TF2_TEAM_RED 2
+
 typedef enum
 {
 	TF_CLASS_SCOUT = 1,
@@ -39,14 +42,6 @@ typedef enum
 	ENGI_DESTROY
 }eEngiCmd;
 
-typedef enum
-{
-	TF_MAP_DM = 0,
-	TF_MAP_CTF,
-	TF_MAP_CP,
-	TF_MAP_CART
-}eTFMapType;
-
 class CBroadcastFlagDropped : public IBotFunction
 {
 public:
@@ -72,7 +67,7 @@ class CBotFortress : public CBot
 {
 public:	
 
-	CBotFortress() { CBot(); m_fCallMedic = 0; m_fTauntTime = 0; m_fTaunting = 0; m_fLastKnownFlagTime = 0.0f; m_bHasFlag = false; }
+	CBotFortress() { CBot(); m_fCallMedic = 0; m_fTauntTime = 0; m_fTaunting = 0; m_fLastKnownFlagTime = 0.0f; m_bHasFlag = false; m_pSentryGun = NULL; m_pDispenser = NULL; m_pTeleExit = NULL; m_pTeleEntrance = NULL; }
 
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
@@ -87,6 +82,22 @@ public:
 	virtual void killed ( edict_t *pVictim );
 
 	virtual void modThink ();
+
+	virtual void checkBuildingsValid () {};
+
+	virtual edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding ) { return false; }
+
+	virtual void engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd ) {};
+
+	virtual void spyDisguise ( int iTeam, int iClass ) {};
+
+	virtual bool hasEngineerBuilt ( eEngiBuild iBuilding ) {return false;}
+
+	virtual void engiBuildSuccess ( eEngiBuild iObject ) {};
+
+	virtual bool isCloaked () { return false; }
+	virtual bool isDisguised () { return false; }
+
 
 	void setLookAtTask ( eLookTask lookTask );
 
@@ -116,6 +127,8 @@ public:
 
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
 
+	bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint );
+
 protected:
 	virtual void selectTeam ();
 
@@ -126,6 +139,11 @@ protected:
 	float m_fCallMedic;
 	float m_fTauntTime;
 	float m_fTaunting;
+
+	edict_t *m_pSentryGun;
+	edict_t *m_pDispenser;
+	edict_t *m_pTeleEntrance;
+	edict_t *m_pTeleExit;
 
 	// valid flag point area
 	Vector m_vLastKnownFlagPoint;
@@ -148,7 +166,17 @@ public:
 
 	CBotTF2() { CBotFortress(); }
 
+	void engiBuildSuccess ( eEngiBuild iObject );
+
 	void modThink ();
+
+	bool isCloaked ();
+
+	bool isDisguised ();
+
+	void checkBuildingsValid ();
+
+	edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding );
 
 	bool isEnemy ( edict_t *pEdict );
 
@@ -177,6 +205,8 @@ public:
 	TF_Class getClass ();
 
 	void updateClass ();
+
+	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
 
 };
 

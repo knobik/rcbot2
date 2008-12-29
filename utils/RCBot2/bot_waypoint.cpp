@@ -50,6 +50,7 @@ using namespace std;
 #include "bot_wpt_color.h"
 #include "bot_profile.h"
 #include "bot_schedule.h"
+#include "bot_fortress.h"
 
 int CWaypoints::m_iNumWaypoints = 0;
 CWaypoint CWaypoints::m_theWaypoints[CWaypoints::MAX_WAYPOINTS];
@@ -313,13 +314,8 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			succ = &paths[iSucc];
 			succWpt = CWaypoints::getWaypoint(iSucc);
 
-			if ( !succWpt->forTeam(m_pBot->getTeam()) )
+			if ( !m_pBot->canGotoWaypoint(vOrigin,succWpt) )
 				continue;
-			if ( succWpt->hasFlag(CWaypointTypes::W_FL_OPENS_LATER) )
-			{
-				if ( !CBotGlobals::isVisible(m_pBot->getEdict(),currWpt->getOrigin(),succWpt->getOrigin()) )
-					continue;
-			}
 
 			fCost = curr->getCost()+(succWpt->distanceFrom(vOrigin));
 
@@ -1127,6 +1123,9 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_NORED,"noredteam","red team can't use this waypoint",WptColor(0,0,128)));
 	addType(new CWaypointType(W_FL_HEALTH,"health","bot can get health here",WptColor(255,255,255)));
 	addType(new CWaypointType(W_FL_OPENS_LATER,"openslater","this waypoint is available when a door is open only",WptColor(100,100,200)));
+	addType(new CWaypointType(W_FL_SNIPER,"sniper","a bot can snipe here",WptColor(0,255,0)));
+	addType(new CWaypointType(W_FL_ROCKET_JUMP,"rocketjump","a bot can rocket jump here",WptColor(10,100,0)));
+
 }
 
 void CWaypointTypes :: freeMemory ()
@@ -1217,4 +1216,14 @@ CWaypointType :: CWaypointType (int iBit, const char *szName, const char *szDesc
 	m_szName = CStrings::getString(szName);
 	m_szDescription = CStrings::getString(szDescription);
 	m_vColour = vColour;
+}
+
+bool CWaypoint :: forTeam ( int iTeam )
+{
+	if ( iTeam == TF2_TEAM_BLUE )
+		return (m_iFlags & CWaypointTypes::W_FL_NOBLU)==0;
+	else if ( iTeam == TF2_TEAM_RED )
+		return (m_iFlags & CWaypointTypes::W_FL_NORED)==0;
+
+	return true;	
 }
