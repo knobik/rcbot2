@@ -514,6 +514,9 @@ void CBotTF2 :: modThink ()
 	// mod specific think code here
 	CBotFortress :: modThink();
 
+	if ( getClass() == TF_CLASS_ENGINEER )
+		checkBuildingsValid();
+
 	if ( m_fTaunting > engine->Time() )
 		stopMoving();
 }
@@ -592,9 +595,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		}
 
 		if ( getClass() == TF_CLASS_ENGINEER )
-		{
-			checkBuildingsValid();
-
+		{		
 			if ( !m_pSentryGun )
 			{
 				pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(-1,getTeam()));

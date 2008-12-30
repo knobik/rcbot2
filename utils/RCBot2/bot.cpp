@@ -494,6 +494,7 @@ void CBot :: init (bool bVarInit)
 {
 	//m_bNeedToInit = false; // doing this now
 
+	m_iAmmo = NULL;
 	m_pButtons = NULL;
 	m_pNavigator = NULL;
 	m_pSchedules = NULL;
@@ -583,7 +584,10 @@ void CBot :: spawnInit ()
 	if ( m_pSchedules != NULL )
 		m_pSchedules->freeMemory(); // clear tasks, im dead now!!
 	if ( m_pVisibles != NULL )
-		m_pVisibles->reset();
+		m_pVisibles->reset();	
+
+	if ( m_pEdict && (m_iAmmo == NULL) )
+		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
 	m_fLookAroundTime = 0.0f;
 	m_bLookedForEnemyLast = false;
@@ -824,6 +828,8 @@ void CBot :: freeMapMemory ()
 		delete m_pWeapons;
 		m_pWeapons = NULL;
 	}
+
+	m_iAmmo = NULL;
 	/////////////////////////////////
 	init();
 }

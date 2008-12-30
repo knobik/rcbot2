@@ -53,6 +53,8 @@
 
 #include "bot_const.h"
 
+#define MAX_AMMO_TYPES 32
+
 // Interfaces from the engine
 //using namespace VEngineServerV21;
 //using namespace ServerGameClientsV3;
@@ -67,6 +69,21 @@ extern IEngineTrace *enginetrace;
 extern IEffects *g_pEffects;
 extern IBotManager *g_pBotManager;
 extern CGlobalVars *gpGlobals;
+
+#define GET_HEALTH 0
+#define GET_TEAM   1
+#define GET_AMMO   2
+
+#define T_OFFSETMAX  3
+
+class CClassInterface
+{
+public:
+	static int getTeam ( edict_t *edict );
+	static int getHealth ( edict_t *edict );
+	static int *getAmmoList ( edict_t *edict );
+	static unsigned int findOffset(const char *szType,const char *szClass);
+};
 
 class CRCBotEventListener : public IGameEventListener2
 {
@@ -359,6 +376,8 @@ public:
 
 	inline void selectWeapon ( int iWeaponId ) { m_iSelectWeapon = iWeaponId; }
 
+	void selectWeaponName ( const char *szWeaponName );
+
 	bool isUsingProfile ( CBotProfile *pProfile );
 
 	inline CBotProfile *getProfile () { return m_pProfile; }
@@ -393,6 +412,7 @@ protected:
 	// next think time
 	float m_fNextThink;
 
+	int *m_iAmmo;
 	bool m_bLookedForEnemyLast;
 
 	//CBotStuckValues *m_pGAvStuck;

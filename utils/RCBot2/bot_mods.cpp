@@ -372,7 +372,8 @@ void CBotMod :: entitySpawn ( edict_t *pEntity )
 
 int CTeamFortress2Mod :: getTeam ( edict_t *pEntity )
 {
-	return *((int*)(pEntity->GetIServerEntity()->GetBaseEntity())+110);
+	return CClassInterface::getTeam (pEntity);
+	//return *((int*)(pEntity->GetIServerEntity()->GetBaseEntity())+110);
 }
 
 int CTeamFortress2Mod :: getSentryLevel ( edict_t *pSentry )

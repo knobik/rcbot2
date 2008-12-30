@@ -114,6 +114,83 @@ void CBotTF2WaitFlagTask :: debugString ( char *string )
 	sprintf(string,"Wait Flag (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
 }
 
+///////////
+/*
+CBotTFEngiUpgradeTask::CBotTFEngiUpgradeTask ( eEngiBuild iType, edict_t *pBuilding )
+{
+  m_iType = iType;
+  m_pBuilding = pBuilding;
+}
+
+void CBotTFEngiUpgradeTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( !m_pBuilding  
+
+	if ( m_iType == ENGI_EXIT )
+
+}
+///////////////////////////////////////////////////////////////////////
+
+// Protect SG from Enemy
+CBotTFEngiTankSentry :: CBotTFEngiTankSentry ( edict_t *pSentry, edict_t *pEnemy )
+{
+	m_pEnemy = pEnemy;
+	m_pSentry = pSentry;
+}
+
+void CBotTFEngiTankSentry :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	
+	CBotFortress *tfBot;
+
+	if ( !pBot->isTF() )
+	{
+		fail();
+		return;
+	}
+	
+	tfBot = (CBotFortress*)pBot;
+
+
+	if ( !CBotGlobals::entityIsAlive(m_pEnemy) )
+		complete();
+	else if ( !CBotGlobals::entityIsAlive(m_pSentry) || !CBotGlobals::entityIsValid(m_pSentry) || !CTeamFortress2Mod::isSentry(m_pSentry) )
+		fail();
+	else
+	{
+		Vector vOrigin;
+		Vector vComp;
+
+		vComp = CBotGlobals::entityOrigin(m_pEnemy) - CBotGlobals::entityOrigin(m_pSentry);
+		vComp = vComp / vComp.Length(); // Normalise
+
+		// find task position behind sentry
+		vOrigin = CBotGlobals::entityOrigin(m_pSentry) - (vComp*80);
+
+		if ( pBot->distanceFrom(vOrigin) > 32  )
+		{
+			// get into position!
+			pBot->setMoveTo(vOrigin);
+		}
+		else
+		{
+			if ( !pBot->currentWeapon("tf_wrench") )
+				pBot->selectWeaponName("tf_wrench");
+			else
+			{
+				setTaskEntity();
+				pBot->setLookAt(TSK_ENTITY);
+
+				// Tank!!!
+				pBot->duck();
+				pBot->tapButton(IN_ATTACK);
+			}
+
+		}
+	}
+		
+}
+*/
 //////////
 
 CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin )
@@ -181,7 +258,8 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			if ( tfBot->hasEngineerBuilt(m_iObject) )
 			{
 				m_iState++;				
-				m_fTime = engine->Time() + RandomFloat(2.0f,4.0f);
+				// OK, set up whacking time!
+				m_fTime = engine->Time() + RandomFloat(5.0f,12.0f);
 			}
 			else if ( m_fTime < engine->Time() )
 			{

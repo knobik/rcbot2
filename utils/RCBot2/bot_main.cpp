@@ -53,6 +53,7 @@
 #include "convar.h"
 #include "Color.h"
 #include "ndebugoverlay.h"
+#include "server_class.h"
 #include "time.h"
 #include "bot.h"
 #include "bot_commands.h"
@@ -85,7 +86,7 @@ IBotManager *g_pBotManager = NULL;
 CGlobalVars *gpGlobals = NULL;
 IVDebugOverlay *debugoverlay = NULL;
 IServerGameEnts *servergameents = NULL; // for accessing the server game entities
-
+IServerGameDLL *servergamedll = NULL;
 // 
 // The plugin is a static singleton that is exported as an interface
 //
@@ -184,6 +185,7 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	LOAD_INTERFACE(debugoverlay,IVDebugOverlay,VDEBUG_OVERLAY_INTERFACE_VERSION);
 	LOAD_INTERFACE(gameeventmanager,IGameEventManager2,INTERFACEVERSION_GAMEEVENTSMANAGER2)
 	LOAD_INTERFACE(gameeventmanager1,IGameEventManager,INTERFACEVERSION_GAMEEVENTSMANAGER)
+	LOAD_GAME_SERVER_INTERFACE(servergamedll,IServerGameDLL,INTERFACEVERSION_SERVERGAMEDLL);
 
 	LOAD_GAME_SERVER_INTERFACE(gameclients,IServerGameClients,INTERFACEVERSION_SERVERGAMECLIENTS);
 
@@ -641,3 +643,143 @@ void InitCVars( CreateInterfaceFn cvarFactory )
 	    ConCommandBaseMgr::OneTimeInit( &g_ConVarAccessor );
 	}
 }*/
+
+
+
+/**
+ * Searches for a named Server Class.
+ *
+ * @param name		Name of the top-level server class.
+ * @return 		Server class matching the name, or NULL if none found.
+ */
+ServerClass *UTIL_FindServerClass(const char *name)
+{
+	ServerClass *pClass = servergamedll->GetAllServerClasses();
+	while (pClass)
+	{
+		if (strcmp(pClass->m_pNetworkName, name) == 0)
+		{
+			return pClass;
+		}
+		pClass = pClass->m_pNext;
+	}
+	return NULL;
+}
+
+/**
+ * Recursively looks through a send table for a given named property.
+ *
+ * @param pTable	Send table to browse.
+ * @param name		Property to search for.
+ * @return 		SendProp pointer on success, NULL on failure.
+ */
+SendProp *UTIL_FindSendProp(SendTable *pTable, const char *name)
+{
+	int count = pTable->GetNumProps();
+	//SendTable *pTable;
+	SendProp *pProp;
+	for (int i=0; i<count; i++)
+	{
+		pProp = pTable->GetProp(i);
+		if (strcmp(pProp->GetName(), name) == 0)
+		{
+			return pProp;
+		}
+		if (pProp->GetDataTable())
+		{
+			if ((pProp=UTIL_FindSendProp(pProp->GetDataTable(), name)) != NULL)
+			{
+				return pProp;
+			}
+		}
+	}
+ 
+	return NULL;
+}
+
+int offsets[T_OFFSETMAX];
+
+char *offsetnames[3] = 
+{
+	"m_iHealth",
+	"m_iTeam",
+	"m_iAmmo"
+};
+
+
+int CClassInterface :: getTeam ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_iTeamNum","CBaseEntity");
+	
+	if (!offset)
+		return 0;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return 0;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return *(int *)((char *)pEntity + offset);
+}
+
+int CClassInterface :: getHealth ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_iHealth","CBaseEntity");
+	
+	if (!offset)
+		return 0;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return 0;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return *(int *)((char *)pEntity + offset);
+}
+
+int *CClassInterface :: getAmmoList ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_iAmmo","CBasePlayer");
+	
+	if (!offset)
+		return NULL;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return NULL;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return (int *)((char *)pEntity + offset);
+}
+
+unsigned int CClassInterface :: findOffset(const char *szType,const char *szClass)
+{
+	ServerClass *sc = UTIL_FindServerClass(szClass);
+	SendProp *pProp = UTIL_FindSendProp(sc->m_pTable, szType);
+
+	if ( pProp )
+		return pProp->GetOffset();
+
+	return 0;
+}

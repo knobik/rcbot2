@@ -80,6 +80,11 @@ public:
 
 	char *getModFolder ();
 
+	virtual const char *getPlayerClass ()
+	{
+		return "CBasePlayer";
+	}
+
 	eModId getModId ();
 
 	eBotType getBotType () { return m_iBotType; }
@@ -214,6 +219,11 @@ public:
 
 	void mapInit ();
 
+	virtual const char *getPlayerClass ()
+	{
+		return "CTFPlayer";
+	}
+
 	static int getTeam ( edict_t *pEntity );
 
 	static int getSentryLevel ( edict_t *pSentry );
@@ -243,6 +253,8 @@ public:
 	{
 		setup("tf","source dedicated server",MOD_TF2,BOTTYPE_TF2);
 	}
+
+
 private:
 
 };

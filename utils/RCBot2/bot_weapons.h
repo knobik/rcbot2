@@ -265,6 +265,8 @@ public:
 
 	void addWeapon ( int iId );
 	void addWeapon ( const char *szWeaponName );
+
+
 private:
 	// bot that has these weapons
 	CBot *m_pBot;

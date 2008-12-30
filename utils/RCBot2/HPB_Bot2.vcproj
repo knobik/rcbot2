@@ -686,6 +686,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\public\server_class.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\public\vstdlib\strtools.h"
 				>
 			</File>

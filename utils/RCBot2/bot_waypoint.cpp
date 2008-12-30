@@ -359,9 +359,11 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 	if ( iLoops == iMaxLoops )
 	{
 		//*bFail = true;
-		m_bWorkingRoute = false;
+		
 		return false; // not finished yet, wait for next iteration
 	}
+
+	m_bWorkingRoute = false;
 	
 	clearOpenList(); // finished
 
@@ -372,16 +374,12 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 		if ( !m_iFailedGoals.IsMember(m_iGoalWaypoint) )
 			m_iFailedGoals.Add(m_iGoalWaypoint);
 
-		m_bWorkingRoute = false;
-
 		return true; // waypoint not found but searching is complete
 	}
 
 	iCurrentNode = m_iGoalWaypoint;
 
 	m_currentRoute.Destroy();
-
-	m_bWorkingRoute = false;
 
 	iLoops = 0;
 
@@ -401,6 +399,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 	{
 		m_currentRoute.Destroy();
 		*bFail = true;
+
 	}
 
     return true; 
