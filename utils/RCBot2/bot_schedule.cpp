@@ -33,6 +33,16 @@
 #include "bot_task.h"
 #include "bot_client.h"
 
+CBotTF2HealSched::CBotTF2HealSched()
+{
+	addTask(new CBotTF2MedicHeal());
+}
+
+void CBotTF2HealSched::init()
+{
+	setID(SCHED_HEAL);
+}
+
 /////////////////////////////////////////////
 
 CBotTFEngiBuild :: CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin )
@@ -66,6 +76,17 @@ CBotTF2GetFlagSched :: CBotTF2GetFlagSched ( Vector vOrigin )
 }
 
 void CBotTF2GetFlagSched :: init ()
+{
+	setID(SCHED_TF2_GET_FLAG);
+}
+
+CBotTF2FindFlagSched :: CBotTF2FindFlagSched ( Vector vOrigin )
+{
+	addTask(new CFindPathTask(vOrigin)); // first
+	addTask(new CBotTF2WaitFlagTask(vOrigin,true)); // second
+}
+
+void CBotTF2FindFlagSched :: init ()
 {
 	setID(SCHED_TF2_GET_FLAG);
 }
@@ -132,6 +153,7 @@ void CBotAttackSched :: init ()
 {
 	setID(SCHED_ATTACK);
 }
+
 
 /////////////////////////////////////////////
 void CBotSchedule :: execute ( CBot *pBot )

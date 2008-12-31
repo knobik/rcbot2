@@ -83,6 +83,8 @@ public:
 	static int getHealth ( edict_t *edict );
 	static int *getAmmoList ( edict_t *edict );
 	static unsigned int findOffset(const char *szType,const char *szClass);
+	static int getTF2NumHealers ( edict_t *edict );
+	static int getTF2Conditions ( edict_t *edict );
 };
 
 class CRCBotEventListener : public IGameEventListener2
@@ -156,6 +158,8 @@ class CFindEnemyFunc;
 class CBotWeapons;
 class CBotProfile;
 class CWaypoint;
+class CBotWeapon;
+class CWeapon;
 
 class CBot 
 {
@@ -201,11 +205,15 @@ public:
 
 	virtual int getTeam ();
 
-	void setLookAtTask ( eLookTask lookTask );
+	bool isUnderWater ( );
+
+	CBotWeapon *getBestWeapon ( edict_t *pEnemy );
+
+	void setLookAtTask ( eLookTask lookTask, int iPriority = 1 );
 
 	virtual void modThink () { return; }
 
-	virtual bool isEnemy ( edict_t *pEdict ) { return false; }
+	virtual bool isEnemy ( edict_t *pEdict, bool bCheckWeapons = true ) { return false; }
 
 	virtual void getLookAtVector ();
 
@@ -303,6 +311,12 @@ public:
 		return ret;
 	}
 
+	void selectWeaponSlot ( int iSlot );
+
+	edict_t *getAvoidEntity () { return m_pAvoidEntity; }
+
+	void setAvoidEntity ( edict_t *pEntity ) { m_pAvoidEntity = pEntity; }
+
 	void updateConditions ();
 
 	bool canAvoid ( edict_t *pEntity );
@@ -312,10 +326,14 @@ public:
 
 	void setLookAt ( Vector vNew );
 
-	void setMoveTo ( Vector vNew )
+	inline void setMoveTo ( Vector vNew, int iPriority = 1 )
 	{
-		m_vMoveTo = vNew;
-		m_bMoveToIsValid = true;
+		if ( iPriority > m_iMovePriority )
+		{
+			m_vMoveTo = vNew;
+			m_bMoveToIsValid = true;
+			m_iMovePriority = iPriority;
+		}
 	}
 
 	void findEnemy ( edict_t *pOldEnemy = NULL );
@@ -323,8 +341,23 @@ public:
 
 	inline IBotNavigator *getNavigator () { return m_pNavigator; }
 
-	inline void stopMoving () { m_bMoveToIsValid = false; }
-	inline void stopLooking () { m_bLookAtIsValid = false; }
+	inline void stopMoving (int iPriority = 1) 
+	{ 
+		if ( iPriority > m_iMovePriority )
+		{
+			m_bMoveToIsValid = false; 
+			m_iMovePriority = iPriority;
+		}
+	}
+	
+	inline void stopLooking ( int iPriority = 1 ) 
+	{ 
+		if ( iPriority > m_iLookPriority )
+		{
+			m_bLookAtIsValid = false; 
+			m_iLookPriority = iPriority;
+		}
+	}
 	//////////////////////
 	virtual bool isCSS () { return false; }
 	virtual bool isHLDM () { return false; }
@@ -338,21 +371,22 @@ public:
 
 	bool onLadder ();
 
-	bool currentEnemy ( edict_t *pEntity ) { return m_pEnemy == pEntity; }
+	inline bool currentEnemy ( edict_t *pEntity ) { return m_pEnemy == pEntity; }
 
 	Vector getAimVector ( edict_t *pEntity );
 
-	Vector *getGoalOrigin ()
+	inline Vector *getGoalOrigin ()
 	{
 		return &m_vGoal;
 	}
 
-	bool hasGoal ()
+	inline bool hasGoal ()
 	{
 		return m_bHasGoal;
 	}
 
 	void primaryAttack (bool bHold = false);
+	void secondaryAttack(bool bHold=false);
 	void jump ();
 	void duck ( bool hold = false );
 
@@ -368,7 +402,7 @@ public:
 
 	float getHealthPercent ();
 
-	CBotSchedules *getSchedule () { return m_pSchedules; }
+	inline CBotSchedules *getSchedule () { return m_pSchedules; }
 
 	void reachedCoverSpot ();
 
@@ -378,6 +412,8 @@ public:
 
 	void selectWeaponName ( const char *szWeaponName );
 
+	CBotWeapon *getCurrentWeapon ();
+
 	bool isUsingProfile ( CBotProfile *pProfile );
 
 	inline CBotProfile *getProfile () { return m_pProfile; }
@@ -385,6 +421,14 @@ public:
 	virtual bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint );
 
 	void tapButton ( int iButton );
+
+	inline int getAmmo ( int iIndex ) { if ( !m_iAmmo ) return 0; else return m_iAmmo[iIndex]; }
+
+	void lookAtEdict ( edict_t *pEdict );
+
+	void select_CWeapon ( CWeapon *pWeapon );
+
+	edict_t *m_pLookEdict;
 
 protected:
 	/////////////////////////
@@ -405,12 +449,16 @@ protected:
 	///////////////////////////////////
 	// bots edict
 	edict_t *m_pEdict;
+	edict_t *m_pAvoidEntity;
 	// is bot used in the game?
 	bool m_bUsed;
 	// time the bot was made in the server
 	float m_fTimeCreated;
 	// next think time
 	float m_fNextThink;
+
+	int m_iMovePriority;
+	int m_iLookPriority;
 
 	int *m_iAmmo;
 	bool m_bLookedForEnemyLast;

@@ -126,6 +126,39 @@ private:
 	int m_iInt;
 };
 
+class CBotTF2MedicHeal : public CBotTask
+{
+public:
+	CBotTF2MedicHeal (  );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+};
+
+class CBotTF2Snipe : public CBotTask
+{
+public:
+	CBotTF2Snipe (  );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+};
+
+class CBotTF2SpyDisguise : public CBotTask
+{
+public:
+	CBotTF2SpyDisguise (  );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+};
+
+class CBotTF2SapBuilding : public CBotTask
+{
+public:
+	CBotTF2SapBuilding ( edict_t *pBuilding );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+};
+
 class CBotTFEngiBuildTask : public CBotTask
 {
 public:
@@ -159,13 +192,14 @@ private:
 class CBotTF2WaitFlagTask : public CBotTask
 {
 public:
-	CBotTF2WaitFlagTask ( Vector vOrigin );
+	CBotTF2WaitFlagTask ( Vector vOrigin, bool bFind = false );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 	virtual void debugString ( char *string );
 private:
 	Vector m_vOrigin;
 	float m_fWaitTime;
+	bool m_bFind;
 };
 
 class CAttackEntityTask : public CBotTask

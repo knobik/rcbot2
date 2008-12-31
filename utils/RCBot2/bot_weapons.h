@@ -34,46 +34,94 @@
 #include <vector>
 using namespace std;
 
+extern const char *g_szTF2Weapons[];
+
 #include "shareddefs.h"
 
 class CBot;
-/*
-	CBaseCombatWeapon*	Weapon_Create( const char *pWeaponName );
-	virtual Activity	Weapon_TranslateActivity( Activity baseAct, bool *pRequired = NULL );
-	void				Weapon_SetActivity( Activity newActivity, float duration );
-	void				Weapon_FrameUpdate( void );
-	void				Weapon_HandleAnimEvent( animevent_t *pEvent );
-	CBaseCombatWeapon*	Weapon_OwnsThisType( const char *pszWeapon, int iSubType = 0 ) const;  // True if already owns a weapon of this class
-	virtual bool		Weapon_CanUse( CBaseCombatWeapon *pWeapon );		// True is allowed to use this class of weapon
-	virtual void		Weapon_Equip( CBaseCombatWeapon *pWeapon );			// Adds weapon to player
-	virtual bool		Weapon_EquipAmmoOnly( CBaseCombatWeapon *pWeapon );	// Adds weapon ammo to player, leaves weapon
-	bool				Weapon_Detach( CBaseCombatWeapon *pWeapon );		// Clear any pointers to the weapon.
-	virtual void		Weapon_Drop( CBaseCombatWeapon *pWeapon, const Vector *pvecTarget = NULL, const Vector *pVelocity = NULL );
-	virtual	bool		Weapon_Switch( CBaseCombatWeapon *pWeapon, int viewmodelindex = 0 );		// Switch to given weapon if has ammo (false if failed)
-	virtual	Vector		Weapon_ShootPosition( );		// gun position at current position/orientation
-	bool				Weapon_IsOnGround( CBaseCombatWeapon *pWeapon );
-	CBaseEntity*		Weapon_FindUsable( const Vector &range );			// search for a usable weapon in this range
-	virtual	bool		Weapon_CanSwitchTo(CBaseCombatWeapon *pWeapon);
-	virtual bool		Weapon_SlotOccupied( CBaseCombatWeapon *pWeapon );
-	virtual CBaseCombatWeapon *Weapon_GetSlot( int slot ) const;
-	CBaseCombatWeapon	*Weapon_GetWpnForAmmo( int iAmmoIndex );
-*/
 
-#define WEAP_FL_PRIM_ATTACK (1<<0)
-#define WEAP_FL_SEC_ATTACK	(1<<1)
-#define WEAP_FL_EXPLOSIVE	(1<<2)
-#define WEAP_FL_MELEE       (1<<3)
-#define WEAP_FL_UNDERWATER  (1<<4)
+extern int m_TF2AmmoIndices[];
+
+typedef struct
+{
+	int iSlot;
+	int iId;
+	const char *szWeaponName;
+	int m_iFlags;
+	float minPrimDist;
+	float maxPrimDist;
+	int m_iAmmoIndex;
+	int m_iPreference;
+}TF2WeaponsData_t;
+
+extern TF2WeaponsData_t TF2Weaps[];
+
+enum 
+{
+	TF2_WEAPON_BAT = 0,
+	TF2_WEAPON_BONESAW,
+	TF2_WEAPON_BOTTLE,
+	TF2_WEAPON_BUILDER,
+	TF2_WEAPON_CLUB,
+	TF2_WEAPON_FIREAXE,
+	TF2_WEAPON_FISTS,
+	TF2_WEAPON_FLAMETHROWER,
+	TF2_WEAPON_GRENADELAUNCHER,
+	TF2_WEAPON_INVIS,
+	TF2_WEAPON_KNIFE,
+	TF2_WEAPON_MEDIGUN,
+	TF2_WEAPON_MINIGUN,
+	TF2_WEAPON_OBJECTSSELECTION,
+	TF2_WEAPON_PDA_ENGI_BUILD,
+	TF2_WEAPON_PDA_ENGI_DESTROY,
+	TF2_WEAPON_PDA_SPY,
+	TF2_WEAPON_PIPEBOMBS,
+	TF2_WEAPON_PISTOL,
+	TF2_WEAPON_PISTOL_SCOUT,
+	TF2_WEAPON_REVOLVER,
+	TF2_WEAPON_ROCKETLAUNCHER,
+	TF2_WEAPON_SCATTERGUN,
+	TF2_WEAPON_SHOTGUN_HWG,
+	TF2_WEAPON_SHOTGUN_PRIMARY,
+	TF2_WEAPON_SHOTGUN_PYRO,
+	TF2_WEAPON_SHOTGUN_SOLDIER,
+	TF2_WEAPON_SHOVEL,
+	TF2_WEAPON_SMG,
+	TF2_WEAPON_SNIPERRIFLE,
+	TF2_WEAPON_SYRINGEGUN,
+	TF2_WEAPON_WRENCH,
+	TF2_WEAPON_MAX
+};
+
+#define WEAP_FL_NONE			0
+#define WEAP_FL_PRIM_ATTACK		1
+#define WEAP_FL_SEC_ATTACK		2
+#define WEAP_FL_EXPLOSIVE		4
+#define WEAP_FL_MELEE			8
+#define WEAP_FL_UNDERWATER		16
+#define WEAP_FL_HOLDATTACK		32
+#define WEAP_FL_SPECIAL			64
 
 class CWeapon
 {
 public:
-	CWeapon( const char *szWeaponName, int iFlags = 0 )
+	CWeapon( int iSlot, const char *szWeaponName, int iId, int iFlags = 0, int iAmmoIndex = 0, float minPrim =0.0f, float maxPrim = 4096.0f, int iPref = 0 )
 	{
-		setID(0);
+		m_iSlot = iSlot;
+		setID(iId);
 		setName(szWeaponName);
-		setModel(NULL);
+
 		setFlags(iFlags);
+
+		// shoot distance (default)
+		m_fPrimMinWeaponShootDist = minPrim;
+		m_fPrimMaxWeaponShootDist = maxPrim;
+
+		m_fSecMinWeaponShootDist = 0.0f;
+		m_fSecMaxWeaponShootDist = 8192.0f;
+		m_iAmmoIndex = iAmmoIndex;
+
+		m_iPreference = iPref;
 	}
 
 	inline void setName ( const char *szWeaponName )
@@ -86,11 +134,6 @@ public:
 		return !strcmp(szWeaponName,getWeaponName());
 	}
 
-	inline void setModel ( const char *szModelName )
-	{
-		m_szModelName = szModelName;
-	}
-
 	inline void setID ( const int iId )
 	{
 		m_iWeaponId = iId;
@@ -99,6 +142,46 @@ public:
 	inline void setFlags ( const int iFlags )
 	{
 		m_iFlags = iFlags;
+	}
+
+	inline bool primaryInRange ( float fDistance )
+	{
+		return (fDistance>m_fPrimMinWeaponShootDist)&&(fDistance<m_fPrimMaxWeaponShootDist);
+	}
+
+	inline bool canUseUnderWater ()
+	{
+		return hasAllFlags(WEAP_FL_UNDERWATER);
+	}
+
+	inline bool mustHoldAttack ()
+	{
+		return hasAllFlags(WEAP_FL_HOLDATTACK);
+	}
+
+	inline bool isMelee ()
+	{
+		return hasAllFlags(WEAP_FL_MELEE);
+	}
+
+	inline bool canAttack()
+	{
+		return hasAllFlags(WEAP_FL_PRIM_ATTACK);
+	}
+
+	inline bool isSpecial ()
+	{
+		return hasAllFlags(WEAP_FL_SPECIAL);
+	}
+
+	inline bool secondaryInRange ( float fDistance )
+	{
+		return (fDistance>m_fSecMinWeaponShootDist)&&(fDistance<m_fSecMaxWeaponShootDist);
+	}
+
+	inline int getPreference ()
+	{
+		return m_iPreference;
 	}
 
 	inline const char *getWeaponName () const
@@ -111,6 +194,30 @@ public:
 		return m_iWeaponId;
 	}
 
+	inline void setPrimaryRange ( float fMinRange, float fMaxRange )
+	{
+		m_fPrimMinWeaponShootDist = fMinRange; 
+		m_fPrimMaxWeaponShootDist = fMaxRange;
+	}
+
+	inline void setSecondaryRange ( float fMinRange, float fMaxRange )
+	{
+		m_fSecMinWeaponShootDist = fMinRange;
+		m_fSecMaxWeaponShootDist = fMaxRange;
+	}
+
+	inline int getAmmoIndex ()
+	{
+		return m_iAmmoIndex;
+	}
+
+	inline int getSlot ()
+	{
+		return m_iSlot;
+	}
+
+private:
+
 	inline bool hasAllFlags ( int iFlags ) const
 	{
 		return (m_iFlags & iFlags)==iFlags;
@@ -121,11 +228,20 @@ public:
 		return (m_iFlags & iFlags)>0;
 	}
 
-private:
 	const char *m_szWeaponName; // classname
-	const char *m_szModelName;  // model file
+
 	int m_iWeaponId;			// identification
 	int m_iFlags;				// flags
+	int m_iAmmoIndex;
+	int m_iPreference;
+	int m_iSlot;
+
+	// shoot distance
+	float m_fPrimMinWeaponShootDist;
+	float m_fPrimMaxWeaponShootDist;
+
+	float m_fSecMinWeaponShootDist;
+	float m_fSecMaxWeaponShootDist;
 };
 
 class IWeaponFunc;
@@ -133,7 +249,12 @@ class IWeaponFunc;
 class CWeapons
 {
 public:
-	static void addWeapon ( CWeapon *pWeapon );
+	CWeapons ()
+	{
+		m_theWeapons.clear();
+	}
+
+	static inline void addWeapon ( CWeapon *pWeapon ) { m_theWeapons.push_back(pWeapon); }
 
 	static CWeapon *getWeapon ( const int iId );
 
@@ -156,22 +277,8 @@ public:
 	CBotWeapon ()
 	{
 		m_pWeaponInfo = NULL;
-
-		// ammo left
-		m_iPrimAmmo = 1;
-		m_iSecAmmo = 0;
-		m_iPrimReserve = 0;
-		m_iSecReserve = 0;
-
-		// shoot distance (default)
-		m_fPrimMinWeaponShootDist = 0.0f;
-		m_fPrimMaxWeaponShootDist = 8192.0f;
-
-		m_fSecMinWeaponShootDist = 0.0f;
-		m_fSecMaxWeaponShootDist = 8192.0f;
-
-		m_iPreference = 0;	// bots preference to weapon
-		m_bHasWeapon = false;
+		m_bHasWeapon = false;		
+		m_iWeaponIndex = 0;
 	}
 
 	inline void setWeapon ( CWeapon *pWeapon )
@@ -181,45 +288,41 @@ public:
 
 	inline bool primaryInRange ( float fDistance )
 	{
-		return (fDistance>m_fPrimMinWeaponShootDist)&&(fDistance<m_fPrimMaxWeaponShootDist);
+		return m_pWeaponInfo->primaryInRange(fDistance);
+	}
+
+	inline bool canUseUnderWater ()
+	{
+		return m_pWeaponInfo->canUseUnderWater();
+	}
+
+	inline bool isSpecial ()
+	{
+		return m_pWeaponInfo->isSpecial();
+	}
+
+	inline bool mustHoldAttack ()
+	{
+		return m_pWeaponInfo->mustHoldAttack();
+	}
+
+	inline bool isMelee ()
+	{
+		return m_pWeaponInfo->isMelee();
 	}
 
 	inline bool secondaryInRange ( float fDistance )
 	{
-		return (fDistance>m_fSecMinWeaponShootDist)&&(fDistance<m_fSecMaxWeaponShootDist);
+		return m_pWeaponInfo->secondaryInRange(fDistance);
 	}
 
 	inline int getPreference ()
 	{
-		return m_iPreference;
+		return m_pWeaponInfo->getPreference();
 	}
 
-	inline void setPreference ( int iPreference )
-	{
-		m_iPreference = iPreference;
-	}
-
-	inline void setPrimaryRange ( float fMinRange, float fMaxRange )
-	{
-		m_fPrimMinWeaponShootDist = fMinRange; 
-		m_fPrimMaxWeaponShootDist = fMaxRange;
-	}
-
-	inline void setSecondaryRange ( float fMinRange, float fMaxRange )
-	{
-		m_fSecMinWeaponShootDist = fMinRange;
-		m_fSecMaxWeaponShootDist = fMaxRange;
-	}
-
-	inline bool outOfAmmo ()
-	{
-		return !m_iPrimAmmo && !m_iSecAmmo && !m_iPrimReserve && !m_iSecReserve;
-	}
-
-	inline bool needToReload ()
-	{
-		return !m_pWeaponInfo->hasAllFlags(WEAP_FL_MELEE) && ((m_iPrimAmmo == 0)&&(m_iPrimReserve>0));
-	}
+	bool outOfAmmo (CBot *pBot);
+	inline bool needToReload () { return false; }
 
 	inline void setHasWeapon ( bool bHas )
 	{
@@ -231,27 +334,29 @@ public:
 		return m_bHasWeapon;
 	}
 
+	inline bool canAttack ()
+	{
+		return m_pWeaponInfo->canAttack();
+	}
+
+	int getAmmo ( CBot *pBot );
+
 	CWeapon *getWeaponInfo () { return m_pWeaponInfo; }
+
+	inline int getWeaponIndex () { return m_iWeaponIndex; }
+
+	inline void setWeaponIndex (int iIndex) { m_iWeaponIndex = iIndex; }
+
 private:
+
 	// link to weapon info
 	CWeapon *m_pWeaponInfo;
 
-	// ammo left
-	int m_iPrimAmmo;
-	int m_iSecAmmo;
-	int m_iPrimReserve;
-	int m_iSecReserve;
-
-	// shoot distance
-	float m_fPrimMinWeaponShootDist;
-	float m_fPrimMaxWeaponShootDist;
-
-	float m_fSecMinWeaponShootDist;
-	float m_fSecMaxWeaponShootDist;
-
-	int m_iPreference;	// bots preference to weapon
+	int m_iWeaponIndex;
 
 	bool m_bHasWeapon;
+
+	
 };
 
 // Weapons that
@@ -261,11 +366,15 @@ public:
 /////////////////////////////////////
 	CBotWeapons ( CBot *pBot );    // // constructor
 /////////////////////////////////////
-	CBotWeapon *getBestWeapon ();
+	CBotWeapon *getBestWeapon ( edict_t *pEnemy );
 
 	void addWeapon ( int iId );
-	void addWeapon ( const char *szWeaponName );
 
+	CBotWeapon *getWeapon ( CWeapon *pWeapon );
+
+	CBotWeapon *getActiveWeapon ( const char *szWeaponName );
+
+	void clearWeapons ();
 
 private:
 	// bot that has these weapons
@@ -273,7 +382,7 @@ private:
 
 	// weapons local to the bot only 
 	// (holds ammo/preference etc and link to actual weapon)
-	CBotWeapon m_theWeapons[MAX_WEAPONS];
+	CBotWeapon m_theWeapons[MAX_WEAPONS];//[MAX_WEAPONS];
 };
 
 #endif

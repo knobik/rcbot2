@@ -53,7 +53,8 @@ typedef enum
 	SCHED_GOOD_HIDE_SPOT,
 	SCHED_TF2_GET_FLAG,
 	SCHED_TF2_GET_HEALTH,
-	SCHED_TF_BUILD
+	SCHED_TF_BUILD,
+	SCHED_HEAL
 }eBotSchedule;
 
 class CBotSchedule
@@ -74,7 +75,14 @@ public:
 	void addTask( CBotTask *pTask );
 
 	void execute ( CBot *pBot );
-
+/*
+	CBotTask *currentTask ()
+	{
+		if ( m_Tasks.IsEmpty() )
+			return NULL;
+		return m_Tasks.Front();
+	}
+*/
 	bool hasFailed ()
 	{
 		return m_bFailed;
@@ -233,6 +241,16 @@ public:
 	{
 		return m_Schedules.IsEmpty();
 	}
+/*
+	CBotTask *getCurrentTask ()
+	{
+		CBotSchedule *sched;
+
+		if ( (sched = m_Schedules.Top()) != NULL )
+		{
+			return sched->currentTask();
+		}
+	}*/
 
 private:
 	dataQueue <CBotSchedule*> m_Schedules;
@@ -245,6 +263,13 @@ class CBotTFEngiBuild : public CBotSchedule
 public:
 	CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin );
 
+	void init ();
+};
+
+class CBotTF2HealSched : public CBotSchedule
+{
+public:
+	CBotTF2HealSched();
 	void init ();
 };
 
@@ -263,6 +288,15 @@ public:
 
 	void init ();
 };
+
+class CBotTF2FindFlagSched : public CBotSchedule
+{
+public:
+	CBotTF2FindFlagSched ( Vector vOrigin );
+
+	void init ();
+};
+
 
 class CBotGotoOriginSched : public CBotSchedule
 {

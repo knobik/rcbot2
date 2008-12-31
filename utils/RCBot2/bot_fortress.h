@@ -4,18 +4,31 @@
 #define TF2_TEAM_BLUE 3
 #define TF2_TEAM_RED 2
 
+// Naris @ Alliedmodders.net
+
+#define TF2_PLAYER_SLOWED       (1 << 0)    // 1
+#define TF2_PLAYER_ZOOMED       (1 << 1)    // 2
+#define TF2_PLAYER_DISGUISING   (1 << 2)    // 4
+#define TF2_PLAYER_DISGUISED	(1 << 3)    // 8
+#define TF2_PLAYER_CLOAKED      (1 << 4)    // 16
+#define TF2_PLAYER_INVULN       (1 << 5)    // 32
+#define TF2_PLAYER_HEALING	    (1 << 6)    // 64
+#define TF2_PLAYER_TAUNTING	    (1 << 7)    // 128
+#define TF2_PLAYER_ONFIRE	    (1 << 14)   // 16384
+
 typedef enum
 {
-	TF_CLASS_SCOUT = 1,
-	TF_CLASS_SNIPER = 2,
-	TF_CLASS_SOLDIER = 3,
-	TF_CLASS_DEMOMAN = 4,
-	TF_CLASS_MEDIC = 5,
-	TF_CLASS_HWGUY = 6,
-	TF_CLASS_PYRO = 7,
-	TF_CLASS_SPY = 8,
-	TF_CLASS_ENGINEER = 9,
 	TF_CLASS_CIVILIAN = 0,
+	TF_CLASS_SCOUT,
+	TF_CLASS_SNIPER,
+	TF_CLASS_SOLDIER,
+	TF_CLASS_DEMOMAN,
+	TF_CLASS_MEDIC,
+	TF_CLASS_HWGUY,
+	TF_CLASS_PYRO,
+	TF_CLASS_SPY,
+	TF_CLASS_ENGINEER,
+	TF_CLASS_UNDEFINED
 }TF_Class;
 
 enum
@@ -67,13 +80,13 @@ class CBotFortress : public CBot
 {
 public:	
 
-	CBotFortress() { CBot(); m_fCallMedic = 0; m_fTauntTime = 0; m_fTaunting = 0; m_fLastKnownFlagTime = 0.0f; m_bHasFlag = false; m_pSentryGun = NULL; m_pDispenser = NULL; m_pTeleExit = NULL; m_pTeleEntrance = NULL; }
+	CBotFortress();
+
+	inline edict_t *getHealingEntity () { return m_pHeal; }
 
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
 	virtual void init (bool bVarInit=false);
-	// setup buttons and data structures
-	virtual void setup ();
 
 	virtual void getTasks ( unsigned int iIgnore = 0 ) { CBot :: getTasks(iIgnore); }
 
@@ -84,6 +97,7 @@ public:
 	virtual void modThink ();
 
 	virtual void checkBuildingsValid () {};
+	virtual void checkHealingValid ();
 
 	virtual edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding ) { return false; }
 
@@ -98,10 +112,15 @@ public:
 	virtual bool isCloaked () { return false; }
 	virtual bool isDisguised () { return false; }
 
+	void setVisible ( edict_t *pEntity, bool bVisible );
+
+	virtual void setClass ( TF_Class _class );
+
+	inline edict_t *seeFlag ( bool reset = false ) { if ( reset ) { m_pFlag = NULL; } return m_pFlag; }
 
 	void setLookAtTask ( eLookTask lookTask );
 
-	virtual bool isEnemy ( edict_t *pEdict );
+	virtual bool isEnemy ( edict_t *pEdict,bool bCheckWeapons = true );
 
 	virtual bool startGame ();
 
@@ -129,6 +148,8 @@ public:
 
 	bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint );
 
+	virtual void setup ();
+
 protected:
 	virtual void selectTeam ();
 
@@ -140,10 +161,13 @@ protected:
 	float m_fTauntTime;
 	float m_fTaunting;
 
+	edict_t *m_pHeal;
 	edict_t *m_pSentryGun;
 	edict_t *m_pDispenser;
 	edict_t *m_pTeleEntrance;
 	edict_t *m_pTeleExit;
+
+	edict_t *m_pFlag;
 
 	// valid flag point area
 	Vector m_vLastKnownFlagPoint;
@@ -158,6 +182,7 @@ protected:
 	bool m_bHasFlag;
 
 	
+	
 };
 
 class CBotTF2 : public CBotFortress
@@ -168,9 +193,13 @@ public:
 
 	void engiBuildSuccess ( eEngiBuild iObject );
 
+	void spawnInit ();
+
 	void modThink ();
 
 	bool isCloaked ();
+
+	void setClass ( TF_Class _class );
 
 	bool isDisguised ();
 
@@ -178,7 +207,7 @@ public:
 
 	edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding );
 
-	bool isEnemy ( edict_t *pEdict );
+	bool isEnemy ( edict_t *pEdict,bool bCheckWeapons = true );
 
 	bool isTF () { return true; }
 
@@ -206,6 +235,7 @@ public:
 
 	void updateClass ();
 
+	void setup ();
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
 
 };
@@ -218,7 +248,7 @@ public:
 
 	void modThink ();
 
-	bool isEnemy ( edict_t *pEdict );
+	bool isEnemy ( edict_t *pEdict,bool bCheckWeapons = true );
 
 	bool isTF () { return true; }
 

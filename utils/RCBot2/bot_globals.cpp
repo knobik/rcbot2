@@ -242,6 +242,8 @@ void CBotGlobals :: gameStart ()
 	if ( m_pCurrentMod != NULL )
 	{
 		m_iCurrentMod = m_pCurrentMod->getModId();
+
+		m_pCurrentMod->initMod();
 	}
 
 	CBots::init();

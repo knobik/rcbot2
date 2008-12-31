@@ -142,6 +142,11 @@ void CBot :: setEdict ( edict_t *pEdict)
 	spawnInit();
 }
 
+bool CBot :: isUnderWater ()
+{
+	return (enginetrace->GetPointContents( getEyePosition() ) == CONTENTS_WATER);
+}
+
 // return false if there is a problem
 bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 {
@@ -182,6 +187,7 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 	m_iDesiredClass = pProfile->getClass();
 
 	engine->SetFakeClientConVarValue(pEdict,"cl_playermodel",szModel);
+	engine->SetFakeClientConVarValue(pEdict,"hud_fastswitch","1");
 	/////////////////////////////
 
 	return true;
@@ -257,7 +263,7 @@ void CBot :: checkStuck ()
 		return; // not stuck
 	float fPercentMoved = fSpeed/fIdealSpeed;
 
-	if ( fPercentMoved < 0.3 )
+	if ( fPercentMoved < 0.2 )
 	{
 		m_pButtons->jump();
 		m_pButtons->duck(0.25f,0.25f);
@@ -339,21 +345,24 @@ bool CBot :: isVisible ( edict_t *pEdict )
 bool CBot :: canAvoid ( edict_t *pEntity )
 {
 	float distance;
+	Vector vAvoidOrigin;
 
 	if ( !CBotGlobals::entityIsValid(pEntity) )
 		return false;
 	if ( m_pEdict == pEntity ) // can't avoid self!!!
 		return false;
 
-	distance = distanceFrom(CBotGlobals::entityOrigin(pEntity));
+	vAvoidOrigin = CBotGlobals::entityOrigin(pEntity);
 
-	if ( ( distance > 16 ) && ( distance < 128 ) )
+	distance = distanceFrom(vAvoidOrigin);
+
+	if ( ( distance > 16 ) && ( distance < 160 ) && (fabs(getOrigin().z - vAvoidOrigin.z) < 32) )
 	{
 		SolidType_t solid = pEntity->GetCollideable()->GetSolid() ;
 
 		if ( (solid == SOLID_BBOX) || (solid == SOLID_VPHYSICS) )
 		{			
-			return pEntity == m_pEnemy;
+			return isEnemy(pEntity,false);
 		}
 	}
 
@@ -388,6 +397,31 @@ void CBot :: currentlyDead ()
 	return;
 }
 
+CBotWeapon *CBot::getCurrentWeapon()
+{
+	return m_pWeapons->getActiveWeapon(m_pPlayerInfo->GetWeaponName());
+}
+
+void CBot :: selectWeaponName ( const char *szWeapon )
+{
+	m_pController->SetActiveWeapon(szWeapon);
+}
+
+void CBot :: selectWeaponSlot ( int iSlot )
+{
+	char cmd[16];
+
+	sprintf(cmd,"slot%d",iSlot);
+
+	helpers->ClientCommand(m_pEdict,cmd);
+	//m_iSelectWeapon = iSlot;
+}
+
+CBotWeapon *CBot :: getBestWeapon (edict_t *pEnemy)
+{
+	return m_pWeapons->getBestWeapon(pEnemy);
+}
+
 void CBot :: debugMsg ( int iLev, const char *szMsg )
 {
 	if ( CClients::clientsDebugging () )
@@ -403,6 +437,9 @@ void CBot :: debugMsg ( int iLev, const char *szMsg )
 void CBot :: think ()
 {
 	float fTime = engine->Time();
+
+	m_iLookPriority = 0;
+	m_iMovePriority = 0;
 
 	// if bot is not in game, start it!!!
 	if ( !startGame() )
@@ -588,8 +625,9 @@ void CBot :: spawnInit ()
 
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
-
+	m_pLookEdict = NULL;
 	m_fLookAroundTime = 0.0f;
+	m_pAvoidEntity = NULL;
 	m_bLookedForEnemyLast = false;
 	////////////////////////
 	m_iPrevHealth = 0;  // 
@@ -709,7 +747,7 @@ void CBot :: hurt ( edict_t *pAttacker, int iHealthNow )
 	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
 		m_fLookSetTime = 0;
-		setLookAtTask(LOOK_HURT_ORIGIN);
+		setLookAtTask(LOOK_HURT_ORIGIN,2);
 		m_fLookSetTime = engine->Time() + RandomFloat(1.5,3.0);
 	}
 
@@ -733,10 +771,13 @@ void CBot :: hurt ( edict_t *pAttacker, int iHealthNow )
 	}
 }
 
-void CBot :: setLookAtTask ( eLookTask lookTask ) 
+void CBot :: setLookAtTask ( eLookTask lookTask, int iPriority ) 
 { 
-	if ( m_fLookSetTime < engine->Time() )
+	if ( (iPriority > m_iLookPriority) || ( m_fLookSetTime < engine->Time() ) )
+	{
+		m_iLookPriority = iPriority;
 		m_iLookTask = lookTask; 
+	}	
 }
 
 void CBot :: findEnemy ( edict_t *pOldEnemy )
@@ -869,39 +910,34 @@ void CBot :: doMove ()
 	// moving somewhere?
 	if ( moveToIsValid () )
 	{
+		Vector2D move;
 		float flMove = 0.0;
 		float flSide = 0.0;
 		// fAngle is got from world realting to bots origin, not angles
 		float fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo);
 
-		if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+		if ( m_pAvoidEntity )
 		{
-			/*if ( m_pAvoidEntity == m_pEdict ) // WTF??? :o
-				m_pAvoidEntity = NULL;
+			if ( canAvoid(m_pAvoidEntity) )
+			{
+				//?			
+			}
 			else
-			{*/
-				// Fixed origin as the same as the avoid entity
-				Vector vOrigin = getOrigin();
-				Vector vMoveTo = m_vMoveTo-getOrigin();
-				Vector vAvoid = vOrigin-CBotGlobals::entityOrigin(m_pEnemy);
-
-				if ( vAvoid.Length() > 1 )
-				{
-					Vector vAvoidMoveTo = ((vMoveTo/vMoveTo.Length()) + (vAvoid/vAvoid.Length())) * 80;
-					vAvoidMoveTo = vOrigin + vAvoidMoveTo;
-					vAvoidMoveTo.z = vOrigin.z;
-
-					fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,vAvoidMoveTo);
-				}
-			//}
+				m_pAvoidEntity = NULL;
 		}
 
 		/////////
 		float radians = fAngle * 3.141592f / 180.0f; // degrees to radians
         // fl Move is percentage (0 to 1) of forward speed,
         // flSide is percentage (0 to 1) of side speed.
-		flMove = cos(radians);
-		flSide = sin(radians);
+		
+		move.x = cos(radians);
+		move.y = sin(radians);
+
+		move = move / move.Length();
+
+		flMove = move.x;
+		flSide = move.y;
 
 		m_fForwardSpeed = m_fIdealMoveSpeed * flMove;
 
@@ -1012,6 +1048,11 @@ void CBot :: setLookAt ( Vector vNew )
 	m_bLookAtIsValid = true;
 }
 
+void CBot :: lookAtEdict ( edict_t *pEdict )
+{
+	m_pLookEdict = pEdict;
+}
+
 void CBot :: getLookAtVector ()
 {
 	switch ( m_iLookTask )
@@ -1026,9 +1067,10 @@ void CBot :: getLookAtVector ()
 		//setLookAt(m_pSchedules->);
 		}
 		break;
-	case LOOK_TSK_EDICT:
+	case LOOK_EDICT:
 		{
-		//setLookAt(...);
+			if ( m_pLookEdict )
+				setLookAt(CBotGlobals::entityOrigin(m_pLookEdict));
 		}
 		break;
 	case LOOK_LAST_ENEMY:
@@ -1036,7 +1078,7 @@ void CBot :: getLookAtVector ()
 			if ( m_pLastEnemy )
 				setLookAt(m_vLastSeeEnemy);
 			else
-				setLookAtTask(LOOK_WAYPOINT);
+				setLookAtTask(LOOK_WAYPOINT,2);
 		}
 		break;
 	case LOOK_ENEMY:
@@ -1044,7 +1086,7 @@ void CBot :: getLookAtVector ()
 			if ( m_pEnemy )
 				setLookAt(getAimVector(m_pEnemy));
 			else
-				setLookAtTask(LOOK_WAYPOINT);
+				setLookAtTask(LOOK_WAYPOINT,2);
 		}		
 		break;
 	case LOOK_WAYPOINT:
@@ -1145,6 +1187,16 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
 		*fUpdate = *fCurrent;
 }
 
+void CBot :: select_CWeapon ( CWeapon *pWeapon )
+{
+	CBotWeapon *pSelect = m_pWeapons->getWeapon(pWeapon);
+
+	if ( pSelect )
+	{
+		selectWeapon(pSelect->getWeaponIndex());
+	}
+}
+
 void CBot :: doLook ()
 {
 	//static float fSigmoid[] = {0.1,0.3,0.4,0.5,0.4,0.3,0.1};
@@ -1174,6 +1226,30 @@ void CBot :: doLook ()
 void CBot :: doButtons ()
 {
 	m_iButtons = m_pButtons->getBitMask();
+}
+
+void CBot :: secondaryAttack ( bool bHold )
+{
+	float fLetGoTime = 0.15;
+	float fHoldTime = 0.12;
+
+	if ( bHold )
+	{
+		fLetGoTime = 0.0;
+		fHoldTime = 1.0;
+	}
+
+	// not currently in "letting go" stage?
+	if ( bHold || m_pButtons->canPressButton(IN_ATTACK2) )
+	{
+		m_pButtons->holdButton
+			(
+				IN_ATTACK2,
+				0/* reaction time? (time to press)*/,
+				fHoldTime/* hold time*/,
+				fLetGoTime/*let go time*/
+			); 
+	}
 }
 
 void CBot :: primaryAttack ( bool bHold )

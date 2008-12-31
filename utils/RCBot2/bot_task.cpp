@@ -36,12 +36,71 @@
 #include "bot_waypoint_locations.h"
 #include "bot_globals.h"
 #include "in_buttons.h"
-
+#include "bot_weapons.h"
 #include "bot_fortress.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Tasks
 
+CBotTF2MedicHeal :: CBotTF2MedicHeal ()
+{
+
+}
+
+void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
+{
+	edict_t *m_pHeal;
+	
+	if ( !pBot->isTF() )
+	{
+		fail();
+		return;
+	}
+
+	m_pHeal = ((CBotFortress*)pBot)->getHealingEntity();
+
+	if ( !m_pHeal )
+		fail();
+	else if ( !CBotGlobals::entityIsValid(m_pHeal) || !CBotGlobals::entityIsAlive(m_pHeal) )
+	{
+		fail();
+	}
+	else if ( pBot->getCurrentWeapon() == NULL )
+	{
+		fail();
+	}
+	else if ( pBot->getCurrentWeapon()->getWeaponInfo()->getID() != TF2_WEAPON_MEDIGUN )
+	{
+		pBot->select_CWeapon( CWeapons::getWeapon(TF2_WEAPON_MEDIGUN) );
+	}
+	else if ( pBot->isVisible(m_pHeal) )
+	{
+		Vector vOrigin = CBotGlobals::entityOrigin(m_pHeal);
+
+		if ( pBot->distanceFrom(vOrigin) > 200 )
+		{
+			pBot->setMoveTo(vOrigin,2);
+		}
+		else
+			pBot->stopMoving();
+
+		pBot->lookAtEdict(m_pHeal);
+		pBot->setLookAtTask(LOOK_EDICT,2);
+		// unselect weapon
+		pBot->selectWeapon(0);
+
+		pBot->primaryAttack(true);
+
+		if ( pBot->hasEnemy() && pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+		{
+			// uber if ready
+			pBot->secondaryAttack();
+		}
+
+	}
+	else
+		fail();
+}
 
 CBotTF2WaitHealthTask :: CBotTF2WaitHealthTask ( Vector vOrigin )
 {
@@ -62,8 +121,8 @@ void CBotTF2WaitHealthTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->setLookAtTask(LOOK_AROUND);
 
-		if ( pBot->distanceFrom(m_vOrigin) > 32 )
-			pBot->setMoveTo(m_vOrigin);
+		if ( pBot->distanceFrom(m_vOrigin) > 50 )
+			pBot->setMoveTo(m_vOrigin,2);
 		else
 			pBot->stopMoving();
 
@@ -78,34 +137,63 @@ void CBotTF2WaitHealthTask :: debugString ( char *string )
 }
 
 
-CBotTF2WaitFlagTask :: CBotTF2WaitFlagTask ( Vector vOrigin )
+CBotTF2WaitFlagTask :: CBotTF2WaitFlagTask ( Vector vOrigin, bool bFind )
 {
 	m_vOrigin = vOrigin;
 	m_fWaitTime = 0;
+	m_bFind = bFind;
 }
 
 void CBotTF2WaitFlagTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( !m_fWaitTime )
-		m_fWaitTime = engine->Time() + 70.0f;
+	{
+		if ( m_bFind )
+			m_fWaitTime = engine->Time() + 5.0f;
+		else
+			m_fWaitTime = engine->Time() + 70.0f;
+	}
 
 	if ( ((CBotTF2*)pBot)->hasFlag() )
 		complete();
 	else if ( pBot->getHealthPercent() < 0.2 )
+	{
 		fail();
+	}
 	else if ( m_fWaitTime < engine->Time() )
+	{
+		((CBotFortress*)pBot)->flagReset();
 		fail();
+	}
+	else if ( !pBot->isTF() )
+	{
+		fail();
+	}
 	else
 	{		
-		pBot->setLookAtTask(LOOK_AROUND);
+		if ( ((CBotFortress*)pBot)->seeFlag(false) != NULL )
+		{
+			edict_t *m_pFlag = ((CBotFortress*)pBot)->seeFlag(false);
 
-		if ( pBot->distanceFrom(m_vOrigin) > 32 )
-			pBot->setMoveTo(m_vOrigin);
+			if ( CBotGlobals::entityIsValid(m_pFlag) )
+			{
+				pBot->lookAtEdict(m_pFlag);
+				pBot->setLookAtTask(LOOK_EDICT,2);
+				m_vOrigin = CBotGlobals::entityOrigin(m_pFlag);
+			}
+			else
+				((CBotFortress*)pBot)->seeFlag(true);
+		}
 		else
-			pBot->stopMoving();
+			pBot->setLookAtTask(LOOK_AROUND);
 
-		if ( pBot->isTF() )
-			((CBotTF2*)pBot)->taunt();
+		if ( pBot->distanceFrom(m_vOrigin) > 48 )
+			pBot->setMoveTo(m_vOrigin,2);
+		else
+			pBot->stopMoving(2);
+
+		((CBotTF2*)pBot)->taunt();
+	
 	}
 }
 
@@ -170,7 +258,7 @@ void CBotTFEngiTankSentry :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( pBot->distanceFrom(vOrigin) > 32  )
 		{
 			// get into position!
-			pBot->setMoveTo(vOrigin);
+			pBot->setMoveTo(vOrigin,2);
 		}
 		else
 		{
@@ -179,7 +267,7 @@ void CBotTFEngiTankSentry :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			else
 			{
 				setTaskEntity();
-				pBot->setLookAt(TSK_ENTITY);
+				pBot->setLookAt(TSK_ENTITY,2);
 
 				// Tank!!!
 				pBot->duck();
@@ -212,10 +300,23 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	tfBot = (CBotFortress*)pBot;
 
 	if ( tfBot->getClass() != TF_CLASS_ENGINEER )
+	{
 		fail();
+		return;
+	}
+	else if ( pBot->hasEnemy() && pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	{
+		fail();
+		return;
+	}
 
 	if ( pBot->distanceFrom(m_vOrigin) > 100 )
-		pBot->setMoveTo(m_vOrigin);
+	{
+		if ( !CBotGlobals::isVisible(pBot->getEdict(),pBot->getEyePosition(),m_vOrigin) )
+			fail();
+		else
+			pBot->setMoveTo(m_vOrigin,2);
+	}
 	else
 	{
 		if ( m_iState == 0 )
@@ -229,6 +330,8 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 		else if ( m_iState == 1 )
 		{
+			// unselect current weapon
+			tfBot->selectWeapon(0);
 			tfBot->engineerBuild(m_iObject,ENGI_BUILD);
 			m_iState ++;
 		}
@@ -419,7 +522,7 @@ void CMoveToTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	}
 	else
 	{		
-		pBot->setMoveTo(vOrigin);
+		pBot->setMoveTo(vOrigin,2);
 
 		if ( pBot->moveFailed() )
 			fail();
@@ -451,6 +554,8 @@ void CAttackEntityTask :: init ()
 
 void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	CBotWeapon *pWeapon;
+
 	if ( m_pEdict == NULL )
 	{
 		fail();
@@ -473,11 +578,29 @@ void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
+	pWeapon = pBot->getBestWeapon(m_pEdict);
+
+	if ( (pWeapon != NULL) && (pWeapon != pBot->getCurrentWeapon()) && pWeapon->getWeaponIndex() )
+	{
+		pBot->selectWeapon(pWeapon->getWeaponIndex());
+	}
+
 	pBot->setEnemy(m_pEdict);
 
-	pBot->setLookAtTask(LOOK_ENEMY);
+	pBot->setLookAtTask(LOOK_ENEMY,2);
 
-	pBot->primaryAttack();
+	if ( pWeapon )
+	{
+		if ( pWeapon->isMelee() )
+			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pEdict),2);
+
+		if ( pWeapon->mustHoldAttack() )
+			pBot->primaryAttack(true);
+		else
+			pBot->primaryAttack();
+	}
+	else
+		pBot->primaryAttack();
 }
 
 ///

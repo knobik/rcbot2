@@ -30,7 +30,7 @@ bool CCSSBot :: isAlive ()
 	return (getOrigin() != Vector(0,0,0));
 }
 
-bool CCSSBot :: isEnemy ( edict_t *pEdict )
+bool CCSSBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
 	if ( ENTINDEX(pEdict) > CBotGlobals::maxClients() )
 		return false;

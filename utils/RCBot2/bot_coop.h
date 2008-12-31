@@ -6,7 +6,7 @@ class CBotCoop : public CBot
 public:
 	virtual void modThink ();
 
-	virtual bool isEnemy ( edict_t *pEdict );
+	virtual bool isEnemy ( edict_t *pEdict, bool bCheckWeapons = true  );
 
 	virtual bool startGame ();
 };

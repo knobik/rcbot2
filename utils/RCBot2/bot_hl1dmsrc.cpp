@@ -70,7 +70,7 @@ void CHL1DMSrcBot :: spawnInit ()
 	CBot::spawnInit();
 }
 
-bool CHL1DMSrcBot :: isEnemy ( edict_t *pEdict )
+bool CHL1DMSrcBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
 	if ( !pEdict )
 		return false;

@@ -154,6 +154,17 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 	static Vector vEntityOrigin;
 	static int clusterIndex;
 	static bool playerInPVS;
+	float m_fAvoidEntityDist = 0;
+	float m_fTempDist = 0;
+
+	edict_t *pAvoidEntity = m_pBot->getAvoidEntity();
+
+	if ( !CBotGlobals::entityIsValid(pAvoidEntity) )
+		pAvoidEntity = NULL;
+	else
+	{
+		m_fAvoidEntityDist = m_pBot->distanceFrom(CBotGlobals::entityOrigin(pAvoidEntity));
+	}
 
 	// reset
 	*bVisible = false;
@@ -161,10 +172,8 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 	// update
 	if ( CBotGlobals::entityIsValid(pEntity) )
 	{
-		// update tick
-		*iTicks = *iTicks + 1;
 
-		if ( CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()) )
+		if ( CClients::clientsDebugging() && CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()) )
 			debugoverlay->AddLineOverlay(m_pBot->getOrigin(),CBotGlobals::entityOrigin(pEntity),255,255,255,false,1);			
 
 		// if in view cone
@@ -182,17 +191,41 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 
 			if ( playerInPVS )
 			{
+				// update tick
+				*iTicks = *iTicks + 1;
+
 				*bVisible = m_pBot->FVisible(pEntity);
 
-				if ( CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()))
-					debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,3,"VISIBLE");
+				if ( bVisible )
+				{
+					if ( m_pBot->canAvoid(pEntity) )
+					{
+						m_fTempDist = m_pBot->distanceFrom(CBotGlobals::entityOrigin(pAvoidEntity));
+
+						if ( !pAvoidEntity || (m_fTempDist<m_fAvoidEntityDist) )
+						{
+							pAvoidEntity = pEntity;
+							m_fAvoidEntityDist = m_fTempDist;
+						}
+					}
+
+					if ( CClients::clientsDebugging() && CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()))
+						debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,0.1,"VISIBLE");
+				}
+				else
+				{
+					if ( CClients::clientsDebugging() && CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()))
+						debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,0.1,"INVISIBLE");
+				}
 			}
-			else if ( CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()))
-				debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,3,"INVISIBLE: playerInPVS false");
+			else if ( CClients::clientsDebugging() && CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()))
+				debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,0.1,"INVISIBLE: playerInPVS false");
 		}
-		else if ( CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()) )
-			debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,3,"INVISIBLE: FInViewCone false");
+		else if ( CClients::clientsDebugging() && CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()) )
+			debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,0.1,"INVISIBLE: FInViewCone false");
 	}
+
+	m_pBot->setAvoidEntity(pAvoidEntity);
 }
 
 void CBotVisibles :: updateVisibles ()

@@ -63,6 +63,8 @@
 #include "bot_waypoint_visibility.h" // for initializing table
 #include "bot_event.h"
 #include "bot_profile.h"
+#include "bot_weapons.h"
+#include "bot_mods.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -259,6 +261,7 @@ void CRCBotPlugin::Unload( void )
 	CWaypoints::freeMemory();
 	CWaypointTypes::freeMemory();
 	CBotProfiles::deleteProfiles();
+	CWeapons::freeMemory();
 
 	//ConVar_Unregister();
 
@@ -783,3 +786,48 @@ unsigned int CClassInterface :: findOffset(const char *szType,const char *szClas
 
 	return 0;
 }
+
+int CClassInterface :: getTF2NumHealers ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_nNumHealers","CTFPlayer");
+	
+	if (!offset)
+		return NULL;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return NULL;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return *(int *)((char *)pEntity + offset);
+}
+
+int CClassInterface :: getTF2Conditions ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_nPlayerCond","CTFPlayer");
+	
+	if (!offset)
+		return NULL;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return NULL;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return *(int *)((char *)pEntity + offset);
+}
+

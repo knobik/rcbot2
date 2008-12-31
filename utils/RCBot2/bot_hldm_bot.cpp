@@ -70,7 +70,7 @@ void CHLDMBot :: spawnInit ()
 	CBot::spawnInit();
 }
 
-bool CHLDMBot :: isEnemy ( edict_t *pEdict )
+bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
 	if ( pEdict == m_pEdict )
 		return false;

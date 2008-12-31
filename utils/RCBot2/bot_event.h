@@ -207,6 +207,17 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2ChangeClass : public CBotEvent
+{
+public:
+	CTF2ChangeClass()
+	{
+		setType("player_changeclass");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 
 class CFlagEvent : public CBotEvent
 {

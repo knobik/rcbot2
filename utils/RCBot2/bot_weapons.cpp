@@ -36,27 +36,92 @@ using namespace std;
 #include "bot_globals.h"
 #include "bot_weapons.h"
 
+const char *g_szTF2Weapons[] =
+{
+"tf_weapon_bat",
+"tf_weapon_bonesaw",
+"tf_weapon_bottle",
+"tf_weapon_builder",
+"tf_weapon_club",
+"tf_weapon_fireaxe",
+"tf_weapon_fists",
+"tf_weapon_flamethrower",
+"tf_weapon_grenadelauncher",
+"tf_weapon_invis",
+"tf_weapon_knife",
+"tf_weapon_medigun",
+"tf_weapon_minigun",
+"tf_weapon_objectselection",
+"tf_weapon_pda_engineer_build",
+"tf_weapon_pda_engineer_destroy",
+"tf_weapon_pda_spy",
+"tf_weapon_pipebomblauncher",
+"tf_weapon_pistol",
+"tf_weapon_pistol_scout",
+"tf_weapon_revolver",
+"tf_weapon_rocketlauncher",
+"tf_weapon_scattergun",
+"tf_weapon_shotgun_hwg",
+"tf_weapon_shotgun_primary",
+"tf_weapon_shotgun_pyro",
+"tf_weapon_shotgun_soldier",
+"tf_weapon_shovel",
+"tf_weapon_smg",
+"tf_weapon_sniperrifle",
+"tf_weapon_syringegun_medic",
+"tf_weapon_wrench"
+};
+
+int m_TF2AmmoIndices[] =
+{
+	0,0,0,0,0,0,0,1,1,0,0,0,1,0,0,0,0,2,2,2,2,1,1,2,1,2,2,0,2,1,1,0
+};
+
+
+TF2WeaponsData_t TF2Weaps[] =
+{
+	{3,TF2_WEAPON_BAT,				g_szTF2Weapons[0],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[0],1},
+	{3,TF2_WEAPON_BONESAW,			g_szTF2Weapons[1],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[1],1},
+	{3,TF2_WEAPON_BOTTLE,				g_szTF2Weapons[2],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[2],1},
+	{0,TF2_WEAPON_BUILDER,			g_szTF2Weapons[3],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[3],1},
+	{3,TF2_WEAPON_CLUB,				g_szTF2Weapons[4],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[4],1},
+	{3,TF2_WEAPON_FIREAXE,			g_szTF2Weapons[5],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[5],1},
+	{3,TF2_WEAPON_FISTS,				g_szTF2Weapons[6],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[6],1},
+	{1,TF2_WEAPON_FLAMETHROWER,		g_szTF2Weapons[7],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_HOLDATTACK|WEAP_FL_SPECIAL,0,400,m_TF2AmmoIndices[7],3},
+	{1,TF2_WEAPON_GRENADELAUNCHER,	g_szTF2Weapons[8],	WEAP_FL_PRIM_ATTACK|WEAP_FL_EXPLOSIVE|WEAP_FL_UNDERWATER,0,1000,m_TF2AmmoIndices[8],2},
+	{0,TF2_WEAPON_INVIS,				g_szTF2Weapons[9],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[9],1},
+	{3,TF2_WEAPON_KNIFE,				g_szTF2Weapons[10],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[10],2},
+	{2,TF2_WEAPON_MEDIGUN,			g_szTF2Weapons[11],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[11],1},
+	{1,TF2_WEAPON_MINIGUN,			g_szTF2Weapons[12],	WEAP_FL_PRIM_ATTACK|WEAP_FL_HOLDATTACK,0,2000,m_TF2AmmoIndices[12],2},
+	{0,TF2_WEAPON_OBJECTSSELECTION,	g_szTF2Weapons[13],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[13],1},
+	{0,TF2_WEAPON_PDA_ENGI_BUILD,		g_szTF2Weapons[14],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[14],1},
+	{0,TF2_WEAPON_PDA_ENGI_DESTROY,	g_szTF2Weapons[15],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[15],1},
+	{0,TF2_WEAPON_PDA_SPY,			g_szTF2Weapons[16],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[16],1},
+	{2,TF2_WEAPON_PIPEBOMBS,			g_szTF2Weapons[17],	WEAP_FL_NONE,0,1000,m_TF2AmmoIndices[17],1},
+	{2,TF2_WEAPON_PISTOL,				g_szTF2Weapons[18],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1400,m_TF2AmmoIndices[18],1},
+	{2,TF2_WEAPON_PISTOL_SCOUT,		g_szTF2Weapons[19],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1800,m_TF2AmmoIndices[19],2},
+	{1,TF2_WEAPON_REVOLVER,			g_szTF2Weapons[20],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1400,m_TF2AmmoIndices[20],1},
+	{1,TF2_WEAPON_ROCKETLAUNCHER,		g_szTF2Weapons[21],	WEAP_FL_PRIM_ATTACK|WEAP_FL_EXPLOSIVE|WEAP_FL_UNDERWATER,0,4000,m_TF2AmmoIndices[21],3},
+	{1,TF2_WEAPON_SCATTERGUN,			g_szTF2Weapons[22],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,m_TF2AmmoIndices[22],3},
+	{2,TF2_WEAPON_SHOTGUN_HWG,		g_szTF2Weapons[23],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,m_TF2AmmoIndices[23],2},
+	{1,TF2_WEAPON_SHOTGUN_PRIMARY,	g_szTF2Weapons[24],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,m_TF2AmmoIndices[24],2},
+	{2,TF2_WEAPON_SHOTGUN_PYRO,		g_szTF2Weapons[25],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,m_TF2AmmoIndices[25],2},
+	{2,TF2_WEAPON_SHOTGUN_SOLDIER,	g_szTF2Weapons[26],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,m_TF2AmmoIndices[26],2},
+	{3,TF2_WEAPON_SHOVEL,				g_szTF2Weapons[27],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[27],1},
+	{2,TF2_WEAPON_SMG,				g_szTF2Weapons[28],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1000,m_TF2AmmoIndices[28],2},
+	{1,TF2_WEAPON_SNIPERRIFLE,		g_szTF2Weapons[29],	WEAP_FL_PRIM_ATTACK,0,4000,m_TF2AmmoIndices[29],3},
+	{1,TF2_WEAPON_SYRINGEGUN,			g_szTF2Weapons[30],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1000,m_TF2AmmoIndices[30],2},
+	{3,TF2_WEAPON_WRENCH,				g_szTF2Weapons[31],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[31],1}
+};
+
+
 // static init (all weapons in game)
 vector<CWeapon*> CWeapons :: m_theWeapons;
 
-// compare preference sorting
-class CompareWeapPref
+int CBotWeapon :: getAmmo (CBot *pBot)
 {
-public:
-	bool operator()(CBotWeapon *a, CBotWeapon *b)
-	{
-		if ( a->outOfAmmo() )
-			return false;//b
-		if ( b->outOfAmmo() )
-			return true;//a
-		if ( a->needToReload() )
-			return false;//b
-		if ( b->needToReload() )
-			return true;//a
-
-		return a->getPreference() > b->getPreference();
-	}
-}; 
+	return pBot->getAmmo(m_pWeaponInfo->getAmmoIndex());
+}
 
 // Bot Weapons
 CBotWeapons :: CBotWeapons ( CBot *pBot ) 
@@ -64,17 +129,23 @@ CBotWeapons :: CBotWeapons ( CBot *pBot )
 	m_pBot = pBot;
 
 	for ( int i = 0; i < MAX_WEAPONS; i ++ )
+	{
+		// find weapon info from weapon id
 		m_theWeapons[i].setWeapon(CWeapons::getWeapon(i));
+	}
 }
 
-CBotWeapon *CBotWeapons :: getBestWeapon ()
+CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 {
-	priority_queue<CBotWeapon*,vector<CBotWeapon*>,CompareWeapPref> m_theBestWeapons;
+	CBotWeapon *m_theBestWeapon = NULL;
+	int iBestPreference = 0;
+
+	if ( !pEnemy )
+		return NULL;
 
 	float flDist = 0;
 
-	if ( m_pBot->hasEnemy() )
-		flDist = m_pBot->distanceFrom(CBotGlobals::entityOrigin(m_pBot->getEnemy()));
+	flDist = m_pBot->distanceFrom(CBotGlobals::entityOrigin(pEnemy));
 
 	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 	{
@@ -83,31 +154,111 @@ CBotWeapon *CBotWeapons :: getBestWeapon ()
 		if ( !pWeapon )
 			continue;
 
-		if ( pWeapon->outOfAmmo() )
+		if ( !pWeapon->hasWeapon() )
 			continue;
 
-		if ( !pWeapon->primaryInRange(flDist) && !pWeapon->secondaryInRange(flDist) )
+		if ( !pWeapon->isMelee() || pWeapon->isSpecial() )
+		{
+			if ( pWeapon->outOfAmmo(m_pBot) )
+				continue;
+		}
+
+		if ( !pWeapon->canAttack() )
 			continue;
 
-		m_theBestWeapons.push(pWeapon);
+		if ( m_pBot->isUnderWater() && !pWeapon->canUseUnderWater() )
+			continue;
+
+		if ( !pWeapon->primaryInRange(flDist) )
+			continue;
+
+		if ( pWeapon->getPreference() > iBestPreference )
+		{
+			iBestPreference = pWeapon->getPreference();
+			m_theBestWeapon = pWeapon;
+		}
 	}
 
-	return m_theBestWeapons.top();
+	return m_theBestWeapon;
 }
 
 void CBotWeapons :: addWeapon ( int iId )
 {
-	m_theWeapons[iId].setHasWeapon(true);	
+
+	int i = 0;
+	Vector origin;
+	edict_t *pEnt;
+	const char *classname;
+	CWeapon *pWeapon;
+
+	m_theWeapons[iId].setHasWeapon(true);
+
+	pWeapon = m_theWeapons[iId].getWeaponInfo();
+
+	if ( !pWeapon )
+		return;
+
+	classname = pWeapon->getWeaponName();
+
+	origin = m_pBot->getOrigin();
+
+	for ( i = 1; i <= gpGlobals->maxEntities; i ++ )
+	{
+		pEnt = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pEnt) )
+		{
+			if ( strcmp(pEnt->GetClassName(),classname) == 0 )
+			{
+				if ( CBotGlobals::entityOrigin(pEnt) == origin )
+				{
+					m_theWeapons[iId].setWeaponIndex(i);
+					break;
+				}
+			}
+		}
+	}
 }
 
-void CBotWeapons :: addWeapon ( const char *szWeaponName )
+CBotWeapon *CBotWeapons :: getWeapon ( CWeapon *pWeapon )
 {
-	CWeapon *pWeapon = CWeapons::getWeapon(szWeaponName);
+	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
+	{
+		if ( m_theWeapons[i].getWeaponInfo() == pWeapon )
+			return &(m_theWeapons[i]);
+	}
 
-	m_theWeapons[pWeapon->getID()].setHasWeapon(true);
-	//m_theWeapons(pWeapon->get)
-	//m_theWeapons.push_back(pWeapon);
+	return NULL;
 }
+
+void CBotWeapons :: clearWeapons ()
+{
+	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
+		m_theWeapons[i].setHasWeapon(false);	
+}
+
+CBotWeapon *CBotWeapons :: getActiveWeapon ( const char *szWeaponName )
+{
+	if ( szWeaponName && *szWeaponName )
+	{
+		CWeapon *pWeapon = CWeapons::getWeapon(szWeaponName);
+
+		if ( pWeapon )
+			return &m_theWeapons[pWeapon->getID()];
+	}
+
+	return NULL;
+}
+
+bool CBotWeapon :: outOfAmmo(CBot *pBot)
+{
+	return getAmmo(pBot)==0;
+}
+/*
+bool CBotWeapon :: needToReload(CBot *pBot)
+{
+	return getAmmo(pBot)==0;
+}*/
 ////////////////////////////////////////
 // CWeapons
 
@@ -189,5 +340,11 @@ void CWeapons :: eachWeapon ( IWeaponFunc *pFunc )
 
 void CWeapons :: freeMemory ()
 {
+	for ( unsigned int i = 0; i < m_theWeapons.size(); i ++ )
+	{
+		delete m_theWeapons[i];
+		m_theWeapons[i] = NULL;
+	}
+
 	m_theWeapons.clear();
 }

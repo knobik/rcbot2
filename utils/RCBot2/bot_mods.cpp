@@ -32,6 +32,7 @@
 #include "bot_mods.h"
 #include "bot_globals.h"
 #include "bot_fortress.h"
+#include "bot_weapons.h"
 
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 /*
@@ -204,6 +205,7 @@ void CBotMods :: createFile ()
 
 	if ( fp )
 	{
+		fprintf(fp,"# EXAMPLE MOD FILE");
 		fprintf(fp,"# valid mod types\n");
 		fprintf(fp,"# ---------------\n");
 		fprintf(fp,"# CSS\n");
@@ -226,30 +228,30 @@ void CBotMods :: createFile ()
 		fprintf(fp,"# ZOMBIE\n");
 		fprintf(fp,"#\n");
 		fprintf(fp,"#\n");
-		fprintf(fp,"mod = CSS\n");
-		fprintf(fp,"steamdir = counter-strike source\n");
-		fprintf(fp,"gamedir = cstrike\n");
-		fprintf(fp,"bot = CSS\n");
+		fprintf(fp,"#mod = CSS\n");
+		fprintf(fp,"#steamdir = counter-strike source\n");
+		fprintf(fp,"#gamedir = cstrike\n");
+		fprintf(fp,"#bot = CSS\n");
 		fprintf(fp,"#\n");
-		fprintf(fp,"mod = TF2\n");
-		fprintf(fp,"steamdir = teamfortress 2\n");
-		fprintf(fp,"gamedir = tf\n");
-		fprintf(fp,"bot = TF2\n");
+		fprintf(fp,"#mod = TF2\n");
+		fprintf(fp,"#steamdir = teamfortress 2\n");
+		fprintf(fp,"#gamedir = tf\n");
+		fprintf(fp,"#bot = TF2\n");
 		fprintf(fp,"#\n");
-		fprintf(fp,"mod = FF\n");
-		fprintf(fp,"steamdir = sourcemods\n");
-		fprintf(fp,"gamedir = ff\n");
-		fprintf(fp,"bot = FF\n");
+		fprintf(fp,"#mod = FF\n");
+		fprintf(fp,"#steamdir = sourcemods\n");
+		fprintf(fp,"#gamedir = ff\n");
+		fprintf(fp,"#bot = FF\n");
 		fprintf(fp,"#\n");
-		fprintf(fp,"mod = HL2DM\n");
-		fprintf(fp,"steamdir = half-life 2 deathmatch\n");
-		fprintf(fp,"gamedir = hl2mp\n");
-		fprintf(fp,"bot = HL2DM\n");
+		fprintf(fp,"#mod = HL2DM\n");
+		fprintf(fp,"#steamdir = half-life 2 deathmatch\n");
+		fprintf(fp,"#gamedir = hl2mp\n");
+		fprintf(fp,"#bot = HL2DM\n");
 		fprintf(fp,"#\n");
-		fprintf(fp,"mod = HL1DM\n");
-		fprintf(fp,"steamdir = half-life 1 deathmatch\n");
-		fprintf(fp,"gamedir = hl1dm\n");
-		fprintf(fp,"bot = HL1DM\n");
+		fprintf(fp,"#mod = HL1DM\n");
+		fprintf(fp,"#steamdir = half-life 1 deathmatch\n");
+		fprintf(fp,"#gamedir = hl1dm\n");
+		fprintf(fp,"#bot = HL1DM\n");
 		fprintf(fp,"#\n");
 		fprintf(fp,"mod = CUSTOM\n");
 		fprintf(fp,"steamdir = day of defeat source\n");
@@ -265,8 +267,7 @@ void CBotMods :: createFile ()
 
 void CBotMods :: readMods()
 {
-	parseFile();
-	/*
+	
 	m_Mods.push_back(new CCounterStrikeSourceMod());
 	m_Mods.push_back(new CHalfLifeDeathmatchMod());
 
@@ -279,7 +280,11 @@ void CBotMods :: readMods()
 	m_Mods.push_back(new CTeamFortress2Mod());
 	m_Mods.push_back(new CTeamFortress2ModDedicated());
 
-	m_Mods.push_back(new CHLDMSourceMod());*/
+	m_Mods.push_back(new CHLDMSourceMod());
+
+	// Look for extra MODs
+
+	parseFile();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -370,6 +375,80 @@ void CBotMod :: entitySpawn ( edict_t *pEntity )
 
 /////////////////////////////////////////////////////////////
 
+
+// Naris @ AlliedModders .net
+
+bool CTeamFortress2Mod :: TF2_IsPlayerZoomed(edict_t *pPlayer)
+{
+    int pcond = CClassInterface :: getTF2Conditions(pPlayer);
+    return ((pcond & TF2_PLAYER_ZOOMED) == TF2_PLAYER_ZOOMED);
+}
+
+bool CTeamFortress2Mod :: TF2_IsPlayerSlowed(edict_t *pPlayer)
+{
+    int pcond = CClassInterface :: getTF2Conditions(pPlayer);
+    return ((pcond & TF2_PLAYER_SLOWED) == TF2_PLAYER_SLOWED);
+}
+
+bool CTeamFortress2Mod :: TF2_IsPlayerDisguised(edict_t *pPlayer)
+{
+    int pcond = CClassInterface :: getTF2Conditions(pPlayer);
+    return ((pcond & TF2_PLAYER_DISGUISED) == TF2_PLAYER_DISGUISED);
+}
+
+bool CTeamFortress2Mod :: TF2_IsPlayerTaunting ( edict_t *pPlayer )
+{
+    int pcond = CClassInterface :: getTF2Conditions(pPlayer);
+    return ((pcond & TF2_PLAYER_TAUNTING) == TF2_PLAYER_TAUNTING);
+}
+
+bool CTeamFortress2Mod :: TF2_IsPlayerCloaked(edict_t *pPlayer)
+{
+    int pcond = CClassInterface :: getTF2Conditions(pPlayer);
+    return ((pcond & TF2_PLAYER_CLOAKED) == TF2_PLAYER_CLOAKED);
+}
+
+bool CTeamFortress2Mod :: TF2_IsPlayerInvuln(edict_t *pPlayer)
+{
+    int pcond = CClassInterface :: getTF2Conditions(pPlayer);
+    return ((pcond & TF2_PLAYER_INVULN) == TF2_PLAYER_INVULN);
+}
+
+bool CTeamFortress2Mod :: TF2_IsPlayerOnFire(edict_t *pPlayer)
+{
+    int pcond = CClassInterface :: getTF2Conditions(pPlayer);
+    return ((pcond & TF2_PLAYER_ONFIRE) == TF2_PLAYER_ONFIRE);
+}
+
+float CTeamFortress2Mod :: TF2_GetClassSpeed(int iClass)
+{
+    switch (iClass)
+    {
+		// Fix needed: Too Fast!!!
+        case TF_CLASS_SCOUT:     return 300.0f;
+        case TF_CLASS_SOLDIER:   return 160.0f;
+        case TF_CLASS_DEMOMAN:   return 180.0f;
+        case TF_CLASS_MEDIC:     return 220.0f;
+        case TF_CLASS_PYRO:      return 200.0f;
+        case TF_CLASS_SPY:       return 200.0f;
+        case TF_CLASS_ENGINEER:  return 200.0f;
+        case TF_CLASS_SNIPER:    return 200.0f;
+        case TF_CLASS_HWGUY:     return 140.0f;
+    }
+    return 0.0;
+}
+
+float CTeamFortress2Mod :: TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass )
+{
+    if (TF2_IsPlayerSlowed(pPlayer))
+        return 80.0;
+    else
+        return TF2_GetClassSpeed(iClass);
+}
+
+
+
+
 int CTeamFortress2Mod :: getTeam ( edict_t *pEntity )
 {
 	return CClassInterface::getTeam (pEntity);
@@ -397,6 +476,11 @@ bool CTeamFortress2Mod :: isDispenser ( edict_t *pEntity, int iTeam )
 	return (strcmp(pEntity->GetClassName(),"obj_dispenser")==0) && (!iTeam || (iTeam == getTeam(pEntity)));
 }
 
+bool CTeamFortress2Mod :: isFlag ( edict_t *pEntity, int iTeam )
+{
+	return (strcmp(pEntity->GetClassName(),"item_teamflag")==0) && (!iTeam || (getEnemyTeam(iTeam) == getTeam(pEntity)));
+}
+
 bool CTeamFortress2Mod :: isSentry ( edict_t *pEntity, int iTeam )
 {
 	return (strcmp(pEntity->GetClassName(),"obj_sentrygun")==0) && (!iTeam || (iTeam == getTeam(pEntity)));
@@ -410,6 +494,14 @@ bool CTeamFortress2Mod :: isTeleporterEntrance ( edict_t *pEntity, int iTeam )
 bool CTeamFortress2Mod :: isTeleporterExit ( edict_t *pEntity, int iTeam )
 {
 	return (strcmp(pEntity->GetClassName(),"obj_teleporter_exit")==0) && (!iTeam || (iTeam == getTeam(pEntity)));
+}
+
+void CTeamFortress2Mod :: initMod ()
+{
+	// Setup Weapons
+
+	for ( unsigned int i = 0; i < TF2_WEAPON_MAX; i ++ )
+		CWeapons::addWeapon(new CWeapon(TF2Weaps[i].iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference));
 }
 
 void CTeamFortress2Mod :: mapInit ()
@@ -428,4 +520,6 @@ void CTeamFortress2Mod :: mapInit ()
 		m_MapType = TF_MAP_CART;
 	else
 		m_MapType = TF_MAP_DM;
+
 }
+

@@ -116,6 +116,21 @@ void CTF2BuiltObjectEvent :: execute ( IBotEventInterface *pEvent )
 	}
 }
 
+void CTF2ChangeClass :: execute ( IBotEventInterface *pEvent )
+{
+	CBot *pBot = CBots::getBotPointer(m_pActivator);
+
+	if ( pBot && pBot->isTF() )
+	{
+
+		int _class = pEvent->getInt("class");
+
+		((CBotFortress*)pBot)->setClass((TF_Class)_class);
+
+	}
+}
+
+
 void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 {
 	int type = pEvent->getInt("eventtype");
@@ -213,6 +228,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CFlagEvent());
 	addEvent(new CPlayerSpawnEvent());
 	addEvent(new CTF2BuiltObjectEvent());
+	addEvent(new CTF2ChangeClass());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

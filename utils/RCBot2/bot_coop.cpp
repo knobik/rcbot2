@@ -12,7 +12,7 @@ void CBotCoop :: modThink ()
 	// find enemies and health stations / objectives etc
 }
 
-bool CBotCoop :: isEnemy ( edict_t *pEdict )
+bool CBotCoop :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
 	const char *classname;
 

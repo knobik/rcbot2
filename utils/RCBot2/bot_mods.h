@@ -33,6 +33,7 @@
 
 #include "bot_const.h"
 #include "bot_strings.h"
+#include "bot_fortress.h"
 
 #include <vector>
 using namespace std;
@@ -224,6 +225,8 @@ public:
 		return "CTFPlayer";
 	}
 
+	void initMod ();
+
 	static int getTeam ( edict_t *pEntity );
 
 	static int getSentryLevel ( edict_t *pSentry );
@@ -242,7 +245,33 @@ public:
 
 	static int getEnemyTeam ( int iTeam );
 
+
+// Naris @ AlliedModders .net
+
+	static bool TF2_IsPlayerZoomed(edict_t *pPlayer);
+
+	static bool TF2_IsPlayerSlowed(edict_t *pPlayer);
+
+	static bool TF2_IsPlayerDisguised(edict_t *pPlayer);
+
+	static bool TF2_IsPlayerCloaked(edict_t *pPlayer);
+
+	static bool TF2_IsPlayerInvuln(edict_t *pPlayer);
+
+	static bool TF2_IsPlayerOnFire(edict_t *pPlayer);
+
+	static bool TF2_IsPlayerTaunting(edict_t *pPlayer);
+
+	
+
+	static float TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass );
+
+
+
 private:
+
+	static float TF2_GetClassSpeed(int iClass);
+
 	static eTFMapType m_MapType;
 };
 

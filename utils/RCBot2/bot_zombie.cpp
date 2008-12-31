@@ -5,7 +5,7 @@
 #include "bot_waypoint_locations.h"
 #include "bot_schedule.h"
 
-bool CBotZombie :: isEnemy ( edict_t *pEdict )
+bool CBotZombie :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
 	if ( pEdict == m_pEdict )
 		return false;
