@@ -754,6 +754,28 @@ int CClassInterface :: getHealth ( edict_t *edict )
 	return *(int *)((char *)pEntity + offset);
 }
 
+Vector *CClassInterface :: getVelocity ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_vecAbsVelocity","CBaseEntity");
+	
+	if (!offset)
+		return NULL;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return NULL;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return (Vector *)((char *)pEntity + offset);
+}
+
 int *CClassInterface :: getAmmoList ( edict_t *edict )
 {
 	static unsigned int offset = 0;

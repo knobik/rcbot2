@@ -1,6 +1,8 @@
 #ifndef __BOT_FORTRESS_H__
 #define __BOT_FORTRESS_H__
 
+class CBotWeapon;
+
 #define TF2_TEAM_BLUE 3
 #define TF2_TEAM_RED 2
 
@@ -112,6 +114,8 @@ public:
 	virtual bool isCloaked () { return false; }
 	virtual bool isDisguised () { return false; }
 
+	virtual bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy ) { return CBot::handleAttack(pWeapon,pEnemy); }
+
 	void setVisible ( edict_t *pEntity, bool bVisible );
 
 	virtual void setClass ( TF_Class _class );
@@ -190,6 +194,8 @@ class CBotTF2 : public CBotFortress
 public:
 
 	CBotTF2() { CBotFortress(); }
+
+	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 
 	void engiBuildSuccess ( eEngiBuild iObject );
 

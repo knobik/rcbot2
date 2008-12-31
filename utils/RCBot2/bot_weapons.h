@@ -101,6 +101,8 @@ enum
 #define WEAP_FL_UNDERWATER		16
 #define WEAP_FL_HOLDATTACK		32
 #define WEAP_FL_SPECIAL			64
+#define WEAP_FL_KILLPIPEBOMBS	128
+#define WEAP_FL_DEFLECTROCKETS	256
 
 class CWeapon
 {
@@ -132,6 +134,16 @@ public:
 	inline bool isWeaponName ( const char *szWeaponName )
 	{
 		return !strcmp(szWeaponName,getWeaponName());
+	}
+
+	inline bool canDestroyPipeBombs()
+	{
+		return hasAllFlags(WEAP_FL_KILLPIPEBOMBS);
+	}
+					
+	inline bool canDeflectRockets()
+	{
+		return hasAllFlags(WEAP_FL_DEFLECTROCKETS);
 	}
 
 	inline void setID ( const int iId )
@@ -304,6 +316,16 @@ public:
 	inline bool mustHoldAttack ()
 	{
 		return m_pWeaponInfo->mustHoldAttack();
+	}
+
+	inline bool canDestroyPipeBombs()
+	{
+		return m_pWeaponInfo->canDestroyPipeBombs();
+	}
+					
+	inline bool canDeflectRockets()
+	{
+		return m_pWeaponInfo->canDeflectRockets();
 	}
 
 	inline bool isMelee ()

@@ -243,6 +243,10 @@ public:
 
 	static bool isFlag ( edict_t *pEntity, int iTeam );
 
+	static bool isPipeBomb ( edict_t *pEntity, int iTeam);
+
+	static bool isRocket ( edict_t *pEntity, int iTeam );
+
 	static int getEnemyTeam ( int iTeam );
 
 
@@ -262,7 +266,7 @@ public:
 
 	static bool TF2_IsPlayerTaunting(edict_t *pPlayer);
 
-	
+
 
 	static float TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass );
 

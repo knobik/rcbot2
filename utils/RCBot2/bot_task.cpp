@@ -563,11 +563,13 @@ void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		fail();
 		return;
 	}
+
 	if ( !pBot->isEnemy(m_pEdict) )
 	{
 		complete();
 		return;
 	}
+
 	if ( !pBot->isVisible(m_pEdict) )
 	{
 		fail();
@@ -591,18 +593,8 @@ void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	pBot->setLookAtTask(LOOK_ENEMY,2);
 
-	if ( pWeapon )
-	{
-		if ( pWeapon->isMelee() )
-			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pEdict),2);
-
-		if ( pWeapon->mustHoldAttack() )
-			pBot->primaryAttack(true);
-		else
-			pBot->primaryAttack();
-	}
-	else
-		pBot->primaryAttack();
+	if ( !pBot->handleAttack ( pWeapon, m_pEdict ) )
+		fail();
 }
 
 ///

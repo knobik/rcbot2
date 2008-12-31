@@ -85,6 +85,7 @@ public:
 	static unsigned int findOffset(const char *szType,const char *szClass);
 	static int getTF2NumHealers ( edict_t *edict );
 	static int getTF2Conditions ( edict_t *edict );
+	static Vector *getVelocity ( edict_t *edict );
 };
 
 class CRCBotEventListener : public IGameEventListener2
@@ -221,6 +222,8 @@ public:
 	{
 		return (m_iConditions & iConditions) > 0;
 	}
+
+	virtual bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 
 	float DotProductFromOrigin ( Vector &pOrigin );
 

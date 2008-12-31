@@ -831,9 +831,48 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 }
 
+bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
+{
+	if ( pWeapon )
+	{
+		bool bSecAttack = false;
+
+		if ( pWeapon->isMelee() )
+			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),2);
+
+		if ( CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
+		{
+			float fDistance = distanceFrom(CBotGlobals::entityOrigin(pEnemy));
+
+			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) > 25) )
+				bSecAttack = true;
+			else
+				return false;
+		}
+
+		if ( !bSecAttack )
+		{
+			if ( pWeapon->mustHoldAttack() )
+				primaryAttack(true);
+			else
+				primaryAttack();
+		}
+		else
+		{
+			secondaryAttack();
+		}
+	}
+	else
+		primaryAttack();
+
+	return true;
+}
+
 bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
 	int iEnemyTeam;
+	bool bIsPipeBomb = false;
+	bool bIsRocket = false;
 	int bValid = false;
 
 	if ( !CBotGlobals::entityIsAlive(pEdict) )
@@ -852,15 +891,28 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 		{
 			bValid = true;
 		}
+		else if ( CTeamFortress2Mod::isPipeBomb ( pEdict, iEnemyTeam ) )
+			bIsPipeBomb = bValid = true;
+		else if ( CTeamFortress2Mod::isRocket ( pEdict, iEnemyTeam ) )
+			bIsRocket = bValid = true;
 	}
 
 	if ( bValid )
 	{
 		if ( bCheckWeapons )
 		{
-			if ( m_pWeapons->getBestWeapon(pEdict) == NULL )
+			CBotWeapon *pWeapon = m_pWeapons->getBestWeapon(pEdict);
+
+			if ( pWeapon == NULL )
 			{
 				return false;
+			}
+			else
+			{
+				if ( bIsPipeBomb && !pWeapon->canDestroyPipeBombs() )
+					return false;
+				else if ( bIsRocket && !pWeapon->canDeflectRockets() )
+					return false;
 			}
 		}
 

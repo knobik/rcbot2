@@ -437,6 +437,7 @@ void CBot :: debugMsg ( int iLev, const char *szMsg )
 void CBot :: think ()
 {
 	float fTime = engine->Time();
+	Vector *pvVelocity;
 
 	m_iLookPriority = 0;
 	m_iMovePriority = 0;
@@ -503,7 +504,13 @@ void CBot :: think ()
 
 	updateConditions();
 
-	if ( m_fUpdateOriginTime < fTime )
+	pvVelocity = CClassInterface::getVelocity(m_pEdict);
+
+	if ( pvVelocity )
+	{
+		m_vVelocity = *pvVelocity;
+	}
+	else if ( m_fUpdateOriginTime < fTime )
 	{
 		Vector vOrigin = getOrigin();
 
@@ -602,6 +609,24 @@ bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint )
 		if ( !CBotGlobals::isVisible(m_pEdict,vPrevWaypoint,pWaypoint->getOrigin()) )
 			return false;
 	}
+
+	return true;
+}
+
+bool CBot::handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
+{
+	if ( pWeapon )
+	{
+		if ( pWeapon->isMelee() )
+			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),2);
+
+		if ( pWeapon->mustHoldAttack() )
+			primaryAttack(true);
+		else
+			primaryAttack();
+	}
+	else
+		primaryAttack();
 
 	return true;
 }
