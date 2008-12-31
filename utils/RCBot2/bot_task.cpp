@@ -151,7 +151,7 @@ void CBotTF2WaitFlagTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( m_bFind )
 			m_fWaitTime = engine->Time() + 5.0f;
 		else
-			m_fWaitTime = engine->Time() + 70.0f;
+			m_fWaitTime = engine->Time() + 10.0f;
 	}
 
 	if ( ((CBotTF2*)pBot)->hasFlag() )
@@ -180,6 +180,7 @@ void CBotTF2WaitFlagTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 				pBot->lookAtEdict(m_pFlag);
 				pBot->setLookAtTask(LOOK_EDICT,2);
 				m_vOrigin = CBotGlobals::entityOrigin(m_pFlag);
+				m_fWaitTime = engine->Time() + 5.0f;
 			}
 			else
 				((CBotFortress*)pBot)->seeFlag(true);
@@ -477,6 +478,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		}
 		else
 		{			
+
 			if ( pBot->moveFailed() )
 			{
 				pBot->debugMsg(BOT_DEBUG_NAV,"moveFailed() == true");
