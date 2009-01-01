@@ -39,7 +39,7 @@ using namespace std;
 #include "bot_genclass.h"
 #include "bot_globals.h"
 
-int CWaypointLocations :: g_iFailedWaypoints[CWaypoints::MAX_WAYPOINTS];
+unsigned char CWaypointLocations :: g_iFailedWaypoints[CWaypoints::MAX_WAYPOINTS];
 dataUnconstArray<int> CWaypointLocations :: m_iLocations[MAX_WPT_BUCKETS][MAX_WPT_BUCKETS][MAX_WPT_BUCKETS];
 
 #define READ_LOC(loc) abs((int)((int)(loc + HALF_MAX_MAP_SIZE) / BUCKET_SPACING));

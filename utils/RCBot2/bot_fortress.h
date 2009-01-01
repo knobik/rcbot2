@@ -2,6 +2,7 @@
 #define __BOT_FORTRESS_H__
 
 class CBotWeapon;
+class CWaypoint;
 
 #define TF2_TEAM_BLUE 3
 #define TF2_TEAM_RED 2
@@ -83,6 +84,8 @@ class CBotFortress : public CBot
 public:	
 
 	CBotFortress();
+
+	virtual void touchedWpt ( CWaypoint *pWaypoint ) { CBot::touchedWpt(pWaypoint); }
 
 	inline edict_t *getHealingEntity () { return m_pHeal; }
 
@@ -194,6 +197,8 @@ class CBotTF2 : public CBotFortress
 public:
 
 	CBotTF2() { CBotFortress(); }
+
+	void touchedWpt ( CWaypoint *pWaypoint );
 
 	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 

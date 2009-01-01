@@ -54,7 +54,10 @@ typedef enum
 	SCHED_TF2_GET_FLAG,
 	SCHED_TF2_GET_HEALTH,
 	SCHED_TF_BUILD,
-	SCHED_HEAL
+	SCHED_HEAL,
+	SCHED_GET_METAL,
+	SCHED_SNIPE,
+	SCHED_UPGRADE
 }eBotSchedule;
 
 class CBotSchedule
@@ -258,6 +261,14 @@ private:
 
 //////////////////////////////////
 
+class CBotTFEngiUpgrade : public CBotSchedule
+{
+public:
+	CBotTFEngiUpgrade ( edict_t *pBuilding );
+
+	void init ();
+};
+
 class CBotTFEngiBuild : public CBotSchedule
 {
 public:
@@ -272,6 +283,24 @@ public:
 	CBotTF2HealSched();
 	void init ();
 };
+
+class CBotGetMetalSched : public CBotSchedule
+{
+public:
+	CBotGetMetalSched ( Vector vOrigin );
+
+	void init ();
+};
+
+
+class CBotTF2SnipeSched : public CBotSchedule
+{
+public:
+	CBotTF2SnipeSched ( Vector vOrigin );
+
+	void init ();
+};
+
 
 class CBotTF2GetHealthSched : public CBotSchedule
 {

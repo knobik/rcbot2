@@ -258,7 +258,7 @@ public:
 	 */
 	virtual bool startGame ();
 
-	virtual void checkStuck ();
+	virtual bool checkStuck ();
 
 	virtual void currentlyDead ();
 
@@ -429,9 +429,18 @@ public:
 
 	void lookAtEdict ( edict_t *pEdict );
 
-	void select_CWeapon ( CWeapon *pWeapon );
+	bool select_CWeapon ( CWeapon *pWeapon );
+	bool selectBotWeapon ( CBotWeapon *pBotWeapon );
+
+	void updatePosition ();
 
 	edict_t *m_pLookEdict;
+
+	CBotWeapons *getWeapons () { return m_pWeapons; }
+
+	virtual void checkCanPickup ( edict_t *pPickup );
+
+	virtual void touchedWpt ( CWaypoint *pWaypoint );
 
 protected:
 	/////////////////////////
@@ -459,6 +468,9 @@ protected:
 	float m_fTimeCreated;
 	// next think time
 	float m_fNextThink;
+
+	float m_fUnstickTime;
+	bool m_bThinkStuck;
 
 	int m_iMovePriority;
 	int m_iLookPriority;
@@ -531,6 +543,8 @@ protected:
 	edict_t *m_pLastEnemy; // enemy we were fighting before we lost it
 	//edict_t *m_pAvoidEntity; // avoid this guy
 	Vector m_vHurtOrigin;
+
+	edict_t *m_pPickup;
 
 	Vector m_vMoveTo;
 	Vector m_vLookAt;

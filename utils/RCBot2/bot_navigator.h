@@ -52,6 +52,8 @@ public:
 	// returns true when working out route finishes, not if successful
 	virtual bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false ) = 0;
 
+	virtual void rollBackPosition () = 0;
+
 	virtual bool hasNextPoint () = 0;
 
 	virtual Vector getNextPoint () = 0;
@@ -154,6 +156,8 @@ public:
 
 	bool routeFound ();
 
+	void rollBackPosition ();
+
 	void open ( AStarNode *pNode );
 
 	AStarNode *nextNode ();
@@ -209,6 +213,8 @@ public:
 	bool routeFound ();
 
 	bool hasNextPoint ();
+
+	void rollBackPosition () {};
 
 	void init ();
 

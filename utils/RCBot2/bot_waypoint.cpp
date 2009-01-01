@@ -418,6 +418,21 @@ Vector CWaypointNavigator :: getNextPoint ()
 
 	return CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
 }
+
+void CWaypointNavigator :: rollBackPosition ()
+{
+	m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(m_pBot->getOrigin(),CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());
+
+	while ( !m_currentRoute.IsEmpty() ) // reached goal!!
+	{		
+		if ( m_iCurrentWaypoint == m_currentRoute.Pop() )
+		{
+			if ( !m_currentRoute.IsEmpty() )
+				m_iCurrentWaypoint = m_currentRoute.Pop();
+		}
+	}
+	// find waypoint in route
+}
 // update the bots current walk vector
 void CWaypointNavigator :: updatePosition ()
 {
@@ -440,7 +455,7 @@ void CWaypointNavigator :: updatePosition ()
 	{
 		if ( pWaypoint->touched(m_pBot->getOrigin()) )
 		{
-			pWaypoint->botTouch(m_pBot);
+			m_pBot->touchedWpt(pWaypoint);
 
 			if ( m_currentRoute.IsEmpty() ) // reached goal!!
 			{
@@ -495,14 +510,7 @@ CWaypoint *CWaypoints :: getWaypoint ( int iIndex )
 
 	return &m_theWaypoints[iIndex];
 }
-// bot touching this waypoint
-void CWaypoint :: botTouch ( CBot *pBot )
-{
-	if ( hasFlag(CWaypointTypes::W_FL_JUMP) )
-		pBot->jump();
-	if ( hasFlag(CWaypointTypes::W_FL_CROUCH) )
-		pBot->duck();
-}
+
 // draw paths from this waypoint (if waypoint drawing is on)
 void CWaypoint :: drawPaths ( edict_t *pEdict, unsigned short int iDrawType )
 {
@@ -545,19 +553,12 @@ bool CWaypoint :: touched ( edict_t *pEdict )
 // checks if a waypoint is touched
 bool CWaypoint :: touched ( Vector vOrigin )
 {
-	/*Vector vBottom = m_vOrigin;
-	
-	if ( m_iFlags & W_FL_CROUCH )
-		vBottom = vOrigin - Vector(0,0,WAYPOINT_HEIGHT/2);
-	else
-		vBottom = vOrigin - Vector(0,0,WAYPOINT_HEIGHT/4);*/
+	if ( (vOrigin-m_vOrigin).Length2D() <= 40 )
+	{
+		return fabs(vOrigin.z-m_vOrigin.z) < 48;
+	}
 
-	float fDistance = VectorDistance(vOrigin-m_vOrigin);
-
-	if ( m_iFlags & CWaypointTypes::W_FL_CROUCH )
-		return ( fDistance < (BOT_WPT_TOUCH_DIST/2) );
-
-	return ( fDistance < BOT_WPT_TOUCH_DIST );
+	return false;
 }
 // get the colour of this waypoint in WptColor format
 WptColor CWaypointTypes ::getColour ( int iFlags )
@@ -1127,11 +1128,14 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_CAPPOINT,"capture","bot will find a capture point here",WptColor(255,255,0)));
 	addType(new CWaypointType(W_FL_NOBLU,"noblueteam","blue team can't use this waypoint",WptColor(255,0,0)));
 	addType(new CWaypointType(W_FL_NORED,"noredteam","red team can't use this waypoint",WptColor(0,0,128)));
-	addType(new CWaypointType(W_FL_HEALTH,"health","bot can get health here",WptColor(255,255,255)));
+	addType(new CWaypointType(W_FL_HEALTH,"health","bot can sometimes get health here",WptColor(255,255,255)));
 	addType(new CWaypointType(W_FL_OPENS_LATER,"openslater","this waypoint is available when a door is open only",WptColor(100,100,200)));
 	addType(new CWaypointType(W_FL_SNIPER,"sniper","a bot can snipe here",WptColor(0,255,0)));
 	addType(new CWaypointType(W_FL_ROCKET_JUMP,"rocketjump","a bot can rocket jump here",WptColor(10,100,0)));
-
+	addType(new CWaypointType(W_FL_AMMO,"ammo","bot can sometimes get ammo here",WptColor(50,100,10)));
+	addType(new CWaypointType(W_FL_RESUPPLY,"resupply","bot can always get ammo and health here",WptColor(255,100,255)));
+	addType(new CWaypointType(W_FL_SENTRY,"sentry","engineer bot can build here",WptColor(255,0,0)));
+	addType(new CWaypointType(W_FL_DOUBLEJUMP,"doublejump","scout can double jump here",WptColor(10,10,100)));
 }
 
 void CWaypointTypes :: freeMemory ()

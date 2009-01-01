@@ -308,6 +308,11 @@ public:
 		return m_pWeaponInfo->canUseUnderWater();
 	}
 
+	inline int getID ()
+	{
+		return m_pWeaponInfo->getID();
+	}
+
 	inline bool isSpecial ()
 	{
 		return m_pWeaponInfo->isSpecial();

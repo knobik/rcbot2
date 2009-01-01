@@ -74,7 +74,7 @@ const char *g_szTF2Weapons[] =
 
 int m_TF2AmmoIndices[] =
 {
-	0,0,0,0,0,0,0,1,1,0,0,0,1,0,0,0,0,2,2,2,2,1,1,2,1,2,2,0,2,1,1,0
+	0,0,0,0,0,0,0,1,1,0,0,0,1,0,0,0,0,2,2,2,2,1,1,2,1,2,2,0,2,1,1,3
 };
 
 
@@ -138,6 +138,7 @@ CBotWeapons :: CBotWeapons ( CBot *pBot )
 CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 {
 	CBotWeapon *m_theBestWeapon = NULL;
+	CBotWeapon *m_FallbackMelee = NULL;
 	int iBestPreference = 0;
 
 	if ( !pEnemy )
@@ -170,7 +171,12 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 			continue;
 
 		if ( !pWeapon->primaryInRange(flDist) )
+		{
+			if ( pWeapon->isMelee() && !pWeapon->isSpecial() )
+				m_FallbackMelee = pWeapon;
+
 			continue;
+		}
 
 		if ( pWeapon->getPreference() > iBestPreference )
 		{
@@ -178,6 +184,9 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 			m_theBestWeapon = pWeapon;
 		}
 	}
+
+	if ( m_theBestWeapon == NULL )
+		m_theBestWeapon = m_FallbackMelee;
 
 	return m_theBestWeapon;
 }

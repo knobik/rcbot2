@@ -80,7 +80,7 @@ public:
 
 	static const int BUCKET_SPACING = (HALF_MAX_MAP_SIZE*2)/MAX_WPT_BUCKETS;
 
-	static int g_iFailedWaypoints [ CWaypoints::MAX_WAYPOINTS ];
+	static unsigned char g_iFailedWaypoints [ CWaypoints::MAX_WAYPOINTS ];
 	
 	static void AddWptLocation ( CWaypoint *pWaypoint, int iIndex );
 

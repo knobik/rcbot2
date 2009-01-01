@@ -108,6 +108,10 @@ public:
 	static const int W_FL_OPENS_LATER = 512;
 	static const int W_FL_ROCKET_JUMP = 1024;
 	static const int W_FL_SNIPER = 2048;
+	static const int W_FL_AMMO = 4096;
+	static const int W_FL_RESUPPLY = 8192;
+	static const int W_FL_SENTRY = 16384;
+	static const int W_FL_DOUBLEJUMP = 32768;
 
 	static void setup ();
 

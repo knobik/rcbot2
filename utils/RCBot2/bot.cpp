@@ -217,7 +217,7 @@ Vector CBot :: getEyePosition ()
 	return vOrigin;
 }
 
-void CBot :: checkStuck ()
+bool CBot :: checkStuck ()
 {
 	static float fTime;
 
@@ -225,7 +225,7 @@ void CBot :: checkStuck ()
 	float fIdealSpeed;
 
 	if ( !moveToIsValid() )
-		return;
+		return false;
 
 
 	fTime = engine->Time();
@@ -247,94 +247,48 @@ void CBot :: checkStuck ()
 			{
 				m_fLastWaypointVisible = 0;
 				m_bFailNextMove = true;
+
+				return true;
 			}
 		}
 	}
 
 	if ( m_fCheckStuckTime > fTime )
-		return;
+		return m_bThinkStuck;
 
-	fSpeed = sqrt(m_vVelocity.LengthSqr());
+	fSpeed = m_vVelocity.Length();
 	fIdealSpeed = m_fIdealMoveSpeed;
 
 	if ( m_pButtons->holdingButton(IN_DUCK) )
 		fIdealSpeed /= 2;
+
 	if ( fIdealSpeed == 0 )
-		return; // not stuck
-	float fPercentMoved = fSpeed/fIdealSpeed;
-
-	if ( fPercentMoved < 0.2 )
-	{
-		m_pButtons->jump();
-		m_pButtons->duck(0.25f,0.25f);
-		m_fCheckStuckTime = fTime + 4.0f;
-	}
-
-	/*
-	if ( m_iTimesStuck && (m_fNextUpdateStuckConstants < fTime) )
-	{
-		const float fTimeInterval = 5.0f;
-
-		m_fNextUpdateStuckConstants = fTime+fTimeInterval;
-
-		float fTimeFitness = (m_fStuckTime/fTime);
-
-		if ( fTimeFitness == 0 )
-			fTimeFitness = 1.0f;
-
-		float fFitness = (1.0f/m_iTimesStuck)*fTimeFitness;
-
-		m_pGAvStuck->setFitness( fFitness );
-		m_pGAStuck->addToPopulation(m_pGAvStuck->copy());
-		m_iTimesStuck = 0;
-		m_pGAvStuck->freeMemory();
-		delete m_pGAvStuck;
-
-		if ( m_pGAStuck->canPick() )
-		{				
-			m_pGAvStuck = (CBotStuckValues*)m_pGAStuck->pick();
-		}
-		else
-			m_pGAvStuck = new CBotStuckValues();
-	}
-
-	if ( fPercentMoved < 0.5 )
-	{
-		if ( m_fStuckTime == 0 )
-		{
-			m_fStuckTime = fTime;
-			m_vStuckPos = getOrigin();
-			m_iTimesStuck++;
-		}
-	}
+		m_bThinkStuck = false; // not stuck
 	else
-	{		
-		m_fStuckTime = 0;
-		m_pGAvStuck->setFitness(1.0f);
+	{
+		float fPercentMoved = fSpeed/fIdealSpeed;
+
+		if ( fPercentMoved < 0.2 )
+		{
+			m_bThinkStuck = true;
+			m_pButtons->jump();
+			m_pButtons->duck(0.25f,RandomFloat(0.2f,0.4f));
+
+			if ( m_fStrafeTime < engine->Time() )
+			{
+				if ( CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo) > 0 )
+					m_fSideSpeed = m_fIdealMoveSpeed/2;
+				else
+					m_fSideSpeed = -(m_fIdealMoveSpeed/2);
+
+				m_fStrafeTime = engine->Time() + 2.0f;
+			}
+
+			m_fCheckStuckTime = m_fCheckStuckTime + 4.0f;
+		}
 	}
 
-	if ( m_fStuckTime )
-	{
-		vector<ga_nn_value> weights;
-		m_pGAvStuck->getStuckWeights(&weights);
-		m_pThinkStuck->setWeights(weights);
-		vector<ga_nn_value> inputs;
-		inputs.push_back(fPercentMoved);
-		inputs.push_back(fTime-m_fStuckTime);
-		m_pThinkStuck->input(inputs);
-		m_pThinkStuck->execute();
-
-		if ( m_pThinkStuck->fired() )
-		{
-			if ( (m_fStuckTime + (m_pGAvStuck->getJumpTime()*4)) < fTime )
-				jump();
-			if ( (m_fStuckTime + (m_pGAvStuck->getFailTime()*8)) < fTime )
-			{
-				m_bFailNextMove = true;
-				m_fStuckTime = 0;
-			}
-		}
-	}*/
+	return m_bThinkStuck;
 }
 
 bool CBot :: isVisible ( edict_t *pEdict )
@@ -613,6 +567,11 @@ bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint )
 	return true;
 }
 
+void CBot::updatePosition()
+{
+	m_pNavigator->rollBackPosition();
+}
+
 bool CBot::handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 {
 	if ( pWeapon )
@@ -650,6 +609,8 @@ void CBot :: spawnInit ()
 
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
+
+	m_bThinkStuck = false;
 	m_pLookEdict = NULL;
 	m_fLookAroundTime = 0.0f;
 	m_pAvoidEntity = NULL;
@@ -661,7 +622,7 @@ void CBot :: spawnInit ()
 	//m_iTimesStuck = 0;
 	m_fUpdateDamageTime = 0;
 	m_iAccumulatedDamage = 0;
-	m_fCheckStuckTime = engine->Time() + 5.0f;
+	m_fCheckStuckTime = engine->Time() + 8.0f;
 	m_fStuckTime = 0;
 	m_vLastOrigin = Vector(0,0,0);
 	m_vVelocity = Vector(0,0,0);
@@ -705,6 +666,26 @@ void CBot :: spawnInit ()
 
 	if ( m_pVisibles != NULL )
 		m_pVisibles->reset();
+}
+
+bool CBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
+{
+	int id = pBotWeapon->getWeaponIndex();
+
+	if ( id )
+	{
+		selectWeapon(id);
+		return true;
+	}
+	return false;
+}
+
+void CBot :: touchedWpt ( CWaypoint *pWaypoint )
+{
+	if ( pWaypoint->getFlags() & CWaypointTypes::W_FL_JUMP )
+		jump();
+	if ( pWaypoint->getFlags() & CWaypointTypes::W_FL_CROUCH )
+		duck();
 }
 
 // setup buttons and data structures
@@ -964,6 +945,12 @@ void CBot :: doMove ()
 		flMove = move.x;
 		flSide = move.y;
 
+		/*if ( m_bThinkStuck )
+		{
+			m_vVelocity
+			m_fSideSpeed = h;
+		}*/
+
 		m_fForwardSpeed = m_fIdealMoveSpeed * flMove;
 
 		// dont want this to override strafe speed if we're trying 
@@ -1073,6 +1060,12 @@ void CBot :: setLookAt ( Vector vNew )
 	m_bLookAtIsValid = true;
 }
 
+void CBot :: checkCanPickup ( edict_t *pPickup )
+{
+
+
+}
+
 void CBot :: lookAtEdict ( edict_t *pEdict )
 {
 	m_pLookEdict = pEdict;
@@ -1098,6 +1091,9 @@ void CBot :: getLookAtVector ()
 				setLookAt(CBotGlobals::entityOrigin(m_pLookEdict));
 		}
 		break;
+	case LOOK_GROUND:
+		setLookAt(getOrigin()-Vector(0,0,64));
+		break;
 	case LOOK_LAST_ENEMY:
 		{
 			if ( m_pLastEnemy )
@@ -1117,6 +1113,67 @@ void CBot :: getLookAtVector ()
 	case LOOK_WAYPOINT:
 		{
 			setLookAt(Vector(m_vMoveTo.x,m_vMoveTo.y,getEyePosition().z));
+		}
+		break;
+	case LOOK_SNIPE:
+		{
+			if ( m_fLookAroundTime < engine->Time() )
+			{
+				CTraceFilterWorldAndPropsOnly filter;
+				Vector m_vAiming = Vector(0,0,0);
+				float bestfraction = -1.0f;
+				Vector eye = getEyePosition();
+				Vector aiming;
+				QAngle eyes = CBotGlobals::playerAngles(m_pEdict);
+				float eyestart;
+				int i;
+
+				trace_t *res;
+
+				AngleVectors(eyes,&aiming);
+
+				res = CBotGlobals::getTraceResult();
+
+				// find aiming vector
+				CBotGlobals::traceLine (eye,eye+(aiming*4096),MASK_SOLID_BRUSHONLY,&filter);
+				
+				if ( res->fraction > bestfraction ) 
+				{
+					bestfraction = res->fraction;
+					m_vAiming = res->endpos;
+				}
+
+				CBotGlobals::traceLine (eye,eye-(aiming*4096),MASK_SOLID_BRUSHONLY,&filter);
+
+				if ( res->fraction > bestfraction ) 
+				{
+					bestfraction = res->fraction;
+					m_vAiming = res->endpos;
+				}
+
+				eyestart = eyes.y - 10.0f;
+
+				CBotGlobals::fixFloatAngle(&eyestart);
+
+				for ( i = 0; i < 4; i ++ )
+				{
+					AngleVectors(eyes,&aiming);
+
+					CBotGlobals::traceLine (eye,eye+(aiming*4096),MASK_SOLID_BRUSHONLY,&filter);
+
+					if ( res->fraction > bestfraction ) 
+					{
+						bestfraction = res->fraction;
+						m_vAiming = res->endpos;
+					}
+
+					eyestart = eyestart + 5.0f;
+					CBotGlobals::fixFloatAngle(&eyestart);
+				}
+
+				m_fLookAroundTime = engine->Time() + RandomFloat(8.0f,18.0f);
+
+			}
 		}
 		break;
 	case LOOK_AROUND:
@@ -1212,14 +1269,23 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
 		*fUpdate = *fCurrent;
 }
 
-void CBot :: select_CWeapon ( CWeapon *pWeapon )
+bool CBot :: select_CWeapon ( CWeapon *pWeapon )
 {
 	CBotWeapon *pSelect = m_pWeapons->getWeapon(pWeapon);
 
 	if ( pSelect )
 	{
-		selectWeapon(pSelect->getWeaponIndex());
+		int id = pSelect->getWeaponIndex();
+
+		if ( id )
+		{
+			selectWeapon(id);
+			return true;
+		}
+
 	}
+
+	return false;
 }
 
 void CBot :: doLook ()

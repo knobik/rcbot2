@@ -32,6 +32,7 @@
 #include "bot_schedule.h"
 #include "bot_task.h"
 #include "bot_client.h"
+#include "bot_weapons.h"
 
 CBotTF2HealSched::CBotTF2HealSched()
 {
@@ -55,9 +56,44 @@ void CBotTFEngiBuild :: init ()
 {
 	setID(SCHED_TF_BUILD);
 }
+//////////////////////////////////////////////
+
+CBotGetMetalSched :: CBotGetMetalSched ( Vector vOrigin )
+{
+	addTask(new CFindPathTask(vOrigin)); // first
+	addTask(new CBotTF2WaitAmmoTask(TF2_WEAPON_WRENCH,vOrigin));
+}
+
+void CBotGetMetalSched :: init ()
+{
+	setID(SCHED_GET_METAL);
+}
+
+//////////////////////////////////////////////
+
+CBotTFEngiUpgrade :: CBotTFEngiUpgrade ( edict_t *pBuilding )
+{
+	addTask(new CFindPathTask(pBuilding));
+	addTask(new CBotTF2UpgradeBuilding(pBuilding));
+}
+
+void CBotTFEngiUpgrade :: init ()
+{
+	setID(SCHED_UPGRADE);
+}
 
 //////////////////////////////////////////////////
 
+CBotTF2SnipeSched :: CBotTF2SnipeSched ( Vector vOrigin )
+{
+	addTask(new CFindPathTask(vOrigin)); // first
+	addTask(new CBotTF2Snipe()); // second
+}
+void CBotTF2SnipeSched :: init ()
+{
+	setID(SCHED_SNIPE);
+}
+////////////
 CBotTF2GetHealthSched :: CBotTF2GetHealthSched ( Vector vOrigin )
 {
 	addTask(new CFindPathTask(vOrigin)); // first

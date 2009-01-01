@@ -204,22 +204,56 @@ void CBotTF2WaitFlagTask :: debugString ( char *string )
 }
 
 ///////////
-/*
-CBotTFEngiUpgradeTask::CBotTFEngiUpgradeTask ( eEngiBuild iType, edict_t *pBuilding )
+CBotTF2UpgradeBuilding :: CBotTF2UpgradeBuilding ( edict_t *pBuilding )
 {
-  m_iType = iType;
-  m_pBuilding = pBuilding;
+	m_pBuilding = pBuilding;
+	m_fTime = 0.0f;
 }
 
-void CBotTFEngiUpgradeTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
-	if ( !m_pBuilding  
+	if (!m_fTime )
+		m_fTime = engine->Time() + RandomFloat(10.0f,15.0f);
+	
+	if ( m_fTime<engine->Time() )
+		complete();
+	else if ( CBotGlobals::entityIsValid(m_pBuilding) && CBotGlobals::entityIsAlive(m_pBuilding) )
+	{
+		Vector vOrigin = CBotGlobals::entityOrigin(m_pBuilding);
 
-	if ( m_iType == ENGI_EXIT )
+		CBotWeapon *pWeapon = pBot->getCurrentWeapon();
 
+		if ( !pWeapon )
+			fail();
+		else if ( pWeapon->getID() != TF2_WEAPON_WRENCH )
+		{
+			if ( !pBot->select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH)) )
+				fail();
+		}
+		else if ( pBot->distanceFrom(vOrigin) > 100 )
+		{
+			pBot->setMoveTo(vOrigin,3);			
+		}
+		else
+		{
+			pBot->primaryAttack();
+		}
+
+		pBot->lookAtEdict(m_pBuilding);
+		pBot->setLookAtTask(LOOK_EDICT,3);
+		
+	}
+	else
+		fail();
 }
+
+void CBotTF2UpgradeBuilding:: debugString ( char *string )
+{
+	sprintf(string,"CBotTF2UpgradeBuilding");
+}
+
 ///////////////////////////////////////////////////////////////////////
-
+/*
 // Protect SG from Enemy
 CBotTFEngiTankSentry :: CBotTFEngiTankSentry ( edict_t *pSentry, edict_t *pEnemy )
 {
@@ -280,8 +314,62 @@ void CBotTFEngiTankSentry :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		
 }
 */
-//////////
 
+////////////////////////
+
+////////////////////////
+
+
+CBotTF2WaitAmmoTask :: CBotTF2WaitAmmoTask ( int iWeaponId, Vector vOrigin )
+{
+	m_vOrigin = vOrigin;
+	m_fWaitTime = 0.0f;
+	m_iWeaponId = iWeaponId;
+}
+	
+void CBotTF2WaitAmmoTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	CBotWeapon *pWeapon;
+	CBotWeapons *pWeapons;
+
+	pWeapons = pBot->getWeapons();
+
+	if ( !m_fWaitTime )
+		m_fWaitTime = engine->Time() + RandomFloat(10.0f,15.0f);
+
+	if ( !pWeapons )
+		fail();
+	else 
+	{
+		pWeapon = pWeapons->getWeapon(CWeapons::getWeapon(m_iWeaponId));
+
+		if (!pWeapon )
+			fail();
+		else
+		{
+			if ( pWeapon->getAmmo(pBot) >= 200 )
+			{
+				complete();
+			}
+			else if ( m_fWaitTime < engine->Time() )
+				fail();
+			else
+			{
+				pBot->stopMoving(2);
+			}
+		}
+	}
+}
+
+void CBotTF2WaitAmmoTask :: debugString ( char *string )
+{
+	sprintf(string,"CBotTF2WaitAmmoTask");
+}
+
+
+
+
+////////////////////////
 CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin )
 {
 	m_iObject = iObject;
@@ -433,6 +521,12 @@ void CFindPathTask :: init ()
 	//setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
 }
 
+CFindPathTask :: CFindPathTask ( edict_t *pEdict )
+{
+	m_pEdict = pEdict;
+	m_vVector = CBotGlobals::entityOrigin(pEdict);
+}
+
 void CFindPathTask :: debugString ( char *string )
 {
 	sprintf(string,"Find Path (%d) (%0.4f,%0.4f,%0.4f)",m_iInt,m_vVector.x,m_vVector.y,m_vVector.z);
@@ -532,6 +626,208 @@ void CMoveToTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 	fPrevDist = fDistance;
 }
+////////////////////////////////////////////////////
+
+
+
+///////////////////////////////////////////////////
+
+CBotTFRocketJump :: CBotTFRocketJump ()
+{
+	m_fTime = 0.0f;
+}
+
+void CBotTFRocketJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	CBotWeapon *pBotWeapon;
+	CWeapon *pWeapon;
+
+	pBotWeapon = pBot->getCurrentWeapon();
+
+	if ( !pBotWeapon )
+	{
+		fail();
+		return;
+	}
+
+	pWeapon = pBotWeapon->getWeaponInfo();
+
+	if (pWeapon == NULL)
+	{
+		fail();
+		return;
+	}
+
+	if ( !pBot->isTF() || (((CBotFortress*)pBot)->getClass() != TF_CLASS_SOLDIER) || (pBot->getHealthPercent() < 0.3) )
+	{
+		fail();
+	}
+	else if (pWeapon->getID() != TF2_WEAPON_ROCKETLAUNCHER )
+	{
+		if ( !pBot->select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_ROCKETLAUNCHER)) )
+		{
+			fail();
+		}
+	}
+	else
+	{
+		if ( !m_fTime )
+		{
+			m_fTime = engine->Time()+RandomFloat(0.3f,0.6f);
+		}
+
+		pBot->setLookAtTask(LOOK_GROUND,4);
+
+		if ( m_fTime < engine->Time() )
+		{
+			pBot->jump();
+			pBot->primaryAttack();
+			complete();
+		}
+	}
+}
+
+void CBotTFRocketJump :: debugString ( char *string )
+{
+	sprintf(string,"CBotTFRocketJump");
+}
+
+
+//////////////////////////////////////////////////////
+
+CBotTFDoubleJump :: CBotTFDoubleJump ()
+{
+	m_fTime = 0.0f;
+}
+
+void CBotTFDoubleJump ::execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fTime == 0.0f )
+	{
+		pBot->tapButton(IN_JUMP);
+
+		m_fTime = engine->Time() + 0.4;
+	}
+	else if ( m_fTime < engine->Time() )
+	{
+		pBot->jump();
+		complete();
+	}
+}
+
+void CBotTFDoubleJump :: debugString ( char *string )
+{
+	sprintf(string,"CbotTFDoublejump");
+}
+////////////////////////////////////////////////////
+
+CBotTF2Snipe :: CBotTF2Snipe (  )
+{
+	m_fTime = 0.0f;
+}
+	
+void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+
+	CBotWeapon *pBotWeapon;
+	CWeapon *pWeapon;
+
+	if ( m_fTime == 0.0f )
+	{
+		m_fTime = engine->Time() + RandomFloat(40.0f,90.0f);
+		pBot->secondaryAttack();
+	}
+
+	pBotWeapon = pBot->getCurrentWeapon();
+
+	if ( !pBotWeapon )
+	{
+		fail();
+		return;
+	}
+
+	pWeapon = pBotWeapon->getWeaponInfo();
+
+	if (pWeapon == NULL)
+	{
+		fail();
+		return;
+	}
+
+	if ( !pBot->isTF() || (((CBotFortress*)pBot)->getClass() != TF_CLASS_SNIPER) || (pBot->getHealthPercent() < 0.2) )
+	{
+		fail();
+	}
+	else if (pWeapon->getID() != TF2_WEAPON_SNIPERRIFLE )
+	{
+		if ( !pBot->select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_SNIPERRIFLE)) )
+		{
+			fail();
+		}
+	}
+	else if ( pBotWeapon->getAmmo(pBot) < 1 )
+	{
+		pBot->secondaryAttack();
+		complete();
+	}
+	else
+	{
+		//if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+		//	pBot->secondaryAttack();
+
+		pBot->stopMoving(2);
+		pBot->setLookAtTask(LOOK_SNIPE);
+
+		if (m_fTime<engine->Time() )
+		{
+			pBot->secondaryAttack();
+			complete();
+		}
+	}
+}
+
+
+/////////////////////////////////////////////////////
+CBotTFUseTeleporter :: CBotTFUseTeleporter ( edict_t *pTele )
+{// going to use this 
+	
+	m_pTele = pTele;
+	m_fTime = 0.0;
+}
+
+void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( !m_pTele || !CBotGlobals::entityIsValid(m_pTele) )
+		fail();
+
+	if ( !m_fTime )
+		m_fTime = engine->Time() + 12.0f;
+
+	if ( m_fTime < engine->Time() )
+		fail();
+	else
+	{
+		Vector vTele = CBotGlobals::entityOrigin(m_pTele);
+
+		if ( pBot->distanceFrom(vTele) > 50 )
+			pBot->setMoveTo(vTele,3);
+		else
+			pBot->stopMoving(3);
+
+		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 100 )
+		{
+			pBot->updatePosition();
+			complete();
+		}
+	}
+}
+
+void CBotTFUseTeleporter :: debugString ( char *string )
+{
+	sprintf(string,"CBotTFUseTeleporter %x",(int)m_pTele);
+}
+
+///////////////////////////////////////////////////
 
 CAttackEntityTask :: CAttackEntityTask ( edict_t *pEdict )
 {

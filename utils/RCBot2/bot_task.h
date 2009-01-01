@@ -101,11 +101,7 @@ public:
 		m_pEdict = NULL; // no edict
 	}
 
-	CFindPathTask ( edict_t *pEdict )
-	{
-		m_pEdict = pEdict;
-		m_vVector = Vector(0,0,0);
-	}
+	CFindPathTask ( edict_t *pEdict );
 
 	void getPassedVector () { m_bGetPassedVector = true; }
 
@@ -141,6 +137,9 @@ public:
 	CBotTF2Snipe (  );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
+private:
+	float m_fTime;
+	Vector m_vAiming;
 };
 
 class CBotTF2SpyDisguise : public CBotTask
@@ -176,6 +175,31 @@ private:
 	int m_iTries;
 };
 
+class CBotTF2UpgradeBuilding : public CBotTask
+{
+public:
+	CBotTF2UpgradeBuilding ( edict_t *pBuilding );
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	virtual void debugString ( char *string );
+private:
+	edict_t *m_pBuilding;
+	float m_fTime;
+};
+
+class CBotTF2WaitAmmoTask : public CBotTask
+{
+public:
+	CBotTF2WaitAmmoTask ( int iWeaponId, Vector vOrigin );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	Vector m_vOrigin;
+	float m_fWaitTime;
+	int m_iWeaponId;
+};
+
 class CBotTF2WaitHealthTask : public CBotTask
 {
 public:
@@ -187,6 +211,42 @@ private:
 	Vector m_vOrigin;
 	float m_fWaitTime;
 };
+
+class CBotTFDoubleJump : public CBotTask
+{
+public:
+	CBotTFDoubleJump (); // going here
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	float m_fTime;
+};
+
+class CBotTFRocketJump : public CBotTask
+{
+public:
+	CBotTFRocketJump (); // going here
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	float m_fTime;
+};
+
+class CBotTFUseTeleporter : public CBotTask
+{
+public:
+	CBotTFUseTeleporter ( edict_t *pTele ); // going to use this 
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	edict_t *m_pTele;
+	float m_fTime;
+	Vector m_vLastOrigin;
+};
+
 
 
 class CBotTF2WaitFlagTask : public CBotTask

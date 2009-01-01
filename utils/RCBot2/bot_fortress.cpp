@@ -40,6 +40,7 @@
 #include "bot_mods.h"
 #include "bot_visibles.h"
 #include "bot_weapons.h"
+#include "bot_waypoint_locations.h"
 
 #include "vstdlib/random.h" // for random functions
 
@@ -660,10 +661,11 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 	{
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_ROCKET_JUMP) )
 		{
-			if ( (getClass() == TF_CLASS_SOLDIER) && (getHealthPercent() > 0.7) )
-				return true;
-
-			return false;
+			return ( (getClass() == TF_CLASS_SOLDIER) && (getHealthPercent() > 0.6) );
+		}
+		else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_DOUBLEJUMP) )
+		{
+			return ( getClass() == TF_CLASS_SCOUT);
 		}
 
 		return true;
@@ -774,24 +776,90 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		if ( getClass() == TF_CLASS_ENGINEER )
 		{		
+			CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH));
+
 			checkBuildingsValid();
 
-			if ( !m_pSentryGun )
+			if ( pWeapon )
 			{
-				pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(-1,getTeam()));
+				if ( pWeapon->getAmmo(this) < 200 )
+				{
+					CWaypoint *pDisp = NULL;
+					CWaypoint *pWaypointAmmo = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_AMMO,getOrigin(),4096,getTeam()));
+					CWaypoint *pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_RESUPPLY,getOrigin(),4096,getTeam()));
 
-				if ( pWaypoint )
-				{
-					m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,pWaypoint->getOrigin()));
-					return;
+					if ( m_pDispenser )
+					{
+						pDisp = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pDispenser),150,-1,true,false,true,NULL,false,getTeam()));
+					}
+
+					if ( pDisp )
+					{
+						// to do : Get ammo from Disp Schedule
+						m_pSchedules->add(new CBotGetMetalSched(CBotGlobals::entityOrigin(m_pDispenser)));
+							return;
+					}
+					else if ( pWaypointAmmo && pWaypointResupply )
+					{
+						if ( distanceFrom(pWaypointAmmo->getOrigin()) < distanceFrom(pWaypointResupply->getOrigin()) )
+						{
+							m_pSchedules->add(new CBotGetMetalSched(pWaypointAmmo->getOrigin()));
+							return;
+						}
+						else
+						{
+							m_pSchedules->add(new CBotGetMetalSched(pWaypointResupply->getOrigin()));
+							return;
+						}
+					}
+					else if ( pWaypointAmmo )
+					{
+						m_pSchedules->add(new CBotGetMetalSched(pWaypointAmmo->getOrigin()));
+						return;
+					}
+					else if ( pWaypointResupply )
+					{
+						m_pSchedules->add(new CBotGetMetalSched(pWaypointResupply->getOrigin()));
+						return;
+					}
+					// Get ammo
 				}
+				else if ( !m_pSentryGun )
+				{
+					pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam()));
+
+					if ( pWaypoint )
+					{
+						m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,pWaypoint->getOrigin()));
+						return;
+					}
+				}
+				else
+				{
+					if ( CTeamFortress2Mod::getSentryLevel(m_pSentryGun) < 3 )
+					{
+						// upgrade it !
+						
+						pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam()));
+
+						if ( pWaypoint )
+						{
+							m_pSchedules->add(new CBotTFEngiUpgrade(m_pSentryGun));
+							return;
+						}
+					}
+				}
+
 			}
-			else
+		}
+		else if ( getClass() == TF_CLASS_SNIPER )
+		{
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam()));
+
+			if ( pWaypoint )
 			{
-				if ( CTeamFortress2Mod::getSentryLevel(m_pSentryGun) < 3 )
-				{
-					// upgrade it !
-				}
+				m_pSchedules->add(new CBotTF2SnipeSched(pWaypoint->getOrigin()));
+				return;
 			}
 		}
 
@@ -806,8 +874,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			}
 		}
 
-		// Pickup flag
-		if ( !pWaypoint )
+
+		if ( CTeamFortress2Mod::isMapType(TF_MAP_CTF) )
 		{
 			// roam
 			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_FLAG,getTeam()));
@@ -829,6 +897,23 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
 	}
 
+}
+
+void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
+{
+	CBot::touchedWpt(pWaypoint);
+
+	if ( canGotoWaypoint (getOrigin(), pWaypoint) )
+	{
+		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_ROCKET_JUMP) )
+		{
+			m_pSchedules->addFront(new CBotSchedule(new CBotTFRocketJump()));
+		}
+		else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_DOUBLEJUMP) )
+		{
+			m_pSchedules->addFront(new CBotSchedule(new CBotTFDoubleJump()));
+		}
+	}
 }
 
 bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
@@ -879,7 +964,18 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 		return false;
 
 	if ( ENTINDEX(pEdict) <= CBotGlobals::maxClients() )
-		bValid = CBotGlobals::getTeam(pEdict) != getTeam();
+	{
+		if (  CBotGlobals::getTeam(pEdict) != getTeam() )
+		{
+			// spy?
+			if ( CTeamFortress2Mod::TF2_IsPlayerDisguised(pEdict) || CTeamFortress2Mod::TF2_IsPlayerCloaked(pEdict) )
+				bValid = false;
+			else
+				bValid = true;
+		}
+
+
+	}
 	else
 	{
 		iEnemyTeam = CTeamFortress2Mod::getEnemyTeam(getTeam());
