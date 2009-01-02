@@ -74,6 +74,8 @@
 
 static ICvar *s_pCVar;
 
+ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
+
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
 IFileSystem *filesystem = NULL;  // file I/O 
@@ -357,7 +359,7 @@ void CRCBotPlugin::ServerActivate( edict_t *pEdictList, int edictCount, int clie
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::GameFrame( bool simulating )
 {
-	if ( CBotGlobals::IsMapRunning() )
+	if ( simulating && CBotGlobals::IsMapRunning() )
 	{
 		CBots::botThink();
 		CClients::clientThink();	
@@ -738,6 +740,28 @@ int CClassInterface :: getHealth ( edict_t *edict )
  
 	if (!offset)
 		offset = findOffset("m_iHealth","CBaseEntity");
+	
+	if (!offset)
+		return 100;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return 100;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return *(int *)((char *)pEntity + offset);
+}
+
+int CClassInterface :: getTF2Class ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_PlayerClass","CTFPlayer")+4;
 	
 	if (!offset)
 		return 0;

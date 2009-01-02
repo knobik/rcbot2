@@ -187,7 +187,7 @@ bool CWaypointVisibilityTable :: ReadFromFile ( void )
    fseek (bfp, 0, SEEK_SET); // seek at start
 
    // clear table
-   memset(m_VisTable,0,sizeof(g_iMaxVisibilityByte));
+   Q_memset(m_VisTable,0,sizeof(g_iMaxVisibilityByte));
 
    // read vis table
    fread(m_VisTable,sizeof(unsigned char),iDesiredSize,bfp);

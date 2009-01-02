@@ -96,8 +96,10 @@ float  CBots :: m_flAddKickBotTime = 0;
 ////////////////////////////////////////////////
 void CBot :: runPlayerMove()
 {
+	extern ConVar bot_attack;
+
 	//////////////////////////////////
-	memset(&cmd, 0, sizeof(cmd));
+	Q_memset( &cmd, 0, sizeof( cmd ) );
 	//////////////////////////////////
 	cmd.forwardmove = m_fForwardSpeed;
 	cmd.sidemove = m_fSideSpeed;
@@ -107,13 +109,16 @@ void CBot :: runPlayerMove()
 	cmd.viewangles = m_vViewAngles;
 	cmd.weaponselect = m_iSelectWeapon;
 
+	if ( bot_attack.GetInt() == 1 )
+		cmd.buttons = IN_ATTACK;
+
 	m_iSelectWeapon = 0;
 
 	if ( CClients::clientsDebugging() )
 	{
 			char dbg[512];
 
-			sprintf(dbg,"m_pButtons = %d/%x, Weapon Select = %d",cmd.buttons,cmd.buttons,cmd.weaponselect);
+			sprintf(dbg,"m_pButtons = %d/%x, Weapon Select = %d, impulse = %d",cmd.buttons,cmd.buttons,cmd.weaponselect,cmd.impulse);
 
 			CClients::clientDebugMsg(BOT_DEBUG_BUTTONS,dbg,this);
 	}
@@ -1104,7 +1109,7 @@ void CBot :: getLookAtVector ()
 	case LOOK_EDICT:
 		{
 			if ( m_pLookEdict )
-				setLookAt(CBotGlobals::entityOrigin(m_pLookEdict));
+				setLookAt(CBotGlobals::entityOrigin(m_pLookEdict)+Vector(0,0,32));
 		}
 		break;
 	case LOOK_GROUND:
@@ -1407,7 +1412,7 @@ void CBot :: duck ( bool hold )
 // TO DO: perceptron method
 bool CBot::wantToFollowEnemy ()
 {
-	return ((m_pPlayerInfo->GetHealth()/m_pPlayerInfo->GetMaxHealth())>0.4);
+	return ((m_pPlayerInfo->GetHealth()/m_pPlayerInfo->GetMaxHealth())>0.5);
 }
 ////////////////////////////
 void CBot :: getTasks (unsigned int iIgnore)

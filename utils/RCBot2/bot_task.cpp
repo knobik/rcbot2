@@ -213,7 +213,7 @@ CBotTF2UpgradeBuilding :: CBotTF2UpgradeBuilding ( edict_t *pBuilding )
 void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if (!m_fTime )
-		m_fTime = engine->Time() + RandomFloat(10.0f,15.0f);
+		m_fTime = engine->Time() + RandomFloat(9.0f,11.0f);
 	
 	if ( m_fTime<engine->Time() )
 		complete();

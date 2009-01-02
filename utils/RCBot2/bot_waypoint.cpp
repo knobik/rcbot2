@@ -76,7 +76,7 @@ void CWaypointNavigator :: init ()
 	m_iLastFailedWpt = -1;
 	m_bWorkingRoute = false;
 
-	memset(m_fBelief,0,sizeof(int)*CWaypoints::MAX_WAYPOINTS);
+	Q_memset(m_fBelief,0,sizeof(int)*CWaypoints::MAX_WAYPOINTS);
 
 	m_iFailedGoals.Destroy();//.clear();//Destroy();
 }
@@ -233,7 +233,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 		}
 
 		clearOpenList();
-		memset(paths,0,sizeof(AStarNode)*CWaypoints::MAX_WAYPOINTS);
+		Q_memset(paths,0,sizeof(AStarNode)*CWaypoints::MAX_WAYPOINTS);
 
 		AStarNode *curr = &paths[m_iCurrentWaypoint];
 		curr->setWaypoint(m_iCurrentWaypoint);
@@ -845,7 +845,7 @@ void CWaypoints :: init ()
 	for ( int i = 0; i < MAX_WAYPOINTS; i ++ )
 		m_theWaypoints[i].init();
 
-	memset(m_theWaypoints,0,sizeof(CWaypoint)*MAX_WAYPOINTS);	
+	Q_memset(m_theWaypoints,0,sizeof(CWaypoint)*MAX_WAYPOINTS);	
 
 	CWaypointLocations::Init();
 	m_pVisibilityTable->ClearVisibilityTable();

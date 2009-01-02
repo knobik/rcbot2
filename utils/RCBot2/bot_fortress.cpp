@@ -41,6 +41,7 @@
 #include "bot_visibles.h"
 #include "bot_weapons.h"
 #include "bot_waypoint_locations.h"
+#include "in_buttons.h"
 
 #include "vstdlib/random.h" // for random functions
 
@@ -846,9 +847,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 				}
 				else
 				{
-					if ( CTeamFortress2Mod::getSentryLevel(m_pSentryGun) < 3 )
+					if (( CTeamFortress2Mod::getSentryLevel(m_pSentryGun) < 3 ) || ( CClassInterface :: getHealth(m_pSentryGun) < 50 ))
 					{
-						// upgrade it !
+						// upgrade/heal it !
 						
 						pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam()));
 
@@ -954,7 +955,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		}
 		else
 		{
-			secondaryAttack();
+			tapButton(IN_ATTACK2);
 		}
 	}
 	else
@@ -977,13 +978,17 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	{
 		if (  CBotGlobals::getTeam(pEdict) != getTeam() )
 		{
-			// spy?
-			if ( CTeamFortress2Mod::TF2_IsPlayerDisguised(pEdict) || CTeamFortress2Mod::TF2_IsPlayerCloaked(pEdict) )
-				bValid = false;
+			//if ( CTeamFortress2Mod::TF2_IsPlayerInvuln(pEdict) )
+			//	bValid = false;			
+			if ( CClassInterface::getTF2Class(pEdict) == (int)TF_CLASS_SPY )
+			{
+				//if ( CTeamFortress2Mod::TF2_IsPlayerDisguised(pEdict) || CTeamFortress2Mod::TF2_IsPlayerCloaked(pEdict) )
+				//	bValid = false;
+				bValid = true;
+			}
 			else
 				bValid = true;
 		}
-
 
 	}
 	else

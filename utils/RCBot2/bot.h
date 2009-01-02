@@ -86,6 +86,7 @@ public:
 	static int getTF2NumHealers ( edict_t *edict );
 	static int getTF2Conditions ( edict_t *edict );
 	static Vector *getVelocity ( edict_t *edict );
+	static int getTF2Class ( edict_t *edict );
 };
 
 class CRCBotEventListener : public IGameEventListener2
