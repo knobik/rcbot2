@@ -642,7 +642,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\public\vstdlib\ICommandLine.h"
+				RelativePath="..\..\public\tier0\icommandline.h"
 				>
 			</File>
 			<File
@@ -658,7 +658,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\public\dlls\iplayerinfo.h"
+				RelativePath="..\..\public\game\server\iplayerinfo.h"
 				>
 			</File>
 			<File
@@ -690,7 +690,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\public\vstdlib\strtools.h"
+				RelativePath="..\..\public\tier1\strtools.h"
 				>
 			</File>
 			<File
