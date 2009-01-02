@@ -93,6 +93,7 @@ public:
 	CFindPathTask ()
 	{
 		m_bGetPassedVector = false;
+		m_pEdict = NULL;
 	}
 
 	CFindPathTask ( Vector vOrigin )

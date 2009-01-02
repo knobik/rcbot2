@@ -801,7 +801,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 					}
 					else if ( pWaypointAmmo && pWaypointResupply )
 					{
-						if ( distanceFrom(pWaypointAmmo->getOrigin()) < distanceFrom(pWaypointResupply->getOrigin()) )
+						if ( distanceFrom(pWaypointResupply->getOrigin()) < 1000 ) // not too far
 						{
 							m_pSchedules->add(new CBotGetMetalSched(pWaypointAmmo->getOrigin()));
 							return;
@@ -831,6 +831,16 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 					if ( pWaypoint )
 					{
 						m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,pWaypoint->getOrigin()));
+						return;
+					}
+				}
+				else if ( !m_pDispenser )
+				{
+					pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam()));
+
+					if ( pWaypoint )
+					{
+						m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,pWaypoint->getOrigin()+Vector(RandomFloat(-96,96),RandomFloat(-96,96),0)));
 						return;
 					}
 				}
@@ -923,7 +933,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		bool bSecAttack = false;
 
 		if ( pWeapon->isMelee() )
-			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),2);
+			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),4);
 
 		if ( CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{

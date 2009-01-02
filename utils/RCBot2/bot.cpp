@@ -107,8 +107,21 @@ void CBot :: runPlayerMove()
 	cmd.viewangles = m_vViewAngles;
 	cmd.weaponselect = m_iSelectWeapon;
 
+	m_iSelectWeapon = 0;
+
+	if ( CClients::clientsDebugging() )
+	{
+			char dbg[512];
+
+			sprintf(dbg,"m_pButtons = %d/%x, Weapon Select = %d",cmd.buttons,cmd.buttons,cmd.weaponselect);
+
+			CClients::clientDebugMsg(BOT_DEBUG_BUTTONS,dbg,this);
+	}
+
 	m_pController->PostClientMessagesSent();
+
 	m_pController->RunPlayerMove(&cmd);
+
 }
 
 bool CBot :: wantsToShoot ()
@@ -144,7 +157,7 @@ void CBot :: setEdict ( edict_t *pEdict)
 
 bool CBot :: isUnderWater ()
 {
-	return (enginetrace->GetPointContents( getEyePosition() ) == CONTENTS_WATER);
+	return m_pController->IsEFlagSet(EFL_TOUCHING_FLUID);
 }
 
 // return false if there is a problem
@@ -402,6 +415,9 @@ void CBot :: think ()
 		doButtons();
 		return; // don't do anything just now
 	}
+
+	if ( m_pController->IsEFlagSet(EFL_BOT_FROZEN) )
+		return;
 
 	doButtons();
 
@@ -1027,7 +1043,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
     v_right = v_right/VectorDistance(v_right); // normalize
 	m_fNextUpdateAimVector = engine->Time() + RandomFloat(0.2f,0.6f);
 
-	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(v_right.x*RandomFloat(-8,8),v_right.y*RandomFloat(-8,8),RandomFloat(-16,32));
+	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(v_right.x*RandomFloat(-8,8),v_right.y*RandomFloat(-8,8),RandomFloat(0,64));
 
 	return m_vAimVector;
 }
@@ -1345,13 +1361,13 @@ void CBot :: secondaryAttack ( bool bHold )
 
 void CBot :: primaryAttack ( bool bHold )
 {
-	float fLetGoTime = 0.15;
-	float fHoldTime = 0.12;
+	float fLetGoTime = 0.15f;
+	float fHoldTime = 0.12f;
 
 	if ( bHold )
 	{
-		fLetGoTime = 0.0;
-		fHoldTime = 1.0;
+		fLetGoTime = 0.0f;
+		fHoldTime = 2.0f;
 	}
 
 	// not currently in "letting go" stage?

@@ -185,7 +185,7 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 		}
 	}
 
-	if ( m_theBestWeapon == NULL )
+	if ( (m_theBestWeapon == NULL) && (flDist < 512) )
 		m_theBestWeapon = m_FallbackMelee;
 
 	return m_theBestWeapon;

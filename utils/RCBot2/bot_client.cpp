@@ -238,6 +238,9 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 
 	switch ( iLev )
 	{
+	case BOT_DEBUG_BUTTONS:
+		szDebugLev = "buttons";
+		break;
 	case BOT_DEBUG_TASK:
 		szDebugLev = "task";
 		break;

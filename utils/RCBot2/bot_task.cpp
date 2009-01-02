@@ -572,11 +572,18 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		}
 		else
 		{			
+			
 
 			if ( pBot->moveFailed() )
 			{
 				pBot->debugMsg(BOT_DEBUG_NAV,"moveFailed() == true");
 				fail();
+			}
+
+			if ( m_pEdict )
+			{
+				if ( pBot->distanceFrom(CBotGlobals::entityOrigin(m_pEdict)) < pBot->distanceFrom(pBot->getNavigator()->getNextPoint()) )
+					complete();
 			}
 
 			// running path
