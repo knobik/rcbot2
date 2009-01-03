@@ -582,7 +582,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 			if ( m_pEdict )
 			{
-				if ( pBot->distanceFrom(CBotGlobals::entityOrigin(m_pEdict)) < pBot->distanceFrom(pBot->getNavigator()->getNextPoint()) )
+				if ( pBot->distanceFrom(m_pEdict) < pBot->distanceFrom(pBot->getNavigator()->getNextPoint()) )
 					complete();
 			}
 

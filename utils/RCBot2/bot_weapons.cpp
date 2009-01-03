@@ -146,7 +146,7 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 
 	float flDist = 0;
 
-	flDist = m_pBot->distanceFrom(CBotGlobals::entityOrigin(pEnemy));
+	flDist = m_pBot->distanceFrom(pEnemy);
 
 	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 	{

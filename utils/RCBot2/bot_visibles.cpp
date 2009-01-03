@@ -75,7 +75,7 @@ void CFindEnemyFunc :: execute ( edict_t *pEntity )
 
 float CFindEnemyFunc :: getFactor ( edict_t *pEntity )
 {
-	return m_pBot->distanceFrom(CBotGlobals::entityOrigin(pEntity));
+	return m_pBot->distanceFrom(pEntity);
 }
 
 void CFindEnemyFunc :: setOldEnemy ( edict_t *pEntity )
@@ -163,7 +163,7 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 		pAvoidEntity = NULL;
 	else
 	{
-		m_fAvoidEntityDist = m_pBot->distanceFrom(CBotGlobals::entityOrigin(pAvoidEntity));
+		m_fAvoidEntityDist = m_pBot->distanceFrom(pAvoidEntity);
 	}
 
 	// reset
@@ -200,7 +200,7 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 				{
 					if ( m_pBot->canAvoid(pEntity) )
 					{
-						m_fTempDist = m_pBot->distanceFrom(CBotGlobals::entityOrigin(pAvoidEntity));
+						m_fTempDist = m_pBot->distanceFrom(pAvoidEntity);
 
 						if ( !pAvoidEntity || (m_fTempDist<m_fAvoidEntityDist) )
 						{

@@ -174,6 +174,9 @@ protected:
 	edict_t *m_pTeleEntrance;
 	edict_t *m_pTeleExit;
 
+	edict_t *m_pNearestDisp;
+	edict_t *m_pNearestEnemySentry;
+
 	edict_t *m_pFlag;
 
 	// valid flag point area

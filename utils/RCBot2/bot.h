@@ -178,9 +178,18 @@ public:
 
 	virtual unsigned int maxEntityIndex ( ) { return MAX_PLAYERS; }
 
-	float distanceFrom ( Vector vOrigin );
+	inline float CBot :: distanceFrom(edict_t *pEntity)
+	{
+		return (pEntity->GetCollideable()->GetCollisionOrigin()-m_pController->GetLocalOrigin()).Length();
+	//return distanceFrom(CBotGlobals::entityOrigin(pEntity));
+	}
+	// return distance from this origin
+	inline float CBot :: distanceFrom ( Vector vOrigin )
+	{
+		return (vOrigin-m_pController->GetLocalOrigin()).Length();
+	}
 
-	Vector getOrigin ();
+	inline Vector getOrigin ();
 	/*
 	 * init()
 	 *

@@ -125,7 +125,7 @@ public:
 	static void traceLine ( Vector vSrc, Vector vDest, unsigned int mask, ITraceFilter *pFilter);
 	static bool traceVisible (edict_t *pEnt);
 	////////
-	static Vector entityOrigin ( edict_t *pEntity );
+	static inline Vector entityOrigin ( edict_t *pEntity ) { return pEntity->GetCollideable()->GetCollisionOrigin(); }
 	static int getTeam ( edict_t *pEntity );
 	static bool entityIsAlive ( edict_t *pEntity );
 	static int numClients ();

@@ -913,16 +913,12 @@ void CBot :: freeAllMemory ()
 	return;
 }
 
-Vector CBot :: getOrigin ()
+inline Vector CBot :: getOrigin ()
 {	
 	return m_pController->GetLocalOrigin();
 	//return CBotGlobals::entityOrigin(m_pEdict);//m_pEdict->GetCollideable()->GetCollisionOrigin();
 }
-// return distance from this origin
-float CBot :: distanceFrom ( Vector vOrigin )
-{
-	return VectorDistance(vOrigin-getOrigin());
-}
+
 // found a new enemy
 void CBot :: enemyFound (edict_t *pEnemy)
 {

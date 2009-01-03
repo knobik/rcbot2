@@ -325,9 +325,11 @@ bool CBotGlobals :: entityIsValid ( edict_t *pEntity )
 {
 	return ( pEntity && !pEntity->IsFree() && !FNullEnt(pEntity) && isNetworkable(pEntity) );
 }
-
-Vector CBotGlobals :: entityOrigin ( edict_t *pEntity )
+/*
+inline Vector CBotGlobals :: entityOrigin ( edict_t *pEntity )
 {
+	return pEntity->GetIServerEntity()->GetCollideable()->GetCollisionOrigin();
+	
 	Vector vOrigin;
 
 	if ( pEntity && pEntity->GetIServerEntity() && pEntity->GetIServerEntity()->GetCollideable() )//fix?
@@ -336,7 +338,7 @@ Vector CBotGlobals :: entityOrigin ( edict_t *pEntity )
 		vOrigin = Vector(0,0,0);
 
 	return vOrigin;
-}
+}*/
 
 // TO DO :: put into CClient
 bool CBotGlobals :: setWaypointDisplayType ( int iType )

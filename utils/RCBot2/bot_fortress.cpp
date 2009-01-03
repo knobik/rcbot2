@@ -71,6 +71,8 @@ CBotFortress :: CBotFortress()
 	m_pDispenser = NULL; 
 	m_pTeleExit = NULL; 
 	m_pTeleEntrance = NULL; 
+	m_pNearestDisp = NULL;
+	m_pNearestEnemySentry = NULL;
 }
 
 void CBotFortress :: init (bool bVarInit)
@@ -114,16 +116,15 @@ void CBotFortress :: checkHealingValid ()
 	}
 }
 
+/////////////////////////////////////////////////////////////////////
+//
+// When a new Entity becomes visible or Invisible this is called
+// 
+// bVisible = true when pEntity is Visible
+// bVisible = false when pEntity becomes inVisible
 void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 {
-	if ( CTeamFortress2Mod::isFlag(pEntity,getTeam()) )
-	{
-		if ( bVisible )
-			m_pFlag = pEntity;
-		else
-			m_pFlag = NULL;
-	}
-
+	// check for people to heal
 	if ( m_iClass == TF_CLASS_MEDIC )
 	{
 		if ( bVisible )
@@ -155,6 +156,47 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 		}else if ( m_pHeal == pEntity )
 			m_pHeal = NULL;
 	}
+	else if ( m_iClass == TF_CLASS_SPY )
+	{
+		// Look for nearest sentry to sap!!!
+		if ( bVisible )
+		{
+			if ( CTeamFortress2Mod::isSentry(pEntity,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
+			{
+				if ( !m_pNearestEnemySentry )
+					m_pNearestEnemySentry = pEntity;
+				else if ( (pEntity != m_pNearestEnemySentry) && (distanceFrom(pEntity) < distanceFrom(m_pNearestEnemySentry)) )
+					m_pNearestEnemySentry = pEntity;
+			}
+		}
+		else if ( pEntity == m_pNearestEnemySentry )
+		{
+			m_pNearestEnemySentry = NULL;
+		}
+	}
+
+	// Check for nearest Dispenser for health/ammo & flag
+	if ( bVisible )
+	{
+		if ( CTeamFortress2Mod::isFlag(pEntity,getTeam()) )
+			m_pFlag = pEntity;
+
+		if ( CTeamFortress2Mod::isDispenser(pEntity,getTeam()) )
+		{
+			if ( !m_pNearestDisp )
+				m_pNearestDisp = pEntity;
+			else if ( (pEntity != m_pNearestDisp) && (distanceFrom(pEntity) < distanceFrom(m_pNearestDisp)) )
+				m_pNearestDisp = pEntity;
+		}
+	}
+	else 
+	{
+		if ( pEntity == m_pFlag )
+			m_pFlag = NULL;
+
+		if ( pEntity == m_pNearestDisp )
+			m_pNearestDisp = NULL;
+	}
 	
 }
 
@@ -165,7 +207,7 @@ bool CBotFortress :: isAlive ()
 
 void CBotFortress :: killed ( edict_t *pVictim )
 {
- return;
+	return;
 }
 
 void CBotFortress :: died ( edict_t *pKiller )
@@ -181,6 +223,11 @@ void CBotFortress :: died ( edict_t *pKiller )
 void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
+
+	m_pHeal = NULL;
+	m_pNearestDisp = NULL;
+	m_pNearestEnemySentry = NULL;
+	m_bHasFlag = false; 
 }
 
 void CBotFortress :: setClass ( TF_Class _class )
@@ -294,8 +341,6 @@ void CBotFortress :: selectClass ()
 void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
-
-	m_pHeal = NULL;
 
 	if ( m_pWeapons && (m_iClass != TF_CLASS_UNDEFINED) )
 	{
@@ -938,7 +983,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 
 		if ( CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
-			float fDistance = distanceFrom(CBotGlobals::entityOrigin(pEnemy));
+			float fDistance = distanceFrom(pEnemy);
 
 			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) > 25) )
 				bSecAttack = true;
