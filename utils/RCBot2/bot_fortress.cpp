@@ -124,6 +124,8 @@ void CBotFortress :: checkHealingValid ()
 // bVisible = false when pEntity becomes inVisible
 void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 {
+	CBot::setVisible(pEntity,bVisible);
+
 	// check for people to heal
 	if ( m_iClass == TF_CLASS_MEDIC )
 	{

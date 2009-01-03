@@ -154,17 +154,6 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 	static Vector vEntityOrigin;
 	static int clusterIndex;
 	static bool playerInPVS;
-	float m_fAvoidEntityDist = 0;
-	float m_fTempDist = 0;
-
-	edict_t *pAvoidEntity = m_pBot->getAvoidEntity();
-
-	if ( !CBotGlobals::entityIsValid(pAvoidEntity) )
-		pAvoidEntity = NULL;
-	else
-	{
-		m_fAvoidEntityDist = m_pBot->distanceFrom(pAvoidEntity);
-	}
 
 	// reset
 	*bVisible = false;
@@ -198,17 +187,6 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 
 				if ( bVisible )
 				{
-					if ( m_pBot->canAvoid(pEntity) )
-					{
-						m_fTempDist = m_pBot->distanceFrom(pAvoidEntity);
-
-						if ( !pAvoidEntity || (m_fTempDist<m_fAvoidEntityDist) )
-						{
-							pAvoidEntity = pEntity;
-							m_fAvoidEntityDist = m_fTempDist;
-						}
-					}
-
 					if ( CClients::clientsDebugging() && CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()))
 						debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,0.1,"VISIBLE");
 				}
@@ -224,8 +202,6 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 		else if ( CClients::clientsDebugging() && CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()) )
 			debugoverlay->AddTextOverlay(CBotGlobals::entityOrigin(pEntity),0,0.1,"INVISIBLE: FInViewCone false");
 	}
-
-	m_pBot->setAvoidEntity(pAvoidEntity);
 }
 
 void CBotVisibles :: updateVisibles ()

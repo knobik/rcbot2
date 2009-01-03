@@ -77,7 +77,11 @@ public:
 	static void setMapRunning ( bool bSet ) { m_bMapRunning = bSet; }
 
 	static bool isNetworkable ( edict_t *pEntity );
-	static bool entityIsValid ( edict_t *pEntity );
+
+	static inline bool entityIsValid ( edict_t *pEntity )
+	{
+		return ( pEntity && !pEntity->IsFree() && !FNullEnt(pEntity) && pEntity->GetNetworkable() && pEntity->GetIServerEntity() && pEntity->GetCollideable() );
+	}
 
 	static bool setWaypointDisplayType ( int iType );
 
@@ -125,10 +129,12 @@ public:
 	static void traceLine ( Vector vSrc, Vector vDest, unsigned int mask, ITraceFilter *pFilter);
 	static bool traceVisible (edict_t *pEnt);
 	////////
-	static inline Vector entityOrigin ( edict_t *pEntity ) { return pEntity->GetCollideable()->GetCollisionOrigin(); }
+	static inline Vector entityOrigin ( edict_t *pEntity ) { return pEntity->GetIServerEntity()->GetCollideable()->GetCollisionOrigin(); }
 	static int getTeam ( edict_t *pEntity );
 	static bool entityIsAlive ( edict_t *pEntity );
 	static int numClients ();
+
+
 
 	static void levelInit();
 

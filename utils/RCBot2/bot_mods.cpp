@@ -471,6 +471,14 @@ int CTeamFortress2Mod :: getEnemyTeam ( int iTeam )
 	return TF2_TEAM_BLUE;
 }
 
+/*
+------------------int : m_nDisguiseTeam
+------------------int : m_nDisguiseClass
+------------------int : m_iDisguiseTargetIndex
+------------------int : m_iDisguiseHealth
+
+*/
+
 bool CTeamFortress2Mod :: isDispenser ( edict_t *pEntity, int iTeam )
 {
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_dispenser")==0);

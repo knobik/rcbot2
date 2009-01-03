@@ -349,7 +349,27 @@ void CBot :: reachedCoverSpot ()
 // something now visiable or not visible anymore
 void CBot :: setVisible ( edict_t *pEntity, bool bVisible )
 {
-	
+	if ( bVisible )
+	{
+		if ( canAvoid(pEntity) )
+		{
+			if ( m_pAvoidEntity )
+			{
+				if ( distanceFrom(pEntity) < distanceFrom(m_pAvoidEntity) )
+				{
+					m_pAvoidEntity = pEntity;
+				}
+			}
+			else
+				m_pAvoidEntity = pEntity;
+		}
+	}
+	else
+	{
+		if ( m_pAvoidEntity == pEntity )
+			m_pAvoidEntity = NULL;
+	}
+
 }
 
 bool CBot :: isUsingProfile ( CBotProfile *pProfile )
@@ -631,6 +651,7 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_pAvoidEntity = NULL;
 	m_bThinkStuck = false;
 	m_pLookEdict = NULL;
 	m_fLookAroundTime = 0.0f;
@@ -1044,7 +1065,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
     v_right = v_right/VectorDistance(v_right); // normalize
 	m_fNextUpdateAimVector = engine->Time() + RandomFloat(0.2f,0.6f);
 
-	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(v_right.x*RandomFloat(-8,8),v_right.y*RandomFloat(-8,8),RandomFloat(0,64));
+	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(v_right.x*RandomFloat(-8,8),v_right.y*RandomFloat(-8,8),RandomFloat(-16,16));
 
 	return m_vAimVector;
 }

@@ -180,7 +180,7 @@ public:
 
 	inline float CBot :: distanceFrom(edict_t *pEntity)
 	{
-		return (pEntity->GetCollideable()->GetCollisionOrigin()-m_pController->GetLocalOrigin()).Length();
+		return (pEntity->GetIServerEntity()->GetCollideable()->GetCollisionOrigin()-m_pController->GetLocalOrigin()).Length();
 	//return distanceFrom(CBotGlobals::entityOrigin(pEntity));
 	}
 	// return distance from this origin

@@ -321,10 +321,6 @@ bool CBotGlobals :: isNetworkable ( edict_t *pEntity )
 	return (pServerEnt && (pServerEnt->GetNetworkable() != NULL));
 }
 
-bool CBotGlobals :: entityIsValid ( edict_t *pEntity )
-{
-	return ( pEntity && !pEntity->IsFree() && !FNullEnt(pEntity) && isNetworkable(pEntity) );
-}
 /*
 inline Vector CBotGlobals :: entityOrigin ( edict_t *pEntity )
 {
