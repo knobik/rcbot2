@@ -5,6 +5,10 @@
 	Name="HPB_bot2"
 	ProjectGUID="{B6572CBE-7C7F-4FFF-94DE-AFBBBAB11C64}"
 	RootNamespace="HPB_bot2"
+	SccProjectName="Svn"
+	SccAuxPath="Svn"
+	SccLocalPath="Svn"
+	SccProvider="SubversionScc"
 	>
 	<Platforms>
 		<Platform
@@ -727,6 +731,14 @@
 			>
 			<File
 				RelativePath=".\update.txt"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Files"
+			>
+			<File
+				RelativePath="..\..\release\HPB_bot2.dll"
 				>
 			</File>
 		</Filter>
