@@ -29,7 +29,8 @@
  *
  */
 #include <math.h>
-#include "vstdlib/random.h" // for random functions
+//#include "vstdlib/random.h" // for random functions
+#include "bot_mtrand.h"
 #include "bot_perceptron.h"
 
 ga_nn_value CPerceptron::m_fDefaultLearnRate = 0.5f;
@@ -49,10 +50,10 @@ CPerceptron :: CPerceptron (unsigned int iInputs,ITransfer *transferFunction)
 	m_iInputs = iInputs;
 	
 	// bias weight
-	m_weights.push_back(RandomFloat(0,1));
+	m_weights.push_back(randomFloat(0,1));
 	
 	for ( unsigned int i = 0; i < m_iInputs; i++ )
-		m_weights.push_back(-1+RandomFloat(0,2));
+		m_weights.push_back(-1+randomFloat(0,2));
 	
 	m_transferFunction = transferFunction;
 	

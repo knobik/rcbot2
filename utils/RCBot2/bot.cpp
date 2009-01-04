@@ -75,7 +75,8 @@
 #include "bot_weapons.h"
 #include "bot_profile.h"
 
-#include "vstdlib/random.h" // for random functions
+#include "bot_mtrand.h"
+//#include "vstdlib/random.h" // for random functions
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -193,9 +194,9 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 
 	if ( FStrEq(szModel,"default") )	
 	{
-		int iModel = RandomInt(1,7);	
+		int iModel = randomInt(1,7);	
 
-		if ( RandomInt(0,1) )
+		if ( randomInt(0,1) )
 			sprintf(szModel,"models/humans/Group03/Male_0%d.mdl",iModel);
 		else
 			sprintf(szModel,"models/humans/Group03/female_0%d.mdl",iModel);
@@ -290,7 +291,7 @@ bool CBot :: checkStuck ()
 		{
 			m_bThinkStuck = true;
 			m_pButtons->jump();
-			m_pButtons->duck(0.25f,RandomFloat(0.2f,0.4f));
+			m_pButtons->duck(0.25f,randomFloat(0.2f,0.4f));
 
 			if ( m_fStrafeTime < engine->Time() )
 			{
@@ -429,7 +430,7 @@ void CBot :: debugMsg ( int iLev, const char *szMsg )
 void CBot :: think ()
 {
 	float fTime = engine->Time();
-	Vector *pvVelocity;
+//	Vector *pvVelocity;
 
 	m_iLookPriority = 0;
 	m_iMovePriority = 0;
@@ -458,6 +459,8 @@ void CBot :: think ()
 
 		return;
 	}
+
+	checkDependantEntities();
 
 	//m_bNeedToInit = true;
 
@@ -499,13 +502,15 @@ void CBot :: think ()
 
 	updateConditions();
 
-	pvVelocity = CClassInterface::getVelocity(m_pEdict);
+	/*pvVelocity = CClassInterface::getVelocity(m_pEdict);
 
 	if ( pvVelocity )
 	{
 		m_vVelocity = *pvVelocity;
 	}
-	else if ( m_fUpdateOriginTime < fTime )
+	else
+	*/
+	if ( m_fUpdateOriginTime < fTime )
 	{
 		Vector vOrigin = getOrigin();
 
@@ -651,6 +656,8 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	
+	m_pPickup = NULL;
 	m_pAvoidEntity = NULL;
 	m_bThinkStuck = false;
 	m_pLookEdict = NULL;
@@ -796,7 +803,7 @@ void CBot :: hurt ( edict_t *pAttacker, int iHealthNow )
 	{
 		m_fLookSetTime = 0;
 		setLookAtTask(LOOK_HURT_ORIGIN,2);
-		m_fLookSetTime = engine->Time() + RandomFloat(1.5,3.0);
+		m_fLookSetTime = engine->Time() + randomFloat(2.5,8.0);
 	}
 
 	float fTime = engine->Time();
@@ -826,6 +833,23 @@ void CBot :: setLookAtTask ( eLookTask lookTask, int iPriority )
 		m_iLookPriority = iPriority;
 		m_iLookTask = lookTask; 
 	}	
+}
+
+
+void CBot :: checkEntity ( edict_t **pEdict )
+{
+	if ( pEdict && *pEdict && !CBotGlobals::entityIsValid(*pEdict) )
+		*pEdict = NULL;
+}
+
+void CBot :: checkDependantEntities ()
+{
+	checkEntity(&m_pOldEnemy);
+	checkEntity(&m_pLookEdict);
+	checkEntity(&m_pAvoidEntity);
+	checkEntity(&m_pEnemy);
+	checkEntity(&m_pLastEnemy);
+	checkEntity(&m_pPickup);
 }
 
 void CBot :: findEnemy ( edict_t *pOldEnemy )
@@ -1020,7 +1044,7 @@ bool CBot :: FInViewCone ( edict_t *pEntity )
 {	
 	Vector origin = CBotGlobals::entityOrigin(pEntity);
 
-	return ( ((origin - getOrigin()).Length()>1) && (DotProductFromOrigin(origin) > 0) ); // 90 degree !! 0.422618f ); // 65 degree field of view   
+	return ( ((origin - getEyePosition()).Length()>1) && (DotProductFromOrigin(origin) > 0) ); // 90 degree !! 0.422618f ); // 65 degree field of view   
 }
 
 float CBot :: DotProductFromOrigin ( Vector &pOrigin )
@@ -1037,7 +1061,7 @@ float CBot :: DotProductFromOrigin ( Vector &pOrigin )
 	AngleVectors(eyes,&vForward);
 	
 	vecLOS = pOrigin - getEyePosition();
-	vecLOS = vecLOS/VectorDistance(vecLOS);
+	vecLOS = vecLOS/vecLOS.Length();
 	
 	flDot = DotProduct (vecLOS , vForward );
 	
@@ -1063,9 +1087,9 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	AngleVectors(angles,&v_right);
 
     v_right = v_right/VectorDistance(v_right); // normalize
-	m_fNextUpdateAimVector = engine->Time() + RandomFloat(0.2f,0.6f);
+	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.2f,0.6f);
 
-	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(v_right.x*RandomFloat(-8,8),v_right.y*RandomFloat(-8,8),RandomFloat(-16,16));
+	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(v_right.x*randomFloat(-8,8),v_right.y*randomFloat(-8,8),randomFloat(-8,8));
 
 	return m_vAimVector;
 }
@@ -1209,7 +1233,7 @@ void CBot :: getLookAtVector ()
 					CBotGlobals::fixFloatAngle(&eyestart);
 				}
 
-				m_fLookAroundTime = engine->Time() + RandomFloat(8.0f,18.0f);
+				m_fLookAroundTime = engine->Time() + randomFloat(8.0f,18.0f);
 
 			}
 		}
@@ -1219,8 +1243,8 @@ void CBot :: getLookAtVector ()
 			
 			if ( m_fLookAroundTime < engine->Time() )
 			{
-				setLookAt(getEyePosition()+Vector(RandomFloat(-128,128),RandomFloat(-128,128),RandomFloat(0,32)));
-				m_fLookAroundTime = engine->Time() + RandomFloat(8.0f,18.0f);
+				setLookAt(getEyePosition()+Vector(randomFloat(-128,128),randomFloat(-128,128),randomFloat(0,32)));
+				m_fLookAroundTime = engine->Time() + randomFloat(8.0f,18.0f);
 			//setLookAt();
 			//setLookAt(...);
 			}
@@ -1339,12 +1363,14 @@ void CBot :: doLook ()
     if ( lookAtIsValid () )
 	{	
 		QAngle requiredAngles;
+
+		extern ConVar bot_anglespeed;
 		
 		VectorAngles(m_vLookAt-getEyePosition(),requiredAngles);
 		CBotGlobals::fixFloatAngle(&requiredAngles.x);
 		CBotGlobals::fixFloatAngle(&requiredAngles.y);
-		changeAngles(15.0f,&requiredAngles.x,&m_vViewAngles.x,NULL);
-		changeAngles(15.0f,&requiredAngles.y,&m_vViewAngles.y,NULL);
+		changeAngles(bot_anglespeed.GetFloat(),&requiredAngles.x,&m_vViewAngles.x,NULL);
+		changeAngles(bot_anglespeed.GetFloat(),&requiredAngles.y,&m_vViewAngles.y,NULL);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.x);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.y);
 	}

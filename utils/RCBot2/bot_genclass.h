@@ -46,7 +46,9 @@
 #include <vector>
 using namespace std;
 
-#include "vstdlib/random.h" // for random functions
+//#include "vstdlib/random.h" // for random functions
+
+#include "bot_mtrand.h"
 
 
 //////////////////////////////////////////////////////////////////////
@@ -681,7 +683,7 @@ class dataUnconstArray
 		{
 			//return array[RANDOM_INT(0,array.size()-1)];
 			//return array[RandomInteger(0,array.size()-1)];
-			return array[RandomInt(0,array.size()-1)];
+			return array[randomInt(0,array.size()-1)];
 		}
 
 		void Add ( const T pObj )

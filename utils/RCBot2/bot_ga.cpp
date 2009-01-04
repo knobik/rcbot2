@@ -29,11 +29,14 @@
  *
  */
 
-#include "vstdlib/random.h" // for random functions
+//#include "vstdlib/random.h" // for random functions
+#include "bot_mtrand.h"
 
 #include "bot.h"
 #include "bot_ga.h"
 #include "bot_globals.h"
+
+
 const int CGA :: g_iDefaultMaxPopSize = 16;
 const float CGA :: g_fCrossOverRate = 0.7f;
 const float CGA :: g_fMutateRate = 0.1f;
@@ -146,7 +149,7 @@ void CGA :: epoch ()
 		IIndividual *baby1 = mum->copy();
 		IIndividual *baby2 = dad->copy();
 
-		if ( RandomFloat(0,1) < g_fCrossOverRate )	
+		if ( randomFloat(0,1) < g_fCrossOverRate )	
 			baby1->crossOver(baby2);
 
 		baby1->mutate();
@@ -202,7 +205,7 @@ IIndividual *CGA :: pick ()
 
 IIndividual *CRouletteSelection :: select ( CPopulation *population )
 {
-	ga_nn_value fFitnessSlice = RandomFloat(0,population->totalFitness());
+	ga_nn_value fFitnessSlice = randomFloat(0,population->totalFitness());
 	ga_nn_value fFitnessSoFar = 0.0f;
 
 	for ( unsigned int i = 0; i < population->size(); i ++ )

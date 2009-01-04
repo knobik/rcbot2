@@ -28,7 +28,9 @@
  *    version.
  *
  */
-#include "vstdlib/random.h" // for random functions
+//#include "vstdlib/random.h" // for random functions
+
+#include "bot_mtrand.h"
 #include "bot.h"
 #include "bot_schedule.h"
 #include "bot_task.h"
@@ -191,7 +193,13 @@ void CBotTF2WaitFlagTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( pBot->distanceFrom(m_vOrigin) > 48 )
 			pBot->setMoveTo(m_vOrigin,2);
 		else
+		{
+			if ( (((CBotFortress*)pBot)->getClass() == TF_CLASS_SPY) && ((CBotFortress*)pBot)->isDisguised() )
+			{
+				pBot->primaryAttack();
+			}
 			pBot->stopMoving(2);
+		}
 
 		((CBotTF2*)pBot)->taunt();
 	
@@ -213,7 +221,7 @@ CBotTF2UpgradeBuilding :: CBotTF2UpgradeBuilding ( edict_t *pBuilding )
 void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if (!m_fTime )
-		m_fTime = engine->Time() + RandomFloat(9.0f,11.0f);
+		m_fTime = engine->Time() + randomFloat(9.0f,11.0f);
 	
 	if ( m_fTime<engine->Time() )
 		complete();
@@ -335,7 +343,7 @@ void CBotTF2WaitAmmoTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pWeapons = pBot->getWeapons();
 
 	if ( !m_fWaitTime )
-		m_fWaitTime = engine->Time() + RandomFloat(10.0f,15.0f);
+		m_fWaitTime = engine->Time() + randomFloat(10.0f,15.0f);
 
 	if ( !pWeapons )
 		fail();
@@ -451,7 +459,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			{
 				m_iState++;				
 				// OK, set up whacking time!
-				m_fTime = engine->Time() + RandomFloat(5.0f,12.0f);
+				m_fTime = engine->Time() + randomFloat(5.0f,12.0f);
 			}
 			else if ( m_fTime < engine->Time() )
 			{
@@ -582,8 +590,13 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 			if ( m_pEdict )
 			{
-				if ( pBot->distanceFrom(m_pEdict) < pBot->distanceFrom(pBot->getNavigator()->getNextPoint()) )
-					complete();
+				if ( CBotGlobals::entityIsValid(m_pEdict) )
+				{
+					if ( pBot->distanceFrom(m_pEdict) < pBot->distanceFrom(pBot->getNavigator()->getNextPoint()) )
+						complete();
+				}
+				else
+					fail();
 			}
 
 			// running path
@@ -680,7 +693,7 @@ void CBotTFRocketJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( !m_fTime )
 		{
-			m_fTime = engine->Time()+RandomFloat(0.3f,0.6f);
+			m_fTime = engine->Time()+randomFloat(0.3f,0.6f);
 		}
 
 		pBot->setLookAtTask(LOOK_GROUND,4);
@@ -741,7 +754,7 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_fTime == 0.0f )
 	{
-		m_fTime = engine->Time() + RandomFloat(40.0f,90.0f);
+		m_fTime = engine->Time() + randomFloat(40.0f,90.0f);
 		pBot->secondaryAttack();
 	}
 
@@ -912,7 +925,7 @@ void CAutoBuy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !m_bTimeset )
 	{
 		m_bTimeset = true;
-		m_fTime = engine->Time() + RandomFloat(2.0,4.0);
+		m_fTime = engine->Time() + randomFloat(2.0,4.0);
 	}
 	else if ( m_fTime < engine->Time() )
 	{
@@ -959,7 +972,7 @@ void CHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	pBot->duck(true);
 
 	if ( m_fHideTime == 0 )
-		m_fHideTime = engine->Time() + RandomFloat(5.0,10.0);
+		m_fHideTime = engine->Time() + randomFloat(5.0,10.0);
 
 	if ( m_fHideTime < engine->Time() )
 		complete();

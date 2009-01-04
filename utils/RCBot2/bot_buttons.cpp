@@ -61,6 +61,7 @@ CBotButtons :: CBotButtons()
 	add(new CBotButton(IN_ATTACK2));
 	add(new CBotButton(IN_DUCK));
 	add(new CBotButton(IN_JUMP));
+	add(new CBotButton(IN_RELOAD));
 }
 
 void CBotButtons :: holdButton ( int iButtonId, float fFrom, float fFor, float fLetGoTime )

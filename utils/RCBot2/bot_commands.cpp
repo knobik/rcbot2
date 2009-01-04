@@ -699,7 +699,7 @@ eBotCommandResult CSearchCommand :: execute ( CClient *pClient, const char *pcmd
 					{
 						model = pEdict->GetIServerEntity()->GetModelName();
 
-						CBaseEntity *p = pEdict->GetNetworkable()->GetBaseEntity();
+						//CBaseEntity *p = pEdict->GetNetworkable()->GetBaseEntity();
 
 						
 						

@@ -65,7 +65,7 @@
 #include "bot_profile.h"
 #include "bot_weapons.h"
 #include "bot_mods.h"
-
+#include "vstdlib/random.h" // for random  seed 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -75,6 +75,8 @@
 static ICvar *s_pCVar;
 
 ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
+ConVar bot_scoutdj( "rcbot_scoutdj", "0.3", 0, "time scout uses to double jump" );
+ConVar bot_anglespeed( "rcbot_anglespeed", "12.0", 0, "speed that bots turn" );
 
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
@@ -617,39 +619,6 @@ bool FNullEnt(const edict_t* pent)
 { 
 	return pent == NULL || ENTINDEX((edict_t*)pent) == 0; 
 }
-/*
-class CPluginConVarAccessor : public IConCommandBaseAccessor
-{
-public:
-	virtual bool RegisterConCommandBase( ConCommandBase *pCommand )
-	{
-		pCommand->AddFlags( FCVAR_PLUGIN );
-
-		// Unlink from plugin only list
-		pCommand->SetNext( 0 );
-
-		// Link to engine's list instead
-		s_pCVar->RegisterConCommand( pCommand );
-		return true;
-	}
-
-};
-
-CPluginConVarAccessor g_ConVarAccessor;
-
-void InitCVars( CreateInterfaceFn cvarFactory )
-{
-	s_pCVar = (ICvar*)cvarFactory( CVAR_INTERFACE_VERSION, NULL);//VENGINE_CVAR_INTERFACE_VERSION, NULL );
-	if ( s_pCVar )
-	{		
-		g_ConVarAccessor.RegisterConCommandBase(&rcbotd_command);
-		ConVar_Register(FCVAR_PLUGIN,&g_ConVarAccessor);
-
-	    ConCommandBaseMgr::OneTimeInit( &g_ConVarAccessor );
-	}
-}*/
-
-
 
 /**
  * Searches for a named Server Class.
@@ -702,14 +671,67 @@ SendProp *UTIL_FindSendProp(SendTable *pTable, const char *name)
 	return NULL;
 }
 
-int offsets[T_OFFSETMAX];
 
-char *offsetnames[3] = 
+struct sm_sendprop_info_t
 {
-	"m_iHealth",
-	"m_iTeam",
-	"m_iAmmo"
+	SendProp *prop;					/**< Property instance. */
+	unsigned int actual_offset;		/**< Actual computed offset. */
 };
+
+bool UTIL_FindInSendTable(SendTable *pTable, 
+						  const char *name,
+						  sm_sendprop_info_t *info,
+						  unsigned int offset)
+{
+	const char *pname;
+	int props = pTable->GetNumProps();
+	SendProp *prop;
+
+	for (int i=0; i<props; i++)
+	{
+		prop = pTable->GetProp(i);
+		pname = prop->GetName();
+		if (pname && strcmp(name, pname) == 0)
+		{
+			info->prop = prop;
+			info->actual_offset = offset + info->prop->GetOffset();
+			return true;
+		}
+		if (prop->GetDataTable())
+		{
+			if (UTIL_FindInSendTable(prop->GetDataTable(), 
+				name,
+				info,
+				offset + prop->GetOffset())
+				)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int *offset)
+{
+	if ( !pInfo )
+	{
+		return false;
+	}
+
+	sm_sendprop_info_t temp_info;
+
+	if (!UTIL_FindInSendTable(pInfo->m_pTable, szType, &temp_info, 0))
+	{
+		return false;
+	}
+
+	*offset = temp_info.actual_offset;
+
+	return true;
+}
+
 
 
 int CClassInterface :: getTeam ( edict_t *edict )
@@ -824,11 +846,21 @@ int *CClassInterface :: getAmmoList ( edict_t *edict )
 
 unsigned int CClassInterface :: findOffset(const char *szType,const char *szClass)
 {
+	unsigned int offset = 0;
 	ServerClass *sc = UTIL_FindServerClass(szClass);
-	SendProp *pProp = UTIL_FindSendProp(sc->m_pTable, szType);
 
-	if ( pProp )
-		return pProp->GetOffset();
+	
+	//SendProp *pProp = UTIL_FindSendProp(sc->m_pTable, szType);
+
+	if ( sc )
+	{
+		if ( UTIL_FindSendPropInfo(sc,szType,&offset) )
+			return offset;
+		else
+			return 0;
+	}
+	//if ( pProp )
+	//	return pProp->GetOffset();
 
 	return 0;
 }
@@ -838,7 +870,7 @@ int CClassInterface :: getTF2NumHealers ( edict_t *edict )
 	static unsigned int offset = 0;
  
 	if (!offset)
-		offset = findOffset("m_nNumHealers","CTFPlayer");
+		offset = findOffset("m_nNumHealers","CTFPlayer")+4;
 	
 	if (!offset)
 		return NULL;
@@ -855,6 +887,61 @@ int CClassInterface :: getTF2NumHealers ( edict_t *edict )
 	return *(int *)((char *)pEntity + offset);
 }
 
+float CClassInterface :: getTF2SpyCloakMeter ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_flCloakMeter","CTFPlayer")+4;
+	
+	if (!offset)
+		return 0.0;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return 0.0;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return *(float *)((char *)pEntity + offset);
+}
+
+bool CClassInterface :: getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health )
+{
+	static unsigned int offset[4] = {0,0,0,0};
+ 
+	if (!offset[0])
+		offset[0] = findOffset("m_nDisguiseTeam","CTFPlayer");
+	if (!offset[1])
+		offset[1] = findOffset("m_nDisguiseClass","CTFPlayer");
+	if (!offset[2])
+		offset[2] = findOffset("m_iDisguiseTargetIndex","CTFPlayer");
+	if (!offset[3])
+		offset[3] = findOffset("m_iDisguiseHealth","CTFPlayer");
+	
+	if (!offset[0] || !offset[1] || !offset[2] || !offset[3])
+		return false;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return false;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	*_team = *(int *)((char *)pEntity + offset[0]);
+	*_class = *(int *)((char *)pEntity + offset[1]);
+	*_index = *(int *)((char *)pEntity + offset[2]);
+	*_health = *(int *)((char *)pEntity + offset[3]);
+
+	 return true;
+}
+
 int CClassInterface :: getTF2Conditions ( edict_t *edict )
 {
 	static unsigned int offset = 0;
@@ -863,13 +950,13 @@ int CClassInterface :: getTF2Conditions ( edict_t *edict )
 		offset = findOffset("m_nPlayerCond","CTFPlayer");
 	
 	if (!offset)
-		return NULL;
+		return 0;
  
 	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
 
 	if (!pUnknown)
 	{
-		return NULL;
+		return 0;
 	}
  
 	CBaseEntity *pEntity = pUnknown->GetBaseEntity();

@@ -3,7 +3,8 @@
 #include "bot_schedule.h"
 #include "bot_globals.h"
 
-#include "vstdlib/random.h" // for random functions
+#include "bot_mtrand.h"
+//#include "vstdlib/random.h" // for random functions
 
 void CCSSBot :: init ()
 {
@@ -59,7 +60,7 @@ bool CCSSBot :: startGame ()
 
 	if ( pInfo->GetTeamIndex() == 0 )
 	{
-		pInfo->ChangeTeam(RandomInt(2,3));
+		pInfo->ChangeTeam(randomInt(2,3));
 	}
 
 	return (pInfo->GetTeamIndex() != 0);

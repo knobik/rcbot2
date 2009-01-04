@@ -425,15 +425,15 @@ float CTeamFortress2Mod :: TF2_GetClassSpeed(int iClass)
     switch (iClass)
     {
 		// Fix needed: Too Fast!!!
-        case TF_CLASS_SCOUT:     return 300.0f;
-        case TF_CLASS_SOLDIER:   return 160.0f;
-        case TF_CLASS_DEMOMAN:   return 180.0f;
-        case TF_CLASS_MEDIC:     return 220.0f;
-        case TF_CLASS_PYRO:      return 200.0f;
-        case TF_CLASS_SPY:       return 200.0f;
-        case TF_CLASS_ENGINEER:  return 200.0f;
-        case TF_CLASS_SNIPER:    return 200.0f;
-        case TF_CLASS_HWGUY:     return 140.0f;
+        case TF_CLASS_SCOUT:     return 290.0f;
+        case TF_CLASS_SOLDIER:   return 150.0f;
+        case TF_CLASS_DEMOMAN:   return 170.0f;
+        case TF_CLASS_MEDIC:     return 210.0f;
+        case TF_CLASS_PYRO:      return 190.0f;
+        case TF_CLASS_SPY:       return 190.0f;
+        case TF_CLASS_ENGINEER:  return 190.0f;
+        case TF_CLASS_SNIPER:    return 190.0f;
+        case TF_CLASS_HWGUY:     return 130.0f;
     }
     return 0.0;
 }

@@ -34,7 +34,9 @@
 #include "bot_globals.h"
 #include "bot_profile.h"
 
-#include "vstdlib/random.h" // for random functions
+
+#include "bot_mtrand.h"
+//#include "vstdlib/random.h" // for random functions
 
 void CHL1DMSrcBot :: init ()
 {
@@ -61,7 +63,7 @@ void CHL1DMSrcBot :: died ( edict_t *pKiller )
 {
 	spawnInit();
 
-	if ( RandomInt(0,1) )
+	if ( randomInt(0,1) )
 		m_pButtons->attack();
 }
 

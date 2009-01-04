@@ -85,6 +85,8 @@ public:
 
 	CBotFortress();
 
+	virtual void checkDependantEntities();
+
 	virtual void touchedWpt ( CWaypoint *pWaypoint ) { CBot::touchedWpt(pWaypoint); }
 
 	inline edict_t *getHealingEntity () { return m_pHeal; }
@@ -92,6 +94,8 @@ public:
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
 	virtual void init (bool bVarInit=false);
+
+	virtual void foundSpy () {};
 
 	virtual void getTasks ( unsigned int iIgnore = 0 ) { CBot :: getTasks(iIgnore); }
 
@@ -164,6 +168,12 @@ protected:
 
 	virtual void callMedic ();
 
+	static bool isClassOnTeam ( int iClass, int iTeam );
+
+	static int getSpyDisguiseClass ( int iTeam );
+
+	bool thinkSpyIsEnemy ( edict_t *pEdict );
+
 	float m_fCallMedic;
 	float m_fTauntTime;
 	float m_fTaunting;
@@ -178,6 +188,12 @@ protected:
 	edict_t *m_pNearestEnemySentry;
 
 	edict_t *m_pFlag;
+	edict_t *m_pPrevSpy;
+
+	float m_fSpyCloakTime;
+	float m_fSeeSpyTime;
+	float m_fSpyDisguiseTime;
+	float m_fLastSaySpy;
 
 	// valid flag point area
 	Vector m_vLastKnownFlagPoint;
@@ -189,9 +205,7 @@ protected:
 
 	float m_fUpdateClass;
 
-	bool m_bHasFlag;
-
-	
+	bool m_bHasFlag;		
 	
 };
 
@@ -200,6 +214,8 @@ class CBotTF2 : public CBotFortress
 public:
 
 	CBotTF2() { CBotFortress(); }
+
+	void foundSpy ();
 
 	void touchedWpt ( CWaypoint *pWaypoint );
 
@@ -251,6 +267,9 @@ public:
 
 	void setup ();
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
+
+private:
+	float m_fDoubleJumpTime;
 
 };
 

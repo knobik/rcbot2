@@ -87,6 +87,8 @@ public:
 	static int getTF2Conditions ( edict_t *edict );
 	static Vector *getVelocity ( edict_t *edict );
 	static int getTF2Class ( edict_t *edict );
+	static float getTF2SpyCloakMeter ( edict_t *edict );
+	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health );
 };
 
 class CRCBotEventListener : public IGameEventListener2
@@ -352,6 +354,8 @@ public:
 	void findEnemy ( edict_t *pOldEnemy = NULL );
 	void enemyFound ( edict_t *pEnemy );
 
+	virtual void checkDependantEntities ();
+
 	inline IBotNavigator *getNavigator () { return m_pNavigator; }
 
 	inline void stopMoving (int iPriority = 1) 
@@ -453,6 +457,8 @@ public:
 	virtual void touchedWpt ( CWaypoint *pWaypoint );
 
 protected:
+
+	static void checkEntity ( edict_t **pEdict );
 	/////////////////////////
 	void doMove ();
 

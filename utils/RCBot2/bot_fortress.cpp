@@ -43,7 +43,9 @@
 #include "bot_waypoint_locations.h"
 #include "in_buttons.h"
 
-#include "vstdlib/random.h" // for random functions
+#include "bot_mtrand.h"
+
+//#include "vstdlib/random.h" // for random functions
 
 
 void CBroadcastFlagDropped :: execute ( CBot *pBot )
@@ -73,6 +75,23 @@ CBotFortress :: CBotFortress()
 	m_pTeleEntrance = NULL; 
 	m_pNearestDisp = NULL;
 	m_pNearestEnemySentry = NULL;
+	m_pPrevSpy = NULL;
+	m_fSeeSpyTime = 0.0f;
+}
+
+void CBotFortress :: checkDependantEntities ()
+{
+	CBot::checkDependantEntities();
+
+	checkEntity(&m_pPrevSpy);
+	checkEntity(&m_pFlag); 
+	checkEntity(&m_pHeal); 
+	checkEntity(&m_pSentryGun); 
+	checkEntity(&m_pDispenser); 
+	checkEntity(&m_pTeleExit); 
+	checkEntity(&m_pTeleEntrance); 
+	checkEntity(&m_pNearestDisp); 
+	checkEntity(&m_pNearestEnemySentry); 
 }
 
 void CBotFortress :: init (bool bVarInit)
@@ -218,7 +237,7 @@ void CBotFortress :: died ( edict_t *pKiller )
 
 	droppedFlag();
 
-	if ( RandomInt(0,1) )
+	if ( randomInt(0,1) )
 		m_pButtons->attack();
 }
 
@@ -226,15 +245,26 @@ void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
 
+	m_fSpyCloakTime = engine->Time() + randomFloat(10.0f,15.0f);
+
+	m_fLastSaySpy = 0.0f;
+	m_fSpyDisguiseTime = 0.0f;
 	m_pHeal = NULL;
 	m_pNearestDisp = NULL;
 	m_pNearestEnemySentry = NULL;
 	m_bHasFlag = false; 
+	m_pPrevSpy = NULL;
+	m_fSeeSpyTime = 0.0f;
 }
 
 void CBotFortress :: setClass ( TF_Class _class )
 {
 	m_iClass = _class;
+}
+
+bool CBotFortress :: thinkSpyIsEnemy ( edict_t *pEdict )
+{
+	return ( (m_fSeeSpyTime > engine->Time()) && (m_pPrevSpy == pEdict) );
 }
 
 bool CBotFortress :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
@@ -265,7 +295,7 @@ void CBotFortress :: modThink ()
 	{
 		if ( ((float)m_pPlayerInfo->GetHealth() / m_pPlayerInfo->GetMaxHealth()) < 0.5 )
 		{
-			m_fCallMedic = engine->Time() + RandomFloat(10.0f,30.0f);
+			m_fCallMedic = engine->Time() + randomFloat(10.0f,30.0f);
 
 			callMedic();
 		}
@@ -279,7 +309,7 @@ void CBotFortress :: selectTeam ()
 {
 	char buffer[32];
 
-	int team = RandomInt(1,2);
+	int team = randomInt(1,2);
 
 	sprintf(buffer,"jointeam %d",team);
 
@@ -292,7 +322,7 @@ void CBotFortress :: selectClass ()
 	TF_Class _class;
 
 	if ( m_iDesiredClass == 0 )
-		_class = (TF_Class)RandomInt(1,9);
+		_class = (TF_Class)randomInt(1,9);
 	else
 		_class = (TF_Class)m_iDesiredClass;
 
@@ -343,6 +373,8 @@ void CBotFortress :: selectClass ()
 void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
+
+	m_fDoubleJumpTime = 0.0f;
 
 	if ( m_pWeapons && (m_iClass != TF_CLASS_UNDEFINED) )
 	{
@@ -435,7 +467,7 @@ void CBotTF2 :: taunt ()
 	if ( !m_pEnemy && (m_fTauntTime < engine->Time()) )
 	{
 		helpers->ClientCommand(m_pEdict,"taunt");
-		m_fTauntTime = engine->Time() + RandomFloat(40.0,100.0);
+		m_fTauntTime = engine->Time() + randomFloat(40.0,100.0);
 		m_fTaunting = engine->Time() + 4.0;
 	}
 }
@@ -480,25 +512,25 @@ void CBotTF2 :: checkBuildingsValid ()
 {
 	if ( m_pSentryGun )
 	{
-		if ( !CBotGlobals::entityIsValid(m_pSentryGun) || !CBotGlobals::entityIsAlive(m_pSentryGun) || !CTeamFortress2Mod::isSentry(m_pSentryGun,getTeam()) )
+		if ( !CBotGlobals::entityIsAlive(m_pSentryGun) || !CTeamFortress2Mod::isSentry(m_pSentryGun,getTeam()) )
 			m_pSentryGun = NULL;
 	}
 
 	if ( m_pDispenser )
 	{
-		if ( !CBotGlobals::entityIsValid(m_pDispenser) || !CBotGlobals::entityIsAlive(m_pDispenser) || !CTeamFortress2Mod::isDispenser(m_pDispenser,getTeam()) )
+		if ( !CBotGlobals::entityIsAlive(m_pDispenser) || !CTeamFortress2Mod::isDispenser(m_pDispenser,getTeam()) )
 			m_pDispenser = NULL;
 	}
 
 	if ( m_pTeleEntrance )
 	{
-		if ( !CBotGlobals::entityIsValid(m_pTeleEntrance) || !CBotGlobals::entityIsAlive(m_pTeleEntrance) || !CTeamFortress2Mod::isTeleporterEntrance(m_pTeleEntrance,getTeam()) )
+		if ( !CBotGlobals::entityIsAlive(m_pTeleEntrance) || !CTeamFortress2Mod::isTeleporterEntrance(m_pTeleEntrance,getTeam()) )
 			m_pTeleEntrance = NULL;
 	}
 
 	if ( m_pTeleExit )
 	{
-		if ( !CBotGlobals::entityIsValid(m_pTeleExit) || !CBotGlobals::entityIsAlive(m_pTeleExit) || !CTeamFortress2Mod::isTeleporterExit(m_pTeleExit,getTeam()) )
+		if ( !CBotGlobals::entityIsAlive(m_pTeleExit) || !CTeamFortress2Mod::isTeleporterExit(m_pTeleExit,getTeam()) )
 			m_pTeleExit = NULL;
 	}
 }
@@ -620,7 +652,17 @@ bool CBotTF2 :: isCloaked ()
 // Test
 bool CBotTF2 :: isDisguised ()
 {
-	return (m_pEdict->GetIServerEntity()->GetModelIndex() != 0);
+	int _class,_team,_index,_health;
+
+	if ( CClassInterface::getTF2SpyDisguised (m_pEdict,&_class,&_team,&_index,&_health) )
+
+	{
+		if ( _class > 0 )
+			return true;
+	}
+
+	return false;
+	
 }
 
 void CBotTF2 :: updateClass ()
@@ -736,9 +778,106 @@ void CBotTF2 :: modThink ()
 		checkBuildingsValid();
 
 	if ( m_fTaunting > engine->Time() )
-		stopMoving(3);
+		stopMoving(5);
+
+	if ( m_fDoubleJumpTime && (m_fDoubleJumpTime < engine->Time()) )
+	{
+		tapButton(IN_JUMP);
+		m_fDoubleJumpTime = 0;
+	}
+
+	if ( m_iClass == TF_CLASS_SPY )
+	{
+		if ( !hasFlag() )
+		{
+			if ( m_fSpyDisguiseTime < engine->Time() )
+			{
+				if ( !isDisguised() )
+				{
+					int iteam = 2;
+
+					if ( getTeam() == TF2_TEAM_RED )
+						iteam = 1; // disguise to blue
+
+					spyDisguise(iteam,getSpyDisguiseClass(iteam));
+				}
+
+				m_fSpyDisguiseTime = engine->Time() + 5.0f;
+			}
+
+			if ( (m_fSpyCloakTime < engine->Time()) && !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) )
+			{
+				m_fSpyCloakTime = engine->Time() + randomFloat(40.0f,60.0f);
+
+				secondaryAttack();
+			}
+			else
+			{
+				if ( m_pEnemy )
+				{
+					secondaryAttack();
+				}
+			}
+		}
+	}
 
 	m_fIdealMoveSpeed = CTeamFortress2Mod::TF2_GetPlayerSpeed(m_pEdict,m_iClass);
+}
+
+
+bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
+{
+	int i = 0;
+	edict_t *pPlayer;
+
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		pPlayer = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pPlayer) && (CTeamFortress2Mod::getTeam(pPlayer) == iTeam))
+		{
+			if ( CClassInterface::getTF2Class(pPlayer) == iClass )
+				return true;
+		}
+	}
+
+	return false;
+}
+
+void CBotTF2 :: foundSpy ()
+{
+	if ( m_fLastSaySpy < engine->Time() )
+	{
+		helpers->ClientCommand(m_pEdict,"voicemenu 1 1");
+		m_fLastSaySpy = engine->Time() + randomFloat(10.0f,40.0f);
+	}
+}
+
+int CBotFortress :: getSpyDisguiseClass ( int iTeam )
+{
+	int i = 0;
+	edict_t *pPlayer;
+	dataUnconstArray<int> m_classes;
+	int _class;
+
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		pPlayer = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pPlayer) && (CTeamFortress2Mod::getTeam(pPlayer) == iTeam))
+		{
+			_class = CClassInterface::getTF2Class(pPlayer);
+
+			if ( _class )
+				m_classes.Add(_class);
+		}
+	}
+
+
+	if ( m_classes.IsEmpty() )
+		return randomInt(1,9);
+	
+	return m_classes.Random();
 }
 
 void CBotTF2 :: getTasks ( unsigned int iIgnore )
@@ -888,7 +1027,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 					if ( pWaypoint )
 					{
-						m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,pWaypoint->getOrigin()+Vector(RandomFloat(-96,96),RandomFloat(-96,96),0)));
+						m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,pWaypoint->getOrigin()+Vector(randomFloat(-96,96),randomFloat(-96,96),0)));
 						return;
 					}
 				}
@@ -969,7 +1108,10 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 		}
 		else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_DOUBLEJUMP) )
 		{
-			m_pSchedules->addFront(new CBotSchedule(new CBotTFDoubleJump()));
+			extern ConVar bot_scoutdj;
+			tapButton(IN_JUMP);
+			m_fDoubleJumpTime = engine->Time() + bot_scoutdj.GetFloat();
+			//m_pSchedules->addFront(new CBotSchedule(new CBotTFDoubleJump()));
 		}
 	}
 }
@@ -1023,15 +1165,49 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 	if ( ENTINDEX(pEdict) <= CBotGlobals::maxClients() )
 	{
-		if (  CBotGlobals::getTeam(pEdict) != getTeam() )
+		if ( CBotGlobals::getTeam(pEdict) != getTeam() )
 		{
-			//if ( CTeamFortress2Mod::TF2_IsPlayerInvuln(pEdict) )
-			//	bValid = false;			
+			if ( m_iClass == TF_CLASS_SPY )	
+			{
+				if ( !bCheckWeapons )
+					return true;
+				else if ( fabs(CBotGlobals::yawAngleFromEdict(pEdict,getOrigin())) > 90 )
+				{
+					return true;
+				}
+			}	
+			
 			if ( CClassInterface::getTF2Class(pEdict) == (int)TF_CLASS_SPY )
 			{
+				int dteam, dclass, dhealth, dindex;
+
+				if ( CClassInterface::getTF2SpyDisguised(pEdict,&dclass,&dteam,&dindex,&dhealth) )
+				{
+					if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pEdict) )
+						bValid = false;
+					else if ( dteam != getTeam() )
+					{
+						bValid = true;
+
+						m_pPrevSpy = pEdict;
+						m_fSeeSpyTime = engine->Time() + randomFloat(10.0f,30.0f);
+					}
+					else if ( dindex == ENTINDEX(m_pEdict) )
+					{
+						bValid = true;
+
+						m_pPrevSpy = pEdict;
+						m_fSeeSpyTime = engine->Time() + randomFloat(10.0f,30.0f);
+					}
+					else
+						bValid = thinkSpyIsEnemy(pEdict);
+
+					if ( bValid && bCheckWeapons )
+						foundSpy();
+				}
+				
 				//if ( CTeamFortress2Mod::TF2_IsPlayerDisguised(pEdict) || CTeamFortress2Mod::TF2_IsPlayerCloaked(pEdict) )
-				//	bValid = false;
-				bValid = true;
+				//	bValid = false;				
 			}
 			else
 				bValid = true;

@@ -29,9 +29,10 @@
  *
  */
 #include "bot.h"
-#include "vstdlib/random.h" // for random functions
+#include "bot_mtrand.h"
 #include "bot_ga.h"
 #include "bot_ga_ind.h"
+#include "bot_mtrand.h"
 
 CBotGAValues :: CBotGAValues()
 {
@@ -55,7 +56,7 @@ void CBotGAValues :: clear ()
 // crossover with other individual
 void CBotGAValues :: crossOver ( IIndividual *other )
 {
-	unsigned int iPoint = RandomInt(0,m_theValues.size());
+	unsigned int iPoint = randomInt(0,m_theValues.size());
 	float fTemp;
 
 	CBotGAValues *vother = (CBotGAValues*)other;
@@ -82,11 +83,11 @@ void CBotGAValues :: mutate ()
 {
 	for ( unsigned int i = 0; i < m_theValues.size(); i ++ )
 	{
-		if ( RandomFloat(0,1) < CGA::g_fMutateRate )
+		if ( randomFloat(0,1) < CGA::g_fMutateRate )
 		{
 			float fCurrentVal = get(i);
 
-			set(i,fCurrentVal + ((fCurrentVal * (-1+RandomFloat(0,2))) * CGA::g_fMaxPerturbation));
+			set(i,fCurrentVal + ((fCurrentVal * (-1+randomFloat(0,2))) * CGA::g_fMaxPerturbation));
 		}
 	}
 }
@@ -104,7 +105,7 @@ void CBotGAValues :: set ( int iIndex, float fVal )
 
 void CBotGAValues :: addRnd()
 {
-	m_theValues.push_back(RandomFloat(0,1));
+	m_theValues.push_back(randomFloat(0,1));
 }
 
 // get new copy of this
