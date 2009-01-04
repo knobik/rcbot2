@@ -330,7 +330,7 @@ bool CBot :: canAvoid ( edict_t *pEntity )
 
 	distance = distanceFrom(vAvoidOrigin);
 
-	if ( ( distance > 16 ) && ( distance < 160 ) && (fabs(getOrigin().z - vAvoidOrigin.z) < 32) )
+	if ( ( distance > 1 ) && ( distance < 160 ) && (fabs(getOrigin().z - vAvoidOrigin.z) < 32) )
 	{
 		SolidType_t solid = pEntity->GetCollideable()->GetSolid() ;
 
@@ -983,20 +983,27 @@ void CBot :: doMove ()
 		float flMove = 0.0;
 		float flSide = 0.0;
 		// fAngle is got from world realting to bots origin, not angles
-		float fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo);
+		float fAngle;
+		float radians;
 
 		if ( m_pAvoidEntity )
 		{
 			if ( canAvoid(m_pAvoidEntity) )
 			{
+				Vector m_vAvoid = (getOrigin()-CBotGlobals::entityOrigin(m_pAvoidEntity));
+
+				m_vAvoid = m_vAvoid/m_vAvoid.Length();
 				//?			
+				m_vMoveTo = m_vMoveTo - (m_vAvoid*(distanceFrom(m_vMoveTo)));
 			}
 			else
 				m_pAvoidEntity = NULL;
 		}
 
+		fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo);
+
 		/////////
-		float radians = fAngle * 3.141592f / 180.0f; // degrees to radians
+		radians = fAngle * 3.141592f / 180.0f; // degrees to radians
         // fl Move is percentage (0 to 1) of forward speed,
         // flSide is percentage (0 to 1) of side speed.
 		

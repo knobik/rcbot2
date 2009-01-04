@@ -95,11 +95,7 @@ public:
 
 	virtual void init (bool bVarInit=false);
 
-	virtual void foundSpy (edict_t *pEdict) 
-	{
-		m_pPrevSpy = pEdict;
-		m_fSeeSpyTime = engine->Time() + randomFloat(10.0f,30.0f);
-	};
+	virtual void foundSpy (edict_t *pEdict);
 
 	virtual void getTasks ( unsigned int iIgnore = 0 ) { CBot :: getTasks(iIgnore); }
 

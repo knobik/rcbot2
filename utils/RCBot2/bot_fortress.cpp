@@ -367,6 +367,12 @@ void CBotFortress :: selectClass ()
 	helpers->ClientCommand(m_pEdict,buffer);
 }
 
+void CBotFortress :: foundSpy (edict_t *pEdict) 
+{
+	m_pPrevSpy = pEdict;
+	m_fSeeSpyTime = engine->Time() + randomFloat(10.0f,30.0f);
+};
+
 // got shot by someone
 void CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow )
 {
@@ -861,9 +867,9 @@ bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
 	return false;
 }
 
-void CBotTF2 :: foundSpy ()
+void CBotTF2 :: foundSpy (edict_t *pEdict)
 {
-	CBotFortress::foundSpy();
+	CBotFortress::foundSpy(pEdict);
 
 	if ( m_fLastSaySpy < engine->Time() )
 	{
