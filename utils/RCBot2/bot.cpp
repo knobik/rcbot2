@@ -114,6 +114,7 @@ void CBot :: runPlayerMove()
 		cmd.buttons = IN_ATTACK;
 
 	m_iSelectWeapon = 0;
+	m_iImpulse = 0;
 
 	if ( CClients::clientsDebugging() )
 	{
@@ -1232,6 +1233,8 @@ void CBot :: getLookAtVector ()
 					eyestart = eyestart + 5.0f;
 					CBotGlobals::fixFloatAngle(&eyestart);
 				}
+
+				setLookAt(m_vAiming);
 
 				m_fLookAroundTime = engine->Time() + randomFloat(8.0f,18.0f);
 

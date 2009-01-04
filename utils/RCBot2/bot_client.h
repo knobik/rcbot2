@@ -108,6 +108,9 @@ private:
 
 	int m_iAccessLevel;
 
+	Vector m_vLastPos;
+	float m_fUpdatePos;
+
 	// auto path waypointing
 	bool m_bAutoPaths;
 	bool m_bPathWaypointOn;

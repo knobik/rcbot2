@@ -53,6 +53,8 @@ void CClient :: init ()
 	m_bPathWaypointOn = false;
 	m_iDebugLevels = 0;
 	m_pPlayerInfo = NULL;
+	
+	m_fUpdatePos = 0.0f;
 }
 
 void CClient :: setEdict ( edict_t *pPlayer )
@@ -67,9 +69,31 @@ void CClient :: think ()
 	if ( isWaypointOn() )
 		CWaypoints::drawWaypoints(this);
 
-	if ( isDebugging() && m_pDebugBot )
+
+	if ( isDebugging() )
 	{
-		//this->cm_pDebugBot->getTaskDebug();
+		if ( isDebugOn(BOT_DEBUG_SPEED) )
+		{
+			if ( m_fUpdatePos < engine->Time() )
+			{
+				m_fUpdatePos = engine->Time() + 1.0f;
+				CBotGlobals::botMessage(m_pPlayer,0,"speed = %0.0f",(m_vLastPos - getOrigin()).Length());
+				m_vLastPos = getOrigin();
+			}
+		}
+		if ( isDebugOn(BOT_DEBUG_USERCMD) )
+		{
+			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(m_pPlayer);
+
+			if ( p )
+			{
+				CBotCmd cmd = p->GetLastUserCommand();
+
+				CBotGlobals::botMessage(m_pPlayer,0,"Btns = %d, cmd_no = %d, impulse = %d, weapselect = %d, weapsub = %d",cmd.buttons,cmd.command_number,cmd.impulse,cmd.weaponselect,cmd.weaponsubtype);
+
+			}
+		}
+			//this->cm_pDebugBot->getTaskDebug();
 		//m_pDebugBot->canAvoid();
 	}
 }

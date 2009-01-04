@@ -367,6 +367,19 @@ void CBotFortress :: selectClass ()
 	helpers->ClientCommand(m_pEdict,buffer);
 }
 
+// got shot by someone
+void CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow )
+{
+	CBot::hurt(pAttacker,iHealthNow);
+
+	if ( pAttacker )
+	{
+		m_fFrenzyTime = engine->Time() + randomFloat(5.0f,15.0f);
+		return;
+	}
+}
+
+
 /////////////////////////////////////////////////////////////////////////////
 // TEAM FORTRESS 2
 
@@ -375,6 +388,7 @@ void CBotTF2 :: spawnInit()
 	CBotFortress::spawnInit();
 
 	m_fDoubleJumpTime = 0.0f;
+	m_fFrenzyTime = 0.0f;
 
 	if ( m_pWeapons && (m_iClass != TF_CLASS_UNDEFINED) )
 	{
@@ -638,11 +652,16 @@ void CBotTF2 :: capturedPoint ()
 
 void CBotTF2 :: spyDisguise ( int iTeam, int iClass )
 {
-	char cmd[256];
+	//char cmd[256];
 
-	sprintf(cmd,"disguise %d %d",iClass,iTeam);
+	if ( iTeam == 3 )
+		m_iImpulse = 230 + iClass;
+	else if ( iTeam == 2 )
+		m_iImpulse = 220 + iClass;
 
-	helpers->ClientCommand(m_pEdict,cmd);
+	//sprintf(cmd,"disguise %d %d",iClass,iTeam);
+
+	//helpers->ClientCommand(m_pEdict,cmd);
 }
 // Test
 bool CBotTF2 :: isCloaked ()
@@ -794,10 +813,7 @@ void CBotTF2 :: modThink ()
 			{
 				if ( !isDisguised() )
 				{
-					int iteam = 2;
-
-					if ( getTeam() == TF2_TEAM_RED )
-						iteam = 1; // disguise to blue
+					int iteam = CTeamFortress2Mod::getEnemyTeam(getTeam());
 
 					spyDisguise(iteam,getSpyDisguiseClass(iteam));
 				}
@@ -805,18 +821,19 @@ void CBotTF2 :: modThink ()
 				m_fSpyDisguiseTime = engine->Time() + 5.0f;
 			}
 
-			if ( (m_fSpyCloakTime < engine->Time()) && !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) )
+			if ( !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict)  )
 			{
-				m_fSpyCloakTime = engine->Time() + randomFloat(40.0f,60.0f);
-
-				secondaryAttack();
-			}
-			else
-			{
-				if ( m_pEnemy )
+				if (m_fSpyCloakTime < engine->Time())
 				{
+					m_fSpyCloakTime = engine->Time() + randomFloat(40.0f,60.0f);
+
 					secondaryAttack();
 				}
+
+			}
+			else if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			{
+				secondaryAttack();
 			}
 		}
 	}
@@ -846,6 +863,8 @@ bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
 
 void CBotTF2 :: foundSpy ()
 {
+	CBotFortress::foundSpy();
+
 	if ( m_fLastSaySpy < engine->Time() )
 	{
 		helpers->ClientCommand(m_pEdict,"voicemenu 1 1");
@@ -1123,7 +1142,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		bool bSecAttack = false;
 
 		if ( pWeapon->isMelee() )
-			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),4);
+			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),5);
 
 		if ( CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
@@ -1171,9 +1190,14 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 			{
 				if ( !bCheckWeapons )
 					return true;
-				else if ( fabs(CBotGlobals::yawAngleFromEdict(pEdict,getOrigin())) > 90 )
+				else if ( isDisguised() )
 				{
-					return true;
+					if ( (distanceFrom(pEdict)<120) && fabs(CBotGlobals::yawAngleFromEdict(pEdict,getOrigin())) > 90 )
+						return true;					
+					else if ( m_fFrenzyTime > engine->Time() )
+						return true;
+					else
+						return false;
 				}
 			}	
 			
@@ -1188,22 +1212,16 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 					else if ( dteam != getTeam() )
 					{
 						bValid = true;
-
-						m_pPrevSpy = pEdict;
-						m_fSeeSpyTime = engine->Time() + randomFloat(10.0f,30.0f);
 					}
 					else if ( dindex == ENTINDEX(m_pEdict) )
 					{
 						bValid = true;
-
-						m_pPrevSpy = pEdict;
-						m_fSeeSpyTime = engine->Time() + randomFloat(10.0f,30.0f);
 					}
 					else
 						bValid = thinkSpyIsEnemy(pEdict);
 
 					if ( bValid && bCheckWeapons )
-						foundSpy();
+						foundSpy(pEdict);
 				}
 				
 				//if ( CTeamFortress2Mod::TF2_IsPlayerDisguised(pEdict) || CTeamFortress2Mod::TF2_IsPlayerCloaked(pEdict) )
@@ -1212,9 +1230,9 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 			else
 				bValid = true;
 		}
-
 	}
-	else
+	// do these in the tasks
+	else if ( (m_iClass != TF_CLASS_SPY) || (m_fFrenzyTime > engine->Time()) )	
 	{
 		iEnemyTeam = CTeamFortress2Mod::getEnemyTeam(getTeam());
 

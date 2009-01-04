@@ -423,6 +423,33 @@ public:
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 
+class CDebugUsercmdCommand : public CBotCommand
+{
+public:
+	CDebugUsercmdCommand ()
+	{
+		setName("usercmd");
+		setHelp("usage \"usercmd 1 or 0, 1 on, 0 off\" : shows last user command output");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+
+class CDebugSpeedCommand : public CBotCommand
+{
+public:
+	CDebugSpeedCommand ()
+	{
+		setName("speed");
+		setHelp("usage \"speed 1 or 0, 1 on, 0 off\" : shows speed");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 class CDebugButtonsCommand : public CBotCommand
 {
 public:

@@ -95,7 +95,11 @@ public:
 
 	virtual void init (bool bVarInit=false);
 
-	virtual void foundSpy () {};
+	virtual void foundSpy (edict_t *pEdict) 
+	{
+		m_pPrevSpy = pEdict;
+		m_fSeeSpyTime = engine->Time() + randomFloat(10.0f,30.0f);
+	};
 
 	virtual void getTasks ( unsigned int iIgnore = 0 ) { CBot :: getTasks(iIgnore); }
 
@@ -138,6 +142,8 @@ public:
 	virtual void spawnInit ();
 
 	bool isTF () { return true; }
+
+	virtual void hurt ( edict_t *pAttacker, int iHealthNow );
 
 	virtual TF_Class getClass () { return TF_CLASS_CIVILIAN; }
 
@@ -190,6 +196,7 @@ protected:
 	edict_t *m_pFlag;
 	edict_t *m_pPrevSpy;
 
+	float m_fFrenzyTime;
 	float m_fSpyCloakTime;
 	float m_fSeeSpyTime;
 	float m_fSpyDisguiseTime;
@@ -215,7 +222,7 @@ public:
 
 	CBotTF2() { CBotFortress(); }
 
-	void foundSpy ();
+	void foundSpy (edict_t *pEdict);
 
 	void touchedWpt ( CWaypoint *pWaypoint );
 

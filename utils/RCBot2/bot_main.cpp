@@ -75,7 +75,7 @@
 static ICvar *s_pCVar;
 
 ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
-ConVar bot_scoutdj( "rcbot_scoutdj", "0.3", 0, "time scout uses to double jump" );
+ConVar bot_scoutdj( "rcbot_scoutdj", "0.32", 0, "time scout uses to double jump" );
 ConVar bot_anglespeed( "rcbot_anglespeed", "12.0", 0, "speed that bots turn" );
 
 // Interfaces from the engine*/

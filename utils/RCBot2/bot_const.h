@@ -46,6 +46,7 @@
 #define BOT_DEBUG_VIS 8
 #define BOT_DEBUG_TASK 16
 #define BOT_DEBUG_BUTTONS 32
+#define BOT_DEBUG_USERCMD 64
 
 typedef enum
 {
