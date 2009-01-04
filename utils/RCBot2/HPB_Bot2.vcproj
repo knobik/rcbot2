@@ -734,14 +734,6 @@
 				>
 			</File>
 		</Filter>
-		<Filter
-			Name="Files"
-			>
-			<File
-				RelativePath="..\..\release\HPB_bot2.dll"
-				>
-			</File>
-		</Filter>
 		<File
 			RelativePath="..\..\lib\public\mathlib.lib"
 			>
