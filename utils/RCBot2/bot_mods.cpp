@@ -131,29 +131,60 @@ void CBotMods :: parseFile ()
 				m_Mods.push_back(curmod);
 			}
 
-			curmod = new CBotMod();
+			curmod = NULL;
+
+			
 			bottype = BOTTYPE_GENERIC;
 
 			modtype = MOD_CUSTOM;
 
 			if ( !strcmp("CUSTOM",val) )
+			{
 				modtype = MOD_CUSTOM;
+				curmod = new CBotMod();
+			}
 			else if ( !strcmp("CSS",val) )
+			{
 				modtype = MOD_CSS;
+				curmod = new CCounterStrikeSourceMod();
+			}
 			else if ( !strcmp("HL1DM",val) )
+			{
 				modtype = MOD_HL1DMSRC;
+				curmod = new CHLDMSourceMod();
+			}
 			else if ( !strcmp("HL2DM",val) )
+			{
 				modtype = MOD_HLDM2;
+				curmod = new CHalfLifeDeathmatchMod();
+			}
 			else if ( !strcmp("FF",val) )
+			{
 				modtype = MOD_FF;
+				curmod = new CFortressForeverMod();
+			}
 			else if ( !strcmp("TF2",val) )
+			{
 				modtype = MOD_TF2;
+				curmod = new CTeamFortress2Mod();
+			}
 			else if ( !strcmp("SVENCOOP2",val) )
+			{
 				modtype = MOD_SVENCOOP2;
+				curmod = new CBotMod();
+			}
 			else if ( !strcmp("TIMCOOP",val) )
+			{
 				modtype = MOD_TIMCOOP;
+				curmod = new CBotMod();
+			}
 			else if ( !strcmp("NS2",val) )
+			{
 				modtype = MOD_NS2;
+				curmod = new CBotMod();
+			}
+			else
+				curmod = new CBotMod();
 		}
 		else if ( curmod && !strcmp(key,"bot") )
 		{
@@ -186,6 +217,7 @@ void CBotMods :: parseFile ()
 
 	if ( curmod )
 	{
+
 		curmod->setup(gamefolder,steamfolder,modtype,bottype);
 		m_Mods.push_back(curmod);
 	}
