@@ -59,7 +59,8 @@ typedef enum
 	SCHED_SNIPE,
 	SCHED_UPGRADE,
 	SCHED_USE_TELE,
-	SCHED_SPY_SAP_BUILDING
+	SCHED_SPY_SAP_BUILDING,
+	SCHED_USE_DISPENSER
 }eBotSchedule;
 
 class CBotSchedule
@@ -278,6 +279,14 @@ public:
 
 	void init ();
 };
+////////////////////////////////////////////////
+class CBotUseDispSched : public CBotSchedule
+{
+public:
+	CBotUseDispSched ( edict_t *pDisp );
+
+	void init ();
+}; 
 ///////////////////////////////////////////////////
 
 class CBotTFEngiUpgrade : public CBotSchedule

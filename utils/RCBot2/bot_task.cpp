@@ -841,15 +841,18 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	pBot->lookAtEdict(m_pBuilding);
+	pBot->setLookAtTask(LOOK_EDICT,5);
 	weapon = tf2Bot->getCurrentWeapon();
 
-	if ( weapon->getID() != TF2_WEAPON_BUILDER )
+	// time out
+	if ( m_fTime < engine->Time() )
+		fail();
+	else if ( weapon->getID() != TF2_WEAPON_BUILDER )
 	{
 		pBot->select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_BUILDER));
 	}
-	else if ( m_fTime > engine->Time() )
+	else 
 	{
-		
 		if ( pBot->distanceFrom(m_pBuilding) > 100 )
 		{
 			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding));
@@ -860,8 +863,6 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			complete();
 		}
 	}
-	else
-		fail();
 
 }
 

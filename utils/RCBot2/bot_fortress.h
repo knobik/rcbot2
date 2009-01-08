@@ -165,6 +165,9 @@ public:
 
 	virtual void setup ();
 
+	virtual bool needHealth();
+	virtual bool needAmmo ();
+
 protected:
 	virtual void selectTeam ();
 
@@ -177,6 +180,8 @@ protected:
 	static int getSpyDisguiseClass ( int iTeam );
 
 	bool thinkSpyIsEnemy ( edict_t *pEdict );
+
+	bool m_bNeedAmmo;
 
 	float m_fCallMedic;
 	float m_fTauntTime;
@@ -267,6 +272,8 @@ public:
 	void capturedFlag ();
 
 	void capturedPoint ();
+
+	virtual bool needAmmo();
 
 	TF_Class getClass ();
 

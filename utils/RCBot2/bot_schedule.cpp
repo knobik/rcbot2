@@ -33,6 +33,7 @@
 #include "bot_task.h"
 #include "bot_client.h"
 #include "bot_weapons.h"
+#include "bot_globals.h"
 
 CBotTF2HealSched::CBotTF2HealSched()
 {
@@ -126,6 +127,20 @@ void CBotUseTeleSched :: init ()
 {
 	setID(SCHED_USE_TELE);
 }
+//////////////////////////////////////////
+
+CBotUseDispSched :: CBotUseDispSched ( edict_t *pDisp )
+{
+	addTask(new CFindPathTask(pDisp)); // first
+	addTask(new CBotTF2WaitHealthTask(CBotGlobals::entityOrigin(pDisp))); // second
+}
+
+void CBotUseDispSched :: init ()
+{
+	setID(SCHED_USE_DISPENSER);
+}
+
+
 ////////////////////////////////////////////
 void CBotSpySapBuildingSched :: init ()
 {

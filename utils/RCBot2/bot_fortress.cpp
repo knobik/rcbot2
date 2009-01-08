@@ -247,6 +247,8 @@ void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
 
+	m_bNeedAmmo = false;
+
 	m_fSpyCloakTime = engine->Time() + randomFloat(10.0f,15.0f);
 
 	m_fLastSaySpy = 0.0f;
@@ -281,6 +283,67 @@ bool CBotFortress :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 		return false;
 
 	return true;	
+}
+
+bool CBotFortress :: needAmmo ()
+{
+	return false;
+}
+
+bool CBotFortress :: needHealth ()
+{
+	return getHealthPercent() < 0.75;
+}
+
+bool CBotTF2 :: needAmmo()
+{
+	if ( getClass() == TF_CLASS_ENGINEER )
+	{		
+		CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH));
+
+		if ( pWeapon )
+		{
+			return ( pWeapon->getAmmo(this) < 200 );
+		}
+	}
+	else if ( getClass() == TF_CLASS_SOLDIER )
+	{
+		CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_ROCKETLAUNCHER));
+
+		if ( pWeapon )
+		{
+			return ( pWeapon->getAmmo(this) < 1 );
+		}
+	}
+	else if ( getClass() == TF_CLASS_DEMOMAN )
+	{
+		CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_GRENADELAUNCHER));
+
+		if ( pWeapon )
+		{
+			return ( pWeapon->getAmmo(this) < 1 );
+		}
+	}
+	else if ( getClass() == TF_CLASS_HWGUY )
+	{
+		CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_MINIGUN));
+
+		if ( pWeapon )
+		{
+			return ( pWeapon->getAmmo(this) < 1 );
+		}
+	}
+	else if ( getClass() == TF_CLASS_PYRO )
+	{
+		CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_FLAMETHROWER));
+
+		if ( pWeapon )
+		{
+			return ( pWeapon->getAmmo(this) < 1 );
+		}
+	}
+
+	return false;
 }
 
 void CBotFortress :: currentlyDead ()
@@ -885,6 +948,18 @@ void CBotTF2 :: modThink ()
 			}*/
 		}
 	}
+
+	if ( m_pNearestDisp && (needHealth() || needAmmo()) )
+	{
+		if ( !m_pSchedules->isCurrentSchedule(SCHED_USE_DISPENSER) )
+		{
+			m_pSchedules->removeSchedule(SCHED_USE_DISPENSER);
+			m_pSchedules->addFront(new CBotUseDispSched(m_pNearestDisp));
+
+			return;
+		}
+	}
+
 
 	m_fIdealMoveSpeed = CTeamFortress2Mod::TF2_GetPlayerSpeed(m_pEdict,m_iClass);
 }
