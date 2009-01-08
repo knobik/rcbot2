@@ -49,7 +49,7 @@ typedef enum
 	ENGI_ENTRANCE,
 	ENGI_EXIT,
 	ENGI_SENTRY,
-	
+	ENGI_SAPPER
 }eEngiBuild;
 
 typedef enum
@@ -155,6 +155,8 @@ public:
 
 	bool isAlive ();
 
+	bool isTeleporterUseful ( edict_t *pTele );
+
 	void flagDropped ( Vector vOrigin );
 
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
@@ -200,6 +202,7 @@ protected:
 
 	// valid flag point area
 	Vector m_vLastKnownFlagPoint;
+	Vector m_vTeleportEntrance;
 
 	// 1 minute wait
 	float m_fLastKnownFlagTime;
@@ -207,6 +210,7 @@ protected:
 	TF_Class m_iClass;
 
 	float m_fUpdateClass;
+	float m_fUseTeleporterTime;
 
 	bool m_bHasFlag;		
 	
@@ -273,6 +277,7 @@ public:
 
 private:
 	float m_fDoubleJumpTime;
+	float m_fSpySapTime;
 
 };
 

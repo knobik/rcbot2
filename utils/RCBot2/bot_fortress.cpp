@@ -184,9 +184,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 		{
 			if ( CTeamFortress2Mod::isSentry(pEntity,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 			{
-				if ( !m_pNearestEnemySentry )
-					m_pNearestEnemySentry = pEntity;
-				else if ( (pEntity != m_pNearestEnemySentry) && (distanceFrom(pEntity) < distanceFrom(m_pNearestEnemySentry)) )
+				if ( !m_pNearestEnemySentry || (pEntity != m_pNearestEnemySentry) && (distanceFrom(pEntity) < distanceFrom(m_pNearestEnemySentry)) )
 					m_pNearestEnemySentry = pEntity;
 			}
 		}
@@ -204,10 +202,14 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 
 		if ( CTeamFortress2Mod::isDispenser(pEntity,getTeam()) )
 		{
-			if ( !m_pNearestDisp )
+			if ( !m_pNearestDisp || (pEntity != m_pNearestDisp) && (distanceFrom(pEntity) < distanceFrom(m_pNearestDisp)) )
 				m_pNearestDisp = pEntity;
-			else if ( (pEntity != m_pNearestDisp) && (distanceFrom(pEntity) < distanceFrom(m_pNearestDisp)) )
-				m_pNearestDisp = pEntity;
+		}
+
+		if ( CTeamFortress2Mod::isTeleporterEntrance(pEntity,getTeam()) )
+		{
+			if ( !m_pTeleEntrance || (pEntity != m_pTeleEntrance) && (distanceFrom(pEntity) < distanceFrom(m_pTeleEntrance)))
+				m_pTeleEntrance = pEntity;
 		}
 	}
 	else 
@@ -289,7 +291,7 @@ void CBotFortress :: currentlyDead ()
 
 void CBotFortress :: modThink ()
 {
-	updateClass();
+	//updateClass();
 
 	if ( m_fCallMedic < engine->Time() )
 	{
@@ -301,9 +303,36 @@ void CBotFortress :: modThink ()
 		}
 	}
 
+	if ( (m_fUseTeleporterTime < engine->Time() ) && !hasFlag() && m_pTeleEntrance )
+	{
+		if ( isTeleporterUseful(m_pTeleEntrance) )
+		{
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_USE_TELE) )
+			{
+				m_pSchedules->removeSchedule(SCHED_USE_TELE);
+				m_pSchedules->addFront(new CBotUseTeleSched(m_pTeleEntrance));
+
+				m_fUseTeleporterTime = engine->Time() + randomFloat(25.0f,35.0f);
+				return;
+			}
+		}
+	}
+
 	checkHealingValid();
 }
 
+bool CBotFortress :: isTeleporterUseful ( edict_t *pTele )
+{
+	edict_t *pExit = CTeamFortress2Mod::getTeleporterExit(pTele);
+
+	if ( pExit )
+	{
+		if ( ((m_vGoal - CBotGlobals::entityOrigin(pExit)).Length()+distanceFrom(pTele)) < distanceFrom(m_vGoal) )
+			return true;
+	}
+
+	return false;
+}
 
 void CBotFortress :: selectTeam ()
 {
@@ -395,6 +424,8 @@ void CBotTF2 :: spawnInit()
 
 	m_fDoubleJumpTime = 0.0f;
 	m_fFrenzyTime = 0.0f;
+	m_fUseTeleporterTime = 0.0f;
+	m_fSpySapTime = 0.0f;
 
 	if ( m_pWeapons && (m_iClass != TF_CLASS_UNDEFINED) )
 	{
@@ -841,6 +872,17 @@ void CBotTF2 :: modThink ()
 			{
 				secondaryAttack();
 			}
+
+			/*if ( m_pNearestEnemySentry && ( m_fSpySapTime < engine->Time() ))
+			{
+				m_fSpySapTime = engine->Time() + randomFloat(2.0f,7.0f);
+
+				if ( !m_pSchedules->isCurrentSchedule(SCHED_SPY_SAP_BUILDING) )
+				{
+					m_pSchedules->removeSchedule(SCHED_SPY_SAP_BUILDING);
+					m_pSchedules->addFront(new CBotSpySapBuildingSched(m_pNearestEnemySentry));
+				}				
+			}*/
 		}
 	}
 

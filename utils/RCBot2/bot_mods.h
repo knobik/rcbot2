@@ -210,6 +210,12 @@ typedef enum
 	TF_MAP_CART
 }eTFMapType;
 
+typedef struct
+{
+	MyEHandle entrance;
+	MyEHandle exit;
+}tf_tele_t;
+
 class CTeamFortress2Mod : public CBotMod
 {
 public:
@@ -249,7 +255,6 @@ public:
 
 	static int getEnemyTeam ( int iTeam );
 
-
 // Naris @ AlliedModders .net
 
 	static bool TF2_IsPlayerZoomed(edict_t *pPlayer);
@@ -266,17 +271,19 @@ public:
 
 	static bool TF2_IsPlayerTaunting(edict_t *pPlayer);
 
-
-
 	static float TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass );
 
+	static void teleporterBuilt ( edict_t *pOwner, eEngiBuild type );
 
+	static edict_t *getTeleporterExit ( edict_t *pTele );
 
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
 
-	static eTFMapType m_MapType;
+	static eTFMapType m_MapType;	
+
+	static tf_tele_t m_Teleporters[MAX_PLAYERS];
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod
@@ -286,7 +293,6 @@ public:
 	{
 		setup("tf","source dedicated server",MOD_TF2,BOTTYPE_TF2);
 	}
-
 
 private:
 

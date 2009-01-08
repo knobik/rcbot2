@@ -806,6 +806,70 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 }
 
+/////////////////////////////////////////////////////
+
+CBotTF2SpySap :: CBotTF2SpySap ( edict_t *pBuilding )
+{
+	m_pBuilding = pBuilding;
+	m_fTime = 0.0f;
+}
+
+void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( !pBot->isTF() )
+	{
+		fail();
+		return;
+	}
+
+	if ( m_fTime )
+		m_fTime = engine->Time() + randomFloat(4.0f,6.0f);
+
+	CBotTF2 *tf2Bot = (CBotTF2*)pBot;
+	CBotWeapon *weapon;
+
+	if ( tf2Bot->getClass() != TF_CLASS_SPY )
+	{
+		fail();
+		return;
+	}
+
+	if ( !m_pBuilding || !CBotGlobals::entityIsValid(m_pBuilding) || !CBotGlobals::entityIsAlive(m_pBuilding) )
+	{
+		fail();
+		return;
+	}
+
+	pBot->lookAtEdict(m_pBuilding);
+	weapon = tf2Bot->getCurrentWeapon();
+
+	if ( weapon->getID() != TF2_WEAPON_BUILDER )
+	{
+		pBot->select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_BUILDER));
+	}
+	else if ( m_fTime > engine->Time() )
+	{
+		
+		if ( pBot->distanceFrom(m_pBuilding) > 100 )
+		{
+			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding));
+		}
+		else
+		{
+			pBot->tapButton(IN_ATTACK);
+			complete();
+		}
+	}
+	else
+		fail();
+
+}
+
+void CBotTF2SpySap :: debugString ( char *string )
+{
+	sprintf(string,"sap building");
+}
+
 
 /////////////////////////////////////////////////////
 CBotTFUseTeleporter :: CBotTFUseTeleporter ( edict_t *pTele )
@@ -818,7 +882,20 @@ CBotTFUseTeleporter :: CBotTFUseTeleporter ( edict_t *pTele )
 void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( !m_pTele || !CBotGlobals::entityIsValid(m_pTele) )
+	{
+	
 		fail();
+		return;
+	}
+
+	if ( !pBot->isTF() )
+	{
+		if ( ((CBotFortress*)pBot)->hasFlag() )
+		{
+			fail();
+			return;
+		}
+	}
 
 	if ( !m_fTime )
 		m_fTime = engine->Time() + 12.0f;
@@ -829,16 +906,18 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		Vector vTele = CBotGlobals::entityOrigin(m_pTele);
 
-		if ( pBot->distanceFrom(vTele) > 50 )
-			pBot->setMoveTo(vTele,3);
+		if ( pBot->distanceFrom(vTele) > 60 )
+			pBot->setMoveTo(vTele,5);
 		else
-			pBot->stopMoving(3);
+			pBot->stopMoving(5);
 
-		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 100 )
+		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 60 )
 		{
 			pBot->updatePosition();
 			complete();
 		}
+		else
+			m_vLastOrigin = pBot->getOrigin();
 	}
 }
 

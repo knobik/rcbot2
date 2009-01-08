@@ -57,7 +57,9 @@ typedef enum
 	SCHED_HEAL,
 	SCHED_GET_METAL,
 	SCHED_SNIPE,
-	SCHED_UPGRADE
+	SCHED_UPGRADE,
+	SCHED_USE_TELE,
+	SCHED_SPY_SAP_BUILDING
 }eBotSchedule;
 
 class CBotSchedule
@@ -259,7 +261,24 @@ private:
 	dataQueue <CBotSchedule*> m_Schedules;
 };
 
-//////////////////////////////////
+///////////////////////////////////////////////////
+
+class CBotUseTeleSched : public CBotSchedule
+{
+public:
+	CBotUseTeleSched ( edict_t *pTele );
+
+	void init ();
+};
+///////////////////////////////////////////////////
+class CBotSpySapBuildingSched : public CBotSchedule
+{
+public:
+	CBotSpySapBuildingSched ( edict_t *pBuilding );
+
+	void init ();
+};
+///////////////////////////////////////////////////
 
 class CBotTFEngiUpgrade : public CBotSchedule
 {
@@ -268,7 +287,7 @@ public:
 
 	void init ();
 };
-
+///////////////////////////////////////////////////
 class CBotTFEngiBuild : public CBotSchedule
 {
 public:

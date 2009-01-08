@@ -91,6 +91,38 @@ public:
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health );
 };
 
+class MyEHandle 
+{
+public:
+	MyEHandle ()
+	{
+		m_pEnt = NULL;
+		m_iSerialNumber = 0;
+	}
+
+    MyEHandle ( edict_t *pent )
+	{
+		m_pEnt = pent;
+
+		if ( pent )
+			m_iSerialNumber = pent->m_NetworkSerialNumber;
+	}
+
+	edict_t *get ()
+	{
+		if ( m_pEnt )
+		{
+			if ( !m_pEnt->IsFree() && (m_iSerialNumber == m_pEnt->m_NetworkSerialNumber) )
+				return m_pEnt;
+		}
+
+		return NULL;
+	}
+private:
+	int m_iSerialNumber;
+	edict_t *m_pEnt;
+};
+
 class CRCBotEventListener : public IGameEventListener2
 {
 	void FireGameEvent( IGameEvent *event );

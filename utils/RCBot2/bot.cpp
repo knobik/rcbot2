@@ -489,6 +489,8 @@ void CBot :: think ()
 
 	m_pSchedules->execute(this);
 
+	m_vGoal = m_pNavigator->getGoalOrigin();
+
 	if ( m_pNavigator->hasNextPoint() )
 	{		
 		m_pNavigator->updatePosition();
@@ -835,7 +837,6 @@ void CBot :: setLookAtTask ( eLookTask lookTask, int iPriority )
 		m_iLookTask = lookTask; 
 	}	
 }
-
 
 void CBot :: checkEntity ( edict_t **pEdict )
 {
@@ -1712,6 +1713,7 @@ void CBots :: freeAllMemory ()
 	{
 		m_Bots[i]->freeAllMemory();
 		delete m_Bots[i];
+		m_Bots[i] = NULL;
 	}
 
 	delete[] m_Bots;

@@ -118,7 +118,7 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 		else if ( iType == BELIEF_DANGER )
 		{
 			m_fBelief[i] += (fStrength / (sqrt((vOrigin-pWpt->getOrigin()).LengthSqr())))*fBelief;
-		}	
+		}
 	}
 }
 // get the hide spot position (vCover) from origin vCoverOrigin
@@ -140,7 +140,7 @@ bool CWaypointNavigator :: getHideSpotPosition ( Vector vCoverOrigin, Vector *vC
 
 	return true;
 }
-
+// AStar Algorithm : open a waypoint
 void CWaypointNavigator :: open ( AStarNode *pNode )
 { 
 	if ( !pNode->isOpen() )
@@ -149,7 +149,7 @@ void CWaypointNavigator :: open ( AStarNode *pNode )
 		m_theOpenList.push_back(pNode);
 	}
 }
-
+// AStar Algorithm : get the waypoint with lowest cost
 AStarNode *CWaypointNavigator :: nextNode ()
 {
 	AStarNode *pNode = NULL;
@@ -162,6 +162,7 @@ AStarNode *CWaypointNavigator :: nextNode ()
 		unsigned int i;
 		AStarNode *pTemp;
 
+		// Safest method, but takes some cpu
 		for ( i = 0; i < m_theOpenList.size(); i ++ )
 		{
 			pTemp = m_theOpenList[i];
@@ -222,6 +223,8 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			m_bWorkingRoute = false;
 			return true;
 		}
+
+		m_vGoal = CWaypoints::getWaypoint(m_iGoalWaypoint)->getOrigin();
 
 		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());
 

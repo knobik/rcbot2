@@ -116,6 +116,13 @@ void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, 
 
 	int iMinLoci,iMaxLoci,iMinLocj,iMaxLocj,iMinLock,iMaxLock;
 
+	int iFrom = CWaypointLocations::NearestWaypoint(vVisibleFrom,500,-1);
+
+	CWaypointVisibilityTable *pTable = CWaypoints::getVisiblity();
+	
+	if ( (iFrom == -1) || !pTable)
+		return;
+
 	getMinMaxs(iLoc,jLoc,kLoc,&iMinLoci,&iMinLocj,&iMinLock,&iMaxLoci,&iMaxLocj,&iMaxLock);
 
 	for ( i = iMinLoci; i <= iMaxLoci; i++ )
@@ -132,7 +139,7 @@ void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, 
 					int iWpt = m_iLocations[i][j][k][l];
 					//int iWpt = tempStack.ChooseFromStack();
 					
-					if ( CBotGlobals::isVisible(vVisibleFrom,CWaypoints::getWaypoint(iWpt)->getOrigin()) )
+					if ( pTable->GetVisibilityFromTo(iFrom,iWpt) )//CBotGlobals::isVisible(vVisibleFrom,CWaypoints::getWaypoint(iWpt)->getOrigin()) )
 						iVisible->Add(iWpt);
 				}
 			}

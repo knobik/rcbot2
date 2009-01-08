@@ -66,6 +66,8 @@ public:
 
 	virtual bool routeFound () = 0;
 
+	inline Vector getGoalOrigin () { return m_vGoal; }
+
 	virtual void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType ) = 0;
 
 	// nearest cover position to vOrigin only
@@ -74,6 +76,9 @@ public:
 	virtual bool getHideSpotPosition ( Vector vCoverOrigin, Vector *vCover ) = 0;
 
 	static const int MAX_PATH_TICKS = 200;
+
+protected:
+	Vector m_vGoal;
 };
 
 #define FL_ASTAR_CLOSED		1
@@ -165,7 +170,7 @@ public:
 	Vector getCoverOrigin ( Vector vCover );
 
 	void clearOpenList ();
-
+	
 	void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType );
 
 	// nearest cover position to vOrigin only

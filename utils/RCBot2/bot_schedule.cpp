@@ -104,7 +104,7 @@ void CBotTF2GetHealthSched :: init ()
 {
 	setID(SCHED_TF2_GET_HEALTH);
 }
-
+//////////////////////////////////////////////
 CBotTF2GetFlagSched :: CBotTF2GetFlagSched ( Vector vOrigin )
 {
 	addTask(new CFindPathTask(vOrigin)); // first
@@ -115,7 +115,30 @@ void CBotTF2GetFlagSched :: init ()
 {
 	setID(SCHED_TF2_GET_FLAG);
 }
+///////////////////////////////////////////
+CBotUseTeleSched :: CBotUseTeleSched ( edict_t *pTele )
+{
+	// find path
+	addTask(new CFindPathTask(pTele)); // first
+	addTask(new CBotTFUseTeleporter(pTele)); // second
+}
+void CBotUseTeleSched :: init ()
+{
+	setID(SCHED_USE_TELE);
+}
+////////////////////////////////////////////
+void CBotSpySapBuildingSched :: init ()
+{
+	setID(SCHED_SPY_SAP_BUILDING);
+}
 
+CBotSpySapBuildingSched :: CBotSpySapBuildingSched ( edict_t *pBuilding )
+{
+	addTask(new CFindPathTask(pBuilding)); // first
+	addTask(new CBotTF2SpySap(pBuilding)); // second
+}
+
+///////////////////////////////////////////
 CBotTF2FindFlagSched :: CBotTF2FindFlagSched ( Vector vOrigin )
 {
 	addTask(new CFindPathTask(vOrigin)); // first

@@ -235,6 +235,19 @@ private:
 	float m_fTime;
 };
 
+class CBotTF2SpySap : public CBotTask
+{
+public:
+	CBotTF2SpySap ( edict_t *pBuilding ); // going to use this 
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	virtual void debugString ( char *string );
+private:
+	edict_t *m_pBuilding;
+	float m_fTime;
+};
+
 class CBotTFUseTeleporter : public CBotTask
 {
 public:

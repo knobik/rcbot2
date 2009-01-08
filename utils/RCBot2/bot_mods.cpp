@@ -34,7 +34,105 @@
 #include "bot_fortress.h"
 #include "bot_weapons.h"
 
+
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
+tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
+
+edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
+{
+	int i;
+	edict_t *pExit;
+
+	for ( i = 0; i < MAX_PLAYERS; i ++ )
+	{
+		if ( m_Teleporters[i].entrance.get() == pTele )
+		{
+			if ( (pExit = m_Teleporters[i].exit.get()) != NULL )
+			{
+				return pExit;
+			}
+
+			return false;
+		}
+	}
+
+	return false;
+}
+
+void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type )
+{
+	QAngle eye = CBotGlobals::playerAngles(pOwner);
+	Vector vForward;
+	Vector vOrigin;
+	edict_t *pEntity;
+	edict_t *pBest = NULL;
+	float fDistance;
+	float fMinDistance = 100;
+	bool bValid;
+	int team;
+
+	if ( (type != ENGI_ENTRANCE) && (type != ENGI_EXIT) )
+		return;
+
+	int iIndex = ENTINDEX(pOwner)-1;
+
+	if ( (iIndex < 0) || (iIndex > gpGlobals->maxClients) )
+		return;
+
+	int i;
+
+	team = getTeam(pOwner);
+
+	AngleVectors(eye,&vForward);
+
+	vOrigin = CBotGlobals::entityOrigin(pOwner) + (vForward*100);
+
+	for ( i = gpGlobals->maxClients+1; i < gpGlobals->maxEntities; i ++ )
+	{
+		pEntity = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pEntity) )
+		{
+			bValid = false;
+			fDistance = (CBotGlobals::entityOrigin(pEntity) - vOrigin).Length();
+
+			if ( fDistance < fMinDistance )
+			{
+				switch ( type )
+				{
+				case ENGI_ENTRANCE :
+					bValid = CTeamFortress2Mod::isTeleporterEntrance(pEntity,team);
+					break;
+				case ENGI_EXIT:
+					bValid = CTeamFortress2Mod::isTeleporterExit(pEntity,team);
+					break;
+				}
+
+				if ( bValid )
+				{
+					fMinDistance = fDistance;
+					pBest = pEntity;
+				}
+			}
+		}
+	}
+
+	if ( pBest )
+	{
+			switch ( type )
+			{
+			case ENGI_ENTRANCE :
+				m_Teleporters[iIndex].entrance = MyEHandle(pBest);
+				break;
+			case ENGI_EXIT:
+				m_Teleporters[iIndex].exit = MyEHandle(pBest);
+				break;
+			default:
+				return;
+			}
+	}
+}
+
 /*
 CBot *CCounterStrikeSourceMod :: makeNewBots ()
 {
