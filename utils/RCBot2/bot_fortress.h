@@ -106,6 +106,7 @@ public:
 	virtual void modThink ();
 
 	virtual void checkBuildingsValid () {};
+
 	virtual void checkHealingValid ();
 
 	virtual edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding ) { return false; }
@@ -130,6 +131,8 @@ public:
 	inline edict_t *seeFlag ( bool reset = false ) { if ( reset ) { m_pFlag = NULL; } return m_pFlag; }
 
 	void setLookAtTask ( eLookTask lookTask );
+
+	virtual bool canAvoid ( edict_t *pEntity );
 
 	virtual bool isEnemy ( edict_t *pEdict,bool bCheckWeapons = true );
 
@@ -166,6 +169,7 @@ public:
 	virtual void setup ();
 
 	virtual bool needHealth();
+
 	virtual bool needAmmo ();
 
 protected:
@@ -181,8 +185,6 @@ protected:
 
 	bool thinkSpyIsEnemy ( edict_t *pEdict );
 
-	bool m_bNeedAmmo;
-
 	float m_fCallMedic;
 	float m_fTauntTime;
 	float m_fTaunting;
@@ -192,6 +194,8 @@ protected:
 	edict_t *m_pDispenser;
 	edict_t *m_pTeleEntrance;
 	edict_t *m_pTeleExit;
+	edict_t *m_pAmmo;
+	edict_t *m_pHealthkit;
 
 	edict_t *m_pNearestDisp;
 	edict_t *m_pNearestEnemySentry;
@@ -204,6 +208,7 @@ protected:
 	float m_fSeeSpyTime;
 	float m_fSpyDisguiseTime;
 	float m_fLastSaySpy;
+	float m_fPickupTime;
 
 	// valid flag point area
 	Vector m_vLastKnownFlagPoint;

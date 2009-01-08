@@ -239,6 +239,11 @@ public:
 
 	static bool isDispenser ( edict_t *pEntity, int iTeam );
 
+	static bool isHealthKit ( edict_t *pEntity );
+
+	static bool isAmmo ( edict_t *pEntity );
+
+
 	static bool isSentry ( edict_t *pEntity, int iTeam );
 
 	static bool isTeleporterEntrance ( edict_t *pEntity, int iTeam );
@@ -276,6 +281,8 @@ public:
 	static void teleporterBuilt ( edict_t *pOwner, eEngiBuild type );
 
 	static edict_t *getTeleporterExit ( edict_t *pTele );
+
+
 
 private:
 

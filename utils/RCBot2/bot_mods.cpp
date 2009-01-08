@@ -59,6 +59,16 @@ edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 	return false;
 }
 
+bool CTeamFortress2Mod :: isHealthKit ( edict_t *pEntity )
+{
+	return strncmp(pEntity->GetClassName(),"item_healthkit",14)==0;
+}
+
+bool CTeamFortress2Mod :: isAmmo ( edict_t *pEntity )
+{
+	return strncmp(pEntity->GetClassName(),"item_ammopack",13)==0;
+}
+
 void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type )
 {
 	QAngle eye = CBotGlobals::playerAngles(pOwner);

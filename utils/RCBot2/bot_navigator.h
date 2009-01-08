@@ -54,11 +54,15 @@ public:
 
 	virtual void rollBackPosition () = 0;
 
+	inline Vector getPreviousPoint () { return m_vPreviousPoint; }
+
 	virtual bool hasNextPoint () = 0;
 
 	virtual Vector getNextPoint () = 0;
 
 	virtual void updatePosition () = 0;
+
+	//virtual void goBack () = 0;
 
 	virtual void freeMapMemory () = 0;		
 
@@ -79,6 +83,7 @@ public:
 
 protected:
 	Vector m_vGoal;
+	Vector m_vPreviousPoint;
 };
 
 #define FL_ASTAR_CLOSED		1
@@ -170,6 +175,8 @@ public:
 	Vector getCoverOrigin ( Vector vCover );
 
 	void clearOpenList ();
+
+	//virtual void goBack();
 	
 	void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType );
 
@@ -182,6 +189,7 @@ private:
 
 	//CWaypointVisibilityTable *m_pDangerNodes;
 
+	//int m_iPrevWaypoint;
 	int m_iCurrentWaypoint;
 	int m_iNextWaypoint;
 	int m_iGoalWaypoint;

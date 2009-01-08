@@ -225,7 +225,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 		}
 
 		m_vGoal = CWaypoints::getWaypoint(m_iGoalWaypoint)->getOrigin();
-
+		m_vPreviousPoint = vFrom;
 		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());
 
 		if ( m_iCurrentWaypoint == -1 )
@@ -424,7 +424,8 @@ Vector CWaypointNavigator :: getNextPoint ()
 
 void CWaypointNavigator :: rollBackPosition ()
 {
-	m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(m_pBot->getOrigin(),CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());
+	m_vPreviousPoint = m_pBot->getOrigin();
+	m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(m_vPreviousPoint,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());
 
 	while ( !m_currentRoute.IsEmpty() ) // reached goal!!
 	{		
@@ -462,6 +463,7 @@ void CWaypointNavigator :: updatePosition ()
 
 			if ( m_currentRoute.IsEmpty() ) // reached goal!!
 			{
+				m_vPreviousPoint = m_pBot->getOrigin();
 				m_iCurrentWaypoint = -1;
 
 				if ( m_pBot->getSchedule()->hasSchedule(SCHED_RUN_FOR_COVER) )
@@ -469,6 +471,7 @@ void CWaypointNavigator :: updatePosition ()
 			}
 			else
 			{
+				m_vPreviousPoint = m_pBot->getOrigin();
 				m_iCurrentWaypoint = m_currentRoute.Pop();
 
 				if ( m_iCurrentWaypoint != -1 )

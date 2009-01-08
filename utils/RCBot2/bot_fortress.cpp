@@ -63,6 +63,8 @@ void CBroadcastFlagCaptured :: execute ( CBot *pBot )
 CBotFortress :: CBotFortress()
 { 
 	CBot(); 
+	m_pAmmo = NULL;
+	m_pHealthkit = NULL;
 	m_pFlag = NULL; 
 	m_pHeal = NULL; 
 	m_fCallMedic = 0; 
@@ -92,6 +94,8 @@ void CBotFortress :: checkDependantEntities ()
 	checkEntity(&m_pTeleEntrance); 
 	checkEntity(&m_pNearestDisp); 
 	checkEntity(&m_pNearestEnemySentry); 
+	checkEntity(&m_pAmmo);
+	checkEntity(&m_pHealthkit);
 }
 
 void CBotFortress :: init (bool bVarInit)
@@ -199,26 +203,37 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		if ( CTeamFortress2Mod::isFlag(pEntity,getTeam()) )
 			m_pFlag = pEntity;
-
-		if ( CTeamFortress2Mod::isDispenser(pEntity,getTeam()) )
+		else if ( CTeamFortress2Mod::isDispenser(pEntity,getTeam()) )
 		{
-			if ( !m_pNearestDisp || (pEntity != m_pNearestDisp) && (distanceFrom(pEntity) < distanceFrom(m_pNearestDisp)) )
+			if ( !m_pNearestDisp || ((pEntity != m_pNearestDisp) && (distanceFrom(pEntity) < distanceFrom(m_pNearestDisp))) )
 				m_pNearestDisp = pEntity;
 		}
-
-		if ( CTeamFortress2Mod::isTeleporterEntrance(pEntity,getTeam()) )
+		else if ( CTeamFortress2Mod::isTeleporterEntrance(pEntity,getTeam()) )
 		{
-			if ( !m_pTeleEntrance || (pEntity != m_pTeleEntrance) && (distanceFrom(pEntity) < distanceFrom(m_pTeleEntrance)))
+			if ( !m_pTeleEntrance || ((pEntity != m_pTeleEntrance) && (distanceFrom(pEntity) < distanceFrom(m_pTeleEntrance))) )
 				m_pTeleEntrance = pEntity;
+		}
+		else if ( CTeamFortress2Mod::isAmmo(pEntity) )
+		{
+			if ( !m_pAmmo || ((pEntity != m_pAmmo) && (distanceFrom(pEntity) < distanceFrom(m_pAmmo))) )
+				m_pAmmo = pEntity;
+		}
+		else if ( CTeamFortress2Mod::isHealthKit(pEntity) )
+		{
+			if ( !m_pHealthkit || ((pEntity != m_pHealthkit) && (distanceFrom(pEntity) < distanceFrom(m_pHealthkit))) )
+				m_pHealthkit = pEntity;
 		}
 	}
 	else 
 	{
 		if ( pEntity == m_pFlag )
 			m_pFlag = NULL;
-
 		if ( pEntity == m_pNearestDisp )
 			m_pNearestDisp = NULL;
+		if ( pEntity == m_pAmmo )
+			m_pAmmo = NULL;
+		if ( pEntity == m_pHealthkit )
+			m_pHealthkit = NULL;
 	}
 	
 }
@@ -247,7 +262,7 @@ void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
 
-	m_bNeedAmmo = false;
+	m_fPickupTime = 0.0f;
 
 	m_fSpyCloakTime = engine->Time() + randomFloat(10.0f,15.0f);
 
@@ -715,6 +730,7 @@ edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding )
 				break;
 			case ENGI_ENTRANCE :
 				m_pTeleEntrance = pBest;
+				m_vTeleportEntrance = CBotGlobals::entityOrigin(pBest);
 				break;
 			case ENGI_EXIT:
 				m_pTeleExit = pBest;
@@ -890,6 +906,8 @@ void CBotTF2 :: callMedic ()
 
 void CBotTF2 :: modThink ()
 {
+	bool bNeedHealth = needHealth();
+	bool bNeedAmmo = needAmmo();
 	// mod specific think code here
 	CBotFortress :: modThink();
 
@@ -949,21 +967,81 @@ void CBotTF2 :: modThink ()
 		}
 	}
 
-	if ( m_pNearestDisp && (needHealth() || needAmmo()) )
+	if ( (m_fPickupTime < engine->Time()) && (bNeedHealth || bNeedAmmo) && (!m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) )
 	{
-		if ( !m_pSchedules->isCurrentSchedule(SCHED_USE_DISPENSER) )
+		if ( m_pNearestDisp )
 		{
-			m_pSchedules->removeSchedule(SCHED_USE_DISPENSER);
-			m_pSchedules->addFront(new CBotUseDispSched(m_pNearestDisp));
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_USE_DISPENSER) )
+			{
+				m_pSchedules->removeSchedule(SCHED_USE_DISPENSER);
+				m_pSchedules->addFront(new CBotUseDispSched(m_pNearestDisp));
 
-			return;
+				m_fPickupTime = engine->Time() + randomFloat(4.0f,6.0f);
+				return;
+			}
+		}
+		else if ( bNeedHealth && m_pHealthkit )
+		{
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_GOTO_ORIGIN) )
+			{
+				m_pSchedules->removeSchedule(SCHED_GOTO_ORIGIN);
+				m_pSchedules->addFront(new CBotGotoOriginSched(m_pHealthkit));
+
+				m_fPickupTime = engine->Time() + randomFloat(4.0f,6.0f);
+
+				return;
+			}
+		}
+		else if ( bNeedAmmo && m_pAmmo )
+		{
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_GOTO_ORIGIN) )
+			{
+				m_pSchedules->removeSchedule(SCHED_GOTO_ORIGIN);
+				m_pSchedules->addFront(new CBotGotoOriginSched(m_pAmmo));
+
+				m_fPickupTime = engine->Time() + randomFloat(4.0f,6.0f);
+
+				return;
+			}
 		}
 	}
-
 
 	m_fIdealMoveSpeed = CTeamFortress2Mod::TF2_GetPlayerSpeed(m_pEdict,m_iClass);
 }
 
+bool CBotFortress :: canAvoid ( edict_t *pEntity )
+{
+	float distance;
+	Vector vAvoidOrigin;
+	int index;
+
+	if ( !CBotGlobals::entityIsValid(pEntity) )
+		return false;
+	if ( m_pEdict == pEntity ) // can't avoid self!!!
+		return false;
+	if ( m_pLookEdict == pEntity )
+		return false;
+	if ( m_pLastEnemy == pEntity )
+		return false;
+
+	index = ENTINDEX(pEntity);
+
+	if ( !index )
+		return false;
+
+	vAvoidOrigin = CBotGlobals::entityOrigin(pEntity);
+
+	distance = distanceFrom(vAvoidOrigin);
+
+	if ( ( distance > 1 ) && ( distance < 200 ) && (fabs(getOrigin().z - vAvoidOrigin.z) < 64) )
+	{
+		if ( index <= gpGlobals->maxClients )
+			return isEnemy(pEntity,false);
+		
+	}
+
+	return false;
+}
 
 bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
 {
@@ -1319,8 +1397,8 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 						return true;					
 					else if ( m_fFrenzyTime > engine->Time() )
 						return true;
-					else
-						return false;
+					
+					return false;
 				}
 			}	
 			
@@ -1340,6 +1418,8 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 					{
 						bValid = true;
 					}
+					else if ( !isClassOnTeam(dclass,getTeam()) )
+						bValid = true;
 					else
 						bValid = thinkSpyIsEnemy(pEdict);
 

@@ -273,6 +273,16 @@ bool CBot :: checkStuck ()
 		}
 	}
 
+	if ( m_fWaypointStuckTime && (m_fWaypointStuckTime < engine->Time()) )
+	{
+		if ( distanceFrom(m_pNavigator->getPreviousPoint()) > 70.0f )
+			setMoveTo(m_pNavigator->getPreviousPoint());
+		else
+			m_fWaypointStuckTime = engine->Time() + randomFloat(7.0f,11.0f);
+
+		m_fWaypointStuckTime = 0.0f;
+	}
+
 	if ( m_fCheckStuckTime > fTime )
 		return m_bThinkStuck;
 
@@ -288,7 +298,7 @@ bool CBot :: checkStuck ()
 	{
 		float fPercentMoved = fSpeed/fIdealSpeed;
 
-		if ( fPercentMoved < 0.2 )
+		if ( fPercentMoved < 0.1 )
 		{
 			m_bThinkStuck = true;
 			m_pButtons->jump();
@@ -325,6 +335,10 @@ bool CBot :: canAvoid ( edict_t *pEntity )
 		return false;
 	if ( m_pEdict == pEntity ) // can't avoid self!!!
 		return false;
+	if ( m_pLookEdict == pEntity )
+		return false;
+	if ( m_pLastEnemy == pEntity )
+		return false;
 
 	vAvoidOrigin = CBotGlobals::entityOrigin(pEntity);
 
@@ -355,15 +369,8 @@ void CBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		if ( canAvoid(pEntity) )
 		{
-			if ( m_pAvoidEntity )
-			{
-				if ( distanceFrom(pEntity) < distanceFrom(m_pAvoidEntity) )
-				{
+			if ( !m_pAvoidEntity || (distanceFrom(pEntity) < distanceFrom(m_pAvoidEntity)) )
 					m_pAvoidEntity = pEntity;
-				}
-			}
-			else
-				m_pAvoidEntity = pEntity;
 		}
 	}
 	else
@@ -659,7 +666,7 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
-	
+	m_fWaypointStuckTime = 0.0f;
 	m_pPickup = NULL;
 	m_pAvoidEntity = NULL;
 	m_bThinkStuck = false;
@@ -734,6 +741,8 @@ bool CBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
 
 void CBot :: touchedWpt ( CWaypoint *pWaypoint )
 {
+	m_fWaypointStuckTime = engine->Time() + randomFloat(7.0f,11.0f);
+
 	if ( pWaypoint->getFlags() & CWaypointTypes::W_FL_JUMP )
 		jump();
 	if ( pWaypoint->getFlags() & CWaypointTypes::W_FL_CROUCH )
@@ -1096,9 +1105,9 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	AngleVectors(angles,&v_right);
 
     v_right = v_right/VectorDistance(v_right); // normalize
-	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.2f,0.6f);
+	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.1f,0.4f);
 
-	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(v_right.x*randomFloat(-8,8),v_right.y*randomFloat(-8,8),randomFloat(-8,8));
+	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(0,0,36) + Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16));
 
 	return m_vAimVector;
 }

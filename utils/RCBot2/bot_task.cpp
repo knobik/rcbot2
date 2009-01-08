@@ -590,7 +590,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 			if ( m_pEdict )
 			{
-				if ( CBotGlobals::entityIsValid(m_pEdict) )
+				if ( CBotGlobals::entityIsValid(m_pEdict) && pBot->isVisible(m_pEdict) )
 				{
 					if ( pBot->distanceFrom(m_pEdict) < pBot->distanceFrom(pBot->getNavigator()->getNextPoint()) )
 						complete();

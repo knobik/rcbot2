@@ -366,7 +366,7 @@ public:
 
 	void updateConditions ();
 
-	bool canAvoid ( edict_t *pEntity );
+	virtual bool canAvoid ( edict_t *pEntity );
 
 	inline bool hasEnemy () { return m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY); }
 	edict_t *getEnemy () { return m_pEnemy; }
@@ -396,6 +396,7 @@ public:
 		{
 			m_bMoveToIsValid = false; 
 			m_iMovePriority = iPriority;
+			m_fWaypointStuckTime = 0;
 		}
 	}
 	
@@ -517,7 +518,7 @@ protected:
 	// next think time
 	float m_fNextThink;
 
-	float m_fUnstickTime;
+	float m_fWaypointStuckTime;
 	bool m_bThinkStuck;
 
 	int m_iMovePriority;
