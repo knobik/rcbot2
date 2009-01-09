@@ -247,7 +247,6 @@ bool CBot :: checkStuck ()
 	if ( !moveToIsValid() )
 		return false;
 
-
 	fTime = engine->Time();
 
 	if ( m_fLastWaypointVisible == 0 )
@@ -275,12 +274,8 @@ bool CBot :: checkStuck ()
 
 	if ( m_fWaypointStuckTime && (m_fWaypointStuckTime < engine->Time()) )
 	{
-		if ( distanceFrom(m_pNavigator->getPreviousPoint()) > 70.0f )
-			setMoveTo(m_pNavigator->getPreviousPoint());
-		else
-			m_fWaypointStuckTime = engine->Time() + randomFloat(7.0f,11.0f);
-
-		m_fWaypointStuckTime = 0.0f;
+		m_bFailNextMove = true;
+		m_fWaypointStuckTime = engine->Time() + randomFloat(7.0f,11.0f);
 	}
 
 	if ( m_fCheckStuckTime > fTime )

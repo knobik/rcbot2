@@ -207,6 +207,14 @@ void CWaypointNavigator :: clearOpenList ()
 
 	m_theOpenList.clear();
 }
+
+void CWaypointNavigator :: failMove ()
+{
+	m_iLastFailedWpt = m_iCurrentWaypoint;
+
+	if ( !m_iFailedGoals.IsMember(m_iGoalWaypoint) )
+		m_iFailedGoals.Add(m_iGoalWaypoint);
+}
 // find route using A* algorithm
 bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart, bool bNoInterruptions )
 {
@@ -234,6 +242,9 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			m_bWorkingRoute = false;
 			return true;
 		}
+
+		// reset
+		m_iLastFailedWpt = -1;
 
 		clearOpenList();
 		Q_memset(paths,0,sizeof(AStarNode)*CWaypoints::MAX_WAYPOINTS);

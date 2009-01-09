@@ -54,6 +54,8 @@ public:
 
 	virtual void rollBackPosition () = 0;
 
+	virtual void failMove () = 0;
+
 	inline Vector getPreviousPoint () { return m_vPreviousPoint; }
 
 	virtual bool hasNextPoint () = 0;
@@ -157,6 +159,8 @@ public:
 	Vector getNextPoint ();
 
 	void updatePosition ();
+
+	void failMove ();
 
 	bool hasNextPoint ();
 

@@ -427,14 +427,86 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 		else if ( m_iState == 1 )
 		{
+			CTraceFilterWorldAndPropsOnly filter;
+			QAngle eyes = CBotGlobals::playerAngles(pBot->getEdict());
+			QAngle turn;
+			Vector forward;
+			Vector building;
+			// find best place to turn it to
+			trace_t *tr = CBotGlobals::getTraceResult();
+			int iNextState = 2;
+
+			float bestfraction = 0.0f;			
+
 			// unselect current weapon
 			tfBot->selectWeapon(0);
 			tfBot->engineerBuild(m_iObject,ENGI_BUILD);
-			m_iState ++;
+
+			AngleVectors(eyes,&forward);
+			iNextState = 8;
+			building = pBot->getEyePosition() + (forward*100);
+//////////////////////////////////////////
+			
+			// forward
+			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+
+			if ( tr->fraction > bestfraction )
+			{
+				iNextState = 8;
+				bestfraction = tr->fraction;
+			}
+////////////////////////////////////////
+			turn = eyes;
+			turn.y = turn.y - 90.0f;
+			CBotGlobals::fixFloatAngle(&turn.y);
+
+			AngleVectors(turn,&forward);
+
+			// left
+			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+
+			if ( tr->fraction > bestfraction )
+			{
+				iNextState = 6;
+				bestfraction = tr->fraction;
+			}
+////////////////////////////////////////
+			turn = eyes;
+			turn.y = turn.y + 180.0f;
+			CBotGlobals::fixFloatAngle(&turn.y);
+
+			AngleVectors(turn,&forward);
+
+			// back
+			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+
+			if ( tr->fraction > bestfraction )
+			{
+				iNextState = 4;
+				bestfraction = tr->fraction;
+			}
+			///////////////////////////////////
+			turn = eyes;
+			turn.y = turn.y + 90.0f;
+			CBotGlobals::fixFloatAngle(&turn.y);
+
+			AngleVectors(turn,&forward);
+
+			// right
+			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+
+			if ( tr->fraction > bestfraction )
+			{
+				iNextState = 2;
+				bestfraction = tr->fraction;
+			}
+			////////////////////////////////////
+			m_iState = iNextState;
+
 		}
 		else if ( m_iState == 2 )
 		{
-			pBot->tapButton(IN_ATTACK2);
+			// let go
 			m_iState ++;
 		}
 		else if ( m_iState == 3 )
@@ -444,22 +516,47 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 		else if ( m_iState == 4 )
 		{
+			// let go
+			m_iState ++;
+		}
+		else if ( m_iState == 5 )
+		{
+			pBot->tapButton(IN_ATTACK2);
+			m_iState ++;
+		}
+		else if ( m_iState == 6 )
+		{
+			// let go 
+			m_iState ++;
+		}
+		else if ( m_iState == 7 )
+		{
+			pBot->tapButton(IN_ATTACK2);
+			m_iState ++;
+		}
+		else if ( m_iState == 8 )
+		{
+			// let go (wait)
+			m_iState ++;
+		}
+		else if ( m_iState == 9 )
+		{
 			pBot->tapButton(IN_ATTACK);
 
 			m_fTime = engine->Time() + 1.0f;
 
 			m_iState++;
 		}
-		else if ( m_iState == 5 )
+		else if ( m_iState == 10 )
 		{
 			// Check if sentry built OK
 			// Wait for Built object message
 
 			if ( tfBot->hasEngineerBuilt(m_iObject) )
 			{
-				m_iState++;				
+				m_iState++;	
 				// OK, set up whacking time!
-				m_fTime = engine->Time() + randomFloat(5.0f,12.0f);
+				m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
 			}
 			else if ( m_fTime < engine->Time() )
 			{
@@ -467,7 +564,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 					fail();
 				else
 				{
-					m_iState = 4;
+					m_iState = 8;
 					m_iTries ++;
 				}
 			}
@@ -586,6 +683,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 			{
 				pBot->debugMsg(BOT_DEBUG_NAV,"moveFailed() == true");
 				fail();
+				pBot->getNavigator()->failMove();
 			}
 
 			if ( m_pEdict )
