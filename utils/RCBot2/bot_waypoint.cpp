@@ -52,6 +52,8 @@ using namespace std;
 #include "bot_schedule.h"
 #include "bot_fortress.h"
 
+#include "bot_wpt_dist.h"
+
 int CWaypoints::m_iNumWaypoints = 0;
 CWaypoint CWaypoints::m_theWaypoints[CWaypoints::MAX_WAYPOINTS];
 float CWaypoints::m_fNextDrawWaypoints = 0;
@@ -398,6 +400,8 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 	iLoops = 0;
 
 	int iNumWaypoints = CWaypoints::numWaypoints();
+	float fDistance = 0.0;
+	int iParent;
 
 	while ( (iCurrentNode != -1) && (iCurrentNode != m_iCurrentWaypoint ) && (iLoops <= iNumWaypoints) )
 	{
@@ -405,8 +409,14 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 
 		m_currentRoute.Push(iCurrentNode);
 
-		iCurrentNode = paths[iCurrentNode].getParent();
+		iParent = paths[iCurrentNode].getParent();
+
+		fDistance += (CWaypoints::getWaypoint(iCurrentNode)->getOrigin() - CWaypoints::getWaypoint(iParent)->getOrigin()).Length();
+
+		iCurrentNode = iParent;
 	}
+
+	CWaypointDistances::setDistance(m_iCurrentWaypoint,m_iGoalWaypoint,fDistance);
 
 	// erh??
 	if ( iLoops > iNumWaypoints )

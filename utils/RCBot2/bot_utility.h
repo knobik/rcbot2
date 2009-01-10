@@ -34,6 +34,8 @@
 #ifndef __BOT_UTILITY_H__
 #define __BOT_UTILITY_H__
 
+#include "bot_genclass.h"
+
 #include <vector>
 using namespace std;
 
@@ -50,7 +52,7 @@ using namespace std;
 #define BOT_UTIL_UPGTMTELENT  10
 #define BOT_UTIL_UPGTMTELEXT  11
 #define BOT_UTIL_GOTODISP		12
-#define BOT_UTIL_GOTORESUPPLY   13
+#define BOT_UTIL_GOTORESUPPLY_FOR_HEALTH   13
 #define BOT_UTIL_GETAMMOKIT   14
 #define BOT_UTIL_GETAMMOTMDISP 15
 #define BOT_UTIL_GETAMMODISP 16
@@ -60,6 +62,7 @@ using namespace std;
 #define BOT_UTIL_SNIPE 20
 #define BOT_UTIL_ROAM 21
 #define BOT_UTIL_CAPTURE_FLAG 22
+#define BOT_UTIL_GOTORESUPPLY_FOR_AMMO 23
 
 class CBotUtility
 {
@@ -83,41 +86,43 @@ private:
 	int m_id;
 };
 
+
+typedef struct util_node_s
+{
+  CBotUtility *util;
+  struct util_node_s *next;
+}util_node_t;
+
+
+typedef struct
+{
+	util_node_t *head;
+}util_list;
+
 class CBotUtilities
 {
 public:
-	void freeMemory ()
+
+	CBotUtilities ()
 	{
-		m_Utilities.clear();
+		m_pBest.head = NULL;
 	}
+
+	void freeMemory ();
 
 	inline void addUtility ( CBotUtility p ) { m_Utilities.push_back(p); }
 
-	CBotUtility *getBestUtility ()
-	{
-		unsigned int i = 0;
-		CBotUtility *pUtil;
-		CBotUtility *pBest = NULL;
-		float fUtil;
-		float fBestUtil = 0;
+	void execute ();
 
-		for ( i = 0; i < m_Utilities.size(); i ++ )
-		{
-			pUtil = &(m_Utilities[i]);
-			fUtil = pUtil->getUtility();
+	CBotUtility *nextBest ();
 
-			if ( pUtil->canDo() && (!pBest || (fUtil > fBestUtil)) )
-			{
-				fBestUtil = fUtil;
-				pBest = pUtil;
-			}
-		}
-
-		return pBest;
-	}
 private:
 	vector<CBotUtility> m_Utilities;
+
+	util_list m_pBest;
 };
+
+
 
 
 #endif

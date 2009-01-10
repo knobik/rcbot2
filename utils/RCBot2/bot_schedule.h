@@ -61,7 +61,8 @@ typedef enum
 	SCHED_USE_TELE,
 	SCHED_SPY_SAP_BUILDING,
 	SCHED_USE_DISPENSER,
-	SCHED_PICKUP
+	SCHED_PICKUP,
+	SCHED_TF2_GET_AMMO
 }eBotSchedule;
 
 class CBotSchedule
@@ -330,6 +331,13 @@ public:
 	void init ();
 };
 
+class CBotTF2GetAmmoSched : public CBotSchedule
+{
+public:
+	CBotTF2GetAmmoSched ( Vector vOrigin );
+
+	void init ();
+};
 
 class CBotTF2GetHealthSched : public CBotSchedule
 {

@@ -3,6 +3,7 @@
 
 class CBotWeapon;
 class CWaypoint;
+class CBotUtility;
 
 #define TF2_TEAM_BLUE 3
 #define TF2_TEAM_RED 2
@@ -94,6 +95,8 @@ public:
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
 	virtual void init (bool bVarInit=false);
+
+	
 
 	virtual void foundSpy (edict_t *pEdict);
 
@@ -245,6 +248,8 @@ public:
 	void modThink ();
 
 	bool isCloaked ();
+
+	bool runUtil ( int id, CWaypoint *pWaypointResupply );
 
 	void setClass ( TF_Class _class );
 

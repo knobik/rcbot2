@@ -390,16 +390,8 @@ public:
 
 	inline IBotNavigator *getNavigator () { return m_pNavigator; }
 
-	inline void stopMoving (int iPriority = 1) 
-	{ 
-		if ( iPriority > m_iMovePriority )
-		{
-			m_bMoveToIsValid = false; 
-			m_iMovePriority = iPriority;
-			m_fWaypointStuckTime = 0;
-		}
-	}
-	
+	void stopMoving (int iPriority = 1);
+
 	inline void stopLooking ( int iPriority = 1 ) 
 	{ 
 		if ( iPriority > m_iLookPriority )

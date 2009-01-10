@@ -115,7 +115,7 @@ void CBotTF2WaitHealthTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !m_fWaitTime )
 		m_fWaitTime = engine->Time() + 40.0f;
 
-	 if ( pBot->getHealthPercent() > 0.9 )
+	 if ( !((CBotFortress*)pBot)->needHealth() )
 		complete();
 	 else if ( m_fWaitTime < engine->Time() )
 		 fail();
@@ -328,44 +328,26 @@ void CBotTFEngiTankSentry :: execute (CBot *pBot,CBotSchedule *pSchedule)
 ////////////////////////
 
 
-CBotTF2WaitAmmoTask :: CBotTF2WaitAmmoTask ( int iWeaponId, Vector vOrigin )
+CBotTF2WaitAmmoTask :: CBotTF2WaitAmmoTask ( Vector vOrigin )
 {
 	m_vOrigin = vOrigin;
 	m_fWaitTime = 0.0f;
-	m_iWeaponId = iWeaponId;
 }
 	
 void CBotTF2WaitAmmoTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
-	CBotWeapon *pWeapon;
-	CBotWeapons *pWeapons;
-
-	pWeapons = pBot->getWeapons();
-
 	if ( !m_fWaitTime )
 		m_fWaitTime = engine->Time() + randomFloat(10.0f,15.0f);
 
-	if ( !pWeapons )
-		fail();
-	else 
+	if ( !((CBotFortress*)pBot)->needAmmo() )
 	{
-		pWeapon = pWeapons->getWeapon(CWeapons::getWeapon(m_iWeaponId));
-
-		if (!pWeapon )
-			fail();
-		else
-		{
-			if ( pWeapon->getAmmo(pBot) >= 200 )
-			{
-				complete();
-			}
-			else if ( m_fWaitTime < engine->Time() )
-				fail();
-			else
-			{
-				pBot->stopMoving(2);
-			}
-		}
+		complete();
+	}
+	else if ( m_fWaitTime < engine->Time() )
+		fail();
+	else
+	{
+		pBot->stopMoving(2);
 	}
 }
 
@@ -710,9 +692,9 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 void CMoveToTask :: init () 
 { 
-	fPrevDist = CWaypointLocations::HALF_MAX_MAP_SIZE; 
-	m_vVector = Vector(0,0,0);
-	m_pEdict = NULL;
+	fPrevDist = 0;
+	//m_vVector = Vector(0,0,0);
+	//m_pEdict = NULL;
 }
 
 void CMoveToTask :: debugString ( char *string )
@@ -720,28 +702,31 @@ void CMoveToTask :: debugString ( char *string )
 	sprintf(string,"MoveToTask (%0.4f,%0.4f,%0.4f)",m_vVector.x,m_vVector.y,m_vVector.z);	
 }
 
+CMoveToTask :: CMoveToTask ( edict_t *pEdict )
+{
+		m_pEdict = pEdict;
+		m_vVector = CBotGlobals::entityOrigin(m_pEdict);
+
+		setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
+	
+}
+
 void CMoveToTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 {
-	static Vector vOrigin = Vector(0,0,0);
 
 	float fDistance;
-	
-	if ( m_pEdict != NULL ) // going to an edict?
-	{
-		vOrigin = CBotGlobals::entityOrigin(m_pEdict);
-	}
 
-	fDistance = pBot->distanceFrom(vOrigin);
+	fDistance = pBot->distanceFrom(m_vVector);
 
 	// sort out looping move to origins by using previous distance check
-	if ( (fDistance < BOT_WPT_TOUCH_DIST) || (fPrevDist > fDistance) )
+	if ( (fDistance < 64) || (fPrevDist&&(fPrevDist > fDistance)) )
 	{
 		complete();
 		return;
 	}
 	else
 	{		
-		pBot->setMoveTo(vOrigin,2);
+		pBot->setMoveTo(m_vVector,3);
 
 		if ( pBot->moveFailed() )
 			fail();

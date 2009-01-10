@@ -72,6 +72,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#include "bot_wpt_dist.h"
+
 static ICvar *s_pCVar;
 
 ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
@@ -321,6 +323,9 @@ void CRCBotPlugin::LevelInit( char const *pMapName )
 	CWaypoints::init();
 	CWaypoints::load();
 
+	CWaypointDistances::reset();
+	CWaypointDistances::load();
+
 	CBotGlobals::setMapRunning(true);
 	
 	
@@ -370,6 +375,8 @@ void CRCBotPlugin::GameFrame( bool simulating )
 		{
 			CWaypoints::getVisiblity()->workVisibility();
 		}
+
+		CWaypointDistances::save();
 	}
 }
 
@@ -378,6 +385,7 @@ void CRCBotPlugin::GameFrame( bool simulating )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::LevelShutdown( void ) // !!!!this can get called multiple times per map change
 {
+	CWaypointDistances::save();
 	CBots::freeMapMemory();	
 	CWaypoints::init();
 

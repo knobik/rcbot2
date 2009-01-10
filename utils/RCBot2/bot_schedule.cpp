@@ -62,7 +62,7 @@ void CBotTFEngiBuild :: init ()
 CBotGetMetalSched :: CBotGetMetalSched ( Vector vOrigin )
 {
 	addTask(new CFindPathTask(vOrigin)); // first
-	addTask(new CBotTF2WaitAmmoTask(TF2_WEAPON_WRENCH,vOrigin));
+	addTask(new CBotTF2WaitAmmoTask(vOrigin));
 }
 
 void CBotGetMetalSched :: init ()
@@ -101,10 +101,24 @@ CBotTF2GetHealthSched :: CBotTF2GetHealthSched ( Vector vOrigin )
 	addTask(new CBotTF2WaitHealthTask(vOrigin)); // second
 }
 
+
 void CBotTF2GetHealthSched :: init ()
 {
 	setID(SCHED_TF2_GET_HEALTH);
 }
+///////////////////////////////////////
+
+CBotTF2GetAmmoSched :: CBotTF2GetAmmoSched ( Vector vOrigin )
+{
+	addTask(new CFindPathTask(vOrigin)); // first
+	addTask(new CBotTF2WaitAmmoTask(vOrigin)); // second
+}
+
+void CBotTF2GetAmmoSched ::  init ()
+{
+	setID(SCHED_TF2_GET_AMMO);
+}
+
 //////////////////////////////////////////////
 CBotTF2GetFlagSched :: CBotTF2GetFlagSched ( Vector vOrigin )
 {

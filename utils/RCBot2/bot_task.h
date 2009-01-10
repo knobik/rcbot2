@@ -191,14 +191,13 @@ private:
 class CBotTF2WaitAmmoTask : public CBotTask
 {
 public:
-	CBotTF2WaitAmmoTask ( int iWeaponId, Vector vOrigin );
+	CBotTF2WaitAmmoTask ( Vector vOrigin );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 	virtual void debugString ( char *string );
 private:
 	Vector m_vOrigin;
 	float m_fWaitTime;
-	int m_iWeaponId;
 };
 
 class CBotTF2WaitHealthTask : public CBotTask
@@ -306,16 +305,12 @@ public:
 	CMoveToTask ( Vector vOrigin )
 	{
 		m_vVector = vOrigin;
+		m_pEdict = NULL;
 
 		setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
 	}
 
-	CMoveToTask ( edict_t *pEdict )
-	{
-		m_pEdict = pEdict;
-
-		setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
-	}
+	CMoveToTask ( edict_t *pEdict );
 
 	void init ();
 

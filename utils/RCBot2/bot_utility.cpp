@@ -33,3 +33,96 @@
 
 #include "bot_utility.h"
 
+void CBotUtilities :: execute ()
+{
+	unsigned int i = 0;
+	CBotUtility *pUtil;
+	float fUtil;
+
+	util_node_t *temp;
+	util_node_t *pnew;
+	util_node_t *prev;
+
+	m_pBest.head = NULL;
+
+	for ( i = 0; i < m_Utilities.size(); i ++ )
+	{
+		pUtil = &(m_Utilities[i]);
+		fUtil = pUtil->getUtility();
+
+		if ( pUtil->canDo() )
+		{			
+			temp = m_pBest.head;
+
+			pnew = (util_node_t*)malloc(sizeof(util_node_t));
+			pnew->util = pUtil;
+			pnew->next = NULL;
+			prev = NULL;
+
+			if ( temp )
+			{
+				while ( temp )
+				{
+					if ( fUtil > temp->util->getUtility() )
+					{
+						if ( temp == m_pBest.head )
+						{
+							pnew->next = temp;
+							m_pBest.head = pnew;
+							break;
+						}
+						else
+						{
+							prev->next = pnew;
+							pnew->next = temp;
+							break;
+						}
+					}
+
+					prev = temp;
+					temp = temp->next;
+				}
+
+				if ( pnew->next == NULL )
+					prev->next = pnew;
+			}
+			else
+				m_pBest.head = pnew;
+		}
+	}
+
+	//return pBest;
+}
+
+void CBotUtilities :: freeMemory ()
+{
+	util_node_t *temp;
+	m_Utilities.clear();
+
+	while ( (temp = m_pBest.head) != NULL )
+	{
+		temp = m_pBest.head;
+		m_pBest.head = m_pBest.head->next;
+		free(temp);		
+	}
+}
+
+CBotUtility *CBotUtilities :: nextBest ()
+{
+	CBotUtility *pBest;
+	util_node_t *temp;
+
+	if ( m_pBest.head == NULL )
+		return NULL;
+
+	pBest = m_pBest.head->util;
+
+	temp = m_pBest.head;
+
+	m_pBest.head = m_pBest.head->next;
+
+	free(temp);
+
+	return pBest;
+	
+}

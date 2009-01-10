@@ -651,6 +651,17 @@ float CBot :: getHealthPercent ()
 	return (((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth());
 }
 
+void CBot::	 stopMoving (int iPriority ) 
+{ 
+	if ( iPriority > m_iMovePriority )
+	{
+		m_bMoveToIsValid = false; 
+		m_iMovePriority = iPriority;
+		m_fWaypointStuckTime = 0;
+		m_fCheckStuckTime = engine->Time() + randomFloat(3.0f,5.0f);
+	}
+}
+
 void CBot :: spawnInit ()
 {
 	if ( m_pSchedules != NULL )
