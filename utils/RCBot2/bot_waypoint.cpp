@@ -528,15 +528,6 @@ bool CWaypointNavigator :: routeFound ()
 {
 	return !m_currentRoute.IsEmpty();
 }
-///////////////////////////////////////////////////////////////
-// get waypoint at index
-CWaypoint *CWaypoints :: getWaypoint ( int iIndex )
-{
-	if ( !validWaypointIndex(iIndex) )
-		return NULL;
-
-	return &m_theWaypoints[iIndex];
-}
 
 // draw paths from this waypoint (if waypoint drawing is on)
 void CWaypoint :: drawPaths ( edict_t *pEdict, unsigned short int iDrawType )
@@ -894,11 +885,6 @@ void CWaypoints :: freeMemory ()
 void CWaypoints :: precacheWaypointTexture ()
 {
 	m_iWaypointTexture = engine->PrecacheModel( "sprites/lgtning.vmt" );
-}
-
-bool CWaypoints :: validWaypointIndex ( int iIndex )
-{
-	return ((iIndex >= 0) && (iIndex < numWaypoints()));
 }
 
 ///////////////////////////////////////////////////////

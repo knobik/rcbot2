@@ -1,5 +1,6 @@
 #include "bot_wpt_dist.h"
 #include "bot_globals.h"
+#include "bot_waypoint.h"
 
 typedef struct
 {
@@ -77,4 +78,12 @@ void CWaypointDistances :: save ()
 
 		}
 	}
+}
+
+float CWaypointDistances :: getDistance ( int iFrom, int iTo )
+{
+	if ( m_Distances[iFrom][iTo] == -1 )
+		return (CWaypoints::getWaypoint(iFrom)->getOrigin()-CWaypoints::getWaypoint(iTo)->getOrigin()).Length();
+
+	return m_Distances[iFrom][iTo];
 }

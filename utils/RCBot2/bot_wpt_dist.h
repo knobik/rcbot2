@@ -15,10 +15,7 @@ public:
 		m_fSaveTime = 0;
 	}
 
-	static float getDistance ( int iFrom, int iTo )
-	{
-		return m_Distances[iFrom][iTo];
-	}
+	static float getDistance ( int iFrom, int iTo );
 
 	static void setDistance ( int iFrom, int iTo, float fDist )
 	{

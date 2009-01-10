@@ -281,7 +281,7 @@ public:
 
 	static void init ();
 
-	static int getWaypointIndex ( CWaypoint *pWpt )
+	static inline int getWaypointIndex ( CWaypoint *pWpt )
 	{
 		return ((int)pWpt - (int)m_theWaypoints)/sizeof(CWaypoint);
 	}
@@ -301,14 +301,24 @@ public:
 	static void deletePathsTo ( int iWpt );
 	static void deletePathsFrom ( int iWpt );
 
-	static CWaypoint *getWaypoint ( int iIndex );	
+	static inline CWaypoint *getWaypoint ( int iIndex )
+	{
+		if ( !validWaypointIndex(iIndex) )
+			return NULL;
+
+		return &m_theWaypoints[iIndex];
+	}
+
 
 	// save waypoints
 	static bool save ( bool bVisiblityMade );
 	// load waypoints
 	static bool load ();
 
-	static bool validWaypointIndex ( int iIndex );
+	static inline bool validWaypointIndex ( int iIndex )
+	{
+		return ((iIndex >= 0) && (iIndex < m_iNumWaypoints));
+	}
 
 	static void precacheWaypointTexture ();
 
