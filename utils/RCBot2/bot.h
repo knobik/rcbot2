@@ -489,6 +489,9 @@ public:
 
 	virtual void touchedWpt ( CWaypoint *pWaypoint );
 
+
+	float m_fWaypointStuckTime;
+
 protected:
 
 	static void checkEntity ( edict_t **pEdict );
@@ -518,7 +521,7 @@ protected:
 	// next think time
 	float m_fNextThink;
 
-	float m_fWaypointStuckTime;
+	
 	bool m_bThinkStuck;
 
 	int m_iMovePriority;

@@ -150,7 +150,7 @@ public:
 
 	virtual void currentlyDead ();
 
-	inline void pickedUpFlag () { m_bHasFlag = true; }
+	void pickedUpFlag ();
 
 	inline bool hasFlag () { return m_bHasFlag; }
 

@@ -649,6 +649,8 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 	if ( (m_iInt == 0) || (m_iInt == 1) )
 	{
+		pBot->m_fWaypointStuckTime = engine->Time() + randomFloat(7.0f,12.0f);
+
 		if ( pBot->getNavigator()->workRoute(pBot->getOrigin(),m_vVector,&bFail,(m_iInt==0),m_bNoInterruptions) )
 			m_iInt = 2;
 		else

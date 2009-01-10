@@ -165,7 +165,17 @@ void CBotTF2FindFlagSched :: init ()
 	setID(SCHED_TF2_GET_FLAG);
 }
 /////////////////////////////////////////////
+CBotPickupSched::CBotPickupSched( edict_t *pEdict )
+{
+	addTask(new CFindPathTask(pEdict));	
+	addTask(new CMoveToTask(pEdict));
+}
 
+void CBotPickupSched :: init ()
+{
+	setID(SCHED_PICKUP);
+}
+////////////////////////////////////////////////
 CBotGotoOriginSched :: CBotGotoOriginSched ( Vector vOrigin )
 {
 	addTask(new CFindPathTask(vOrigin)); // first

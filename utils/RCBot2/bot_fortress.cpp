@@ -42,6 +42,7 @@
 #include "bot_weapons.h"
 #include "bot_waypoint_locations.h"
 #include "in_buttons.h"
+#include "bot_utility.h"
 
 #include "bot_mtrand.h"
 
@@ -126,6 +127,13 @@ bool CBotFortress :: startGame()
 		return true;
 
 	return false;
+}
+
+void CBotFortress ::pickedUpFlag()
+{ 
+	m_bHasFlag = true; 
+	// clear tasks
+	m_pSchedules->freeMemory();
 }
 
 void CBotFortress :: checkHealingValid ()
@@ -976,30 +984,30 @@ void CBotTF2 :: modThink ()
 				m_pSchedules->removeSchedule(SCHED_USE_DISPENSER);
 				m_pSchedules->addFront(new CBotUseDispSched(m_pNearestDisp));
 
-				m_fPickupTime = engine->Time() + randomFloat(4.0f,6.0f);
+				m_fPickupTime = engine->Time() + randomFloat(6.0f,20.0f);
 				return;
 			}
 		}
 		else if ( bNeedHealth && m_pHealthkit )
 		{
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_GOTO_ORIGIN) )
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_PICKUP) )
 			{
-				m_pSchedules->removeSchedule(SCHED_GOTO_ORIGIN);
+				m_pSchedules->removeSchedule(SCHED_PICKUP);
 				m_pSchedules->addFront(new CBotGotoOriginSched(m_pHealthkit));
 
-				m_fPickupTime = engine->Time() + randomFloat(4.0f,6.0f);
+				m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 
 				return;
 			}
 		}
 		else if ( bNeedAmmo && m_pAmmo )
 		{
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_GOTO_ORIGIN) )
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_PICKUP) )
 			{
-				m_pSchedules->removeSchedule(SCHED_GOTO_ORIGIN);
-				m_pSchedules->addFront(new CBotGotoOriginSched(m_pAmmo));
+				m_pSchedules->removeSchedule(SCHED_PICKUP);
+				m_pSchedules->addFront(new CBotPickupSched(m_pAmmo));
 
-				m_fPickupTime = engine->Time() + randomFloat(4.0f,6.0f);
+				m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 
 				return;
 			}
@@ -1144,31 +1152,143 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( !m_pSchedules->isEmpty() )
 		return; // already got some tasks left
 
-	if ( hasFlag () )
-	{
-		// Goto capture point
 
-		// roam
-		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam()));
+		TF_Class iClass = getClass();
 
-		if ( pWaypoint )
+		CWaypoint *pWaypoint = NULL;
+
+		CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH));
+
+		CBotUtilities utils;
+
+		int iMetal = pWeapon->getAmmo(this);
+		bool bNeedAmmo = needAmmo();
+		bool bNeedHealth = needHealth();
+
+		CWaypoint *pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_RESUPPLY,getOrigin(),4096,getTeam()));
+
+		if ( iClass == TF_CLASS_ENGINEER )
+			checkBuildingsValid();
+
+		utils.addUtility(CBotUtility(BOT_UTIL_CAPTURE_FLAG,hasFlag (),0.95));
+		utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!hasFlag () && (iClass==TF_CLASS_ENGINEER) && !m_pSentryGun && (iMetal>=130),0.9));
+		utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!hasFlag () && (iClass==TF_CLASS_ENGINEER) && !m_pDispenser && (iMetal>=100),0.8));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!hasFlag () && (iClass==TF_CLASS_ENGINEER) && m_pSentryGun && (iMetal>=200) && (CTeamFortress2Mod::getSentryLevel(m_pSentryGun)<3),0.9));
+		utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,(iClass==TF_CLASS_ENGINEER) && m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
+		utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
+		utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY, !hasFlag () && pWaypointResupply && (bNeedAmmo || bNeedHealth),0.9));
+		utils.addUtility(CBotUtility(BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0));
+		utils.addUtility(CBotUtility(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0));
+		utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, !hasFlag () && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), 0.9));
+		utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !hasFlag () && (iClass==TF_CLASS_SNIPER), 0.95));
+		utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, !hasFlag () && CTeamFortress2Mod::isMapType(TF_MAP_CTF), 0.7));
+		utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
+
+		CBotUtility *util = utils.getBestUtility();
+
+		switch ( util->getId() )
 		{
-			m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
-		}
-		else
-		{
-			// roam
-			CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint(getTeam()));
+		case BOT_UTIL_CAPTURE_FLAG:
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam()));
 
 			if ( pWaypoint )
+			{
 				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+			}
+			break;
+		case BOT_UTIL_BUILDSENTRY:
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,pWaypoint->getOrigin()));
+				return;
+			}
+			break;
+		case BOT_UTIL_BUILDDISP:
+			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,pWaypoint->getOrigin()+Vector(randomFloat(-96,96),randomFloat(-96,96),0)));
+				return;
+			}
+			break;
+		case BOT_UTIL_UPGSENTRY:
+			m_pSchedules->add(new CBotTFEngiUpgrade(m_pSentryGun));
+			return;
+		case BOT_UTIL_GETAMMODISP:
+			m_pSchedules->add(new CBotGetMetalSched(CBotGlobals::entityOrigin(m_pDispenser)));
+			break;
+		case BOT_UTIL_GOTORESUPPLY:
+			m_pSchedules->add(new CBotTF2GetHealthSched(pWaypointResupply->getOrigin()));
+			break;
+		case BOT_UTIL_GOTODISP:
+			m_pSchedules->removeSchedule(SCHED_USE_DISPENSER);
+			m_pSchedules->addFront(new CBotUseDispSched(m_pNearestDisp));
+
+			m_fPickupTime = engine->Time() + randomFloat(6.0f,20.0f);
+			return;
+		case BOT_UTIL_GETHEALTHKIT:
+			m_pSchedules->removeSchedule(SCHED_PICKUP);
+			m_pSchedules->addFront(new CBotGotoOriginSched(m_pHealthkit));
+
+			m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
+
+			return;
+		case BOT_UTIL_GETAMMOKIT:
+			m_pSchedules->removeSchedule(SCHED_PICKUP);
+			m_pSchedules->addFront(new CBotPickupSched(m_pAmmo));
+
+			m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
+
+			return;
+		case BOT_UTIL_SNIPE:
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotTF2SnipeSched(pWaypoint->getOrigin()));
+				return;
+			}
+			break;
+		case BOT_UTIL_GETFLAG_LASTKNOWN:
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(-1,m_vLastKnownFlagPoint,512.0,getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotTF2FindFlagSched(m_vLastKnownFlagPoint));
+				return;
+			}
+			break;
+		case BOT_UTIL_GETFLAG:
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_FLAG,getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotTF2GetFlagSched(pWaypoint->getOrigin()));
+				return;
+			}
+			break;
+		case BOT_UTIL_ROAM:
+			// roam
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint(getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				return;
+			}
+			break;
+		default:
+			break;
 		}
-	}
-	else
-	{
-		CWaypoint *pWaypoint = NULL;
+
+		utils.freeMemory();
+
 		// Find enemy flag or defend flag or roam
 
+		/*
 		// Pickup health
 		if ( ((float)m_pPlayerInfo->GetHealth()/m_pPlayerInfo->GetMaxHealth()) < 0.6f )
 		{
@@ -1189,6 +1309,22 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 			if ( pWeapon )
 			{
+
+
+				//utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!m_pTeleEntrance && (pWeapon->getAmmo(this)>=120),0.9);
+				//utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!m_pTeleExit && (pWeapon->getAmmo(this)>=120),0.9);
+
+				//utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser && (iMetal>=200),0.9);
+				//utils.addUtility(CBotUtility(BOT_UTIL_UPGTELENT,m_pTeleEntrance && (iMetal>=200),0.9);
+				//utils.addUtility(CBotUtility(BOT_UTIL_UPGTELEXT,m_pTeleExit && (iMetal>=200),0.9);
+
+				//utils.addUtility(CBotUtility(BOT_UTIL_UPGTMSENTRY,!m_pSentryGun && (iMetal>=130),0.9);
+				//utils.addUtility(CBotUtility(BOT_UTIL_UPGTMDISP,m_pDispenser && (iMetal>=100),0.9);
+				//utils.addUtility(CBotUtility(BOT_UTIL_UPGTMTELENT,m_pTeleEntrance && (iMetal>=120),0.9);
+				//utils.addUtility(CBotUtility(BOT_UTIL_UPGTMTELEXT,m_pTeleExit && (iMetal>=120),0.9);
+
+
+				/*
 				if ( pWeapon->getAmmo(this) < 200 )
 				{
 					CWaypoint *pDisp = NULL;
@@ -1311,8 +1447,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		}
 
 		if ( pWaypoint )
-			m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
-	}
+			m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));*/
+	
+	
 
 }
 

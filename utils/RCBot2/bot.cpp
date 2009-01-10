@@ -1135,6 +1135,7 @@ void CBot :: setLookAt ( Vector vNew )
 	m_bLookAtIsValid = true;
 }
 
+
 void CBot :: checkCanPickup ( edict_t *pPickup )
 {
 

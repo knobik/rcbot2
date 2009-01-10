@@ -327,6 +327,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_som.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_strings.cpp"
 				>
 			</File>
@@ -336,6 +340,10 @@
 			</File>
 			<File
 				RelativePath=".\bot_usercmd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_utility.cpp"
 				>
 			</File>
 			<File
@@ -602,11 +610,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_som.h"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_strings.h"
 				>
 			</File>
 			<File
 				RelativePath=".\bot_task.h"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_utility.h"
 				>
 			</File>
 			<File

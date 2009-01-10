@@ -60,7 +60,8 @@ typedef enum
 	SCHED_UPGRADE,
 	SCHED_USE_TELE,
 	SCHED_SPY_SAP_BUILDING,
-	SCHED_USE_DISPENSER
+	SCHED_USE_DISPENSER,
+	SCHED_PICKUP
 }eBotSchedule;
 
 class CBotSchedule
@@ -354,6 +355,13 @@ public:
 	void init ();
 };
 
+class CBotPickupSched : public CBotSchedule
+{
+public:
+	CBotPickupSched ( edict_t *pEdict );
+
+	void init ();
+};
 
 class CBotGotoOriginSched : public CBotSchedule
 {
