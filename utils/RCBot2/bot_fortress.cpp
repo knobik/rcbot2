@@ -975,42 +975,39 @@ void CBotTF2 :: modThink ()
 		}
 	}
 
-	if ( (m_fPickupTime < engine->Time()) && (bNeedHealth || bNeedAmmo) && (!m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) )
+	if ( m_pSchedules->isCurrentSchedule(SCHED_GOTO_ORIGIN) && (m_fPickupTime < engine->Time()) && (bNeedHealth || bNeedAmmo) && (!m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) )
 	{
-		if ( m_pNearestDisp )
+		if ( m_pNearestDisp && !m_pSchedules->isCurrentSchedule(SCHED_USE_DISPENSER) )
 		{
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_USE_DISPENSER) )
-			{
+
 				m_pSchedules->removeSchedule(SCHED_USE_DISPENSER);
 				m_pSchedules->addFront(new CBotUseDispSched(m_pNearestDisp));
 
 				m_fPickupTime = engine->Time() + randomFloat(6.0f,20.0f);
 				return;
-			}
+			
 		}
-		else if ( bNeedHealth && m_pHealthkit )
+		else if ( bNeedHealth && m_pHealthkit && !m_pSchedules->isCurrentSchedule(SCHED_PICKUP) )
 		{
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_PICKUP) )
-			{
+
 				m_pSchedules->removeSchedule(SCHED_PICKUP);
 				m_pSchedules->addFront(new CBotGotoOriginSched(m_pHealthkit));
 
 				m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 
 				return;
-			}
+			
 		}
-		else if ( bNeedAmmo && m_pAmmo )
+		else if ( bNeedAmmo && m_pAmmo && !m_pSchedules->isCurrentSchedule(SCHED_PICKUP) )
 		{
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_PICKUP) )
-			{
+
 				m_pSchedules->removeSchedule(SCHED_PICKUP);
 				m_pSchedules->addFront(new CBotPickupSched(m_pAmmo));
 
 				m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 
 				return;
-			}
+			
 		}
 	}
 
@@ -1231,7 +1228,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			return;
 		case BOT_UTIL_GETHEALTHKIT:
 			m_pSchedules->removeSchedule(SCHED_PICKUP);
-			m_pSchedules->addFront(new CBotGotoOriginSched(m_pHealthkit));
+			m_pSchedules->addFront(new CBotPickupSched(m_pHealthkit));
 
 			m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 

@@ -1042,6 +1042,14 @@ void CBot :: doMove ()
 			m_fForwardSpeed = 0.0;
 		if ( fabs(m_fSideSpeed) < 1.0 )
 			m_fSideSpeed = 0.0;
+
+		if ( isUnderWater() )
+		{
+			if ( m_vMoveTo.z > (getOrigin().z + 32.0) )
+				m_fUpSpeed = m_fIdealMoveSpeed;
+			else if ( m_vMoveTo.z < (getOrigin().z - 32.0) )
+				m_fUpSpeed = -m_fIdealMoveSpeed;
+		}
 	}
 	else
 	{	
