@@ -1,3 +1,20 @@
+TF2 updates
+
+- Bots use waypoints for sniper/sentry facing positions
+- bug fixes with enemy conditions
+- bug fixes with moving to a waypoint
+- rocket jump improvements
+- bot task improvements
+- sniper improvements
+- engineer building improvements
+- melee weapon fixes
+- scouts and bots with flag don't follow enemies
+- fixed custom MOD directories for ini file
+- using mersenne twiser randomiser / seeds when loaded
+- fixes only soldiers joining tf2 bug
+- engineers build up to level 3 sentry and also level 1 dispenser near sentry
+- bots use teleporters
+
 3.
 
 fixed: crash when players leave server

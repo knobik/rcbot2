@@ -206,6 +206,15 @@ public:
 ///////////////////////
 // waypoint
 
+class CWaypointSetAngleCommand : public CBotCommand
+{
+public:
+	CWaypointSetAngleCommand();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+
 class CWaypointAngleCommand : public CBotCommand
 {
 public:
@@ -288,6 +297,22 @@ public:
 
 ///////////////
 // pathwaypoint
+
+class CPathWaypointDeleteToCommand : public CBotCommand
+{
+public:
+	CPathWaypointDeleteToCommand();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+class CPathWaypointDeleteFromCommand : public CBotCommand
+{
+public:
+	CPathWaypointDeleteFromCommand();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
 
 class CPathWaypointOnCommand : public CBotCommand
 {

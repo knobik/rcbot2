@@ -112,6 +112,8 @@ public:
 
 	virtual void modThink ();
 
+	virtual bool wantToFollowEnemy ();
+
 	virtual void checkBuildingsValid () {};
 
 	virtual void checkHealingValid ();

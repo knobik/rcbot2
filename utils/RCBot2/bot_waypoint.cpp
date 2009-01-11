@@ -540,7 +540,7 @@ void CWaypointNavigator :: updatePosition ()
 	}
 
 	m_pBot->setMoveTo(vWptOrigin);
-	m_pBot->setAiming(vWptOrigin+(vaim*48));
+	m_pBot->setAiming(vWptOrigin+(vaim*1024));
 }
 
 // free up memory
@@ -965,7 +965,7 @@ void CWaypoints :: deleteWaypoint ( int iIndex )
 	deletePathsTo(iIndex);
 }
 
-int CWaypoints :: getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam, float *fReturnDist )
+int CWaypoints :: getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam, float *fReturnDist, unsigned char *failedwpts )
 {
 	int i = 0;
 	int size = numWaypoints();
@@ -982,6 +982,9 @@ int CWaypoints :: getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam, fl
 		pWpt = &m_theWaypoints[i];
 
 		if ( i == iFrom )
+			continue;
+
+		if ( failedwpts[i] == 1 )
 			continue;
 
 		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) )

@@ -1071,6 +1071,16 @@ bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
 	return false;
 }
 
+bool CBotFortress :: wantToFollowEnemy ()
+{
+	if ( hasFlag() )
+		return false;
+	if ( getClass() == TF_CLASS_SCOUT )
+		return false;
+	
+	return CBot::wantToFollowEnemy();
+}
+
 void CBotTF2 :: foundSpy (edict_t *pEdict)
 {
 	CBotFortress::foundSpy(pEdict);
@@ -1182,19 +1192,19 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		m_pNavigator->getFailedGoals(&failed);
 
-		CWaypointLocations :: resetFailedWaypoints ( failed );
+		unsigned char *failedlist = CWaypointLocations :: resetFailedWaypoints ( failed );
 
 		fResupplyDist = 1;
 		fHealthDist = 1;
 		fAmmoDist = 1;
 
-		pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,getOrigin(),getTeam(),&fResupplyDist));
+		pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,getOrigin(),getTeam(),&fResupplyDist,failedlist));
 
 		
 		if ( bNeedAmmo )
-			pWaypointAmmo = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_AMMO,getOrigin(),getTeam(),&fAmmoDist));
+			pWaypointAmmo = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_AMMO,getOrigin(),getTeam(),&fAmmoDist,failedlist));
 		if ( bNeedHealth )
-			pWaypointHealth = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_HEALTH,getOrigin(),getTeam(),&fHealthDist));
+			pWaypointHealth = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_HEALTH,getOrigin(),getTeam(),&fHealthDist,failedlist));
 	}
 
 	if ( iClass == TF_CLASS_ENGINEER )
@@ -1372,7 +1382,11 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		bool bSecAttack = false;
 
 		if ( pWeapon->isMelee() )
-			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),5);
+		{
+			setMoveTo(CBotGlobals::entityOrigin(pEnemy),5);
+			//dontAvoid
+			m_fAvoidTime = engine->Time() + 1.0f;
+		}
 
 		if ( CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{

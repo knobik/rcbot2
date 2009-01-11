@@ -677,6 +677,7 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_fAvoidTime = 0;
 	m_vLookAroundOffset = Vector(0,0,0);
 	m_fWaypointStuckTime = 0.0f;
 	m_pPickup = NULL;
@@ -1008,7 +1009,7 @@ void CBot :: doMove ()
 		float fAngle;
 		float radians;
 
-		if ( m_pAvoidEntity )
+		if ( m_pAvoidEntity && (m_fAvoidTime < engine->Time()) )
 		{
 			if ( canAvoid(m_pAvoidEntity) )
 			{
@@ -1226,7 +1227,7 @@ void CBot :: getLookAtVector ()
 			{
 				m_fLookAroundTime = engine->Time() + randomFloat(4.0f,8.0f);
 
-				m_vLookAroundOffset = Vector(randomFloat(-16.0f,16.0f),randomFloat(-16.0f,16.0f),randomFloat(-16.0f,0.0f));
+				m_vLookAroundOffset = Vector(randomFloat(-256.0f,256.0f),randomFloat(-256.0f,256.0f),randomFloat(-128.0f,64.0f));
 			}
 
 			setLookAt(m_vWaypointAim+m_vLookAroundOffset);

@@ -447,7 +447,7 @@ public:
 
 	void reachedCoverSpot ();
 
-	bool wantToFollowEnemy ();
+	virtual bool wantToFollowEnemy ();
 
 	inline void selectWeapon ( int iWeaponId ) { m_iSelectWeapon = iWeaponId; }
 
@@ -487,6 +487,8 @@ public:
 	inline void setLookVector ( Vector vLook ) { m_vLookVector = vLook; }
 
 	inline Vector getLookVector () { return m_vLookVector; }
+
+	//inline void dontAvoid () { m_fAvoidTime = engine->Time() + 1.0f; }
 
 	float m_fWaypointStuckTime;
 
@@ -537,7 +539,7 @@ protected:
 	//CPerceptron *m_pThinkStuck;
 	Vector m_vStuckPos;
 	//int m_iTimesStuck;
-
+	float m_fAvoidTime;
 	///////////////////////////////////
 	// current impulse command
 	int m_iImpulse;

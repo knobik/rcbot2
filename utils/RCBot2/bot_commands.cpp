@@ -73,7 +73,28 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointGiveTypeCommand());
 	add(new CWaypointDrawTypeCommand());
 	add(new CWaypointAngleCommand());
+	add(new CWaypointSetAngleCommand());
 }
+
+CWaypointSetAngleCommand :: CWaypointSetAngleCommand()
+{
+	setName("updateyaw");
+}
+
+eBotCommandResult CWaypointSetAngleCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	pClient->updateCurrentWaypoint();
+
+	if ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) )
+	{
+		CWaypoint *pWpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+		pWpt->setAim(CBotGlobals::playerAngles(pClient->getPlayer()).y);
+	}
+
+	return COMMAND_ACCESSED;
+}
+
 
 CUsersCommand :: CUsersCommand ()
 {
@@ -284,7 +305,44 @@ CPathWaypointCommand :: CPathWaypointCommand ()
 	add(new CPathWaypointCreate2Command());
 	add(new CPathWaypointRemove1Command());
 	add(new CPathWaypointRemove2Command());
+	add(new CPathWaypointDeleteToCommand());
+	add(new CPathWaypointDeleteFromCommand());
 
+}
+
+CPathWaypointDeleteToCommand :: CPathWaypointDeleteToCommand()
+{
+	setName("deleteto");
+}
+
+eBotCommandResult CPathWaypointDeleteToCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	pClient->updateCurrentWaypoint();
+
+	if ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) )
+	{
+		CWaypoints::deletePathsTo(pClient->currentWaypoint());
+	}
+
+	return COMMAND_ACCESSED;;
+}
+
+
+CPathWaypointDeleteFromCommand :: CPathWaypointDeleteFromCommand()
+{
+	setName("deletefrom");
+}
+
+eBotCommandResult CPathWaypointDeleteFromCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	pClient->updateCurrentWaypoint();
+
+	if ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) )
+	{
+		CWaypoints::deletePathsFrom(pClient->currentWaypoint());
+	}
+
+	return COMMAND_ACCESSED;
 }
 
 CPathWaypointOnCommand :: CPathWaypointOnCommand()
