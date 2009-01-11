@@ -38,6 +38,8 @@
 #include "bot_client.h"
 #include "bot_wpt_color.h"
 
+//#include "bot_navigator.h"
+
 class CWaypointVisibilityTable;
 class CClient;
 
@@ -134,7 +136,7 @@ private:
 	static vector<CWaypointType*> m_Types;
 };
 
-class CWaypoint
+class CWaypoint //: public INavigatorNode
 {
 public:
 	//static const int MAX_PATHS = 8;
@@ -171,6 +173,11 @@ public:
 	inline float getAimYaw ()
 	{
 		return (float)m_iAimYaw;
+	}
+
+	inline Vector getOrigin ()
+	{
+		return m_vOrigin;
 	}
 
 	void init ();
@@ -239,11 +246,6 @@ public:
 	}
 
 	float distanceFrom ( Vector vOrigin );
-
-	Vector getOrigin ()
-	{
-		return m_vOrigin;
-	}
 
 	int numPaths ();
 
@@ -327,6 +329,8 @@ public:
 	static void deleteWaypoint ( int iIndex );
 
 	static void freeMemory ();
+
+	static int getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam,float *fReturnDist =NULL );
 
 	static int nearestWaypointGoal ( int iFlags, Vector &origin, float fDist, int iTeam = 0 );
 	static int randomWaypointGoal ( int iFlags, int iTeam = 0 );

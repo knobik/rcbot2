@@ -34,7 +34,7 @@
 #include "bot.h"
 #include "bot_task.h"
 #include "bot_genclass.h"
-#include "bot_fortress.h"
+//#include "bot_fortress.h"
 
 class CBotTask;
 class CAttackEntityTask;

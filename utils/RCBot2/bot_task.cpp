@@ -373,6 +373,8 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	CBotFortress *tfBot;
 
+	bool bAimingOk = true;
+
 	if ( !pBot->isTF() )
 		fail();
 
@@ -389,6 +391,31 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
+	
+
+	if ( m_iObject == ENGI_SENTRY )
+	{
+		pBot->setLookAtTask(LOOK_BUILD,3);
+		bAimingOk = CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getAiming()) < 15;
+	}
+	else if ( m_iObject == ENGI_DISP )
+	{
+		edict_t *pSentry = tfBot->getSentry();
+
+		if ( pSentry && CBotGlobals::entityIsValid(pSentry) )
+		{
+			pBot->setLookVector(pBot->getOrigin() + (pBot->getOrigin()-CBotGlobals::entityOrigin(pSentry)));
+			pBot->setLookAtTask(LOOK_VECTOR,4);
+			bAimingOk = CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getLookVector()) < 15;
+		}
+		else
+		{
+			pBot->setLookVector(pBot->getOrigin() + (pBot->getOrigin()-pBot->getAiming()));
+			pBot->setLookAtTask(LOOK_VECTOR,4);
+			bAimingOk = CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getLookVector()) < 15;
+		}
+	}
+
 	if ( pBot->distanceFrom(m_vOrigin) > 100 )
 	{
 		if ( !CBotGlobals::isVisible(pBot->getEdict(),pBot->getEyePosition(),m_vOrigin) )
@@ -396,7 +423,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		else
 			pBot->setMoveTo(m_vOrigin,2);
 	}
-	else
+	else if ( bAimingOk )
 	{
 		if ( m_iState == 0 )
 		{
@@ -707,7 +734,7 @@ CMoveToTask :: CMoveToTask ( edict_t *pEdict )
 		m_pEdict = pEdict;
 		m_vVector = CBotGlobals::entityOrigin(m_pEdict);
 
-		setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
+		//setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
 	
 }
 
@@ -719,7 +746,7 @@ void CMoveToTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	fDistance = pBot->distanceFrom(m_vVector);
 
 	// sort out looping move to origins by using previous distance check
-	if ( (fDistance < 64) || (fPrevDist&&(fPrevDist > fDistance)) )
+	if ( (fDistance < 64) || (fPrevDist&&(fPrevDist < fDistance)) )
 	{
 		complete();
 		return;
@@ -781,16 +808,20 @@ void CBotTFRocketJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( !m_fTime )
 		{
-			m_fTime = engine->Time()+randomFloat(0.3f,0.6f);
+			m_fTime = engine->Time()+randomFloat(2.5f,4.5f);
 		}
 
 		pBot->setLookAtTask(LOOK_GROUND,4);
 
-		if ( m_fTime < engine->Time() )
+		if ( (pBot->getSpeed() > 100) && (CBotGlobals::playerAngles(pBot->getEdict()).x > 80.0f )  )
 		{
 			pBot->jump();
 			pBot->primaryAttack();
 			complete();
+		}
+		else if ( m_fTime < engine->Time() )
+		{
+			fail();
 		}
 	}
 }

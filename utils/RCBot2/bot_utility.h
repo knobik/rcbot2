@@ -63,6 +63,8 @@ using namespace std;
 #define BOT_UTIL_ROAM 21
 #define BOT_UTIL_CAPTURE_FLAG 22
 #define BOT_UTIL_GOTORESUPPLY_FOR_AMMO 23
+#define BOT_UTIL_FIND_NEAREST_HEALTH 24
+#define BOT_UTIL_FIND_NEAREST_AMMO 25
 
 class CBotUtility
 {

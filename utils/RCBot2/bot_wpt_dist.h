@@ -3,7 +3,7 @@
 
 #include "bot_waypoint.h"
 
-#define WPT_DIST_VER 0x01
+#define WPT_DIST_VER 0x03
 
 #define BOT_WAYPOINT_DST_EXTENSION "rcd"
 
@@ -17,7 +17,7 @@ public:
 
 	static float getDistance ( int iFrom, int iTo );
 
-	static void setDistance ( int iFrom, int iTo, float fDist )
+	static inline void setDistance ( int iFrom, int iTo, float fDist )
 	{
 		m_Distances[iFrom][iTo] = (int)fDist;
 	}

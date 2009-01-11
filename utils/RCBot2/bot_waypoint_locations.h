@@ -89,6 +89,8 @@ public:
 		Init();
 	}
 
+	static unsigned char *resetFailedWaypoints (dataUnconstArray<int> *iIgnoreWpts);
+
 	static void Init()
 	{
 		int i,j,k;

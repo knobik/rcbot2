@@ -44,6 +44,26 @@ dataUnconstArray<int> CWaypointLocations :: m_iLocations[MAX_WPT_BUCKETS][MAX_WP
 
 #define READ_LOC(loc) abs((int)((int)(loc + HALF_MAX_MAP_SIZE) / BUCKET_SPACING));
 
+unsigned char *CWaypointLocations :: resetFailedWaypoints (dataUnconstArray<int> *iIgnoreWpts)
+{
+	Q_memset(g_iFailedWaypoints,0,sizeof(unsigned char)*CWaypoints::MAX_WAYPOINTS);
+	
+	if ( iIgnoreWpts )
+	{   
+		//dataStack<int> ignoreWptStack = *iIgnoreWpts;
+		int iWpt;
+		
+		//while ( !ignoreWptStack.IsEmpty() )
+		for ( int l = 0; l < iIgnoreWpts->Size(); l ++ )
+		{
+			if ( (iWpt = (*iIgnoreWpts)[l]) != -1 )//(iWpt = ignoreWptStack.ChooseFromStack()) != -1 )
+				g_iFailedWaypoints[iWpt] = 1;
+		}
+	}
+
+	return g_iFailedWaypoints;
+}
+
 void CWaypointLocations :: getMinMaxs ( int iLoc, int jLoc, int kLoc, 
 									    int *iMinLoci, int *iMinLocj, int *iMinLock,
 									    int *iMaxLoci, int *iMaxLocj, int *iMaxLock )
@@ -219,7 +239,6 @@ void CWaypointLocations :: DeleteWptLocation ( int iIndex, const float *fOrigin 
 	m_iLocations[i][j][k].Remove(iIndex);
 	//m_iLocations[i][j][k].Remove(iIndex);
 }
-
 
 ///////////////
 // return nearest waypoint that can be used to cover from vCoverFrom vector

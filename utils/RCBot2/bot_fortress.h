@@ -80,6 +80,12 @@ private:
 	int m_iTeam;
 };
 
+class CBroadcastRoundStart : public IBotFunction
+{
+public:
+	void execute ( CBot *pBot );
+};
+
 class CBotFortress : public CBot
 {
 public:	
@@ -95,8 +101,6 @@ public:
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
 	virtual void init (bool bVarInit=false);
-
-	
 
 	virtual void foundSpy (edict_t *pEdict);
 
@@ -117,6 +121,8 @@ public:
 	virtual void engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd ) {};
 
 	virtual void spyDisguise ( int iTeam, int iClass ) {};
+
+	inline edict_t *getSentry () { return m_pSentryGun; }
 
 	virtual bool hasEngineerBuilt ( eEngiBuild iBuilding ) {return false;}
 
@@ -249,7 +255,7 @@ public:
 
 	bool isCloaked ();
 
-	bool runUtil ( int id, CWaypoint *pWaypointResupply );
+	bool runUtil ( int id, CWaypoint *pWaypointResupply, CWaypoint *pWaypointHealth, CWaypoint *pWaypointAmmo );
 
 	void setClass ( TF_Class _class );
 

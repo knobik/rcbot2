@@ -31,6 +31,8 @@
 #ifndef __RCBOT_NAVIGATOR_H__
 #define __RCBOT_NAVIGATOR_H__
 
+#include "bot_genclass.h"
+
 #include <vector>
 #include <queue>
 using namespace std;
@@ -43,6 +45,14 @@ using namespace std;
 
 class CNavMesh;
 class CWaypointVisibilityTable;
+
+class INavigatorNode
+{
+public:
+	inline Vector getOrigin () { return m_vOrigin; }
+protected:
+	Vector m_vOrigin;
+};
 
 class IBotNavigator
 {
@@ -64,6 +74,10 @@ public:
 
 	virtual void updatePosition () = 0;
 
+	virtual float distanceTo ( Vector vOrigin ) = 0;
+
+	virtual float distanceTo ( CWaypoint *pWaypoint ) = 0;
+
 	//virtual void goBack () = 0;
 
 	virtual void freeMapMemory () = 0;		
@@ -71,6 +85,8 @@ public:
 	virtual void freeAllMemory () = 0;
 
 	virtual bool routeFound () = 0;
+
+	virtual void getFailedGoals (dataUnconstArray <int> **goals) = 0;
 
 	inline Vector getGoalOrigin () { return m_vGoal; }
 
@@ -176,6 +192,10 @@ public:
 
 	AStarNode *nextNode ();
 
+	float distanceTo ( Vector vOrigin );
+
+	float distanceTo ( CWaypoint *pWaypoint );
+
 	Vector getCoverOrigin ( Vector vCover );
 
 	void clearOpenList ();
@@ -188,6 +208,8 @@ public:
 	bool getCoverPosition ( Vector vCoverOrigin, Vector *vCover );
 	// nearest cover postion to both vectors
 	bool getHideSpotPosition ( Vector vCoverOrigin, Vector *vCover );
+
+	virtual void getFailedGoals ( dataUnconstArray <int> **goals) { *goals = &m_iFailedGoals; }
 private:
 	CBot *m_pBot;
 

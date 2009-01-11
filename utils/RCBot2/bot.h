@@ -81,6 +81,7 @@ class CClassInterface
 public:
 	static int getTeam ( edict_t *edict );
 	static int getHealth ( edict_t *edict );
+	static int getEffects ( edict_t *edict );
 	static int *getAmmoList ( edict_t *edict );
 	static unsigned int findOffset(const char *szType,const char *szClass);
 	static int getTF2NumHealers ( edict_t *edict );
@@ -259,8 +260,6 @@ public:
 	virtual void modThink () { return; }
 
 	virtual bool isEnemy ( edict_t *pEdict, bool bCheckWeapons = true ) { return false; }
-
-	virtual void getLookAtVector ();
 
 	inline bool hasSomeConditions ( int iConditions )
 	{
@@ -481,8 +480,17 @@ public:
 
 	virtual void touchedWpt ( CWaypoint *pWaypoint );
 
+	inline void setAiming ( Vector aiming ) { m_vWaypointAim = aiming; }
+
+	inline Vector getAiming () { return m_vWaypointAim; }
+
+	inline void setLookVector ( Vector vLook ) { m_vLookVector = vLook; }
+
+	inline Vector getLookVector () { return m_vLookVector; }
 
 	float m_fWaypointStuckTime;
+
+	inline float getSpeed () { return m_vVelocity.Length2D(); }
 
 protected:
 
@@ -491,6 +499,8 @@ protected:
 	void doMove ();
 
 	void doLook ();
+
+	virtual void getLookAtVector ();
 
 	void doButtons ();
 	/////////////////////////
@@ -587,8 +597,10 @@ protected:
 	edict_t *m_pLastEnemy; // enemy we were fighting before we lost it
 	//edict_t *m_pAvoidEntity; // avoid this guy
 	Vector m_vHurtOrigin;
-
+	Vector m_vLookVector;
+	Vector m_vLookAroundOffset;
 	edict_t *m_pPickup;
+	Vector m_vWaypointAim;
 
 	Vector m_vMoveTo;
 	Vector m_vLookAt;

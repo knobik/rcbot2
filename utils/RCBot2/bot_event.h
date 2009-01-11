@@ -185,6 +185,17 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2RoundStart : public CBotEvent
+{
+public:
+	CTF2RoundStart()
+	{
+		setType("teamplay_round_start");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CBulletImpactEvent : public CBotEvent
 {
 public:

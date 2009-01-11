@@ -83,7 +83,7 @@ int MTRand_int32::p = 0;
 bool MTRand_int32::init = false;
 
 static unsigned long init[4] = {0x123, 0x234, 0x345, 0x456}, length = 4;
-static MTRand_int32 irand(init,length);
+MTRand_int32 irand(init,length);
 static MTRand drand;
 
 int randomInt ( int imin, int imax )

@@ -61,6 +61,10 @@ void CBroadcastFlagCaptured :: execute ( CBot *pBot )
 		((CBotTF2*)pBot)->flagReset();
 }
 
+void CBroadcastRoundStart :: execute ( CBot *pBot )
+{
+	((CBotTF2*)pBot)->flagReset();
+}
 CBotFortress :: CBotFortress()
 { 
 	CBot(); 
@@ -221,12 +225,12 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 			if ( !m_pTeleEntrance || ((pEntity != m_pTeleEntrance) && (distanceFrom(pEntity) < distanceFrom(m_pTeleEntrance))) )
 				m_pTeleEntrance = pEntity;
 		}
-		else if ( CTeamFortress2Mod::isAmmo(pEntity) )
+		else if ( !(CClassInterface::getEffects(pEntity)&EF_NODRAW) && CTeamFortress2Mod::isAmmo(pEntity) )
 		{
 			if ( !m_pAmmo || ((pEntity != m_pAmmo) && (distanceFrom(pEntity) < distanceFrom(m_pAmmo))) )
 				m_pAmmo = pEntity;
 		}
-		else if ( CTeamFortress2Mod::isHealthKit(pEntity) )
+		else if ( !(CClassInterface::getEffects(pEntity)&EF_NODRAW) &&CTeamFortress2Mod::isHealthKit(pEntity) )
 		{
 			if ( !m_pHealthkit || ((pEntity != m_pHealthkit) && (distanceFrom(pEntity) < distanceFrom(m_pHealthkit))) )
 				m_pHealthkit = pEntity;
@@ -1107,6 +1111,21 @@ int CBotFortress :: getSpyDisguiseClass ( int iTeam )
 
 void CBotTF2 :: getTasks ( unsigned int iIgnore )
 {
+	static TF_Class iClass;
+	static int iMetal = 0;
+	static bool bNeedAmmo = false;
+	static bool bNeedHealth = false;
+
+	static CBotUtilities utils;
+	static CBotWeapon *pWeapon;
+	static CWaypoint *pWaypointResupply;
+	static CWaypoint *pWaypointAmmo;
+	static CWaypoint *pWaypointHealth;
+	static CBotUtility *util;
+	static float fResupplyDist = 1;
+	static float fHealthDist = 1;
+	static float fAmmoDist = 1;
+
 	// look for tasks
 	if ( !hasFlag() && m_pHeal && (m_iClass == TF_CLASS_MEDIC) )
 	{		
@@ -1149,18 +1168,34 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( !m_pSchedules->isEmpty() )
 		return; // already got some tasks left
 
+	iClass = getClass();
 
-	TF_Class iClass = getClass();
+	bNeedAmmo = needAmmo();
+	bNeedHealth = needHealth();
 
-	CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH));
+	pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH));
+	iMetal = pWeapon->getAmmo(this);
 
-	CBotUtilities utils;
+	if ( bNeedAmmo || bNeedHealth )
+	{
+		dataUnconstArray<int> *failed;
 
-	int iMetal = pWeapon->getAmmo(this);
-	bool bNeedAmmo = needAmmo();
-	bool bNeedHealth = needHealth();
+		m_pNavigator->getFailedGoals(&failed);
 
-	CWaypoint *pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_RESUPPLY,getOrigin(),2048,getTeam()));
+		CWaypointLocations :: resetFailedWaypoints ( failed );
+
+		fResupplyDist = 1;
+		fHealthDist = 1;
+		fAmmoDist = 1;
+
+		pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,getOrigin(),getTeam(),&fResupplyDist));
+
+		
+		if ( bNeedAmmo )
+			pWaypointAmmo = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_AMMO,getOrigin(),getTeam(),&fAmmoDist));
+		if ( bNeedHealth )
+			pWaypointHealth = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_HEALTH,getOrigin(),getTeam(),&fHealthDist));
+	}
 
 	if ( iClass == TF_CLASS_ENGINEER )
 		checkBuildingsValid();
@@ -1171,22 +1206,22 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!hasFlag () && (iClass==TF_CLASS_ENGINEER) && m_pSentryGun && (iMetal>=200) && (CTeamFortress2Mod::getSentryLevel(m_pSentryGun)<3),0.9));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,(iClass==TF_CLASS_ENGINEER) && m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
-	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !hasFlag () && pWaypointResupply && bNeedHealth,0.9));
-	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !hasFlag () && pWaypointResupply && bNeedAmmo,0.9));
+	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !hasFlag () && pWaypointResupply && bNeedHealth && !m_pHealthkit,fHealthDist/fResupplyDist));
+	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !hasFlag () && pWaypointResupply && bNeedAmmo && !m_pAmmo,fAmmoDist/fResupplyDist));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, !hasFlag () && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), 0.9));
 	utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !hasFlag () && (iClass==TF_CLASS_SNIPER), 0.95));
-	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, !hasFlag () && CTeamFortress2Mod::isMapType(TF_MAP_CTF), 0.7));
+	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, !hasFlag () && CTeamFortress2Mod::isMapType(TF_MAP_CTF), 0.6));
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
-
-	CBotUtility *util;
+	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
+	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,fResupplyDist/fAmmoDist));
 	
 	utils.execute();
 
 	while ( (util = utils.nextBest()) != NULL )
 	{
-		if ( runUtil(util->getId(),pWaypointResupply) )
+		if ( runUtil(util->getId(),pWaypointResupply,pWaypointHealth,pWaypointAmmo) )
 		{
 			utils.freeMemory();
 			return;
@@ -1196,7 +1231,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.freeMemory();
 }
 
-bool CBotTF2 :: runUtil ( int id,CWaypoint *pWaypointResupply )
+bool CBotTF2 :: runUtil ( int id, CWaypoint *pWaypointResupply, CWaypoint *pWaypointHealth, CWaypoint *pWaypointAmmo )
 {
 	CWaypoint *pWaypoint;
 
@@ -1240,6 +1275,12 @@ bool CBotTF2 :: runUtil ( int id,CWaypoint *pWaypointResupply )
 			return true;
 		case BOT_UTIL_GOTORESUPPLY_FOR_AMMO:
 			m_pSchedules->add(new CBotTF2GetAmmoSched(pWaypointResupply->getOrigin()));
+			return true;
+		case BOT_UTIL_FIND_NEAREST_HEALTH:
+			m_pSchedules->add(new CBotTF2GetHealthSched(pWaypointHealth->getOrigin()));
+			return true;
+		case BOT_UTIL_FIND_NEAREST_AMMO:
+			m_pSchedules->add(new CBotTF2GetAmmoSched(pWaypointAmmo->getOrigin()));
 			return true;
 		case BOT_UTIL_GOTODISP:
 			m_pSchedules->removeSchedule(SCHED_USE_DISPENSER);

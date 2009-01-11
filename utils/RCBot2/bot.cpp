@@ -601,6 +601,11 @@ void CBot :: updateConditions ()
 			}
 		}
 	}
+	else
+	{
+		removeCondition(CONDITION_SEE_CUR_ENEMY);
+		removeCondition(CONDITION_ENEMY_OBSCURED);
+	}
 }
 
 // Called when working out route
@@ -672,6 +677,7 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_vLookAroundOffset = Vector(0,0,0);
 	m_fWaypointStuckTime = 0.0f;
 	m_pPickup = NULL;
 	m_pAvoidEntity = NULL;
@@ -1054,13 +1060,13 @@ void CBot :: doMove ()
 		if ( fabs(m_fSideSpeed) < 1.0 )
 			m_fSideSpeed = 0.0;
 
-		if ( isUnderWater() )
-		{
+		//if ( isUnderWater() )
+		//{
 			if ( m_vMoveTo.z > (getOrigin().z + 32.0) )
 				m_fUpSpeed = m_fIdealMoveSpeed;
 			else if ( m_vMoveTo.z < (getOrigin().z - 32.0) )
 				m_fUpSpeed = -m_fIdealMoveSpeed;
-		}
+		//}
 	}
 	else
 	{	
@@ -1175,9 +1181,9 @@ void CBot :: getLookAtVector ()
 			stopLooking();
 		}
 		break;
-	case LOOK_TSK_VECTOR:
+	case LOOK_VECTOR:
 		{
-		//setLookAt(m_pSchedules->);
+			setLookAt(m_vLookVector);
 		}
 		break;
 	case LOOK_EDICT:
@@ -1207,82 +1213,38 @@ void CBot :: getLookAtVector ()
 		break;
 	case LOOK_WAYPOINT:
 		{
-			setLookAt(Vector(m_vMoveTo.x,m_vMoveTo.y,getEyePosition().z));
+			setLookAt(Vector(m_vMoveTo.x,m_vMoveTo.y,m_vMoveTo.z + 32.0f));
 		}
 		break;
+	case LOOK_WAYPOINT_AIM:
+			setLookAt(m_vWaypointAim);
+		break;
+	case LOOK_BUILD:
 	case LOOK_SNIPE:
 		{
 			if ( m_fLookAroundTime < engine->Time() )
 			{
-				CTraceFilterWorldAndPropsOnly filter;
-				Vector m_vAiming = Vector(0,0,0);
-				float bestfraction = -1.0f;
-				Vector eye = getEyePosition();
-				Vector aiming;
-				QAngle eyes = CBotGlobals::playerAngles(m_pEdict);
-				float eyestart;
-				int i;
+				m_fLookAroundTime = engine->Time() + randomFloat(4.0f,8.0f);
 
-				trace_t *res;
-
-				AngleVectors(eyes,&aiming);
-
-				res = CBotGlobals::getTraceResult();
-
-				// find aiming vector
-				CBotGlobals::traceLine (eye,eye+(aiming*4096),MASK_SOLID_BRUSHONLY,&filter);
-				
-				if ( res->fraction > bestfraction ) 
-				{
-					bestfraction = res->fraction;
-					m_vAiming = res->endpos;
-				}
-
-				CBotGlobals::traceLine (eye,eye-(aiming*4096),MASK_SOLID_BRUSHONLY,&filter);
-
-				if ( res->fraction > bestfraction ) 
-				{
-					bestfraction = res->fraction;
-					m_vAiming = res->endpos;
-				}
-
-				eyestart = eyes.y - 10.0f;
-
-				CBotGlobals::fixFloatAngle(&eyestart);
-
-				for ( i = 0; i < 4; i ++ )
-				{
-					AngleVectors(eyes,&aiming);
-
-					CBotGlobals::traceLine (eye,eye+(aiming*4096),MASK_SOLID_BRUSHONLY,&filter);
-
-					if ( res->fraction > bestfraction ) 
-					{
-						bestfraction = res->fraction;
-						m_vAiming = res->endpos;
-					}
-
-					eyestart = eyestart + 5.0f;
-					CBotGlobals::fixFloatAngle(&eyestart);
-				}
-
-				setLookAt(m_vAiming);
-
-				m_fLookAroundTime = engine->Time() + randomFloat(8.0f,18.0f);
-
+				m_vLookAroundOffset = Vector(randomFloat(-16.0f,16.0f),randomFloat(-16.0f,16.0f),randomFloat(-16.0f,0.0f));
 			}
+
+			setLookAt(m_vWaypointAim+m_vLookAroundOffset);
 		}
 		break;
 	case LOOK_AROUND:
 		{
-			
 			if ( m_fLookAroundTime < engine->Time() )
 			{
-				setLookAt(getEyePosition()+Vector(randomFloat(-128,128),randomFloat(-128,128),randomFloat(0,32)));
+				m_vLookAroundOffset = Vector(randomFloat(-128,128),randomFloat(-128,128),randomFloat(0,32));
+				
 				m_fLookAroundTime = engine->Time() + randomFloat(8.0f,18.0f);
+
 			//setLookAt();
 			//setLookAt(...);
 			}
+
+			setLookAt(getEyePosition()+m_vLookAroundOffset);
 		}
 		break;
 	case LOOK_HURT_ORIGIN:
@@ -1408,6 +1370,12 @@ void CBot :: doLook ()
 		changeAngles(bot_anglespeed.GetFloat(),&requiredAngles.y,&m_vViewAngles.y,NULL);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.x);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.y);
+
+		// Clamp pitch
+		if ( m_vViewAngles.x > 89.0f )
+			m_vViewAngles.x = 89.0f;
+		else if ( m_vViewAngles.x < -89.0f )
+			m_vViewAngles.x = -89.0f;
 	}
 
 	//m_pController->SetLocalAngles(m_vViewAngles);
@@ -1684,13 +1652,19 @@ void CBots :: botThink ()
 {
 	static CBot *pBot;
 
+	extern ConVar bot_stop;
+
+	bool bBotStop = bot_stop.GetInt() > 0;
+
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
 		pBot = m_Bots[i];
 
 		if ( pBot->inUse() )
 		{
-			pBot->think();
+			if ( !bBotStop )
+				pBot->think();
+
 			pBot->runPlayerMove();
 		}
 	}

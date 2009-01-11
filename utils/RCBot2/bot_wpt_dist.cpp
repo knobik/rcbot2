@@ -10,7 +10,7 @@ typedef struct
 }wpt_dist_hdr_t;
 
 int CWaypointDistances::m_Distances [CWaypoints::MAX_WAYPOINTS][CWaypoints::MAX_WAYPOINTS];
-float CWaypointDistances::m_fSaveTime=0;
+float CWaypointDistances::m_fSaveTime = 0;
 
 void CWaypointDistances :: load ()
 {
@@ -39,14 +39,13 @@ void CWaypointDistances :: load ()
 		m_fSaveTime = engine->Time() + 100.0f;
 
 		fclose(bfp);
-
 	}
 }
 
 void CWaypointDistances :: save ()
 {
-	if ( m_fSaveTime < engine->Time() )
-	{
+	//if ( m_fSaveTime < engine->Time() )
+	//{
 		char filename[1024];	
 		char *szMapName = CBotGlobals::getMapName();
 
@@ -75,9 +74,8 @@ void CWaypointDistances :: save ()
 			m_fSaveTime = engine->Time() + 100.0f;
 
 			fclose(bfp);
-
 		}
-	}
+	//}
 }
 
 float CWaypointDistances :: getDistance ( int iFrom, int iTo )
@@ -85,5 +83,5 @@ float CWaypointDistances :: getDistance ( int iFrom, int iTo )
 	if ( m_Distances[iFrom][iTo] == -1 )
 		return (CWaypoints::getWaypoint(iFrom)->getOrigin()-CWaypoints::getWaypoint(iTo)->getOrigin()).Length();
 
-	return m_Distances[iFrom][iTo];
+	return (float)m_Distances[iFrom][iTo];
 }

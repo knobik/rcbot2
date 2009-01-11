@@ -217,6 +217,30 @@ void CWaypointNavigator :: failMove ()
 	if ( !m_iFailedGoals.IsMember(m_iGoalWaypoint) )
 		m_iFailedGoals.Add(m_iGoalWaypoint);
 }
+
+float CWaypointNavigator :: distanceTo ( Vector vOrigin )
+{
+	int iGoal;
+
+	if ( m_iCurrentWaypoint == -1 )
+		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(m_pBot->getOrigin(),CWaypointLocations::REACHABLE_RANGE,-1,true,false,true,NULL,false,m_pBot->getTeam());
+	
+	if ( m_iCurrentWaypoint != -1 )
+	{
+		iGoal = CWaypointLocations::NearestWaypoint(vOrigin,CWaypointLocations::REACHABLE_RANGE,-1,true,false,true,NULL,false,m_pBot->getTeam());
+
+		if ( iGoal != -1 )
+			return CWaypointDistances::getDistance(m_iCurrentWaypoint,iGoal);
+	}
+		
+	return m_pBot->distanceFrom(vOrigin);
+}
+
+float CWaypointNavigator :: distanceTo ( CWaypoint *pWaypoint )
+{
+	return distanceTo(pWaypoint->getOrigin());
+}
+
 // find route using A* algorithm
 bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart, bool bNoInterruptions )
 {
@@ -461,7 +485,10 @@ void CWaypointNavigator :: rollBackPosition ()
 // update the bots current walk vector
 void CWaypointNavigator :: updatePosition ()
 {
-	static Vector vWptOrigin;	
+	static Vector vWptOrigin;
+
+	QAngle aim;
+	Vector vaim;
 
 	if ( m_iCurrentWaypoint == -1 ) // invalid
 	{
@@ -473,6 +500,9 @@ void CWaypointNavigator :: updatePosition ()
 
 	if ( pWaypoint == NULL )
 		return;
+
+	aim = QAngle(0,pWaypoint->getAimYaw(),0);
+	AngleVectors(aim,&vaim);
 
 	vWptOrigin = pWaypoint->getOrigin();
 
@@ -510,6 +540,7 @@ void CWaypointNavigator :: updatePosition ()
 	}
 
 	m_pBot->setMoveTo(vWptOrigin);
+	m_pBot->setAiming(vWptOrigin+(vaim*48));
 }
 
 // free up memory
@@ -528,6 +559,8 @@ bool CWaypointNavigator :: routeFound ()
 {
 	return !m_currentRoute.IsEmpty();
 }
+
+/////////////////////////////////////////////////////////
 
 // draw paths from this waypoint (if waypoint drawing is on)
 void CWaypoint :: drawPaths ( edict_t *pEdict, unsigned short int iDrawType )
@@ -606,6 +639,9 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 {
 	float fHeight = WAYPOINT_HEIGHT;
 
+	QAngle qAim;
+	Vector vAim;
+	
 	WptColor colour = CWaypointTypes::getColour(m_iFlags);
 
 	//////////////////////////////////////////
@@ -615,6 +651,11 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 	unsigned char b = (unsigned char)colour.b;
 	unsigned char a = (unsigned char)colour.a;
 
+	qAim = QAngle(0,m_iAimYaw,0);
+
+	AngleVectors(qAim,&vAim);
+
+
 	// top + bottom heights = fHeight
 	fHeight /= 2;
 
@@ -622,11 +663,18 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 	{
 	case DRAWTYPE_DEBUGENGINE:
 		debugoverlay->AddLineOverlay (m_vOrigin - Vector(0,0,fHeight), m_vOrigin + Vector(0,0,fHeight), r,g,b, false, 1);
+
+		debugoverlay->AddLineOverlay (m_vOrigin + Vector(0,0,fHeight/2), m_vOrigin + Vector(0,0,fHeight/2) + vAim*48, r,g,b, false, 1);
 		break;
 	case DRAWTYPE_EFFECTS:
 		g_pEffects->Beam( m_vOrigin - Vector(0,0,fHeight), m_vOrigin + Vector(0,0,fHeight), CWaypoints::waypointTexture(), 
 			0, 0, 1,
 			1, WAYPOINT_WIDTH, WAYPOINT_WIDTH, 255, 
+			1, r, g, b, a, 10);//*/
+
+		/*g_pEffects->Beam( m_vOrigin + Vector(0,0,fHeight/2), m_vOrigin + Vector(0,0,fHeight/2) + vAim*48 CWaypoints::waypointTexture(), 
+			0, 0, 1,
+			1, WAYPOINT_WIDTH/2, WAYPOINT_WIDTH/2, 255, 
 			1, r, g, b, a, 10);//*/
 		break;
 	}
@@ -652,7 +700,7 @@ float CWaypoint :: distanceFrom ( Vector vOrigin )
 {
 	return VectorDistance((m_vOrigin - vOrigin));//.Length();
 }
-///////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////
 // save waypoints (visibilitymade saves having to work out visibility again)
 bool CWaypoints :: save ( bool bVisiblityMade )
 {
@@ -697,6 +745,10 @@ bool CWaypoints :: save ( bool bVisiblityMade )
 	}
 
 	fclose(bfp);
+
+	CWaypointDistances::reset();
+
+	CWaypointDistances::save();
 
 	return true;
 }
@@ -774,6 +826,8 @@ bool CWaypoints :: load ()
 
 	if ( bWorkVisibility ) // say a message
 		Msg(" *** No waypoint visibility file ***\n *** Working out waypoint visibility information... ***\n");
+
+	CWaypointDistances::load();
 
 	return true;
 }
@@ -911,6 +965,49 @@ void CWaypoints :: deleteWaypoint ( int iIndex )
 	deletePathsTo(iIndex);
 }
 
+int CWaypoints :: getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam, float *fReturnDist )
+{
+	int i = 0;
+	int size = numWaypoints();
+
+	float fDist = 8192.0;
+	float distance;
+	int iwpt = -1;
+	int iFrom = CWaypointLocations::NearestWaypoint(vOrigin,fDist,-1,true,false,true,NULL,false,iTeam);
+
+	CWaypoint *pWpt;
+
+	for ( i = 0; i < size; i ++ )
+	{
+		pWpt = &m_theWaypoints[i];
+
+		if ( i == iFrom )
+			continue;
+
+		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) )
+		{
+			if ( pWpt->hasFlag(iFlags) )
+			{
+				if ( (iFrom == -1) )
+					distance = (pWpt->getOrigin()-vOrigin).Length();
+				else
+					distance = CWaypointDistances::getDistance(iFrom,i);
+
+				if ( distance < fDist)
+				{
+					fDist = distance;
+					iwpt = i;
+				}
+			}
+		}
+	}
+
+	if ( fReturnDist )
+		*fReturnDist = fDist;
+
+	return iwpt;
+}
+
 void CWaypoints :: deletePathsTo ( int iWpt )
 {
 	for ( int i = 0; i < numWaypoints(); i ++ )
@@ -927,7 +1024,7 @@ void CWaypoints :: addWaypoint ( CClient *pClient )
 {
 	int iFlags = 0;
 	Vector vWptOrigin = pClient->getOrigin();
-	QAngle playerAngles = CBotGlobals::entityEyeAngles(pClient->getPlayer());
+	QAngle playerAngles = CBotGlobals::playerAngles (pClient->getPlayer());
 
 	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pClient->getPlayer());
 
@@ -955,6 +1052,7 @@ void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, b
 
 	///////////////////////////////////////////////////
 	m_theWaypoints[iIndex] = CWaypoint(vOrigin,iFlags);	
+	m_theWaypoints[iIndex].setAim(iYaw);
 	// increase max waypoints used
 	if ( iIndex == m_iNumWaypoints )
 		m_iNumWaypoints++;	

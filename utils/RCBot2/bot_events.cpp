@@ -132,6 +132,11 @@ void CTF2ChangeClass :: execute ( IBotEventInterface *pEvent )
 	}
 }
 
+void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
+{
+	CBroadcastRoundStart *roundstart = new CBroadcastRoundStart();
+	CBots::botFunction(roundstart);
+}
 
 void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 {
@@ -231,6 +236,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CPlayerSpawnEvent());
 	addEvent(new CTF2BuiltObjectEvent());
 	addEvent(new CTF2ChangeClass());
+	addEvent(new CTF2RoundStart());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

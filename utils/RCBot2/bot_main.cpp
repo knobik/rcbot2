@@ -79,6 +79,7 @@ static ICvar *s_pCVar;
 ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
 ConVar bot_scoutdj( "rcbot_scoutdj", "0.32", 0, "time scout uses to double jump" );
 ConVar bot_anglespeed( "rcbot_anglespeed", "12.0", 0, "speed that bots turn" );
+ConVar bot_stop( "rcbot_stop", "0", 0, "Make bots stop thinking!");
 
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
@@ -175,6 +176,8 @@ void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMsgName, char *s
 //---------------------------------------------------------------------------------
 bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn gameServerFactory )
 {
+	extern MTRand_int32 irand;
+
 	ConnectTier1Libraries( &interfaceFactory, 1 );
 	ConnectTier2Libraries( &interfaceFactory, 1 );
 
@@ -202,6 +205,7 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	//InitCVars( interfaceFactory ); // register any cvars we have defined
 
 	srand( (unsigned)time(NULL) );  // initialize the random seed
+	irand.seed( (unsigned)time(NULL) );
 
 	eventListener2 = new CRCBotEventListener();
 
@@ -320,11 +324,10 @@ void CRCBotPlugin::LevelInit( char const *pMapName )
 
 	CWaypoints::precacheWaypointTexture();
 
+	CWaypointDistances::reset();
+
 	CWaypoints::init();
 	CWaypoints::load();
-
-	CWaypointDistances::reset();
-	CWaypointDistances::load();
 
 	CBotGlobals::setMapRunning(true);
 	
@@ -375,8 +378,6 @@ void CRCBotPlugin::GameFrame( bool simulating )
 		{
 			CWaypoints::getVisiblity()->workVisibility();
 		}
-
-		CWaypointDistances::save();
 	}
 }
 
@@ -769,7 +770,27 @@ bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int 
 	return true;
 }
 
+int CClassInterface :: getEffects ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_fEffects","CBaseEntity");
+	
+	if (!offset)
+		return 0;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
 
+	if (!pUnknown)
+	{
+		return 0;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return *(int *)((char *)pEntity + offset);
+}
 
 int CClassInterface :: getTeam ( edict_t *edict )
 {
