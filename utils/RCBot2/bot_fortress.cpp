@@ -1199,7 +1199,6 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		fAmmoDist = 1;
 
 		pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,getOrigin(),getTeam(),&fResupplyDist,failedlist));
-
 		
 		if ( bNeedAmmo )
 			pWaypointAmmo = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_AMMO,getOrigin(),getTeam(),&fAmmoDist,failedlist));
@@ -1212,7 +1211,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	utils.addUtility(CBotUtility(BOT_UTIL_CAPTURE_FLAG,hasFlag (),0.95));
 	utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!hasFlag () && (iClass==TF_CLASS_ENGINEER) && !m_pSentryGun && (iMetal>=130),0.9));
-	utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!hasFlag () && m_pSentryGun && (iClass==TF_CLASS_ENGINEER) && !m_pDispenser && (iMetal>=100),0.8));
+	utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!hasFlag () && m_pSentryGun && (iClass==TF_CLASS_ENGINEER) && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.2)));
 	utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!hasFlag () && (iClass==TF_CLASS_ENGINEER) && m_pSentryGun && (iMetal>=200) && (CTeamFortress2Mod::getSentryLevel(m_pSentryGun)<3),0.9));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,(iClass==TF_CLASS_ENGINEER) && m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
