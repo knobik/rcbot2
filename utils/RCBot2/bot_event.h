@@ -185,6 +185,18 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2PointCaptured : public CBotEvent
+{
+public:
+	CTF2PointCaptured()
+	{
+		setType("teamplay_point_captured");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+
 class CTF2RoundStart : public CBotEvent
 {
 public:

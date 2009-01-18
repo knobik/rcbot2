@@ -34,9 +34,9 @@
 #include "bot_fortress.h"
 #include "bot_weapons.h"
 
-
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
+int CTeamFortress2Mod :: m_iArea = 0;
 
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 {
@@ -67,6 +67,58 @@ bool CTeamFortress2Mod :: isHealthKit ( edict_t *pEntity )
 bool CTeamFortress2Mod :: isAmmo ( edict_t *pEntity )
 {
 	return strncmp(pEntity->GetClassName(),"item_ammopack",13)==0;
+}
+
+void CTeamFortress2Mod :: getResetPoints (int iTeam, int *iCurrentDefendArea, int *iCurrentAttackArea)
+{
+	char *mapname = CBotGlobals::getMapName();
+
+	if ( strcmp(mapname,"cp_granary") == 0 )
+	{
+		*iCurrentDefendArea = 2;
+		*iCurrentAttackArea = 2;
+	}
+}
+
+void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *iCurrentDefendArea,int *iCurrentAttackArea)
+{
+	char *mapname = CBotGlobals::getMapName();
+
+	int iAttackPoint;
+
+	if ( strcmp(mapname,"cp_granary") == 0 )
+	{
+		if ( iTeam == TF2_TEAM_BLUE )
+		{
+			iAttackPoint = iPoint + 1;
+
+			if ( iMyTeam == TF2_TEAM_BLUE )
+			{
+				*iCurrentDefendArea = iPoint;
+				*iCurrentAttackArea = iAttackPoint;
+			}
+			else
+			{
+				*iCurrentDefendArea = iAttackPoint;
+				*iCurrentAttackArea = iPoint;
+			}
+		}
+		else
+		{
+			iAttackPoint = iPoint - 1;
+
+			if ( iMyTeam == TF2_TEAM_BLUE )
+			{
+				*iCurrentDefendArea = iAttackPoint;
+				*iCurrentAttackArea = iPoint;
+			}
+			else
+			{
+				*iCurrentDefendArea = iPoint;
+				*iCurrentAttackArea = iAttackPoint;
+			}
+		}
+	}
 }
 
 void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type )
@@ -680,5 +732,6 @@ void CTeamFortress2Mod :: mapInit ()
 	else
 		m_MapType = TF_MAP_DM;
 
+	m_iArea = 0;
 }
 

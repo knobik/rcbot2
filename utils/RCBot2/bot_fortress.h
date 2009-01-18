@@ -1,6 +1,8 @@
 #ifndef __BOT_FORTRESS_H__
 #define __BOT_FORTRESS_H__
 
+#include "bot_utility.h"
+
 class CBotWeapon;
 class CWaypoint;
 class CBotUtility;
@@ -85,6 +87,22 @@ class CBroadcastRoundStart : public IBotFunction
 public:
 	void execute ( CBot *pBot );
 };
+
+class CBroadcastCapturedPoint : public IBotFunction
+{
+public:
+	CBroadcastCapturedPoint ( int iPoint, int iTeam )
+	{
+		m_iPoint = iPoint;
+		m_iTeam = iTeam;
+	}
+
+	void execute ( CBot *pBot );
+private:
+	int m_iPoint;
+	int m_iTeam;
+};
+
 
 class CBotFortress : public CBot
 {
@@ -257,7 +275,7 @@ public:
 
 	bool isCloaked ();
 
-	bool runUtil ( int id, CWaypoint *pWaypointResupply, CWaypoint *pWaypointHealth, CWaypoint *pWaypointAmmo );
+	bool executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWaypoint *pWaypointHealth, CWaypoint *pWaypointAmmo );
 
 	void setClass ( TF_Class _class );
 
@@ -275,6 +293,10 @@ public:
 
 	void callMedic ();
 
+	void roundReset ();
+
+	void pointCaptured ( int iPoint, int iTeam );
+
 	void engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd );
 
 	void spyDisguise ( int iTeam, int iClass );
@@ -289,7 +311,7 @@ public:
 
 	void capturedFlag ();
 
-	void capturedPoint ();
+	void pointCaptured ();
 
 	virtual bool needAmmo();
 
@@ -303,6 +325,8 @@ public:
 private:
 	float m_fDoubleJumpTime;
 	float m_fSpySapTime;
+	int m_iCurrentDefendArea;
+	int m_iCurrentAttackArea;
 
 };
 

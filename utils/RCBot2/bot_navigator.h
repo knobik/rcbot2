@@ -74,6 +74,8 @@ public:
 
 	virtual void updatePosition () = 0;
 
+	virtual bool canGetTo ( Vector vOrigin ) = 0;
+
 	virtual float distanceTo ( Vector vOrigin ) = 0;
 
 	virtual float distanceTo ( CWaypoint *pWaypoint ) = 0;
@@ -183,6 +185,8 @@ public:
 	void freeMapMemory ();
 
 	void freeAllMemory ();
+
+	bool canGetTo ( Vector vOrigin );
 
 	bool routeFound ();
 

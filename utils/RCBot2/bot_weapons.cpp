@@ -98,7 +98,7 @@ TF2WeaponsData_t TF2Weaps[] =
 	{0,TF2_WEAPON_PDA_ENGI_DESTROY,	g_szTF2Weapons[15],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[15],1},
 	{0,TF2_WEAPON_PDA_SPY,			g_szTF2Weapons[16],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[16],1},
 	{2,TF2_WEAPON_PIPEBOMBS,			g_szTF2Weapons[17],	WEAP_FL_NONE,0,1000,m_TF2AmmoIndices[17],1},
-	{2,TF2_WEAPON_PISTOL,				g_szTF2Weapons[18],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1400,m_TF2AmmoIndices[18],1},
+	{2,TF2_WEAPON_PISTOL,				g_szTF2Weapons[18],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,2000,m_TF2AmmoIndices[18],1},
 	{2,TF2_WEAPON_PISTOL_SCOUT,		g_szTF2Weapons[19],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1800,m_TF2AmmoIndices[19],2},
 	{1,TF2_WEAPON_REVOLVER,			g_szTF2Weapons[20],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1400,m_TF2AmmoIndices[20],1},
 	{1,TF2_WEAPON_ROCKETLAUNCHER,		g_szTF2Weapons[21],	WEAP_FL_PRIM_ATTACK|WEAP_FL_EXPLOSIVE|WEAP_FL_UNDERWATER,300,4000,m_TF2AmmoIndices[21],3},
@@ -140,13 +140,16 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 	CBotWeapon *m_theBestWeapon = NULL;
 	CBotWeapon *m_FallbackMelee = NULL;
 	int iBestPreference = 0;
+	Vector vEnemyOrigin;
 
 	if ( !pEnemy )
 		return NULL;
 
+	vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
+
 	float flDist = 0;
 
-	flDist = m_pBot->distanceFrom(pEnemy);
+	flDist = m_pBot->distanceFrom(vEnemyOrigin);
 
 	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 	{
@@ -185,7 +188,7 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 		}
 	}
 
-	if ( (m_theBestWeapon == NULL) && (flDist < 512) )
+	if ( (m_theBestWeapon == NULL) && (flDist < 512) && (fabs(vEnemyOrigin.z-m_pBot->getOrigin().z)<BOT_JUMP_HEIGHT) )
 		m_theBestWeapon = m_FallbackMelee;
 
 	return m_theBestWeapon;

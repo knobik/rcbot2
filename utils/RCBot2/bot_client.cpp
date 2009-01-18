@@ -53,6 +53,7 @@ void CClient :: init ()
 	m_bPathWaypointOn = false;
 	m_iDebugLevels = 0;
 	m_pPlayerInfo = NULL;
+	m_iWptArea = 0;
 	
 	m_fUpdatePos = 0.0f;
 }

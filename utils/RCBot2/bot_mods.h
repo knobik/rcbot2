@@ -243,6 +243,9 @@ public:
 
 	static bool isAmmo ( edict_t *pEntity );
 
+	static int getArea (); // get current area of map
+
+	static void setArea ( int area ) { m_iArea = area; }
 
 	static bool isSentry ( edict_t *pEntity, int iTeam );
 
@@ -282,7 +285,9 @@ public:
 
 	static edict_t *getTeleporterExit ( edict_t *pTele );
 
+	static void getResetPoints (int iTeam,int *iCurrentDefendArea, int *iCurrentAttackArea);
 
+	static void getNextPoints (int iPoint,int iTeam,int iMyTeam,int *iCurrentDefendArea,int *iCurrentAttackArea);
 
 private:
 
@@ -291,6 +296,8 @@ private:
 	static eTFMapType m_MapType;	
 
 	static tf_tele_t m_Teleporters[MAX_PLAYERS];
+
+	static int m_iArea;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

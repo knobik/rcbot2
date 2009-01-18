@@ -467,6 +467,21 @@ Vector CWaypointNavigator :: getNextPoint ()
 	return CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
 }
 
+bool CWaypointNavigator :: canGetTo ( Vector vOrigin )
+{
+	int iwpt = CWaypointLocations::NearestWaypoint(vOrigin,100,-1,true,false,true,NULL,false,m_pBot->getTeam());
+
+	if ( iwpt >= 0 )
+	{
+		if ( m_iFailedGoals.IsMember(iwpt) )
+			return false;
+	}
+	else
+		return false;
+
+	return true;
+}
+
 void CWaypointNavigator :: rollBackPosition ()
 {
 	m_vPreviousPoint = m_pBot->getOrigin();
@@ -780,9 +795,9 @@ bool CWaypoints :: load ()
 		fclose(bfp);
 		return false;
 	}
-	if ( header.iVersion != WAYPOINT_VERSION )
+	if ( header.iVersion > WAYPOINT_VERSION )
 	{
-		CBotGlobals::botMessage(NULL,0,"Error loading waypoints: Waypoint version mismatch");
+		CBotGlobals::botMessage(NULL,0,"Error loading waypoints: Waypoint version too new");
 		fclose(bfp);
 		return false;
 	}
@@ -811,7 +826,7 @@ bool CWaypoints :: load ()
 	{
 		CWaypoint *pWpt = &m_theWaypoints[i];		
 
-		pWpt->load(bfp);
+		pWpt->load(bfp,header.iVersion);
 
 		if ( pWpt->isUsed() ) // not a deleted waypoint
 		{
@@ -840,6 +855,7 @@ void CWaypoint :: init ()
 	m_bUsed = false;
 	setAim(0);
 	m_thePaths.Clear();
+	m_iArea = 0;
 }
 
 void CWaypoint :: save ( FILE *bfp )
@@ -859,18 +875,23 @@ void CWaypoint :: save ( FILE *bfp )
 		int iPath = getPath(n);
 		fwrite(&iPath,sizeof(int),1,bfp);		
 	}
+
+	if ( CWaypoints::WAYPOINT_VERSION >= 2 )
+	{
+		fwrite(&m_iArea,sizeof(int),1,bfp);
+	}
 }
 
-void CWaypoint :: load ( FILE *bfp )
+void CWaypoint :: load ( FILE *bfp, int iVersion )
 {
+	int iPaths;
+
 	fread(&m_vOrigin,sizeof(Vector),1,bfp);
 	// aim of vector (used with certain waypoint types)
 	fread(&m_iAimYaw,sizeof(int),1,bfp);
 	fread(&m_iFlags,sizeof(int),1,bfp);
 	// not deleted
-	fread(&m_bUsed,sizeof(bool),1,bfp);
-
-	int iPaths;
+	fread(&m_bUsed,sizeof(bool),1,bfp);	
 	fread(&iPaths,sizeof(int),1,bfp);
 
 	for ( int n = 0; n < iPaths; n ++ )
@@ -878,6 +899,11 @@ void CWaypoint :: load ( FILE *bfp )
 		int iPath;
 		fread(&iPath,sizeof(int),1,bfp);
 		addPathTo(iPath);
+	}
+
+	if ( iVersion >= 2 )
+	{
+		fread(&m_iArea,sizeof(int),1,bfp);
 	}
 }
 // draw waypoints to this client pClient
@@ -1040,10 +1066,10 @@ void CWaypoints :: addWaypoint ( CClient *pClient )
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 		iFlags |= CWaypoint::W_FL_CROUCH;		*/
 
-	addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y); // sort flags out
+	addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,pClient->getWptArea()); // sort flags out
 }
 
-void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw )
+void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw, int iArea )
 {
 	int iIndex = freeWaypointIndex();
 
@@ -1056,6 +1082,7 @@ void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, b
 	///////////////////////////////////////////////////
 	m_theWaypoints[iIndex] = CWaypoint(vOrigin,iFlags);	
 	m_theWaypoints[iIndex].setAim(iYaw);
+	m_theWaypoints[iIndex].setArea(iArea);
 	// increase max waypoints used
 	if ( iIndex == m_iNumWaypoints )
 		m_iNumWaypoints++;	
@@ -1266,7 +1293,7 @@ void CWaypointTypes :: freeMemory ()
 void CWaypointTypes:: printInfo ( CWaypoint *pWpt, edict_t *pPrintTo )
 {
 	char szMessage[1024];
-	Q_snprintf(szMessage,1024,"Waypoint ID %d [",CWaypoints::getWaypointIndex(pWpt));	
+	Q_snprintf(szMessage,1024,"Waypoint ID %d (Area = %d)[",CWaypoints::getWaypointIndex(pWpt),pWpt->getArea());	
 
 	if ( pWpt->getFlags() )
 	{

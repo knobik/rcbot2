@@ -69,6 +69,9 @@ public:
 	inline bool isPathWaypointOn () { return m_bPathWaypointOn; }
 	inline void setPathWaypoint ( bool bOn ) { m_bPathWaypointOn = bOn; }
 
+	inline int getWptArea () { return m_iWptArea; }
+	inline void setWptArea ( int area ) { m_iWptArea = area; }
+
 	inline void setPathFrom ( int iWpt ) { m_iPathFrom = iWpt; }
 	inline void setPathTo ( int iWpt ) { m_iPathTo = iWpt; }
 
@@ -110,6 +113,8 @@ private:
 
 	Vector m_vLastPos;
 	float m_fUpdatePos;
+
+	int m_iWptArea;
 
 	// auto path waypointing
 	bool m_bAutoPaths;

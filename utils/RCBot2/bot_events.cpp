@@ -138,6 +138,12 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	CBots::botFunction(roundstart);
 }
 
+void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
+{
+	CBroadcastCapturedPoint *cap = new CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"));
+	CBots::botFunction(cap);
+}
+
 void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 {
 	int type = pEvent->getInt("eventtype");
@@ -237,6 +243,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CTF2BuiltObjectEvent());
 	addEvent(new CTF2ChangeClass());
 	addEvent(new CTF2RoundStart());
+	addEvent(new CTF2PointCaptured());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

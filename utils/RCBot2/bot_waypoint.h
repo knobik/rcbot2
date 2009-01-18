@@ -229,6 +229,9 @@ public:
 		m_thePaths.Clear();//Destroy();
 	}
 
+	int getArea () { return m_iArea; }
+	void setArea (int area) { m_iArea = area; }
+
 	void drawPaths ( edict_t *pEdict, unsigned short int iDrawType );
 
 	void drawPathBeam ( CWaypoint *to, unsigned short int iDrawType );
@@ -251,7 +254,7 @@ public:
 
 	int getPath ( int i );
 
-	void load ( FILE *bfp );
+	void load ( FILE *bfp, int iVersion );
 
 	void save ( FILE *bfp );
 
@@ -267,6 +270,7 @@ private:
 	// aim of vector (used with certain waypoint types)
 	int m_iAimYaw;
 	int m_iFlags;
+	int m_iArea;
 	// not deleted
 	bool m_bUsed;
 	// paths to other waypoints
@@ -277,7 +281,7 @@ class CWaypoints
 {
 public:
 	static const int MAX_WAYPOINTS = 1024;
-	static const int WAYPOINT_VERSION = 1;
+	static const int WAYPOINT_VERSION = 2;
 
 	static const int W_FILE_FL_VISIBILITY = 1;
 
@@ -292,7 +296,7 @@ public:
 
 	static void addWaypoint ( CClient *pClient );
 
-	static void addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags = CWaypointTypes::W_FL_NONE, bool bAutoPath = false, int iYaw = 0 );
+	static void addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags = CWaypointTypes::W_FL_NONE, bool bAutoPath = false, int iYaw = 0, int iArea = 0 );
 
 	static void removeWaypoint ( int iIndex );
 

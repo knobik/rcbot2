@@ -79,6 +79,7 @@ extern CGlobalVars *gpGlobals;
 class CClassInterface
 {
 public:
+    static int getFlags ( edict_t *edict );
 	static int getTeam ( edict_t *edict );
 	static int getHealth ( edict_t *edict );
 	static int getEffects ( edict_t *edict );
@@ -558,6 +559,7 @@ protected:
 	float m_fLookSetTime; 
 	float m_fLookAroundTime;
 
+	int m_iFlags;
 	// Origin a second ago to check if stuck
 	Vector m_vLastOrigin;
 	// Generated velocity found from last origin (not always correct)

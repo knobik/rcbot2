@@ -91,6 +91,8 @@ typedef enum
 	MOD_MAX
 }eModId;
 
+#define BOT_JUMP_HEIGHT 45
+
 #undef INDEXENT
 #define INDEXENT(iEdictNum) engine->PEntityOfEntIndex(iEdictNum)
 

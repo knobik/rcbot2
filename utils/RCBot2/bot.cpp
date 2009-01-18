@@ -435,18 +435,17 @@ void CBot :: think ()
 	float fTime = engine->Time();
 //	Vector *pvVelocity;
 
+	// important!!!
+	//
 	m_iLookPriority = 0;
 	m_iMovePriority = 0;
-
+	//
 	// if bot is not in game, start it!!!
 	if ( !startGame() )
 	{
 		doButtons();
 		return; // don't do anything just now
 	}
-
-	if ( m_pController->IsEFlagSet(EFL_BOT_FROZEN) )
-		return;
 
 	doButtons();
 
@@ -474,6 +473,16 @@ void CBot :: think ()
 		return;
 
 	m_fNextThink = fTime + 0.04;
+
+	/////////////////////////////
+
+	m_iFlags = CClassInterface::getFlags(m_pEdict);
+
+	if ( m_pController->IsEFlagSet(EFL_BOT_FROZEN)  || (m_iFlags & FL_FROZEN) )
+	{
+		stopMoving(10);
+		return;
+	}
 
 	//////////////////////////////
 

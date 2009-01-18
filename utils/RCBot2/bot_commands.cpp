@@ -74,12 +74,36 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointDrawTypeCommand());
 	add(new CWaypointAngleCommand());
 	add(new CWaypointSetAngleCommand());
+	add(new CWaypointSetAreaCommand());
 }
 
 CWaypointSetAngleCommand :: CWaypointSetAngleCommand()
 {
 	setName("updateyaw");
 }
+
+CWaypointSetAreaCommand :: CWaypointSetAreaCommand ()
+{
+	setName("setarea");
+	setHelp("Go to a waypoint, use setarea <areaid>");
+}
+
+eBotCommandResult CWaypointSetAreaCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	pClient->updateCurrentWaypoint();
+
+	if ( pcmd && *pcmd && ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) ) )
+	{
+		CWaypoint *pWpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+		pWpt->setArea(atoi(pcmd));
+	}
+	else
+		return COMMAND_ERROR;
+
+	return COMMAND_ACCESSED;
+}
+
 
 eBotCommandResult CWaypointSetAngleCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {

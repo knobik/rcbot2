@@ -39,37 +39,40 @@
 #include <vector>
 using namespace std;
 
-#define BOT_UTIL_BUILDSENTRY   0
-#define BOT_UTIL_BUILDDISP     1
-#define BOT_UTIL_BUILDTELENT   2
-#define BOT_UTIL_BUILDTELEXT   3
-#define BOT_UTIL_UPGSENTRY     4
-#define BOT_UTIL_UPGDISP       5
-#define BOT_UTIL_UPGTELENT     6
-#define BOT_UTIL_UPGTELEXT     7
-#define BOT_UTIL_UPGTMSENTRY   8
-#define BOT_UTIL_UPGTMDISP	   9
-#define BOT_UTIL_UPGTMTELENT  10
-#define BOT_UTIL_UPGTMTELEXT  11
-#define BOT_UTIL_GOTODISP		12
-#define BOT_UTIL_GOTORESUPPLY_FOR_HEALTH   13
-#define BOT_UTIL_GETAMMOKIT   14
-#define BOT_UTIL_GETAMMOTMDISP 15
-#define BOT_UTIL_GETAMMODISP 16
-#define BOT_UTIL_GETFLAG 17
-#define BOT_UTIL_GETHEALTHKIT 18
-#define BOT_UTIL_GETFLAG_LASTKNOWN 19
-#define BOT_UTIL_SNIPE 20
-#define BOT_UTIL_ROAM 21
-#define BOT_UTIL_CAPTURE_FLAG 22
-#define BOT_UTIL_GOTORESUPPLY_FOR_AMMO 23
-#define BOT_UTIL_FIND_NEAREST_HEALTH 24
-#define BOT_UTIL_FIND_NEAREST_AMMO 25
+typedef enum
+{
+ BOT_UTIL_BUILDSENTRY = 0,
+ BOT_UTIL_BUILDDISP,
+ BOT_UTIL_BUILDTELENT,
+ BOT_UTIL_BUILDTELEXT,
+ BOT_UTIL_UPGSENTRY,
+ BOT_UTIL_UPGDISP,
+ BOT_UTIL_UPGTELENT,
+ BOT_UTIL_UPGTELEXT,
+ BOT_UTIL_UPGTMSENTRY,
+ BOT_UTIL_UPGTMDISP,
+ BOT_UTIL_UPGTMTELENT,
+ BOT_UTIL_UPGTMTELEXT,
+ BOT_UTIL_GOTODISP,
+ BOT_UTIL_GOTORESUPPLY_FOR_HEALTH,
+ BOT_UTIL_GETAMMOKIT,
+ BOT_UTIL_GETAMMOTMDISP,
+ BOT_UTIL_GETAMMODISP,
+ BOT_UTIL_GETFLAG,
+ BOT_UTIL_GETHEALTHKIT,
+ BOT_UTIL_GETFLAG_LASTKNOWN,
+ BOT_UTIL_SNIPE,
+ BOT_UTIL_ROAM,
+ BOT_UTIL_CAPTURE_FLAG,
+ BOT_UTIL_GOTORESUPPLY_FOR_AMMO,
+ BOT_UTIL_FIND_NEAREST_HEALTH,
+ BOT_UTIL_FIND_NEAREST_AMMO
+}eBotAction;
 
 class CBotUtility
 {
 public:
-	CBotUtility ( int id, bool bCanDo, float fUtil )
+	CBotUtility ( eBotAction id, bool bCanDo, float fUtil )
 	{
 		m_fUtility = fUtil;
 		m_id = id;
@@ -78,14 +81,14 @@ public:
 
 	inline float getUtility () { return m_fUtility; }
 
-	inline int getId () { return m_id; }
+	inline eBotAction getId () { return m_id; }
 
 	inline bool canDo () { return m_bCanDo; }
 
 private:
 	float m_fUtility;
 	bool m_bCanDo;
-	int m_id;
+	eBotAction m_id;
 };
 
 
