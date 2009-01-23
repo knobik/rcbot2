@@ -154,7 +154,7 @@ public:
 //		m_iId = -1;
 	}
 
-	CWaypoint ( Vector vOrigin, int iFlags = 0, int iYaw = 0 )
+	CWaypoint ( Vector vOrigin, int iFlags = 0, int iYaw = 0, int m_fRadius = 0 )
 	{
 		m_thePaths.Clear();
 		init();
@@ -162,6 +162,7 @@ public:
 		m_vOrigin = vOrigin;		
 		m_bUsed = true;
 		setAim(iYaw);
+		m_fRadius = 0;
 //		m_iId = iId;
 	}
 
@@ -220,7 +221,7 @@ public:
 	}
 
 	//bool touched ( edict_t *pEdict );
-	bool touched ( Vector vOrigin );
+	bool touched ( Vector vOrigin, Vector vOffset );
 
 	void botTouch ( CBot *pBot );
 
@@ -265,12 +266,17 @@ public:
 
 	bool forTeam ( int iTeam );
 
+	inline float getRadius () { return m_fRadius; }
+
+	inline void setRadius ( float fRad ) { m_fRadius = fRad; }
+
 private:
 	Vector m_vOrigin;
 	// aim of vector (used with certain waypoint types)
 	int m_iAimYaw;
 	int m_iFlags;
 	int m_iArea;
+	float m_fRadius;
 	// not deleted
 	bool m_bUsed;
 	// paths to other waypoints
@@ -281,7 +287,7 @@ class CWaypoints
 {
 public:
 	static const int MAX_WAYPOINTS = 1024;
-	static const int WAYPOINT_VERSION = 2;
+	static const int WAYPOINT_VERSION = 3;
 
 	static const int W_FILE_FL_VISIBILITY = 1;
 

@@ -238,6 +238,9 @@ private:
 	float m_fBelief [CWaypoints::MAX_WAYPOINTS];
 
 	vector<AStarNode*> m_theOpenList;
+
+	Vector m_vOffset;
+	bool m_bOffsetApplied;
 };
 
 class CNavMeshNavigator : public IBotNavigator

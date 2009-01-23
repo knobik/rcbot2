@@ -75,12 +75,9 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointAngleCommand());
 	add(new CWaypointSetAngleCommand());
 	add(new CWaypointSetAreaCommand());
+	add(new CWaypointSetRadiusCommand());
 }
 
-CWaypointSetAngleCommand :: CWaypointSetAngleCommand()
-{
-	setName("updateyaw");
-}
 
 CWaypointSetAreaCommand :: CWaypointSetAreaCommand ()
 {
@@ -103,7 +100,34 @@ eBotCommandResult CWaypointSetAreaCommand :: execute ( CClient *pClient, const c
 
 	return COMMAND_ACCESSED;
 }
+///////////////
+CWaypointSetRadiusCommand :: CWaypointSetRadiusCommand ()
+{
+	setName("setradius");
+	setHelp("Go to a waypoint, use setradius <radius>");
+}
 
+eBotCommandResult CWaypointSetRadiusCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	pClient->updateCurrentWaypoint();
+
+	if ( pcmd && *pcmd && ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) ) )
+	{
+		CWaypoint *pWpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+		pWpt->setRadius(atof(pcmd));
+	}
+	else
+		return COMMAND_ERROR;
+
+	return COMMAND_ACCESSED;
+}
+/////////////////
+
+CWaypointSetAngleCommand :: CWaypointSetAngleCommand()
+{
+	setName("updateyaw");
+}
 
 eBotCommandResult CWaypointSetAngleCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {

@@ -69,6 +69,9 @@ void CWaypointNavigator :: init ()
 {
 	m_pBot = NULL;
 
+	m_vOffset = Vector(0,0,0);
+	m_bOffsetApplied = false;
+
 	m_iCurrentWaypoint = -1;
 	m_iNextWaypoint = -1;
 	m_iGoalWaypoint = -1;
@@ -503,6 +506,7 @@ void CWaypointNavigator :: rollBackPosition ()
 void CWaypointNavigator :: updatePosition ()
 {
 	static Vector vWptOrigin;
+	static float fRadius;
 
 	QAngle aim;
 	Vector vaim;
@@ -521,13 +525,17 @@ void CWaypointNavigator :: updatePosition ()
 	aim = QAngle(0,pWaypoint->getAimYaw(),0);
 	AngleVectors(aim,&vaim);
 
+	fRadius = pWaypoint->getRadius();
+
 	vWptOrigin = pWaypoint->getOrigin();
 
 	if ( !m_bWorkingRoute )
 	{
-		if ( pWaypoint->touched(m_pBot->getOrigin()) )
+		if ( pWaypoint->touched(m_pBot->getOrigin(),m_vOffset) )
 		{
 			m_pBot->touchedWpt(pWaypoint);
+
+			m_bOffsetApplied = false;
 
 			if ( m_currentRoute.IsEmpty() ) // reached goal!!
 			{
@@ -545,18 +553,30 @@ void CWaypointNavigator :: updatePosition ()
 				if ( m_iCurrentWaypoint != -1 )
 				{
 					vWptOrigin = CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
+					m_bOffsetApplied = false;
 				}
 			}
 		}
-
 	}
+	else
+		m_bOffsetApplied = false;
 
 	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_CROUCH) )
 	{
 		m_pBot->duck(true);
 	}
 
-	m_pBot->setMoveTo(vWptOrigin);
+	if ( !m_bOffsetApplied )
+	{
+		if ( fRadius > 0 )
+			m_vOffset = Vector(randomFloat(-fRadius,fRadius),randomFloat(-fRadius,fRadius),0);
+		else
+			m_vOffset = Vector(0,0,0);
+
+		m_bOffsetApplied = true;
+	}
+
+	m_pBot->setMoveTo(vWptOrigin+m_vOffset);
 	m_pBot->setAiming(vWptOrigin+(vaim*1024));
 }
 
@@ -619,9 +639,9 @@ bool CWaypoint :: touched ( edict_t *pEdict )
 	return touched(pEdict->m_pNetworkable->GetPVSInfo()->
 }*/
 // checks if a waypoint is touched
-bool CWaypoint :: touched ( Vector vOrigin )
+bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset)
 {
-	if ( (vOrigin-m_vOrigin).Length2D() <= 40 )
+	if ( (vOrigin-(m_vOrigin+vOffset)).Length2D() <= 40 )
 	{
 		return fabs(vOrigin.z-m_vOrigin.z) < 48;
 	}
@@ -679,9 +699,17 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 	switch ( iDrawType )
 	{
 	case DRAWTYPE_DEBUGENGINE:
+		// draw waypoint
 		debugoverlay->AddLineOverlay (m_vOrigin - Vector(0,0,fHeight), m_vOrigin + Vector(0,0,fHeight), r,g,b, false, 1);
 
+		// draw aim
 		debugoverlay->AddLineOverlay (m_vOrigin + Vector(0,0,fHeight/2), m_vOrigin + Vector(0,0,fHeight/2) + vAim*48, r,g,b, false, 1);
+
+		// draw radius
+		if ( m_fRadius )
+		{
+			debugoverlay->AddBoxOverlay(m_vOrigin,Vector(-m_fRadius,-m_fRadius,-fHeight),Vector(m_fRadius,m_fRadius,fHeight),QAngle(0,0,0),255,255,255,50,1);
+		}
 		break;
 	case DRAWTYPE_EFFECTS:
 		g_pEffects->Beam( m_vOrigin - Vector(0,0,fHeight), m_vOrigin + Vector(0,0,fHeight), CWaypoints::waypointTexture(), 
@@ -854,10 +882,11 @@ void CWaypoint :: init ()
 	//m_thePaths.clear();
 	m_iFlags = 0;
 	m_vOrigin = Vector(0,0,0);
-	m_bUsed = false;
+	m_bUsed = false; // ( == "deleted" )
 	setAim(0);
 	m_thePaths.Clear();
 	m_iArea = 0;
+	m_fRadius = 0;
 }
 
 void CWaypoint :: save ( FILE *bfp )
@@ -881,6 +910,11 @@ void CWaypoint :: save ( FILE *bfp )
 	if ( CWaypoints::WAYPOINT_VERSION >= 2 )
 	{
 		fwrite(&m_iArea,sizeof(int),1,bfp);
+	}
+
+	if ( CWaypoints::WAYPOINT_VERSION >= 3 ) 
+	{
+		fwrite(&m_fRadius,sizeof(float),1,bfp);
 	}
 }
 
@@ -906,6 +940,11 @@ void CWaypoint :: load ( FILE *bfp, int iVersion )
 	if ( iVersion >= 2 )
 	{
 		fread(&m_iArea,sizeof(int),1,bfp);
+	}
+
+	if ( iVersion >= 3 ) 
+	{
+		fread(&m_fRadius,sizeof(float),1,bfp);
 	}
 }
 // draw waypoints to this client pClient
@@ -1045,10 +1084,10 @@ void CWaypoints :: deletePathsTo ( int iWpt )
 		m_theWaypoints[i].removePathTo(iWpt);
 }
 
+// Fixed; 23/01
 void CWaypoints :: deletePathsFrom ( int iWpt )
 {
-	for ( int i = 0; i < numWaypoints(); i ++ )
-		m_theWaypoints[i].clearPaths();
+	m_theWaypoints[iWpt].clearPaths();
 }
 
 void CWaypoints :: addWaypoint ( CClient *pClient )
