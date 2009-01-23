@@ -184,6 +184,7 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 	engine->SetFakeClientConVarValue(pEdict,"cl_team","default");
 	engine->SetFakeClientConVarValue(pEdict,"cl_defaultweapon","pistol");
 	engine->SetFakeClientConVarValue(pEdict,"cl_autowepswitch","1");	
+	engine->SetFakeClientConVarValue(pEdict,"tf_medigun_autoheal","1");	
 
 	if ( m_pPlayerInfo && (pProfile->getTeam() != -1) )
 		m_pPlayerInfo->ChangeTeam(pProfile->getTeam());
@@ -215,12 +216,13 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 
 bool CBot :: FVisible ( Vector &vOrigin )
 {
-	return CBotGlobals::isVisible(getEyePosition(),vOrigin);
+	return CBotGlobals::isVisible(m_pEdict,getEyePosition(),vOrigin);
 }
 
 bool CBot :: FVisible ( edict_t *pEdict )
 {
-	return CBotGlobals::isVisible(m_pEdict,getEyePosition(),pEdict);
+	Vector eye = getEyePosition();
+	return CBotGlobals::isVisible(m_pEdict,eye,CBotGlobals::entityOrigin(pEdict)+Vector(0,0,36.0f));
 }
 
 QAngle CBot :: eyeAngles ()
@@ -296,8 +298,11 @@ bool CBot :: checkStuck ()
 		if ( fPercentMoved < 0.1 )
 		{
 			m_bThinkStuck = true;
+
+
 			m_pButtons->jump();
 			m_pButtons->duck(0.25f,randomFloat(0.2f,0.4f));
+			
 
 			if ( m_fStrafeTime < engine->Time() )
 			{
@@ -471,6 +476,8 @@ void CBot :: think ()
 
 	if ( m_fNextThink > fTime )
 		return;
+
+	m_pButtons->letGoAllButtons(false);
 
 	m_fNextThink = fTime + 0.04;
 
@@ -836,8 +843,8 @@ void CBot :: hurt ( edict_t *pAttacker, int iHealthNow )
 	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
 		m_fLookSetTime = 0;
-		setLookAtTask(LOOK_HURT_ORIGIN,2);
-		m_fLookSetTime = engine->Time() + randomFloat(2.5,8.0);
+		setLookAtTask(LOOK_HURT_ORIGIN,10);
+		m_fLookSetTime = engine->Time() + randomFloat(3.0,8.0);
 	}
 
 	float fTime = engine->Time();
@@ -862,7 +869,7 @@ void CBot :: hurt ( edict_t *pAttacker, int iHealthNow )
 
 void CBot :: setLookAtTask ( eLookTask lookTask, int iPriority ) 
 { 
-	if ( (iPriority > m_iLookPriority) || ( m_fLookSetTime < engine->Time() ) )
+	if ( (iPriority > m_iLookPriority) && ( m_fLookSetTime < engine->Time() ) )
 	{
 		m_iLookPriority = iPriority;
 		m_iLookTask = lookTask; 
@@ -1122,6 +1129,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 {
 	Vector v_right;
 	QAngle angles;
+	Vector v_max;
 	
 	if ( m_fNextUpdateAimVector > engine->Time() )
 		return m_vAimVector;	
@@ -1137,7 +1145,9 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
     v_right = v_right/VectorDistance(v_right); // normalize
 	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.1f,0.4f);
 
-	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(0,0,36) + Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16));
+	//v_max = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
+
+	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(0,0,36.0f) + Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16));
 
 	return m_vAimVector;
 }

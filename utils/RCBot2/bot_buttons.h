@@ -41,7 +41,7 @@ public:
 	{
 		memset(this,0,sizeof(CBotButton));
 		m_iButtonId = iId;
-		m_bTapped = false;
+		m_bTapped = false;		
 	}
 
 	inline void tap () { m_bTapped = true; }
@@ -96,6 +96,7 @@ public:
 		m_theButtons.clear();
 	}
 
+	void letGo (int iButtonId);
 	void holdButton ( int iButtonId, float fFrom = 0.0, float fFor = 1.0f, float m_fLetGoTime = 0.0f );
 
 	inline void add ( CBotButton *theButton );
@@ -104,6 +105,8 @@ public:
 	bool canPressButton ( int iButtonId );
 
 	void tap ( int iButtonId );
+
+	void letGoAllButtons ( bool bVal ) { m_bLetGoAll = bVal; }
 
 	int getBitMask ();
 
@@ -115,5 +118,6 @@ public:
 
 private:
 	vector<CBotButton*> m_theButtons;
+	bool m_bLetGoAll;
 };
 #endif

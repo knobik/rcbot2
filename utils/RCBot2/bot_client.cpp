@@ -42,6 +42,7 @@ bool CClients::m_bClientsDebugging = false;
 
 void CClient :: init ()
 {
+	m_fSpeed = 0;
 	m_pPlayer = NULL;
 	m_szSteamID = NULL;
 	m_bWaypointOn = false;
@@ -70,18 +71,20 @@ void CClient :: think ()
 	if ( isWaypointOn() )
 		CWaypoints::drawWaypoints(this);
 
+	if ( m_fUpdatePos < engine->Time() )
+	{
+		m_fUpdatePos = engine->Time() + 1.0f;
+		m_fSpeed = (m_vLastPos - getOrigin()).Length();
+		m_vLastPos = getOrigin();
+	}
 
 	if ( isDebugging() )
 	{
 		if ( isDebugOn(BOT_DEBUG_SPEED) )
 		{
-			if ( m_fUpdatePos < engine->Time() )
-			{
-				m_fUpdatePos = engine->Time() + 1.0f;
-				CBotGlobals::botMessage(m_pPlayer,0,"speed = %0.0f",(m_vLastPos - getOrigin()).Length());
-				m_vLastPos = getOrigin();
-			}
+			CBotGlobals::botMessage(m_pPlayer,0,"speed = %0.0f",m_fSpeed);
 		}
+
 		if ( isDebugOn(BOT_DEBUG_USERCMD) )
 		{
 			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(m_pPlayer);

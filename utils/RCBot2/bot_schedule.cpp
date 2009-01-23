@@ -101,7 +101,6 @@ CBotTF2GetHealthSched :: CBotTF2GetHealthSched ( Vector vOrigin )
 	addTask(new CBotTF2WaitHealthTask(vOrigin)); // second
 }
 
-
 void CBotTF2GetHealthSched :: init ()
 {
 	setID(SCHED_TF2_GET_HEALTH);

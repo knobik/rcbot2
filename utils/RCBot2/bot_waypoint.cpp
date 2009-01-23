@@ -435,7 +435,9 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 
 		iParent = paths[iCurrentNode].getParent();
 
-		fDistance += (CWaypoints::getWaypoint(iCurrentNode)->getOrigin() - CWaypoints::getWaypoint(iParent)->getOrigin()).Length();
+		// crash bug fix
+		if ( iParent != -1 )
+			fDistance += (CWaypoints::getWaypoint(iCurrentNode)->getOrigin() - CWaypoints::getWaypoint(iParent)->getOrigin()).Length();
 
 		iCurrentNode = iParent;
 	}
@@ -1140,36 +1142,38 @@ int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist,
 	return iwpt;
 }
 
-int CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam )
+CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea )
 {
 	int i = 0;
 	int size = numWaypoints();
+	CWaypoint *pWpt;
 
-	dataUnconstArray<int> goals;
+	dataUnconstArray<CWaypoint*> goals;
 
 	for ( i = 0; i < size; i ++ )
 	{
-		if ( m_theWaypoints[i].isUsed() && m_theWaypoints[i].forTeam(iTeam) )
+		pWpt = &m_theWaypoints[i];
+
+		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) && (pWpt->getArea() == iArea) )
 		{			
-			if ( (iFlags == -1) || (m_theWaypoints[i].hasFlag(iFlags)) )
-				goals.Add(i);
-			
+			if ( (iFlags == -1) || pWpt->hasFlag(iFlags) )
+				goals.Add(pWpt);
 		}
 	}
 
-	int iwpt = -1;
+	pWpt = NULL;
 
 	if ( !goals.IsEmpty() )
-		iwpt = goals.Random();
+		pWpt = goals.Random();
 
 	goals.Clear();
 
-	return iwpt;
+	return pWpt;
 }
 
 int CWaypoints :: randomFlaggedWaypoint (int iTeam)
 {
-	return randomWaypointGoal(-1,iTeam);
+	return getWaypointIndex(randomWaypointGoal(-1,iTeam));
 }
 
 ///////////

@@ -152,7 +152,22 @@ void CBotFortress :: checkHealingValid ()
 			m_pHeal = NULL;
 		else if ( !isVisible(m_pHeal) )
 			m_pHeal = NULL;
+		else if ( !wantToHeal(m_pHeal) )
+		{
+			m_pHeal = NULL;
+		}
 	}
+}
+
+bool CBotFortress :: wantToHeal ( edict_t *pPlayer )
+{
+	IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+	TF_Class iclass = (TF_Class)CClassInterface::getTF2Class(pPlayer);
+
+	if ( ( iclass == TF_CLASS_SPY ) || (iclass == TF_CLASS_SNIPER ) || (iclass == TF_CLASS_MEDIC) || (iclass == TF_CLASS_ENGINEER) || (iclass == TF_CLASS_SCOUT) )
+		return ( p->GetHealth() < p->GetMaxHealth() );
+	
+	return true;
 }
 
 /////////////////////////////////////////////////////////////////////
@@ -178,23 +193,31 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 
 					if ( distanceFrom(vPlayer) < 400 )
 					{
-						if ( m_pHeal )
+						if ( wantToHeal(pEntity) )
 						{
-							if ( m_pHeal != pEntity )
+							if ( m_pHeal )
 							{
-								IPlayerInfo *p1 = playerinfomanager->GetPlayerInfo(m_pHeal);
-								IPlayerInfo *p2 = playerinfomanager->GetPlayerInfo(pEntity);
+								if ( m_pHeal != pEntity )
+								{
+									IPlayerInfo *p1 = playerinfomanager->GetPlayerInfo(m_pHeal);
+									IPlayerInfo *p2 = playerinfomanager->GetPlayerInfo(pEntity);
 
-								if ( ((float)p2->GetHealth()/p2->GetMaxHealth()) < ((float)p1->GetHealth()/p1->GetMaxHealth()) )
-									m_pHeal = pEntity;
+									if ( ((float)p2->GetHealth()/p2->GetMaxHealth()) < ((float)p1->GetHealth()/p1->GetMaxHealth()) )
+									{									
+										m_pHeal = pEntity;
+									}
+								}					
+							}
+							else
+							{
+								m_pHeal = pEntity;
 							}
 						}
-						else
-							m_pHeal = pEntity;
 					}
 				}
 			}
-		}else if ( m_pHeal == pEntity )
+		}
+		else if ( m_pHeal == pEntity )
 			m_pHeal = NULL;
 	}
 	else if ( m_iClass == TF_CLASS_SPY )
@@ -387,6 +410,16 @@ void CBotFortress :: modThink ()
 {
 	//updateClass();
 
+	if ( needHealth() )
+		updateCondition(CONDITION_NEED_HEALTH);
+	else
+		removeCondition(CONDITION_NEED_HEALTH);
+
+	if ( needAmmo() )
+		updateCondition(CONDITION_NEED_AMMO);
+	else
+		removeCondition(CONDITION_NEED_AMMO);
+
 	if ( m_fCallMedic < engine->Time() )
 	{
 		if ( ((float)m_pPlayerInfo->GetHealth() / m_pPlayerInfo->GetMaxHealth()) < 0.5 )
@@ -410,6 +443,18 @@ void CBotFortress :: modThink ()
 				return;
 			}
 		}
+	}
+
+
+	// Check redundant tasks
+	if ( !hasSomeConditions(CONDITION_NEED_AMMO) && m_pSchedules->isCurrentSchedule(SCHED_TF2_GET_AMMO) )
+	{
+		m_pSchedules->removeSchedule(SCHED_TF2_GET_AMMO);
+	}
+
+	if ( !hasSomeConditions(CONDITION_NEED_HEALTH) && m_pSchedules->isCurrentSchedule(SCHED_TF2_GET_HEALTH) )
+	{
+		m_pSchedules->removeSchedule(SCHED_TF2_GET_HEALTH);
 	}
 
 	checkHealingValid();
@@ -613,7 +658,7 @@ void CBotTF2 :: taunt ()
 	{
 		helpers->ClientCommand(m_pEdict,"taunt");
 		m_fTauntTime = engine->Time() + randomFloat(40.0,100.0);
-		m_fTaunting = engine->Time() + 4.0;
+		m_fTaunting = engine->Time() + 5.0;
 	}
 }
 
@@ -917,16 +962,28 @@ void CBotTF2 :: callMedic ()
 
 void CBotTF2 :: modThink ()
 {
-	bool bNeedHealth = needHealth();
-	bool bNeedAmmo = needAmmo();
+	bool bNeedHealth = hasSomeConditions(CONDITION_NEED_HEALTH);
+	bool bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
 	// mod specific think code here
 	CBotFortress :: modThink();
+
+	if ( getClass() == TF_CLASS_HWGUY )
+	{
+		if ( m_pButtons->holdingButton(IN_ATTACK) || m_pButtons->holdingButton(IN_ATTACK2) )
+		{
+			if ( m_pButtons->holdingButton(IN_JUMP) )
+				m_pButtons->letGo(IN_JUMP);
+		}
+	}
 
 	if ( getClass() == TF_CLASS_ENGINEER )
 		checkBuildingsValid();
 
 	if ( m_fTaunting > engine->Time() )
-		stopMoving(5);
+	{
+		m_pButtons->letGoAllButtons(true);
+		stopMoving(10);
+	}
 
 	if ( m_fDoubleJumpTime && (m_fDoubleJumpTime < engine->Time()) )
 	{
@@ -950,7 +1007,7 @@ void CBotTF2 :: modThink ()
 				m_fSpyDisguiseTime = engine->Time() + 5.0f;
 			}
 
-			if ( !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict)  )
+			if ( !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict)  )
 			{
 				if (m_fSpyCloakTime < engine->Time())
 				{
@@ -958,9 +1015,9 @@ void CBotTF2 :: modThink ()
 
 					secondaryAttack();
 				}
-
 			}
-			else if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			// uncloak
+			else if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 			{
 				secondaryAttack();
 			}
@@ -992,12 +1049,12 @@ void CBotTF2 :: modThink ()
 			}
 			
 		}
-		else if ( bNeedHealth && m_pHealthkit && !m_pSchedules->isCurrentSchedule(SCHED_PICKUP) )
+		else if ( bNeedHealth && m_pHealthkit && !m_pSchedules->isCurrentSchedule(SCHED_TF2_GET_HEALTH) )
 		{
 			if ( fabs(CBotGlobals::entityOrigin(m_pHealthkit).z - getOrigin().z) < BOT_JUMP_HEIGHT )
 			{
-				m_pSchedules->removeSchedule(SCHED_PICKUP);
-				m_pSchedules->addFront(new CBotGotoOriginSched(m_pHealthkit));
+				m_pSchedules->removeSchedule(SCHED_TF2_GET_HEALTH);
+				m_pSchedules->addFront(new CBotTF2GetHealthSched(CBotGlobals::entityOrigin(m_pHealthkit)));
 
 				m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 
@@ -1009,8 +1066,8 @@ void CBotTF2 :: modThink ()
 		{
 			if ( fabs(CBotGlobals::entityOrigin(m_pAmmo).z - getOrigin().z) < BOT_JUMP_HEIGHT )
 			{
-				m_pSchedules->removeSchedule(SCHED_PICKUP);
-				m_pSchedules->addFront(new CBotPickupSched(m_pAmmo));
+				m_pSchedules->removeSchedule(SCHED_TF2_GET_AMMO);
+				m_pSchedules->addFront(new CBotTF2GetAmmoSched(CBotGlobals::entityOrigin(m_pAmmo)));
 
 				m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 
@@ -1036,6 +1093,18 @@ bool CBotFortress :: canAvoid ( edict_t *pEntity )
 		return false;
 	if ( m_pLastEnemy == pEntity )
 		return false;
+	if ( pEntity == m_pTeleEntrance )
+		return false;
+	if ( pEntity == m_pNearestDisp )
+		return false;
+	if ( pEntity == m_pHealthkit )
+		return false;
+	if ( pEntity == m_pAmmo )
+		return false;
+	if ( pEntity == m_pSentryGun )
+		return false;
+	if ( pEntity == m_pDispenser )
+		return false;
 
 	index = ENTINDEX(pEntity);
 
@@ -1046,7 +1115,7 @@ bool CBotFortress :: canAvoid ( edict_t *pEntity )
 
 	distance = distanceFrom(vAvoidOrigin);
 
-	if ( ( distance > 1 ) && ( distance < 200 ) && (fabs(getOrigin().z - vAvoidOrigin.z) < 64) )
+	if ( ( distance > 1 ) && ( distance < 200 ) && (vAvoidOrigin.z >= getOrigin().z) && (fabs(getOrigin().z - vAvoidOrigin.z) < 64) )
 	{
 		if ( index <= gpGlobals->maxClients )
 			return isEnemy(pEntity,false);
@@ -1123,6 +1192,55 @@ int CBotFortress :: getSpyDisguiseClass ( int iTeam )
 	return m_classes.Random();
 }
 
+
+
+// Preconditions :  Current weapon is Medigun
+//					pPlayer is not NULL
+//
+bool CBotTF2 :: healPlayer ( edict_t *pPlayer )
+{
+	CBotWeapon *pWeap = getCurrentWeapon();
+
+	Vector vOrigin = CBotGlobals::entityOrigin(m_pHeal);
+	
+	if ( !wantToHeal(m_pHeal) )
+		return false;
+
+	if ( distanceFrom(vOrigin) > 100 )
+	{
+		setMoveTo(vOrigin,3);
+	}
+	else
+	{
+		stopMoving();
+	}
+
+	lookAtEdict(m_pHeal);
+	setLookAtTask(LOOK_EDICT,2);
+	// unselect weapon
+	//pBot->selectWeapon(0);
+
+	if ( !CClassInterface::getMedigunHealing(INDEXENT(pWeap->getWeaponIndex())) )
+		primaryAttack(true);
+	//else
+	//	m_pHeal = CClassInterface::getMedigunTarget(INDEXENT(pWeap->getWeaponIndex()));
+
+	// hack
+	m_bLookedForEnemyLast = false;
+	m_pLastEnemy = m_pHeal;
+
+	if ( getEnemy() )
+	{
+		if ( randomInt(0,100) > 80 )
+		{
+			// uber if ready
+			secondaryAttack();
+		}
+	}
+
+	return true;
+}
+
 void CBotTF2 :: getTasks ( unsigned int iIgnore )
 {
 	static TF_Class iClass;
@@ -1189,8 +1307,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	iClass = getClass();
 
-	bNeedAmmo = needAmmo();
-	bNeedHealth = needHealth();
+	bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
+	bNeedHealth = hasSomeConditions(CONDITION_NEED_HEALTH);
 
 	pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH));
 	iMetal = pWeapon->getAmmo(this);
@@ -1218,7 +1336,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( iClass == TF_CLASS_ENGINEER )
 		checkBuildingsValid();
 
-	utils.addUtility(CBotUtility(BOT_UTIL_CAPTURE_FLAG,bHasFlag,0.95));
+	utils.addUtility(CBotUtility(BOT_UTIL_CAPTURE_FLAG,CTeamFortress2Mod::isMapType(TF_MAP_CTF) && bHasFlag,0.95));
 	utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && (iClass==TF_CLASS_ENGINEER) && !m_pSentryGun && (iMetal>=130),0.9));
 	utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && (iClass==TF_CLASS_ENGINEER) && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
 	utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag && (iClass==TF_CLASS_ENGINEER) && m_pSentryGun && (iMetal>=200) && (CTeamFortress2Mod::getSentryLevel(m_pSentryGun)<3),0.9));
@@ -1230,10 +1348,13 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), 0.9));
 	utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95));
-	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, !bHasFlag && CTeamFortress2Mod::isMapType(TF_MAP_CTF), 0.6));
+	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && CTeamFortress2Mod::isMapType(TF_MAP_CTF), 0.6));
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,fResupplyDist/fAmmoDist));
+
+	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP),randomFloat(0.6,1.0)));
+	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)&&m_iClass!=TF_CLASS_SCOUT,randomFloat(0.6,1.0)));
 
 	//CTeamFortress2Mod::isMapType(TF_MAP_CART);
 	
@@ -1259,8 +1380,13 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 		switch ( id )
 		{
+		case BOT_UTIL_ATTACK_POINT:
+			//CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal());
+			break;
+		case BOT_UTIL_DEFEND_POINT:
+			break;
 		case BOT_UTIL_CAPTURE_FLAG:
-			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam()));
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam());
 
 			if ( pWaypoint )
 			{
@@ -1269,7 +1395,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			}
 			break;
 		case BOT_UTIL_BUILDSENTRY:
-			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam()));
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam());
 
 			if ( pWaypoint )
 			{
@@ -1324,7 +1450,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 			return true;
 		case BOT_UTIL_SNIPE:
-			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam()));
+			pWaypoint =CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam());
 
 			if ( pWaypoint )
 			{
@@ -1342,7 +1468,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			}
 			break;
 		case BOT_UTIL_GETFLAG:
-			pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_FLAG,getTeam()));
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_FLAG,getTeam());
 
 			if ( pWaypoint )
 			{
@@ -1424,6 +1550,36 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	}
 	else
 		primaryAttack();
+
+	return true;
+}
+
+bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
+{
+	Vector vOrigin = CBotGlobals::entityOrigin(pBuilding);
+
+	CBotWeapon *pWeapon = getCurrentWeapon();
+
+	if ( !pWeapon )
+		return false;
+	else if ( pWeapon->getID() != TF2_WEAPON_WRENCH )
+	{
+		if ( !select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH)) )
+			return false;
+	}
+	else if ( distanceFrom(vOrigin) > 100 )
+	{
+		setMoveTo(vOrigin,3);			
+	}
+	else
+	{
+		primaryAttack();
+	}
+
+	lookAtEdict(pBuilding);
+	m_fLookSetTime = 0;
+	setLookAtTask(LOOK_EDICT,3);
+	m_fLookSetTime = engine->Time() + randomFloat(3.0,8.0);
 
 	return true;
 }
@@ -1567,7 +1723,6 @@ bool CBotFF :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 	return true;	
 }
-
 
 // --------------------------------------------------------------------------
 // Hackathon tiem

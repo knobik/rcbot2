@@ -289,6 +289,9 @@ public:
 
 	static inline int getWaypointIndex ( CWaypoint *pWpt )
 	{
+		if ( pWpt == NULL )
+			return -1;
+
 		return ((int)pWpt - (int)m_theWaypoints)/sizeof(CWaypoint);
 	}
 
@@ -337,7 +340,7 @@ public:
 	static int getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam,float *fReturnDist =NULL, unsigned char *failedwpts = NULL );
 
 	static int nearestWaypointGoal ( int iFlags, Vector &origin, float fDist, int iTeam = 0 );
-	static int randomWaypointGoal ( int iFlags, int iTeam = 0 );
+	static CWaypoint *randomWaypointGoal ( int iFlags, int iTeam = 0, int iArea = 0 );
 	static int randomFlaggedWaypoint (int iTeam = 0);
 
 	static CWaypointVisibilityTable *getVisiblity () { return m_pVisibilityTable; }

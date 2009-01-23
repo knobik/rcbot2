@@ -62,13 +62,18 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	m_pHeal = ((CBotFortress*)pBot)->getHealingEntity();
 
 	if ( !m_pHeal )
+	{
+		pBot->getNavigator()->rollBackPosition();
 		fail();
+	}
 	else if ( !CBotGlobals::entityIsValid(m_pHeal) || !CBotGlobals::entityIsAlive(m_pHeal) )
 	{
+		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
 	else if ( pBot->getCurrentWeapon() == NULL )
 	{
+		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
 	else if ( pBot->getCurrentWeapon()->getWeaponInfo()->getID() != TF2_WEAPON_MEDIGUN )
@@ -77,31 +82,17 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else if ( pBot->isVisible(m_pHeal) )
 	{
-		Vector vOrigin = CBotGlobals::entityOrigin(m_pHeal);
-
-		if ( pBot->distanceFrom(vOrigin) > 200 )
+		if ( !((CBotFortress*)pBot)->healPlayer(m_pHeal) )
 		{
-			pBot->setMoveTo(vOrigin,2);
+			pBot->getNavigator()->rollBackPosition();
+			fail();
 		}
-		else
-			pBot->stopMoving();
-
-		pBot->lookAtEdict(m_pHeal);
-		pBot->setLookAtTask(LOOK_EDICT,2);
-		// unselect weapon
-		pBot->selectWeapon(0);
-
-		pBot->primaryAttack(true);
-
-		if ( pBot->hasEnemy() && pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
-		{
-			// uber if ready
-			pBot->secondaryAttack();
-		}
-
 	}
 	else
+	{
+		pBot->getNavigator()->rollBackPosition();
 		fail();
+	}
 }
 
 CBotTF2WaitHealthTask :: CBotTF2WaitHealthTask ( Vector vOrigin )
@@ -115,7 +106,7 @@ void CBotTF2WaitHealthTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !m_fWaitTime )
 		m_fWaitTime = engine->Time() + 40.0f;
 
-	 if ( !((CBotFortress*)pBot)->needHealth() )
+	 if ( !pBot->hasSomeConditions(CONDITION_NEED_HEALTH) )
 		complete();
 	 else if ( m_fWaitTime < engine->Time() )
 		 fail();
@@ -227,29 +218,8 @@ void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		complete();
 	else if ( CBotGlobals::entityIsValid(m_pBuilding) && CBotGlobals::entityIsAlive(m_pBuilding) )
 	{
-		Vector vOrigin = CBotGlobals::entityOrigin(m_pBuilding);
-
-		CBotWeapon *pWeapon = pBot->getCurrentWeapon();
-
-		if ( !pWeapon )
-			fail();
-		else if ( pWeapon->getID() != TF2_WEAPON_WRENCH )
-		{
-			if ( !pBot->select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH)) )
-				fail();
-		}
-		else if ( pBot->distanceFrom(vOrigin) > 100 )
-		{
-			pBot->setMoveTo(vOrigin,3);			
-		}
-		else
-		{
-			pBot->primaryAttack();
-		}
-
-		pBot->lookAtEdict(m_pBuilding);
-		pBot->setLookAtTask(LOOK_EDICT,3);
-		
+		if ( !((CBotFortress*)pBot)->upgradeBuilding(m_pBuilding) )
+			fail();		
 	}
 	else
 		fail();
@@ -339,7 +309,7 @@ void CBotTF2WaitAmmoTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !m_fWaitTime )
 		m_fWaitTime = engine->Time() + randomFloat(10.0f,15.0f);
 
-	if ( !((CBotFortress*)pBot)->needAmmo() )
+	if ( !pBot->hasSomeConditions(CONDITION_NEED_AMMO) )
 	{
 		complete();
 	}
@@ -731,11 +701,10 @@ void CMoveToTask :: debugString ( char *string )
 
 CMoveToTask :: CMoveToTask ( edict_t *pEdict )
 {
-		m_pEdict = pEdict;
-		m_vVector = CBotGlobals::entityOrigin(m_pEdict);
+	m_pEdict = pEdict;
+	m_vVector = CBotGlobals::entityOrigin(m_pEdict);
 
-		//setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
-	
+	//setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
 }
 
 void CMoveToTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
@@ -813,10 +782,10 @@ void CBotTFRocketJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		pBot->setLookAtTask(LOOK_GROUND,4);
 
-		if ( (pBot->getSpeed() > 100) && (CBotGlobals::playerAngles(pBot->getEdict()).x > 80.0f )  )
+		if ( (pBot->getSpeed() > 100) && (CBotGlobals::playerAngles(pBot->getEdict()).x > 84.0f )  )
 		{
 			pBot->jump();
-			pBot->primaryAttack();
+			pBot->tapButton(IN_ATTACK);
 			complete();
 		}
 		else if ( m_fTime < engine->Time() )

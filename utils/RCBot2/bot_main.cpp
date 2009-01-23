@@ -792,6 +792,50 @@ int CClassInterface :: getEffects ( edict_t *edict )
 	return *(int *)((char *)pEntity + offset);
 }
 
+bool CClassInterface :: getMedigunHealing ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_bHealing","CWeaponMedigun");
+	
+	if (!offset)
+		return 0;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return 0;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return *(bool *)((char *)pEntity + offset);
+}
+
+edict_t *CClassInterface :: getMedigunTarget ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_hHealingTarget","CWeaponMedigun");
+	
+	if (!offset)
+		return 0;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return NULL;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return (edict_t*)(*(int*)((char *)pEntity + offset));
+}
+
 int CClassInterface :: getFlags ( edict_t *edict )
 {
 	static unsigned int offset = 0;

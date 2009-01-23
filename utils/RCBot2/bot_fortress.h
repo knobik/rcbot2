@@ -130,6 +130,8 @@ public:
 
 	virtual void modThink ();
 
+	bool wantToHeal ( edict_t *pPlayer );
+
 	virtual bool wantToFollowEnemy ();
 
 	virtual void checkBuildingsValid () {};
@@ -148,6 +150,9 @@ public:
 
 	virtual void engiBuildSuccess ( eEngiBuild iObject ) {};
 
+	virtual bool healPlayer ( edict_t *pPlayer ) { return false; }
+	virtual bool upgradeBuilding ( edict_t *pBuilding ) {return false;}
+
 	virtual bool isCloaked () { return false; }
 	virtual bool isDisguised () { return false; }
 
@@ -158,8 +163,6 @@ public:
 	virtual void setClass ( TF_Class _class );
 
 	inline edict_t *seeFlag ( bool reset = false ) { if ( reset ) { m_pFlag = NULL; } return m_pFlag; }
-
-	void setLookAtTask ( eLookTask lookTask );
 
 	virtual bool canAvoid ( edict_t *pEntity );
 
@@ -259,7 +262,14 @@ class CBotTF2 : public CBotFortress
 {
 public:
 
-	CBotTF2() { CBotFortress(); }
+	CBotTF2() 
+	{ 
+		CBotFortress(); 
+		m_fDoubleJumpTime = 0;
+		m_fSpySapTime = 0;
+		m_iCurrentDefendArea = 0;
+		m_iCurrentAttackArea = 0;
+	}
 
 	void foundSpy (edict_t *pEdict);
 
@@ -318,6 +328,11 @@ public:
 	TF_Class getClass ();
 
 	void updateClass ();
+
+	bool healPlayer ( edict_t *pPlayer );
+	
+
+	bool upgradeBuilding ( edict_t *pBuilding );
 
 	void setup ();
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );

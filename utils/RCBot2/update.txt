@@ -1,3 +1,14 @@
+0.4
+TF2 updates
+
+- fixed bots not looking at enemies shooting them from behind
+- fixed heavys from jumping whilst shooting
+- fixed taunting bots from moving and shooting 
+- helped bots not shooting correctly & not seeing enemies on ledges above them
+- new waypoint version (For use with CP/PL maps / not supported yet)
+- crash bug fix
+
+0.3 
 TF2 updates
 
 - Bots use waypoints for sniper/sentry facing positions

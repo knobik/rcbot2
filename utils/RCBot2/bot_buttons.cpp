@@ -62,6 +62,8 @@ CBotButtons :: CBotButtons()
 	add(new CBotButton(IN_DUCK));
 	add(new CBotButton(IN_JUMP));
 	add(new CBotButton(IN_RELOAD));
+
+	m_bLetGoAll = false;
 }
 
 void CBotButtons :: holdButton ( int iButtonId, float fFrom, float fFor, float fLetGoTime )
@@ -76,22 +78,41 @@ void CBotButtons :: holdButton ( int iButtonId, float fFrom, float fFor, float f
 	}
 }
 
-int CBotButtons :: getBitMask ()
+void CBotButtons :: letGo (int iButtonId)
 {
-	int iBitMask = 0;
-
-	float fTime = engine->Time();
-
 	for (unsigned int i = 0; i < m_theButtons.size(); i ++ )
 	{			
-		if ( m_theButtons[i]->held(fTime) )
+		if ( m_theButtons[i]->getID() == iButtonId )
 		{
-			m_theButtons[i]->unTap();
-			iBitMask |= m_theButtons[i]->getID();
+			m_theButtons[i]->letGo();
+			return;
 		}
 	}
+}
 
-	return iBitMask;
+int CBotButtons :: getBitMask ()
+{
+	if ( m_bLetGoAll )
+		return 0;
+	else
+	{
+
+		int iBitMask = 0;
+
+		float fTime = engine->Time();
+
+		for (unsigned int i = 0; i < m_theButtons.size(); i ++ )
+		{			
+			if ( m_theButtons[i]->held(fTime) )
+			{
+				m_theButtons[i]->unTap();
+				iBitMask |= m_theButtons[i]->getID();
+			}
+		}
+
+		return iBitMask;
+
+	}
 }
 
 bool CBotButtons :: canPressButton ( int iButtonId )

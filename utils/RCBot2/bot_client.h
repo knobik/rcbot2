@@ -51,6 +51,8 @@ public:
 
 	Vector getOrigin ();
 
+	inline float getSpeed () { return m_fSpeed; }
+
 	void setEdict ( edict_t *pPlayer );
 
 	edict_t *getPlayer () { return m_pPlayer; }
@@ -127,6 +129,7 @@ private:
 
 	CBot *m_pDebugBot;
 
+	float m_fSpeed;
 	// TODO: tooltips queue
 	// vector<CToolTip*> tooltips
 };

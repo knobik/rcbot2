@@ -91,6 +91,8 @@ public:
 	static int getTF2Class ( edict_t *edict );
 	static float getTF2SpyCloakMeter ( edict_t *edict );
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health );
+	static bool getMedigunHealing ( edict_t *edict );
+	static edict_t *getMedigunTarget ( edict_t *edict );
 };
 
 class MyEHandle 
