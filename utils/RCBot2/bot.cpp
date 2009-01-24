@@ -543,6 +543,8 @@ void CBot :: think ()
 	modThink();
 
 	m_iPrevHealth = m_pPlayerInfo->GetHealth();
+
+	m_bInitAlive = false;
 }
 
 CBot :: CBot()
@@ -741,6 +743,8 @@ void CBot :: spawnInit ()
 	m_iConditions = 0;
 	m_fStrafeTime = 0;
 
+	m_bInitAlive = true;
+
 	m_vMoveTo = Vector(0,0,0);
 	m_bMoveToIsValid = false;
 	m_vLookAt = Vector(0,0,0);
@@ -766,6 +770,11 @@ bool CBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
 		return true;
 	}
 	return false;
+}
+
+float CBot :: getEnemyFactor ( edict_t *pEnemy )
+{
+	return distanceFrom(pEnemy);
 }
 
 void CBot :: touchedWpt ( CWaypoint *pWaypoint )
@@ -1129,10 +1138,15 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 {
 	Vector v_right;
 	QAngle angles;
-	Vector v_max;
+	float fDistFactor;
+	Vector v_max,v_min;
+	Vector v_org;
+	float fov = 90.0f;
 	
 	if ( m_fNextUpdateAimVector > engine->Time() )
 		return m_vAimVector;	
+
+	fDistFactor = (distanceFrom(pEntity)/2048.0f)*(fov/90.0f);
 
 	angles = eyeAngles();
 	// to the right
@@ -1145,9 +1159,15 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
     v_right = v_right/VectorDistance(v_right); // normalize
 	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.1f,0.4f);
 
-	//v_max = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
+	v_max = pEntity->GetCollideable()->OBBMaxs();
+	v_min = pEntity->GetCollideable()->OBBMins();
+	v_org = CBotGlobals::entityOrigin(pEntity);
 
-	m_vAimVector = CBotGlobals::entityOrigin(pEntity) + Vector(0,0,36.0f) + Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16));
+	// add randomised offset
+	m_vAimVector = v_org + (fDistFactor*Vector(randomFloat(v_min.x,v_max.x),randomFloat(v_min.y,v_max.y),randomFloat(v_min.z,v_max.z))) + (fDistFactor*Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16)));
+
+	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
+		m_vAimVector = m_vAimVector + Vector(0,0,36);
 
 	return m_vAimVector;
 }
@@ -1213,7 +1233,9 @@ void CBot :: getLookAtVector ()
 		}
 		break;
 	case LOOK_GROUND:
-		setLookAt(getOrigin()-Vector(0,0,64));
+		{
+			setLookAt(getOrigin()-Vector(0,0,64));
+		}
 		break;
 	case LOOK_LAST_ENEMY:
 		{
@@ -1233,7 +1255,13 @@ void CBot :: getLookAtVector ()
 		break;
 	case LOOK_WAYPOINT:
 		{
-			setLookAt(Vector(m_vMoveTo.x,m_vMoveTo.y,m_vMoveTo.z + 32.0f));
+			Vector vLook;
+			
+			if ( m_pNavigator->getNextRoutePoint(&vLook) )
+				setLookAt(Vector(vLook.x,vLook.y,vLook.z + 36.0f));				
+			else
+				setLookAt(Vector(m_vMoveTo.x,m_vMoveTo.y,m_vMoveTo.z + 36.0f));
+				
 		}
 		break;
 	case LOOK_WAYPOINT_AIM:

@@ -5,8 +5,14 @@ TF2 updates
 - fixed heavys from jumping whilst shooting
 - fixed taunting bots from moving and shooting 
 - helped bots not shooting correctly & not seeing enemies on ledges above them
+- medics healing
+- medics ubercharging
 - new waypoint version (For use with CP/PL maps / not supported yet)
-- crash bug fix
+	- added waypoint radius'
+	- added waypoint areas
+- possible crash bug fix
+- improved snipers
+- bots now look ahead of where they want to go (gives some more realism)
 
 0.3 
 TF2 updates

@@ -161,7 +161,7 @@ bool CBotGlobals :: isVisible ( edict_t *pPlayer, Vector vSrc, Vector vDest)
 {
 	CTraceFilterWorldAndPropsOnly filter;
 
-	traceLine (vSrc,vDest,MASK_SOLID_BRUSHONLY,&filter);
+	traceLine (vSrc,vDest,MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);
 
 	return (traceVisible(NULL));
 }
@@ -172,7 +172,7 @@ bool CBotGlobals :: isVisible ( edict_t *pPlayer, Vector vSrc, edict_t *pDest )
 
 	CTraceFilterWorldAndPropsOnly filter;
 
-	traceLine (vSrc,entityOrigin(pDest),MASK_SOLID_BRUSHONLY,&filter);
+	traceLine (vSrc,entityOrigin(pDest),MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);
 
 	return (traceVisible(pDest));
 }
@@ -181,7 +181,7 @@ bool CBotGlobals :: isVisible (Vector vSrc, Vector vDest)
 {
 	CTraceFilterWorldAndPropsOnly filter;
 
-	traceLine (vSrc,vDest,MASK_SOLID_BRUSHONLY,&filter);
+	traceLine (vSrc,vDest,MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);
 
 	return traceVisible(NULL);
 }

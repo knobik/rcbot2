@@ -75,7 +75,7 @@ void CFindEnemyFunc :: execute ( edict_t *pEntity )
 
 float CFindEnemyFunc :: getFactor ( edict_t *pEntity )
 {
-	return m_pBot->distanceFrom(pEntity);
+	return m_pBot->getEnemyFactor(pEntity);
 }
 
 void CFindEnemyFunc :: setOldEnemy ( edict_t *pEntity )

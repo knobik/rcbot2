@@ -92,7 +92,7 @@ public:
 	static float getTF2SpyCloakMeter ( edict_t *edict );
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health );
 	static bool getMedigunHealing ( edict_t *edict );
-	static edict_t *getMedigunTarget ( edict_t *edict );
+	static int getMedigunTarget ( edict_t *edict );
 };
 
 class MyEHandle 
@@ -417,7 +417,7 @@ public:
 
 	inline bool currentEnemy ( edict_t *pEntity ) { return m_pEnemy == pEntity; }
 
-	Vector getAimVector ( edict_t *pEntity );
+	virtual Vector getAimVector ( edict_t *pEntity );
 
 	inline Vector *getGoalOrigin ()
 	{
@@ -479,6 +479,8 @@ public:
 
 	CBotWeapons *getWeapons () { return m_pWeapons; }
 
+	virtual float getEnemyFactor ( edict_t *pEnemy );
+
 	virtual void checkCanPickup ( edict_t *pPickup );
 
 	virtual void touchedWpt ( CWaypoint *pWaypoint );
@@ -529,6 +531,7 @@ protected:
 	float m_fNextThink;
 
 	
+	bool m_bInitAlive;
 	bool m_bThinkStuck;
 
 	int m_iMovePriority;

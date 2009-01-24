@@ -472,6 +472,22 @@ Vector CWaypointNavigator :: getNextPoint ()
 	return CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
 }
 
+bool CWaypointNavigator :: getNextRoutePoint ( Vector *point )
+{
+	if ( !m_currentRoute.IsEmpty() )
+	{
+		int *head = m_currentRoute.GetHeadInfoPointer();
+
+		if ( head && (*head!= -1))
+		{
+			*point = CWaypoints::getWaypoint(*head)->getOrigin();
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool CWaypointNavigator :: canGetTo ( Vector vOrigin )
 {
 	int iwpt = CWaypointLocations::NearestWaypoint(vOrigin,100,-1,true,false,true,NULL,false,m_pBot->getTeam());
@@ -1320,6 +1336,10 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_RESUPPLY,"resupply","bot can always get ammo and health here",WptColor(255,100,255)));
 	addType(new CWaypointType(W_FL_SENTRY,"sentry","engineer bot can build here",WptColor(255,0,0)));
 	addType(new CWaypointType(W_FL_DOUBLEJUMP,"doublejump","scout can double jump here",WptColor(10,10,100)));
+
+	addType(new CWaypointType(W_FL_TELE_ENTRANCE,"teleentrance","engineer bot can build tele entrance here",WptColor(50,50,150)));
+	addType(new CWaypointType(W_FL_TELE_EXIT,"teleexit","engineer bot can build tele exit here",WptColor(100,100,255)));
+	
 }
 
 void CWaypointTypes :: freeMemory ()
@@ -1336,7 +1356,7 @@ void CWaypointTypes :: freeMemory ()
 void CWaypointTypes:: printInfo ( CWaypoint *pWpt, edict_t *pPrintTo )
 {
 	char szMessage[1024];
-	Q_snprintf(szMessage,1024,"Waypoint ID %d (Area = %d)[",CWaypoints::getWaypointIndex(pWpt),pWpt->getArea());	
+	Q_snprintf(szMessage,1024,"Waypoint ID %d (Area = %d | Radius = %0.1f)[",CWaypoints::getWaypointIndex(pWpt),pWpt->getArea(),pWpt->getRadius());	
 
 	if ( pWpt->getFlags() )
 	{

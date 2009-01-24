@@ -110,7 +110,11 @@ public:
 
 	CBotFortress();
 
+	virtual float getEnemyFactor ( edict_t *pEnemy ) { return CBot::getEnemyFactor(pEnemy); }
+
 	virtual void checkDependantEntities();
+
+	virtual Vector getAimVector ( edict_t *pEntity ) { return CBot::getAimVector(pEntity); }
 
 	virtual void touchedWpt ( CWaypoint *pWaypoint ) { CBot::touchedWpt(pWaypoint); }
 
@@ -221,6 +225,8 @@ protected:
 	float m_fTauntTime;
 	float m_fTaunting;
 
+	bool m_bEntranceVectorValid;
+
 	edict_t *m_pHeal;
 	edict_t *m_pSentryGun;
 	edict_t *m_pDispenser;
@@ -271,6 +277,10 @@ public:
 		m_iCurrentAttackArea = 0;
 	}
 
+	bool rocketJump();
+
+	float getEnemyFactor ( edict_t *pEnemy );
+
 	void foundSpy (edict_t *pEdict);
 
 	void touchedWpt ( CWaypoint *pWaypoint );
@@ -280,6 +290,8 @@ public:
 	void engiBuildSuccess ( eEngiBuild iObject );
 
 	void spawnInit ();
+
+	Vector getAimVector ( edict_t *pEntity );
 
 	void modThink ();
 

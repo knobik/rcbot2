@@ -114,6 +114,8 @@ public:
 	static const int W_FL_RESUPPLY = 8192;
 	static const int W_FL_SENTRY = 16384;
 	static const int W_FL_DOUBLEJUMP = 32768;
+	static const int W_FL_TELE_ENTRANCE = 65536;
+	static const int W_FL_TELE_EXIT = 131072;
 
 	static void setup ();
 

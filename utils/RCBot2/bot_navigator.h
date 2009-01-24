@@ -66,6 +66,8 @@ public:
 
 	virtual void failMove () = 0;
 
+	virtual bool getNextRoutePoint ( Vector *vPoint ) = 0;
+
 	inline Vector getPreviousPoint () { return m_vPreviousPoint; }
 
 	virtual bool hasNextPoint () = 0;
@@ -173,6 +175,8 @@ public:
 	void init ();
 
 	bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false  );
+
+	bool getNextRoutePoint ( Vector *vPoint );
 
 	Vector getNextPoint ();
 

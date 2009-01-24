@@ -172,6 +172,7 @@ void CWaypointLocations :: AutoPathInBucket ( edict_t *pPlayer, int i, int j, in
 	//dataStack <int> tempStack = m_iLocations[i][j][k];
 	int iWpt;
 	CWaypoint *pOtherWpt;
+	extern ConVar bot_waypointpathdist;
 
 	CWaypoint *pWpt = CWaypoints::getWaypoint(iWptFrom);
 	Vector vWptOrigin = pWpt->getOrigin();
@@ -201,16 +202,19 @@ void CWaypointLocations :: AutoPathInBucket ( edict_t *pPlayer, int i, int j, in
 	//	if ( fabs(vOtherWptOrigin.z-vWptOrigin.z) > 128 )
 		//	continue;
 
-		if ( CBotGlobals::isVisible(vWptOrigin,vOtherWptOrigin) )
+		if ( (vWptOrigin-vOtherWptOrigin).Length() <= bot_waypointpathdist.GetFloat() )
 		{
-			if ( CBotGlobals::walkableFromTo(pPlayer, vWptOrigin,vOtherWptOrigin) )
+			if ( CBotGlobals::isVisible(vWptOrigin,vOtherWptOrigin) )
 			{
-				pWpt->addPathTo(iWpt);			
-			}
+				if ( CBotGlobals::walkableFromTo(pPlayer, vWptOrigin,vOtherWptOrigin) )
+				{
+					pWpt->addPathTo(iWpt);			
+				}
 
-			if ( CBotGlobals::walkableFromTo(pPlayer,vOtherWptOrigin,vWptOrigin) )
-			{
-				pOtherWpt->addPathTo(iWptFrom);		
+				if ( CBotGlobals::walkableFromTo(pPlayer,vOtherWptOrigin,vWptOrigin) )
+				{
+					pOtherWpt->addPathTo(iWptFrom);		
+				}
 			}
 		}
 	}

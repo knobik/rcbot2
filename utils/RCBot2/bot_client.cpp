@@ -74,7 +74,8 @@ void CClient :: think ()
 	if ( m_fUpdatePos < engine->Time() )
 	{
 		m_fUpdatePos = engine->Time() + 1.0f;
-		m_fSpeed = (m_vLastPos - getOrigin()).Length();
+		m_vVelocity = (m_vLastPos - getOrigin());
+		m_fSpeed = m_vVelocity.Length();
 		m_vLastPos = getOrigin();
 	}
 
@@ -225,6 +226,8 @@ void CClients :: clientThink ()
 {
 	static CClient *pClient;
 
+	edict_t *pPlayer;
+
 	m_bClientsDebugging = false;
 
 	for ( int i = 0; i < MAX_PLAYERS; i ++ )
@@ -235,8 +238,11 @@ void CClients :: clientThink ()
 			continue;
 		if ( !m_bClientsDebugging && pClient->isDebugging() )
 			m_bClientsDebugging = true;
+
+		pPlayer = pClient->getPlayer();
 	
-		pClient->think();
+		if ( pPlayer && pPlayer->GetIServerEntity() )
+			pClient->think();
 	}
 }
 

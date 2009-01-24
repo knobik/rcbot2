@@ -777,17 +777,11 @@ void CBotTFRocketJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( !m_fTime )
 		{
-			m_fTime = engine->Time()+randomFloat(2.5f,4.5f);
+			m_fTime = engine->Time()+randomFloat(4.0f,5.0f);
 		}
 
-		pBot->setLookAtTask(LOOK_GROUND,4);
-
-		if ( (pBot->getSpeed() > 100) && (CBotGlobals::playerAngles(pBot->getEdict()).x > 84.0f )  )
-		{
-			pBot->jump();
-			pBot->tapButton(IN_ATTACK);
+		if ( ((CBotTF2*)pBot)->rocketJump() )
 			complete();
-		}
 		else if ( m_fTime < engine->Time() )
 		{
 			fail();
@@ -864,6 +858,9 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( !pBot->isTF() || (((CBotFortress*)pBot)->getClass() != TF_CLASS_SNIPER) || (pBot->getHealthPercent() < 0.2) )
 	{
+		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+			pBot->secondaryAttack();
+
 		fail();
 	}
 	else if (pWeapon->getID() != TF2_WEAPON_SNIPERRIFLE )
@@ -875,21 +872,27 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else if ( pBotWeapon->getAmmo(pBot) < 1 )
 	{
-		pBot->secondaryAttack();
+		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+			pBot->secondaryAttack();
+
 		complete();
 	}
 	else
 	{
-		//if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
-		//	pBot->secondaryAttack();
-
 		pBot->stopMoving(2);
 		pBot->setLookAtTask(LOOK_SNIPE);
 
 		if (m_fTime<engine->Time() )
 		{
-			pBot->secondaryAttack();
+			if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+				pBot->secondaryAttack();
+
 			complete();
+		}
+		else
+		{
+			if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+				pBot->secondaryAttack();
 		}
 	}
 }

@@ -80,6 +80,7 @@ ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
 ConVar bot_scoutdj( "rcbot_scoutdj", "0.32", 0, "time scout uses to double jump" );
 ConVar bot_anglespeed( "rcbot_anglespeed", "12.0", 0, "speed that bots turn" );
 ConVar bot_stop( "rcbot_stop", "0", 0, "Make bots stop thinking!");
+ConVar bot_waypointpathdist("rcbot_wpt_pathdist","512",0,"Length for waypoints to automatically add paths at");
 
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
@@ -814,7 +815,7 @@ bool CClassInterface :: getMedigunHealing ( edict_t *edict )
 	return *(bool *)((char *)pEntity + offset);
 }
 
-edict_t *CClassInterface :: getMedigunTarget ( edict_t *edict )
+int CClassInterface :: getMedigunTarget ( edict_t *edict )
 {
 	static unsigned int offset = 0;
  
@@ -833,7 +834,7 @@ edict_t *CClassInterface :: getMedigunTarget ( edict_t *edict )
  
 	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
 
-	return (edict_t*)(*(int*)((char *)pEntity + offset));
+	return *(int*)((char *)pEntity + offset);
 }
 
 int CClassInterface :: getFlags ( edict_t *edict )

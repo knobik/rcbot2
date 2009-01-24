@@ -88,6 +88,7 @@ CBotFortress :: CBotFortress()
 	m_pNearestEnemySentry = NULL;
 	m_pPrevSpy = NULL;
 	m_fSeeSpyTime = 0.0f;
+	m_bEntranceVectorValid = false;
 }
 
 void CBotFortress :: checkDependantEntities ()
@@ -458,6 +459,17 @@ void CBotFortress :: modThink ()
 	}
 
 	checkHealingValid();
+
+	if ( m_bInitAlive )
+	{
+		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_TELE_ENTRANCE,getOrigin(),4096,getTeam()));
+
+		if ( pWpt )
+		{
+			m_vTeleportEntrance = pWpt->getOrigin();// + Vector(randomFloat(-pWpt->getRadius(),pWpt->getRadius()),randomFloat(-pWpt->getRadius(),pWpt->getRadius()),0);
+			m_bEntranceVectorValid = true;
+		}
+	}
 }
 
 bool CBotFortress :: isTeleporterUseful ( edict_t *pTele )
@@ -792,6 +804,7 @@ edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding )
 			case ENGI_ENTRANCE :
 				m_pTeleEntrance = pBest;
 				m_vTeleportEntrance = CBotGlobals::entityOrigin(pBest);
+				m_bEntranceVectorValid = true;
 				break;
 			case ENGI_EXIT:
 				m_pTeleExit = pBest;
@@ -1200,6 +1213,7 @@ int CBotFortress :: getSpyDisguiseClass ( int iTeam )
 bool CBotTF2 :: healPlayer ( edict_t *pPlayer )
 {
 	CBotWeapon *pWeap = getCurrentWeapon();
+	IPlayerInfo *p;
 
 	Vector vOrigin = CBotGlobals::entityOrigin(m_pHeal);
 	
@@ -1227,18 +1241,25 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer )
 
 	// hack
 	m_bLookedForEnemyLast = false;
-	m_pLastEnemy = m_pHeal;
+	m_pLastEnemy = pPlayer;
 
-	if ( getEnemy() )
+	p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+	if ( ((((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth())<0.25) || ((((float)p->GetHealth())/p->GetMaxHealth())<0.25) )
 	{
-		if ( randomInt(0,100) > 80 )
+		if ( randomInt(0,100) > 50 )
 		{
 			// uber if ready
-			secondaryAttack();
+			m_pButtons->tap(IN_ATTACK2);
 		}
 	}
 
 	return true;
+}
+
+float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
+{
+	return distanceFrom(pEnemy);
 }
 
 void CBotTF2 :: getTasks ( unsigned int iIgnore )
@@ -1272,7 +1293,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			m_pSchedules->addFront(new CBotTF2HealSched());
 		}
 	}
-	else if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	else if ( ((m_iClass!=TF_CLASS_MEDIC)||(!m_pHeal)) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{		
 		if ( !m_pSchedules->isCurrentSchedule(SCHED_ATTACK) )
 		{
@@ -1339,6 +1360,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_CAPTURE_FLAG,CTeamFortress2Mod::isMapType(TF_MAP_CTF) && bHasFlag,0.95));
 	utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && (iClass==TF_CLASS_ENGINEER) && !m_pSentryGun && (iMetal>=130),0.9));
 	utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && (iClass==TF_CLASS_ENGINEER) && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
+	utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&(iClass==TF_CLASS_ENGINEER)&&!m_pTeleEntrance&&(iMetal>=125),1.0));
+	utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&(iClass==TF_CLASS_ENGINEER)&&!m_pTeleExit&&(iMetal>=125),0.7));
 	utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag && (iClass==TF_CLASS_ENGINEER) && m_pSentryGun && (iMetal>=200) && (CTeamFortress2Mod::getSentryLevel(m_pSentryGun)<3),0.9));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,(iClass==TF_CLASS_ENGINEER) && m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
@@ -1393,6 +1416,29 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
 				return true;
 			}
+			break;
+		case BOT_UTIL_BUILDTELENT:
+			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,150,-1,true,false,true,NULL,false,getTeam()));
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_ENTRANCE,m_vTeleportEntrance));
+
+				return true;
+			}
+			
+			break;
+		case BOT_UTIL_BUILDTELEXT:
+
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),0);//CTeamFortress2Mod::getArea());
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_EXIT,pWaypoint->getOrigin()));
+
+				return true;
+			}
+
 			break;
 		case BOT_UTIL_BUILDSENTRY:
 			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam());
@@ -1513,6 +1559,65 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 	}
 }
 
+Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
+{
+	Vector vAim = CBot::getAimVector(pEntity);
+	CBotWeapon *pWp = getCurrentWeapon();
+	float fDist = distanceFrom(pEntity);
+
+	if ( pWp )
+	{
+
+		if ( m_iClass == TF_CLASS_MEDIC )
+		{
+			if ( pWp->getID() == TF2_WEAPON_SYRINGEGUN )
+				vAim = vAim + Vector(0,0,sqrt(fDist)*2);
+		}
+		else if ( (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_DEMOMAN) )
+		{
+			switch ( pWp->getID() )
+			{
+			case TF2_WEAPON_ROCKETLAUNCHER:
+			{
+				vAim = vAim - Vector(0,0,randomFloat(16.0f,36.0f));
+			}
+			// fall through
+			case TF2_WEAPON_GRENADELAUNCHER:
+			{
+				CClient *pClient = CClients::get(pEntity);
+				Vector vVelocity;
+
+				if ( pClient )
+				{
+					vVelocity = pClient->getVelocity();
+					vAim = vAim + (vVelocity*randomFloat(0.4f,0.9f));
+				}
+			}
+			break;
+			}
+		}
+	}
+
+	return vAim;
+}
+
+bool CBotTF2 :: rocketJump()
+{
+	setLookAtTask(LOOK_GROUND,4);
+
+	if ( (getSpeed() > 100) && (CBotGlobals::playerAngles(m_pEdict).x > 84.0f )  )
+	{
+		m_pButtons->holdButton(IN_JUMP,0,0.2,0.1);
+		m_pButtons->holdButton(IN_ATTACK,0.1,0.2,0.1);
+
+		return true;
+	}
+
+	return false;
+}
+
+
+
 bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 {
 	if ( pWeapon )
@@ -1536,7 +1641,17 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 				return false;
 		}
 
-		if ( !bSecAttack )
+		if ( (m_iClass == TF_CLASS_SNIPER) && (pWeapon->getID() == TF2_WEAPON_SNIPERRIFLE) ) 
+		{
+			stopMoving();
+
+			if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
+				secondaryAttack();
+
+			if ( randomInt(0,100) > 98 )
+				primaryAttack();
+		}
+		else if ( !bSecAttack )
 		{
 			if ( pWeapon->mustHoldAttack() )
 				primaryAttack(true);
