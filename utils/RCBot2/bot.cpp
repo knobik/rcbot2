@@ -580,6 +580,7 @@ void CBot :: init (bool bVarInit)
 	m_pProfile = NULL;
 	m_szBotName[0] = 0;
 	m_fIdealMoveSpeed = 320;
+	m_fFov = 90.0f;
 
 	if ( bVarInit )
 		spawnInit();
@@ -1141,12 +1142,11 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	float fDistFactor;
 	Vector v_max,v_min;
 	Vector v_org;
-	float fov = 90.0f;
 	
 	if ( m_fNextUpdateAimVector > engine->Time() )
 		return m_vAimVector;	
 
-	fDistFactor = (distanceFrom(pEntity)/2048.0f)*(fov/90.0f);
+	fDistFactor = (distanceFrom(pEntity)/2048.0f)*(m_fFov/90.0f);
 
 	angles = eyeAngles();
 	// to the right
@@ -1229,7 +1229,8 @@ void CBot :: getLookAtVector ()
 	case LOOK_EDICT:
 		{
 			if ( m_pLookEdict )
-				setLookAt(CBotGlobals::entityOrigin(m_pLookEdict)+Vector(0,0,32));
+				setLookAt(getAimVector(m_pLookEdict));
+				//setLookAt(CBotGlobals::entityOrigin(m_pLookEdict)+Vector(0,0,32));
 		}
 		break;
 	case LOOK_GROUND:

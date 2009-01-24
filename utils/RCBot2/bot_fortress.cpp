@@ -803,8 +803,8 @@ edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding )
 				break;
 			case ENGI_ENTRANCE :
 				m_pTeleEntrance = pBest;
-				m_vTeleportEntrance = CBotGlobals::entityOrigin(pBest);
-				m_bEntranceVectorValid = true;
+				//m_vTeleportEntrance = CBotGlobals::entityOrigin(pBest);
+				//m_bEntranceVectorValid = true;
 				break;
 			case ENGI_EXIT:
 				m_pTeleExit = pBest;
@@ -979,6 +979,14 @@ void CBotTF2 :: modThink ()
 	bool bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
 	// mod specific think code here
 	CBotFortress :: modThink();
+
+	if ( getClass() == TF_CLASS_SNIPER )
+	{
+		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
+			m_fFov = 10.0f;
+		else
+			m_fFov = 90.0f;
+	}
 
 	if ( getClass() == TF_CLASS_HWGUY )
 	{
@@ -1358,24 +1366,44 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		checkBuildingsValid();
 
 	utils.addUtility(CBotUtility(BOT_UTIL_CAPTURE_FLAG,CTeamFortress2Mod::isMapType(TF_MAP_CTF) && bHasFlag,0.95));
-	utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && (iClass==TF_CLASS_ENGINEER) && !m_pSentryGun && (iMetal>=130),0.9));
-	utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && (iClass==TF_CLASS_ENGINEER) && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
-	utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&(iClass==TF_CLASS_ENGINEER)&&!m_pTeleEntrance&&(iMetal>=125),1.0));
-	utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&(iClass==TF_CLASS_ENGINEER)&&!m_pTeleExit&&(iMetal>=125),0.7));
-	utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag && (iClass==TF_CLASS_ENGINEER) && m_pSentryGun && (iMetal>=200) && (CTeamFortress2Mod::getSentryLevel(m_pSentryGun)<3),0.9));
-	utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,(iClass==TF_CLASS_ENGINEER) && m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
+
+	if ( iClass == TF_CLASS_ENGINEER )
+	{
+		int iSentryLevel = 0;
+		float fEntranceDist = 99999.0f;
+		float fExitDist = 99999.0f;
+
+		if ( m_pTeleExit )
+			fExitDist = distanceFrom(m_pTeleExit);
+
+		if ( m_pTeleEntrance )
+			fEntranceDist = distanceFrom(m_pTeleEntrance);
+
+		if ( m_pSentryGun )
+			iSentryLevel = CTeamFortress2Mod::getSentryLevel(m_pSentryGun);
+
+		utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9));
+		utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
+		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),1.0));
+		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag && m_pSentryGun && (iMetal>=200),0.9-(iSentryLevel*0.05)));
+		utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELENT,m_pTeleEntrance!=NULL && (iMetal>=200),(fEntranceDist<fExitDist) * randomFloat(0.6,0.85)));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELEXT,m_pTeleExit!=NULL && (iMetal>=200),(fExitDist<fEntranceDist) * randomFloat(0.6,0.85)));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser!=NULL && (iMetal>=200),randomFloat(0.6,0.85)));
+	}
+
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,fHealthDist/fResupplyDist));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,fAmmoDist/fResupplyDist));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0));
-	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), 0.9));
+	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), 0.7));
 	utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && CTeamFortress2Mod::isMapType(TF_MAP_CTF), 0.6));
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,fResupplyDist/fAmmoDist));
-
 	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP),randomFloat(0.6,1.0)));
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)&&m_iClass!=TF_CLASS_SCOUT,randomFloat(0.6,1.0)));
 
@@ -1461,6 +1489,15 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 		case BOT_UTIL_UPGSENTRY:
 			m_pSchedules->add(new CBotTFEngiUpgrade(m_pSentryGun));
 			return true;
+		case BOT_UTIL_UPGTELENT:
+			m_pSchedules->add(new CBotTFEngiUpgrade(m_pTeleEntrance));
+			break;
+		case BOT_UTIL_UPGTELEXT:
+			m_pSchedules->add(new CBotTFEngiUpgrade(m_pTeleExit));
+			break;
+		case BOT_UTIL_UPGDISP:
+			m_pSchedules->add(new CBotTFEngiUpgrade(m_pDispenser));
+			break;
 		case BOT_UTIL_GETAMMODISP:
 			m_pSchedules->add(new CBotGetMetalSched(CBotGlobals::entityOrigin(m_pDispenser)));
 			return true;
@@ -1688,6 +1725,7 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 	}
 	else
 	{
+		duck(true);
 		primaryAttack();
 	}
 

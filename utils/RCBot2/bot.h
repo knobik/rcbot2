@@ -530,6 +530,7 @@ protected:
 	// next think time
 	float m_fNextThink;
 
+	float m_fFov;
 	
 	bool m_bInitAlive;
 	bool m_bThinkStuck;

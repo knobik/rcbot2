@@ -260,7 +260,7 @@ protected:
 	float m_fUpdateClass;
 	float m_fUseTeleporterTime;
 
-	bool m_bHasFlag;		
+	bool m_bHasFlag;
 	
 };
 

@@ -216,6 +216,8 @@ void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	
 	if ( m_fTime<engine->Time() )
 		complete();
+	else if ( !pBot->isVisible(m_pBuilding) )
+		fail();
 	else if ( CBotGlobals::entityIsValid(m_pBuilding) && CBotGlobals::entityIsAlive(m_pBuilding) )
 	{
 		if ( !((CBotFortress*)pBot)->upgradeBuilding(m_pBuilding) )
@@ -361,14 +363,10 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-	
+	pBot->setLookAtTask(LOOK_BUILD,3);
+	bAimingOk = CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getAiming()) < 15;
 
-	if ( m_iObject == ENGI_SENTRY )
-	{
-		pBot->setLookAtTask(LOOK_BUILD,3);
-		bAimingOk = CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getAiming()) < 15;
-	}
-	else if ( m_iObject == ENGI_DISP )
+	if ( m_iObject == ENGI_DISP )
 	{
 		edict_t *pSentry = tfBot->getSentry();
 
@@ -536,6 +534,10 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 				m_iState++;	
 				// OK, set up whacking time!
 				m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
+
+				if ( m_iObject != ENGI_SENTRY )
+					complete();
+				else; // Else / whack sentry
 			}
 			else if ( m_fTime < engine->Time() )
 			{
@@ -992,18 +994,22 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !m_fTime )
 		m_fTime = engine->Time() + 12.0f;
 
+	if ( !((CBotFortress*)pBot)->isTeleporterUseful(m_pTele) )
+		fail();
+
 	if ( m_fTime < engine->Time() )
 		fail();
 	else
 	{
-		Vector vTele = CBotGlobals::entityOrigin(m_pTele);
+		Vector vTele = CBotGlobals::entityOrigin(m_pTele);		
 
-		if ( pBot->distanceFrom(vTele) > 60 )
+
+		if ( pBot->distanceFrom(vTele) > 48 )
 			pBot->setMoveTo(vTele,5);
 		else
 			pBot->stopMoving(5);
 
-		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 60 )
+		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 48 )
 		{
 			pBot->updatePosition();
 			complete();
