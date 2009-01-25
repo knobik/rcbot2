@@ -1117,17 +1117,30 @@ void CAutoBuy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 }
 
-CFindLastEnemy::CFindLastEnemy ()
+CFindLastEnemy::CFindLastEnemy (Vector vLast,Vector vVelocity)
 {
+	m_vLast = vLast+vVelocity;
+	m_fTime = 0;
 }
 
 void CFindLastEnemy::execute ( CBot *pBot, CBotSchedule *pSchedule )
 {
+	if ( m_fTime == 0 )
+		m_fTime = engine->Time() + randomFloat(2.0,4.0);
+
 	if ( pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 		complete();
 	if ( !pBot->moveToIsValid() || pBot->moveFailed() )
 		fail();
-	pBot->setLookAtTask(LOOK_LAST_ENEMY);
+	if ( pBot->distanceFrom(m_vLast) > 80 )
+		pBot->setMoveTo(m_vLast);
+	else
+		pBot->stopMoving();
+
+	pBot->setLookAtTask(LOOK_AROUND,2);
+
+	if ( m_fTime < engine->Time() )
+		complete();
 }
 
 CHideTask :: CHideTask( Vector vHideFrom )

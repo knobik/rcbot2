@@ -1533,10 +1533,17 @@ void CBot :: getTasks (unsigned int iIgnore)
 	{
 		if ( wantToFollowEnemy() )
 		{
+			Vector vVelocity = Vector(0,0,0);
+			CClient *pClient = CClients::get(m_pLastEnemy);
 			CBotSchedule *pSchedule = new CBotSchedule();
-			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);		
+			
+			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);	
+			
+			if ( pClient )
+				vVelocity = pClient->getVelocity();
+
 			pSchedule->addTask(pFindPath);
-			pSchedule->addTask(new CFindLastEnemy());
+			pSchedule->addTask(new CFindLastEnemy(m_vLastSeeEnemy,vVelocity));
 
 			//////////////
 			pFindPath->setNoInterruptions();

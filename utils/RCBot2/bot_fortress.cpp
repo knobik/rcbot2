@@ -1181,6 +1181,8 @@ bool CBotFortress :: wantToFollowEnemy ()
 		return false;
 	if ( getClass() == TF_CLASS_SCOUT )
 		return false;
+	if ( CClassInterface::getTF2Class(m_pLastEnemy) == TF_CLASS_SPY )
+		return true; // always find spies!
 	
 	return CBot::wantToFollowEnemy();
 }
@@ -1303,6 +1305,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	static float fHealthDist = 1;
 	static float fAmmoDist = 1;
 	static bool bHasFlag = false;
+	static float fGetFlagUtility = 0.5;
+	static float fDefendFlagUtility = 0.5;
 	//static float fResupplyUtil = 0.5;
 	//static float fHealthUtil = 0.5;
 	//static float fAmmoUtil = 0.5;
@@ -1334,10 +1338,17 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	{
 		if ( wantToFollowEnemy() )
 		{
+			Vector vVelocity = Vector(0,0,0);
+			CClient *pClient = CClients::get(m_pLastEnemy);
 			CBotSchedule *pSchedule = new CBotSchedule();
-			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);		
+			
+			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);	
+			
+			if ( pClient )
+				vVelocity = pClient->getVelocity();
+
 			pSchedule->addTask(pFindPath);
-			pSchedule->addTask(new CFindLastEnemy());
+			pSchedule->addTask(new CFindLastEnemy(m_vLastSeeEnemy,vVelocity));
 
 			//////////////
 			pFindPath->setNoInterruptions();
@@ -1446,14 +1457,26 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser!=NULL && (iMetal>=200) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3)));
 	}
 
+	fGetFlagUtility = 0.2;
+
+	if ( m_iClass == TF_CLASS_SCOUT )
+		fGetFlagUtility = 0.6;
+	else if ( m_iClass == TF_CLASS_SPY )
+		fGetFlagUtility = 0.6;
+
+	fDefendFlagUtility = 0.2;
+
+	if ( (m_iClass == TF_CLASS_HWGUY) || (m_iClass == TF_CLASS_DEMOMAN) || (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_PYRO) )
+		fDefendFlagUtility = 0.5;
+
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,fHealthDist/fResupplyDist));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,fAmmoDist/fResupplyDist));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0));
-	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), 0.7));
+	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), fGetFlagUtility+0.1));
 	utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95));
-	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && CTeamFortress2Mod::isMapType(TF_MAP_CTF), 0.4));
+	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && CTeamFortress2Mod::isMapType(TF_MAP_CTF),fGetFlagUtility));
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,fResupplyDist/fAmmoDist));

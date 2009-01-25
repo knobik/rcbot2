@@ -328,9 +328,12 @@ private:
 class CFindLastEnemy : public CBotTask
 {
 public:
-	CFindLastEnemy ();
+	CFindLastEnemy (Vector vLast,Vector vVelocity);
 
 	void execute ( CBot *pBot, CBotSchedule *pSchedule );
+private:
+	Vector m_vLast;
+	float m_fTime;
 };
 
 class CFindGoodHideSpot : public CBotTask
