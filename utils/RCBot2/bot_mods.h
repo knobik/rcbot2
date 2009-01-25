@@ -236,6 +236,7 @@ public:
 	static int getTeam ( edict_t *pEntity );
 
 	static int getSentryLevel ( edict_t *pSentry );
+	static int getDispenserLevel ( edict_t *pDispenser );
 
 	static bool isDispenser ( edict_t *pEntity, int iTeam );
 

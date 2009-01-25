@@ -881,26 +881,26 @@ int CClassInterface :: getTeam ( edict_t *edict )
 	return *(int *)((char *)pEntity + offset);
 }
 
-int CClassInterface :: getHealth ( edict_t *edict )
+float CClassInterface :: getHealth ( edict_t *edict )
 {
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_iHealth","CBaseEntity");
-	
-	if (!offset)
-		return 100;
- 
+	static unsigned int offset1 = 0;
+
+	if (!offset1)
+		offset1 = findOffset("m_iHealth","CBasePlayer");
+
+	if (!offset1)
+		return 1.0f;
+
 	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
 
 	if (!pUnknown)
 	{
-		return 100;
+		return 1.0f;
 	}
  
 	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
 
-	return *(int *)((char *)pEntity + offset);
+	return (float)(*(int *)((char *)pEntity + offset1));
 }
 
 int CClassInterface :: getTF2Class ( edict_t *edict )

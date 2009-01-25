@@ -656,6 +656,18 @@ int CTeamFortress2Mod :: getSentryLevel ( edict_t *pSentry )
 	//if ( pSentry && pSentry->
 }
 
+int CTeamFortress2Mod :: getDispenserLevel ( edict_t *pDispenser )
+{
+	string_t model = pDispenser->GetIServerEntity()->GetModelName();
+	const char *szmodel = model.ToCStr();
+
+	if ( strlen(szmodel) < 32 )
+		return 1;
+
+	return (szmodel[31] - '1')+1;
+	//if ( pSentry && pSentry->
+}
+
 int CTeamFortress2Mod :: getEnemyTeam ( int iTeam )
 {
 	if ( iTeam == TF2_TEAM_BLUE )

@@ -1218,7 +1218,7 @@ int CBotFortress :: getSpyDisguiseClass ( int iTeam )
 // Preconditions :  Current weapon is Medigun
 //					pPlayer is not NULL
 //
-bool CBotTF2 :: healPlayer ( edict_t *pPlayer )
+bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 {
 	CBotWeapon *pWeap = getCurrentWeapon();
 	IPlayerInfo *p;
@@ -1243,7 +1243,14 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer )
 	//pBot->selectWeapon(0);
 
 	if ( !CClassInterface::getMedigunHealing(INDEXENT(pWeap->getWeaponIndex())) )
+	{
 		primaryAttack(true);
+	}
+	else
+	{
+		if ( pPrevPlayer != pPlayer )
+			primaryAttack(true);
+	}
 	//else
 	//	m_pHeal = CClassInterface::getMedigunTarget(INDEXENT(pWeap->getWeaponIndex()));
 
@@ -1370,27 +1377,63 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( iClass == TF_CLASS_ENGINEER )
 	{
 		int iSentryLevel = 0;
+		int iDispenserLevel = 0;
 		float fEntranceDist = 99999.0f;
-		float fExitDist = 99999.0f;
+		float fExitDist = 99999.0f;		
+		float fSentryHealthPercent = 1.0f;
+		float fDispenserHealthPercent = 1.0f;
+		float fTeleporterEntranceHealthPercent = 1.0f;
+		float fTeleporterExitHealthPercent = 1.0f;		
 
 		if ( m_pTeleExit )
+		{
 			fExitDist = distanceFrom(m_pTeleExit);
 
+			fTeleporterExitHealthPercent = CClassInterface::getHealth(m_pTeleExit)/180;
+		}
+
 		if ( m_pTeleEntrance )
+		{
 			fEntranceDist = distanceFrom(m_pTeleEntrance);
 
+			fTeleporterEntranceHealthPercent = CClassInterface::getHealth(m_pTeleEntrance)/180;
+		}
+
 		if ( m_pSentryGun )
+		{
 			iSentryLevel = CTeamFortress2Mod::getSentryLevel(m_pSentryGun);
+			fSentryHealthPercent = CClassInterface::getHealth(m_pSentryGun);
+
+			if ( iSentryLevel == 1 )
+				fSentryHealthPercent /= 150;		
+			else if ( iSentryLevel == 2 )
+				fSentryHealthPercent /= 180;		
+			else if ( iSentryLevel == 3 )
+				fSentryHealthPercent /= 216;		
+		}
+
+		if ( m_pDispenser )
+		{
+			iDispenserLevel = CTeamFortress2Mod::getDispenserLevel(m_pDispenser);
+			fDispenserHealthPercent = CClassInterface::getHealth(m_pDispenser);
+
+			if ( iDispenserLevel == 1 )
+				fDispenserHealthPercent /= 150;
+			else if ( iDispenserLevel == 2 )
+				fDispenserHealthPercent /= 180;		
+			else if ( iDispenserLevel == 3 )
+				fDispenserHealthPercent /= 216;		
+		}
 
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9));
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),1.0));
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag && m_pSentryGun && (iMetal>=200),0.9-(iSentryLevel*0.05)));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag && m_pSentryGun && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2)));
 		utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELENT,m_pTeleEntrance!=NULL && (iMetal>=200),(fEntranceDist<fExitDist) * randomFloat(0.6,0.85)));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELEXT,m_pTeleExit!=NULL && (iMetal>=200),(fExitDist<fEntranceDist) * randomFloat(0.6,0.85)));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser!=NULL && (iMetal>=200),randomFloat(0.6,0.85)));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELENT,m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.5 + (0.5-(fTeleporterEntranceHealthPercent*0.5))));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELEXT,m_pTeleExit!=NULL && (iMetal>=200) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.5) + ((0.5-fTeleporterExitHealthPercent)*0.5)));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser!=NULL && (iMetal>=200) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3)));
 	}
 
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
@@ -1400,7 +1443,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), 0.7));
 	utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95));
-	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && CTeamFortress2Mod::isMapType(TF_MAP_CTF), 0.6));
+	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && CTeamFortress2Mod::isMapType(TF_MAP_CTF), 0.4));
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,fResupplyDist/fAmmoDist));

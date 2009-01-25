@@ -129,6 +129,8 @@ public:
 	CBotTF2MedicHeal (  );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
+private:
+	edict_t *m_pHeal;
 
 };
 

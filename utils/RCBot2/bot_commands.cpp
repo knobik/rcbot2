@@ -833,7 +833,7 @@ eBotCommandResult CSearchCommand :: execute ( CClient *pClient, const char *pcmd
 
 						
 						
-						CBotGlobals::botMessage(pPlayer,0,"D:%0.2f C:'%s', MI:%d, MN:'%s'",fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr());
+						CBotGlobals::botMessage(pPlayer,0,"D:%0.2f C:'%s', MI:%d, MN:'%s' Health=%d",fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr(),(int)CClassInterface::getHealth(pEdict));
 					}
 				}
 			}

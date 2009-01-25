@@ -74,7 +74,7 @@ void CClient :: think ()
 	if ( m_fUpdatePos < engine->Time() )
 	{
 		m_fUpdatePos = engine->Time() + 1.0f;
-		m_vVelocity = (m_vLastPos - getOrigin());
+		m_vVelocity = (getOrigin()-m_vLastPos);
 		m_fSpeed = m_vVelocity.Length();
 		m_vLastPos = getOrigin();
 	}

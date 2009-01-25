@@ -46,27 +46,28 @@
 
 CBotTF2MedicHeal :: CBotTF2MedicHeal ()
 {
-
+	m_pHeal = NULL;
 }
 
 void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
-{
-	edict_t *m_pHeal;
-	
+{	
+	edict_t *pHeal;
+
 	if ( !pBot->isTF() )
 	{
 		fail();
 		return;
 	}
 
-	m_pHeal = ((CBotFortress*)pBot)->getHealingEntity();
+	
+	pHeal = ((CBotFortress*)pBot)->getHealingEntity();
 
-	if ( !m_pHeal )
+	if ( !pHeal )
 	{
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
-	else if ( !CBotGlobals::entityIsValid(m_pHeal) || !CBotGlobals::entityIsAlive(m_pHeal) )
+	else if ( !CBotGlobals::entityIsValid(pHeal) || !CBotGlobals::entityIsAlive(pHeal) )
 	{
 		pBot->getNavigator()->rollBackPosition();
 		fail();
@@ -80,9 +81,9 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->select_CWeapon( CWeapons::getWeapon(TF2_WEAPON_MEDIGUN) );
 	}
-	else if ( pBot->isVisible(m_pHeal) )
+	else if ( pBot->isVisible(pHeal) )
 	{
-		if ( !((CBotFortress*)pBot)->healPlayer(m_pHeal) )
+		if ( !((CBotFortress*)pBot)->healPlayer(pHeal,m_pHeal) )
 		{
 			pBot->getNavigator()->rollBackPosition();
 			fail();
@@ -93,6 +94,9 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
+
+	m_pHeal = pHeal;
+
 }
 
 CBotTF2WaitHealthTask :: CBotTF2WaitHealthTask ( Vector vOrigin )

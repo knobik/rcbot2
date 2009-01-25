@@ -154,7 +154,7 @@ public:
 
 	virtual void engiBuildSuccess ( eEngiBuild iObject ) {};
 
-	virtual bool healPlayer ( edict_t *pPlayer ) { return false; }
+	virtual bool healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer ) { return false; }
 	virtual bool upgradeBuilding ( edict_t *pBuilding ) {return false;}
 
 	virtual bool isCloaked () { return false; }
@@ -341,9 +341,8 @@ public:
 
 	void updateClass ();
 
-	bool healPlayer ( edict_t *pPlayer );
+	bool healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer );
 	
-
 	bool upgradeBuilding ( edict_t *pBuilding );
 
 	void setup ();

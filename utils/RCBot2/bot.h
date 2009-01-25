@@ -81,7 +81,7 @@ class CClassInterface
 public:
     static int getFlags ( edict_t *edict );
 	static int getTeam ( edict_t *edict );
-	static int getHealth ( edict_t *edict );
+	static float getHealth ( edict_t *edict );
 	static int getEffects ( edict_t *edict );
 	static int *getAmmoList ( edict_t *edict );
 	static unsigned int findOffset(const char *szType,const char *szClass);
