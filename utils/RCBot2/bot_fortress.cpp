@@ -56,12 +56,16 @@ void CBroadcastFlagDropped :: execute ( CBot *pBot )
 {
 	if ( pBot->getTeam() == m_iTeam )
 		((CBotTF2*)pBot)->flagDropped(m_vOrigin);
+	else
+		((CBotTF2*)pBot)->teamFlagDropped(m_vOrigin);
 }
 
 void CBroadcastFlagCaptured :: execute ( CBot *pBot )
 {
 	if ( pBot->getTeam() == m_iTeam )
 		((CBotTF2*)pBot)->flagReset();
+	else
+		((CBotTF2*)pBot)->teamFlagReset();
 }
 
 void CBroadcastRoundStart :: execute ( CBot *pBot )
@@ -944,6 +948,12 @@ void CBotFortress :: flagDropped ( Vector vOrigin )
 	m_fLastKnownFlagTime = engine->Time() + 60.0f;
 }
 
+void CBotFortress :: teamFlagDropped ( Vector vOrigin )
+{
+	m_vLastKnownTeamFlagPoint = vOrigin; 
+	m_fLastKnownTeamFlagTime = engine->Time() + 60.0f;
+}
+
 void CBotFortress :: callMedic ()
 {
 	helpers->ClientCommand (m_pEdict,"saveme");
@@ -1474,6 +1484,17 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 		switch ( id )
 		{
+		case BOT_UTIL_DEFEND_FLAG:
+			if ( m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time()) )
+			{
+				// use last known flag position
+
+			}
+			else
+			{
+				// find our flag waypoint
+			}
+			break;
 		case BOT_UTIL_ATTACK_POINT:
 			//CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal());
 			break;
@@ -1783,6 +1804,7 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 void CBotTF2::roundReset()
 {
 	flagReset();
+	teamFlagReset();
 	
 	CTeamFortress2Mod::getResetPoints (getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 }

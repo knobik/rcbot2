@@ -197,8 +197,10 @@ public:
 	bool isTeleporterUseful ( edict_t *pTele );
 
 	void flagDropped ( Vector vOrigin );
+	void teamFlagDropped ( Vector vOrigin );
 
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
+	inline void teamFlagReset () { m_fLastKnownTeamFlagTime = 0.0f; }
 
 	bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint );
 
@@ -250,10 +252,12 @@ protected:
 
 	// valid flag point area
 	Vector m_vLastKnownFlagPoint;
+	Vector m_vLastKnownTeamFlagPoint;
 	Vector m_vTeleportEntrance;
 
 	// 1 minute wait
 	float m_fLastKnownFlagTime;
+	float m_fLastKnownTeamFlagTime;
 
 	TF_Class m_iClass;
 
