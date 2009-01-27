@@ -318,6 +318,220 @@ void CBotFortress :: spawnInit ()
 	m_bHasFlag = false; 
 	m_pPrevSpy = NULL;
 	m_fSeeSpyTime = 0.0f;
+
+	m_bSentryGunVectorValid = false;
+	m_bDispenserVectorValid = false;
+	m_bTeleportExitVectorValid = false;
+}
+
+int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTime, int *iTries )
+{
+
+	switch ( *iState )
+	{
+	case 0:
+		{
+			if ( hasEngineerBuilt(iObject) )
+			{
+				engineerBuild(iObject,ENGI_DESTROY);
+			}
+
+			*iState = 1;
+		}
+		break;
+	case 1:
+		{
+			CTraceFilterWorldAndPropsOnly filter;
+			QAngle eyes = CBotGlobals::playerAngles(m_pEdict);
+			QAngle turn;
+			Vector forward;
+			Vector building;
+			// find best place to turn it to
+			trace_t *tr = CBotGlobals::getTraceResult();
+			int iNextState = 2;
+
+			float bestfraction = 0.0f;			
+
+			// unselect current weapon
+			selectWeapon(0);
+			engineerBuild(iObject,ENGI_BUILD);
+
+			AngleVectors(eyes,&forward);
+			iNextState = 8;
+			building = getEyePosition() + (forward*100);
+			//////////////////////////////////////////
+
+			// forward
+			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+
+			if ( tr->fraction > bestfraction )
+			{
+				iNextState = 8;
+				bestfraction = tr->fraction;
+			}
+			////////////////////////////////////////
+			turn = eyes;
+			turn.y = turn.y - 90.0f;
+			CBotGlobals::fixFloatAngle(&turn.y);
+
+			AngleVectors(turn,&forward);
+
+			// left
+			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+
+			if ( tr->fraction > bestfraction )
+			{
+				iNextState = 6;
+				bestfraction = tr->fraction;
+			}
+			////////////////////////////////////////
+			turn = eyes;
+			turn.y = turn.y + 180.0f;
+			CBotGlobals::fixFloatAngle(&turn.y);
+
+			AngleVectors(turn,&forward);
+
+			// back
+			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+
+			if ( tr->fraction > bestfraction )
+			{
+				iNextState = 4;
+				bestfraction = tr->fraction;
+			}
+			///////////////////////////////////
+			turn = eyes;
+			turn.y = turn.y + 90.0f;
+			CBotGlobals::fixFloatAngle(&turn.y);
+
+			AngleVectors(turn,&forward);
+
+			// right
+			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+
+			if ( tr->fraction > bestfraction )
+			{
+				iNextState = 2;
+				bestfraction = tr->fraction;
+			}
+			////////////////////////////////////
+			*iState = iNextState;
+
+		}
+	case 2:
+		{
+			// let go
+			*iState = *iState + 1;
+		}
+		break;
+	case 3:
+		{
+			tapButton(IN_ATTACK2);
+			*iState = *iState + 1;
+		}
+		break;
+	case 4:
+		{
+			// let go
+			*iState = *iState + 1;
+		}
+		break;
+	case 5:
+		{
+			tapButton(IN_ATTACK2);
+			*iState = *iState + 1;
+		}
+		break;
+	case 6:
+
+		{
+			// let go 
+			*iState = *iState + 1;
+		}
+		break;
+	case 7:
+		{
+			tapButton(IN_ATTACK2);
+			*iState = *iState + 1;
+		}
+		break;
+	case 8:
+		{
+			// let go (wait)
+			*iState = *iState + 1;
+		}
+		break;
+	case 9:
+		{
+			tapButton(IN_ATTACK);
+
+			*fTime = engine->Time() + 1.0f;
+
+			*iState = *iState + 1;
+		}
+		break;
+	case 10:
+		{
+			// Check if sentry built OK
+			// Wait for Built object message
+
+			if ( hasEngineerBuilt(iObject) )
+			{
+				*iState = *iState + 1;
+				// OK, set up whacking time!
+				*fTime = engine->Time() + randomFloat(5.0f,10.0f);
+
+				if ( iObject == ENGI_SENTRY )
+						m_bSentryGunVectorValid = false;
+				else
+				{
+					if ( iObject == ENGI_DISP )
+						m_bDispenserVectorValid = false;
+					else if ( iObject == ENGI_EXIT )
+						m_bTeleportExitVectorValid = false;
+
+					return 1;
+				}
+
+			}
+			else if ( *fTime < engine->Time() )
+			{
+				if ( *iTries > 3 )
+				{
+					if ( iObject == ENGI_SENTRY )
+						m_bSentryGunVectorValid = false;
+					else if ( iObject == ENGI_DISP )
+						m_bDispenserVectorValid = false;
+					else if ( iObject == ENGI_EXIT )
+						m_bTeleportExitVectorValid = false;
+
+					return 0;
+				}
+				else
+				{
+					*fTime = engine->Time() + randomFloat(0.5,1.0);
+					*iTries = *iTries + 1;
+					*iState = 1;
+				}
+			}
+			else
+			{
+				m_pButtons->tap(IN_ATTACK);
+			}
+		}
+		break;
+	case 11:
+		{
+			// whack it for a while
+			if ( *fTime < engine->Time() )
+				return 1;
+			else
+				tapButton(IN_ATTACK);
+		}
+		break;
+	}
+
+	return 2;
 }
 
 void CBotFortress :: setClass ( TF_Class _class )
@@ -946,6 +1160,10 @@ void CBotFortress :: flagDropped ( Vector vOrigin )
 { 
 	m_vLastKnownFlagPoint = vOrigin; 
 	m_fLastKnownFlagTime = engine->Time() + 60.0f;
+
+	if ( m_pSchedules->hasSchedule(SCHED_TF2_GET_FLAG) )
+		m_pSchedules->removeSchedule(SCHED_TF2_GET_FLAG);
+
 }
 
 void CBotFortress :: teamFlagDropped ( Vector vOrigin )
@@ -1311,6 +1529,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	//static float fHealthUtil = 0.5;
 	//static float fAmmoUtil = 0.5;
 
+	extern const char *g_szUtils[BOT_UTIL_MAX];
+
 	bHasFlag = hasFlag();
 
 	// look for tasks
@@ -1318,7 +1538,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	{		
 		if ( !m_pSchedules->isCurrentSchedule(SCHED_HEAL) )
 		{
-			m_pSchedules->removeSchedule(SCHED_HEAL);
+			m_pSchedules->freeMemory();//>removeSchedule(SCHED_HEAL);
 			m_pSchedules->addFront(new CBotTF2HealSched());
 		}
 	}
@@ -1326,7 +1546,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	{		
 		if ( !m_pSchedules->isCurrentSchedule(SCHED_ATTACK) )
 		{
-			m_pSchedules->removeSchedule(SCHED_ATTACK);
+			m_pSchedules->freeMemory(); //m_pSchedules->removeSchedule(SCHED_ATTACK);
 			m_pSchedules->addFront(new CBotAttackSched(m_pEnemy));
 
 			return;
@@ -1346,6 +1566,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			
 			if ( pClient )
 				vVelocity = pClient->getVelocity();
+
+			m_pSchedules->freeMemory();
 
 			pSchedule->addTask(pFindPath);
 			pSchedule->addTask(new CFindLastEnemy(m_vLastSeeEnemy,vVelocity));
@@ -1500,6 +1722,11 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	{
 		if ( executeAction(util->getId(),pWaypointResupply,pWaypointHealth,pWaypointAmmo) )
 		{
+			if ( CClients::clientsDebugging() )
+			{
+				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[util->getId()],this);
+			}
+
 			utils.freeMemory();
 			return;
 		}
@@ -1555,31 +1782,49 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_BUILDTELEXT:
 
-			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),0);//CTeamFortress2Mod::getArea());
+			if ( m_bTeleportExitVectorValid )
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportExit,150,-1,true,false,true,NULL,false,getTeam()));
+			else
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),0);//CTeamFortress2Mod::getArea());
 
 			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotTFEngiBuild(ENGI_EXIT,pWaypoint->getOrigin()));
+				m_bTeleportExitVectorValid = true;
+				m_vTeleportExit = pWaypoint->getOrigin();
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_EXIT,m_vTeleportExit));
 
 				return true;
 			}
 
 			break;
 		case BOT_UTIL_BUILDSENTRY:
-			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam());
+
+			if ( m_bSentryGunVectorValid )
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vSentryGun,150,-1,true,false,true,NULL,false,getTeam()));
+			else
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam());
 
 			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,pWaypoint->getOrigin()));
+				m_vSentryGun = pWaypoint->getOrigin();
+				m_bSentryGunVectorValid = true;
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,m_vSentryGun));
 				return true;
 			}
 			break;
 		case BOT_UTIL_BUILDDISP:
-			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam()));
+
+			if ( m_bDispenserVectorValid )
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vDispenser,150,-1,true,false,true,NULL,false,getTeam()));
+			else
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam()));			
 
 			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,pWaypoint->getOrigin()+Vector(randomFloat(-96,96),randomFloat(-96,96),0)));
+				m_vDispenser = pWaypoint->getOrigin();
+				m_bDispenserVectorValid = true;
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,m_vDispenser+Vector(randomFloat(-96,96),randomFloat(-96,96),0)));
+
 				return true;
 			}
 			break;
@@ -1588,13 +1833,13 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			return true;
 		case BOT_UTIL_UPGTELENT:
 			m_pSchedules->add(new CBotTFEngiUpgrade(m_pTeleEntrance));
-			break;
+			return true;
 		case BOT_UTIL_UPGTELEXT:
 			m_pSchedules->add(new CBotTFEngiUpgrade(m_pTeleExit));
-			break;
+			return true;
 		case BOT_UTIL_UPGDISP:
 			m_pSchedules->add(new CBotTFEngiUpgrade(m_pDispenser));
-			break;
+			return true;
 		case BOT_UTIL_GETAMMODISP:
 			m_pSchedules->add(new CBotGetMetalSched(CBotGlobals::entityOrigin(m_pDispenser)));
 			return true;

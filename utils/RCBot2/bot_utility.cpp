@@ -33,6 +33,41 @@
 
 #include "bot_utility.h"
 
+
+const char *g_szUtils[BOT_UTIL_MAX] =
+{
+	"BOT_UTIL_BUILDSENTRY",
+	"BOT_UTIL_BUILDDISP",
+	"BOT_UTIL_BUILDTELENT",
+	"BOT_UTIL_BUILDTELEXT",
+	"BOT_UTIL_UPGSENTRY",
+	"BOT_UTIL_UPGDISP",
+	"BOT_UTIL_UPGTELENT",
+	"BOT_UTIL_UPGTELEXT",
+	"BOT_UTIL_UPGTMSENTRY",
+	"BOT_UTIL_UPGTMDISP",
+	"BOT_UTIL_UPGTMTELENT",
+	"BOT_UTIL_UPGTMTELEXT",
+	"BOT_UTIL_GOTODISP",
+	"BOT_UTIL_GOTORESUPPLY_FOR_HEALTH",
+	"BOT_UTIL_GETAMMOKIT",
+	"BOT_UTIL_GETAMMOTMDISP",
+	"BOT_UTIL_GETAMMODISP",
+	"BOT_UTIL_GETFLAG",
+	"BOT_UTIL_GETHEALTHKIT",
+	"BOT_UTIL_GETFLAG_LASTKNOWN",
+	"BOT_UTIL_SNIPE",
+	"BOT_UTIL_ROAM",
+	"BOT_UTIL_CAPTURE_FLAG",
+	"BOT_UTIL_GOTORESUPPLY_FOR_AMMO",
+	"BOT_UTIL_FIND_NEAREST_HEALTH",
+	"BOT_UTIL_FIND_NEAREST_AMMO",
+	"BOT_UTIL_ATTACK_POINT",
+	"BOT_UTIL_DEFEND_POINT",
+	"BOT_UTIL_DEFEND_FLAG"
+};
+
+// Execute a list of possible actions and put them into order of available actions against utility
 void CBotUtilities :: execute ()
 {
 	unsigned int i = 0;
@@ -50,10 +85,13 @@ void CBotUtilities :: execute ()
 		pUtil = &(m_Utilities[i]);
 		fUtil = pUtil->getUtility();
 
+		// if bot can do this action
 		if ( pUtil->canDo() )
 		{			
+			// add to list
 			temp = m_pBest.head;
 
+			// put in correct order by making a linked list
 			pnew = (util_node_t*)malloc(sizeof(util_node_t));
 			pnew->util = pUtil;
 			pnew->next = NULL;
@@ -63,6 +101,7 @@ void CBotUtilities :: execute ()
 			{
 				while ( temp )
 				{
+					// put into correct position
 					if ( fUtil > temp->util->getUtility() )
 					{
 						if ( temp == m_pBest.head )
@@ -99,6 +138,7 @@ void CBotUtilities :: freeMemory ()
 	util_node_t *temp;
 	m_Utilities.clear();
 
+	// FREE LIST
 	while ( (temp = m_pBest.head) != NULL )
 	{
 		temp = m_pBest.head;

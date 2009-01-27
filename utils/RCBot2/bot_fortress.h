@@ -110,6 +110,8 @@ public:
 
 	CBotFortress();
 
+	virtual int engiBuildObject ( int *iState, eEngiBuild iObject, float *fTime, int *iTries );
+
 	virtual float getEnemyFactor ( edict_t *pEnemy ) { return CBot::getEnemyFactor(pEnemy); }
 
 	virtual void checkDependantEntities();
@@ -227,8 +229,6 @@ protected:
 	float m_fTauntTime;
 	float m_fTaunting;
 
-	bool m_bEntranceVectorValid;
-
 	edict_t *m_pHeal;
 	edict_t *m_pSentryGun;
 	edict_t *m_pDispenser;
@@ -253,7 +253,15 @@ protected:
 	// valid flag point area
 	Vector m_vLastKnownFlagPoint;
 	Vector m_vLastKnownTeamFlagPoint;
+
 	Vector m_vTeleportEntrance;
+	bool m_bEntranceVectorValid;
+	Vector m_vSentryGun;
+	bool m_bSentryGunVectorValid;
+	Vector m_vDispenser;
+	bool m_bDispenserVectorValid;
+	Vector m_vTeleportExit;
+	bool m_bTeleportExitVectorValid;
 
 	// 1 minute wait
 	float m_fLastKnownFlagTime;

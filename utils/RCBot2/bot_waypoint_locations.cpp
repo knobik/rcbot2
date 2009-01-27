@@ -386,6 +386,12 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 		if ( !curr_wpt->forTeam(iTeam) )
 			continue;
 
+		if ( bIsBot )
+		{
+			if ( curr_wpt->getFlags() & (CWaypointTypes::W_FL_ROCKET_JUMP || CWaypointTypes::W_FL_JUMP) )
+				continue;
+		}
+
 		if ( (fDist = curr_wpt->distanceFrom(vOrigin)) < *pfMinDist )
 		{
 			bAdd = false;

@@ -214,11 +214,11 @@ void CBotWeapons :: addWeapon ( int iId )
 
 	origin = m_pBot->getOrigin();
 
-	for ( i = 1; i <= gpGlobals->maxEntities; i ++ )
+	for ( i = (gpGlobals->maxClients+1); i <= gpGlobals->maxEntities; i ++ )
 	{
 		pEnt = INDEXENT(i);
 
-		if ( CBotGlobals::entityIsValid(pEnt) )
+		if ( pEnt && CBotGlobals::entityIsValid(pEnt) )
 		{
 			if ( strcmp(pEnt->GetClassName(),classname) == 0 )
 			{

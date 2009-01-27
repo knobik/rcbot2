@@ -1391,6 +1391,11 @@ bool CBot :: select_CWeapon ( CWeapon *pWeapon )
 			selectWeapon(id);
 			return true;
 		}
+		else
+		{
+			if ( isTF() )
+				m_pWeapons->addWeapon(pWeapon->getID());
+		}
 
 	}
 

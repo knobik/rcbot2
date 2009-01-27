@@ -661,7 +661,7 @@ int CTeamFortress2Mod :: getDispenserLevel ( edict_t *pDispenser )
 	string_t model = pDispenser->GetIServerEntity()->GetModelName();
 	const char *szmodel = model.ToCStr();
 
-	if ( strlen(szmodel) < 32 )
+	if ( strcmp(szmodel,"models/buildables/dispenser_light.mdl") == 0 )
 		return 1;
 
 	return (szmodel[31] - '1')+1;

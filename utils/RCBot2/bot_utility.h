@@ -39,6 +39,7 @@
 #include <vector>
 using namespace std;
 
+
 typedef enum
 {
  BOT_UTIL_BUILDSENTRY = 0,
@@ -69,7 +70,8 @@ typedef enum
  BOT_UTIL_FIND_NEAREST_AMMO,
  BOT_UTIL_ATTACK_POINT,
  BOT_UTIL_DEFEND_POINT,
- BOT_UTIL_DEFEND_FLAG
+ BOT_UTIL_DEFEND_FLAG,
+ BOT_UTIL_MAX
 }eBotAction;
 
 class CBotUtility

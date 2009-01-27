@@ -170,6 +170,7 @@ public:
 	{ 
 		init();
 		m_pBot = pBot; 
+		m_fNextClearFailedGoals = 0;
 	}
 
 	void init ();
@@ -238,6 +239,7 @@ private:
 	AStarNode *succ;
 
 	dataUnconstArray<int> m_iFailedGoals;
+	float m_fNextClearFailedGoals;
 
 	float m_fBelief [CWaypoints::MAX_WAYPOINTS];
 

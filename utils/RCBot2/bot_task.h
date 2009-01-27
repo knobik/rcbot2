@@ -129,6 +129,11 @@ public:
 	CBotTF2MedicHeal (  );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotTF2MedicHeal");
+	}
 private:
 	edict_t *m_pHeal;
 
@@ -140,6 +145,11 @@ public:
 	CBotTF2Snipe (  );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotTF2Snipe");
+	}
 private:
 	float m_fTime;
 	Vector m_vAiming;
@@ -151,6 +161,11 @@ public:
 	CBotTF2SpyDisguise (  );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotTF2SpyDisguise");
+	}
 };
 
 class CBotTF2SapBuilding : public CBotTask
@@ -159,6 +174,11 @@ public:
 	CBotTF2SapBuilding ( edict_t *pBuilding );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotTF2SapBuilding");
+	}
 };
 
 class CBotTFEngiBuildTask : public CBotTask
@@ -331,6 +351,11 @@ public:
 	CFindLastEnemy (Vector vLast,Vector vVelocity);
 
 	void execute ( CBot *pBot, CBotSchedule *pSchedule );
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CFindLastEnemy");
+	}
 private:
 	Vector m_vLast;
 	float m_fTime;
@@ -346,6 +371,12 @@ public:
 	void init ();
 
 	void execute ( CBot *pBot, CBotSchedule *pSchedule );
+
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CFindGoodHideSpot");
+	}
 private:
 	Vector m_vHideFrom;
 };

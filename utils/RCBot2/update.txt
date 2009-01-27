@@ -13,6 +13,7 @@ TF2 updates
 - possible crash bug fix
 - improved snipers
 - bots now look ahead of where they want to go (gives some more realism)
+- stopped bots from using rocketjump/double jump waypoints if they cant use it
 
 0.3 
 TF2 updates

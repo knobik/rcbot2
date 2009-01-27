@@ -175,7 +175,7 @@ CBotTF2FindFlagSched :: CBotTF2FindFlagSched ( Vector vOrigin )
 
 void CBotTF2FindFlagSched :: init ()
 {
-	setID(SCHED_TF2_GET_FLAG);
+	setID(SCHED_TF2_FIND_FLAG);
 }
 /////////////////////////////////////////////
 CBotPickupSched::CBotPickupSched( edict_t *pEdict )

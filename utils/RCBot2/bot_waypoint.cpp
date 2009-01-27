@@ -218,7 +218,10 @@ void CWaypointNavigator :: failMove ()
 	m_iLastFailedWpt = m_iCurrentWaypoint;
 
 	if ( !m_iFailedGoals.IsMember(m_iGoalWaypoint) )
+	{
 		m_iFailedGoals.Add(m_iGoalWaypoint);
+		m_fNextClearFailedGoals = engine->Time() + randomFloat(8.0f,30.0f);
+	}
 }
 
 float CWaypointNavigator :: distanceTo ( Vector vOrigin )
@@ -415,7 +418,10 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 		*bFail = true;
 
 		if ( !m_iFailedGoals.IsMember(m_iGoalWaypoint) )
+		{
 			m_iFailedGoals.Add(m_iGoalWaypoint);
+			m_fNextClearFailedGoals = engine->Time() + randomFloat(8.0f,30.0f);
+		}
 
 		return true; // waypoint not found but searching is complete
 	}
@@ -590,6 +596,13 @@ void CWaypointNavigator :: updatePosition ()
 			m_vOffset = Vector(0,0,0);
 
 		m_bOffsetApplied = true;
+	}
+
+	// fix for bots not finding goals
+	if ( m_fNextClearFailedGoals && ( m_fNextClearFailedGoals < engine->Time() ) )
+	{
+		m_iFailedGoals.Destroy();
+		m_fNextClearFailedGoals = 0;
 	}
 
 	m_pBot->setMoveTo(vWptOrigin+m_vOffset);
