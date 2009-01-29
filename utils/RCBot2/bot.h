@@ -577,6 +577,7 @@ protected:
 	float m_fNextUpdateStuckConstants;
 
 	float m_fStrafeTime;
+	float m_fLastSeeEnemy;
 
 	float m_fUpdateDamageTime;
 	// Damage bot accumulated over the last second or so

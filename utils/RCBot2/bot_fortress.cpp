@@ -465,7 +465,7 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 		{
 			tapButton(IN_ATTACK);
 
-			*fTime = engine->Time() + 1.0f;
+			*fTime = engine->Time() + randomFloat(0.5f,1.0f);
 
 			*iState = *iState + 1;
 		}
@@ -475,28 +475,29 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			// Check if sentry built OK
 			// Wait for Built object message
 
-			if ( hasEngineerBuilt(iObject) )
-			{
-				*iState = *iState + 1;
-				// OK, set up whacking time!
-				*fTime = engine->Time() + randomFloat(5.0f,10.0f);
+			m_pButtons->tap(IN_ATTACK);
 
-				if ( iObject == ENGI_SENTRY )
-						m_bSentryGunVectorValid = false;
-				else
+			if ( *fTime < engine->Time() )
+			{
+				if ( hasEngineerBuilt(iObject) )
 				{
-					if ( iObject == ENGI_DISP )
-						m_bDispenserVectorValid = false;
-					else if ( iObject == ENGI_EXIT )
-						m_bTeleportExitVectorValid = false;
+					*iState = *iState + 1;
+					// OK, set up whacking time!
+					*fTime = engine->Time() + randomFloat(5.0f,10.0f);
 
-					return 1;
+					if ( iObject == ENGI_SENTRY )
+							m_bSentryGunVectorValid = false;
+					else
+					{
+						if ( iObject == ENGI_DISP )
+							m_bDispenserVectorValid = false;
+						else if ( iObject == ENGI_EXIT )
+							m_bTeleportExitVectorValid = false;
+
+						return 1;
+					}
 				}
-
-			}
-			else if ( *fTime < engine->Time() )
-			{
-				if ( *iTries > 3 )
+				else if ( *iTries > 3 )
 				{
 					if ( iObject == ENGI_SENTRY )
 						m_bSentryGunVectorValid = false;
@@ -514,17 +515,15 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 					*iState = 1;
 				}
 			}
-			else
-			{
-				m_pButtons->tap(IN_ATTACK);
-			}
 		}
 		break;
 	case 11:
 		{
 			// whack it for a while
 			if ( *fTime < engine->Time() )
+			{
 				return 1;
+			}
 			else
 				tapButton(IN_ATTACK);
 		}
@@ -688,7 +687,14 @@ void CBotFortress :: modThink ()
 			m_bEntranceVectorValid = true;
 		}
 	}
+
+	if ( m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time()) )
+	{
+		m_fLastSeeEnemy = 0;
+		m_pButtons->tap(IN_RELOAD);
+	}
 }
+
 
 bool CBotFortress :: isTeleporterUseful ( edict_t *pTele )
 {
@@ -932,25 +938,25 @@ void CBotTF2 :: checkBuildingsValid ()
 {
 	if ( m_pSentryGun )
 	{
-		if ( !CBotGlobals::entityIsAlive(m_pSentryGun) || !CTeamFortress2Mod::isSentry(m_pSentryGun,getTeam()) )
+		if ( !CBotGlobals::entityIsValid(m_pSentryGun) || !CBotGlobals::entityIsAlive(m_pSentryGun) || !CTeamFortress2Mod::isSentry(m_pSentryGun,getTeam()) )
 			m_pSentryGun = NULL;
 	}
 
 	if ( m_pDispenser )
 	{
-		if ( !CBotGlobals::entityIsAlive(m_pDispenser) || !CTeamFortress2Mod::isDispenser(m_pDispenser,getTeam()) )
+		if ( !CBotGlobals::entityIsValid(m_pDispenser) || !CBotGlobals::entityIsAlive(m_pDispenser) || !CTeamFortress2Mod::isDispenser(m_pDispenser,getTeam()) )
 			m_pDispenser = NULL;
 	}
 
 	if ( m_pTeleEntrance )
 	{
-		if ( !CBotGlobals::entityIsAlive(m_pTeleEntrance) || !CTeamFortress2Mod::isTeleporterEntrance(m_pTeleEntrance,getTeam()) )
+		if ( !CBotGlobals::entityIsValid(m_pTeleEntrance) || !CBotGlobals::entityIsAlive(m_pTeleEntrance) || !CTeamFortress2Mod::isTeleporterEntrance(m_pTeleEntrance,getTeam()) )
 			m_pTeleEntrance = NULL;
 	}
 
 	if ( m_pTeleExit )
 	{
-		if ( !CBotGlobals::entityIsAlive(m_pTeleExit) || !CTeamFortress2Mod::isTeleporterExit(m_pTeleExit,getTeam()) )
+		if ( !CBotGlobals::entityIsValid(m_pTeleExit) || !CBotGlobals::entityIsAlive(m_pTeleExit) || !CTeamFortress2Mod::isTeleporterExit(m_pTeleExit,getTeam()) )
 			m_pTeleExit = NULL;
 	}
 }

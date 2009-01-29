@@ -613,6 +613,7 @@ void CBot :: updateConditions ()
 			}
 			else
 			{
+				m_fLastSeeEnemy = engine->Time();
 				m_pLastEnemy = m_pEnemy;
 				m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
 
@@ -697,6 +698,7 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_fLastSeeEnemy = 0;
 	m_fAvoidTime = 0;
 	m_vLookAroundOffset = Vector(0,0,0);
 	m_fWaypointStuckTime = 0.0f;
@@ -1018,7 +1020,7 @@ inline Vector CBot :: getOrigin ()
 // found a new enemy
 void CBot :: enemyFound (edict_t *pEnemy)
 {
-
+	
 }
 // work move velocity
 void CBot :: doMove ()
