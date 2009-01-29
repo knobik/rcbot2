@@ -627,6 +627,15 @@ void CBot :: updateConditions ()
 		removeCondition(CONDITION_SEE_CUR_ENEMY);
 		removeCondition(CONDITION_ENEMY_OBSCURED);
 	}
+
+	if ( FVisible(m_vLookVector) )
+	{
+		updateCondition(CONDITION_SEE_LOOK_VECTOR);
+	}
+	else
+	{
+		removeCondition(CONDITION_SEE_LOOK_VECTOR);
+	}
 }
 
 // Called when working out route

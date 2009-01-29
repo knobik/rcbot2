@@ -219,6 +219,19 @@ void CBotGotoOriginSched :: init ()
 	setID(SCHED_GOTO_ORIGIN);
 }
 
+CBotDefendSched ::CBotDefendSched ( Vector vOrigin )
+{
+	addTask(new CFindPathTask(vOrigin));
+	addTask(new CBotDefendTask(vOrigin));
+}
+
+void CBotDefendSched :: init ()
+{
+	setID(SCHED_DEFEND);
+}
+
+
+
 ///////////
 CGotoHideSpotSched :: CGotoHideSpotSched ( edict_t *pEdict )
 {

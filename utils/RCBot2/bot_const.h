@@ -115,7 +115,7 @@ typedef enum
 #define CONDITION_SEE_WAYPOINT   32
 #define CONDITION_NEED_AMMO		 64
 #define CONDITION_NEED_HEALTH	 128
-
+#define CONDITION_SEE_LOOK_VECTOR 256
 ////////////////////////
 #define MAX_PLAYERS 32
 

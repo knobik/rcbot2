@@ -1695,7 +1695,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,fResupplyDist/fAmmoDist));
 	}
 
-	fGetFlagUtility = 0.2;
+	fGetFlagUtility = 0.2+randomFloat(0.0f,0.2f);
 
 	if ( m_iClass == TF_CLASS_SCOUT )
 		fGetFlagUtility = 0.6;
@@ -1705,16 +1705,22 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	fDefendFlagUtility = 0.2;
 
 	if ( (m_iClass == TF_CLASS_HWGUY) || (m_iClass == TF_CLASS_DEMOMAN) || (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_PYRO) )
-		fDefendFlagUtility = 0.5;
+		fDefendFlagUtility = 0.5-randomFloat(0.0f,0.2f);
 
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,fHealthDist/fResupplyDist));
 
 	utils.addUtility(CBotUtility(BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0));
-	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), fGetFlagUtility+0.1));
-	utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95));
+
 	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && CTeamFortress2Mod::isMapType(TF_MAP_CTF),fGetFlagUtility));
+	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), fGetFlagUtility+0.1));
+
+	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_FLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag, fDefendFlagUtility+0.1));
+	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_FLAG_LASTKNOWN, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && (m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time())), fDefendFlagUtility+0.1));
+
+	utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95));	
+
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	
@@ -1797,18 +1803,33 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 		{
 		case BOT_UTIL_ENGI_LOOK_AFTER_SENTRY:
 			{
-				m_pSchedules->add(new CBotTFEngiLookAfterSentry(m_pSentryGun));
+				m_pSchedules->add(new CBotTFEngiLookAfterSentry(m_pSentryGun));			
 			}
 			break;
 		case BOT_UTIL_DEFEND_FLAG:
-			if ( m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time()) )
+			// use last known flag position
 			{
-				// use last known flag position
+				CWaypoint *pWaypoint = NULL;
+				
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam());
+				
+				if ( pWaypoint && randomInt(0,1) )
+					pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),pWaypoint->getOrigin());
 
+				if ( pWaypoint )
+				{
+					setLookAt(pWaypoint->getOrigin());
+					m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin()));
+					return true;
+				}
 			}
-			else
+			break;
+		case BOT_UTIL_DEFEND_FLAG_LASTKNOWN:
+			// find our flag waypoint
 			{
-				// find our flag waypoint
+				setLookAt(m_vLastKnownTeamFlagPoint);
+				m_pSchedules->add(new CBotDefendSched(m_vLastKnownTeamFlagPoint));
+				return true;
 			}
 			break;
 		case BOT_UTIL_ATTACK_POINT:

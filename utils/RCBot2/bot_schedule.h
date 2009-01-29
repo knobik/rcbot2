@@ -64,7 +64,8 @@ typedef enum
 	SCHED_PICKUP,
 	SCHED_TF2_GET_AMMO,
 	SCHED_TF2_FIND_FLAG,
-	SCHED_LOOKAFTERSENTRY
+	SCHED_LOOKAFTERSENTRY,
+	SCHED_DEFEND
 }eBotSchedule;
 
 class CBotSchedule
@@ -313,6 +314,14 @@ class CBotTF2HealSched : public CBotSchedule
 {
 public:
 	CBotTF2HealSched();
+	void init ();
+};
+
+class CBotDefendSched : public CBotSchedule
+{
+public:
+	CBotDefendSched ( Vector vOrigin );
+
 	void init ();
 };
 

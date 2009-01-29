@@ -331,7 +331,19 @@ void CBotTF2WaitAmmoTask :: debugString ( char *string )
 {
 	sprintf(string,"CBotTF2WaitAmmoTask");
 }
+////////////////////////////
 
+void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fTime == 0 )
+		m_fTime = engine->Time() + randomFloat(20.0f,90.0f);
+	
+	pBot->stopMoving(5);
+	pBot->setLookAtTask(LOOK_SNIPE,5);
+
+	if ( m_fTime < engine->Time() )
+		complete();
+}
 
 //////////////////////
 void CBotTF2EngiLookAfter :: execute (CBot *pBot,CBotSchedule *pSchedule)

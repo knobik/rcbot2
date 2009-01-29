@@ -1352,6 +1352,7 @@ void CWaypointTypes :: setup ()
 
 	addType(new CWaypointType(W_FL_TELE_ENTRANCE,"teleentrance","engineer bot can build tele entrance here",WptColor(50,50,150)));
 	addType(new CWaypointType(W_FL_TELE_EXIT,"teleexit","engineer bot can build tele exit here",WptColor(100,100,255)));
+	addType(new CWaypointType(W_FL_DEFEND,"defend","bot will defend at this position",WptColor(160,50,50)));
 	
 }
 

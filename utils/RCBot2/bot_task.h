@@ -139,6 +139,22 @@ private:
 
 };
 
+class CBotDefendTask : public CBotTask
+{
+public:
+	CBotDefendTask ( Vector vOrigin ) { m_vOrigin = vOrigin; m_fTime = 0; setCompleteInterrupt(CONDITION_SEE_CUR_ENEMY); }
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotDefendTask");
+	}
+private:
+	float m_fTime;
+	Vector m_vOrigin;
+};
+
 class CBotTF2EngiLookAfter : public CBotTask
 {
 public:
