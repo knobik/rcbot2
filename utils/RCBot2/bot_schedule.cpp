@@ -218,7 +218,7 @@ void CBotGotoOriginSched :: init ()
 {
 	setID(SCHED_GOTO_ORIGIN);
 }
-
+///////////////////////////////////////
 CBotDefendSched ::CBotDefendSched ( Vector vOrigin )
 {
 	addTask(new CFindPathTask(vOrigin));
