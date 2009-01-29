@@ -63,7 +63,8 @@ typedef enum
 	SCHED_USE_DISPENSER,
 	SCHED_PICKUP,
 	SCHED_TF2_GET_AMMO,
-	SCHED_TF2_FIND_FLAG
+	SCHED_TF2_FIND_FLAG,
+	SCHED_LOOKAFTERSENTRY
 }eBotSchedule;
 
 class CBotSchedule
@@ -323,6 +324,13 @@ public:
 	void init ();
 };
 
+class CBotTFEngiLookAfterSentry : public CBotSchedule
+{
+public:
+	CBotTFEngiLookAfterSentry ( edict_t *pSentry );
+
+	void init ();
+};
 
 class CBotTF2SnipeSched : public CBotSchedule
 {

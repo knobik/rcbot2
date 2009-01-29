@@ -94,6 +94,19 @@ void CBotTF2SnipeSched :: init ()
 {
 	setID(SCHED_SNIPE);
 }
+/////////
+
+CBotTFEngiLookAfterSentry :: CBotTFEngiLookAfterSentry ( edict_t *pSentry )
+{
+	addTask(new CFindPathTask(pSentry)); // first
+	addTask(new CBotTF2EngiLookAfter()); // second
+}
+
+void CBotTFEngiLookAfterSentry :: init ()
+{
+	setID(SCHED_LOOKAFTERSENTRY);
+}
+
 ////////////
 CBotTF2GetHealthSched :: CBotTF2GetHealthSched ( Vector vOrigin )
 {

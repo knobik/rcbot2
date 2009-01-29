@@ -1686,6 +1686,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,(fAmmoDist/fResupplyDist)*(200.0f/(iMetal+1))));
 		utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(fResupplyDist/fAmmoDist)*(100.0f/(iMetal+1))));
+
+		utils.addUtility(CBotUtility(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,m_pSentryGun!=NULL,0.5));
 	}
 	else
 	{
@@ -1716,7 +1718,6 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	
-
 	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP),randomFloat(0.6,1.0)));
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)&&m_iClass!=TF_CLASS_SCOUT,randomFloat(0.6,1.0)));
 
@@ -1740,6 +1741,51 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	utils.freeMemory();
 }
+
+bool CBotTF2::lookAfterBuildings ()
+{
+	static float prevSentryHealth = 0;
+	static float prevDispHealth = 0;
+	static float prevTeleExtHealth = 0;
+	static float prevTeleEntHealth = 0;
+
+	if ( m_pSentryGun )
+	{
+		if ( prevSentryHealth > CClassInterface::getHealth(m_pSentryGun) )
+			return true;
+
+		prevSentryHealth = CClassInterface::getHealth(m_pSentryGun);
+	}
+
+	if ( m_pDispenser )
+	{
+		if ( prevDispHealth > CClassInterface::getHealth(m_pDispenser) )
+			return true;
+
+		prevDispHealth = CClassInterface::getHealth(m_pDispenser);
+	}
+
+	if ( m_pTeleExit )
+	{
+		if ( prevTeleExtHealth > CClassInterface::getHealth(m_pTeleExit) )
+			return true;
+
+		prevTeleExtHealth = CClassInterface::getHealth(m_pTeleExit);
+	}
+
+	if ( m_pTeleEntrance )
+	{
+		if ( prevTeleEntHealth > CClassInterface::getHealth(m_pTeleEntrance) )
+			return true;
+
+		prevTeleEntHealth = CClassInterface::getHealth(m_pTeleEntrance);
+	}
+
+	setLookAtTask(LOOK_AROUND,3);
+
+
+	return false;
+}
 //
 // Execute a given Action
 //
@@ -1749,6 +1795,11 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 		switch ( id )
 		{
+		case BOT_UTIL_ENGI_LOOK_AFTER_SENTRY:
+			{
+				m_pSchedules->add(new CBotTFEngiLookAfterSentry(m_pSentryGun));
+			}
+			break;
 		case BOT_UTIL_DEFEND_FLAG:
 			if ( m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time()) )
 			{

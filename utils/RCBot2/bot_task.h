@@ -139,6 +139,21 @@ private:
 
 };
 
+class CBotTF2EngiLookAfter : public CBotTask
+{
+public:
+	CBotTF2EngiLookAfter (  ) { m_fTime = 0; }
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotTF2EngiLookAfter");
+	}
+private:
+	float m_fTime;
+};
+
 class CBotTF2Snipe : public CBotTask
 {
 public:

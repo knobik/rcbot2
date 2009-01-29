@@ -150,6 +150,8 @@ public:
 
 	virtual void spyDisguise ( int iTeam, int iClass ) {};
 
+	virtual bool lookAfterBuildings () { return false; }
+
 	inline edict_t *getSentry () { return m_pSentryGun; }
 
 	virtual bool hasEngineerBuilt ( eEngiBuild iBuilding ) {return false;}
@@ -300,6 +302,8 @@ public:
 	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 
 	void engiBuildSuccess ( eEngiBuild iObject );
+
+	bool lookAfterBuildings ();
 
 	void spawnInit ();
 

@@ -333,7 +333,18 @@ void CBotTF2WaitAmmoTask :: debugString ( char *string )
 }
 
 
+//////////////////////
+void CBotTF2EngiLookAfter :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	CBotFortress *tfBot = (CBotFortress*)pBot;
 
+	if ( !m_fTime )
+		m_fTime = engine->Time() + randomFloat(15.0f,60.0f);
+	else if ( m_fTime < engine->Time() )
+		complete();
+	else if ( tfBot->lookAfterBuildings() )
+		complete();
+}
 
 ////////////////////////
 CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin )
