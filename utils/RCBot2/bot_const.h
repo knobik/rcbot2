@@ -106,6 +106,13 @@ typedef enum
 #define BOT_VER_CVAR "rcbot_ver"
 #define BOT_FOLDER "rcbot2"
 
+typedef enum
+{
+	BOT_FUNC_FAIL = 0,
+    BOT_FUNC_CONTINUE,
+	BOT_FUNC_COMPLETE,
+}eBotFuncState;
+
 //////////////////////////////////
 #define CONDITION_ENEMY_OBSCURED 1
 #define CONDITION_NO_WEAPON		 2

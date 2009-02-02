@@ -1590,6 +1590,14 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( !m_pSchedules->isEmpty() )
 		return; // already got some tasks left
 
+	// No Enemy now
+	if ( m_iClass == TF_CLASS_SNIPER )
+		// un zoom
+	{
+		if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
+				secondaryAttack();
+	}
+
 	iClass = getClass();
 
 	bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
@@ -1813,8 +1821,8 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				
 				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam());
 				
-				if ( pWaypoint && randomInt(0,1) )
-					pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),pWaypoint->getOrigin());
+				//if ( pWaypoint && randomInt(0,1) )
+				//	pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),pWaypoint->getOrigin());
 
 				if ( pWaypoint )
 				{
@@ -2058,19 +2066,39 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 	return vAim;
 }
 
-bool CBotTF2 :: rocketJump()
+eBotFuncState CBotTF2 :: rocketJump(int *iState,float *fTime)
 {
-	setLookAtTask(LOOK_GROUND,4);
+	extern ConVar bot_rj;
 
-	if ( (getSpeed() > 100) && (CBotGlobals::playerAngles(m_pEdict).x > 84.0f )  )
+	setLookAtTask(LOOK_GROUND,6);
+
+	switch ( *iState )
 	{
-		m_pButtons->holdButton(IN_JUMP,0,0.2,0.1);
-		m_pButtons->holdButton(IN_ATTACK,0.1,0.2,0.1);
+	case 0:
+		{
+			if ( (getSpeed() > 100) && (CBotGlobals::playerAngles(m_pEdict).x > 86.0f )  )
+			{
+				m_pButtons->tap(IN_JUMP);
+				*iState = *iState + 1;
+				*fTime = engine->Time() + bot_rj.GetFloat();//randomFloat(0.08,0.5);
 
-		return true;
+				return BOT_FUNC_CONTINUE;
+			}
+		}
+		break;
+	case 1:
+		{
+			if ( *fTime < engine->Time() )
+			{
+				m_pButtons->tap(IN_ATTACK);
+
+				return BOT_FUNC_COMPLETE;
+			}
+		}
+		break;
 	}
 
-	return false;
+	return BOT_FUNC_CONTINUE;
 }
 
 

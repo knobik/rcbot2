@@ -285,6 +285,8 @@ public:
 	virtual void debugString ( char *string );
 private:
 	float m_fTime;
+	float m_fJumpTime;
+	int m_iState;
 };
 
 class CBotTF2SpySap : public CBotTask

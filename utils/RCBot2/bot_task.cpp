@@ -609,6 +609,8 @@ void CMoveToTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 CBotTFRocketJump :: CBotTFRocketJump ()
 {
 	m_fTime = 0.0f;
+	m_fJumpTime = 0.0f;
+	m_iState = 0;
 }
 
 void CBotTFRocketJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -645,12 +647,14 @@ void CBotTFRocketJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else
 	{
+		CBotTF2 *tf2Bot = ((CBotTF2*)pBot);
+
 		if ( !m_fTime )
 		{
 			m_fTime = engine->Time()+randomFloat(4.0f,5.0f);
 		}
 
-		if ( ((CBotTF2*)pBot)->rocketJump() )
+		if ( tf2Bot->rocketJump(&m_iState,&m_fJumpTime) == BOT_FUNC_COMPLETE )
 			complete();
 		else if ( m_fTime < engine->Time() )
 		{

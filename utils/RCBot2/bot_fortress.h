@@ -291,7 +291,7 @@ public:
 		m_iCurrentAttackArea = 0;
 	}
 
-	bool rocketJump();
+	eBotFuncState rocketJump(int *iState,float *fTime);
 
 	float getEnemyFactor ( edict_t *pEnemy );
 

@@ -1247,7 +1247,8 @@ void CBot :: getLookAtVector ()
 		break;
 	case LOOK_GROUND:
 		{
-			setLookAt(getOrigin()-Vector(0,0,64));
+			setLookAt(m_vMoveTo);
+			//setLookAt(getOrigin()-Vector(0,0,64));
 		}
 		break;
 	case LOOK_LAST_ENEMY:
@@ -1432,6 +1433,10 @@ void CBot :: doLook ()
 		VectorAngles(m_vLookAt-getEyePosition(),requiredAngles);
 		CBotGlobals::fixFloatAngle(&requiredAngles.x);
 		CBotGlobals::fixFloatAngle(&requiredAngles.y);
+
+		if ( m_iLookTask == LOOK_GROUND )
+			requiredAngles.x = 89.0f;
+
 		changeAngles(bot_anglespeed.GetFloat(),&requiredAngles.x,&m_vViewAngles.x,NULL);
 		changeAngles(bot_anglespeed.GetFloat(),&requiredAngles.y,&m_vViewAngles.y,NULL);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.x);
