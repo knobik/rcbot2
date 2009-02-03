@@ -6,14 +6,24 @@ TF2 updates
 - fixed taunting bots from moving and shooting 
 - helped bots not shooting correctly & not seeing enemies on ledges above them
 - medics healing
-- medics ubercharging
+- medics ubercharging (only when healing player is low on health or medic is low on health at the moment)
 - new waypoint version (For use with CP/PL maps / not supported yet)
-	- added waypoint radius'
-	- added waypoint areas
-- possible crash bug fix
+	- added waypoint radius' (use 'rcbot waypoint drawtype 1')
+	- added waypoint areas (for different map types soon)
+- possible crash bug fixes
 - improved snipers
 - bots now look ahead of where they want to go (gives some more realism)
 - stopped bots from using rocketjump/double jump waypoints if they cant use it
+- added 'defend' waypoint type
+- added 'rcbot_defrate' rate at which defensive bot classes defend at (default 0.35)
+- changed rocket jump code again!
+- reduce bot speeds again!
+- improved engineer building
+- added teleporter entrance / teleporter exit waypoints
+- engineers build teleporters
+- engineers upgrade teleporters and dispensers
+- engineers stay by sentry and hit it with wrench occasionally if nothing else to do
+- added 'rcbot_wpt_pathdist' command, use to reduce/increase distance for automatic waypoint paths to be made at
 
 0.3 
 TF2 updates

@@ -221,7 +221,15 @@ void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime<engine->Time() )
 		complete();
 	else if ( !pBot->isVisible(m_pBuilding) )
-		fail();
+	{
+		if ( pBot->distanceFrom(m_pBuilding) > 200 )
+			fail();
+		else if ( pBot->distanceFrom(m_pBuilding) > 100 )
+			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding),3);
+		
+		pBot->setLookAtTask(LOOK_EDICT,3);
+		pBot->lookAtEdict(m_pBuilding);
+	}
 	else if ( CBotGlobals::entityIsValid(m_pBuilding) && CBotGlobals::entityIsAlive(m_pBuilding) )
 	{
 		if ( !((CBotFortress*)pBot)->upgradeBuilding(m_pBuilding) )
@@ -351,10 +359,13 @@ void CBotTF2EngiLookAfter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CBotFortress *tfBot = (CBotFortress*)pBot;
 
 	if ( !m_fTime )
-		m_fTime = engine->Time() + randomFloat(15.0f,60.0f);
+	{
+		m_fTime = engine->Time() + randomFloat(21.0f,60.0f);
+		m_fHitSentry = engine->Time() + randomFloat(1.0f,3.0f);
+	}
 	else if ( m_fTime < engine->Time() )
 		complete();
-	else if ( tfBot->lookAfterBuildings() )
+	else if ( tfBot->lookAfterBuildings(&m_fHitSentry) )
 		complete();
 }
 

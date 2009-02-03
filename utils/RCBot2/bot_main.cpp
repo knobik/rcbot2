@@ -82,6 +82,7 @@ ConVar bot_anglespeed( "rcbot_anglespeed", "12.0", 0, "speed that bots turn" );
 ConVar bot_stop( "rcbot_stop", "0", 0, "Make bots stop thinking!");
 ConVar bot_waypointpathdist("rcbot_wpt_pathdist","512",0,"Length for waypoints to automatically add paths at");
 ConVar bot_rj("rcbot_rj","0.01",0,"time for soldier to fire rocket after jumping");
+ConVar bot_defrate("rcbot_defrate","0.35",0,"rate for bots to defend");
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
 IFileSystem *filesystem = NULL;  // file I/O 

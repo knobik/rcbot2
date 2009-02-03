@@ -1531,6 +1531,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	static bool bHasFlag = false;
 	static float fGetFlagUtility = 0.5;
 	static float fDefendFlagUtility = 0.5;
+
+	extern ConVar bot_defrate;
 	//static float fResupplyUtil = 0.5;
 	//static float fHealthUtil = 0.5;
 	//static float fAmmoUtil = 0.5;
@@ -1688,8 +1690,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag && m_pSentryGun && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2)));
 		utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELENT,m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.5 + (0.5-(fTeleporterEntranceHealthPercent*0.5))));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELEXT,m_pTeleExit!=NULL && (iMetal>=200) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.5) + ((0.5-fTeleporterExitHealthPercent)*0.5)));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELENT,m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5))));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELEXT,m_pTeleExit!=NULL && (iMetal>=200) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.51) + ((0.5-fTeleporterExitHealthPercent)*0.5)));
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser!=NULL && (iMetal>=200) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3)));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,(fAmmoDist/fResupplyDist)*(200.0f/(iMetal+1))));
@@ -1710,10 +1712,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	else if ( m_iClass == TF_CLASS_SPY )
 		fGetFlagUtility = 0.6;
 
-	fDefendFlagUtility = 0.2;
+	fDefendFlagUtility = bot_defrate.GetFloat()/2;
 
 	if ( (m_iClass == TF_CLASS_HWGUY) || (m_iClass == TF_CLASS_DEMOMAN) || (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_PYRO) )
-		fDefendFlagUtility = 0.5-randomFloat(0.0f,0.2f);
+		fDefendFlagUtility = bot_defrate.GetFloat() - randomFloat(0.0f,fDefendFlagUtility);
 
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,fHealthDist/fResupplyDist));
@@ -1725,8 +1727,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_GETFLAG_LASTKNOWN, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), fGetFlagUtility+0.1));
 
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_FLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag, fDefendFlagUtility+0.1));
-	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_FLAG_LASTKNOWN, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && (m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time())), fDefendFlagUtility+0.1));
-
+	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_FLAG_LASTKNOWN, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && (m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time())), fDefendFlagUtility+(randomFloat(0.0,0.2)-0.1)));
 	utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95));	
 
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
@@ -1756,7 +1757,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.freeMemory();
 }
 
-bool CBotTF2::lookAfterBuildings ()
+bool CBotTF2::lookAfterBuildings ( float *fTime )
 {
 	static float prevSentryHealth = 0;
 	static float prevDispHealth = 0;
@@ -1769,7 +1770,24 @@ bool CBotTF2::lookAfterBuildings ()
 			return true;
 
 		prevSentryHealth = CClassInterface::getHealth(m_pSentryGun);
+
+		if ( distanceFrom(m_pSentryGun) > 100 )
+			setMoveTo(CBotGlobals::entityOrigin(m_pSentryGun),3);
+		else
+			stopMoving();
+
+		lookAtEdict(m_pSentryGun);
+		setLookAt(LOOK_BUILD);
+
+		if ( *fTime < engine->Time() )
+		{
+			m_pButtons->tap(IN_ATTACK);
+			*fTime = engine->Time() + randomFloat(10.0f,20.0f);
+		}
+
 	}
+	else
+		return false;
 
 	if ( m_pDispenser )
 	{
@@ -1778,6 +1796,8 @@ bool CBotTF2::lookAfterBuildings ()
 
 		prevDispHealth = CClassInterface::getHealth(m_pDispenser);
 	}
+	else
+		return false;
 
 	if ( m_pTeleExit )
 	{
@@ -1786,6 +1806,8 @@ bool CBotTF2::lookAfterBuildings ()
 
 		prevTeleExtHealth = CClassInterface::getHealth(m_pTeleExit);
 	}
+	else
+		return false;
 
 	if ( m_pTeleEntrance )
 	{
@@ -1794,6 +1816,8 @@ bool CBotTF2::lookAfterBuildings ()
 
 		prevTeleEntHealth = CClassInterface::getHealth(m_pTeleEntrance);
 	}
+	else
+		return false;
 
 	setLookAtTask(LOOK_AROUND,3);
 

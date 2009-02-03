@@ -110,6 +110,7 @@ void CBot :: runPlayerMove()
 	cmd.viewangles = m_vViewAngles;
 	cmd.weaponselect = m_iSelectWeapon;
 	cmd.tick_count = gpGlobals->tickcount;
+	//cmd.hasbeenpredicted
 
 	if ( bot_attack.GetInt() == 1 )
 		cmd.buttons = IN_ATTACK;

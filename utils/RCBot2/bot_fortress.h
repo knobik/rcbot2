@@ -150,7 +150,7 @@ public:
 
 	virtual void spyDisguise ( int iTeam, int iClass ) {};
 
-	virtual bool lookAfterBuildings () { return false; }
+	virtual bool lookAfterBuildings (float *fTime) { return false; }
 
 	inline edict_t *getSentry () { return m_pSentryGun; }
 
@@ -303,7 +303,7 @@ public:
 
 	void engiBuildSuccess ( eEngiBuild iObject );
 
-	bool lookAfterBuildings ();
+	bool lookAfterBuildings (float *fTime);
 
 	void spawnInit ();
 
