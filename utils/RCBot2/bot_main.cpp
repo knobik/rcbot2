@@ -838,6 +838,31 @@ int CClassInterface :: getMedigunTarget ( edict_t *edict )
 	return *(int*)((char *)pEntity + offset);
 }
 
+void CClassInterface :: setTickBase ( edict_t *edict, int tick )
+{
+	static unsigned int offset = 0;
+	int *tickbase;
+ 
+	if (!offset)
+		offset = findOffset("m_nTickBase","CBasePlayer");
+	
+	if (!offset)
+		return;
+
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	tickbase = (int *)((char *)pEntity + offset);
+
+	*tickbase = tick;
+}
+
 int CClassInterface :: getFlags ( edict_t *edict )
 {
 	static unsigned int offset = 0;

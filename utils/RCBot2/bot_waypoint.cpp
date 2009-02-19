@@ -263,8 +263,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			m_bWorkingRoute = false;
 			return true;
 		}
-
-		m_vGoal = CWaypoints::getWaypoint(m_iGoalWaypoint)->getOrigin();
+		
 		m_vPreviousPoint = vFrom;
 		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());
 
@@ -458,8 +457,9 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 	{
 		m_currentRoute.Destroy();
 		*bFail = true;
-
 	}
+	else
+		m_vGoal = CWaypoints::getWaypoint(m_iGoalWaypoint)->getOrigin();
 
     return true; 
 }
@@ -536,13 +536,17 @@ void CWaypointNavigator :: updatePosition ()
 	if ( m_iCurrentWaypoint == -1 ) // invalid
 	{
 		m_pBot->stopMoving();	
+		m_bOffsetApplied = false;
 		return;
 	}
 
 	CWaypoint *pWaypoint = CWaypoints::getWaypoint(m_iCurrentWaypoint);
 
 	if ( pWaypoint == NULL )
+	{
+		m_bOffsetApplied = false;
 		return;
+	}
 
 	aim = QAngle(0,pWaypoint->getAimYaw(),0);
 	AngleVectors(aim,&vaim);
@@ -575,7 +579,6 @@ void CWaypointNavigator :: updatePosition ()
 				if ( m_iCurrentWaypoint != -1 )
 				{
 					vWptOrigin = CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
-					m_bOffsetApplied = false;
 				}
 			}
 		}
@@ -1027,8 +1030,12 @@ void CWaypoints :: setupVisibility ()
 
 void CWaypoints :: freeMemory ()
 {
-	m_pVisibilityTable->FreeVisibilityTable();
-	delete m_pVisibilityTable;
+	if ( m_pVisibilityTable )
+	{
+		m_pVisibilityTable->FreeVisibilityTable();
+
+		delete m_pVisibilityTable;
+	}
 	m_pVisibilityTable = NULL;
 }
 

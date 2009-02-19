@@ -93,6 +93,7 @@ public:
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health );
 	static bool getMedigunHealing ( edict_t *edict );
 	static int getMedigunTarget ( edict_t *edict );
+	static void setTickBase ( edict_t *edict, int tickbase );
 };
 
 class MyEHandle 

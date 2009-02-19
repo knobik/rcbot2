@@ -94,6 +94,9 @@ int CBots :: m_iMinBots = -1;
 // add or kick bot time
 float  CBots :: m_flAddKickBotTime = 0;
 
+#define TICK_INTERVAL			(gpGlobals->interval_per_tick)
+#define TIME_TO_TICKS( dt )		( (int)( 0.5f + (float)(dt) / TICK_INTERVAL ) )
+
 ////////////////////////////////////////////////
 void CBot :: runPlayerMove()
 {
@@ -129,7 +132,20 @@ void CBot :: runPlayerMove()
 
 	m_pController->PostClientMessagesSent();
 
+	// IS THIS REQUIRED????
+	//float frametime = gpGlobals->frametime;
+	// Store off the globals.. they're gonna get whacked
+	//float flOldFrametime = gpGlobals->frametime;
+	//float flOldCurtime = gpGlobals->curtime;
+
+	//float flTimeBase = gpGlobals->curtime + gpGlobals->frametime - frametime;
+
+	//CClassInterface::setTickBase(m_pEdict,TIME_TO_TICKS(flTimeBase));
 	m_pController->RunPlayerMove(&cmd);
+
+	// Restore the globals..
+	//gpGlobals->frametime = flOldFrametime;
+	//gpGlobals->curtime = flOldCurtime;
 
 }
 
