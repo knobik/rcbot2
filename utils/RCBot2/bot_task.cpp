@@ -877,8 +877,9 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !m_fTime )
 		m_fTime = engine->Time() + 12.0f;
 
-	if ( !((CBotFortress*)pBot)->isTeleporterUseful(m_pTele) )
-		fail();
+	// FIX BUG
+	//if ( !((CBotFortress*)pBot)->isTeleporterUseful(m_pTele) )
+	//	fail();
 
 	if ( m_fTime < engine->Time() )
 		fail();
