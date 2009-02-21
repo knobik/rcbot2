@@ -612,31 +612,30 @@ bool CTeamFortress2Mod :: TF2_IsPlayerOnFire(edict_t *pPlayer)
     return ((pcond & TF2_PLAYER_ONFIRE) == TF2_PLAYER_ONFIRE);
 }
 
-float CTeamFortress2Mod :: TF2_GetClassSpeed(int iClass)
-{
-    switch (iClass)
-    {
-		// Fix needed: Too Fast!!!
-        case TF_CLASS_SCOUT:     return 240.0f;
-        case TF_CLASS_SOLDIER:   return 130.0f;
-        case TF_CLASS_DEMOMAN:   return 150.0f;
-        case TF_CLASS_MEDIC:     return 190.0f;
-        case TF_CLASS_PYRO:      return 170.0f;
-        case TF_CLASS_SPY:       return 170.0f;
-        case TF_CLASS_ENGINEER:  return 170.0f;
-        case TF_CLASS_SNIPER:    return 170.0f;
-        case TF_CLASS_HWGUY:     return 110.0f;
-    }
-    return 0.0;
-}
-
-float CTeamFortress2Mod :: TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass )
-{
-    if (TF2_IsPlayerSlowed(pPlayer))
-        return 80.0;
-    else
-        return TF2_GetClassSpeed(iClass);
-}
+float CTeamFortress2Mod :: TF2_GetClassSpeed(int iClass) 
+{ 
+switch (iClass) 
+{ 
+case TF_CLASS_SCOUT: return 133.0f; 
+case TF_CLASS_SOLDIER: return 80.0f; 
+case TF_CLASS_DEMOMAN: return 93.00; 
+case TF_CLASS_MEDIC: return 109.0f; 
+case TF_CLASS_PYRO: return 100.0f; 
+case TF_CLASS_SPY: return 100.0f; 
+case TF_CLASS_ENGINEER: return 100.0f; 
+case TF_CLASS_SNIPER: return 100.0f; 
+case TF_CLASS_HWGUY: return 77.0f; 
+} 
+return 0.0; 
+} 
+ 
+float CTeamFortress2Mod :: TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass ) 
+{ 
+if (TF2_IsPlayerSlowed(pPlayer)) 
+return 27.0; 
+else 
+return TF2_GetClassSpeed(iClass) * 1.58; 
+} 
 
 
 

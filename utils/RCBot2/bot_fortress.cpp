@@ -1217,7 +1217,7 @@ void CBotTF2 :: modThink ()
 	if ( getClass() == TF_CLASS_SNIPER )
 	{
 		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
-			m_fFov = 10.0f;
+			m_fFov = 20.0f;
 		else
 			m_fFov = 90.0f;
 	}
