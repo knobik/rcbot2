@@ -654,7 +654,8 @@ void CBotFortress :: modThink ()
 		{
 			if ( !m_pSchedules->isCurrentSchedule(SCHED_USE_TELE) )
 			{
-				m_pSchedules->removeSchedule(SCHED_USE_TELE);
+				m_pSchedules->freeMemory();
+				//m_pSchedules->removeSchedule(SCHED_USE_TELE);
 				m_pSchedules->addFront(new CBotUseTeleSched(m_pTeleEntrance));
 
 				m_fUseTeleporterTime = engine->Time() + randomFloat(25.0f,35.0f);
@@ -1217,7 +1218,7 @@ void CBotTF2 :: modThink ()
 	if ( getClass() == TF_CLASS_SNIPER )
 	{
 		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
-			m_fFov = 20.0f;
+			m_fFov = 20.0f; // Jagger
 		else
 			m_fFov = 90.0f;
 	}
