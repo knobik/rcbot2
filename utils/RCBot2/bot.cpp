@@ -137,7 +137,7 @@ void CBot :: runPlayerMove()
 	// Store off the globals.. they're gonna get whacked
 	//float flOldFrametime = gpGlobals->frametime;
 	//float flOldCurtime = gpGlobals->curtime;
-
+//
 	//float flTimeBase = gpGlobals->curtime + gpGlobals->frametime - frametime;
 
 	//CClassInterface::setTickBase(m_pEdict,TIME_TO_TICKS(flTimeBase));
@@ -1748,6 +1748,7 @@ void CBots :: botThink ()
 	static CBot *pBot;
 
 	extern ConVar bot_stop;
+	extern ConVar bot_command;
 
 	bool bBotStop = bot_stop.GetInt() > 0;
 
@@ -1759,10 +1760,16 @@ void CBots :: botThink ()
 		{
 			if ( !bBotStop )
 				pBot->think();
+			if ( bot_command.GetString() && *bot_command.GetString() )
+			{
+				helpers->ClientCommand(pBot->getEdict(),bot_command.GetString());
+			}
 
 			pBot->runPlayerMove();
 		}
 	}
+
+	bot_command.SetValue("");
 	
 	if ( needToAddBot () )
 	{
