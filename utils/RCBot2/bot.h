@@ -161,6 +161,10 @@ public:
 	virtual PLUGIN_RESULT	NetworkIDValidated( const char *pszUserName, const char *pszNetworkID );
 	virtual void			OnQueryCvarValueFinished( QueryCvarCookie_t iCookie, edict_t *pPlayerEntity, EQueryCvarValueStatus eStatus, const char *pCvarName, const char *pCvarValue );
 
+	// added with version 3 of the interface.
+	virtual void			OnEdictAllocated( edict_t *edict );
+	virtual void			OnEdictFreed( const edict_t *edict  );	
+
 	// IGameEventListener Interface
 	virtual void FireGameEvent( KeyValues * event );
 	//virtual void FireGameEvent( IGameEvent * event );

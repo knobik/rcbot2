@@ -31,6 +31,8 @@
 #ifndef __BOT_CONST_H__
 #define __BOT_CONST_H__
 
+#include "shareddefs.h"
+
 #define strlow(str) { int len = strlen(str); int i;	for ( i = 0; i < len; i ++ ) { str[i] = tolower(str[i]); } }
 #define round(a) (((a-(int)a) >= 0.5) ? ((int)a+1) : ((int)a))
 //#define RANDOM_INT(min,max) (min + round(((float)rand()/RAND_MAX)*(float)(max-min)))
@@ -124,7 +126,6 @@ typedef enum
 #define CONDITION_NEED_HEALTH	 128
 #define CONDITION_SEE_LOOK_VECTOR 256
 ////////////////////////
-#define MAX_PLAYERS 32
 
 ///////////////////////
 typedef enum 

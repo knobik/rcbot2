@@ -153,6 +153,15 @@ CON_COMMAND( rcbotd, "access the bot commands on a server" )
 		}
 }
 
+void CRCBotPlugin::OnEdictAllocated( edict_t *edict )
+{
+}
+
+void CRCBotPlugin::OnEdictFreed( const edict_t *edict  )
+{
+}
+
+
 
 ///////////////
 // hud message
@@ -375,7 +384,7 @@ void CRCBotPlugin::GameFrame( bool simulating )
 	if ( simulating && CBotGlobals::IsMapRunning() )
 	{
 		CBots::botThink();
-		CClients::clientThink();	
+		CClients::clientThink();
 
 		if ( CWaypoints::getVisiblity()->needToWorkVisibility() )
 		{
