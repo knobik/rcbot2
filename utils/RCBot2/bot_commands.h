@@ -299,6 +299,18 @@ public:
 };
 
 ///////////////
+// control bot
+class CControlCommand : public CBotCommand
+{
+public:
+	CControlCommand();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+
+	virtual bool canbeUsedDedicated () { return true; }
+};
+
+///////////////
 // addbot
 class CAddBotCommand : public CBotCommand
 {

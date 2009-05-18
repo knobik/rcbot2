@@ -52,6 +52,8 @@
 #include "usercmd.h"
 
 #include "bot_const.h"
+#include <queue>
+using namespace std;
 
 #define MAX_AMMO_TYPES 32
 
@@ -672,9 +674,17 @@ public:
 
 	static void init ();
 
+	static bool controlBots () { return m_bControlBotsOnly; }
+
+	static bool controlBot ( edict_t *pEdict );
+
+	static bool controlBot ( const char *szOldName, const char *szName, const char *szTeam, const char *szClass );
+
 	static bool createBot (const char *szClass, const char *szTeam, const char *szName);
 
 	static int numBots ();
+
+	static void handlePlayerJoin ( edict_t *pEdict, const char *name );
 
 	static int slotOfEdict ( edict_t *pEdict );
 
@@ -700,6 +710,8 @@ public:
 
 	static void botFunction ( IBotFunction *function );
 
+	static void handleAutomaticControl ();
+
 private:
 	static CBot **m_Bots;
 
@@ -707,8 +719,18 @@ private:
 	static int m_iMaxBots;
 	static int m_iMinBots;
 
+	// Workaround for add bot bug
+	//
+	static bool m_bControlBotsOnly;
+	static bool m_bControlNext;
+	static CBotProfile *m_pNextProfile;
+	static char m_szNextName[64];
+	// End - workaround
+
 	// add or kick bot time
 	static float m_flAddKickBotTime;
+
+	static queue<edict_t*> m_ControlQueue;
 };
 
 void DrawLine ( const Vector &origin, const Vector &target, int r, int g, int b, bool noDepthTest, float duration );

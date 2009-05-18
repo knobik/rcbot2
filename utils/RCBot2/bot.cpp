@@ -88,6 +88,11 @@ const float CBot :: m_fAttackLowestHoldTime = 0.1f;
 const float CBot :: m_fAttackHighestHoldTime = 0.6f;
 const float CBot :: m_fAttackLowestLetGoTime = 0.1f;
 const float CBot :: m_fAttackHighestLetGoTime = 0.5f;
+bool CBots :: m_bControlBotsOnly = true;
+bool CBots :: m_bControlNext = false;
+CBotProfile *CBots :: m_pNextProfile = NULL;
+queue<edict_t*> CBots :: m_ControlQueue;
+char CBots :: m_szNextName[64];
 
 int CBots :: m_iMaxBots = -1;
 int CBots :: m_iMinBots = -1;
@@ -1607,15 +1612,54 @@ void CBot :: getTasks (unsigned int iIgnore)
 
 ///////////////////////
 
-bool CBots :: createBot (const char *szClass, const char *szTeam, const char *szName)
-{		
+bool CBots :: controlBot ( edict_t *pEdict )
+{
+	CBotProfile *pBotProfile = CBotProfiles::getRandomFreeProfile();
+
+	if ( m_Bots[slotOfEdict(pEdict)]->getEdict() == pEdict )
+	{
+		return false;
+	}
+
+	if ( pBotProfile == NULL )
+	{
+		CBotGlobals::botMessage(NULL,0,"No bot profiles are free, creating a default bot...");
+
+		pBotProfile = CBotProfiles::getDefaultProfile();
+
+		if ( pBotProfile == NULL )
+			return false;
+	}
+
+	m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,pBotProfile);
+
+	return true;
+}
+
+bool CBots :: controlBot ( const char *szOldName, const char *szName, const char *szTeam, const char *szClass )
+{
 	edict_t *pEdict;	
 	CBotProfile *pBotProfile;
 
 	char *szOVName = "";
 
+	if ( (pEdict = CBotGlobals::findPlayerByTruncName(szOldName)) == NULL )
+	{
+		CBotGlobals::botMessage(NULL,0,"Can't find player");
+		return false;
+	}
+
+	if ( m_Bots[slotOfEdict(pEdict)]->getEdict() == pEdict )
+	{
+		CBotGlobals::botMessage(NULL,0,"already controlling player");
+		return false;
+	}
+
 	if ( (m_iMaxBots != -1) && (CBotGlobals::numClients() >= m_iMaxBots) )
+	{
 		CBotGlobals::botMessage(NULL,0,"Can't create bot, max_bots reached");
+		return false;
+	}
 
 	m_flAddKickBotTime = engine->Time() + 2.0f;
 
@@ -1648,12 +1692,83 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 	else
 		szOVName = pBotProfile->getName();
 
-	pEdict = g_pBotManager->CreateBot( szOVName );
+	//IBotController *p = g_pBotManager->GetBotController(pEdict);	
 
-	if ( pEdict == NULL )
-		return false;
+	return m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,pBotProfile);
+	
+}
 
-	return ( m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,pBotProfile) );
+bool CBots :: createBot (const char *szClass, const char *szTeam, const char *szName)
+{		
+	edict_t *pEdict;	
+	CBotProfile *pBotProfile;
+
+	char *szOVName = "";
+
+	if ( (m_iMaxBots != -1) && (CBotGlobals::numClients() >= m_iMaxBots) )
+		CBotGlobals::botMessage(NULL,0,"Can't create bot, max_bots reached");
+
+	m_flAddKickBotTime = engine->Time() + 2.0f;
+
+	pBotProfile = CBotProfiles::getRandomFreeProfile();
+
+	if ( pBotProfile == NULL )
+	{
+		CBotGlobals::botMessage(NULL,0,"No bot profiles are free, creating a default bot...");
+
+		pBotProfile = CBotProfiles::getDefaultProfile();
+
+		if ( pBotProfile == NULL )
+			return false;
+	}
+
+	m_pNextProfile = pBotProfile;
+
+	if ( szClass && *szClass )
+	{
+		pBotProfile->setClass(atoi(szClass));
+	}
+
+	if ( szTeam && *szTeam )
+	{
+		pBotProfile->setTeam(atoi(szTeam));
+	}
+	
+	if ( szName && *szName )
+	{
+		szOVName = (char*)szName;
+	}
+	else
+		szOVName = pBotProfile->getName();
+
+	strncpy(m_szNextName,szOVName,63);
+	m_szNextName[63] = 0;
+
+	if ( CBots::controlBots() )
+	{
+		char cmd[64];
+
+		sprintf(cmd,"bot -name %s",szOVName);
+		// control next bot that joins server
+		m_bControlNext = true;
+
+		if ( CClients::get(0)->getPlayer() )
+			engine->ClientCommand(CClients::get(0)->getPlayer(),cmd);
+		else
+			engine->ServerCommand(cmd); // Might not work
+
+		return true;
+	}
+	else
+	{
+		pEdict = g_pBotManager->CreateBot( szOVName );
+
+		if ( pEdict == NULL )
+			return false;
+
+		return ( m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,pBotProfile) );
+	}
+
 }
 
 void CBots :: botFunction ( IBotFunction *function )
@@ -1920,3 +2035,33 @@ void CBots :: kickRandomBotOnTeam ( int team )
 	engine->ServerCommand(szCommand);
 }
 ////////////////////////
+
+void CBots :: handlePlayerJoin ( edict_t *pEdict, const char *name )
+{
+	if ( m_bControlNext && (strncmp(name,m_szNextName,strlen(m_szNextName)) == 0) )
+	{
+		m_ControlQueue.push(pEdict);
+		m_bControlNext = false;
+		engine->SetFakeClientConVarValue(pEdict,"tf_medigun_autoheal","1");	
+	}
+}
+
+void CBots :: handleAutomaticControl ()
+{
+	if ( !m_ControlQueue.empty() )
+	{
+		edict_t *pEdict = (edict_t*)m_ControlQueue.front();
+
+		IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pEdict);
+
+		if ( p )
+		{
+			m_ControlQueue.pop();
+
+			//engine->SetFakeClientConVarValue( pEdict, "name",m_pNextProfile->getName() );
+
+			m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,m_pNextProfile);
+		}
+		
+	}
+}

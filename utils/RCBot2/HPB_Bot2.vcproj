@@ -33,7 +33,7 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\SteamApps\paul.murphy@ntlworld.com\counter-strike source\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\SteamApps\paul.murphy@ntlworld.com\half-life 2 deathmatch\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\SteamApps\paul.murphy@ntlworld.com\source dedicated server\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\half-life deathmatch source\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\steamapps\SourceMods\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\SteamApps\paul.murphy@ntlworld.com\counter-strike source\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\SteamApps\paul.murphy@ntlworld.com\half-life 2 deathmatch\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\SteamApps\paul.murphy@ntlworld.com\source dedicated server\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\half-life deathmatch source\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\steamapps\SourceMods\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;D:\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;&#x0D;&#x0A;"
 				Outputs="c:\Program Files (x86)\Steam\SteamApps\paul.murphy@ntlworld.com\counter-strike source\bin\HPB_bot2.dll;c:\Program Files (x86)\Steam\SteamApps\paul.murphy@ntlworld.com\half-life 2 deathmatch\bin\HPB_bot2.dll;c:\Program Files (x86)\Steam\SteamApps\paul.murphy@ntlworld.com\source dedicated server\bin\HPB_Bot2.dll;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\half-life deathmatch source\bin\HPB_Bot2.dll;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_Bot2.dll;c:\Program Files (x86)\Steam\steamapps\SourceMods\bin\HPB_Bot2.dll"
 			/>
 			<Tool
@@ -138,7 +138,7 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Steam\SteamApps\paul.murphy@ntlworld.com\counter-strike source\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Steam\SteamApps\paul.murphy@ntlworld.com\half-life 2 deathmatch\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Steam\SteamApps\paul.murphy@ntlworld.com\source dedicated server\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;D:\svn\hl2\release\HPB_bot2.dll&quot;&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Steam\SteamApps\paul.murphy@ntlworld.com\counter-strike source\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Steam\SteamApps\paul.murphy@ntlworld.com\half-life 2 deathmatch\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files\Steam\SteamApps\paul.murphy@ntlworld.com\source dedicated server\bin\HPB_Bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;"
 				Outputs="C:\Program Files\Steam\SteamApps\paul.murphy@ntlworld.com\counter-strike source\bin\HPB_bot2.dll;C:\Program Files\Steam\SteamApps\paul.murphy@ntlworld.com\half-life 2 deathmatch\bin\HPB_bot2.dll;C:\Program Files\Steam\SteamApps\paul.murphy@ntlworld.com\source dedicated server\bin\HPB_Bot2.dll"
 			/>
 			<Tool
@@ -404,6 +404,10 @@
 				RelativePath="..\..\public\tier0\memoverride.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\tier1\utlsymbol.cpp"
+				>
+			</File>
 			<Filter
 				Name="tier1"
 				>
@@ -497,10 +501,6 @@
 				</File>
 				<File
 					RelativePath="..\..\tier1\utlstring.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\tier1\utlsymbol.cpp"
 					>
 				</File>
 			</Filter>

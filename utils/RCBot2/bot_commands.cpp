@@ -48,6 +48,7 @@ CRCBotCommand :: CRCBotCommand ()
 	setAccessLevel(0);
 	add(new CWaypointCommand());
 	add(new CAddBotCommand());
+	add(new CControlCommand());
 	add(new CPathWaypointCommand());
 	add(new CDebugCommand());
 	add(new CPrintCommands());
@@ -311,6 +312,27 @@ eBotCommandResult CWaypointDeleteCommand :: execute ( CClient *pClient, const ch
 	return COMMAND_ACCESSED;
 }
 /////////////////////
+CControlCommand :: CControlCommand ()
+{
+	setName("control");
+	setAccessLevel(CMD_ACCESS_BOT);
+}
+
+eBotCommandResult CControlCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	edict_t *pEntity = NULL;
+
+	if ( pClient )
+		pEntity = pClient->getPlayer();
+
+	if ( CBots::controlBot(pcmd,pcmd,arg2,arg3) )
+		CBotGlobals::botMessage(pEntity,0,"bot added");
+	else
+		CBotGlobals::botMessage(pEntity,0,"error: couldn't create bot! (Check maxplayers)");
+
+	return COMMAND_ACCESSED;
+}
+////////////////////
 
 CAddBotCommand ::CAddBotCommand()
 {

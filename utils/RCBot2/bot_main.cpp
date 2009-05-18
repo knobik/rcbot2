@@ -384,6 +384,7 @@ void CRCBotPlugin::GameFrame( bool simulating )
 	if ( simulating && CBotGlobals::IsMapRunning() )
 	{
 		CBots::botThink();
+		CBots::handleAutomaticControl();
 		CClients::clientThink();
 
 		if ( CWaypoints::getVisiblity()->needToWorkVisibility() )
@@ -432,6 +433,9 @@ void CRCBotPlugin::ClientDisconnect( edict_t *pEntity )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::ClientPutInServer( edict_t *pEntity, char const *playername )
 {
+	if ( CBots::controlBots() )
+		CBots::handlePlayerJoin(pEntity,playername);
+
 	CClients::clientConnected(pEntity);
 }
 

@@ -128,11 +128,15 @@ void CBotFortress :: setup ()
 
 bool CBotFortress :: startGame()
 {
-	if ( m_pPlayerInfo->GetTeamIndex() == 0 )
+	int team = m_pPlayerInfo->GetTeamIndex();
+	
+	m_iClass = (TF_Class)CClassInterface::getTF2Class(m_pEdict);
+
+	if ( (team != TF2_TEAM_BLUE) && (team != TF2_TEAM_RED) )
 	{
 		selectTeam();
 	}
-	else if ( m_iClass == TF_CLASS_UNDEFINED )
+	else if ( (m_iDesiredClass && (m_iClass != m_iDesiredClass)) || (m_iClass == TF_CLASS_UNDEFINED) )
 	{
 		selectClass();
 	}
@@ -623,9 +627,10 @@ void CBotFortress :: currentlyDead ()
 	m_fUpdateClass = engine->Time() + 0.1f;
 }
 
-
 void CBotFortress :: modThink ()
 {
+	// get class
+	m_iClass = (TF_Class)CClassInterface::getTF2Class(m_pEdict);
 	//updateClass();
 
 	if ( needHealth() )
