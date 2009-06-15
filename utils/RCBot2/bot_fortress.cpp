@@ -1871,10 +1871,26 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			}
 			break;
 		case BOT_UTIL_ATTACK_POINT:
-			//CWaypoints::getWaypoint(CWaypoints::randomWaypointGoal());
+			
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentAttackArea);
+
+			if ( pWaypoint )
+			{
+				// TO DO , should be CAPTURE SCHED
+				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				return true;
+			}
 			break;
 		case BOT_UTIL_DEFEND_POINT:
-			// TO do
+
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea);
+
+			if ( pWaypoint )
+			{
+				// TO DO , should be CAPTURE SCHED
+				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				return true;
+			}
 			break;
 		case BOT_UTIL_CAPTURE_FLAG:
 			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam());

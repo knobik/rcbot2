@@ -79,7 +79,21 @@ void CTeamFortress2Mod :: getResetPoints (int iTeam, int *iCurrentDefendArea, in
 		*iCurrentAttackArea = 2;
 	}
 }
+/*
+void MapConfigLoad ()
+{
+	char filename[512];
 
+	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),"config/tf2","rcm",false);
+
+	FILE *fp = CBotGlobals::openFile(filename, "r");
+
+	if ( fp )
+	{
+		
+	}
+}
+*/
 void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *iCurrentDefendArea,int *iCurrentAttackArea)
 {
 	char *mapname = CBotGlobals::getMapName();
