@@ -48,6 +48,9 @@ void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
 
+	if ( pAttacker && (!pAttacker->m_pNetworkable || !pAttacker->m_NetworkSerialNumber) )
+		pAttacker = NULL;
+
 	if ( pBot )
 		pBot->hurt(pAttacker,pEvent->getInt("health"));
 

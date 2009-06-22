@@ -108,6 +108,7 @@ void CBotFortress :: checkDependantEntities ()
 	checkEntity(&m_pTeleEntrance); 
 	checkEntity(&m_pNearestDisp); 
 	checkEntity(&m_pNearestEnemySentry); 
+	checkEntity(&m_pNearestAllySentry);
 	checkEntity(&m_pAmmo);
 	checkEntity(&m_pHealthkit);
 }
@@ -251,6 +252,11 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		if ( CTeamFortress2Mod::isFlag(pEntity,getTeam()) )
 			m_pFlag = pEntity;
+		else if ( CTeamFortress2Mod::isSentry(pEntity,getTeam()) )
+		{
+			if ( !m_pNearestAllySentry || ((pEntity != m_pNearestAllySentry) && (distanceFrom(pEntity) < distanceFrom(m_pNearestAllySentry))) )
+				m_pNearestAllySentry = pEntity;
+		}
 		else if ( CTeamFortress2Mod::isDispenser(pEntity,getTeam()) )
 		{
 			if ( !m_pNearestDisp || ((pEntity != m_pNearestDisp) && (distanceFrom(pEntity) < distanceFrom(m_pNearestDisp))) )
@@ -319,6 +325,7 @@ void CBotFortress :: spawnInit ()
 	m_pHeal = NULL;
 	m_pNearestDisp = NULL;
 	m_pNearestEnemySentry = NULL;
+	m_pNearestAllySentry = NULL;
 	m_bHasFlag = false; 
 	m_pPrevSpy = NULL;
 	m_fSeeSpyTime = 0.0f;
@@ -1643,8 +1650,15 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	{
 		int iSentryLevel = 0;
 		int iDispenserLevel = 0;
+		int iAllySentryLevel = 0;
+		int iAllyDispLevel = 0;
+
 		float fEntranceDist = 99999.0f;
 		float fExitDist = 99999.0f;		
+
+		float fAllyDispenserHealthPercent = 1.0f;
+		float fAllySentryHealthPercent = 1.0f;
+
 		float fSentryHealthPercent = 1.0f;
 		float fDispenserHealthPercent = 1.0f;
 		float fTeleporterEntranceHealthPercent = 1.0f;
@@ -1670,11 +1684,11 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			fSentryHealthPercent = CClassInterface::getHealth(m_pSentryGun);
 
 			if ( iSentryLevel == 1 )
-				fSentryHealthPercent /= 150;		
+				fSentryHealthPercent /= TF2_SENTRY_LEVEL1_HEALTH;		
 			else if ( iSentryLevel == 2 )
-				fSentryHealthPercent /= 180;		
+				fSentryHealthPercent /= TF2_SENTRY_LEVEL2_HEALTH;		
 			else if ( iSentryLevel == 3 )
-				fSentryHealthPercent /= 216;		
+				fSentryHealthPercent /= TF2_SENTRY_LEVEL3_HEALTH;		
 		}
 
 		if ( m_pDispenser )
@@ -1683,11 +1697,37 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			fDispenserHealthPercent = CClassInterface::getHealth(m_pDispenser);
 
 			if ( iDispenserLevel == 1 )
-				fDispenserHealthPercent /= 150;
+				fDispenserHealthPercent /= TF2_DISPENSER_LEVEL1_HEALTH;
 			else if ( iDispenserLevel == 2 )
-				fDispenserHealthPercent /= 180;		
+				fDispenserHealthPercent /= TF2_DISPENSER_LEVEL2_HEALTH;		
 			else if ( iDispenserLevel == 3 )
-				fDispenserHealthPercent /= 216;		
+				fDispenserHealthPercent /= TF2_DISPENSER_LEVEL3_HEALTH;		
+		}
+
+		if ( m_pNearestDisp && (m_pNearestDisp != m_pDispenser) )
+		{
+			iAllyDispLevel = CTeamFortress2Mod::getDispenserLevel(m_pNearestDisp);
+			fAllyDispenserHealthPercent = CClassInterface::getHealth(m_pNearestDisp);
+
+			if ( iAllyDispLevel == 1 )
+				fAllyDispenserHealthPercent /= TF2_DISPENSER_LEVEL1_HEALTH;
+			else if ( iAllyDispLevel == 2 )
+				fAllyDispenserHealthPercent /= TF2_DISPENSER_LEVEL2_HEALTH;		
+			else if ( iAllyDispLevel == 3 )
+				fAllyDispenserHealthPercent /= TF2_DISPENSER_LEVEL3_HEALTH;	
+		}
+
+		if ( m_pNearestAllySentry && (m_pNearestAllySentry != m_pSentryGun) )
+		{
+			iAllySentryLevel = CTeamFortress2Mod::getSentryLevel(m_pNearestAllySentry);
+			fAllySentryHealthPercent = CClassInterface::getHealth(m_pNearestAllySentry);
+
+			if ( iAllySentryLevel == 1 )
+				fAllySentryHealthPercent /= TF2_SENTRY_LEVEL1_HEALTH;		
+			else if ( iAllySentryLevel == 2 )
+				fAllySentryHealthPercent /= TF2_SENTRY_LEVEL2_HEALTH;		
+			else if ( iSentryLevel == 3 )
+				fAllySentryHealthPercent /= TF2_SENTRY_LEVEL3_HEALTH;	
 		}
 
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9));
@@ -1704,6 +1744,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(fResupplyDist/fAmmoDist)*(100.0f/(iMetal+1))));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,m_pSentryGun!=NULL,0.5));
+
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMSENTRY,!bHasFlag && m_pNearestAllySentry && (m_pNearestAllySentry!=m_pSentryGun) && (iMetal>=200) && ((iAllySentryLevel<3)||(fAllySentryHealthPercent<1.0f)),0.8+((1.0f-fAllySentryHealthPercent)*0.2)));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMDISP,(m_pNearestDisp!=NULL)&&(m_pNearestDisp!=m_pDispenser) && (iMetal>=200) && ((iAllyDispLevel<3)||(fAllyDispenserHealthPercent<1.0f)),0.7+((1.0f-fAllyDispenserHealthPercent)*0.3)));
+
 	}
 	else
 	{
@@ -1960,6 +2004,12 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				return true;
 			}
 			break;
+		case BOT_UTIL_UPGTMSENTRY:
+			m_pSchedules->add(new CBotTFEngiUpgrade(m_pNearestAllySentry));
+			return true;
+		case BOT_UTIL_UPGTMDISP:
+			m_pSchedules->add(new CBotTFEngiUpgrade(m_pNearestDisp));
+			return true;
 		case BOT_UTIL_UPGSENTRY:
 			m_pSchedules->add(new CBotTFEngiUpgrade(m_pSentryGun));
 			return true;
@@ -2244,6 +2294,10 @@ void CBotTF2::pointCaptured(int iPoint,int iTeam)
 	CTeamFortress2Mod::getNextPoints (iPoint,iTeam,getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 }
 
+// Is Enemy Function
+// take a pEdict entity to check if its an enemy
+// return TRUE to "OPEN FIRE" (Attack)
+// return FALSE to ignore
 bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
 	int iEnemyTeam;
@@ -2266,7 +2320,7 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 				{
 					if ( (distanceFrom(pEdict)<120) && fabs(CBotGlobals::yawAngleFromEdict(pEdict,getOrigin())) > 90 )
 						return true;					
-					else if ( m_fFrenzyTime > engine->Time() )
+					else if ( m_fFrenzyTime > engine->Time() ) // Spy got hurt recently, cover may be blown, so open fire
 						return true;
 					
 					return false;
@@ -2305,7 +2359,7 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 				bValid = true;
 		}
 	}
-	// do these in the tasks
+	// "FrenzyTime" is the time it takes for the bot to check out where he got hurt
 	else if ( (m_iClass != TF_CLASS_SPY) || (m_fFrenzyTime > engine->Time()) )	
 	{
 		iEnemyTeam = CTeamFortress2Mod::getEnemyTeam(getTeam());

@@ -10,6 +10,14 @@ class CBotUtility;
 #define TF2_TEAM_BLUE 3
 #define TF2_TEAM_RED 2
 
+#define TF2_SENTRY_LEVEL1_HEALTH 150
+#define TF2_SENTRY_LEVEL2_HEALTH 180
+#define TF2_SENTRY_LEVEL3_HEALTH 216
+
+#define TF2_DISPENSER_LEVEL1_HEALTH 150
+#define TF2_DISPENSER_LEVEL2_HEALTH 180
+#define TF2_DISPENSER_LEVEL3_HEALTH 216
+
 // Naris @ Alliedmodders.net
 
 #define TF2_PLAYER_SLOWED       (1 << 0)    // 1
@@ -241,6 +249,7 @@ protected:
 
 	edict_t *m_pNearestDisp;
 	edict_t *m_pNearestEnemySentry;
+	edict_t *m_pNearestAllySentry;
 
 	edict_t *m_pFlag;
 	edict_t *m_pPrevSpy;

@@ -2038,7 +2038,7 @@ void CBots :: kickRandomBotOnTeam ( int team )
 
 void CBots :: handlePlayerJoin ( edict_t *pEdict, const char *name )
 {
-	if ( m_bControlNext && (strncmp(name,m_szNextName,strlen(m_szNextName)) == 0) )
+	if ( m_bControlNext && (strcmp(&name[strlen(name)-strlen(m_szNextName)],m_szNextName) == 0) )
 	{
 		m_ControlQueue.push(pEdict);
 		m_bControlNext = false;
