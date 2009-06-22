@@ -276,6 +276,29 @@ void CBotAttackSched :: init ()
 {
 	setID(SCHED_ATTACK);
 }
+///////////////////////////////////////////
+CBotAttackPointSched :: CBotAttackPointSched ( Vector vPoint, int iRadius, int iArea )
+{
+	addTask(new CFindPathTask(vPoint)); // first
+	addTask(new CBotTF2AttackPoint(iArea,vPoint,iRadius)); // second
+}
+
+void CBotAttackPointSched ::init ()
+{
+	setID(SCHED_ATTACKPOINT);
+}
+ 
+//////////////////////////////////////////////////
+CBotDefendPointSched ::	CBotDefendPointSched ( Vector vPoint, int iRadius, int iArea )
+{
+	addTask(new CFindPathTask(vPoint)); // first
+	addTask(new CBotTF2DefendPoint(iArea,vPoint,iRadius)); // second
+}
+
+void CBotDefendPointSched ::init ()
+{
+	setID(SCHED_DEFENDPOINT);
+}
 
 
 /////////////////////////////////////////////

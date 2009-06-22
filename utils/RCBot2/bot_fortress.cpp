@@ -1783,8 +1783,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	
-	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP),randomFloat(0.6,1.0)));
-	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)&&m_iClass!=TF_CLASS_SCOUT,randomFloat(0.6,1.0)));
+	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP),fGetFlagUtility));
+	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
 	//CTeamFortress2Mod::isMapType(TF_MAP_CART);
 	
@@ -1920,8 +1920,9 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 			if ( pWaypoint )
 			{
+
 				// TO DO , should be CAPTURE SCHED
-				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
 				return true;
 			}
 			break;
@@ -1932,7 +1933,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			if ( pWaypoint )
 			{
 				// TO DO , should be CAPTURE SCHED
-				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				m_pSchedules->add(new CBotDefendPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
 				return true;
 			}
 			break;
@@ -2287,6 +2288,16 @@ void CBotTF2::roundReset()
 	teamFlagReset();
 	
 	CTeamFortress2Mod::getResetPoints (getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+}
+
+void CBotTF2::getDefendArea ( vector<int> *m_iAreas )
+{
+	m_iAreas->push_back(m_iCurrentDefendArea);
+}
+
+void CBotTF2::getAttackArea ( vector <int> *m_iAreas )
+{
+	m_iAreas->push_back(m_iCurrentAttackArea);
 }
 
 void CBotTF2::pointCaptured(int iPoint,int iTeam)

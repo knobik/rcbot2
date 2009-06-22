@@ -205,6 +205,124 @@ void CBotTF2WaitFlagTask :: debugString ( char *string )
 {
 	sprintf(string,"Wait Flag (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
 }
+//////////
+
+CBotTF2AttackPoint :: CBotTF2AttackPoint ( int iArea, Vector vOrigin, int iRadius )
+{
+	m_vOrigin = vOrigin;
+	m_fAttackTime = 0;
+	m_fTime = 0;
+	m_iArea = iArea;
+	m_iRadius = iRadius;
+}
+
+void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	vector<int> areas;
+	unsigned int i;
+	bool found = false;
+
+	((CBotTF2*)pBot)->getAttackArea(&areas);
+	
+	i = 0;
+
+	while ( (i < areas.size()) && !found )
+	{
+		found = areas[i] == m_iArea;
+		i++;
+	}
+
+	if ( !found )	
+		complete();
+	else if ( m_fAttackTime == 0 )
+		m_fAttackTime = engine->Time() + randomFloat(30.0,60.0);
+	else if ( m_fAttackTime < engine->Time() )
+		complete();
+	else
+	{
+		if ( m_fTime == 0 )
+		{
+			m_fTime = engine->Time() + randomFloat(5.0,10.0);
+			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
+
+			if ( pBot->distanceFrom(m_vMoveTo) < 32 )
+				pBot->stopMoving(5);
+			else
+				pBot->setMoveTo(m_vMoveTo,3);
+
+			pBot->setLookAtTask(LOOK_AROUND,5);
+		}
+		else if ( m_fTime < engine->Time() )
+		{
+			m_fTime = 0;
+		}
+	}
+}
+
+void CBotTF2AttackPoint :: debugString ( char *string )
+{
+	sprintf(string,"CBotTF2AttackPoint (%d,%0.1f,%0.1f,%0.1f,%d)",m_iArea,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z,m_iRadius);
+}
+
+////////////
+
+
+CBotTF2DefendPoint :: CBotTF2DefendPoint ( int iArea, Vector vOrigin, int iRadius )
+{
+	m_vOrigin = vOrigin;
+	m_fDefendTime = 0;
+	m_fTime = 0;
+	m_iArea = iArea;
+	m_iRadius = iRadius;
+}
+
+void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	vector<int> areas;
+	unsigned int i;
+	bool found = false;
+
+	((CBotTF2*)pBot)->getDefendArea(&areas);
+	
+	i = 0;
+
+	while ( (i < areas.size()) && !found )
+	{
+		found = areas[i] == m_iArea;
+		i++;
+	}
+
+	if ( !found )
+		complete();
+	else if ( m_fDefendTime == 0 )
+		m_fDefendTime = engine->Time() + randomFloat(30.0,60.0);
+	else if ( m_fDefendTime < engine->Time() )
+		complete();
+	else
+	{
+		if ( m_fTime == 0 )
+		{
+			m_fTime = engine->Time() + randomFloat(5.0,10.0);
+			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
+
+			if ( pBot->distanceFrom(m_vMoveTo) < 32 )
+				pBot->stopMoving(5);
+			else
+				pBot->setMoveTo(m_vMoveTo,3);
+
+			pBot->setLookAtTask(LOOK_AROUND,5);
+		}
+		else if ( m_fTime < engine->Time() )
+		{
+			m_fTime = 0;
+		}
+	}
+}
+
+void CBotTF2DefendPoint :: debugString ( char *string )
+{
+	sprintf(string,"CBotTF2DefendPoint (%d,%0.1f,%0.1f,%0.1f,%d)",m_iArea,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z,m_iRadius);
+}
 
 ///////////
 CBotTF2UpgradeBuilding :: CBotTF2UpgradeBuilding ( edict_t *pBuilding )

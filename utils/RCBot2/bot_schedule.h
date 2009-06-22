@@ -65,7 +65,9 @@ typedef enum
 	SCHED_TF2_GET_AMMO,
 	SCHED_TF2_FIND_FLAG,
 	SCHED_LOOKAFTERSENTRY,
-	SCHED_DEFEND
+	SCHED_DEFEND,
+	SCHED_ATTACKPOINT,
+	SCHED_DEFENDPOINT
 }eBotSchedule;
 
 class CBotSchedule
@@ -276,6 +278,22 @@ public:
 
 	void init ();
 };
+/////////////////////////////////////////////////
+class CBotAttackPointSched : public CBotSchedule
+{
+public:
+	CBotAttackPointSched ( Vector vPoint, int iRadius, int iArea );
+
+	void init ();
+}; 
+//////////////////////////////////////////////////
+class CBotDefendPointSched : public CBotSchedule
+{
+public:
+	CBotDefendPointSched ( Vector vPoint, int iRadius, int iArea );
+
+	void init ();
+}; 
 ///////////////////////////////////////////////////
 class CBotSpySapBuildingSched : public CBotSchedule
 {

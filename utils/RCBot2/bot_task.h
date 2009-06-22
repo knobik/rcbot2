@@ -230,6 +230,38 @@ private:
 	int m_iTries;
 };
 
+class CBotTF2AttackPoint : public CBotTask
+{
+public:
+	CBotTF2AttackPoint ( int iArea, Vector vOrigin, int iRadius );
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	virtual void debugString ( char *string );
+private:
+	Vector m_vOrigin;
+	Vector m_vMoveTo;
+	float m_fAttackTime;
+	float m_fTime;
+	int m_iArea;
+	int m_iRadius;
+};
+
+class CBotTF2DefendPoint : public CBotTask
+{
+public:
+	CBotTF2DefendPoint ( int iArea, Vector vOrigin, int iRadius );
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	virtual void debugString ( char *string );
+private:
+	Vector m_vOrigin;
+	Vector m_vMoveTo;
+	float m_fDefendTime;
+	float m_fTime;
+	int m_iArea;
+	int m_iRadius;
+};
+
 class CBotTF2UpgradeBuilding : public CBotTask
 {
 public:

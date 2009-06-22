@@ -300,6 +300,10 @@ public:
 		m_iCurrentAttackArea = 0;
 	}
 
+	void getDefendArea ( vector<int> *m_iAreas );
+
+	void getAttackArea ( vector <int> *m_iAreas );
+
 	eBotFuncState rocketJump(int *iState,float *fTime);
 
 	float getEnemyFactor ( edict_t *pEnemy );
