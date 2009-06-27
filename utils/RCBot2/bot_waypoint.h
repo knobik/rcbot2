@@ -135,6 +135,11 @@ public:
 	static void freeMemory ();
 
 	static WptColor getColour ( int iFlags );
+
+	static CWaypointType *getTypeByIndex ( unsigned int iIndex );
+
+	static unsigned int getNumTypes ();
+
 private:
 	static vector<CWaypointType*> m_Types;
 };

@@ -78,6 +78,11 @@ void CTeamFortress2Mod :: getResetPoints (int iTeam, int *iCurrentDefendArea, in
 		*iCurrentDefendArea = 2;
 		*iCurrentAttackArea = 2;
 	}
+	else if ( strcmp(mapname,"cp_dustbowl") == 0 )
+	{
+		*iCurrentDefendArea = 0;
+		*iCurrentAttackArea = 0;
+	}
 }
 /*
 void MapConfigLoad ()
@@ -131,6 +136,19 @@ void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *i
 				*iCurrentDefendArea = iPoint;
 				*iCurrentAttackArea = iAttackPoint;
 			}
+		}
+	}
+	else if ( strcmp(mapname,"cp_dustbowl") == 0 )
+	{
+		if ( iMyTeam == TF2_TEAM_BLUE )
+		{
+			*iCurrentAttackArea = iPoint + 1;
+			*iCurrentDefendArea = iPoint + 1;
+		}
+		else
+		{
+			*iCurrentAttackArea = iPoint;
+			*iCurrentDefendArea = iPoint + 1;
 		}
 	}
 }

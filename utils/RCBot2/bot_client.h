@@ -47,6 +47,8 @@ public:
 	// this player disconnects
 	void clientDisconnected ();	
 
+	inline void showMenu () { m_bShowMenu = true; };
+
 	bool isUsed ();
 
 	Vector getOrigin ();
@@ -132,6 +134,8 @@ private:
 
 	float m_fSpeed;
 	Vector m_vVelocity;
+
+	bool m_bShowMenu;
 	// TODO: tooltips queue
 	// vector<CToolTip*> tooltips
 };

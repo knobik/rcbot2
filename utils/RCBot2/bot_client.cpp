@@ -55,7 +55,7 @@ void CClient :: init ()
 	m_iDebugLevels = 0;
 	m_pPlayerInfo = NULL;
 	m_iWptArea = 0;
-	
+	m_bShowMenu = false;
 	m_fUpdatePos = 0.0f;
 }
 
@@ -68,6 +68,12 @@ void CClient :: setEdict ( edict_t *pPlayer )
 // called each frame
 void CClient :: think ()
 {
+	if ( m_bShowMenu )
+	{
+		m_bShowMenu = false;
+		engine->ClientCommand(m_pPlayer,"cancelselect");
+	}
+
 	if ( isWaypointOn() )
 		CWaypoints::drawWaypoints(this);
 

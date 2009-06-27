@@ -1338,6 +1338,21 @@ void CWaypointTypes:: addType ( CWaypointType *type )
 	m_Types.push_back(type);
 }
 
+CWaypointType *CWaypointTypes :: getTypeByIndex ( unsigned int iIndex )
+{
+	if ( iIndex < m_Types.size() )
+	{
+		return m_Types[iIndex];
+	}
+	else
+		return NULL;
+}
+
+unsigned int CWaypointTypes :: getNumTypes ()
+{
+	return m_Types.size();
+}
+
 void CWaypointTypes :: setup ()
 {	
 	addType(new CWaypointType(W_FL_JUMP,"jump","bot will jump here",WptColor(255,255,255)));

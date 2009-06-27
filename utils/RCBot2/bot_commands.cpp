@@ -77,6 +77,7 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointSetAngleCommand());
 	add(new CWaypointSetAreaCommand());
 	add(new CWaypointSetRadiusCommand());
+	add(new CWaypointMenu());
 }
 
 
@@ -124,6 +125,107 @@ eBotCommandResult CWaypointSetRadiusCommand :: execute ( CClient *pClient, const
 	return COMMAND_ACCESSED;
 }
 /////////////////
+
+CWaypointMenu :: CWaypointMenu()
+{
+	setName("menu");
+};
+
+eBotCommandResult CWaypointMenu:: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		// number of waypoint types to show per menu
+		unsigned const int iNumToShow = 7;
+
+		unsigned int i = 0;
+		// menu level .. ?
+		unsigned int iLevel = 0;
+		// number of possible waypoint types to show
+		unsigned int iNumTypes = CWaypointTypes::getNumTypes();
+
+		char num[64], msg[64], cmd[128];
+		CWaypointType *p;
+		CWaypoint *pWpt;
+
+		// get current waypoint types on current waypoint
+		pClient->updateCurrentWaypoint();
+		pWpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+		if ( !pWpt )
+		{
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"Not next to any waypoints to show a menu for");
+			return COMMAND_ERROR;
+		}
+
+		// Menu level to start, 0 = beginning
+		if ( pcmd && *pcmd )
+		{
+			iLevel = atoi(pcmd);
+		}
+		else
+		{
+			iLevel = 0;
+		}
+
+		//pClient->update
+
+		KeyValues *kv = new KeyValues( "menu" );
+		kv->SetString( "title", "Waypoint Menu" );
+		kv->SetInt( "level", 1 );
+		kv->SetColor( "color", Color( 255, 0, 0, 255 ));
+		kv->SetInt( "time", 15 );
+		kv->SetString( "msg", "Select Waypoint Type" );
+		
+		// start at this waypoint type index
+		unsigned int iIndex = iLevel*iNumToShow;
+
+		// run through a small number
+		while ( (i < iNumToShow) && (iIndex < iNumTypes) )
+		{
+			p = CWaypointTypes::getTypeByIndex(iIndex);
+			
+			Q_snprintf( num, sizeof(num), "%i", i );
+
+			// if waypoint has this type show it by putting a "[x]" next to it
+			if ( pWpt->getFlags() & p->getBits() )
+				Q_snprintf( msg, sizeof(msg), "%s [x]", p->getName() );
+			else
+				Q_snprintf( msg, sizeof(msg), "%s [ ]", p->getName() );
+
+			Q_snprintf( cmd, sizeof(cmd), "rcbot waypoint givetype %s; wait; cancelselect", p->getName() );
+
+			KeyValues *item1 = kv->FindKey( num, true );
+			item1->SetString( "msg", msg );
+			item1->SetString( "command", cmd );
+
+			iIndex ++;
+			i++;
+		}
+
+		// finally show "More" option if available
+		if ( iIndex < iNumTypes )
+		{
+			Q_snprintf( num, sizeof(num), "%i", i );
+			Q_snprintf( msg, sizeof(msg), "More..." );
+			Q_snprintf( cmd, sizeof(cmd), "rcbot waypoint menu %d", iLevel+1 );
+
+			KeyValues *item1 = kv->FindKey( num, true );
+			item1->SetString( "msg", msg );
+			item1->SetString( "command", cmd );
+		}
+
+		helpers->CreateMessage( pClient->getPlayer(), DIALOG_MENU, kv, &g_RCBOTServerPlugin );
+		kv->deleteThis();
+
+		//pClient->showMenu();
+
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+};
+////////////////////////////
 
 CWaypointSetAngleCommand :: CWaypointSetAngleCommand()
 {
@@ -930,6 +1032,7 @@ eBotCommandResult CBotCommand :: execute ( CClient *pClient, const char *pcmd, c
 {
 	return COMMAND_NOT_FOUND;
 }
+
 
 ////////////////////////////
 // container of commands

@@ -1,3 +1,11 @@
+0.43
+- Provisional Support for CP Granary
+- Fixed crash bug
+- Engineers upgrade team mates dispensers and sentries
+
+0.42
+- Fixed working with scout update
+- Fixed bots not using teleporters
 0.4
 TF2 updates
 
