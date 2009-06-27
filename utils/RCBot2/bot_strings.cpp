@@ -33,6 +33,7 @@
 
 #include <vector>
 
+// (RCBOT2 String Interning Pool)
 #include "bot.h"
 #include "bot_strings.h"
 
@@ -45,6 +46,7 @@ CStrings :: CStrings ()
 
 void CStrings :: freeAllMemory()
 {
+	// clear strings 
 	for ( int i = 0; i < MAX_STRINGS_HASH; i ++ )
 	{
 		for ( unsigned int j = 0; j < m_Strings[i].size(); j ++ )
@@ -57,17 +59,20 @@ void CStrings :: freeAllMemory()
 	}
 }
 
+// Either : 1 . Return the existing string or 2 . make a new string and return it.
 char *CStrings :: getString ( const char *szString )
 {
-	int iHash = szString[0]%MAX_STRINGS_HASH;
+	unsigned int iHash = szString[0]%MAX_STRINGS_HASH;
 	
 	for ( unsigned int i = 0; i < m_Strings[iHash].size(); i ++ )
 	{
 		char *szCompString = m_Strings[iHash][i];
 
+		// check if pointers match first
 		if ( szCompString == szString )
 			return szCompString;
 
+		// if not do a full string comparison
 		if ( FStrEq(szString,szCompString) )
 			return szCompString;
 	}
