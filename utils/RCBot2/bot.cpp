@@ -1752,7 +1752,7 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 		// control next bot that joins server
 		m_bControlNext = true;
 
-		if ( CClients::get(0)->getPlayer() && !engine->IsDedicatedServer())
+		if ( CClients::get(0)->getPlayer() && !engine->IsDedicatedServer()) // The_Shadow
 			engine->ClientCommand(CClients::get(0)->getPlayer(),cmd);
 		else
 			engine->ServerCommand(cmd); // Might not work

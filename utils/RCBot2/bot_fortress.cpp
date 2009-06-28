@@ -46,6 +46,8 @@
 
 #include "bot_mtrand.h"
 
+// Payload stuff by   The_Shadow
+
 //#include "vstdlib/random.h" // for random functions
 void CBroadcastCapturedPoint :: execute ( CBot *pBot )
 {
