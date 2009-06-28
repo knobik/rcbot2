@@ -93,6 +93,7 @@ CBotFortress :: CBotFortress()
 	m_pPrevSpy = NULL;
 	m_fSeeSpyTime = 0.0f;
 	m_bEntranceVectorValid = false;
+	m_pPayloadBomb = NULL;
 }
 
 void CBotFortress :: checkDependantEntities ()
@@ -111,6 +112,7 @@ void CBotFortress :: checkDependantEntities ()
 	checkEntity(&m_pNearestAllySentry);
 	checkEntity(&m_pAmmo);
 	checkEntity(&m_pHealthkit);
+	checkEntity(&m_pPayloadBomb);
 }
 
 void CBotFortress :: init (bool bVarInit)
@@ -276,6 +278,10 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 		{
 			if ( !m_pHealthkit || ((pEntity != m_pHealthkit) && (distanceFrom(pEntity) < distanceFrom(m_pHealthkit))) )
 				m_pHealthkit = pEntity;
+		}
+		else if ( CTeamFortress2Mod::isPayloadBomb(pEntity) )
+		{
+			m_pPayloadBomb = pEntity;
 		}
 	}
 	else 
@@ -1786,6 +1792,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP),fGetFlagUtility));
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
+	if ( getTeam() == TF2_TEAM_BLUE )
+		utils.addUtility(CBotUtility(BOT_UTIL_GOTO_PAYLOAD_BOMB,CTeamFortress2Mod::isMapType(TF_MAP_CART),fGetFlagUtility));
+
 	//CTeamFortress2Mod::isMapType(TF_MAP_CART);
 	
 	utils.execute();
@@ -1883,9 +1892,19 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 		switch ( id )
 		{
+		case BOT_UTIL_GOTO_PAYLOAD_BOMB:
+			{
+				if ( m_pPayloadBomb )
+				{
+					m_pSchedules->add(new CBotTF2PushPayloadBombSched(m_pPayloadBomb));
+					return true;
+				}
+			}
+			break;
 		case BOT_UTIL_ENGI_LOOK_AFTER_SENTRY:
 			{
 				m_pSchedules->add(new CBotTFEngiLookAfterSentry(m_pSentryGun));			
+				return true;
 			}
 			break;
 		case BOT_UTIL_DEFEND_FLAG:
@@ -2288,6 +2307,8 @@ void CBotTF2::roundReset()
 	teamFlagReset();
 	
 	CTeamFortress2Mod::getResetPoints (getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+
+	m_pPayloadBomb = NULL;
 }
 
 void CBotTF2::getDefendArea ( vector<int> *m_iAreas )

@@ -69,11 +69,16 @@ bool CTeamFortress2Mod :: isAmmo ( edict_t *pEntity )
 	return strncmp(pEntity->GetClassName(),"item_ammopack",13)==0;
 }
 
+bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity )
+{
+	return strncmp(pEntity->GetClassName(),"func_tracktrain",15)==0;
+}
+
 void CTeamFortress2Mod :: getResetPoints (int iTeam, int *iCurrentDefendArea, int *iCurrentAttackArea)
 {
 	char *mapname = CBotGlobals::getMapName();
 
-	if ( strcmp(mapname,"cp_granary") == 0 )
+	if ( (strcmp(mapname,"cp_granary") == 0) || (strcmp(mapname,"cp_well") == 0) || (strcmp(mapname,"cp_badlands") == 0) )
 	{
 		*iCurrentDefendArea = 2;
 		*iCurrentAttackArea = 2;
@@ -105,7 +110,7 @@ void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *i
 
 	int iAttackPoint;
 
-	if ( strcmp(mapname,"cp_granary") == 0 )
+	if ( (strcmp(mapname,"cp_granary") == 0) || (strcmp(mapname,"cp_well") == 0) || (strcmp(mapname,"cp_badlands") == 0) )
 	{
 		if ( iTeam == TF2_TEAM_BLUE )
 		{

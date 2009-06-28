@@ -240,6 +240,8 @@ public:
 
 	static bool isDispenser ( edict_t *pEntity, int iTeam );
 
+	static bool isPayloadBomb ( edict_t *pEntity );
+
 	static bool isHealthKit ( edict_t *pEntity );
 
 	static bool isAmmo ( edict_t *pEntity );

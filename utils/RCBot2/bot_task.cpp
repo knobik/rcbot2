@@ -264,9 +264,54 @@ void CBotTF2AttackPoint :: debugString ( char *string )
 	sprintf(string,"CBotTF2AttackPoint (%d,%0.1f,%0.1f,%0.1f,%d)",m_iArea,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z,m_iRadius);
 }
 
-////////////
+////////////////////////////
 
+CBotTF2PushPayloadBombTask :: CBotTF2PushPayloadBombTask (edict_t * pPayloadBomb)
+{
+	m_pPayloadBomb = pPayloadBomb;
+	m_fPushTime = 0;
+	m_fTime = 0;
+	m_vRandomOffset = NULL;
+}
 
+void CBotTF2PushPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fPushTime == 0 )
+	{
+		m_fPushTime = engine->Time() + randomFloat(10.0,30.0);
+		m_vRandomOffset = Vector(randomFloat(-50,50),randomFloat(-50,50),0);
+	}
+	else if ( m_fPushTime < engine->Time() )
+	{
+		complete();
+	}
+	else if(m_pPayloadBomb == NULL)
+	{
+		complete();
+	}
+
+	m_vOrigin = CBotGlobals::entityOrigin(m_pPayloadBomb);
+	//m_vMoveTo = m_vOrigin + Vector(randomFloat(-10,10),randomFloat(-10,10),0);
+	m_vMoveTo = m_vOrigin + m_vRandomOffset;
+
+	if ( pBot->distanceFrom(m_vMoveTo) < 90 )
+	{	
+		if ( (((CBotFortress*)pBot)->getClass() == TF_CLASS_SPY) && ((CBotFortress*)pBot)->isDisguised() )
+		{
+			pBot->primaryAttack();
+		}
+	}
+	else
+		pBot->setMoveTo(m_vMoveTo,3);
+
+	pBot->setLookAtTask(LOOK_AROUND,5);
+}
+
+void CBotTF2PushPayloadBombTask :: debugString ( char *string )
+{
+	sprintf(string,"CBotTF2PushPayloadBombTask (%0.1f,%0.1f,%0.1f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
+}
+//////////////////////
 CBotTF2DefendPoint :: CBotTF2DefendPoint ( int iArea, Vector vOrigin, int iRadius )
 {
 	m_vOrigin = vOrigin;

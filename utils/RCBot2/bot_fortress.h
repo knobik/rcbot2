@@ -284,6 +284,8 @@ protected:
 	float m_fUseTeleporterTime;
 
 	bool m_bHasFlag;
+
+	edict_t *m_pPayloadBomb;
 	
 };
 

@@ -69,6 +69,18 @@ void CBotGetMetalSched :: init ()
 {
 	setID(SCHED_GET_METAL);
 }
+///////////////////////////////////////////
+
+CBotTF2PushPayloadBombSched :: CBotTF2PushPayloadBombSched (edict_t * ePayloadBomb)
+{
+	addTask(new CFindPathTask(CBotGlobals::entityOrigin(ePayloadBomb))); // first
+	addTask(new CBotTF2PushPayloadBombTask(ePayloadBomb)); // second
+}
+
+void CBotTF2PushPayloadBombSched :: init ()
+{
+	setID(SCHED_TF2_PUSH_PAYLOADBOMB);
+}
 
 //////////////////////////////////////////////
 

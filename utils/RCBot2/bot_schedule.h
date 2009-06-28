@@ -67,7 +67,8 @@ typedef enum
 	SCHED_LOOKAFTERSENTRY,
 	SCHED_DEFEND,
 	SCHED_ATTACKPOINT,
-	SCHED_DEFENDPOINT
+	SCHED_DEFENDPOINT,
+	SCHED_TF2_PUSH_PAYLOADBOMB
 }eBotSchedule;
 
 class CBotSchedule
@@ -291,6 +292,14 @@ class CBotDefendPointSched : public CBotSchedule
 {
 public:
 	CBotDefendPointSched ( Vector vPoint, int iRadius, int iArea );
+
+	void init ();
+}; 
+///////////////////////////////////////////////
+class CBotTF2PushPayloadBombSched : public CBotSchedule
+{
+public:
+	CBotTF2PushPayloadBombSched (edict_t * ePayloadBomb);
 
 	void init ();
 }; 

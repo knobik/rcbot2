@@ -262,6 +262,23 @@ private:
 	int m_iRadius;
 };
 
+class CBotTF2PushPayloadBombTask : public CBotTask
+{
+public:
+	CBotTF2PushPayloadBombTask (edict_t * pPayloadBomb);
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	edict_t * m_pPayloadBomb;
+	Vector m_vMoveTo;
+	float m_fPushTime;
+	float m_fTime;
+	int m_iRadius;
+	Vector m_vOrigin;
+	Vector m_vRandomOffset;
+};
+
 class CBotTF2UpgradeBuilding : public CBotTask
 {
 public:
