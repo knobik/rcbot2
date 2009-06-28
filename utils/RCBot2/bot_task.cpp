@@ -297,13 +297,21 @@ void CBotTF2PushPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	else if(m_pPayloadBomb == NULL)
 	{
 		complete();
+		return;
+	}
+
+	if ( !m_pPayloadBomb->GetIServerEntity() || !m_pPayloadBomb->GetCollideable() )
+	{
+		m_pPayloadBomb = NULL;
+		complete();
+		return;
 	}
 
 	m_vOrigin = CBotGlobals::entityOrigin(m_pPayloadBomb);
 	//m_vMoveTo = m_vOrigin + Vector(randomFloat(-10,10),randomFloat(-10,10),0);
 	m_vMoveTo = m_vOrigin + m_vRandomOffset;
 
-	if ( pBot->distanceFrom(m_vMoveTo) < 90 )
+	if ( pBot->distanceFrom(m_vMoveTo) < 80 )
 	{	
 		if ( (((CBotFortress*)pBot)->getClass() == TF_CLASS_SPY) && ((CBotFortress*)pBot)->isDisguised() )
 		{

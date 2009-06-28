@@ -102,7 +102,7 @@ bool CWaypointNavigator :: getCoverPosition ( Vector vCoverOrigin, Vector *vCove
 
 	return true;
 }
-
+#define MAX_BELIEF 1024.0f
 // get belief nearest to current origin using waypoints to store belief
 void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief, float fStrength, BotBelief iType )
 {
@@ -114,15 +114,18 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 
 	for ( int i = 0; i < m_iVisibles.Size(); i ++ )
 	{
-		CWaypoint *pWpt = CWaypoints::getWaypoint(i);
+		CWaypoint *pWpt = CWaypoints::getWaypoint(m_iVisibles[i]);
+		int iWptIndex = CWaypoints::getWaypointIndex(pWpt);
 
 		if ( iType == BELIEF_SAFETY )
 		{
-			m_fBelief[i] -= (fStrength / (sqrt((vOrigin-pWpt->getOrigin()).LengthSqr())))*fBelief;
+			if ( m_fBelief[iWptIndex] > -MAX_BELIEF)
+				m_fBelief[iWptIndex] -= (fStrength / (sqrt((vOrigin-pWpt->getOrigin()).LengthSqr())))*fBelief;
 		}
 		else if ( iType == BELIEF_DANGER )
 		{
-			m_fBelief[i] += (fStrength / (sqrt((vOrigin-pWpt->getOrigin()).LengthSqr())))*fBelief;
+			if ( m_fBelief[iWptIndex] < MAX_BELIEF )
+				m_fBelief[iWptIndex] += (fStrength / (sqrt((vOrigin-pWpt->getOrigin()).LengthSqr())))*fBelief;
 		}
 	}
 }

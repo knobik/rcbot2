@@ -1067,11 +1067,17 @@ edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding )
 
 void CBotTF2 :: died ( edict_t *pKiller )
 {
+	spawnInit();
 
+	if ( pKiller )
+		m_pNavigator->belief(getOrigin(),getOrigin(),10.0f,distanceFrom(pKiller),BELIEF_DANGER);
 }
 
 void CBotTF2 :: killed ( edict_t *pVictim )
 {
+	if ( pVictim )
+		m_pNavigator->belief(getOrigin(),getOrigin(),10.0f,distanceFrom(pVictim),BELIEF_SAFETY);
+
 	taunt();
 }
 
