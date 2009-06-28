@@ -583,7 +583,7 @@ bool CBotFortress :: needAmmo ()
 
 bool CBotFortress :: needHealth ()
 {
-	return getHealthPercent() < 0.75;
+	return getHealthPercent() < 0.7;
 }
 
 bool CBotTF2 :: needAmmo()

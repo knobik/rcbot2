@@ -108,7 +108,7 @@ CBotTF2WaitHealthTask :: CBotTF2WaitHealthTask ( Vector vOrigin )
 void CBotTF2WaitHealthTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( !m_fWaitTime )
-		m_fWaitTime = engine->Time() + 40.0f;
+		m_fWaitTime = engine->Time() + randomFloat(5.0f,10.0f);
 
 	 if ( !pBot->hasSomeConditions(CONDITION_NEED_HEALTH) )
 		complete();
@@ -116,6 +116,15 @@ void CBotTF2WaitHealthTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		 fail();
 	else
 	{
+		// TO DO
+		/*edict_t *pOtherPlayer = CBotGlobals::findNearestPlayer(m_vOrigin,50.0,pBot->getEdict());
+
+		if ( pOtherPlayer )
+		{
+			fail();
+			return;
+		}*/
+
 		pBot->setLookAtTask(LOOK_AROUND);
 
 		if ( pBot->distanceFrom(m_vOrigin) > 50 )
