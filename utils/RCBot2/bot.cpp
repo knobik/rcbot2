@@ -1748,7 +1748,8 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 	{
 		char cmd[64];
 
-		sprintf(cmd,"bot -name %s",szOVName);
+		// fix : dedicated server  - The_Shadow
+		sprintf(cmd,"bot -name \"%s\"\n",szOVName);
 		// control next bot that joins server
 		m_bControlNext = true;
 
