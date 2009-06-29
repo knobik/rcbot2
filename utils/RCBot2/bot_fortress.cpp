@@ -46,6 +46,7 @@
 
 #include "bot_mtrand.h"
 
+extern ConVar bot_beliefmulti;
 // Payload stuff by   The_Shadow
 
 //#include "vstdlib/random.h" // for random functions
@@ -296,6 +297,8 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_pAmmo = NULL;
 		if ( pEntity == m_pHealthkit )
 			m_pHealthkit = NULL;
+		if ( pEntity == m_pHeal )
+			m_pHeal = NULL;
 	}
 	
 }
@@ -1070,13 +1073,13 @@ void CBotTF2 :: died ( edict_t *pKiller )
 	spawnInit();
 
 	if ( pKiller )
-		m_pNavigator->belief(getOrigin(),getOrigin(),10.0f,distanceFrom(pKiller),BELIEF_DANGER);
+		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 }
 
 void CBotTF2 :: killed ( edict_t *pVictim )
 {
 	if ( pVictim )
-		m_pNavigator->belief(getOrigin(),getOrigin(),10.0f,distanceFrom(pVictim),BELIEF_SAFETY);
+		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 
 	taunt();
 }
@@ -1400,8 +1403,7 @@ bool CBotFortress :: canAvoid ( edict_t *pEntity )
 	if ( ( distance > 1 ) && ( distance < 200 ) && (vAvoidOrigin.z >= getOrigin().z) && (fabs(getOrigin().z - vAvoidOrigin.z) < 64) )
 	{
 		if ( index <= gpGlobals->maxClients )
-			return isEnemy(pEntity,false);
-		
+			return (m_pEnemy!=pEntity) && isEnemy(pEntity,false);
 	}
 
 	return false;
@@ -1485,13 +1487,17 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 {
 	CBotWeapon *pWeap = getCurrentWeapon();
 	IPlayerInfo *p;
+	edict_t *pWeapon;
 
 	Vector vOrigin = CBotGlobals::entityOrigin(m_pHeal);
 	
 	if ( !wantToHeal(m_pHeal) )
 		return false;
 
-	if ( distanceFrom(vOrigin) > 100 )
+	if ( !isVisible(m_pHeal) ) 
+		return false;
+
+	if ( distanceFrom(vOrigin) > 90 )
 	{
 		setMoveTo(vOrigin,3);
 	}
@@ -1501,11 +1507,15 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	}
 
 	lookAtEdict(m_pHeal);
-	setLookAtTask(LOOK_EDICT,2);
+	setLookAtTask(LOOK_EDICT,4);
 	// unselect weapon
 	//pBot->selectWeapon(0);
 
-	if ( !CClassInterface::getMedigunHealing(INDEXENT(pWeap->getWeaponIndex())) )
+	pWeapon = INDEXENT(pWeap->getWeaponIndex());
+	if ( pWeapon == NULL )
+		return false;
+
+	if ( !CClassInterface::getMedigunHealing(pWeapon) )
 	{
 		primaryAttack(true);
 	}

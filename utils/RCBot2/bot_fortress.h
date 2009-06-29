@@ -130,6 +130,8 @@ public:
 
 	inline edict_t *getHealingEntity () { return m_pHeal; }
 
+	inline void clearHealingEntity () { m_pHeal = NULL; }
+
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
 	virtual void init (bool bVarInit=false);

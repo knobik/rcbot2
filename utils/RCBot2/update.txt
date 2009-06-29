@@ -1,3 +1,9 @@
+- Support for CP_Badlands, CP_well
+- Support for PL maps (attack teams only)
+- Bots listen to players attacking
+- Added bots belief which will let them take different paths
+- command : rcbot_beliefmulti, increase it to be more effective.
+
 0.43
 - Provisional Support for CP Granary
 - Fixed crash bug

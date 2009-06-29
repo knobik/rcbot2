@@ -539,6 +539,8 @@ void CBot :: think ()
 	else
 		stopMoving();
 
+	listenForPlayers();
+
 	if ( m_pOldEnemy )
 		findEnemy(m_pOldEnemy); // any better enemies than this one?
 	else
@@ -729,6 +731,8 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_fListenTime = 0.0f;
+	m_bListenPositionValid = false;
 	m_fLastSeeEnemy = 0;
 	m_fAvoidTime = 0;
 	m_vLookAroundOffset = Vector(0,0,0);
@@ -1030,6 +1034,79 @@ void CBot :: freeMapMemory ()
 	/////////////////////////////////
 	init();
 }
+// Listen for players who are shooting
+void CBot :: listenForPlayers ()
+{
+	//m_fNextListenTime = engine->Time() + randomFloat(0.5f,2.0f);
+
+	edict_t *pListenNearest = NULL;
+
+	float fMinDist = 1024.0f;
+	float fDist;
+
+	if ( hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	{
+		m_bListenPositionValid = false;
+		return;
+	}
+
+	if ( m_fListenTime > engine->Time() ) // already listening to something ?
+	{
+		setLookAtTask(LOOK_NOISE,4);
+		return;
+	}
+
+	m_bListenPositionValid = false;
+
+	for ( int i = 0; i < MAX_PLAYERS; i ++ )
+	{
+		CClient *pClient = CClients::get(i);
+		
+		if ( pClient->isUsed() )
+		{
+			edict_t *pPlayer = pClient->getPlayer();
+			
+			if ( pPlayer != m_pEdict )
+			{
+				IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+				CBotCmd cmd = p->GetLastUserCommand();
+
+				if ( cmd.buttons & IN_ATTACK )
+				{
+					fDist = distanceFrom(pPlayer);
+
+					if ( fDist < fMinDist )
+					{
+						fMinDist = fDist;
+						pListenNearest = pPlayer;
+
+						// look at enemy
+						if ( !isVisible(pPlayer) || isEnemy(pPlayer) )
+							m_vListenPosition = p->GetAbsOrigin();
+						else
+						{
+							QAngle angle = p->GetAbsAngles();
+							Vector forward;
+
+							AngleVectors( angle, &forward );
+
+							// look where team mate is shooting
+							m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);
+						}
+
+						m_bListenPositionValid = true;
+					}
+				}
+			}
+		}
+	}
+
+	if ( m_bListenPositionValid )
+	{
+		m_fListenTime = engine->Time() + randomFloat(5.0f,10.0f);
+	}
+}
 
 bool CBot :: onLadder ()
 {	
@@ -1316,6 +1393,19 @@ void CBot :: getLookAtVector ()
 			setLookAt(m_vWaypointAim+m_vLookAroundOffset);
 		}
 		break;
+	case LOOK_NOISE:
+		{
+			if ( !m_bListenPositionValid || (m_fListenTime < engine->Time()) ) // already listening to something ?
+			{
+				setLookAtTask(LOOK_WAYPOINT,4);
+				return;
+			}
+
+			setLookAt(m_vListenPosition);
+		}
+		break;
+
+
 	case LOOK_AROUND:
 		{
 			if ( m_fLookAroundTime < engine->Time() )

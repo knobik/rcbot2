@@ -506,6 +506,8 @@ public:
 
 	inline float getSpeed () { return m_vVelocity.Length2D(); }
 
+	virtual void listenForPlayers ();
+
 protected:
 
 	static void checkEntity ( edict_t **pEdict );
@@ -651,6 +653,11 @@ protected:
 	/////////////////////////////////
 
 	char m_szBotName[64];
+
+	/////////////////////////////////
+	Vector m_vListenPosition; // listening player position, heard someone shoot
+	bool m_bListenPositionValid;
+	float m_fListenTime;
 };
 
 class IBotFunction

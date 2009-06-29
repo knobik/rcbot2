@@ -69,11 +69,13 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else if ( !CBotGlobals::entityIsValid(pHeal) || !CBotGlobals::entityIsAlive(pHeal) )
 	{
+		((CBotFortress*)pBot)->clearHealingEntity();
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
 	else if ( pBot->getCurrentWeapon() == NULL )
 	{
+		((CBotFortress*)pBot)->clearHealingEntity();
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
@@ -86,17 +88,21 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 		if ( !((CBotFortress*)pBot)->healPlayer(pHeal,m_pHeal) )
 		{
 			pBot->getNavigator()->rollBackPosition();
+			((CBotFortress*)pBot)->clearHealingEntity();
 			fail();
 		}
+
+
 	}
 	else
 	{
 		pBot->getNavigator()->rollBackPosition();
+		((CBotFortress*)pBot)->clearHealingEntity();
 		fail();
 	}
 
-	m_pHeal = pHeal;
-
+	
+m_pHeal = pHeal;
 }
 
 CBotTF2WaitHealthTask :: CBotTF2WaitHealthTask ( Vector vOrigin )

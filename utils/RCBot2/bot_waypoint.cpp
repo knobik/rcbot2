@@ -102,7 +102,7 @@ bool CWaypointNavigator :: getCoverPosition ( Vector vCoverOrigin, Vector *vCove
 
 	return true;
 }
-#define MAX_BELIEF 1024.0f
+#define MAX_BELIEF 200.0f
 // get belief nearest to current origin using waypoints to store belief
 void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief, float fStrength, BotBelief iType )
 {

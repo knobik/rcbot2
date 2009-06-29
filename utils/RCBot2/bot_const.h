@@ -64,7 +64,8 @@ typedef enum
 	LOOK_GROUND,
 	LOOK_SNIPE,
 	LOOK_WAYPOINT_AIM,
-	LOOK_BUILD
+	LOOK_BUILD,
+	LOOK_NOISE
 }eLookTask;
 
 #define BOT_CONFIG_FOLDER "config"
