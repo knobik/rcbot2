@@ -1,8 +1,11 @@
+0.46
+
 - Support for CP_Badlands, CP_well
-- Support for PL maps (attack teams only)
+- Support for PL maps (attack teams only) - thx The_Shadow
 - Bots listen to players attacking
 - Added bots belief which will let them take different paths
 - command : rcbot_beliefmulti, increase it to be more effective.
+- Added rcbot waypoint menu, to add waypoint types (incomplete) need to press ESC to use.
 
 0.43
 - Provisional Support for CP Granary
@@ -12,7 +15,9 @@
 0.42
 - Fixed working with scout update
 - Fixed bots not using teleporters
+
 0.4
+
 TF2 updates
 
 - fixed bots not looking at enemies shooting them from behind

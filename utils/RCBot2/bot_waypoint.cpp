@@ -120,12 +120,16 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 		if ( iType == BELIEF_SAFETY )
 		{
 			if ( m_fBelief[iWptIndex] > -MAX_BELIEF)
-				m_fBelief[iWptIndex] -= (fStrength / (sqrt((vOrigin-pWpt->getOrigin()).LengthSqr())))*fBelief;
+				m_fBelief[iWptIndex] -= (fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
+			if ( m_fBelief[iWptIndex] < -MAX_BELIEF )
+				m_fBelief[iWptIndex] = -MAX_BELIEF;
 		}
 		else if ( iType == BELIEF_DANGER )
 		{
 			if ( m_fBelief[iWptIndex] < MAX_BELIEF )
-				m_fBelief[iWptIndex] += (fStrength / (sqrt((vOrigin-pWpt->getOrigin()).LengthSqr())))*fBelief;
+				m_fBelief[iWptIndex] += (fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
+			if ( m_fBelief[iWptIndex] > MAX_BELIEF )
+				m_fBelief[iWptIndex] = MAX_BELIEF;
 		}
 	}
 }
