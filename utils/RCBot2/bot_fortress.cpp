@@ -282,7 +282,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 			if ( !m_pHealthkit || ((pEntity != m_pHealthkit) && (distanceFrom(pEntity) < distanceFrom(m_pHealthkit))) )
 				m_pHealthkit = pEntity;
 		}
-		else if ( CTeamFortress2Mod::isPayloadBomb(pEntity) )
+		else if ( CTeamFortress2Mod::isPayloadBomb(pEntity,getTeam()) )
 		{
 			m_pPayloadBomb = pEntity;
 		}

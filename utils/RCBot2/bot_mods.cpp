@@ -69,9 +69,9 @@ bool CTeamFortress2Mod :: isAmmo ( edict_t *pEntity )
 	return strncmp(pEntity->GetClassName(),"item_ammopack",13)==0;
 }
 
-bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity )
+bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity, int iTeam )
 {
-	return strncmp(pEntity->GetClassName(),"func_tracktrain",15)==0;
+	return ((strncmp(pEntity->GetClassName(),"mapobj_cart_dispenser",21)==0) && (CClassInterface::getTeam(pEntity)==iTeam));
 }
 
 void CTeamFortress2Mod :: getResetPoints (int iTeam, int *iCurrentDefendArea, int *iCurrentAttackArea)
