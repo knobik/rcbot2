@@ -777,6 +777,8 @@ void CTeamFortress2Mod :: mapInit ()
 		m_MapType = TF_MAP_TC;
 	else if ( strncmp(szmapname,"pl_",3) == 0 )
 		m_MapType = TF_MAP_CART;
+	else if ( strncmp(szmapname,"plr_",4) == 0 )
+		m_MapType = TF_MAP_CARTRACE;
 	else
 		m_MapType = TF_MAP_DM;
 

@@ -207,7 +207,8 @@ typedef enum
 	TF_MAP_CTF,
 	TF_MAP_CP,
 	TF_MAP_TC,
-	TF_MAP_CART
+	TF_MAP_CART,
+	TF_MAP_CARTRACE
 }eTFMapType;
 
 typedef struct

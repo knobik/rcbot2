@@ -81,6 +81,11 @@ public:
 
 		return true; 
 	}
+
+	virtual TraceType_t	GetTraceType() const
+	{
+		return TRACE_EVERYTHING;
+	}
 private:
 	edict_t *m_pPlayer;
 	edict_t *m_pHit;

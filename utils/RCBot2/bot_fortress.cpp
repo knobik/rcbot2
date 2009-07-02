@@ -1810,8 +1810,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP),fGetFlagUtility));
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
-	if ( getTeam() == TF2_TEAM_BLUE )
-		utils.addUtility(CBotUtility(BOT_UTIL_GOTO_PAYLOAD_BOMB,CTeamFortress2Mod::isMapType(TF_MAP_CART),fGetFlagUtility));
+	utils.addUtility(CBotUtility(BOT_UTIL_GOTO_PAYLOAD_BOMB,(m_pPayloadBomb!=NULL) && ((( getTeam() == TF2_TEAM_BLUE )&&CTeamFortress2Mod::isMapType(TF_MAP_CART))||(CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE))),fGetFlagUtility));
 
 	//CTeamFortress2Mod::isMapType(TF_MAP_CART);
 	

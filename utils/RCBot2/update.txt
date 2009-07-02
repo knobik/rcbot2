@@ -1,8 +1,9 @@
 0.46
-
+- provisional Support PLR maps
 - Support for CP_Badlands, CP_well
-- Support for PL maps (attack teams only) - thx The_Shadow
+- provisional Support for PL maps - thx The_Shadow
 - Bots listen to players attacking
+- reduced bot waiting time on health to 5 sec minimum
 - Added bots belief which will let them take different paths
 - command : rcbot_beliefmulti, increase it to be more effective.
 - Added rcbot waypoint menu, to add waypoint types (incomplete) need to press ESC to use.
