@@ -93,22 +93,22 @@ private:
 class CBroadcastRoundStart : public IBotFunction
 {
 public:
+	CBroadcastRoundStart ( bool bFullReset ) { m_bFullReset = bFullReset; }
 	void execute ( CBot *pBot );
+private:
+	bool m_bFullReset;
 };
 
 class CBroadcastCapturedPoint : public IBotFunction
 {
 public:
-	CBroadcastCapturedPoint ( int iPoint, int iTeam )
-	{
-		m_iPoint = iPoint;
-		m_iTeam = iTeam;
-	}
+	CBroadcastCapturedPoint ( int iPoint, int iTeam, const char *szName );
 
 	void execute ( CBot *pBot );
 private:
 	int m_iPoint;
 	int m_iTeam;
+	const char *m_szName;
 };
 
 
@@ -348,9 +348,9 @@ public:
 
 	void callMedic ();
 
-	void roundReset ();
+	void roundReset (bool bFullReset);
 
-	void pointCaptured ( int iPoint, int iTeam );
+	void pointCaptured ( int iPoint, int iTeam, const char *szPointName );
 
 	void engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd );
 

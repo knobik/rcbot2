@@ -43,16 +43,25 @@
 #include "bot_waypoint_locations.h"
 #include "in_buttons.h"
 #include "bot_utility.h"
+#include "bot_script.h"
 
 #include "bot_mtrand.h"
 
 extern ConVar bot_beliefmulti;
+
 // Payload stuff by   The_Shadow
 
 //#include "vstdlib/random.h" // for random functions
 void CBroadcastCapturedPoint :: execute ( CBot *pBot )
 {
-	((CBotTF2*)pBot)->pointCaptured(m_iPoint,m_iTeam);
+	((CBotTF2*)pBot)->pointCaptured(m_iPoint,m_iTeam,m_szName);
+}
+
+CBroadcastCapturedPoint :: CBroadcastCapturedPoint ( int iPoint, int iTeam, const char *szName )
+{
+	m_iPoint = iPoint;
+	m_iTeam = iTeam;
+	m_szName = CStrings::getString(szName);
 }
 
 void CBroadcastFlagDropped :: execute ( CBot *pBot )
@@ -73,7 +82,7 @@ void CBroadcastFlagCaptured :: execute ( CBot *pBot )
 
 void CBroadcastRoundStart :: execute ( CBot *pBot )
 {
-	((CBotTF2*)pBot)->roundReset();
+	((CBotTF2*)pBot)->roundReset(m_bFullReset);
 }
 
 CBotFortress :: CBotFortress()
@@ -2318,12 +2327,37 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 	return true;
 }
 
-void CBotTF2::roundReset()
+void CBotTF2::roundReset(bool bFullReset)
 {
 	flagReset();
 	teamFlagReset();
 	
-	CTeamFortress2Mod::getResetPoints (getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+	if ( bFullReset )
+	{
+		CResetPoint *p = CPoints::getPoint(NULL);
+
+		if ( p )
+		{
+			vector<CPointStyle> *points;
+
+			p->getCurrentPoints(0,getTeam(),&points);
+
+			if ( points )
+			{
+				unsigned int i = 0; 
+				
+				for ( i = 0; i < points->size(); i ++ )
+				{
+					if ( (*points)[i].getStyle () == POINT_DEFEND )
+						m_iCurrentDefendArea = (*points)[i].getArea();
+					else if ( (*points)[i].getStyle () == POINT_ATTACK )
+						m_iCurrentAttackArea = (*points)[i].getArea();
+				}
+			}
+		}
+		else
+			CTeamFortress2Mod::getResetPoints (getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+	}
 
 	m_pPayloadBomb = NULL;
 }
@@ -2338,9 +2372,31 @@ void CBotTF2::getAttackArea ( vector <int> *m_iAreas )
 	m_iAreas->push_back(m_iCurrentAttackArea);
 }
 
-void CBotTF2::pointCaptured(int iPoint,int iTeam)
+void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 {
-	CTeamFortress2Mod::getNextPoints (iPoint,iTeam,getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+		CResetPoint *p = CPoints::getPoint(szPointName);
+
+		if ( p )
+		{
+			vector<CPointStyle> *points;
+
+			p->getCurrentPoints(0,getTeam(),&points);
+
+			if ( points )
+			{
+				unsigned int i = 0; 
+				
+				for ( i = 0; i < points->size(); i ++ )
+				{
+					if ( (*points)[i].getStyle () == POINT_DEFEND )
+						m_iCurrentDefendArea = (*points)[i].getArea();
+					else if ( (*points)[i].getStyle () == POINT_ATTACK )
+						m_iCurrentAttackArea = (*points)[i].getArea();
+				}
+			}
+		}
+		else
+			CTeamFortress2Mod::getNextPoints (iPoint,iTeam,getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 }
 
 // Is Enemy Function
@@ -2450,6 +2506,10 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 	return false;	
 }
+
+
+////////////////////////////////////////
+
 
 /////////////////////////////////////////////////////////////////////////
 // FORTRESS FOREVER

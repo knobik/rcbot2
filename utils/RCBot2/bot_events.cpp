@@ -137,13 +137,17 @@ void CTF2ChangeClass :: execute ( IBotEventInterface *pEvent )
 
 void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 {
-	CBroadcastRoundStart *roundstart = new CBroadcastRoundStart();
-	CBots::botFunction(roundstart);
+	// 04/07/09 : add full reset
+
+	  CBroadcastRoundStart *roundstart = new CBroadcastRoundStart(pEvent->getInt("full_reset") == 1);
+	  
+	  CBots::botFunction(roundstart);
+	
 }
 
 void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
 {
-	CBroadcastCapturedPoint *cap = new CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"));
+	CBroadcastCapturedPoint *cap = new CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"),pEvent->getString("cpname"));
 	CBots::botFunction(cap);
 }
 

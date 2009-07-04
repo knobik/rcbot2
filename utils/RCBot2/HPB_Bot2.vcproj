@@ -327,6 +327,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_script.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_som.cpp"
 				>
 			</File>
@@ -611,6 +615,10 @@
 			</File>
 			<File
 				RelativePath=".\bot_schedule.h"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_script.h"
 				>
 			</File>
 			<File

@@ -33,6 +33,7 @@
 #include "bot_globals.h"
 #include "bot_fortress.h"
 #include "bot_weapons.h"
+#include "bot_script.h"
 
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
@@ -783,5 +784,7 @@ void CTeamFortress2Mod :: mapInit ()
 		m_MapType = TF_MAP_DM;
 
 	m_iArea = 0;
+
+	CPoints::loadMapScript();
 }
 
