@@ -34,6 +34,7 @@
 #include "bot_strings.h"
 #include "bot_globals.h"
 #include "bot_fortress.h"
+#include "bot_script.h"
 
 vector<CBotEvent*> CBotEvents :: m_theEvents;
 ///////////////////////////////////////////////////////
@@ -141,6 +142,9 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 
 	  CBroadcastRoundStart *roundstart = new CBroadcastRoundStart(pEvent->getInt("full_reset") == 1);
 	  
+	  if ( pEvent->getInt("full_reset") == 1 )
+		CPoints::resetPoints();
+	  // MUST BE AFTER RESETPOINTS
 	  CBots::botFunction(roundstart);
 	
 }
@@ -148,7 +152,10 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
 {
 	CBroadcastCapturedPoint *cap = new CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"),pEvent->getString("cpname"));
-	CBots::botFunction(cap);
+	
+	CPoints::pointCaptured(pEvent->getInt("team"),pEvent->getString("cpname"));
+    // MUST BE AFTER POINTCAPTURED
+    CBots::botFunction(cap);
 }
 
 void CFlagEvent :: execute ( IBotEventInterface *pEvent )

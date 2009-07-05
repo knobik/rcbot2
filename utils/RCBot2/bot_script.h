@@ -71,6 +71,8 @@ public:
 	void addPointStyle ( int iTeamCaptured, int iTeam, CPointStyle pointstyle );
 
 	void addValidArea ( int iArea );
+
+	void getValidAreas ( vector <int> *iAreas );
 private:
 	vector <CPointStyle> m_iNextRed[2];
 	vector <CPointStyle> m_iNextBlue[2];
@@ -91,13 +93,28 @@ private:
 class CPoints
 {
 public:
-	static CResetPoint *getPoint ( const char *szName = NULL );
+	
+	static void pointCaptured ( int iTeamCaptured, const char *szName );
 
-	static void loadMapScript ( );
+	static void resetPoints();
+
+	static void loadMapScript ();
+
+	// TODO : convert to [vector]
+	static void getAreas ( int iTeam, int *iDefend, int *iAttack );
 
 	static void freeMemory ();
 private:
+
+	static CResetPoint *getPoint ( const char *szName = NULL );
+
 	static vector <CResetPoint*> m_points;
+
+	static vector <int> m_BlueAttack; 
+	static vector <int> m_RedAttack; 
+	static vector <int> m_BlueDefend; 
+	static vector <int> m_RedDefend; 
+	static vector <int> m_ValidAreas;
 };
 
 

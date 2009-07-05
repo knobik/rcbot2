@@ -72,6 +72,7 @@ typedef enum
 #define BOT_MOD_FILE "bot_mods"
 #define BOT_ACCESS_CLIENT_FILE "accessclients"
 #define BOT_PROFILE_FOLDER "profiles"
+#define BOT_WAYPOINT_FOLDER "waypoints"
 #define BOT_CONFIG_EXTENSION "ini"
 #define BOT_SCRIPT_FOLDER "scripts"
 #define BOT_SCRIPT_EXTENSION "rcs"

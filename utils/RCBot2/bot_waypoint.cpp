@@ -790,7 +790,7 @@ bool CWaypoints :: save ( bool bVisiblityMade )
 {
 	char filename[1024];
 
-	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),"waypoints",BOT_WAYPOINT_EXTENSION,true);
+	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_EXTENSION,true);
 
 	FILE *bfp = CBotGlobals::openFile(filename,"wb");
 
@@ -842,7 +842,7 @@ bool CWaypoints :: load ()
 {
 	char filename[1024];	
 
-	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),"waypoints",BOT_WAYPOINT_EXTENSION,true);
+	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_EXTENSION,true);
 
 	FILE *bfp = CBotGlobals::openFile(filename,"rb");
 

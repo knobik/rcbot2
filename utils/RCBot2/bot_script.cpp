@@ -38,6 +38,12 @@
 
 vector <CResetPoint*> CPoints::m_points;
 
+vector <int> CPoints::m_BlueAttack; 
+vector <int> CPoints::m_RedAttack; 
+vector <int> CPoints::m_BlueDefend; 
+vector <int> CPoints::m_RedDefend;
+vector <int> CPoints::m_ValidAreas;
+
 CPointStyle::CPointStyle (int iPointArea,ePointStyle iStyle)
 {
 		m_iPointArea = iPointArea;
@@ -91,7 +97,7 @@ void CResetPoint :: addValidArea ( int iArea )
 
 CPoint :: CPoint ( const char *szName )
 {
-	m_szName = CStrings::getString(m_szName);
+	m_szName = CStrings::getString(szName);
 }
 
 bool CPoint :: isPoint ( const char *szName ) 
@@ -126,9 +132,143 @@ CResetPoint *CPoints::getPoint ( const char *szName )
 	return newpoint;
 }
 
+void CResetPoint :: getValidAreas ( vector <int> *iAreas )
+{
+	unsigned int i;
+
+	iAreas->clear();
+
+	for ( i = 0; i < m_iValidAreas.size(); i ++ )
+		iAreas->push_back(m_iValidAreas[i]);
+}
+
+void CPoints :: pointCaptured ( int iTeamCaptured, const char *szName )
+{
+	CResetPoint *p = CPoints::getPoint(szName);
+
+	m_BlueAttack.clear(); 
+	m_RedAttack.clear(); 
+	m_BlueDefend.clear(); 
+	m_RedDefend.clear(); 
+	m_ValidAreas.clear();
+
+	if ( p )
+	{
+		vector<CPointStyle> *points;
+
+		p->getValidAreas(&m_ValidAreas);
+
+		p->getCurrentPoints(iTeamCaptured,TF2_TEAM_BLUE,&points);
+
+		if ( points )
+		{
+			unsigned int i = 0; 
+			
+			for ( i = 0; i < points->size(); i ++ )
+			{
+				if ( (*points)[i].getStyle () == POINT_DEFEND )
+					m_BlueDefend.push_back((*points)[i].getArea());
+				else if ( (*points)[i].getStyle () == POINT_ATTACK )
+					m_BlueAttack.push_back((*points)[i].getArea());
+			}
+		}
+
+		p->getCurrentPoints(iTeamCaptured,TF2_TEAM_RED,&points);
+
+		if ( points )
+		{
+			unsigned int i = 0; 
+			
+			for ( i = 0; i < points->size(); i ++ )
+			{
+				if ( (*points)[i].getStyle () == POINT_DEFEND )
+					m_RedDefend.push_back((*points)[i].getArea());
+				else if ( (*points)[i].getStyle () == POINT_ATTACK )
+					m_RedAttack.push_back((*points)[i].getArea());
+			}
+		}
+	}
+}
+
+void CPoints :: resetPoints()
+{
+	CResetPoint *p = CPoints::getPoint(NULL);
+
+	m_BlueAttack.clear(); 
+	m_RedAttack.clear(); 
+	m_BlueDefend.clear(); 
+	m_RedDefend.clear(); 
+	m_ValidAreas.clear();
+
+	if ( p )
+	{
+		vector<CPointStyle> *points;
+
+		p->getValidAreas(&m_ValidAreas);
+
+		p->getCurrentPoints(0,TF2_TEAM_BLUE,&points);
+
+		if ( points )
+		{
+			unsigned int i = 0; 
+			
+			for ( i = 0; i < points->size(); i ++ )
+			{
+				if ( (*points)[i].getStyle () == POINT_DEFEND )
+					m_BlueDefend.push_back((*points)[i].getArea());
+				else if ( (*points)[i].getStyle () == POINT_ATTACK )
+					m_BlueAttack.push_back((*points)[i].getArea());
+			}
+		}
+
+		p->getCurrentPoints(0,TF2_TEAM_RED,&points);
+
+		if ( points )
+		{
+			unsigned int i = 0; 
+			
+			for ( i = 0; i < points->size(); i ++ )
+			{
+				if ( (*points)[i].getStyle () == POINT_DEFEND )
+					m_RedDefend.push_back((*points)[i].getArea());
+				else if ( (*points)[i].getStyle () == POINT_ATTACK )
+					m_RedAttack.push_back((*points)[i].getArea());
+			}
+		}
+	}
+}
+
+// TODO : convert to [vector]
+void CPoints :: getAreas( int iTeam, int *iDefend, int *iAttack )
+{
+	if ( m_points.size() )
+	{
+		if ( iTeam == TF2_TEAM_BLUE )
+		{
+			if ( m_BlueAttack.size() )
+				*iAttack = m_BlueAttack[0];
+			if ( m_BlueDefend.size() )
+				*iDefend = m_BlueDefend[0];
+		}
+		else if ( iTeam == TF2_TEAM_RED )
+		{
+			if ( m_RedAttack.size() )
+				*iAttack = m_RedAttack[0];
+			if ( m_RedDefend.size() )
+				*iDefend = m_RedDefend[0];
+		}
+	}
+}
+
 void CPoints :: freeMemory ()
 {
 	unsigned int i = 0;
+
+	m_BlueAttack.clear(); 
+	m_RedAttack.clear(); 
+	m_BlueDefend.clear(); 
+	m_RedDefend.clear(); 
+	m_ValidAreas.clear();
 
 	for ( i = 0; i < m_points.size(); i ++ )
 	{
@@ -179,19 +319,19 @@ void CPoints :: loadMapScript ( )
 			// control character
 			if ( line[0] == ':' )
 			{
-				if ( strcmpi(&line[1],"on_blue_cap:") == 0 )
-				{
-					currentpoint = getPoint(&line[14]);
-					state = STATE_BLUE_CAP;
-				}
-				else if ( strcmpi(&line[1],"on_red_cap:") == 0 )
+				if ( strncmp(&line[1],"on_blue_cap:",12) == 0 )
 				{
 					currentpoint = getPoint(&line[13]);
 					state = STATE_BLUE_CAP;
 				}
-				else if ( strcmpi(&line[1],"on_reset:") == 0 )
+				else if ( strncmp(&line[1],"on_red_cap:",11) == 0 )
 				{
-					currentpoint = getPoint(&line[11]);
+					currentpoint = getPoint(&line[12]);
+					state = STATE_BLUE_CAP;
+				}
+				else if ( strncmp(&line[1],"on_reset:",9) == 0 )
+				{
+					currentpoint = getPoint(NULL);
 					state = STATE_RESET;
 				}
 			}
@@ -204,16 +344,46 @@ void CPoints :: loadMapScript ( )
 				char num[4];
 
 				num[0] = 0;
-				
-				if ( strncmp("red_",&line[1],4) == 0 )
+
+				if ( strncmp("areas:",&line[0],6) == 0 )
+				{
+					// get areas
+					i = i + 6;
+					n = 0;
+
+					while ( i < len )
+					{
+						if (line[i] == ' ')
+						{
+							i++;
+							continue;
+						}
+
+						if ( n < 3 )
+							num[n++] = line[i];
+
+						if ( ((i+1) >= len) || (line[i+1]==',') )
+						{
+							num[n]=0;
+							n = 0;
+
+							currentpoint->addValidArea(atoi(num));
+
+							i++;//skip ,
+						}
+
+						i++;
+					}
+				}
+				else if ( strncmp("red_",&line[0],4) == 0 )
 				{
 					iTeam = TF2_TEAM_RED;
-					i = 6;
+					i = 4;
 				}
-				else if ( strncmp("blue_",&line[1],5) == 0 )
+				else if ( strncmp("blue_",&line[0],5) == 0 )
 				{
 					iTeam = TF2_TEAM_BLUE;
-					i = 7;
+					i = 5;
 				}
 				else
 				{
@@ -222,9 +392,9 @@ void CPoints :: loadMapScript ( )
 					continue;
 				}
 
-				if ( strcmp("attack:",&line[i]) == 0) 
+				if ( strncmp("attack:",&line[i],7) == 0) 
 					style = POINT_ATTACK;
-				else if ( strcmp("defend:",&line[i]) == 0 )
+				else if ( strncmp("defend:",&line[i],7) == 0 )
 					style = POINT_DEFEND;
 				else
 				{
@@ -240,19 +410,22 @@ void CPoints :: loadMapScript ( )
 
 				while ( i < len )
 				{
-					if ( n < 4 )
+					if ( n < 3 )
 						num[n++] = line[i];
 
 					if ( ((i+1) >= len) || (line[i+1]==',') )
 					{
+						num[n]=0;
+						n = 0;
+
 						if ( state == STATE_RESET )
 							currentpoint->addPointStyle(0,iTeam,CPointStyle(atoi(num),style));
 						else if ( state == STATE_BLUE_CAP )
 							currentpoint->addPointStyle(TF2_TEAM_BLUE,iTeam,CPointStyle(atoi(num),style));
 						else if ( state == STATE_RED_CAP )
 							currentpoint->addPointStyle(TF2_TEAM_RED,iTeam,CPointStyle(atoi(num),style));
-						
-						n = 0;
+
+						i++;//skip ,
 					}
 
 					i++;

@@ -20,7 +20,7 @@ void CWaypointDistances :: load ()
 
 	if ( szMapName  && *szMapName )
 	{
-		CBotGlobals::buildFileName(filename,szMapName,"waypoints",BOT_WAYPOINT_DST_EXTENSION,true);
+		CBotGlobals::buildFileName(filename,szMapName,BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_DST_EXTENSION,true);
 
 		FILE *bfp = CBotGlobals::openFile(filename,"rb");
 
@@ -53,7 +53,7 @@ void CWaypointDistances :: save ()
 		{
 			wpt_dist_hdr_t hdr;
 
-			CBotGlobals::buildFileName(filename,szMapName,"waypoints",BOT_WAYPOINT_DST_EXTENSION,true);
+			CBotGlobals::buildFileName(filename,szMapName,BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_DST_EXTENSION,true);
 
 			FILE *bfp = CBotGlobals::openFile(filename,"wb");
 

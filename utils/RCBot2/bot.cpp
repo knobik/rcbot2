@@ -1070,32 +1070,37 @@ void CBot :: listenForPlayers ()
 			{
 				IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
 
-				CBotCmd cmd = p->GetLastUserCommand();
-
-				if ( cmd.buttons & IN_ATTACK )
+				// 05/07/09 fix crash bug
+				if ( p && p->IsConnected() && !p->IsDead() && !p->IsObserver() && p->IsPlayer() )
 				{
-					fDist = distanceFrom(pPlayer);
 
-					if ( fDist < fMinDist )
+					CBotCmd cmd = p->GetLastUserCommand();
+
+					if ( cmd.buttons & IN_ATTACK )
 					{
-						fMinDist = fDist;
-						pListenNearest = pPlayer;
+						fDist = distanceFrom(pPlayer);
 
-						// look at enemy
-						if ( !isVisible(pPlayer) || isEnemy(pPlayer) )
-							m_vListenPosition = p->GetAbsOrigin();
-						else
+						if ( fDist < fMinDist )
 						{
-							QAngle angle = p->GetAbsAngles();
-							Vector forward;
+							fMinDist = fDist;
+							pListenNearest = pPlayer;
 
-							AngleVectors( angle, &forward );
+							// look at enemy
+							if ( !isVisible(pPlayer) || isEnemy(pPlayer) )
+								m_vListenPosition = p->GetAbsOrigin();
+							else
+							{
+								QAngle angle = p->GetAbsAngles();
+								Vector forward;
 
-							// look where team mate is shooting
-							m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);
+								AngleVectors( angle, &forward );
+
+								// look where team mate is shooting
+								m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);
+							}
+
+							m_bListenPositionValid = true;
 						}
-
-						m_bListenPositionValid = true;
 					}
 				}
 			}

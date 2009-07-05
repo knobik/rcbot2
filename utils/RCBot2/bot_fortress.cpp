@@ -830,6 +830,8 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+
 	m_fDoubleJumpTime = 0.0f;
 	m_fFrenzyTime = 0.0f;
 	m_fUseTeleporterTime = 0.0f;
@@ -2331,56 +2333,42 @@ void CBotTF2::roundReset(bool bFullReset)
 {
 	flagReset();
 	teamFlagReset();
-	
-	if ( bFullReset )
-	{
-		CResetPoint *p = CPoints::getPoint(NULL);
 
-		if ( p )
-		{
-			vector<CPointStyle> *points;
+	m_pNavigator->freeMapMemory();
 
-			p->getCurrentPoints(0,getTeam(),&points);
-
-			if ( points )
-			{
-				unsigned int i = 0; 
-				
-				for ( i = 0; i < points->size(); i ++ )
-				{
-					if ( (*points)[i].getStyle () == POINT_DEFEND )
-						m_iCurrentDefendArea = (*points)[i].getArea();
-					else if ( (*points)[i].getStyle () == POINT_ATTACK )
-						m_iCurrentAttackArea = (*points)[i].getArea();
-				}
-			}
-		}
-		else
-			CTeamFortress2Mod::getResetPoints (getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
-	}
+	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
 	m_pPayloadBomb = NULL;
 }
 
+/// TO DO : list of areas
 void CBotTF2::getDefendArea ( vector<int> *m_iAreas )
 {
+	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 	m_iAreas->push_back(m_iCurrentDefendArea);
 }
 
 void CBotTF2::getAttackArea ( vector <int> *m_iAreas )
 {
+	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 	m_iAreas->push_back(m_iCurrentAttackArea);
 }
 
 void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 {
+	m_pPayloadBomb = NULL;
+
+	m_pNavigator->freeMapMemory();
+
+	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+	/*
 		CResetPoint *p = CPoints::getPoint(szPointName);
 
 		if ( p )
 		{
 			vector<CPointStyle> *points;
 
-			p->getCurrentPoints(0,getTeam(),&points);
+			p->getCurrentPoints(iTeam,getTeam(),&points);
 
 			if ( points )
 			{
@@ -2397,6 +2385,7 @@ void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 		}
 		else
 			CTeamFortress2Mod::getNextPoints (iPoint,iTeam,getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+			*/
 }
 
 // Is Enemy Function

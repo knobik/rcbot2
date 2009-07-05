@@ -138,7 +138,7 @@ bool CWaypointVisibilityTable :: SaveToFile ( void )
 {
     char filename[1024];
 
-	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),"waypoints","rcv",true);
+	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,"rcv",true);
 
 	FILE *bfp = CBotGlobals::openFile(filename,"wb");
 
@@ -162,7 +162,7 @@ bool CWaypointVisibilityTable :: ReadFromFile ( void )
 
     char filename[1024];
 
-	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),"waypoints","rcv",true);
+	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,"rcv",true);
 
    FILE *bfp =  CBotGlobals::openFile(filename,"rb");
 
