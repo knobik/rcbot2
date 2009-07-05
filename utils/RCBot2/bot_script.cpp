@@ -327,7 +327,7 @@ void CPoints :: loadMapScript ( )
 				else if ( strncmp(&line[1],"on_red_cap:",11) == 0 )
 				{
 					currentpoint = getPoint(&line[12]);
-					state = STATE_BLUE_CAP;
+					state = STATE_RED_CAP;
 				}
 				else if ( strncmp(&line[1],"on_reset:",9) == 0 )
 				{
@@ -410,6 +410,12 @@ void CPoints :: loadMapScript ( )
 
 				while ( i < len )
 				{
+					if (line[i] == ' ')
+					{
+						i++;
+						continue;
+					}
+
 					if ( n < 3 )
 						num[n++] = line[i];
 
