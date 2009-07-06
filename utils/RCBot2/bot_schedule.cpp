@@ -81,6 +81,19 @@ void CBotTF2PushPayloadBombSched :: init ()
 {
 	setID(SCHED_TF2_PUSH_PAYLOADBOMB);
 }
+///////////////////////////////////
+
+CBotTF2DefendPayloadBombSched :: CBotTF2DefendPayloadBombSched (edict_t * ePayloadBomb)
+{
+	addTask(new CFindPathTask(CBotGlobals::entityOrigin(ePayloadBomb))); // first
+	addTask(new CBotTF2DefendPayloadBombTask(ePayloadBomb)); // second
+}
+
+void CBotTF2DefendPayloadBombSched :: init ()
+{
+	setID(SCHED_TF2_DEFEND_PAYLOADBOMB);
+}
+
 
 //////////////////////////////////////////////
 

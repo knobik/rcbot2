@@ -53,6 +53,8 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 {	
 	edict_t *pHeal;
 
+	pBot->wantToShoot(false);
+
 	if ( !pBot->isTF() )
 	{
 		fail();
@@ -73,6 +75,12 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
+	else if ( !pBot->isVisible(pHeal) )
+	{
+		pBot->getNavigator()->rollBackPosition();
+		((CBotFortress*)pBot)->clearHealingEntity();
+		fail();
+	}
 	else if ( pBot->getCurrentWeapon() == NULL )
 	{
 		((CBotFortress*)pBot)->clearHealingEntity();
@@ -83,8 +91,10 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->select_CWeapon( CWeapons::getWeapon(TF2_WEAPON_MEDIGUN) );
 	}
-	else if ( pBot->isVisible(pHeal) )
+	else 
 	{
+		pBot->clearFailedWeaponSelect();
+
 		if ( !((CBotFortress*)pBot)->healPlayer(pHeal,m_pHeal) )
 		{
 			pBot->getNavigator()->rollBackPosition();
@@ -94,12 +104,7 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 
 
 	}
-	else
-	{
-		pBot->getNavigator()->rollBackPosition();
-		((CBotFortress*)pBot)->clearHealingEntity();
-		fail();
-	}
+
 
 	
 m_pHeal = pHeal;
@@ -286,7 +291,7 @@ CBotTF2PushPayloadBombTask :: CBotTF2PushPayloadBombTask (edict_t * pPayloadBomb
 	m_pPayloadBomb = pPayloadBomb;
 	m_fPushTime = 0;
 	m_fTime = 0;
-	m_vRandomOffset = NULL;
+	m_vRandomOffset = Vector(0,0,0);
 }
 
 void CBotTF2PushPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -306,33 +311,82 @@ void CBotTF2PushPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-	if ( !m_pPayloadBomb->GetIServerEntity() || !m_pPayloadBomb->GetCollideable() )
+	else if(CBotGlobals::entityIsValid(m_pPayloadBomb) && CBotGlobals::entityIsAlive(m_pPayloadBomb))
 	{
-		m_pPayloadBomb = NULL;
-		complete();
-		return;
-	}
 
-	m_vOrigin = CBotGlobals::entityOrigin(m_pPayloadBomb);
-	//m_vMoveTo = m_vOrigin + Vector(randomFloat(-10,10),randomFloat(-10,10),0);
-	m_vMoveTo = m_vOrigin + m_vRandomOffset;
+		m_vOrigin = CBotGlobals::entityOrigin(m_pPayloadBomb);
+		//m_vMoveTo = m_vOrigin + Vector(randomFloat(-10,10),randomFloat(-10,10),0);
+		m_vMoveTo = m_vOrigin + m_vRandomOffset;
 
-	if ( pBot->distanceFrom(m_vMoveTo) < 80 )
-	{	
-		if ( (((CBotFortress*)pBot)->getClass() == TF_CLASS_SPY) && ((CBotFortress*)pBot)->isDisguised() )
-		{
-			pBot->primaryAttack();
+		if ( pBot->distanceFrom(m_vMoveTo) < 80 )
+		{	
+			if ( (((CBotFortress*)pBot)->getClass() == TF_CLASS_SPY) && ((CBotFortress*)pBot)->isDisguised() )
+			{
+				pBot->primaryAttack();
+			}
 		}
+		else
+			pBot->setMoveTo(m_vMoveTo,3);
+
+		pBot->setLookAtTask(LOOK_AROUND,5);
 	}
 	else
-		pBot->setMoveTo(m_vMoveTo,3);
+		complete();
 
-	pBot->setLookAtTask(LOOK_AROUND,5);
 }
 
 void CBotTF2PushPayloadBombTask :: debugString ( char *string )
 {
 	sprintf(string,"CBotTF2PushPayloadBombTask (%0.1f,%0.1f,%0.1f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
+}
+////////////////////////////////////////////////////////////////////////
+
+CBotTF2DefendPayloadBombTask :: CBotTF2DefendPayloadBombTask (edict_t * pPayloadBomb)
+{
+	m_pPayloadBomb = pPayloadBomb;
+	m_fDefendTime = 0;
+	m_fTime = 0;
+	m_vRandomOffset = Vector(0,0,0);
+}
+
+void CBotTF2DefendPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fDefendTime == 0 )
+	{
+		m_fDefendTime = engine->Time() + randomFloat(10.0f,30.0f);
+		m_vRandomOffset = Vector(randomFloat(-150.0f,150.0f),randomFloat(-150.0f,150.0f),0);
+	}
+	else if ( m_fDefendTime < engine->Time() )
+	{
+		complete();
+	}
+	else if(m_pPayloadBomb == NULL)
+	{
+		complete();
+		return;
+	}
+	else if(CBotGlobals::entityIsValid(m_pPayloadBomb) && CBotGlobals::entityIsAlive(m_pPayloadBomb))
+	{
+		m_vOrigin = CBotGlobals::entityOrigin(m_pPayloadBomb);
+		m_vMoveTo = m_vOrigin + m_vRandomOffset;
+
+		if ( pBot->distanceFrom(m_vMoveTo) > 200 )
+			pBot->setMoveTo(m_vMoveTo,3);
+		else
+			pBot->stopMoving(3);
+
+		pBot->setLookAtTask(LOOK_EDICT,3);
+		pBot->lookAtEdict(m_pPayloadBomb);
+	}
+	else
+	{
+		complete();
+	}
+}
+
+void CBotTF2DefendPayloadBombTask :: debugString ( char *string )
+{
+	sprintf(string,"CBotTF2DefendPayloadBombTask (%0.1f,%0.1f,%0.1f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
 }
 //////////////////////
 CBotTF2DefendPoint :: CBotTF2DefendPoint ( int iArea, Vector vOrigin, int iRadius )
@@ -401,6 +455,8 @@ CBotTF2UpgradeBuilding :: CBotTF2UpgradeBuilding ( edict_t *pBuilding )
 
 void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	pBot->wantToShoot(false);
+
 	if (!m_fTime )
 		m_fTime = engine->Time() + randomFloat(9.0f,11.0f);
 	

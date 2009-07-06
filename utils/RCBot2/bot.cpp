@@ -154,11 +154,6 @@ void CBot :: runPlayerMove()
 
 }
 
-bool CBot :: wantsToShoot ()
-{
-	return true;
-}
-
 bool CBot :: startGame ()
 {
 	return true;
@@ -524,9 +519,11 @@ void CBot :: think ()
 
 	getTasks();	
 
-	// update m_pEnemy with AttackTask
+	// update m_pEnemy with findEnemy()
 	m_pOldEnemy = m_pEnemy;
 	m_pEnemy = NULL;
+
+	m_bOpenFire = true;
 
 	m_pSchedules->execute(this);
 
@@ -539,14 +536,14 @@ void CBot :: think ()
 	else
 		stopMoving();
 
-	listenForPlayers();
-
 	if ( m_pOldEnemy )
 		findEnemy(m_pOldEnemy); // any better enemies than this one?
 	else
 		findEnemy();
 
 	updateConditions();
+
+	listenForPlayers();
 
 	/*pvVelocity = CClassInterface::getVelocity(m_pEdict);
 
@@ -566,6 +563,32 @@ void CBot :: think ()
 	}
 
 	modThink();
+
+	//
+	// Handle attacking at this point
+	//
+	if ( m_pEnemy && !hasSomeConditions(CONDITION_ENEMY_DEAD) && 
+		hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && wantToShoot() && 
+		isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
+	{
+		CBotWeapon *pWeapon;
+
+		pWeapon = getBestWeapon(m_pEnemy);
+
+		if ( (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
+		{
+			selectWeapon(pWeapon->getWeaponIndex());
+		}
+
+		setLookAtTask(LOOK_ENEMY,6);
+
+		if ( !handleAttack ( pWeapon, m_pEnemy ) )
+		{
+			m_pEnemy = NULL;
+			m_pOldEnemy = NULL;
+			wantToShoot(false);
+		}
+	}
 
 	m_iPrevHealth = m_pPlayerInfo->GetHealth();
 
@@ -606,6 +629,7 @@ void CBot :: init (bool bVarInit)
 	m_szBotName[0] = 0;
 	m_fIdealMoveSpeed = 320;
 	m_fFov = 90.0f;
+	m_bOpenFire = true;
 
 	if ( bVarInit )
 		spawnInit();
@@ -686,6 +710,8 @@ bool CBot::handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 {
 	if ( pWeapon )
 	{
+		clearFailedWeaponSelect();
+
 		if ( pWeapon->isMelee() )
 			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),2);
 
@@ -731,6 +757,8 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_iPrevWeaponSelectFailed = 0;
+	m_bOpenFire = true;
 	m_fListenTime = 0.0f;
 	m_bListenPositionValid = false;
 	m_fLastSeeEnemy = 0;
@@ -1044,7 +1072,7 @@ void CBot :: listenForPlayers ()
 	float fMinDist = 1024.0f;
 	float fDist;
 
-	if ( hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
 		m_bListenPositionValid = false;
 		return;
@@ -1517,6 +1545,7 @@ bool CBot :: select_CWeapon ( CWeapon *pWeapon )
 
 		if ( id )
 		{
+			failWeaponSelect();
 			selectWeapon(id);
 			return true;
 		}
@@ -1652,7 +1681,7 @@ bool CBot::wantToFollowEnemy ()
 void CBot :: getTasks (unsigned int iIgnore)
 {
 	// look for tasks
-	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	/*if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{		
 		if ( !m_pSchedules->isCurrentSchedule(SCHED_ATTACK) && !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
 		{
@@ -1667,7 +1696,8 @@ void CBot :: getTasks (unsigned int iIgnore)
 
 		m_bLookedForEnemyLast = false;
 	}
-	else if ( !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy) )
+	else*/
+	if ( !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy) )
 	{
 		if ( wantToFollowEnemy() )
 		{

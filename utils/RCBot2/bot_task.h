@@ -272,11 +272,26 @@ public:
 private:
 	edict_t * m_pPayloadBomb;
 	Vector m_vMoveTo;
+	Vector m_vRandomOffset;
 	float m_fPushTime;
 	float m_fTime;
-	int m_iRadius;
 	Vector m_vOrigin;
+};
+
+class CBotTF2DefendPayloadBombTask : public CBotTask
+{
+public:
+	CBotTF2DefendPayloadBombTask (edict_t * pPayloadBomb);
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	edict_t * m_pPayloadBomb;
+	Vector m_vMoveTo;
 	Vector m_vRandomOffset;
+	float m_fDefendTime;
+	float m_fTime;
+	Vector m_vOrigin;
 };
 
 class CBotTF2UpgradeBuilding : public CBotTask

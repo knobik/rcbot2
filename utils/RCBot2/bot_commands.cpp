@@ -962,13 +962,8 @@ eBotCommandResult CSearchCommand :: execute ( CClient *pClient, const char *pcmd
 					if ( (fDistance=(CBotGlobals::entityOrigin(pEdict) - CBotGlobals::entityOrigin(pPlayer)).Length()) < 128 )
 					{
 						model = pEdict->GetIServerEntity()->GetModelName();
-
-						//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pEdict);
-
-						//if ( p )
-						//	CBotGlobals::botMessage(pPlayer,0,"D:%0.2f C:'%s', MI:%d, MN:'%s' Health=%d, PLYR (T:%d,UID:%d) ",fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr(),(int)CClassInterface::getHealth(pEdict),p->GetTeamIndex(),p->GetUserID());
-						//else					
-					    CBotGlobals::botMessage(pPlayer,0,"D:%0.2f C:'%s', Mid:%d, Mn:'%s' Health=%d, Tm:%d, Fl:%d",fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr(),(int)CClassInterface::getHealth(pEdict),(int)CClassInterface::getTeam(pEdict),pEdict->m_fStateFlags );
+				
+						CBotGlobals::botMessage(pPlayer,0,"(%d) D:%0.2f C:'%s', Mid:%d, Mn:'%s' Health=%d, Tm:%d, Fl:%d",i,fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr(),(int)CClassInterface::getHealth(pEdict),(int)CClassInterface::getTeam(pEdict),pEdict->m_fStateFlags );
 					}
 				}
 			}

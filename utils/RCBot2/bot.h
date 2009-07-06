@@ -219,6 +219,9 @@ public:
 
 	CBot();
 
+	inline void clearFailedWeaponSelect () { m_iPrevWeaponSelectFailed = 0; }
+	inline void failWeaponSelect () { m_iPrevWeaponSelectFailed ++; }
+
 	void debugMsg ( int iLev, const char *szMsg );
 
 	virtual unsigned int maxEntityIndex ( ) { return MAX_PLAYERS; }
@@ -508,6 +511,9 @@ public:
 
 	virtual void listenForPlayers ();
 
+	inline bool wantToShoot ( void ) { return m_bOpenFire; }
+	inline void wantToShoot ( bool bSet ) { m_bOpenFire = bSet; }
+
 protected:
 
 	static void checkEntity ( edict_t **pEdict );
@@ -649,7 +655,7 @@ protected:
 	// bots profile data
 	CBotProfile *m_pProfile;
 
-	bool wantsToShoot ();
+
 	/////////////////////////////////
 
 	char m_szBotName[64];
@@ -658,6 +664,8 @@ protected:
 	Vector m_vListenPosition; // listening player position, heard someone shoot
 	bool m_bListenPositionValid;
 	float m_fListenTime;
+	bool m_bOpenFire;
+	unsigned int m_iPrevWeaponSelectFailed;
 };
 
 class IBotFunction

@@ -68,7 +68,8 @@ typedef enum
 	SCHED_DEFEND,
 	SCHED_ATTACKPOINT,
 	SCHED_DEFENDPOINT,
-	SCHED_TF2_PUSH_PAYLOADBOMB
+	SCHED_TF2_PUSH_PAYLOADBOMB,
+	SCHED_TF2_DEFEND_PAYLOADBOMB
 }eBotSchedule;
 
 class CBotSchedule
@@ -300,6 +301,14 @@ class CBotTF2PushPayloadBombSched : public CBotSchedule
 {
 public:
 	CBotTF2PushPayloadBombSched (edict_t * ePayloadBomb);
+
+	void init ();
+}; 
+///////////////////////////////////////////////
+class CBotTF2DefendPayloadBombSched : public CBotSchedule
+{
+public:
+	CBotTF2DefendPayloadBombSched (edict_t * ePayloadBomb);
 
 	void init ();
 }; 

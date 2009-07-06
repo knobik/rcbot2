@@ -105,7 +105,6 @@ CBotFortress :: CBotFortress()
 	m_pPrevSpy = NULL;
 	m_fSeeSpyTime = 0.0f;
 	m_bEntranceVectorValid = false;
-	m_pPayloadBomb = NULL;
 }
 
 void CBotFortress :: checkDependantEntities ()
@@ -124,7 +123,6 @@ void CBotFortress :: checkDependantEntities ()
 	checkEntity(&m_pNearestAllySentry);
 	checkEntity(&m_pAmmo);
 	checkEntity(&m_pHealthkit);
-	checkEntity(&m_pPayloadBomb);
 }
 
 void CBotFortress :: init (bool bVarInit)
@@ -193,6 +191,7 @@ bool CBotFortress :: wantToHeal ( edict_t *pPlayer )
 	
 	return true;
 }
+
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -290,10 +289,6 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 		{
 			if ( !m_pHealthkit || ((pEntity != m_pHealthkit) && (distanceFrom(pEntity) < distanceFrom(m_pHealthkit))) )
 				m_pHealthkit = pEntity;
-		}
-		else if ( CTeamFortress2Mod::isPayloadBomb(pEntity,getTeam()) )
-		{
-			m_pPayloadBomb = pEntity;
 		}
 	}
 	else 
@@ -830,6 +825,8 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	m_fBlockPushTime = 0.0f;
+
 	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
 	m_fDoubleJumpTime = 0.0f;
@@ -837,6 +834,17 @@ void CBotTF2 :: spawnInit()
 	m_fUseTeleporterTime = 0.0f;
 	m_fSpySapTime = 0.0f;
 
+	m_pPushPayloadBomb = NULL;
+	m_pDefendPayloadBomb = NULL;
+
+	m_bFixWeapons = true;
+	m_iPrevWeaponSelectFailed = 0;
+
+	
+}
+
+void CBotTF2 :: fixWeapons ()
+{
 	if ( m_pWeapons && (m_iClass != TF_CLASS_UNDEFINED) )
 	{
 		m_pWeapons->clearWeapons();
@@ -1255,6 +1263,13 @@ void CBotTF2 :: modThink ()
 	// mod specific think code here
 	CBotFortress :: modThink();
 
+	if ( m_bFixWeapons || (m_iPrevWeaponSelectFailed>2) )
+	{
+		fixWeapons();
+		m_bFixWeapons = false;
+		m_iPrevWeaponSelectFailed = 0;
+	}
+
 	if ( getClass() == TF_CLASS_SNIPER )
 	{
 		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
@@ -1490,6 +1505,22 @@ int CBotFortress :: getSpyDisguiseClass ( int iTeam )
 }
 
 
+void CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
+{
+	CBotFortress::setVisible(pEntity,bVisible);
+
+	if ( bVisible )
+	{
+		if ( CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_RED) )
+		{
+			m_pRedPayloadBomb = pEntity;
+		}
+		else if ( CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_BLUE) )
+		{
+			m_pBluePayloadBomb = pEntity;
+		}
+	}
+}
 
 // Preconditions :  Current weapon is Medigun
 //					pPlayer is not NULL
@@ -1589,7 +1620,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	bHasFlag = hasFlag();
 
-	// look for tasks
+	// look for tasks / more important tasks here
 	if ( !bHasFlag && m_pHeal && (m_iClass == TF_CLASS_MEDIC) )
 	{		
 		if ( !m_pSchedules->isCurrentSchedule(SCHED_HEAL) )
@@ -1598,7 +1629,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			m_pSchedules->addFront(new CBotTF2HealSched());
 		}
 	}
-	else if ( ((m_iClass!=TF_CLASS_MEDIC)||(!m_pHeal)) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	/*else if ( ((m_iClass!=TF_CLASS_MEDIC)||(!m_pHeal)) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{		
 		if ( !m_pSchedules->isCurrentSchedule(SCHED_ATTACK) )
 		{
@@ -1610,6 +1641,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		m_bLookedForEnemyLast = false;
 	}
+	else
+		*/
 	else if ( !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy) )
 	{
 		if ( wantToFollowEnemy() )
@@ -1639,6 +1672,13 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	if ( !m_pSchedules->isEmpty() )
 		return; // already got some tasks left
+
+	// Shadow/Time must be Floating point
+	if(m_fBlockPushTime < engine->Time())
+	{
+		m_bBlockPushing = (randomFloat(0.0,100)>50); // 50 % block pushing
+		m_fBlockPushTime = engine->Time() + randomFloat(10.0f,30.0f); // must be floating point
+	}
 
 	// No Enemy now
 	if ( m_iClass == TF_CLASS_SNIPER )
@@ -1821,10 +1861,44 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP),fGetFlagUtility));
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
-	utils.addUtility(CBotUtility(BOT_UTIL_GOTO_PAYLOAD_BOMB,(m_pPayloadBomb!=NULL) && ((( getTeam() == TF2_TEAM_BLUE )&&CTeamFortress2Mod::isMapType(TF_MAP_CART))||(CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE))),fGetFlagUtility));
+	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
+	{
+		if ( getTeam() == TF2_TEAM_BLUE )
+		{
+		    m_pDefendPayloadBomb = m_pRedPayloadBomb;
+		    m_pPushPayloadBomb = m_pBluePayloadBomb;
+			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,(m_pDefendPayloadBomb!=NULL),fDefendFlagUtility));
+			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,(m_pPushPayloadBomb!=NULL),fGetFlagUtility));
+		}
+		else
+		{
+		    m_pDefendPayloadBomb = m_pBluePayloadBomb;
+		    m_pPushPayloadBomb = m_pRedPayloadBomb;
+			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,(m_pDefendPayloadBomb!=NULL),fDefendFlagUtility));
+			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,(m_pPushPayloadBomb!=NULL),fGetFlagUtility));
+		}
+	}
+	else
+	{
+		if ( getTeam() == TF2_TEAM_BLUE )
+		{
+		    m_pPushPayloadBomb = m_pBluePayloadBomb;
+			m_pDefendPayloadBomb = NULL;
+			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,(m_pPushPayloadBomb!=NULL),fGetFlagUtility));
+			// Goto Payload bomb
+		}
+		else
+		{
+			m_pPushPayloadBomb = NULL;
+			m_pDefendPayloadBomb = m_pRedPayloadBomb;
+			// Defend Payload bomb
+			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,(m_pDefendPayloadBomb!=NULL),fDefendFlagUtility));
+		}
+	}
 
-	//CTeamFortress2Mod::isMapType(TF_MAP_CART);
-	
+	/////////////////////////////////////////////////////////
+	// Work out utilities
+	//////////////////////////////////////////////////////////
 	utils.execute();
 
 	while ( (util = utils.nextBest()) != NULL )
@@ -1920,11 +1994,20 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 		switch ( id )
 		{
-		case BOT_UTIL_GOTO_PAYLOAD_BOMB:
+		case BOT_UTIL_DEFEND_PAYLOAD_BOMB:
 			{
-				if ( m_pPayloadBomb )
+				if ( m_pDefendPayloadBomb )
 				{
-					m_pSchedules->add(new CBotTF2PushPayloadBombSched(m_pPayloadBomb));
+					m_pSchedules->add(new CBotTF2DefendPayloadBombSched(m_pDefendPayloadBomb));
+					return true;
+				}
+			}
+			break;
+		case BOT_UTIL_PUSH_PAYLOAD_BOMB:
+			{
+				if ( m_pPushPayloadBomb )
+				{
+					m_pSchedules->add(new CBotTF2PushPayloadBombSched(m_pPushPayloadBomb));
 					return true;
 				}
 			}
@@ -2210,6 +2293,13 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 	return vAim;
 }
 
+void CBotTF2 :: checkDependantEntities ()
+{
+	CBotFortress::checkDependantEntities();
+	checkEntity(&m_pRedPayloadBomb);
+	checkEntity(&m_pBluePayloadBomb);
+}
+
 eBotFuncState CBotTF2 :: rocketJump(int *iState,float *fTime)
 {
 	extern ConVar bot_rj;
@@ -2252,6 +2342,8 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	if ( pWeapon )
 	{
 		bool bSecAttack = false;
+
+		clearFailedWeaponSelect();
 
 		if ( pWeapon->isMelee() )
 		{
@@ -2311,14 +2403,19 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 		if ( !select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH)) )
 			return false;
 	}
-	else if ( distanceFrom(vOrigin) > 100 )
-	{
-		setMoveTo(vOrigin,3);			
-	}
 	else
 	{
-		duck(true);
-		primaryAttack();
+		clearFailedWeaponSelect();
+
+		if ( distanceFrom(vOrigin) > 100 )
+		{
+			setMoveTo(vOrigin,3);			
+		}
+		else
+		{
+			duck(true);
+			primaryAttack();
+		}
 	}
 
 	lookAtEdict(pBuilding);
@@ -2331,6 +2428,9 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 
 void CBotTF2::roundReset(bool bFullReset)
 {
+	m_pRedPayloadBomb = NULL;
+	m_pBluePayloadBomb = NULL;
+
 	flagReset();
 	teamFlagReset();
 
@@ -2338,7 +2438,7 @@ void CBotTF2::roundReset(bool bFullReset)
 
 	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
-	m_pPayloadBomb = NULL;
+	//m_pPayloadBomb = NULL;
 }
 
 /// TO DO : list of areas
@@ -2356,7 +2456,9 @@ void CBotTF2::getAttackArea ( vector <int> *m_iAreas )
 
 void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 {
-	m_pPayloadBomb = NULL;
+	//m_pPayloadBomb = NULL;
+	m_pRedPayloadBomb = NULL;
+	m_pBluePayloadBomb = NULL;
 
 	m_pNavigator->freeMapMemory();
 

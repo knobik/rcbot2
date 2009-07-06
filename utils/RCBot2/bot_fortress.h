@@ -176,7 +176,7 @@ public:
 
 	virtual bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy ) { return CBot::handleAttack(pWeapon,pEnemy); }
 
-	void setVisible ( edict_t *pEntity, bool bVisible );
+	virtual void setVisible ( edict_t *pEntity, bool bVisible );
 
 	virtual void setClass ( TF_Class _class );
 
@@ -286,8 +286,6 @@ protected:
 	float m_fUseTeleporterTime;
 
 	bool m_bHasFlag;
-
-	edict_t *m_pPayloadBomb;
 	
 };
 
@@ -302,7 +300,18 @@ public:
 		m_fSpySapTime = 0;
 		m_iCurrentDefendArea = 0;
 		m_iCurrentAttackArea = 0;
+	    m_bBlockPushing = false;
+	    m_fBlockPushTime = 0;
+		m_pDefendPayloadBomb = NULL;
+		m_pPushPayloadBomb = NULL;
+		m_pRedPayloadBomb = NULL;
+		m_pBluePayloadBomb = NULL;
+		m_bFixWeapons = false;
 	}
+
+	void fixWeapons ();
+
+	void checkDependantEntities ();
 
 	void getDefendArea ( vector<int> *m_iAreas );
 
@@ -323,6 +332,8 @@ public:
 	bool lookAfterBuildings (float *fTime);
 
 	void spawnInit ();
+
+	void setVisible ( edict_t *pEntity, bool bVisible );
 
 	Vector getAimVector ( edict_t *pEntity );
 
@@ -386,6 +397,13 @@ private:
 	float m_fSpySapTime;
 	int m_iCurrentDefendArea;
 	int m_iCurrentAttackArea;
+	bool m_bBlockPushing;
+	float m_fBlockPushTime;
+	edict_t *m_pDefendPayloadBomb;
+	edict_t *m_pPushPayloadBomb;
+	edict_t *m_pRedPayloadBomb;
+	edict_t *m_pBluePayloadBomb;
+	bool m_bFixWeapons;
 
 };
 
