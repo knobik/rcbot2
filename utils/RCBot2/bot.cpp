@@ -580,7 +580,7 @@ void CBot :: think ()
 			selectWeapon(pWeapon->getWeaponIndex());
 		}
 
-		setLookAtTask(LOOK_ENEMY,6);
+		setLookAtTask(LOOK_ENEMY,9);
 
 		if ( !handleAttack ( pWeapon, m_pEnemy ) )
 		{

@@ -1549,7 +1549,7 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	}
 
 	lookAtEdict(m_pHeal);
-	setLookAtTask(LOOK_EDICT,4);
+	setLookAtTask(LOOK_EDICT,7);
 	// unselect weapon
 	//pBot->selectWeapon(0);
 
@@ -1629,20 +1629,6 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			m_pSchedules->addFront(new CBotTF2HealSched());
 		}
 	}
-	/*else if ( ((m_iClass!=TF_CLASS_MEDIC)||(!m_pHeal)) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
-	{		
-		if ( !m_pSchedules->isCurrentSchedule(SCHED_ATTACK) )
-		{
-			m_pSchedules->freeMemory(); //m_pSchedules->removeSchedule(SCHED_ATTACK);
-			m_pSchedules->addFront(new CBotAttackSched(m_pEnemy));
-
-			return;
-		}
-
-		m_bLookedForEnemyLast = false;
-	}
-	else
-		*/
 	else if ( !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy) )
 	{
 		if ( wantToFollowEnemy() )
@@ -1672,6 +1658,15 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	if ( !m_pSchedules->isEmpty() )
 		return; // already got some tasks left
+
+	/*if ( ((m_iClass!=TF_CLASS_MEDIC)||(!m_pHeal)) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	{		
+		if ( randomFloat(0.0f,100.0f) > 50.0f )
+		{
+			m_pSchedules->addFront(new CGotoHideSpotSched(m_pEnemy));
+			return;
+		}
+	}*/
 
 	// Shadow/Time must be Floating point
 	if(m_fBlockPushTime < engine->Time())
