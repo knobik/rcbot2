@@ -354,7 +354,7 @@ public:
 	static int getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam,float *fReturnDist =NULL, unsigned char *failedwpts = NULL );
 
 	static int nearestWaypointGoal ( int iFlags, Vector &origin, float fDist, int iTeam = 0 );
-	static CWaypoint *randomWaypointGoal ( int iFlags, int iTeam = 0, int iArea = 0 );
+	static CWaypoint *randomWaypointGoal ( int iFlags, int iTeam = 0, int iArea = 0, bool bForceArea = false );
 	static int randomFlaggedWaypoint (int iTeam = 0);
 
 	static CWaypointVisibilityTable *getVisiblity () { return m_pVisibilityTable; }

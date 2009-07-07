@@ -1004,7 +1004,7 @@ void CBotTF2 :: checkBuildingsValid ()
 	}
 }
 
-
+// Find the EDICT_T of the building that the engineer just built...
 edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding )
 {
 	int i;
@@ -2041,23 +2041,20 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_ATTACK_POINT:
 			
-			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentAttackArea);
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentAttackArea,true);
 
 			if ( pWaypoint )
 			{
-
-				// TO DO , should be CAPTURE SCHED
 				m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
 				return true;
 			}
 			break;
 		case BOT_UTIL_DEFEND_POINT:
 
-			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea);
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea,true);
 
 			if ( pWaypoint )
 			{
-				// TO DO , should be CAPTURE SCHED
 				m_pSchedules->add(new CBotDefendPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
 				return true;
 			}
@@ -2072,7 +2069,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			}
 			break;
 		case BOT_UTIL_BUILDTELENT:
-			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,150,-1,true,false,true,NULL,false,getTeam()));
+			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,300,-1,true,false,true,NULL,false,getTeam()));
 
 			if ( pWaypoint )
 			{
@@ -2087,7 +2084,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			if ( m_bTeleportExitVectorValid )
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportExit,150,-1,true,false,true,NULL,false,getTeam()));
 			else
-				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),0);//CTeamFortress2Mod::getArea());
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam());//CTeamFortress2Mod::getArea());
 
 			if ( pWaypoint )
 			{
@@ -2426,6 +2423,12 @@ void CBotTF2::roundReset(bool bFullReset)
 	m_pRedPayloadBomb = NULL;
 	m_pBluePayloadBomb = NULL;
 
+    m_bEntranceVectorValid = false;
+	m_bSentryGunVectorValid = false;
+	m_bDispenserVectorValid = false;
+	m_bTeleportExitVectorValid = false;
+	m_pPrevSpy = NULL;
+
 	flagReset();
 	teamFlagReset();
 
@@ -2458,31 +2461,6 @@ void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 	m_pNavigator->freeMapMemory();
 
 	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
-	/*
-		CResetPoint *p = CPoints::getPoint(szPointName);
-
-		if ( p )
-		{
-			vector<CPointStyle> *points;
-
-			p->getCurrentPoints(iTeam,getTeam(),&points);
-
-			if ( points )
-			{
-				unsigned int i = 0; 
-				
-				for ( i = 0; i < points->size(); i ++ )
-				{
-					if ( (*points)[i].getStyle () == POINT_DEFEND )
-						m_iCurrentDefendArea = (*points)[i].getArea();
-					else if ( (*points)[i].getStyle () == POINT_ATTACK )
-						m_iCurrentAttackArea = (*points)[i].getArea();
-				}
-			}
-		}
-		else
-			CTeamFortress2Mod::getNextPoints (iPoint,iTeam,getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
-			*/
 }
 
 // Is Enemy Function

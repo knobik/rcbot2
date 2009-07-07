@@ -42,7 +42,7 @@ vector <int> CPoints::m_BlueAttack;
 vector <int> CPoints::m_RedAttack; 
 vector <int> CPoints::m_BlueDefend; 
 vector <int> CPoints::m_RedDefend;
-vector <int> CPoints::m_ValidAreas;
+int CPoints::m_iValidAreas = 0;
 
 CPointStyle::CPointStyle (int iPointArea,ePointStyle iStyle)
 {
@@ -132,14 +132,18 @@ CResetPoint *CPoints::getPoint ( const char *szName )
 	return newpoint;
 }
 
-void CResetPoint :: getValidAreas ( vector <int> *iAreas )
+int CResetPoint :: getValidAreas ( void )
 {
 	unsigned int i;
 
-	iAreas->clear();
+	int iAreas = 0;
 
 	for ( i = 0; i < m_iValidAreas.size(); i ++ )
-		iAreas->push_back(m_iValidAreas[i]);
+	{
+		iAreas |= (1<<(m_iValidAreas[i]));
+	}
+
+	return iAreas;
 }
 
 void CPoints :: pointCaptured ( int iTeamCaptured, const char *szName )
@@ -150,13 +154,14 @@ void CPoints :: pointCaptured ( int iTeamCaptured, const char *szName )
 	m_RedAttack.clear(); 
 	m_BlueDefend.clear(); 
 	m_RedDefend.clear(); 
-	m_ValidAreas.clear();
+	m_iValidAreas = 0;
+	//m_ValidAreas.clear();
 
 	if ( p )
 	{
 		vector<CPointStyle> *points;
 
-		p->getValidAreas(&m_ValidAreas);
+		m_iValidAreas = p->getValidAreas();
 
 		p->getCurrentPoints(iTeamCaptured,TF2_TEAM_BLUE,&points);
 
@@ -198,13 +203,14 @@ void CPoints :: resetPoints()
 	m_RedAttack.clear(); 
 	m_BlueDefend.clear(); 
 	m_RedDefend.clear(); 
-	m_ValidAreas.clear();
+	m_iValidAreas = 0;
+	//m_ValidAreas.clear();
 
 	if ( p )
 	{
 		vector<CPointStyle> *points;
 
-		p->getValidAreas(&m_ValidAreas);
+		m_iValidAreas = p->getValidAreas();
 
 		p->getCurrentPoints(0,TF2_TEAM_BLUE,&points);
 
@@ -238,7 +244,7 @@ void CPoints :: resetPoints()
 	}
 }
 
-// TODO : convert to [vector]
+// TODO : convert to [vector] input
 void CPoints :: getAreas( int iTeam, int *iDefend, int *iAttack )
 {
 	if ( m_points.size() )
@@ -268,7 +274,7 @@ void CPoints :: freeMemory ()
 	m_RedAttack.clear(); 
 	m_BlueDefend.clear(); 
 	m_RedDefend.clear(); 
-	m_ValidAreas.clear();
+	//m_ValidAreas.clear();
 
 	for ( i = 0; i < m_points.size(); i ++ )
 	{
@@ -293,6 +299,7 @@ void CPoints :: loadMapScript ( )
 	FILE *fp = CBotGlobals::openFile(filename,"r");
 
 	int state = STATE_NONE;
+
 	if ( fp )
 	{
 		char line[256];
@@ -348,7 +355,7 @@ void CPoints :: loadMapScript ( )
 				if ( strncmp("areas:",&line[0],6) == 0 )
 				{
 					// get areas
-					i = i + 6;
+					i = 6;
 					n = 0;
 
 					while ( i < len )
@@ -374,6 +381,8 @@ void CPoints :: loadMapScript ( )
 
 						i++;
 					}
+
+					continue;
 				}
 				else if ( strncmp("red_",&line[0],4) == 0 )
 				{

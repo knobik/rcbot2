@@ -51,6 +51,7 @@ using namespace std;
 #include "bot_profile.h"
 #include "bot_schedule.h"
 #include "bot_fortress.h"
+#include "bot_script.h"
 
 #include "bot_wpt_dist.h"
 
@@ -1101,6 +1102,9 @@ int CWaypoints :: getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam, fl
 		{
 			if ( pWpt->hasFlag(iFlags) )
 			{
+				if ( !CPoints::isValidArea(pWpt->getArea()) )
+					continue;
+
 				if ( (iFrom == -1) )
 					distance = (pWpt->getOrigin()-vOrigin).Length();
 				else
@@ -1212,10 +1216,13 @@ int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist,
 		{
 			if ( (iFlags == -1) || pWpt->hasFlag(iFlags) )
 			{
-				if ( (distance = pWpt->distanceFrom(origin)) < fDist)
+				if ( !CPoints::isValidArea(pWpt->getArea()) )
 				{
-					fDist = distance;
-					iwpt = i;
+					if ( (distance = pWpt->distanceFrom(origin)) < fDist)
+					{
+						fDist = distance;
+						iwpt = i;
+					}
 				}
 			}
 		}
@@ -1224,7 +1231,7 @@ int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist,
 	return iwpt;
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea )
+CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea )
 {
 	int i = 0;
 	int size = numWaypoints();
@@ -1236,8 +1243,13 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea )
 	{
 		pWpt = &m_theWaypoints[i];
 
-		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) && (pWpt->getArea() == iArea) )
-		{			
+		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) )// && (pWpt->getArea() == iArea) )
+		{
+			if ( !bForceArea && !CPoints::isValidArea(pWpt->getArea()) )
+				continue;
+			else if ( bForceArea && (pWpt->getArea() != iArea) )
+				continue;
+
 			if ( (iFlags == -1) || pWpt->hasFlag(iFlags) )
 				goals.Add(pWpt);
 		}

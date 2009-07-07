@@ -38,6 +38,7 @@ using namespace std;
 #include "bot_waypoint_locations.h"
 #include "bot_genclass.h"
 #include "bot_globals.h"
+#include "bot_script.h"
 
 unsigned char CWaypointLocations :: g_iFailedWaypoints[CWaypoints::MAX_WAYPOINTS];
 dataUnconstArray<int> CWaypointLocations :: m_iLocations[MAX_WPT_BUCKETS][MAX_WPT_BUCKETS][MAX_WPT_BUCKETS];
@@ -384,6 +385,9 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 			continue;
 
 		if ( !curr_wpt->forTeam(iTeam) )
+			continue;
+
+		if ( !CPoints::isValidArea(curr_wpt->getArea()) )
 			continue;
 
 		if ( bIsBot )

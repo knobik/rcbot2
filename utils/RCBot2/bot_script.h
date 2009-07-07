@@ -72,7 +72,7 @@ public:
 
 	void addValidArea ( int iArea );
 
-	void getValidAreas ( vector <int> *iAreas );
+	int getValidAreas ( void );
 private:
 	vector <CPointStyle> m_iNextRed[2];
 	vector <CPointStyle> m_iNextBlue[2];
@@ -104,6 +104,10 @@ public:
 	static void getAreas ( int iTeam, int *iDefend, int *iAttack );
 
 	static void freeMemory ();
+
+	static inline int getValidAreas () { return m_iValidAreas; }
+
+	static inline bool isValidArea ( int iArea ) { return ((m_iValidAreas & (1<<iArea))>0); }
 private:
 
 	static CResetPoint *getPoint ( const char *szName = NULL );
@@ -114,7 +118,7 @@ private:
 	static vector <int> m_RedAttack; 
 	static vector <int> m_BlueDefend; 
 	static vector <int> m_RedDefend; 
-	static vector <int> m_ValidAreas;
+	static int m_iValidAreas;
 };
 
 
