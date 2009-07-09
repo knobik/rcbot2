@@ -48,13 +48,21 @@ public:
 
 	CProfileTimer (const char *szFunction);
 
-	inline const char *getFunction () { return m_szFunction; }
+	inline const char *getFunction () 
+	{ 
+		return m_szFunction; 
+	}
 
     void Start();
 
     void Stop();
 
-	void print(int i, float *high);
+	void print(double *high);
+
+	inline __int64 getOverall ()
+	{
+		return m_overall;
+	}
     
 private:
     unsigned __int64  start_cycle;
@@ -63,6 +71,7 @@ private:
 	unsigned __int64  m_min;
 	unsigned __int64  m_max;
 	unsigned __int64  m_last;
+	unsigned __int64  m_overall;
 	
 	const char *m_szFunction;
 
@@ -70,7 +79,7 @@ private:
 	// is also used to reset the minimum value
 	// and reset the maximum values after
 	// if it is not "invoked" it is not displayed
-	bool m_bInvoked; 
+	int m_iInvoked; 
 };
 
 enum

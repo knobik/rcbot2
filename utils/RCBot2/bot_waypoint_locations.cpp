@@ -387,7 +387,7 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 		if ( !curr_wpt->forTeam(iTeam) )
 			continue;
 
-		if ( !CPoints::isValidArea(curr_wpt->getArea()) )
+		if ( bIsBot && !CPoints::isValidArea(curr_wpt->getArea()) )
 			continue;
 
 		if ( bIsBot )
