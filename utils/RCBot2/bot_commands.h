@@ -459,6 +459,19 @@ public:
 	CDebugCommand();
 };
 
+class CDebugProfilingCommand : public CBotCommand
+{
+public:
+	CDebugProfilingCommand ()
+	{
+		setName("profiling");
+		setHelp("usage \"profiling 1 or 0, 1 on, 0 off\" : shows performance profiling");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 class CDebugNavCommand : public CBotCommand
 {
 public:

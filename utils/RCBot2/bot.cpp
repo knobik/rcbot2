@@ -81,6 +81,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#include "bot_profiling.h"
+
 // instantiate bots -- make different for different mods
 CBot **CBots::m_Bots = NULL;
 
@@ -101,6 +103,7 @@ float  CBots :: m_flAddKickBotTime = 0;
 
 #define TICK_INTERVAL			(gpGlobals->interval_per_tick)
 #define TIME_TO_TICKS( dt )		( (int)( 0.5f + (float)(dt) / TICK_INTERVAL ) )
+
 
 ////////////////////////////////////////////////
 void CBot :: runPlayerMove()
@@ -456,6 +459,7 @@ void CBot :: debugMsg ( int iLev, const char *szMsg )
 void CBot :: think ()
 {
 	float fTime = engine->Time();
+
 //	Vector *pvVelocity;
 
 	// important!!!
@@ -628,7 +632,7 @@ void CBot :: init (bool bVarInit)
 	m_pProfile = NULL;
 	m_szBotName[0] = 0;
 	m_fIdealMoveSpeed = 320;
-	m_fFov = 90.0f;
+	m_fFov = BOT_DEFAULT_FOV;
 	m_bOpenFire = true;
 
 	if ( bVarInit )
@@ -1991,7 +1995,21 @@ void CBots :: botThink ()
 	extern ConVar bot_stop;
 	extern ConVar bot_command;
 
+	CProfileTimer *CBotsBotThink;
+	CProfileTimer *CBotThink;
+
 	bool bBotStop = bot_stop.GetInt() > 0;
+
+#ifdef _DEBUG
+	CBotsBotThink = CProfileTimers::getTimer(BOTS_THINK_TIMER);
+	CBotThink = CProfileTimers::getTimer(BOT_THINK_TIMER);
+
+	if ( CClients::clientsDebugging(BOT_DEBUG_PROFILE) )
+	{
+		CBotsBotThink->Start();
+	}
+
+#endif
 
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
@@ -2000,7 +2018,27 @@ void CBots :: botThink ()
 		if ( pBot->inUse() )
 		{
 			if ( !bBotStop )
+			{
+				#ifdef _DEBUG
+
+					if ( CClients::clientsDebugging(BOT_DEBUG_PROFILE) )
+					{
+						CBotThink->Start();
+					}
+
+				#endif
+
 				pBot->think();
+
+				#ifdef _DEBUG
+
+					if ( CClients::clientsDebugging(BOT_DEBUG_PROFILE) )
+					{
+						CBotThink->Stop();
+					}
+
+				#endif
+			}
 			if ( bot_command.GetString() && *bot_command.GetString() )
 			{
 				helpers->ClientCommand(pBot->getEdict(),bot_command.GetString());
@@ -2009,6 +2047,15 @@ void CBots :: botThink ()
 			pBot->runPlayerMove();
 		}
 	}
+
+#ifdef _DEBUG
+
+	if ( CClients::clientsDebugging(BOT_DEBUG_PROFILE) )
+	{
+		CBotsBotThink->Stop();
+	}
+
+#endif
 
 	bot_command.SetValue("");
 	

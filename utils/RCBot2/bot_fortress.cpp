@@ -1275,7 +1275,7 @@ void CBotTF2 :: modThink ()
 		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
 			m_fFov = 20.0f; // Jagger
 		else
-			m_fFov = 90.0f;
+			m_fFov = BOT_DEFAULT_FOV;
 	}
 
 	if ( getClass() == TF_CLASS_HWGUY )
@@ -1853,8 +1853,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	
-	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP),fGetFlagUtility));
-	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
+	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC),fGetFlagUtility));
+	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,(CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
 	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
 	{

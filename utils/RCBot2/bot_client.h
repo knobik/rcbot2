@@ -157,7 +157,7 @@ public:
 	static bool isListenServerClient ( CClient *pClient ) { return m_pListenServerClient == pClient; }
 	static bool noListenServerClient () { return m_pListenServerClient == NULL; }
 	static void clientThink ();
-	static bool clientsDebugging ();
+	static bool clientsDebugging ( int iLev = 0 );
 	static void clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot = NULL );
 	static CClient *findClientBySteamID ( char *szSteamID );
 

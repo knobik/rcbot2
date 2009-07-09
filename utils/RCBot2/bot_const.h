@@ -33,6 +33,8 @@
 
 #include "shareddefs.h"
 
+#define BOT_DEFAULT_FOV 90.0f
+
 #define strlow(str) { int len = strlen(str); int i;	for ( i = 0; i < len; i ++ ) { str[i] = tolower(str[i]); } }
 #define round(a) (((a-(int)a) >= 0.5) ? ((int)a+1) : ((int)a))
 //#define RANDOM_INT(min,max) (min + round(((float)rand()/RAND_MAX)*(float)(max-min)))
@@ -50,6 +52,7 @@
 #define BOT_DEBUG_BUTTONS 32
 #define BOT_DEBUG_USERCMD 64
 #define BOT_DEBUG_UTIL 128
+#define BOT_DEBUG_PROFILE 256
 
 typedef enum
 {

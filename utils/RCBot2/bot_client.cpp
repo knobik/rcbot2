@@ -274,7 +274,7 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 {
 	CClient *pClient;
 
-	char *szDebugLev;
+	char *szDebugLev = NULL;
 
 	switch ( iLev )
 	{
@@ -289,6 +289,15 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 		break;
 	case BOT_DEBUG_GAME_EVENT:
 		szDebugLev = "game_event";
+		break;
+	case BOT_DEBUG_USERCMD:
+		szDebugLev = "usercmd";
+		break;
+	case BOT_DEBUG_UTIL:
+		szDebugLev = "utility";
+		break;
+	case BOT_DEBUG_PROFILE:
+		szDebugLev = "P";
 		break;
 	default:
 		szDebugLev = "unknown";
@@ -316,7 +325,26 @@ int CClients :: slotOfEdict ( edict_t *pPlayer )
 	return ENTINDEX(pPlayer)-1;
 }
 
-bool CClients :: clientsDebugging ()
+bool CClients :: clientsDebugging (int iLev)
 {
-	return m_bClientsDebugging;
+	if ( iLev == 0 )
+		return m_bClientsDebugging;
+	else if ( m_bClientsDebugging )
+	{
+		int i;
+		CClient *pClient;
+
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			pClient = CClients::get(i);
+
+			if ( pClient->isUsed() )
+			{
+				if ( pClient->isDebugOn(iLev) )
+					return true;
+			}
+		}
+	}
+
+	return false;
 }

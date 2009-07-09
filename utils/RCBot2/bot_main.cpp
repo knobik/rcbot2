@@ -65,6 +65,7 @@
 #include "bot_profile.h"
 #include "bot_weapons.h"
 #include "bot_mods.h"
+#include "bot_profiling.h"
 #include "vstdlib/random.h" // for random  seed 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -339,6 +340,8 @@ void CRCBotPlugin::LevelInit( char const *pMapName )
 
 	CWaypointDistances::reset();
 
+	CProfileTimers::reset();
+
 	CWaypoints::init();
 	CWaypoints::load();
 
@@ -392,6 +395,12 @@ void CRCBotPlugin::GameFrame( bool simulating )
 		{
 			CWaypoints::getVisiblity()->workVisibility();
 		}
+#ifdef _DEBUG
+		if ( CClients::clientsDebugging(BOT_DEBUG_PROFILE) )
+		{
+			CProfileTimers::updateAndDisplay();
+		}
+#endif
 	}
 }
 

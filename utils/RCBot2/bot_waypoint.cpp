@@ -110,6 +110,8 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 	dataUnconstArray<int> m_iVisibles;
 	//int m_iVisiblePoints[CWaypoints::MAX_WAYPOINTS]; // make searching quicker
 
+
+
 	CWaypointLocations::GetAllVisible(vOrigin,vOrigin,&m_iVisibles);
 	CWaypointLocations::GetAllVisible(vOrigin,m_pBot->getEyePosition(),&m_iVisibles);
 

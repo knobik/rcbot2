@@ -323,6 +323,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_profiling.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_schedule.cpp"
 				>
 			</File>
@@ -603,6 +607,10 @@
 			</File>
 			<File
 				RelativePath=".\bot_profile.h"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_profiling.h"
 				>
 			</File>
 			<File
