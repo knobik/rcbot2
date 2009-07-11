@@ -90,21 +90,8 @@ void CTeamFortress2Mod :: getResetPoints (int iTeam, int *iCurrentDefendArea, in
 		*iCurrentAttackArea = 0;
 	}
 }
-/*
-void MapConfigLoad ()
-{
-	char filename[512];
 
-	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),"config/tf2","rcm",false);
-
-	FILE *fp = CBotGlobals::openFile(filename, "r");
-
-	if ( fp )
-	{
-		
-	}
-}
-*/
+// NOT USED NOW!!! See CPoints class
 void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *iCurrentDefendArea,int *iCurrentAttackArea)
 {
 	char *mapname = CBotGlobals::getMapName();
@@ -232,29 +219,9 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type )
 			}
 	}
 }
-
-/*
-CBot *CCounterStrikeSourceMod :: makeNewBots ()
-{
-	return new CCSSBot[MAX_PLAYERS];
-}
-
-CBot *CHalfLifeDeathmatchMod :: makeNewBots ()
-{
-	return new CHLDMBot[MAX_PLAYERS];
-}
-
-CBot *CFortressForeverMod :: makeNewBots ()
-{
-	return new CBotFF[MAX_PLAYERS];
-}
-
-CBot *CTeamFortress2Mod :: makeNewBots()
-{
-	return new CBotTF2[MAX_PLAYERS];
-}
-*/
-
+//
+//
+//
 void CBotMods :: parseFile ()
 {
 	char buffer[1024];

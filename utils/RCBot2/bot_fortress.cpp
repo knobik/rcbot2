@@ -352,6 +352,7 @@ void CBotFortress :: spawnInit ()
 
 int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTime, int *iTries )
 {
+	wantToShoot(false);
 
 	switch ( *iState )
 	{
@@ -2069,7 +2070,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			}
 			break;
 		case BOT_UTIL_BUILDTELENT:
-			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,300,-1,true,false,true,NULL,false,getTeam()));
+			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,300,-1,true,false,true,NULL,false,getTeam(),true));
 
 			if ( pWaypoint )
 			{
@@ -2082,7 +2083,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 		case BOT_UTIL_BUILDTELEXT:
 
 			if ( m_bTeleportExitVectorValid )
-				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportExit,150,-1,true,false,true,NULL,false,getTeam()));
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportExit,150,-1,true,false,true,NULL,false,getTeam(),true));
 			else
 				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam());//CTeamFortress2Mod::getArea());
 
@@ -2099,7 +2100,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 		case BOT_UTIL_BUILDSENTRY:
 
 			if ( m_bSentryGunVectorValid )
-				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vSentryGun,150,-1,true,false,true,NULL,false,getTeam()));
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vSentryGun,150,-1,true,false,true,NULL,false,getTeam(),true));
 			else
 				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam());
 
@@ -2114,9 +2115,9 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 		case BOT_UTIL_BUILDDISP:
 
 			if ( m_bDispenserVectorValid )
-				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vDispenser,150,-1,true,false,true,NULL,false,getTeam()));
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vDispenser,150,-1,true,false,true,NULL,false,getTeam(),true));
 			else
-				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam()));			
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam(),true));			
 
 			if ( pWaypoint )
 			{
@@ -2427,6 +2428,18 @@ void CBotTF2::roundReset(bool bFullReset)
 	m_bSentryGunVectorValid = false;
 	m_bDispenserVectorValid = false;
 	m_bTeleportExitVectorValid = false;
+	m_pPrevSpy = NULL;
+	m_pHeal = NULL;
+	m_pSentryGun = NULL;
+	m_pDispenser = NULL;
+	m_pTeleEntrance = NULL;
+	m_pTeleExit = NULL;
+	m_pAmmo = NULL;
+	m_pHealthkit = NULL;
+	m_pNearestDisp = NULL;
+	m_pNearestEnemySentry = NULL;
+	m_pNearestAllySentry = NULL;
+	m_pFlag = NULL;
 	m_pPrevSpy = NULL;
 
 	flagReset();

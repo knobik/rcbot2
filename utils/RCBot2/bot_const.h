@@ -33,7 +33,7 @@
 
 #include "shareddefs.h"
 
-#define BOT_DEFAULT_FOV 90.0f
+#define BOT_DEFAULT_FOV 75.0f
 
 #define strlow(str) { int len = strlen(str); int i;	for ( i = 0; i < len; i ++ ) { str[i] = tolower(str[i]); } }
 #define round(a) (((a-(int)a) >= 0.5) ? ((int)a+1) : ((int)a))

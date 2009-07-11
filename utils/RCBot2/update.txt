@@ -1,3 +1,11 @@
+0.5
+- rcbot waypoint copy
+- rcbot waypoint paste
+- added scripting for CP/PL maps
+- added profiling for developers
+- Reduced Bot FOV to more realistic value
+- Attack code is now non-task based and runs simultaneously with bot tasks
+
 0.46
 - provisional Support PLR maps
 - Support for CP_Badlands, CP_well

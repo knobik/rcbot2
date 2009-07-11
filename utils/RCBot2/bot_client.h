@@ -39,6 +39,12 @@ class CBot;
 class CClient
 {
 public:
+	CClient ()
+	{
+		m_szSteamID = NULL;
+		m_pPlayerInfo = NULL;
+		m_pDebugBot = NULL;
+	}
 	void init ();
 
 	int accessLevel ();
@@ -56,6 +62,7 @@ public:
 	inline float getSpeed () { return m_fSpeed; }
 	inline Vector getVelocity () { return m_vVelocity; }
 
+	void setWaypointCopy (CWaypoint *pWaypoint); 
 	void setEdict ( edict_t *pPlayer );
 
 	edict_t *getPlayer () { return m_pPlayer; }
@@ -102,6 +109,10 @@ public:
 
 	inline void setDrawType ( unsigned short int iType ) { m_iWaypointDrawType = iType; }
 	inline unsigned short int getDrawType () { return m_iWaypointDrawType; }
+
+	inline float getWptCopyRadius() { return m_fCopyWptRadius; }
+	inline int getWptCopyFlags () { return m_iCopyWptFlags; }
+	inline int getWptCopyArea () { return m_iCopyWptArea; }
 private:
 	edict_t *m_pPlayer;
 	// steam id
@@ -136,6 +147,10 @@ private:
 	Vector m_vVelocity;
 
 	bool m_bShowMenu;
+
+	float m_fCopyWptRadius;
+	int m_iCopyWptFlags;
+	int m_iCopyWptArea;
 	// TODO: tooltips queue
 	// vector<CToolTip*> tooltips
 };

@@ -260,6 +260,8 @@ float CWaypointNavigator :: distanceTo ( CWaypoint *pWaypoint )
 // find route using A* algorithm
 bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart, bool bNoInterruptions )
 {
+	extern ConVar bot_pathrevs;
+
 	if ( bRestart )
 	{
 		*bFail = false;
@@ -311,7 +313,10 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 ///////////////////////////////
 
 	int iLoops = 0;
-	int iMaxLoops = this->m_pBot->getProfile()->getPathTicks();//IBotNavigator::MAX_PATH_TICKS;
+	int iMaxLoops = bot_pathrevs.GetInt(); //this->m_pBot->getProfile()->getPathTicks();//IBotNavigator::MAX_PATH_TICKS;
+
+	if ( iMaxLoops <= 0 )
+		iMaxLoops = 200;
 	
 	if ( bNoInterruptions )
 		iMaxLoops *= 2; // "less" interruptions, however dont want to hang, or use massive cpu
@@ -399,7 +404,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			}
 
 			succ->setParent(iCurrentNode);
-			succ->setCost(fCost+m_fBelief[iSucc]);	
+			succ->setCost(fCost);//+m_fBelief[iSucc]);	
 			succ->setWaypoint(iSucc);
 
 			if ( !succ->heuristicSet() )		
@@ -670,6 +675,7 @@ void CWaypoint :: drawPathBeam ( CWaypoint *to, unsigned short int iDrawType )
 		1, PATHWAYPOINT_WIDTH, PATHWAYPOINT_WIDTH, 255, 
 		1, 200, 200, 200, 200, 10);	
 		break;
+	case DRAWTYPE_DEBUGENGINE2:
 	case DRAWTYPE_DEBUGENGINE:
 		debugoverlay->AddLineOverlay (m_vOrigin, to->getOrigin(), 200,200,200, false, 1);
 		break;
@@ -740,6 +746,13 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 	switch ( iDrawType )
 	{
+	case DRAWTYPE_DEBUGENGINE2:
+		// draw area
+		if ( pEdict )
+		{
+			if ( distanceFrom(CBotGlobals::entityOrigin(pEdict)) < 250 )
+				CWaypointTypes::printInfo(this,pEdict,1.0);
+		}
 	case DRAWTYPE_DEBUGENGINE:
 		// draw waypoint
 		debugoverlay->AddLineOverlay (m_vOrigin - Vector(0,0,fHeight), m_vOrigin + Vector(0,0,fHeight), r,g,b, false, 1);
@@ -1139,12 +1152,13 @@ void CWaypoints :: deletePathsFrom ( int iWpt )
 	m_theWaypoints[iWpt].clearPaths();
 }
 
-void CWaypoints :: addWaypoint ( CClient *pClient )
+void CWaypoints :: addWaypoint ( CClient *pClient, bool bUseTemplate )
 {
 	int iFlags = 0;
 	Vector vWptOrigin = pClient->getOrigin();
 	QAngle playerAngles = CBotGlobals::playerAngles (pClient->getPlayer());
 
+	
 	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pClient->getPlayer());
 
 	/*CBasePlayer *pPlayer = (CBasePlayer*)(CBaseEntity::Instance(pClient->getPlayer()));
@@ -1156,10 +1170,15 @@ void CWaypoints :: addWaypoint ( CClient *pClient )
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 		iFlags |= CWaypoint::W_FL_CROUCH;		*/
 
-	addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,pClient->getWptArea()); // sort flags out
+	if ( bUseTemplate )
+	{
+		addWaypoint(pClient->getPlayer(),vWptOrigin,pClient->getWptCopyFlags(),pClient->isAutoPathOn(),(int)playerAngles.y,pClient->getWptCopyArea(),pClient->getWptCopyRadius()); // sort flags out
+	}
+	else
+		addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,pClient->getWptArea(),0); // sort flags out
 }
 
-void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw, int iArea )
+void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw, int iArea, float fRadius )
 {
 	int iIndex = freeWaypointIndex();
 
@@ -1173,6 +1192,7 @@ void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, b
 	m_theWaypoints[iIndex] = CWaypoint(vOrigin,iFlags);	
 	m_theWaypoints[iIndex].setAim(iYaw);
 	m_theWaypoints[iIndex].setArea(iArea);
+	m_theWaypoints[iIndex].setRadius(fRadius);
 	// increase max waypoints used
 	if ( iIndex == m_iNumWaypoints )
 		m_iNumWaypoints++;	
@@ -1218,7 +1238,7 @@ int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist,
 		{
 			if ( (iFlags == -1) || pWpt->hasFlag(iFlags) )
 			{
-				if ( !CPoints::isValidArea(pWpt->getArea()) )
+				if ( CPoints::isValidArea(pWpt->getArea()) )
 				{
 					if ( (distance = pWpt->distanceFrom(origin)) < fDist)
 					{
@@ -1410,7 +1430,7 @@ void CWaypointTypes :: freeMemory ()
 	m_Types.clear();
 }
 
-void CWaypointTypes:: printInfo ( CWaypoint *pWpt, edict_t *pPrintTo )
+void CWaypointTypes:: printInfo ( CWaypoint *pWpt, edict_t *pPrintTo, float duration )
 {
 	char szMessage[1024];
 	Q_snprintf(szMessage,1024,"Waypoint ID %d (Area = %d | Radius = %0.1f)[",CWaypoints::getWaypointIndex(pWpt),pWpt->getArea(),pWpt->getRadius());	
@@ -1441,9 +1461,9 @@ void CWaypointTypes:: printInfo ( CWaypoint *pWpt, edict_t *pPrintTo )
 
 	strcat(szMessage,"]");
 
-	debugoverlay->AddTextOverlay(pWpt->getOrigin()+Vector(0,0,24),0,6,szMessage);
+	debugoverlay->AddTextOverlay(pWpt->getOrigin()+Vector(0,0,24),duration,szMessage);
 
-	CRCBotPlugin :: HudTextMessage (pPrintTo,"wptinfo","Waypoint Info",szMessage,Color(255,0,0,255),1,2);
+	//CRCBotPlugin :: HudTextMessage (pPrintTo,"wptinfo","Waypoint Info",szMessage,Color(255,0,0,255),1,2);
 }
 /*
 CCrouchWaypointType :: CCrouchWaypointType()

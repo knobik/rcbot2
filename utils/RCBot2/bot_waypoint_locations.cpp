@@ -349,7 +349,7 @@ void CWaypointLocations :: FindNearestCoverWaypointInBucket ( int i, int j, int 
 ///////////////////////////////////////////////
 //
 
-void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vector &vOrigin, float *pfMinDist, int *piIndex, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, dataUnconstArray<int> *iFailedWpts, bool bNearestAimingOnly, int iTeam )
+void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vector &vOrigin, float *pfMinDist, int *piIndex, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, dataUnconstArray<int> *iFailedWpts, bool bNearestAimingOnly, int iTeam, bool bCheckArea )
 // Search for the nearest waypoint : I.e.
 // Find the waypoint that is closest to vOrigin from the distance pfMinDist
 // And set the piIndex to the waypoint index if closer.
@@ -387,7 +387,7 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 		if ( !curr_wpt->forTeam(iTeam) )
 			continue;
 
-		if ( bIsBot && !CPoints::isValidArea(curr_wpt->getArea()) )
+		if ( bCheckArea && !CPoints::isValidArea(curr_wpt->getArea()) )
 			continue;
 
 		if ( bIsBot )
@@ -419,7 +419,7 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 
 /////////////////////////////
 // get the nearest waypoint INDEX from an origin
-int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNearestDist, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, dataUnconstArray<int> *iFailedWpts, bool bNearestAimingOnly, int iTeam )
+int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNearestDist, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, dataUnconstArray<int> *iFailedWpts, bool bNearestAimingOnly, int iTeam, bool bCheckArea )
 {
 	int iNearestIndex = -1;
 
@@ -455,7 +455,7 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 		{
 			for ( k = iMinLock; k <= iMaxLock; k++ )
 			{
-				FindNearestInBucket(i,j,k,vOrigin,&fNearestDist,&iNearestIndex,iIgnoreWpt,bGetVisible,bGetUnReachable,bIsBot,iFailedWpts,bNearestAimingOnly,iTeam);
+				FindNearestInBucket(i,j,k,vOrigin,&fNearestDist,&iNearestIndex,iIgnoreWpt,bGetVisible,bGetUnReachable,bIsBot,iFailedWpts,bNearestAimingOnly,iTeam,bCheckArea);
 			}
 		}
 	}

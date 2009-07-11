@@ -39,7 +39,8 @@ CProfileTimer CProfileTimers :: m_Timers[PROFILING_TIMERS] =
 {
 CProfileTimer("CBots::botThink()"), // BOTS_THINK_TIMER
 CProfileTimer("CBot::think()"), // BOT_THINK_TIMER
-CProfileTimer("Nav::findRoute()") // BOT_ROUTE_TIMER
+CProfileTimer("Nav::findRoute()"), // BOT_ROUTE_TIMER
+CProfileTimer("updateVisables()") // BOT_VISION_TIMER
 };
 
 // initialise update time

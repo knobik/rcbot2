@@ -34,6 +34,7 @@
 #include "bot_accessclient.h"
 #include "bot_commands.h"
 #include "bot_globals.h"
+#include "bot_waypoint.h"
 
 // setup static client array
 CClient CClients::m_Clients[MAX_PLAYERS];
@@ -57,6 +58,10 @@ void CClient :: init ()
 	m_iWptArea = 0;
 	m_bShowMenu = false;
 	m_fUpdatePos = 0.0f;
+
+	m_fCopyWptRadius = 0.0f;
+	m_iCopyWptFlags = 0;
+	m_iCopyWptArea = 0;
 }
 
 void CClient :: setEdict ( edict_t *pPlayer )
@@ -347,4 +352,14 @@ bool CClients :: clientsDebugging (int iLev)
 	}
 
 	return false;
+}
+
+void CClient :: setWaypointCopy (CWaypoint *pWaypoint) 
+{
+	if (pWaypoint) 
+	{ 
+		m_fCopyWptRadius = pWaypoint->getRadius();
+		m_iCopyWptFlags = pWaypoint->getFlags();
+		m_iCopyWptArea = pWaypoint->getArea();
+	} 
 }

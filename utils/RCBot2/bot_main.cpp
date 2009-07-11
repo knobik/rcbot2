@@ -77,6 +77,8 @@
 
 static ICvar *s_pCVar;
 
+ConVar bot_visrevs("rcbot_visrevs","10",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
+ConVar bot_pathrevs("rcbot_pathrevs","200",0,"how many revs the bot searches for a path each frame, lower to reduce cpu usage");
 ConVar bot_command("rcbot_cmd","",0,"issues a command to all bots");
 ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
 ConVar bot_scoutdj( "rcbot_scoutdj", "0.28", 0, "time scout uses to double jump" );

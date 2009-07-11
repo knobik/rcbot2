@@ -78,6 +78,52 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointSetAreaCommand());
 	add(new CWaypointSetRadiusCommand());
 	add(new CWaypointMenu());
+	add(new CWaypointCopy());
+	add(new CWaypointPaste());
+}
+
+CWaypointCopy :: CWaypointCopy()
+{
+	setName("copy");
+	setHelp("Go to a waypoint, and copy to hold its properties, then use paste to make a new waypoint with the same properties");
+}
+
+eBotCommandResult CWaypointCopy :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		pClient->updateCurrentWaypoint();
+
+		CWaypoint *pwpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+		if ( pwpt )
+		{
+			pClient->setWaypointCopy(pwpt);
+			return COMMAND_ACCESSED;
+		}
+
+		
+	}
+
+	return COMMAND_ERROR;
+}
+
+
+CWaypointPaste :: CWaypointPaste()
+{
+	setName("paste");
+	setHelp("first copy a waypoint using the copy command and then use paste to make a new waypoint with the same properties");
+}
+
+eBotCommandResult CWaypointPaste :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		CWaypoints::addWaypoint(pClient,true);
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
 }
 
 

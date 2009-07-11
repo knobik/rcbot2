@@ -34,6 +34,7 @@
 #include "bot_globals.h"
 #include "bot_profile.h"
 #include "bot_client.h"
+#include "bot_profiling.h"
 
 #include "ndebugoverlay.h"
 extern IVDebugOverlay *debugoverlay;
@@ -209,9 +210,23 @@ void CBotVisibles :: updateVisibles ()
 	bool bVisible;
 	edict_t *pEntity;
 
+	extern ConVar bot_visrevs;
+
 	int iTicks = 0;
-	int iMaxTicks = m_pBot->getProfile()->getVisionTicks();
+	int iMaxTicks = bot_visrevs.GetInt(); //m_pBot->getProfile()->getVisionTicks();
 	int iStartIndex = m_iCurrentIndex;
+
+	if ( iMaxTicks <= 0 )
+		iMaxTicks = 10;
+
+#ifdef _DEBUG
+	CProfileTimer *timer = CProfileTimers::getTimer(BOT_VISION_TIMER);
+
+	if ( CClients::clientsDebugging(BOT_DEBUG_PROFILE) )
+	{
+		timer->Start();
+	}
+#endif
 
 	//edict_t *pAvoidEntity = NULL;
 //	float fNearestAvoidEntity = 0;
@@ -278,6 +293,13 @@ void CBotVisibles :: updateVisibles ()
 		if ( m_iCurrentIndex == iStartIndex )
 			break; // back to where we started
 	}
+
+#ifdef _DEBUG
+	if ( CClients::clientsDebugging(BOT_DEBUG_PROFILE) )
+	{
+		timer->Stop();
+	}
+#endif
 }
 
 bool CBotVisibles :: isVisible ( edict_t *pEdict ) 

@@ -53,8 +53,13 @@ public:
 	int iFlags;
 };
 
-#define DRAWTYPE_EFFECTS     0
-#define DRAWTYPE_DEBUGENGINE 1
+enum
+{
+ DRAWTYPE_EFFECTS = 0,
+ DRAWTYPE_DEBUGENGINE,
+ DRAWTYPE_DEBUGENGINE2,
+ DRAWTYPE_MAX
+};
 
 class CWaypoint;
 
@@ -122,7 +127,7 @@ public:
 
 	static void addType ( CWaypointType *type );
 
-	static void printInfo ( CWaypoint *pWpt, edict_t *pPrintTo );
+	static void printInfo ( CWaypoint *pWpt, edict_t *pPrintTo, float duration = 6.0f );
 
 	static void displayTypesMenu ( edict_t *pPrintTo );
 	
@@ -311,9 +316,9 @@ public:
 
 	static void drawWaypoints ( CClient *pClient );
 
-	static void addWaypoint ( CClient *pClient );
+	static void addWaypoint ( CClient *pClient, bool bUseTemplate = false );
 
-	static void addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags = CWaypointTypes::W_FL_NONE, bool bAutoPath = false, int iYaw = 0, int iArea = 0 );
+	static void addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags = CWaypointTypes::W_FL_NONE, bool bAutoPath = false, int iYaw = 0, int iArea = 0, float fRadius = 0 );
 
 	static void removeWaypoint ( int iIndex );
 
