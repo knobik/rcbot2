@@ -163,6 +163,44 @@ private:
 	int m_iWaypoint;
 };
 
+struct AstarNodeCompare : binary_function<AStarNode*, AStarNode*, bool> 
+{
+  // Other stuff...
+  bool operator()(AStarNode* x, AStarNode* y) const 
+  {
+    return y->betterCost(x);
+  }
+};
+
+class AStarOpenList : public vector<AStarNode*> 
+{
+  AstarNodeCompare comp;
+public:
+  AStarOpenList(AstarNodeCompare cmp = AstarNodeCompare()) : comp(cmp) {
+    make_heap(begin(), end(), comp);
+  }
+  AStarNode* top() { return front(); }
+  void push(AStarNode* x) {
+    push_back(x);
+    push_heap(begin(), end(), comp);
+  }
+  void pop() {
+    pop_heap(begin(), end(), comp);
+    pop_back();
+  }  
+};
+
+/*
+bool operator<( const AStarNode & A, const AStarNode & B )
+{
+    return A.betterCost(&B);
+}
+
+bool operator<( const AStarNode * A, const AStarNode * B )
+{
+    return A->betterCost(B);
+}*/
+
 class CWaypointNavigator : public IBotNavigator
 {
 public:
@@ -243,7 +281,7 @@ private:
 
 	float m_fBelief [CWaypoints::MAX_WAYPOINTS];
 
-	vector<AStarNode*> m_theOpenList;
+	AStarOpenList m_theOpenList;
 
 	Vector m_vOffset;
 	bool m_bOffsetApplied;

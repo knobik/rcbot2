@@ -1,4 +1,5 @@
 0.5
+- optimised path finding code
 - rcbot waypoint copy
 - rcbot waypoint paste
 - added scripting for CP/PL maps

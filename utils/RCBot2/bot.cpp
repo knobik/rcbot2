@@ -777,7 +777,7 @@ void CBot :: spawnInit ()
 	m_pAvoidEntity = NULL;
 	m_bLookedForEnemyLast = false;
 	////////////////////////
-	m_iPrevHealth = 0;  // 
+	m_iPrevHealth = 0;    // 
 	////////////////////////
 	m_vStuckPos = Vector(0,0,0);
 	//m_iTimesStuck = 0;
@@ -1995,12 +1995,12 @@ void CBots :: botThink ()
 	extern ConVar bot_stop;
 	extern ConVar bot_command;
 
-	CProfileTimer *CBotsBotThink;
-	CProfileTimer *CBotThink;
-
 	bool bBotStop = bot_stop.GetInt() > 0;
 
 #ifdef _DEBUG
+	CProfileTimer *CBotsBotThink;
+	CProfileTimer *CBotThink;
+
 	CBotsBotThink = CProfileTimers::getTimer(BOTS_THINK_TIMER);
 	CBotThink = CProfileTimers::getTimer(BOT_THINK_TIMER);
 
