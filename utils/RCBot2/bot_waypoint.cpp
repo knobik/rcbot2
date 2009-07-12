@@ -174,6 +174,7 @@ AStarNode *CWaypointNavigator :: nextNode ()
 		AStarNode *t = m_theOpenList.top();
 
 		t->unOpen();
+		m_theOpenList.pop();
 
 		pNode = t;
 	}
