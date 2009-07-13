@@ -162,7 +162,7 @@ private:
 	short int m_iParent;
 	int m_iWaypoint;
 };
-
+/*
 struct AstarNodeCompare : binary_function<AStarNode*, AStarNode*, bool> 
 {
   // Other stuff...
@@ -188,7 +188,8 @@ public:
     pop_heap(begin(), end(), comp);
     pop_back();
   }  
-};
+};*/
+
 
 /*
 bool operator<( const AStarNode & A, const AStarNode & B )
@@ -281,7 +282,7 @@ private:
 
 	float m_fBelief [CWaypoints::MAX_WAYPOINTS];
 
-	AStarOpenList m_theOpenList;
+	vector <AStarNode*> m_theOpenList;
 
 	Vector m_vOffset;
 	bool m_bOffsetApplied;

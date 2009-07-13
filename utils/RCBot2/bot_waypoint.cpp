@@ -161,14 +161,14 @@ void CWaypointNavigator :: open ( AStarNode *pNode )
 	if ( !pNode->isOpen() )
 	{
 		pNode->open();
-		m_theOpenList.push(pNode);
+		m_theOpenList.push_back(pNode);
 	}
 }
 // AStar Algorithm : get the waypoint with lowest cost
 AStarNode *CWaypointNavigator :: nextNode ()
 {
 	AStarNode *pNode = NULL;
-
+/*
 	if ( !m_theOpenList.empty() )
 	{
 		AStarNode *t = m_theOpenList.top();
@@ -177,9 +177,9 @@ AStarNode *CWaypointNavigator :: nextNode ()
 		m_theOpenList.pop();
 
 		pNode = t;
-	}
+	}*/
 		
-/*
+
 	if ( !m_theOpenList.empty() )
 	{
 		// Find node with least cost
@@ -204,7 +204,6 @@ AStarNode *CWaypointNavigator :: nextNode ()
 
 		if ( pNode )
 		{
-			
 			vector<AStarNode*> temp;
 
 			pNode->unOpen();
@@ -220,7 +219,7 @@ AStarNode *CWaypointNavigator :: nextNode ()
 			m_theOpenList = temp;
 			
 		}
-	}*/
+	}
 
 	return pNode;
 }
