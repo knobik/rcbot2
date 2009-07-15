@@ -33,6 +33,13 @@
 
 #include "bot_const.h"
 
+typedef enum eWptCopyType
+{
+	WPT_COPY_NONE = 0,
+	WPT_COPY_COPY,
+	WPT_COPY_CUT
+};
+
 struct edict_t;
 class CBot;
 
@@ -44,6 +51,7 @@ public:
 		m_szSteamID = NULL;
 		m_pPlayerInfo = NULL;
 		m_pDebugBot = NULL;
+		m_WaypointCopyType = WPT_COPY_NONE;
 	}
 	void init ();
 
@@ -62,6 +70,7 @@ public:
 	inline float getSpeed () { return m_fSpeed; }
 	inline Vector getVelocity () { return m_vVelocity; }
 
+	void setWaypointCut ( CWaypoint *pWaypoint );
 	void setWaypointCopy (CWaypoint *pWaypoint); 
 	void setEdict ( edict_t *pPlayer );
 
@@ -82,7 +91,7 @@ public:
 	inline void setPathWaypoint ( bool bOn ) { m_bPathWaypointOn = bOn; }
 
 	inline int getWptArea () { return m_iWptArea; }
-	inline void setWptArea ( int area ) { m_iWptArea = area; }
+	inline void setWptArea ( int area ) { m_iWptArea = area; }	
 
 	inline void setPathFrom ( int iWpt ) { m_iPathFrom = iWpt; }
 	inline void setPathTo ( int iWpt ) { m_iPathTo = iWpt; }
@@ -113,6 +122,8 @@ public:
 	inline float getWptCopyRadius() { return m_fCopyWptRadius; }
 	inline int getWptCopyFlags () { return m_iCopyWptFlags; }
 	inline int getWptCopyArea () { return m_iCopyWptArea; }
+
+	inline eWptCopyType getWptCopyType () { return m_WaypointCopyType; }
 private:
 	edict_t *m_pPlayer;
 	// steam id
@@ -151,6 +162,9 @@ private:
 	float m_fCopyWptRadius;
 	int m_iCopyWptFlags;
 	int m_iCopyWptArea;
+
+	vector<int> m_WaypointCutPaths;
+	eWptCopyType m_WaypointCopyType;
 	// TODO: tooltips queue
 	// vector<CToolTip*> tooltips
 };

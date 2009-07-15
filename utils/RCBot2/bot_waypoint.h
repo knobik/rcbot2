@@ -122,6 +122,7 @@ public:
 	static const int W_FL_TELE_ENTRANCE = 65536;
 	static const int W_FL_TELE_EXIT = 131072;
 	static const int W_FL_DEFEND = 262144;
+	static const int W_FL_AREAONLY = 524288;
 
 	static void setup ();
 
@@ -328,6 +329,8 @@ public:
 
 	static void deletePathsTo ( int iWpt );
 	static void deletePathsFrom ( int iWpt );
+
+	static void shiftAreas (int val);
 
 	static inline CWaypoint *getWaypoint ( int iIndex )
 	{

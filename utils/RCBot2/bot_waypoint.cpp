@@ -1101,6 +1101,19 @@ void CWaypoints :: deleteWaypoint ( int iIndex )
 	deletePathsTo(iIndex);
 }
 
+void CWaypoints :: shiftAreas (int val)
+{
+	for ( int i = 0; i < m_iNumWaypoints; i ++ )
+	{
+		CWaypoint *pWpt = &m_theWaypoints[i];
+
+		if ( pWpt->getFlags() > 0 )
+		{
+		   pWpt->setArea(pWpt->getArea()+val);
+		}
+	}
+}
+
 int CWaypoints :: getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam, float *fReturnDist, unsigned char *failedwpts )
 {
 	int i = 0;
@@ -1426,6 +1439,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_TELE_ENTRANCE,"teleentrance","engineer bot can build tele entrance here",WptColor(50,50,150)));
 	addType(new CWaypointType(W_FL_TELE_EXIT,"teleexit","engineer bot can build tele exit here",WptColor(100,100,255)));
 	addType(new CWaypointType(W_FL_DEFEND,"defend","bot will defend at this position",WptColor(160,50,50)));
+	addType(new CWaypointType(W_FL_AREAONLY,"areaonly","bot will only use this waypoint at certain areas of map",WptColor(150,200,150)));
 	
 }
 

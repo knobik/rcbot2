@@ -35,8 +35,9 @@
 #include "bot_weapons.h"
 #include "bot_globals.h"
 
-CBotTF2HealSched::CBotTF2HealSched()
+CBotTF2HealSched::CBotTF2HealSched(edict_t *pHeal)
 {
+	addTask(new CFindPathTask(CBotGlobals::entityOrigin(pHeal)));
 	addTask(new CBotTF2MedicHeal());
 }
 

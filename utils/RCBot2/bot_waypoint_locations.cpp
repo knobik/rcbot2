@@ -374,7 +374,10 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 		if ( iSelectedIndex == iIgnoreWpt )
 			continue;
 		if ( g_iFailedWaypoints[iSelectedIndex] == 1 )
+		{
+			g_iFailedWaypoints[iSelectedIndex] = 2; // flag this 
 			continue;
+		}
 
 		curr_wpt = CWaypoints::getWaypoint(iSelectedIndex);
 
@@ -456,6 +459,22 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 			for ( k = iMinLock; k <= iMaxLock; k++ )
 			{
 				FindNearestInBucket(i,j,k,vOrigin,&fNearestDist,&iNearestIndex,iIgnoreWpt,bGetVisible,bGetUnReachable,bIsBot,iFailedWpts,bNearestAimingOnly,iTeam,bCheckArea);
+			}
+		}
+	}
+
+	if ( iFailedWpts )
+	{   
+		int iWpt;
+		
+		for ( int l = 0; l < iFailedWpts->Size(); l ++ )
+		{
+			if ( (iWpt=(*iFailedWpts)[l]) != -1 ) //( (iWpt = tempStack.ChooseFromStack()) != -1 )
+			{
+				if ( g_iFailedWaypoints[iWpt] == 2 )
+				{
+					iFailedWpts->Remove(iWpt);
+				}
 			}
 		}
 	}

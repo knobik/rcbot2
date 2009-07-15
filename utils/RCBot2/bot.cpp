@@ -398,6 +398,10 @@ void CBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		if ( m_pAvoidEntity == pEntity )
 			m_pAvoidEntity = NULL;
+		if ( m_pEnemy == pEntity )
+		{
+			m_pLastEnemy = m_pEnemy;
+		}
 	}
 
 }

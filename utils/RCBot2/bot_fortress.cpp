@@ -1237,6 +1237,11 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 {
 	if ( CBot::canGotoWaypoint(vPrevWaypoint,pWaypoint) )
 	{
+		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_AREAONLY) )
+		{
+			if ( !CPoints::isValidArea(pWaypoint->getArea()) )
+				return false;
+		}
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_ROCKET_JUMP) )
 		{
 			return ( (getClass() == TF_CLASS_SOLDIER) && (getHealthPercent() > 0.6) );
@@ -1461,8 +1466,10 @@ bool CBotFortress :: wantToFollowEnemy ()
 		return false;
 	if ( getClass() == TF_CLASS_SCOUT )
 		return false;
-	if ( CClassInterface::getTF2Class(m_pLastEnemy) == TF_CLASS_SPY )
+	if ( (CClassInterface::getTF2Class(m_pLastEnemy) == TF_CLASS_SPY) && (thinkSpyIsEnemy(m_pLastEnemy)) )
 		return true; // always find spies!
+	if ( (m_iClass == TF_CLASS_SPY) && isDisguised() ) // sneak around the enemy
+		return true;
 	
 	return CBot::wantToFollowEnemy();
 }
@@ -1622,15 +1629,15 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	bHasFlag = hasFlag();
 
 	// look for tasks / more important tasks here
-	if ( !bHasFlag && m_pHeal && (m_iClass == TF_CLASS_MEDIC) )
+	if ( (m_iClass == TF_CLASS_MEDIC) && !bHasFlag && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal) )
 	{		
 		if ( !m_pSchedules->isCurrentSchedule(SCHED_HEAL) )
 		{
-			m_pSchedules->freeMemory();//>removeSchedule(SCHED_HEAL);
-			m_pSchedules->addFront(new CBotTF2HealSched());
+			m_pSchedules->freeMemory();
+			m_pSchedules->addFront(new CBotTF2HealSched(m_pHeal));
 		}
 	}
-	else if ( !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy) )
+	else if ( !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy) )
 	{
 		if ( wantToFollowEnemy() )
 		{
@@ -1874,7 +1881,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,(m_pPushPayloadBomb!=NULL),fGetFlagUtility));
 		}
 	}
-	else
+	else if ( CTeamFortress2Mod::isMapType(TF_MAP_CART) )
 	{
 		if ( getTeam() == TF2_TEAM_BLUE )
 		{
@@ -2277,6 +2284,9 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 					vVelocity = pClient->getVelocity();
 					vAim = vAim + (vVelocity*randomFloat(0.4f,0.9f));
 				}
+
+				if ( pWp->getID() == TF2_WEAPON_GRENADELAUNCHER )
+					vAim = vAim + Vector(0,0,sqrt(fDist)*2);
 			}
 			break;
 			}
@@ -2332,6 +2342,16 @@ eBotFuncState CBotTF2 :: rocketJump(int *iState,float *fTime)
 
 bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 {
+	/* Handle Spy Attacking Choice here */
+	if ( m_iClass == TF_CLASS_SPY )	 
+	{
+		if ( isDisguised() )
+		{
+			if ( (m_fFrenzyTime < engine->Time()) && ((distanceFrom(pEnemy)>120) || fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > 90 ))
+				return true;
+		}
+	}
+
 	if ( pWeapon )
 	{
 		bool bSecAttack = false;
@@ -2498,15 +2518,6 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 			{
 				if ( !bCheckWeapons )
 					return true;
-				else if ( isDisguised() )
-				{
-					if ( (distanceFrom(pEdict)<120) && fabs(CBotGlobals::yawAngleFromEdict(pEdict,getOrigin())) > 90 )
-						return true;					
-					else if ( m_fFrenzyTime > engine->Time() ) // Spy got hurt recently, cover may be blown, so open fire
-						return true;
-					
-					return false;
-				}
 			}	
 			
 			if ( CClassInterface::getTF2Class(pEdict) == (int)TF_CLASS_SPY )

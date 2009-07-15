@@ -354,6 +354,25 @@ bool CClients :: clientsDebugging (int iLev)
 	return false;
 }
 
+void CClient :: setWaypointCut (CWaypoint *pWaypoint)
+{
+	if ( pWaypoint )
+	{
+		int i = 0;
+
+		setWaypointCopy(pWaypoint);
+
+		m_WaypointCutPaths.clear();
+
+		for ( i = 0; i < pWaypoint->numPaths(); i ++ )
+		{
+			m_WaypointCutPaths.push_back(pWaypoint->getPath(i));
+		}
+
+		m_WaypointCopyType = WPT_COPY_CUT;
+	}
+}
+
 void CClient :: setWaypointCopy (CWaypoint *pWaypoint) 
 {
 	if (pWaypoint) 
@@ -361,5 +380,6 @@ void CClient :: setWaypointCopy (CWaypoint *pWaypoint)
 		m_fCopyWptRadius = pWaypoint->getRadius();
 		m_iCopyWptFlags = pWaypoint->getFlags();
 		m_iCopyWptArea = pWaypoint->getArea();
+		m_WaypointCopyType = WPT_COPY_COPY;
 	} 
 }

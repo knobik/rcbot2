@@ -107,7 +107,7 @@ public:
 
 	static inline int getValidAreas () { return m_iValidAreas; }
 
-	static inline bool isValidArea ( int iArea ) { return ((m_iValidAreas & (1<<iArea))>0); }
+	static inline bool isValidArea ( int iArea ) { return (iArea==0)||(m_iValidAreas==0) || ((m_iValidAreas & (1<<iArea))>0); }
 private:
 
 	static CResetPoint *getPoint ( const char *szName = NULL );

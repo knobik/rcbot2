@@ -349,7 +349,7 @@ public:
 class CBotTF2HealSched : public CBotSchedule
 {
 public:
-	CBotTF2HealSched();
+	CBotTF2HealSched(edict_t *pHeal);
 	void init ();
 };
 

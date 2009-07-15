@@ -62,7 +62,6 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-	
 	pHeal = ((CBotFortress*)pBot)->getHealingEntity();
 
 	if ( !pHeal )
@@ -80,6 +79,12 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->getNavigator()->rollBackPosition();
 		((CBotFortress*)pBot)->clearHealingEntity();
+		fail();
+	}
+	else if ( pBot->distanceFrom(pHeal) > 200 )
+	{
+		((CBotFortress*)pBot)->clearHealingEntity();
+		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
 	else if ( pBot->getCurrentWeapon() == NULL )
@@ -564,7 +569,7 @@ CBotTF2WaitAmmoTask :: CBotTF2WaitAmmoTask ( Vector vOrigin )
 void CBotTF2WaitAmmoTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( !m_fWaitTime )
-		m_fWaitTime = engine->Time() + randomFloat(10.0f,15.0f);
+		m_fWaitTime = engine->Time() + randomFloat(5.0f,10.0f);
 
 	if ( !pBot->hasSomeConditions(CONDITION_NEED_AMMO) )
 	{

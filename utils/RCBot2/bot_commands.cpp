@@ -78,8 +78,10 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointSetAreaCommand());
 	add(new CWaypointSetRadiusCommand());
 	add(new CWaypointMenu());
+	add(new CWaypointCut());
 	add(new CWaypointCopy());
 	add(new CWaypointPaste());
+	add(new CWaypointShiftAreas());
 }
 
 CWaypointCopy :: CWaypointCopy()
@@ -101,13 +103,38 @@ eBotCommandResult CWaypointCopy :: execute ( CClient *pClient, const char *pcmd,
 			pClient->setWaypointCopy(pwpt);
 			return COMMAND_ACCESSED;
 		}
-
-		
 	}
 
 	return COMMAND_ERROR;
 }
+//////////////////////////////////////////
 
+CWaypointCut :: CWaypointCut()
+{
+	setName("cut");
+	setHelp("allows you to move a waypoint by cutting it and pasting it");
+}
+
+eBotCommandResult CWaypointCut :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		pClient->updateCurrentWaypoint();
+
+		CWaypoint *pwpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+		if ( pwpt )
+		{
+			pClient->setWaypointCut(pwpt);
+			CWaypoints::deleteWaypoint(pClient->currentWaypoint());
+		}
+
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
+///////////////////////////////////////////
 
 CWaypointPaste :: CWaypointPaste()
 {
@@ -125,8 +152,31 @@ eBotCommandResult CWaypointPaste :: execute ( CClient *pClient, const char *pcmd
 
 	return COMMAND_ERROR;
 }
+//////////////////////////////////
 
+CWaypointShiftAreas :: CWaypointShiftAreas()
+{
+	setName("shiftareas");
+	setHelp("shift the areas of flagged waypoints to a different area/only use this once");
+}
 
+eBotCommandResult CWaypointShiftAreas :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		int val = 1;
+
+		if ( pcmd && *pcmd )
+			val = atoi(pcmd);
+
+		CWaypoints::shiftAreas(val);
+
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
+////////////////////////////////////
 CWaypointSetAreaCommand :: CWaypointSetAreaCommand ()
 {
 	setName("setarea");
