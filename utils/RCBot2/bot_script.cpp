@@ -325,12 +325,12 @@ void CPoints :: loadMapScript ( )
 
 			// control character
 			if ( line[0] == ':' )
-			{/*
+			{
 				if ( strncmp(&line[1],"setup_time:",11) == 0 )
 				{
-					
+					CTeamFortress2Mod::setSetupTime(atoi(&line[12]));
 				}
-				else*/ if ( strncmp(&line[1],"on_blue_cap:",12) == 0 )
+				else if ( strncmp(&line[1],"on_blue_cap:",12) == 0 )
 				{
 					currentpoint = getPoint(&line[13]);
 					state = STATE_BLUE_CAP;

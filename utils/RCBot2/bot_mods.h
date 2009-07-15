@@ -293,6 +293,8 @@ public:
 
 	static void getNextPoints (int iPoint,int iTeam,int iMyTeam,int *iCurrentDefendArea,int *iCurrentAttackArea);
 
+	static void setSetupTime ( int time );
+
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
@@ -302,6 +304,8 @@ private:
 	static tf_tele_t m_Teleporters[MAX_PLAYERS];
 
 	static int m_iArea;
+
+	static float m_fSetupTime;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod
