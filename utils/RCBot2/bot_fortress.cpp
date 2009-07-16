@@ -2059,6 +2059,14 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_DEFEND_POINT:
 
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true);
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotDefendPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
+				return true;
+			}
+
 			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea,true);
 
 			if ( pWaypoint )
@@ -2109,7 +2117,13 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			if ( m_bSentryGunVectorValid )
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vSentryGun,150,-1,true,false,true,NULL,false,getTeam(),true));
 			else
-				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam());
+			{
+				//if ( CTeamFortress2Mod::isMapType(TF_MAPTYPE_CP) || CTeamFortress2Mod::isMapType(TF_MAPTYPE_PL) )
+				//	pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam(),m_iCurrentDefendArea,true);
+
+				//if ( !pWaypoint )
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam());
+			}
 
 			if ( pWaypoint )
 			{
@@ -2286,7 +2300,7 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 				}
 
 				if ( pWp->getID() == TF2_WEAPON_GRENADELAUNCHER )
-					vAim = vAim + Vector(0,0,sqrt(fDist)*2);
+					vAim = vAim + Vector(0,0,sqrt(fDist));
 			}
 			break;
 			}

@@ -1,10 +1,16 @@
 0.5
+- rcbot wayponit cut
+- fixed engineer crash
 - rcbot waypoint copy
 - rcbot waypoint paste
-- added scripting for CP/PL maps
+- added scripting for CP/PL maps (supported: cp_dustbowl/cp_granary/cp_badlands)
 - added profiling for developers
 - Reduced Bot FOV to more realistic value
 - Attack code is now non-task based and runs simultaneously with bot tasks
+issues:
+
+engineers can't select wrench sometimes
+
 
 0.46
 - provisional Support PLR maps

@@ -438,7 +438,7 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			else
 				pBot->setMoveTo(m_vMoveTo,3);
 
-			pBot->setLookAtTask(LOOK_AROUND,5);
+			pBot->setLookAtTask(LOOK_SNIPE,5);
 		}
 		else if ( m_fTime < engine->Time() )
 		{
@@ -467,7 +467,14 @@ void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		m_fTime = engine->Time() + randomFloat(9.0f,11.0f);
 	
 	if ( m_fTime<engine->Time() )
+	{
 		complete();
+	}// Fix 16/07/09
+	else if ( !CBotGlobals::entityIsValid(m_pBuilding) )
+	{
+		fail();
+		return;
+	}
 	else if ( !pBot->isVisible(m_pBuilding) )
 	{
 		if ( pBot->distanceFrom(m_pBuilding) > 200 )

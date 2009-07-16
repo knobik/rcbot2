@@ -998,7 +998,6 @@ bool CBot :: isAlive ()
 	return !m_pPlayerInfo->IsDead();
 }
 
-
 int CBot :: getTeam ()
 {
 	return m_pPlayerInfo->GetTeamIndex();
