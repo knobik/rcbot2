@@ -80,7 +80,7 @@ public:
 
 	static inline bool entityIsValid ( edict_t *pEntity )
 	{
-		return ( pEntity && !pEntity->IsFree() && !FNullEnt(pEntity) && pEntity->GetNetworkable() && pEntity->GetIServerEntity() && pEntity->GetCollideable() );
+		return ( !FNullEnt(pEntity) && !pEntity->IsFree() && pEntity->GetNetworkable() && pEntity->GetIServerEntity() && pEntity->GetCollideable() );
 	}
 
 	static bool setWaypointDisplayType ( int iType );

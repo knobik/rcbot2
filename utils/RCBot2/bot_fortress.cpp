@@ -282,12 +282,26 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 		}
 		else if ( !(CClassInterface::getEffects(pEntity)&EF_NODRAW) && CTeamFortress2Mod::isAmmo(pEntity) )
 		{
-			if ( !m_pAmmo || ((pEntity != m_pAmmo) && (distanceFrom(pEntity) < distanceFrom(m_pAmmo))) )
+			float fDistance;
+
+			fDistance = distanceFrom(pEntity);
+
+			if ( fDistance > 200 )
+				return;
+
+			if ( !m_pAmmo || ((pEntity != m_pAmmo) && (fDistance < distanceFrom(m_pAmmo))) )
 				m_pAmmo = pEntity;
 		}
 		else if ( !(CClassInterface::getEffects(pEntity)&EF_NODRAW) &&CTeamFortress2Mod::isHealthKit(pEntity) )
 		{
-			if ( !m_pHealthkit || ((pEntity != m_pHealthkit) && (distanceFrom(pEntity) < distanceFrom(m_pHealthkit))) )
+			float fDistance;
+
+			fDistance = distanceFrom(pEntity);
+
+			if ( fDistance > 200 )
+				return;
+
+			if ( !m_pHealthkit || ((pEntity != m_pHealthkit) && (fDistance < distanceFrom(m_pHealthkit))) )
 				m_pHealthkit = pEntity;
 		}
 	}
@@ -1092,13 +1106,13 @@ void CBotTF2 :: died ( edict_t *pKiller )
 {
 	spawnInit();
 
-	if ( pKiller )
+	if ( pKiller && CBotGlobals::entityIsValid(pKiller) )
 		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 }
 
 void CBotTF2 :: killed ( edict_t *pVictim )
 {
-	if ( pVictim )
+	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
 		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 
 	taunt();
@@ -2059,11 +2073,11 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_DEFEND_POINT:
 
-			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true);
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam());
 
 			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotDefendPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
+				m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin()));
 				return true;
 			}
 

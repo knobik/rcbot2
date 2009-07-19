@@ -1,9 +1,14 @@
 0.5
-- rcbot wayponit cut
+- rcbot waypoint cut
 - fixed engineer crash
 - rcbot waypoint copy
 - rcbot waypoint paste
-- added scripting for CP/PL maps (supported: cp_dustbowl/cp_granary/cp_badlands)
+- performance command rcbot_visrevs (default 10, 2 maybe good enough)
+- performance command rcbot_pathrevs (default 200, 20 maybe good enough)
+- new "areaonly" waypoint type
+- new rcbot waypoint drawtype 2
+- added scripting for CP/PL maps (supported: cp_dustbowl)
+- PLR support 
 - added profiling for developers
 - Reduced Bot FOV to more realistic value
 - Attack code is now non-task based and runs simultaneously with bot tasks

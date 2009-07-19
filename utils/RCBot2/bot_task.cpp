@@ -436,14 +436,13 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			if ( pBot->distanceFrom(m_vMoveTo) < 32 )
 				pBot->stopMoving(5);
 			else
-				pBot->setMoveTo(m_vMoveTo,3);
-
-			pBot->setLookAtTask(LOOK_SNIPE,5);
+				pBot->setMoveTo(m_vMoveTo,3);			
 		}
 		else if ( m_fTime < engine->Time() )
 		{
 			m_fTime = 0;
 		}
+		pBot->setLookAtTask(LOOK_SNIPE,5);
 	}
 }
 

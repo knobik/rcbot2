@@ -1144,7 +1144,7 @@ void CBot :: listenForPlayers ()
 
 	if ( m_bListenPositionValid )
 	{
-		m_fListenTime = engine->Time() + randomFloat(5.0f,10.0f);
+		m_fListenTime = engine->Time() + randomFloat(2.0f,5.0f);
 	}
 }
 

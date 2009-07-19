@@ -122,10 +122,10 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 
 		if ( iType == BELIEF_SAFETY )
 		{
-			if ( m_fBelief[iWptIndex] > -MAX_BELIEF)
+			if ( m_fBelief[iWptIndex] > 0)
 				m_fBelief[iWptIndex] -= (fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
-			if ( m_fBelief[iWptIndex] < -MAX_BELIEF )
-				m_fBelief[iWptIndex] = -MAX_BELIEF;
+			if ( m_fBelief[iWptIndex] < 0 )
+				m_fBelief[iWptIndex] = 0;
 		}
 		else if ( iType == BELIEF_DANGER )
 		{
@@ -414,7 +414,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			}
 
 			succ->setParent(iCurrentNode);
-			succ->setCost(fCost);//+m_fBelief[iSucc]);	
+			succ->setCost(fCost+m_fBelief[iSucc]);	
 			succ->setWaypoint(iSucc);
 
 			if ( !succ->heuristicSet() )		
@@ -761,7 +761,12 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 		if ( pEdict )
 		{
 			if ( distanceFrom(CBotGlobals::entityOrigin(pEdict)) < 250 )
+			{
 				CWaypointTypes::printInfo(this,pEdict,1.0);
+
+				if ( m_iFlags )
+					debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+32.0f),0,1,255,255,255,255,"%d",m_iArea);
+			}
 		}
 	case DRAWTYPE_DEBUGENGINE:
 		// draw waypoint
