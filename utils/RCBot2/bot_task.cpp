@@ -989,6 +989,8 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CBotWeapon *pBotWeapon;
 	CWeapon *pWeapon;
 
+	pBot->wantToShoot(false);
+
 	if ( m_fTime == 0.0f )
 	{
 		m_fTime = engine->Time() + randomFloat(40.0f,90.0f);
@@ -1034,20 +1036,29 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else
 	{
-		pBot->stopMoving(2);
-		pBot->setLookAtTask(LOOK_SNIPE);
+		pBot->stopMoving(4);
 
-		if (m_fTime<engine->Time() )
+		if ( pBot->hasEnemy() )
 		{
-			if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
-				pBot->secondaryAttack();
-
-			complete();
+			pBot->setLookAtTask(LOOK_ENEMY,6);
+			pBot->handleAttack(pBotWeapon,pBot->getEnemy());
 		}
 		else
 		{
-			if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
-				pBot->secondaryAttack();
+			pBot->setLookAtTask(LOOK_SNIPE);
+
+			if (m_fTime<engine->Time() )
+			{
+				if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+					pBot->secondaryAttack();
+
+				complete();
+			}
+			else
+			{
+				if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+					pBot->secondaryAttack();
+			}
 		}
 	}
 }

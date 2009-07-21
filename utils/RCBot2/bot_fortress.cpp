@@ -291,6 +291,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 
 			if ( !m_pAmmo || ((pEntity != m_pAmmo) && (fDistance < distanceFrom(m_pAmmo))) )
 				m_pAmmo = pEntity;
+			
 		}
 		else if ( !(CClassInterface::getEffects(pEntity)&EF_NODRAW) &&CTeamFortress2Mod::isHealthKit(pEntity) )
 		{
@@ -1368,7 +1369,7 @@ void CBotTF2 :: modThink ()
 
 	if ( m_pSchedules->isCurrentSchedule(SCHED_GOTO_ORIGIN) && (m_fPickupTime < engine->Time()) && (bNeedHealth || bNeedAmmo) && (!m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) )
 	{
-		if ( m_pNearestDisp && !m_pSchedules->isCurrentSchedule(SCHED_USE_DISPENSER) )
+		if ( (m_fPickupTime<engine->Time()) && m_pNearestDisp && !m_pSchedules->isCurrentSchedule(SCHED_USE_DISPENSER) )
 		{
 			if ( fabs(CBotGlobals::entityOrigin(m_pNearestDisp).z - getOrigin().z) < BOT_JUMP_HEIGHT )
 			{
@@ -1380,7 +1381,7 @@ void CBotTF2 :: modThink ()
 			}
 			
 		}
-		else if ( bNeedHealth && m_pHealthkit && !m_pSchedules->isCurrentSchedule(SCHED_TF2_GET_HEALTH) )
+		else if ( (m_fPickupTime<engine->Time()) && bNeedHealth && m_pHealthkit && !m_pSchedules->isCurrentSchedule(SCHED_TF2_GET_HEALTH) )
 		{
 			if ( fabs(CBotGlobals::entityOrigin(m_pHealthkit).z - getOrigin().z) < BOT_JUMP_HEIGHT )
 			{
@@ -1393,7 +1394,7 @@ void CBotTF2 :: modThink ()
 			}
 			
 		}
-		else if ( bNeedAmmo && m_pAmmo && !m_pSchedules->isCurrentSchedule(SCHED_PICKUP) )
+		else if ( (m_fPickupTime<engine->Time()) && bNeedAmmo && m_pAmmo && !m_pSchedules->isCurrentSchedule(SCHED_PICKUP) )
 		{
 			if ( fabs(CBotGlobals::entityOrigin(m_pAmmo).z - getOrigin().z) < BOT_JUMP_HEIGHT )
 			{
@@ -1608,10 +1609,35 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 
 	return true;
 }
-
+// The lower the better
 float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 {
-	return distanceFrom(pEnemy);
+	float fPreFactor = 0;
+
+	if ( ((ENTINDEX(pEnemy) > 0)&&(ENTINDEX(pEnemy)<=gpGlobals->maxClients)) )
+	{		
+		int iclass = CClassInterface::getTF2Class(pEnemy);
+
+		if ( iclass == TF_CLASS_MEDIC )
+		{
+			fPreFactor = -150;
+		}
+		else if ( iclass == TF_CLASS_SPY )
+		{
+			fPreFactor = -100;
+		}		
+	}
+	else
+	{
+		if ( CTeamFortress2Mod::isSentry(pEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
+		{
+			fPreFactor = -400;
+		}
+	}
+
+	fPreFactor += distanceFrom(pEnemy);
+
+	return fPreFactor;
 }
 
 void CBotTF2 :: getTasks ( unsigned int iIgnore )
@@ -1639,6 +1665,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	//static float fAmmoUtil = 0.5;
 
 	extern const char *g_szUtils[BOT_UTIL_MAX];
+
+	// if in setup time this will tell bot not to shoot yet
+	wantToShoot(CTeamFortress2Mod::hasRoundStarted());
 
 	bHasFlag = hasFlag();
 
@@ -1701,7 +1730,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( m_iClass == TF_CLASS_SNIPER )
 		// un zoom
 	{
-		if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
+		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
 				secondaryAttack();
 	}
 
@@ -2063,6 +2092,14 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_ATTACK_POINT:
 			
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentAttackArea,true);
+
+			if ( pWaypoint )
+			{
+				m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin()));
+				return true;
+			}
+
 			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentAttackArea,true);
 
 			if ( pWaypoint )
@@ -2073,7 +2110,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_DEFEND_POINT:
 
-			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam());
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam(),m_iCurrentDefendArea,true);
 
 			if ( pWaypoint )
 			{
@@ -2375,7 +2412,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	{
 		if ( isDisguised() )
 		{
-			if ( (m_fFrenzyTime < engine->Time()) && ((distanceFrom(pEnemy)>120) || fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > 90 ))
+			if ( (m_fFrenzyTime < engine->Time()) && ((distanceFrom(pEnemy)>130) || fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > 75 ))
 				return true;
 		}
 	}

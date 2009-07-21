@@ -39,6 +39,7 @@ eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
 int CTeamFortress2Mod :: m_iArea = 0;
 float CTeamFortress2Mod::m_fSetupTime = 0.0f;
+float CTeamFortress2Mod::m_fRoundTime = 0.0f;
 
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 {
@@ -65,9 +66,19 @@ bool CTeamFortress2Mod :: isHealthKit ( edict_t *pEntity )
 {
 	return strncmp(pEntity->GetClassName(),"item_healthkit",14)==0;
 }
+void CTeamFortress2Mod :: resetSetupTime ()
+{
+	m_fRoundTime = engine->Time() + m_fSetupTime;
+}
+
+bool CTeamFortress2Mod::hasRoundStarted ()
+{
+	return (engine->Time() > m_fRoundTime);
+}
 
 void CTeamFortress2Mod :: setSetupTime ( int time )
 {
+  m_fRoundTime = 0;
   m_fSetupTime = (float)time;
 }
 
@@ -759,6 +770,8 @@ void CTeamFortress2Mod :: mapInit ()
 	m_iArea = 0;
 
 	m_fSetupTime = 0.0f;
+
+	m_fRoundTime = 0.0f;
 
 	CPoints::loadMapScript();
 }

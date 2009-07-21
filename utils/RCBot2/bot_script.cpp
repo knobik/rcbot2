@@ -294,7 +294,9 @@ void CPoints :: loadMapScript ( )
 
 	freeMemory();
 	
-	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_SCRIPT_FOLDER,BOT_SCRIPT_EXTENSION);
+	//CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_SCRIPT_FOLDER,BOT_SCRIPT_EXTENSION);
+
+	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,BOT_SCRIPT_EXTENSION,true);
 
 	FILE *fp = CBotGlobals::openFile(filename,"r");
 

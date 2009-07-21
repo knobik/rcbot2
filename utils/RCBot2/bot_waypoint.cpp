@@ -765,7 +765,12 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 				CWaypointTypes::printInfo(this,pEdict,1.0);
 
 				if ( m_iFlags )
-					debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+32.0f),0,1,255,255,255,255,"%d",m_iArea);
+				{
+					if ( CPoints::isValidArea(m_iArea) )
+						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+16.0f),0,1,255,255,255,255,"%d",m_iArea);	
+					else
+						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+16.0f),0,1,255,0,0,255,"%d",m_iArea);
+				}
 			}
 		}
 	case DRAWTYPE_DEBUGENGINE:

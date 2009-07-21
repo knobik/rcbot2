@@ -146,6 +146,8 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 		CPoints::resetPoints();
 	  // MUST BE AFTER RESETPOINTS
 	  CBots::botFunction(roundstart);
+
+	  CTeamFortress2Mod::resetSetupTime();
 	
 }
 

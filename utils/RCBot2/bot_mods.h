@@ -295,6 +295,10 @@ public:
 
 	static void setSetupTime ( int time );
 
+	static void resetSetupTime ();
+
+	static bool hasRoundStarted ();
+
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
@@ -306,6 +310,8 @@ private:
 	static int m_iArea;
 
 	static float m_fSetupTime;
+
+	static float m_fRoundTime;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

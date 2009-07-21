@@ -525,13 +525,13 @@ void CBot :: think ()
 	
 	checkStuck();
 
+	m_bOpenFire = true;
+
 	getTasks();	
 
 	// update m_pEnemy with findEnemy()
 	m_pOldEnemy = m_pEnemy;
 	m_pEnemy = NULL;
-
-	m_bOpenFire = true;
 
 	m_pSchedules->execute(this);
 
