@@ -388,7 +388,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			succ = &paths[iSucc];
 			succWpt = CWaypoints::getWaypoint(iSucc);
 
-			if ( !m_pBot->canGotoWaypoint(vOrigin,succWpt) )
+			if ( (iSucc != m_iGoalWaypoint) && !m_pBot->canGotoWaypoint(vOrigin,succWpt) )
 				continue;
 
 			fCost = curr->getCost()+(succWpt->distanceFrom(vOrigin));

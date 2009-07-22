@@ -268,13 +268,18 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( m_fTime == 0 )
 		{
+			float fdist = pBot->distanceFrom(m_vMoveTo);
 			m_fTime = engine->Time() + randomFloat(5.0,10.0);
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
 
-			if ( pBot->distanceFrom(m_vMoveTo) < 32 )
+			if ( fdist < 32 )
 				pBot->stopMoving(5);
+			else if ( fdist > 400 )
+				fail();
 			else
+			{				
 				pBot->setMoveTo(m_vMoveTo,3);
+			}
 
 			pBot->setLookAtTask(LOOK_AROUND,5);
 		}
@@ -430,13 +435,18 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( m_fTime == 0 )
 		{
+			float fdist = pBot->distanceFrom(m_vMoveTo);
 			m_fTime = engine->Time() + randomFloat(5.0,10.0);
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
 
-			if ( pBot->distanceFrom(m_vMoveTo) < 32 )
+			if ( fdist < 32 )
 				pBot->stopMoving(5);
+			else if ( fdist > 400 )
+				fail();
 			else
-				pBot->setMoveTo(m_vMoveTo,3);			
+			{				
+				pBot->setMoveTo(m_vMoveTo,3);
+			}		
 		}
 		else if ( m_fTime < engine->Time() )
 		{
