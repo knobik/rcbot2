@@ -542,7 +542,10 @@ void CBot :: think ()
 		m_pNavigator->updatePosition();
 	}
 	else
-		stopMoving();
+	{
+		stopMoving(2);
+		setLookAtTask(LOOK_AROUND,2);
+	}
 
 	if ( m_pOldEnemy )
 		findEnemy(m_pOldEnemy); // any better enemies than this one?
@@ -1144,7 +1147,7 @@ void CBot :: listenForPlayers ()
 
 	if ( m_bListenPositionValid )
 	{
-		m_fListenTime = engine->Time() + randomFloat(2.0f,5.0f);
+		m_fListenTime = engine->Time() + randomFloat(2.0f,4.0f);
 	}
 }
 

@@ -1,6 +1,6 @@
 0.5
 - rcbot waypoint cut
-- fixed engineer crash
+- fixed an engineer building crash
 - rcbot waypoint copy
 - rcbot waypoint paste
 - performance command rcbot_visrevs (default 10, 2 maybe good enough)
