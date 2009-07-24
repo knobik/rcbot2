@@ -174,7 +174,12 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 	{
 	case 1: // pickup
 		if ( pBot && pBot->isTF() )
+		{
 			((CBotTF2*)pBot)->pickedUpFlag();
+		}
+
+		if ( pPlayer )
+			CTeamFortress2Mod::flagPickedUp(CTeamFortress2Mod::getTeam(pPlayer),pPlayer);
 		break;
 	case 2: // captured
 		{
@@ -193,7 +198,8 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 				((CBotTF2*)pBot)->droppedFlag();	
 			}
 		
-			
+			if ( pPlayer )
+				CTeamFortress2Mod::flagDropped(CTeamFortress2Mod::getTeam(pPlayer));
 
 			
 		}
@@ -213,7 +219,8 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 				((CBotTF2*)pBot)->droppedFlag();
 
 			
-			
+			if ( pPlayer )
+				CTeamFortress2Mod::flagDropped(CTeamFortress2Mod::getTeam(pPlayer));
 		}
 		break;
 	default:	

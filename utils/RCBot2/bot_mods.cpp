@@ -40,6 +40,8 @@ tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
 int CTeamFortress2Mod :: m_iArea = 0;
 float CTeamFortress2Mod::m_fSetupTime = 0.0f;
 float CTeamFortress2Mod::m_fRoundTime = 0.0f;
+edict_t *CTeamFortress2Mod::m_pFlagCarrierRed = NULL;
+edict_t *CTeamFortress2Mod::m_pFlagCarrierBlue = NULL;
 
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 {
@@ -772,6 +774,9 @@ void CTeamFortress2Mod :: mapInit ()
 	m_fSetupTime = 0.0f;
 
 	m_fRoundTime = 0.0f;
+
+	m_pFlagCarrierRed = NULL;
+	m_pFlagCarrierBlue = NULL;
 
 	CPoints::loadMapScript();
 }

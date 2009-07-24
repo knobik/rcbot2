@@ -341,6 +341,23 @@ private:
 	float m_fTime;
 };
 
+/*
+
+To Do
+
+
+class CBotTF2DeployStickies : public CBotTask
+{
+public:
+	CBotTF2DeployStickies (); // going here
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	float m_fReloadTime;
+	float m_fTime;
+};*/
+
 class CBotTFRocketJump : public CBotTask
 {
 public:

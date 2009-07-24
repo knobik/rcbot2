@@ -299,6 +299,26 @@ public:
 
 	static bool hasRoundStarted ();
 
+	static void flagPickedUp (int iTeam, edict_t *pPlayer)
+	{
+		if ( iTeam == TF2_TEAM_BLUE )
+			m_pFlagCarrierBlue = pPlayer;
+		else if ( iTeam == TF2_TEAM_RED )
+			m_pFlagCarrierRed = pPlayer;
+	}
+
+	static void flagDropped (int iTeam)
+	{
+		if ( iTeam == TF2_TEAM_BLUE )
+			m_pFlagCarrierBlue = NULL;
+		else if ( iTeam == TF2_TEAM_RED )
+			m_pFlagCarrierRed = NULL;
+	}
+
+	static bool isFlagCarrier (edict_t *pPlayer)
+	{
+		return (m_pFlagCarrierBlue==pPlayer)||(m_pFlagCarrierRed==pPlayer);
+	}
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
@@ -312,6 +332,9 @@ private:
 	static float m_fSetupTime;
 
 	static float m_fRoundTime;
+
+	static edict_t *m_pFlagCarrierRed;
+	static edict_t *m_pFlagCarrierBlue;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

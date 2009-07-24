@@ -841,8 +841,12 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	// stickies destroyed now
+	m_bDeployedStickies = false;
+
 	m_fBlockPushTime = 0.0f;
 
+	// update current areas
 	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
 	m_fDoubleJumpTime = 0.0f;
@@ -1616,16 +1620,26 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 
 	if ( ((ENTINDEX(pEnemy) > 0)&&(ENTINDEX(pEnemy)<=gpGlobals->maxClients)) )
 	{		
-		int iclass = CClassInterface::getTF2Class(pEnemy);
-
-		if ( iclass == TF_CLASS_MEDIC )
+		if ( CTeamFortress2Mod::isFlagCarrier(pEnemy) )
 		{
-			fPreFactor = -150;
+			// shoot flag carrier even if 1000 units away from nearest enemy
+			fPreFactor = -1000;
 		}
-		else if ( iclass == TF_CLASS_SPY )
+		else
 		{
-			fPreFactor = -100;
-		}		
+			int iclass = CClassInterface::getTF2Class(pEnemy);
+
+			if ( iclass == TF_CLASS_MEDIC )
+			{
+				// shoot medic even if 250 units further from nearest enemy (approx. healing range)
+				fPreFactor = -250;
+			}
+			else if ( iclass == TF_CLASS_SPY ) 
+			{
+				// shoot spy even if a little further from nearest enemy
+				fPreFactor = -150;
+			}
+		}
 	}
 	else
 	{

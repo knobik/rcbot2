@@ -285,14 +285,17 @@ protected:
 	float m_fUpdateClass;
 	float m_fUseTeleporterTime;
 
-	bool m_bHasFlag;
-	
+	bool m_bHasFlag;	
 };
-
+//
+//
+//
+//
 class CBotTF2 : public CBotFortress
 {
 public:
 
+	// 
 	CBotTF2() 
 	{ 
 		CBotFortress(); 
@@ -307,8 +310,10 @@ public:
 		m_pRedPayloadBomb = NULL;
 		m_pBluePayloadBomb = NULL;
 		m_bFixWeapons = false;
+		m_bDeployedStickies = false;
 	}
 
+	//
 	void fixWeapons ();
 
 	void checkDependantEntities ();
@@ -393,18 +398,27 @@ public:
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
 
 private:
+	// time for next jump
 	float m_fDoubleJumpTime;
+	// time bot has taken to sap something
 	float m_fSpySapTime;
+	// 
 	int m_iCurrentDefendArea;
 	int m_iCurrentAttackArea;
+	//
 	bool m_bBlockPushing;
 	float m_fBlockPushTime;
+	//
 	edict_t *m_pDefendPayloadBomb;
 	edict_t *m_pPushPayloadBomb;
 	edict_t *m_pRedPayloadBomb;
 	edict_t *m_pBluePayloadBomb;
+	//
 	bool m_bFixWeapons;
-
+	// if demoman has already deployed stickies this is true
+	// once the demoman explodes them then this becomes false
+	// and it can deploy stickies again
+	bool m_bDeployedStickies;
 };
 
 class CBotFF : public CBotFortress
