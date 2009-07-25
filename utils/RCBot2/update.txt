@@ -1,21 +1,25 @@
 0.5
-- rcbot waypoint cut
+- readded an 'altered' bot belief waypoint system
+- fixed a general crash
 - fixed an engineer building crash
+- rcbot waypoint cut
 - rcbot waypoint copy
 - rcbot waypoint paste
-- performance command rcbot_visrevs (default 10, 2 maybe good enough)
-- performance command rcbot_pathrevs (default 200, 20 maybe good enough)
+- performance command rcbot_visrevs (default 8, 8 maybe good enough) *REDUCED VALUE*
+- performance command rcbot_pathrevs (default 40, 20 maybe good enough) *REDUCED VALUE*
 - new "areaonly" waypoint type
 - new rcbot waypoint drawtype 2
-- added scripting for CP/PL maps (supported: cp_dustbowl)
-- PLR support 
-- added profiling for developers
+- added scripting for CP/PL maps (currently supported: cp_dustbowl/granary/badlands)
+- PLR support
+- added profiling for developers (rcbot debug profile)
 - Reduced Bot FOV to more realistic value
-- Attack code is now non-task based and runs simultaneously with bot tasks
+- changed attacking code. attack code is now non-task based and runs simultaneously with bot tasks
+- changed spy attack code
+- added better bot choice of enemy, e.g. flag carriers have higher priority/ and spies/medics
+
 issues:
-
 engineers can't select wrench sometimes
-
+spy attack still not perfect
 
 0.46
 - provisional Support PLR maps

@@ -2126,7 +2126,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_DEFEND_POINT:
 
-			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam(),m_iCurrentDefendArea,true);
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true);
 
 			if ( pWaypoint )
 			{
