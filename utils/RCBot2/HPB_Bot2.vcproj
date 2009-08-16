@@ -686,6 +686,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\public\dt_send.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Public\eiface.h"
 				>
 			</File>
