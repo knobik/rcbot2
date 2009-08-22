@@ -766,6 +766,10 @@ void CTeamFortress2Mod :: mapInit ()
 		m_MapType = TF_MAP_CART;
 	else if ( strncmp(szmapname,"plr_",4) == 0 )
 		m_MapType = TF_MAP_CARTRACE;
+	else if ( strncmp(szmapname,"arena_",6) == 0 )
+		m_MapType = TF_MAP_ARENA;
+	else if ( strncmp(szmapname,"koth_",5) == 0 )
+		m_MapType = TF_MAP_KOTH;
 	else
 		m_MapType = TF_MAP_DM;
 
