@@ -99,6 +99,7 @@ void CBotProfiles :: setupProfiles ()
 			char *szWeapon;
 			int iVisionTicks;
 			int iPathTicks;
+			int iClass;
 
 			pKVL->parseFile(fp);		
 
@@ -114,8 +115,10 @@ void CBotProfiles :: setupProfiles ()
 				iVisionTicks = m_pDefaultProfile->getVisionTicks();
 			if ( !pKVL->getInt("pathticks",&iPathTicks) )
 				iPathTicks = m_pDefaultProfile->getPathTicks();
+			if ( !pKVL->getInt("class",&iClass) )
+				iClass = 0;
 
-			m_Profiles.push_back(new CBotProfile(szName,szModel,iTeam,szWeapon,iVisionTicks,iPathTicks));
+			m_Profiles.push_back(new CBotProfile(szName,szModel,iTeam,szWeapon,iVisionTicks,iPathTicks,iClass));
 
 			delete pKVL;
 

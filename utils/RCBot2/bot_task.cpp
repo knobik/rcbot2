@@ -74,13 +74,13 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 		((CBotFortress*)pBot)->clearHealingEntity();
 		pBot->getNavigator()->rollBackPosition();
 		fail();
-	}
+	}/*
 	else if ( !pBot->isVisible(pHeal) )
 	{
 		pBot->getNavigator()->rollBackPosition();
 		((CBotFortress*)pBot)->clearHealingEntity();
 		fail();
-	}
+	}*/
 	else if ( pBot->distanceFrom(pHeal) > 200 )
 	{
 		((CBotFortress*)pBot)->clearHealingEntity();
