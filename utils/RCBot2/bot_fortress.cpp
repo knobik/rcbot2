@@ -88,6 +88,7 @@ void CBroadcastRoundStart :: execute ( CBot *pBot )
 CBotFortress :: CBotFortress()
 { 
 	CBot(); 
+	m_fSnipeAttackTime = 0;
 	m_pAmmo = NULL;
 	m_pHealthkit = NULL;
 	m_pFlag = NULL; 
@@ -348,6 +349,7 @@ void CBotFortress :: spawnInit ()
 
 	m_fPickupTime = 0.0f;
 
+	m_fSnipeAttackTime = 0.0f;
 	m_fSpyCloakTime = engine->Time() + randomFloat(10.0f,15.0f);
 
 	m_fLastSaySpy = 0.0f;
@@ -1919,9 +1921,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	
 	// only attack if attack area is > 0
-	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,(m_iCurrentAttackArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility));
+	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,(m_iCurrentAttackArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility));
 	// only defend if defend area is > 0
-	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) &&(CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
+	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
 	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
 	{
@@ -2058,6 +2060,14 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 		{
 		case BOT_UTIL_DEFEND_PAYLOAD_BOMB:
 			{
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true);
+
+				if ( pWaypoint )
+				{
+					m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin()));
+					return true;
+				}
+
 				if ( m_pDefendPayloadBomb )
 				{
 					m_pSchedules->add(new CBotTF2DefendPayloadBombSched(m_pDefendPayloadBomb));
@@ -2463,8 +2473,11 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 			if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
 				secondaryAttack();
 
-			if ( randomInt(0,100) > 98 )
+			if ( m_fSnipeAttackTime < engine->Time() )
+			{
 				primaryAttack();
+				m_fSnipeAttackTime = engine->Time() + randomFloat(0.5f,3.0f);
+			}
 		}
 		else if ( !bSecAttack )
 		{

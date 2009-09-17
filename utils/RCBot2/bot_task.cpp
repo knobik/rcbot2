@@ -1000,6 +1000,7 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CWeapon *pWeapon;
 
 	pBot->wantToShoot(false);
+	pBot->wantToListen(false);
 
 	if ( m_fTime == 0.0f )
 	{

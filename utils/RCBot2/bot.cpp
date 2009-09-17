@@ -525,7 +525,10 @@ void CBot :: think ()
 	
 	checkStuck();
 
+	// 
 	m_bOpenFire = true;
+	m_bWantToListen = true;
+	//
 
 	getTasks();	
 
@@ -554,7 +557,8 @@ void CBot :: think ()
 
 	updateConditions();
 
-	listenForPlayers();
+	if ( m_bWantToListen )
+		listenForPlayers();
 
 	/*pvVelocity = CClassInterface::getVelocity(m_pEdict);
 
@@ -768,6 +772,7 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_bWantToListen = true;
 	m_iPrevWeaponSelectFailed = 0;
 	m_bOpenFire = true;
 	m_fListenTime = 0.0f;

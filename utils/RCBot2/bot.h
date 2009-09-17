@@ -513,6 +513,7 @@ public:
 
 	inline bool wantToShoot ( void ) { return m_bOpenFire; }
 	inline void wantToShoot ( bool bSet ) { m_bOpenFire = bSet; }
+	inline void wantToListen ( bool bSet ) { m_bWantToListen = bSet; }
 
 protected:
 
@@ -666,6 +667,10 @@ protected:
 	float m_fListenTime;
 	bool m_bOpenFire;
 	unsigned int m_iPrevWeaponSelectFailed;
+
+	bool m_bWantToListen;
+
+
 };
 
 class IBotFunction

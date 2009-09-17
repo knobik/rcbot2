@@ -286,6 +286,7 @@ protected:
 	float m_fUseTeleporterTime;
 
 	bool m_bHasFlag;	
+	float m_fSnipeAttackTime;
 };
 //
 //
