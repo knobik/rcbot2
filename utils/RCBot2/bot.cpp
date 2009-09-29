@@ -1690,7 +1690,7 @@ void CBot :: duck ( bool hold )
 // TO DO: perceptron method
 bool CBot::wantToFollowEnemy ()
 {
-	return ((m_pPlayerInfo->GetHealth()/m_pPlayerInfo->GetMaxHealth())>0.5);
+	return getHealthPercent() > 0.5;
 }
 ////////////////////////////
 void CBot :: getTasks (unsigned int iIgnore)

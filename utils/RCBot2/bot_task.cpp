@@ -1187,7 +1187,8 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 48 )
 		{
-			pBot->updatePosition();
+			pBot->getNavigator()->freeMapMemory();
+			
 			complete();
 		}
 		else

@@ -1561,6 +1561,9 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	edict_t *pWeapon;
 
 	Vector vOrigin = CBotGlobals::entityOrigin(m_pHeal);
+
+	if ( !m_pHeal )
+		return false;
 	
 	if ( !wantToHeal(m_pHeal) )
 		return false;
@@ -1604,7 +1607,8 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 
 	p = playerinfomanager->GetPlayerInfo(pPlayer);
 
-	if ( ((((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth())<0.25) || ((((float)p->GetHealth())/p->GetMaxHealth())<0.25) )
+	// Simple UBER check
+	if ( ((((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth())<0.25) || (getHealthPercent()<0.25) )
 	{
 		if ( randomInt(0,100) > 50 )
 		{
