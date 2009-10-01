@@ -1497,7 +1497,7 @@ bool CBotFortress :: wantToFollowEnemy ()
 	// incase enemy was a sentry gun, do a check here, make sure it is a player 
 	p = playerinfomanager->GetPlayerInfo(m_pLastEnemy);
 	
-	if ( p->IsPlayer() && (CClassInterface::getTF2Class(m_pLastEnemy) == TF_CLASS_SPY) && (thinkSpyIsEnemy(m_pLastEnemy)) )
+	if ( p && p->IsPlayer() && (CClassInterface::getTF2Class(m_pLastEnemy) == TF_CLASS_SPY) && (thinkSpyIsEnemy(m_pLastEnemy)) )
 		return true; // always find spies!
 	
 	return CBot::wantToFollowEnemy();
