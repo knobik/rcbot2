@@ -1483,24 +1483,19 @@ bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
 
 bool CBotFortress :: wantToFollowEnemy ()
 {
-	IPlayerInfo *p;
+    if ( !m_pLastEnemy )
+        return false;
+    if ( hasFlag() )
+        return false;
+    if ( getClass() == TF_CLASS_SCOUT )
+        return false;
+    if ( (m_iClass == TF_CLASS_SPY) && isDisguised() ) // sneak around the enemy
+        return true;
 
-	if ( !m_pLastEnemy )
-		return false;
-	if ( hasFlag() )
-		return false;
-	if ( getClass() == TF_CLASS_SCOUT )
-		return false;
-	if ( (m_iClass == TF_CLASS_SPY) && isDisguised() ) // sneak around the enemy
-		return true;
-
-	// incase enemy was a sentry gun, do a check here, make sure it is a player 
-	p = playerinfomanager->GetPlayerInfo(m_pLastEnemy);
-	
-	if ( p && p->IsPlayer() && (CClassInterface::getTF2Class(m_pLastEnemy) == TF_CLASS_SPY) && (thinkSpyIsEnemy(m_pLastEnemy)) )
-		return true; // always find spies!
-	
-	return CBot::wantToFollowEnemy();
+    if ( ((ENTINDEX(m_pLastEnemy) > 0)&&(ENTINDEX(m_pLastEnemy)<=gpGlobals->maxClients)) && (CClassInterface::getTF2Class(m_pLastEnemy) == TF_CLASS_SPY) && (thinkSpyIsEnemy(m_pLastEnemy)) )
+        return true; // always find spies!
+    
+    return CBot::wantToFollowEnemy();
 }
 
 void CBotTF2 :: foundSpy (edict_t *pEdict)
