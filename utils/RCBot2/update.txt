@@ -1,3 +1,38 @@
+0.52
+- sniper changes (they shoot more with sniper rifle)
+- snipers no longer look around to listen to sounds when sniping
+- fixed possible engineer crashes
+- fixed possible medic crash
+- fixed possible divide by zero crash
+- added support for defend waypoints on PL/PLR map scripts
+- rcbot waypoint load <mapname> command
+- added 'class' in bot profile
+- medics keep healing if looking away from healing player
+
+ issues/todo:
+  [] spies still cannot sap (*engine issue?)
+  [] demo's cannot set pipe traps  
+  [] bots don't always use teleports (some situations only)
+
+ KNOWN limitations:
+  All of these limitations are effects of the Orange Box SDK lack 
+  of 3rd party bot support, which are caused by the double speed/double 
+  timing issue:
+ 
+    [] bots still cannot crouch 
+    [] pyro's flame still does not show
+    [] sometimes engineers can't select wrench
+     [] other bots sometimes can't select the weapon they want
+      [] sometimes bots use melee weapon from long range
+    [] soldier rocket jumps are not perfect
+    [] scout double jumps are not perfect
+    [] bots can still move when bonked
+
+0.51
+- supports latest classless update
+- supports capturing on KOTH maps
+- supports capturing on ARENA maps
+
 0.5
 - readded an 'altered' bot belief waypoint system
 - fixed a general crash

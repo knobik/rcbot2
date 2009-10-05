@@ -75,6 +75,8 @@
 
 #include "bot_wpt_dist.h"
 
+#include "bot_configfile.h"
+
 static ICvar *s_pCVar;
 
 ConVar bot_visrevs("rcbot_visrevs","9",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
@@ -86,7 +88,7 @@ ConVar bot_anglespeed( "rcbot_anglespeed", "12.0", 0, "speed that bots turn" );
 ConVar bot_stop( "rcbot_stop", "0", 0, "Make bots stop thinking!");
 ConVar bot_waypointpathdist("rcbot_wpt_pathdist","512",0,"Length for waypoints to automatically add paths at");
 ConVar bot_rj("rcbot_rj","0.01",0,"time for soldier to fire rocket after jumping");
-ConVar bot_defrate("rcbot_defrate","0.35",0,"rate for bots to defend");
+ConVar bot_defrate("rcbot_defrate","0.24",0,"rate for bots to defend");
 ConVar bot_beliefmulti("rcbot_beliefmulti","10.0",0,"multiplier for bot belief");
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
@@ -232,6 +234,9 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	CWaypointTypes::setup();
 	CWaypoints::setupVisibility();
 
+	CBotConfigFile::reset();	
+	CBotConfigFile::load();
+
 	CRCBotPlugin::ShowLicense();	
 
 	RandomSeed((unsigned int)time(NULL));
@@ -348,7 +353,7 @@ void CRCBotPlugin::LevelInit( char const *pMapName )
 	CWaypoints::load();
 
 	CBotGlobals::setMapRunning(true);
-	
+	CBotConfigFile::reset();
 	
 	//ConVar *pTeamplay = (ConVar*)rcbotd_command.GetCommands()->FindCommand("mp_teamplay");
 
@@ -397,12 +402,17 @@ void CRCBotPlugin::GameFrame( bool simulating )
 		{
 			CWaypoints::getVisiblity()->workVisibility();
 		}
+
+		// Profiling
 #ifdef _DEBUG
 		if ( CClients::clientsDebugging(BOT_DEBUG_PROFILE) )
 		{
 			CProfileTimers::updateAndDisplay();
 		}
 #endif
+
+		// Config Commands
+		CBotConfigFile::doNextCommand();
 	}
 }
 

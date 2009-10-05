@@ -874,11 +874,15 @@ bool CWaypoints :: save ( bool bVisiblityMade )
 }
 
 // load waypoints
-bool CWaypoints :: load ()
+bool CWaypoints :: load (const char *szMapName)
 {
 	char filename[1024];	
 
-	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_EXTENSION,true);
+	// open explicit map name waypoints
+	if ( szMapName == NULL )
+		CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_EXTENSION,true);
+	else
+		CBotGlobals::buildFileName(filename,szMapName,BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_EXTENSION,true);
 
 	FILE *bfp = CBotGlobals::openFile(filename,"rb");
 
@@ -906,7 +910,17 @@ bool CWaypoints :: load ()
 		fclose(bfp);
 		return false;
 	}
-	if ( !FStrEq(header.szMapName,CBotGlobals::getMapName()) )
+
+	if ( szMapName )
+	{
+		if ( !FStrEq(header.szMapName,szMapName) )
+		{
+			CBotGlobals::botMessage(NULL,0,"Error loading waypoints: Map name mismatch");
+			fclose(bfp);
+			return false;
+		}
+	}
+	else if ( !FStrEq(header.szMapName,CBotGlobals::getMapName()) )
 	{
 		CBotGlobals::botMessage(NULL,0,"Error loading waypoints: Map name mismatch");
 		fclose(bfp);
@@ -924,7 +938,8 @@ bool CWaypoints :: load ()
 
 	bool bWorkVisibility = true;
 
-	if ( header.iFlags & W_FILE_FL_VISIBILITY )
+	// if we're loading from another map, just load visibility, save effort!
+	if ( (szMapName == NULL) && (header.iFlags & W_FILE_FL_VISIBILITY) )
 		bWorkVisibility = ( !m_pVisibilityTable->ReadFromFile() );
 
 	for ( int i = 0; i < iSize; i ++ )
@@ -947,7 +962,9 @@ bool CWaypoints :: load ()
 	if ( bWorkVisibility ) // say a message
 		Msg(" *** No waypoint visibility file ***\n *** Working out waypoint visibility information... ***\n");
 
-	CWaypointDistances::load();
+	// if we're loading from another map just do this again!
+	if ( szMapName == NULL )
+		CWaypointDistances::load();
 
 	return true;
 }
@@ -1062,6 +1079,7 @@ void CWaypoints :: init ()
 	Q_memset(m_theWaypoints,0,sizeof(CWaypoint)*MAX_WAYPOINTS);	
 
 	CWaypointLocations::Init();
+	CWaypointDistances::reset();
 	m_pVisibilityTable->ClearVisibilityTable();
 }
 

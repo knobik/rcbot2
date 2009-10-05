@@ -344,7 +344,7 @@ public:
 	// save waypoints
 	static bool save ( bool bVisiblityMade );
 	// load waypoints
-	static bool load ();
+	static bool load (const char *szMapName = NULL);
 
 	static inline bool validWaypointIndex ( int iIndex )
 	{

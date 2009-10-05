@@ -1435,7 +1435,7 @@ void CBot :: getLookAtVector ()
 			{
 				m_fLookAroundTime = engine->Time() + randomFloat(4.0f,8.0f);
 
-				m_vLookAroundOffset = Vector(randomFloat(-256.0f,256.0f),randomFloat(-256.0f,256.0f),randomFloat(-128.0f,64.0f));
+				m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
 			}
 
 			setLookAt(m_vWaypointAim+m_vLookAroundOffset);
