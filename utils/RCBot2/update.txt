@@ -6,7 +6,7 @@
 - fixed possible divide by zero crash
 - added support for defend waypoints on PL/PLR map scripts
 - rcbot waypoint load <mapname> command
-- added 'class' in bot profile
+- added 'class' in bot profiles
 - medics keep healing if looking away from healing player
 
  issues/todo:
