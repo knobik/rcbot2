@@ -772,6 +772,7 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_fUseRouteTime = 0.0f;
 	m_bWantToListen = true;
 	m_iPrevWeaponSelectFailed = 0;
 	m_bOpenFire = true;

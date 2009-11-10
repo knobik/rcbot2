@@ -123,6 +123,7 @@ public:
 	static const int W_FL_TELE_EXIT = 131072;
 	static const int W_FL_DEFEND = 262144;
 	static const int W_FL_AREAONLY = 524288;
+	static const int W_FL_ROUTE = 1048576;
 
 	static void setup ();
 

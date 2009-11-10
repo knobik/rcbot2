@@ -669,6 +669,7 @@ protected:
 	unsigned int m_iPrevWeaponSelectFailed;
 
 	bool m_bWantToListen;
+	float m_fUseRouteTime;
 
 
 };

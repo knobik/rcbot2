@@ -1,17 +1,24 @@
+
+0.53
+- fixed: bots roaming instead of defending issue
+- fixed: reduced engineer wrenching distance
+
+Snipers still face wrong way
+
 0.52
-- sniper changes (they shoot more with sniper rifle)
+- sniper changes (they shoot more with sniper rifle) -- bug still exists where they face the wrong direction sometimes
 - snipers no longer look around to listen to sounds when sniping
 - fixed possible engineer crashes
 - fixed possible medic crash
 - fixed possible divide by zero crash
 - added support for defend waypoints on PL/PLR map scripts
-- rcbot waypoint load <mapname> command
+- rcbot waypoint load <mapname> command, (use "rcbot waypoint save" after loading)
 - added 'class' in bot profiles
 - medics keep healing if looking away from healing player
 
  issues/todo:
   [] spies still cannot sap (*engine issue?)
-  [] demo's cannot set pipe traps  
+  [] demo's cannot set pipe traps (yet)  
   [] bots don't always use teleports (some situations only)
 
  KNOWN limitations:

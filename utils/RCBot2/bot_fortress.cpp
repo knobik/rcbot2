@@ -1924,7 +1924,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_FLAG_LASTKNOWN, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && (m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time())), fDefendFlagUtility+(randomFloat(0.0,0.2)-0.1)));
 	utils.addUtility(CBotUtility(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95));	
 
-	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.1));
+	utils.addUtility(CBotUtility(BOT_UTIL_ROAM,true,0.0001));
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	
 	// only attack if attack area is > 0
@@ -2137,7 +2137,22 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
+				CWaypoint *pRoute = NULL;
+
+				if ( m_fUseRouteTime < engine->Time() )
+				{
+				// find random route
+					pRoute = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_ROUTE,getTeam(),m_iCurrentAttackArea,true);
+				}
+
+				if ( pRoute )
+				{
+					m_fUseRouteTime = engine->Time() + randomFloat(40.0f,80.0f);
+					m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea(),true,pRoute->getOrigin()));
+				}
+				else
+					m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
+
 				return true;
 			}
 			break;
@@ -2521,7 +2536,7 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 	{
 		clearFailedWeaponSelect();
 
-		if ( distanceFrom(vOrigin) > 100 )
+		if ( distanceFrom(vOrigin) > 92 )
 		{
 			setMoveTo(vOrigin,3);			
 		}

@@ -1468,7 +1468,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_TELE_EXIT,"teleexit","engineer bot can build tele exit here",WptColor(100,100,255)));
 	addType(new CWaypointType(W_FL_DEFEND,"defend","bot will defend at this position",WptColor(160,50,50)));
 	addType(new CWaypointType(W_FL_AREAONLY,"areaonly","bot will only use this waypoint at certain areas of map",WptColor(150,200,150)));
-	
+	addType(new CWaypointType(W_FL_ROUTE,"route","bot will attempt to go through one of these",WptColor(100,100,100)));
 }
 
 void CWaypointTypes :: freeMemory ()
