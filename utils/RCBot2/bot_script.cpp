@@ -328,11 +328,11 @@ void CPoints :: loadMapScript ( )
 			// control character
 			if ( line[0] == ':' )
 			{
-				/*if ( strncmp(&line[1],"point_open_time:",16) == 0 )
+				if ( strncmp(&line[1],"arena_point_time:",17) == 0 )
 				{
-					CTeamFortress2Mod::setPointOpenTime(atoi(&line[17]));
+					CTeamFortress2Mod::setPointOpenTime(atoi(&line[18]));
 				}
-				else*/ if ( strncmp(&line[1],"setup_time:",11) == 0 )
+				else if ( strncmp(&line[1],"setup_time:",11) == 0 )
 				{
 					CTeamFortress2Mod::setSetupTime(atoi(&line[12]));
 				}

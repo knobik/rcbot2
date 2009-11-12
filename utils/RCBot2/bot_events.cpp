@@ -59,6 +59,8 @@ void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 
 	if ( pBot )
 		pBot->shot(m_pActivator);
+
+	//CBots::botFunction()
 }
 
 void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )

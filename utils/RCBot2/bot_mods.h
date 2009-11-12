@@ -295,9 +295,13 @@ public:
 
 	static void getNextPoints (int iPoint,int iTeam,int iMyTeam,int *iCurrentDefendArea,int *iCurrentAttackArea);
 
+	static void setPointOpenTime ( int time );
+
 	static void setSetupTime ( int time );
 
 	static void resetSetupTime ();
+
+	static bool isArenaPointOpen ();
 
 	static bool hasRoundStarted ();
 
@@ -337,6 +341,9 @@ private:
 
 	static edict_t *m_pFlagCarrierRed;
 	static edict_t *m_pFlagCarrierBlue;
+
+	static float m_fPointTime;
+	static float m_fArenaPointOpenTime;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

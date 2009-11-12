@@ -210,6 +210,8 @@ public:
 
 	bool isTeleporterUseful ( edict_t *pTele );
 
+	void waitForFlag ( Vector *vOrigin, float *fWait );
+
 	void flagDropped ( Vector vOrigin );
 	void teamFlagDropped ( Vector vOrigin );
 

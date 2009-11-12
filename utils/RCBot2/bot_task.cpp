@@ -194,36 +194,7 @@ void CBotTF2WaitFlagTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else
 	{		
-		if ( ((CBotFortress*)pBot)->seeFlag(false) != NULL )
-		{
-			edict_t *m_pFlag = ((CBotFortress*)pBot)->seeFlag(false);
-
-			if ( CBotGlobals::entityIsValid(m_pFlag) )
-			{
-				pBot->lookAtEdict(m_pFlag);
-				pBot->setLookAtTask(LOOK_EDICT,2);
-				m_vOrigin = CBotGlobals::entityOrigin(m_pFlag);
-				m_fWaitTime = engine->Time() + 5.0f;
-			}
-			else
-				((CBotFortress*)pBot)->seeFlag(true);
-		}
-		else
-			pBot->setLookAtTask(LOOK_AROUND);
-
-		if ( pBot->distanceFrom(m_vOrigin) > 48 )
-			pBot->setMoveTo(m_vOrigin,2);
-		else
-		{
-			if ( (((CBotFortress*)pBot)->getClass() == TF_CLASS_SPY) && ((CBotFortress*)pBot)->isDisguised() )
-			{
-				pBot->primaryAttack();
-			}
-			pBot->stopMoving(2);
-		}
-
-		((CBotTF2*)pBot)->taunt();
-	
+		((CBotFortress*)pBot)->waitForFlag(&m_vOrigin,&m_fWaitTime);
 	}
 }
 
@@ -273,7 +244,12 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
 
 			if ( fdist < 32 )
+			{
 				pBot->stopMoving(5);
+
+				if ( (((CBotTF2*)pBot)->getClass() == TF_CLASS_SPY) && (((CBotTF2*)pBot)->isDisguised()))
+					pBot->primaryAttack(); // remove disguise to capture
+			}
 			else if ( fdist > 400 )
 				fail();
 			else
@@ -1090,7 +1066,7 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-	if ( m_fTime )
+	if ( !m_fTime )
 		m_fTime = engine->Time() + randomFloat(4.0f,6.0f);
 
 	CBotTF2 *tf2Bot = (CBotTF2*)pBot;

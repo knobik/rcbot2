@@ -42,6 +42,8 @@ float CTeamFortress2Mod::m_fSetupTime = 0.0f;
 float CTeamFortress2Mod::m_fRoundTime = 0.0f;
 edict_t *CTeamFortress2Mod::m_pFlagCarrierRed = NULL;
 edict_t *CTeamFortress2Mod::m_pFlagCarrierBlue = NULL;
+float CTeamFortress2Mod::m_fArenaPointOpenTime = 0.0f;
+float CTeamFortress2Mod::m_fPointTime = 0.0f;
 
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 {
@@ -68,9 +70,16 @@ bool CTeamFortress2Mod :: isHealthKit ( edict_t *pEntity )
 {
 	return strncmp(pEntity->GetClassName(),"item_healthkit",14)==0;
 }
+
+bool CTeamFortress2Mod :: isArenaPointOpen ()
+{
+	return m_fArenaPointOpenTime < engine->Time();
+}
+
 void CTeamFortress2Mod :: resetSetupTime ()
 {
 	m_fRoundTime = engine->Time() + m_fSetupTime;
+	m_fArenaPointOpenTime = engine->Time() + m_fPointTime;
 }
 
 bool CTeamFortress2Mod::hasRoundStarted ()
@@ -78,9 +87,15 @@ bool CTeamFortress2Mod::hasRoundStarted ()
 	return (engine->Time() > m_fRoundTime);
 }
 
+void CTeamFortress2Mod :: setPointOpenTime ( int time )
+{
+	m_fArenaPointOpenTime = 0.0f;
+	m_fPointTime = (float)time;
+}
+
 void CTeamFortress2Mod :: setSetupTime ( int time )
 {
-  m_fRoundTime = 0;
+  m_fRoundTime = 0.0f;
   m_fSetupTime = (float)time;
 }
 

@@ -158,8 +158,11 @@ void CBotTF2GetAmmoSched ::  init ()
 }
 
 //////////////////////////////////////////////
-CBotTF2GetFlagSched :: CBotTF2GetFlagSched ( Vector vOrigin )
+CBotTF2GetFlagSched :: CBotTF2GetFlagSched ( Vector vOrigin, bool bUseRoute, Vector vRoute )
 {
+	if ( bUseRoute )
+		addTask(new CFindPathTask(vRoute));
+
 	addTask(new CFindPathTask(vOrigin)); // first
 	addTask(new CBotTF2WaitFlagTask(vOrigin)); // second
 }

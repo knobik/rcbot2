@@ -1304,9 +1304,9 @@ int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist,
 	return iwpt;
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea )
+CWaypoint *CWaypoints :: randomRouteWaypoint ( Vector vOrigin, Vector vGoal, int iTeam, int iArea )
 {
-	int i = 0;
+	register int i = 0;
 	int size = numWaypoints();
 	CWaypoint *pWpt;
 
@@ -1318,13 +1318,69 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, 
 
 		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) )// && (pWpt->getArea() == iArea) )
 		{
-			if ( !bForceArea && !CPoints::isValidArea(pWpt->getArea()) )
-				continue;
-			else if ( bForceArea && (pWpt->getArea() != iArea) )
-				continue;
+			if ( pWpt->hasFlag(CWaypointTypes::W_FL_ROUTE) )
+			{
+			    if ((pWpt->getArea() != iArea) )
+					continue;
 
+				// CHECK THAT ROUTE WAYPOINT IS USEFUL...
+
+				Vector vRoute = pWpt->getOrigin();
+
+				//if ( (vRoute - vOrigin).Length() < (vGoal - vOrigin).Length() )
+				//{
+					Vector vecLOS;
+					float flDot;
+					Vector vForward;
+					// in fov? Check angle to edict
+					vForward = vGoal - vOrigin;
+					vForward = vForward/vForward.Length(); // normalise
+
+					vecLOS = vRoute - vOrigin;
+					vecLOS = vecLOS/vecLOS.Length(); // normalise
+
+					flDot = DotProduct (vecLOS , vForward );
+
+					if ( flDot > 0.17f ) // 80 degrees
+						goals.Add(pWpt);
+				//}
+			}
+		}
+	}
+
+	pWpt = NULL;
+
+	if ( !goals.IsEmpty() )
+		pWpt = goals.Random();
+
+	goals.Clear();
+
+	return pWpt;
+}
+
+CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea )
+{
+	register int i = 0;
+	int size = numWaypoints();
+	CWaypoint *pWpt;
+
+	dataUnconstArray<CWaypoint*> goals;
+
+	for ( i = 0; i < size; i ++ )
+	{
+		pWpt = &m_theWaypoints[i];
+
+		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) )// && (pWpt->getArea() == iArea) )
+		{
 			if ( (iFlags == -1) || pWpt->hasFlag(iFlags) )
+			{
+				if ( !bForceArea && !CPoints::isValidArea(pWpt->getArea()) )
+					continue;
+				else if ( bForceArea && (pWpt->getArea() != iArea) )
+					continue;
+			
 				goals.Add(pWpt);
+			}
 		}
 	}
 

@@ -817,6 +817,40 @@ void CBotFortress :: selectClass ()
 	helpers->ClientCommand(m_pEdict,buffer);
 }
 
+void CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait )
+{
+		if ( seeFlag(false) != NULL )
+		{
+			edict_t *m_pFlag = seeFlag(false);
+
+			if ( CBotGlobals::entityIsValid(m_pFlag) )
+			{
+				lookAtEdict(m_pFlag);
+				setLookAtTask(LOOK_EDICT,2);
+				*vOrigin = CBotGlobals::entityOrigin(m_pFlag);
+				*fWait = engine->Time() + 5.0f;
+			}
+			else
+				seeFlag(true);
+		}
+		else
+			setLookAtTask(LOOK_AROUND);
+
+		if ( distanceFrom(*vOrigin) > 48 )
+			setMoveTo(*vOrigin,2);
+		else
+		{
+			if ( (getClass() == TF_CLASS_SPY) && isDisguised() )
+			{
+				primaryAttack();
+			}
+
+			stopMoving(2);
+		}
+		
+		//taunt();
+}
+
 void CBotFortress :: foundSpy (edict_t *pEdict) 
 {
 	m_pPrevSpy = pEdict;
@@ -1359,10 +1393,10 @@ void CBotTF2 :: modThink ()
 			{
 				secondaryAttack();
 			}
-
-			/*if ( m_pNearestEnemySentry && ( m_fSpySapTime < engine->Time() ))
+/* --- Sapping --- not working
+			if ( m_pNearestEnemySentry && ( m_fSpySapTime < engine->Time() ))
 			{
-				m_fSpySapTime = engine->Time() + randomFloat(2.0f,7.0f);
+				m_fSpySapTime = engine->Time() + randomFloat(3.0f,8.0f);
 
 				if ( !m_pSchedules->isCurrentSchedule(SCHED_SPY_SAP_BUILDING) )
 				{
@@ -1798,7 +1832,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		int iAllyDispLevel = 0;
 
 		float fEntranceDist = 99999.0f;
-		float fExitDist = 99999.0f;		
+		float fExitDist = 99999.0f;
 
 		float fAllyDispenserHealthPercent = 1.0f;
 		float fAllySentryHealthPercent = 1.0f;
@@ -1928,7 +1962,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	
 	// only attack if attack area is > 0
-	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,(m_iCurrentAttackArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility));
+	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,(m_iCurrentAttackArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||(CTeamFortress2Mod::isMapType(TF_MAP_ARENA)&&CTeamFortress2Mod::isArenaPointOpen())||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility));
 	// only defend if defend area is > 0
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
@@ -2138,20 +2172,23 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			if ( pWaypoint )
 			{
 				CWaypoint *pRoute = NULL;
+				Vector vRoute = Vector(0,0,0);
+				bool bUseRoute = false;
 
-				if ( m_fUseRouteTime < engine->Time() )
+				if ( (m_fUseRouteTime < engine->Time()) )
 				{
 				// find random route
-					pRoute = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_ROUTE,getTeam(),m_iCurrentAttackArea,true);
+					pRoute = CWaypoints::randomRouteWaypoint(getOrigin(),pWaypoint->getOrigin(),getTeam(),m_iCurrentAttackArea);
+
+					if ( pRoute )
+					{
+						bUseRoute = true;
+						vRoute = pRoute->getOrigin();
+						m_fUseRouteTime = engine->Time() + randomFloat(30.0f,60.0f);
+					}
 				}
 
-				if ( pRoute )
-				{
-					m_fUseRouteTime = engine->Time() + randomFloat(40.0f,80.0f);
-					m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea(),true,pRoute->getOrigin()));
-				}
-				else
-					m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
+				m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea(),bUseRoute,vRoute));
 
 				return true;
 			}
@@ -2323,9 +2360,28 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotTF2GetFlagSched(pWaypoint->getOrigin()));
+				CWaypoint *pRoute = NULL;
+				Vector vRoute = Vector(0,0,0);
+				bool bUseRoute = false;
+
+				if ( (m_fUseRouteTime < engine->Time()) )
+				{
+				// find random route
+					pRoute = CWaypoints::randomRouteWaypoint(getOrigin(),pWaypoint->getOrigin(),getTeam(),m_iCurrentAttackArea);
+
+					if ( pRoute )
+					{
+						bUseRoute = true;
+						vRoute = pRoute->getOrigin();
+						m_fUseRouteTime = engine->Time() + randomFloat(30.0f,60.0f);
+					}
+				}
+
+				m_pSchedules->add(new CBotTF2GetFlagSched(pWaypoint->getOrigin(),bUseRoute,vRoute));
+
 				return true;
 			}
+				
 			break;
 		case BOT_UTIL_ROAM:
 			// roam
