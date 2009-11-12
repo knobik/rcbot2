@@ -146,7 +146,7 @@ eBotCommandResult CWaypointPaste :: execute ( CClient *pClient, const char *pcmd
 {
 	if ( pClient )
 	{
-		CWaypoints::addWaypoint(pClient,true);
+		CWaypoints::addWaypoint(pClient,NULL,NULL,NULL,NULL,true);
 		return COMMAND_ACCESSED;
 	}
 
@@ -414,31 +414,49 @@ eBotCommandResult CWaypointGiveTypeCommand :: execute ( CClient *pClient, const 
 			CBotGlobals::botMessage(pEntity,0,"No waypoint nearby to give types (move closer to the waypoint you want to give types)");
 		else
 		{
-			CWaypointType *pType = CWaypointTypes::getType(pcmd);
+			char *type = NULL;
 
-			if ( pType )
+			for ( int i = 0; i < 4; i ++ )
 			{
-				CWaypoint *pWaypoint = CWaypoints::getWaypoint(pClient->currentWaypoint());
+				if ( i == 0 )
+					type = (char*)pcmd;
+				else if ( i == 1 )
+					type = (char*)arg1;
+				else if ( i == 2 )
+					type = (char*)arg2;
+				else if ( i == 3 )
+					type = (char*)arg3;
 
-				if ( pWaypoint )
+				if ( !type || !*type )
+					break;
+
+				CWaypointType *pType = CWaypointTypes::getType(type);
+
+				if ( pType )
 				{
-					if ( pWaypoint->hasFlag(pType->getBits()) )
+					CWaypoint *pWaypoint = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+					if ( pWaypoint )
 					{
-						pWaypoint->removeFlag(pType->getBits());
-						CBotGlobals::botMessage(pEntity,0,"type %s removed from waypoint %d",pcmd,CWaypoints::getWaypointIndex(pWaypoint));
+						if ( pWaypoint->hasFlag(pType->getBits()) )
+						{
+							pWaypoint->removeFlag(pType->getBits());
+							CBotGlobals::botMessage(pEntity,0,"type %s removed from waypoint %d",type,CWaypoints::getWaypointIndex(pWaypoint));
+						}
+						else
+						{
+							pWaypoint->addFlag(pType->getBits());
+							CBotGlobals::botMessage(pEntity,0,"type %s added to waypoint %d",type,CWaypoints::getWaypointIndex(pWaypoint));
+						}
+						
 					}
-					else
-					{
-						pWaypoint->addFlag(pType->getBits());
-						CBotGlobals::botMessage(pEntity,0,"type %s added to waypoint %d",pcmd,CWaypoints::getWaypointIndex(pWaypoint));
-					}
-					
 				}
-			}
-			else
-			{
-				CBotGlobals::botMessage(pEntity,0,"type not found");
-				CWaypointTypes::showTypesOnConsole(pEntity);
+				else
+				{
+					CBotGlobals::botMessage(pEntity,0,"type '%s' not found",type);
+					CWaypointTypes::showTypesOnConsole(pEntity);
+				}
+
 			}
 		}
 	}
@@ -481,7 +499,7 @@ CWaypointAddCommand::CWaypointAddCommand()
 
 eBotCommandResult CWaypointAddCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
-	CWaypoints::addWaypoint(pClient);
+	CWaypoints::addWaypoint(pClient,pcmd,arg1,arg2,arg3);
 
 	return COMMAND_ACCESSED;
 }

@@ -318,7 +318,7 @@ public:
 
 	static void drawWaypoints ( CClient *pClient );
 
-	static void addWaypoint ( CClient *pClient, bool bUseTemplate = false );
+	static void addWaypoint ( CClient *pClient, const char *type1, const char *type2,const char *type3,const char *type4, bool bUseTemplate = false );
 
 	static void addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags = CWaypointTypes::W_FL_NONE, bool bAutoPath = false, int iYaw = 0, int iArea = 0, float fRadius = 0 );
 

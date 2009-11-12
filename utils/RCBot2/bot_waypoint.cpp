@@ -1203,13 +1203,42 @@ void CWaypoints :: deletePathsFrom ( int iWpt )
 	m_theWaypoints[iWpt].clearPaths();
 }
 
-void CWaypoints :: addWaypoint ( CClient *pClient, bool bUseTemplate )
+void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char *type2,const char *type3,const char *type4,  bool bUseTemplate )
 {
 	int iFlags = 0;
 	Vector vWptOrigin = pClient->getOrigin();
 	QAngle playerAngles = CBotGlobals::playerAngles (pClient->getPlayer());
 
-	
+	if ( type1 && *type1 )
+	{
+		CWaypointType *t = CWaypointTypes::getType(type1);
+
+		if ( t )
+			iFlags |= t->getBits();
+
+		if ( type2 && *type2 )
+		{
+			t = CWaypointTypes::getType(type2);
+			if ( t )
+				iFlags |= t->getBits();
+
+			if ( type3 && *type3 )
+			{
+				t = CWaypointTypes::getType(type3);
+				if ( t )
+					iFlags |= t->getBits();
+
+				if ( type4 && *type4 )
+				{
+					t = CWaypointTypes::getType(type4);
+					if ( t )
+						iFlags |= t->getBits();
+				}
+			}
+
+		}
+
+	}
 	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pClient->getPlayer());
 
 	/*CBasePlayer *pPlayer = (CBasePlayer*)(CBaseEntity::Instance(pClient->getPlayer()));
