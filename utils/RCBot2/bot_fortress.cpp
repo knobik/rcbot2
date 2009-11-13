@@ -72,6 +72,14 @@ void CBroadcastFlagDropped :: execute ( CBot *pBot )
 		((CBotTF2*)pBot)->teamFlagDropped(m_vOrigin);
 }
 
+void CBotTF2FunctionEnemyAtIntel :: execute (CBot *pBot)
+{
+	if ( pBot->getTeam() != m_iTeam )
+	{
+		((CBotTF2*)pBot)->enemyAtIntel(m_vPos,m_iType);
+	}
+}
+
 void CBroadcastFlagCaptured :: execute ( CBot *pBot )
 {
 	if ( pBot->getTeam() == m_iTeam )
@@ -348,6 +356,7 @@ void CBotFortress :: spawnInit ()
 	CBot::spawnInit();
 
 	m_fPickupTime = 0.0f;
+	m_fDefendTime = 0.0f;
 
 	m_fSnipeAttackTime = 0.0f;
 	m_fSpyCloakTime = engine->Time() + randomFloat(10.0f,15.0f);
@@ -2795,29 +2804,49 @@ bool CBotFF :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	return true;	
 }
 
-// --------------------------------------------------------------------------
-// Hackathon tiem
 
-// Auto reconstructed from vtable block @ 0x00D3D380
-// from "server_i486.so", by ida_vtables.idc
-/*
-#define TF_GetServerClass 9
-
-class VfuncEmptyClass {}; 
-
-void VFuncs_GetServerClass(CBaseEntity *pThisPtr)
+// Go back to Cap/Flag to 
+void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 {
-	void **this_ptr = *(void ***)&pThisPtr;
-	void **vtable = *(void ***)pThisPtr;
-	void *func = vtable[TF_GetServerClass]; 
- 
-	union {CBaseEntity *(VfuncEmptyClass::*mfpnew)( void );
-	#ifndef __linux__
-			void *addr;	} u; 	u.addr = func;
-	#else // GCC's member function pointers all contain a this pointer adjustor. You'd probably set it to 0 
-				struct {void *addr; intptr_t adjustor;} s; } u; u.s.addr = func; u.s.adjustor = 0;
-	#endif
- 
-	return(int)(reinterpret_cast<VfuncEmptyClass*>(this_ptr)->*u.mfpnew)();
+	if ( !m_pPlayerInfo )
+		return;
+
+	if ( !isAlive() )
+		return;
+	
+	if ( hasFlag() )
+		return;
+
+	if ( m_fDefendTime > engine->Time() )
+		return;
+
+	if ( type == EVENT_CAPPOINT )
+	{
+		if ( !m_iCurrentDefendArea )
+			return;
+
+		CWaypoint *pWpt = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,CTeamFortress2Mod::getEnemyTeam(getTeam()),m_iCurrentDefendArea,true);
+
+		if ( !pWpt )
+		{
+			return;
+		}
+
+		vPos = pWpt->getOrigin();
+	}
+
+	if ( !m_pNavigator->hasNextPoint() || ((m_pNavigator->getGoalOrigin()-getOrigin()).Length() > ((vPos-getOrigin()).Length())) )
+	{
+		dataUnconstArray<int> *failed;
+		m_pNavigator->getFailedGoals(&failed);
+		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPos,400,-1,true,false,true,failed,false,getTeam(),true));
+		if ( pWpt )
+		{
+		m_pSchedules->freeMemory();
+		m_pSchedules->add(new CBotGotoOriginSched(pWpt->getOrigin()));
+		m_fDefendTime = engine->Time() + randomFloat(10.0f,20.0f);
+		}
+	}
+	
 }
-*/
+

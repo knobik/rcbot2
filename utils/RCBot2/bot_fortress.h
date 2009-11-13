@@ -69,6 +69,19 @@ typedef enum
 	ENGI_DESTROY
 }eEngiCmd;
 
+
+class CBotTF2FunctionEnemyAtIntel : public IBotFunction
+{
+public:
+	CBotTF2FunctionEnemyAtIntel( int iTeam, Vector vPos, int type ){m_iTeam = iTeam;m_vPos = vPos;m_iType = type;}
+
+	void execute (CBot *pBot);
+private:
+	int m_iTeam;
+	Vector m_vPos;
+	int m_iType;
+};
+
 class CBroadcastFlagDropped : public IBotFunction
 {
 public:
@@ -111,6 +124,8 @@ private:
 	const char *m_szName;
 };
 
+#define EVENT_FLAG_PICKUP 0
+#define EVENT_CAPPOINT    1
 
 class CBotFortress : public CBot
 {
@@ -242,6 +257,7 @@ protected:
 	float m_fCallMedic;
 	float m_fTauntTime;
 	float m_fTaunting;
+	float m_fDefendTime;
 
 	edict_t *m_pHeal;
 	edict_t *m_pSentryGun;
@@ -316,6 +332,7 @@ public:
 		m_bDeployedStickies = false;
 	}
 
+	void enemyAtIntel ( Vector vPos, int type = EVENT_FLAG_PICKUP );
 	//
 	void fixWeapons ();
 

@@ -243,12 +243,12 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			m_fTime = engine->Time() + randomFloat(5.0,10.0);
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
 
+			if ( (((CBotTF2*)pBot)->getClass() == TF_CLASS_SPY) && (((CBotTF2*)pBot)->isDisguised()))
+				pBot->primaryAttack(); // remove disguise to capture
+
 			if ( fdist < 32 )
 			{
 				pBot->stopMoving(5);
-
-				if ( (((CBotTF2*)pBot)->getClass() == TF_CLASS_SPY) && (((CBotTF2*)pBot)->isDisguised()))
-					pBot->primaryAttack(); // remove disguise to capture
 			}
 			else if ( fdist > 400 )
 				fail();

@@ -1917,7 +1917,7 @@ void CBots :: botFunction ( IBotFunction *function )
 {
 	for ( unsigned int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		if ( m_Bots[i]->inUse() )
+		if ( m_Bots[i]->inUse() && m_Bots[i]->getEdict() )
 			function->execute (m_Bots[i]);
 	}
 }

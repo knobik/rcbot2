@@ -71,6 +71,20 @@ bool CTeamFortress2Mod :: isHealthKit ( edict_t *pEntity )
 	return strncmp(pEntity->GetClassName(),"item_healthkit",14)==0;
 }
 
+void CTeamFortress2Mod:: flagPickedUp (int iTeam, edict_t *pPlayer)
+{
+	if ( iTeam == TF2_TEAM_BLUE )
+		m_pFlagCarrierBlue = pPlayer;
+	else if ( iTeam == TF2_TEAM_RED )
+		m_pFlagCarrierRed = pPlayer;
+
+	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(iTeam,CBotGlobals::entityOrigin(pPlayer),EVENT_FLAG_PICKUP);
+
+	CBots::botFunction(function);
+
+	delete function;
+}
+
 bool CTeamFortress2Mod :: isArenaPointOpen ()
 {
 	return m_fArenaPointOpenTime < engine->Time();

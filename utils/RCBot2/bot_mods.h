@@ -305,13 +305,7 @@ public:
 
 	static bool hasRoundStarted ();
 
-	static void flagPickedUp (int iTeam, edict_t *pPlayer)
-	{
-		if ( iTeam == TF2_TEAM_BLUE )
-			m_pFlagCarrierBlue = pPlayer;
-		else if ( iTeam == TF2_TEAM_RED )
-			m_pFlagCarrierRed = pPlayer;
-	}
+	static void flagPickedUp (int iTeam, edict_t *pPlayer);
 
 	static void flagDropped (int iTeam)
 	{

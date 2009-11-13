@@ -153,6 +153,29 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	
 }
 
+void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
+{/*
+ [RCBot] [DEBUG game_event] teamplay_point_startcapture
+[RCBot] [DEBUG game_event] cp = 0
+[RCBot] [DEBUG game_event] cpname = #Dustbowl_cap_1_A
+[RCBot] [DEBUG game_event] team = 2
+[RCBot] [DEBUG game_event] capteam = 3
+[RCBot] [DEBUG game_event] captime = 64.134995
+[RCBot] [DEBUG game_event] cappers = 
+[RCBot] [DEBUG game_event] priority = 7
+*/
+    int capteam = pEvent->getInt("capteam",0);
+//	const char *cpname = pEvent->getString("cpname","");
+//	int cp = pEvent->getInt("cp",0);
+
+	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(capteam,Vector(0,0,0),EVENT_CAPPOINT);
+
+	CBots::botFunction(function);
+
+	delete function;
+	
+}
+
 void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
 {
 	CBroadcastCapturedPoint *cap = new CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"),pEvent->getString("cpname"));
@@ -269,6 +292,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CTF2ChangeClass());
 	addEvent(new CTF2RoundStart());
 	addEvent(new CTF2PointCaptured());
+	addEvent(new CTF2PointStartCapture());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

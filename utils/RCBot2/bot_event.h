@@ -196,6 +196,16 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2PointStartCapture : public CBotEvent
+{
+public:
+	CTF2PointStartCapture()
+	{
+		setType("teamplay_point_startcapture");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
 
 class CTF2RoundStart : public CBotEvent
 {
