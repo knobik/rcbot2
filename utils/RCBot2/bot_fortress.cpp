@@ -2835,7 +2835,8 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 		vPos = pWpt->getOrigin();
 	}
 
-	if ( !m_pNavigator->hasNextPoint() || ((m_pNavigator->getGoalOrigin()-getOrigin()).Length() > ((vPos-getOrigin()).Length())) )
+	// everyone go back to cap point unless doing something important
+	if ( (type == EVENT_CAPPOINT) || (!m_pNavigator->hasNextPoint() || ((m_pNavigator->getGoalOrigin()-getOrigin()).Length() > ((vPos-getOrigin()).Length()))) )
 	{
 		dataUnconstArray<int> *failed;
 		m_pNavigator->getFailedGoals(&failed);

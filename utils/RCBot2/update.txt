@@ -1,9 +1,22 @@
 
-0.53
+0.53 BETA
+- added: allowed bots to take different routes (needs updated waypoints with "route waypoints")
+   (Works with supplied cp_dustbowl waypoints)
+   ONLY WORKS ON CTF/CP maps with UPDATED WAYPOINTS
+- fixed: spies remove disguise when trying to capture point
+- added: arena_point_time:<time> in script for arena maps
+- added: route waypoints (givetype route), make these the same area as 
+         attacking position (0 if ctf map) and give team type if appropriate
 - fixed: bots roaming instead of defending issue
 - fixed: reduced engineer wrenching distance
+- changed: increased spy attack distance with knife (still to improve)
+- changed: reduced soldiers need to use shotgun a little
+- added: bots return to cap point or flag if intel/cap point is being taken
+- allowed additions of editing up to four waypoint types at once
+- rcbot waypoint add <type 1> <type 2> <type 3> <type 4>
+- rcbot waypoint givetype <type 1> <type 2> <type 3> <type 4>
 
-Snipers still face wrong way
+to fix... Snipers still face wrong way...
 
 0.52
 - sniper changes (they shoot more with sniper rifle) -- bug still exists where they face the wrong direction sometimes
