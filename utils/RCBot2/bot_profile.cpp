@@ -101,6 +101,11 @@ void CBotProfiles :: setupProfiles ()
 			int iPathTicks;
 			int iClass;
 
+			float skill;
+			float aim_skill;
+			float aim_time;
+			float aim_speed;
+
 			pKVL->parseFile(fp);		
 
 			if ( !pKVL->getInt("team",&iTeam) )
@@ -117,6 +122,14 @@ void CBotProfiles :: setupProfiles ()
 				iPathTicks = m_pDefaultProfile->getPathTicks();
 			if ( !pKVL->getInt("class",&iClass) )
 				iClass = 0;
+			if ( !pKVL->getFloat("skill",&skill) )
+				skill = 0;
+			if ( !pKVL->getFloat("aim_speed",&aim_speed) )
+				aim_speed = 0;
+			if ( !pKVL->getFloat("aim_time",&aim_time) )
+				aim_time = 0;
+			if ( !pKVL->getFloat("aim_skill",&aim_skill) )
+				aim_skill = 0;
 
 			m_Profiles.push_back(new CBotProfile(szName,szModel,iTeam,szWeapon,iVisionTicks,iPathTicks,iClass));
 

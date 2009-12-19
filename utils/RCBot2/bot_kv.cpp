@@ -90,6 +90,20 @@ CRCBotKeyValue *CRCBotKeyValueList :: getKV ( char *key )
 	return NULL;
 }
 
+bool CRCBotKeyValueList :: getFloat ( char *key, float *val )
+{
+	CRCBotKeyValue *pKV;
+
+	pKV = getKV(key);
+
+	if ( !pKV )
+		return false;
+	
+	*val = atof(pKV->getValue());
+
+	return true;
+}
+
 	
 bool CRCBotKeyValueList :: getInt ( char *key, int *val )
 {

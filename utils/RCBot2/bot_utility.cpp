@@ -64,7 +64,12 @@ const char *g_szUtils[BOT_UTIL_MAX] =
 	"BOT_UTIL_FIND_NEAREST_AMMO",
 	"BOT_UTIL_ATTACK_POINT",
 	"BOT_UTIL_DEFEND_POINT",
-	"BOT_UTIL_DEFEND_FLAG"
+	"BOT_UTIL_DEFEND_FLAG",
+    "BOT_UTIL_ENGI_LOOK_AFTER_SENTRY",
+    "BOT_UTIL_DEFEND_FLAG_LASTKNOWN",
+    "BOT_UTIL_PUSH_PAYLOAD_BOMB",
+    "BOT_UTIL_DEFEND_PAYLOAD_BOMB",
+	"BOT_UTIL_MEDIC_HEAL"
 };
 
 // Execute a list of possible actions and put them into order of available actions against utility

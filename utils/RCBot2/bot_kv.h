@@ -41,6 +41,8 @@ public:
 
 	bool getString ( char *key, char **val );
 
+	bool getFloat ( char *key, float *val );
+
 private:
 
 	CRCBotKeyValue *getKV ( char *key );

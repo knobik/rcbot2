@@ -2841,11 +2841,12 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 		dataUnconstArray<int> *failed;
 		m_pNavigator->getFailedGoals(&failed);
 		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPos,400,-1,true,false,true,failed,false,getTeam(),true));
+
 		if ( pWpt )
 		{
-		m_pSchedules->freeMemory();
-		m_pSchedules->add(new CBotGotoOriginSched(pWpt->getOrigin()));
-		m_fDefendTime = engine->Time() + randomFloat(10.0f,20.0f);
+			m_pSchedules->freeMemory();
+			m_pSchedules->add(new CBotGotoOriginSched(pWpt->getOrigin()));
+			m_fDefendTime = engine->Time() + randomFloat(10.0f,20.0f);
 		}
 	}
 	
