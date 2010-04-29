@@ -214,7 +214,23 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	LOAD_INTERFACE(debugoverlay,IVDebugOverlay,VDEBUG_OVERLAY_INTERFACE_VERSION);
 	LOAD_INTERFACE(gameeventmanager,IGameEventManager2,INTERFACEVERSION_GAMEEVENTSMANAGER2)
 	LOAD_INTERFACE(gameeventmanager1,IGameEventManager,INTERFACEVERSION_GAMEEVENTSMANAGER)
-	LOAD_GAME_SERVER_INTERFACE(servergamedll,IServerGameDLL,"ServerGameDLL006");
+
+	if ( (servergamedll = (IServerGameDLL*)gameServerFactory("ServerGameDLL006",NULL)) == NULL ) 
+	{ 
+		Msg("[RCBOT] Cannot open game server interface ServerGameDLL006 for TF2\nChecking for older version..");
+
+		if ( (servergamedll = (IServerGameDLL*)gameServerFactory(INTERFACEVERSION_SERVERGAMEDLL,NULL)) == NULL )
+		{
+			Warning("[RCBOT] Cannot open older game server interface\n");
+			return false;
+		}
+		else
+			Msg("[RCBOT] Found older game server interface");
+	}
+	else
+		Msg("[RCBOT] Found interface ServerGameDLL006 for TF2\n"); 
+
+	//LOAD_GAME_SERVER_INTERFACE(servergamedll,IServerGameDLL,"ServerGameDLL006");
 
 	LOAD_GAME_SERVER_INTERFACE(gameclients,IServerGameClients,INTERFACEVERSION_SERVERGAMECLIENTS);
 

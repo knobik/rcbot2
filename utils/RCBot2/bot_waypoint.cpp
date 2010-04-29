@@ -161,7 +161,8 @@ void CWaypointNavigator :: open ( AStarNode *pNode )
 	if ( !pNode->isOpen() )
 	{
 		pNode->open();
-		m_theOpenList.push_back(pNode);
+		//m_theOpenList.push_back(pNode);
+		m_theOpenList.add(pNode);
 	}
 }
 // AStar Algorithm : get the waypoint with lowest cost
@@ -178,7 +179,13 @@ AStarNode *CWaypointNavigator :: nextNode ()
 
 		pNode = t;
 	}*/
+
+	pNode = m_theOpenList.top();
+	m_theOpenList.pop();
 		
+	return pNode;
+
+	/*
 
 	if ( !m_theOpenList.empty() )
 	{
@@ -221,16 +228,19 @@ AStarNode *CWaypointNavigator :: nextNode ()
 		}
 	}
 
-	return pNode;
+	return pNode;*/
 }
 
 // clears the AStar open list
 void CWaypointNavigator :: clearOpenList ()
 {
-	for ( unsigned int i = 0; i < m_theOpenList.size(); i ++ )
-		m_theOpenList[i]->unOpen();
+	m_theOpenList.destroy();
 
-	m_theOpenList.clear();
+
+	//for ( unsigned int i = 0; i < m_theOpenList.size(); i ++ )
+	//	m_theOpenList[i]->unOpen();
+
+	//m_theOpenList.clear();
 }
 
 void CWaypointNavigator :: failMove ()

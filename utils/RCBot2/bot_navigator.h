@@ -149,7 +149,7 @@ public:
 	inline void setCost ( float fCost ) { m_fCost = fCost; }
 	////////////////////////////////////////////////////////
 	// for comparison
-	bool betterCost ( AStarNode *other ) const
+	bool precedes ( AStarNode *other ) const
 	{
 		return (m_fCost+m_fHeuristic) < (other->getCost() + other->getHeuristic());
 	}
@@ -162,6 +162,112 @@ private:
 	short int m_iParent;
 	int m_iWaypoint;
 };
+// Insertion sorted list
+class AStarListNode
+{
+public:
+	AStarListNode ( AStarNode *data )
+	{
+		m_Data = data;
+		m_Next = NULL;
+	}
+	AStarNode *m_Data;
+	AStarListNode *m_Next;
+};
+
+class AStarOpenList
+{
+public:
+	AStarOpenList()
+	{
+		m_Head = NULL;
+	}
+
+	bool empty ()
+	{
+		return (m_Head==NULL);
+	}
+
+	AStarNode *top ()
+	{
+		if ( m_Head == NULL )
+			return NULL;
+		
+		return m_Head->m_Data;
+	}
+
+	void pop ()
+	{
+		if ( m_Head != NULL )
+		{
+			AStarListNode *t = m_Head;
+
+			m_Head = m_Head->m_Next;
+
+			delete t;
+		}
+	}
+
+
+	void add ( AStarNode *data )
+	{
+		AStarListNode *newNode = new AStarListNode(data);
+		AStarListNode *t;
+		AStarListNode *p;
+
+		if ( m_Head == NULL )
+			m_Head = newNode;
+		else
+		{
+			if ( data->precedes(m_Head->m_Data) )
+			{
+				newNode->m_Next = m_Head;
+				m_Head = newNode;
+			}
+			else
+			{
+				p = m_Head;
+				t = m_Head->m_Next;
+
+				while ( t != NULL )
+				{
+					if ( data->precedes(t->m_Data) )
+					{
+						p->m_Next = newNode;
+						newNode->m_Next = t;
+						break;
+					}
+
+					p = t;
+					t = t->m_Next;
+				}
+
+				if ( t == NULL )
+					p->m_Next = newNode;
+
+			}
+		}
+	}
+
+	void destroy ()
+	{
+		AStarListNode *t;
+
+		while ( m_Head != NULL )
+		{
+			t = m_Head;
+			m_Head = m_Head->m_Next;
+			delete t;
+			t = NULL;
+		}
+
+		m_Head = NULL;
+	}
+	
+private:
+	AStarListNode *m_Head;
+};
+
 /*
 struct AstarNodeCompare : binary_function<AStarNode*, AStarNode*, bool> 
 {
@@ -282,7 +388,7 @@ private:
 
 	float m_fBelief [CWaypoints::MAX_WAYPOINTS];
 
-	vector <AStarNode*> m_theOpenList;
+	AStarOpenList m_theOpenList;
 
 	Vector m_vOffset;
 	bool m_bOffsetApplied;

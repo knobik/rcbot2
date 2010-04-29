@@ -2590,6 +2590,8 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 
 	CBotWeapon *pWeapon = getCurrentWeapon();
 
+	wantToListen(false);
+
 	if ( !pWeapon )
 		return false;
 	else if ( pWeapon->getID() != TF2_WEAPON_WRENCH )

@@ -1131,7 +1131,12 @@ void CBot :: listenForPlayers ()
 
 							// look at enemy
 							if ( !isVisible(pPlayer) || isEnemy(pPlayer) )
+							{
 								m_vListenPosition = p->GetAbsOrigin();
+
+								if ( !isEnemy(pPlayer) )
+									m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
+							}
 							else
 							{
 								QAngle angle = p->GetAbsAngles();
@@ -1144,6 +1149,7 @@ void CBot :: listenForPlayers ()
 							}
 
 							m_bListenPositionValid = true;
+							m_fListenTime = engine->Time() + randomFloat(2.0f,4.0f);
 						}
 					}
 				}
@@ -1151,10 +1157,6 @@ void CBot :: listenForPlayers ()
 		}
 	}
 
-	if ( m_bListenPositionValid )
-	{
-		m_fListenTime = engine->Time() + randomFloat(2.0f,4.0f);
-	}
 }
 
 bool CBot :: onLadder ()

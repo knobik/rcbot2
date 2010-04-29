@@ -1,3 +1,7 @@
+0.54 beta
+- works with latest TF2 updates
+- engineers don't listen to things when building
+- improved path finding algorithm speed
 
 0.53 BETA
 - added: allowed bots to take different routes (needs updated waypoints with "route waypoints")

@@ -201,10 +201,10 @@ Vector CClient :: getOrigin ()
 
 	if ( playerinfo )
 	{
-		return playerinfo->GetAbsOrigin() + Vector(0,0,32);
+		return  playerinfo->GetAbsOrigin() + Vector(0,0,32);
 	}
 
-	return CBotGlobals::entityOrigin(m_pPlayer);//m_pPlayer->GetCollideable()->GetCollisionOrigin();
+	return CBotGlobals::entityOrigin(m_pPlayer) + Vector(0,0,32);//m_pPlayer->GetCollideable()->GetCollisionOrigin();
 }
 
 void CClients :: clientActive ( edict_t *pPlayer )
