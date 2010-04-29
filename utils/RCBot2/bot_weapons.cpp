@@ -69,7 +69,9 @@ const char *g_szTF2Weapons[] =
 "tf_weapon_smg",
 "tf_weapon_sniperrifle",
 "tf_weapon_syringegun_medic",
-"tf_weapon_wrench"
+"tf_weapon_wrench",
+"tf_weapon_pda_engineer_destroy",
+"tf_weapon_pda_engineer_build"
 };
 
 int m_TF2AmmoIndices[] =
@@ -114,7 +116,9 @@ TF2WeaponsData_t TF2Weaps[] =
 	{2,TF2_WEAPON_SMG,				g_szTF2Weapons[28],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1000,m_TF2AmmoIndices[28],2},
 	{1,TF2_WEAPON_SNIPERRIFLE,		g_szTF2Weapons[29],	WEAP_FL_PRIM_ATTACK,1000,4000,m_TF2AmmoIndices[29],3},
 	{1,TF2_WEAPON_SYRINGEGUN,			g_szTF2Weapons[30],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1000,m_TF2AmmoIndices[30],2},
-	{3,TF2_WEAPON_WRENCH,				g_szTF2Weapons[31],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[31],1}
+	{3,TF2_WEAPON_WRENCH,				g_szTF2Weapons[31],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[31],1},
+	{5,TF2_WEAPON_ENGIDESTROY,			g_szTF2Weapons[32],0,0,0,0,3},
+	{4,TF2_WEAPON_ENGIBUILD,			g_szTF2Weapons[33],0,0,0,0,3}
 };
 
 

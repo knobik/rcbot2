@@ -544,8 +544,8 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 					{
 						if ( iObject == ENGI_DISP )
 							m_bDispenserVectorValid = false;
-						else if ( iObject == ENGI_EXIT )
-							m_bTeleportExitVectorValid = false;
+						//else if ( iObject == ENGI_EXIT )
+						//	m_bTeleportExitVectorValid = false;
 
 						return 1;
 					}
@@ -556,8 +556,8 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 						m_bSentryGunVectorValid = false;
 					else if ( iObject == ENGI_DISP )
 						m_bDispenserVectorValid = false;
-					else if ( iObject == ENGI_EXIT )
-						m_bTeleportExitVectorValid = false;
+//					else if ( iObject == ENGI_EXIT )
+//						m_bTeleportExitVectorValid = false;
 
 					return 0;
 				}
@@ -928,6 +928,8 @@ void CBotTF2 :: fixWeapons ()
 			m_pWeapons->addWeapon(TF2_WEAPON_SHOTGUN_PRIMARY);
 			m_pWeapons->addWeapon(TF2_WEAPON_PISTOL);
 			m_pWeapons->addWeapon(TF2_WEAPON_WRENCH);
+			//m_pWeapons->addWeapon(TF2_WEAPON_ENGIDESTROY);
+			//m_pWeapons->addWeapon(TF2_WEAPON_ENGIBUILD);
 
 		break;
 
@@ -1006,40 +1008,78 @@ void CBotTF2 :: taunt ()
 	}
 }
 
+
+/*
+lambda-
+NEW COMMAND SYNTAX:
+- "build 2 0" - Build sentry gun
+- "build 0 0" - Build dispenser
+- "build 1 0" - Build teleporter entrance
+- "build 1 1" - Build teleporter exit
+*/
 void CBotTF2 :: engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd )
 {
-	char buffer[16];
-	char cmd[256];
+	//char buffer[16];
+	//char cmd[256];
 
 	if ( iEngiCmd == ENGI_BUILD )
-		strcpy(buffer,"build");
+	{
+		//strcpy(buffer,"build");
+
+		switch ( iBuilding )
+		{
+		case ENGI_DISP :
+			//m_pDispenser = NULL;
+			helpers->ClientCommand(m_pEdict,"build 0 0");
+			break;
+		case ENGI_SENTRY :
+			//m_pSentryGun = NULL;
+			helpers->ClientCommand(m_pEdict,"build 2 0");
+			break;
+		/*case ENGI_ENTRANCE :
+			//m_pTeleEntrance = NULL;
+			helpers->ClientCommand(m_pEdict,"build 1 0");
+			break;
+		case ENGI_EXIT :
+			//m_pTeleExit = NULL;
+			helpers->ClientCommand(m_pEdict,"build 1 1");
+			break;*/
+		default:
+			return;
+			break;
+		}
+	}
 	else
 	{
-		strcpy(buffer,"destroy");
+		//strcpy(buffer,"destroy");
 
 		switch ( iBuilding )
 		{
 		case ENGI_DISP :
 			m_pDispenser = NULL;
+			helpers->ClientCommand(m_pEdict,"destroy 0 0");
 			break;
 		case ENGI_SENTRY :
 			m_pSentryGun = NULL;
+			helpers->ClientCommand(m_pEdict,"destroy 2 0");
 			break;
-		case ENGI_ENTRANCE :
+		/*case ENGI_ENTRANCE :
 			m_pTeleEntrance = NULL;
+			helpers->ClientCommand(m_pEdict,"destroy 1 0");
 			break;
 		case ENGI_EXIT :
 			m_pTeleExit = NULL;
-			break;
+			helpers->ClientCommand(m_pEdict,"destroy 1 1");
+			break;*/
 		default:
 			return;
 			break;
 		}
 	}
 
-	sprintf(cmd,"%s %d",buffer,iBuilding);
+	//sprintf(cmd,"%s %d 0",buffer,iBuilding); // added extra value to end
 
-	helpers->ClientCommand(m_pEdict,cmd);
+	//helpers->ClientCommand(m_pEdict,cmd);
 }
 
 void CBotTF2 :: checkBuildingsValid ()
@@ -1106,12 +1146,12 @@ edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding )
 				case ENGI_DISP :
 					bValid = CTeamFortress2Mod::isDispenser(pEntity,team);
 					break;
-				case ENGI_ENTRANCE :
+				/*case ENGI_ENTRANCE :
 					bValid = CTeamFortress2Mod::isTeleporterEntrance(pEntity,team);
 					break;
 				case ENGI_EXIT:
 					bValid = CTeamFortress2Mod::isTeleporterExit(pEntity,team);
-					break;
+					break;*/
 				case ENGI_SENTRY :
 					bValid = CTeamFortress2Mod::isSentry(pEntity,team);
 					break;
@@ -1133,14 +1173,14 @@ edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding )
 			case ENGI_DISP :
 				m_pDispenser = pBest;
 				break;
-			case ENGI_ENTRANCE :
+/*			case ENGI_ENTRANCE :
 				m_pTeleEntrance = pBest;
 				//m_vTeleportEntrance = CBotGlobals::entityOrigin(pBest);
 				//m_bEntranceVectorValid = true;
 				break;
 			case ENGI_EXIT:
 				m_pTeleExit = pBest;
-				break;
+				break;*/
 			case ENGI_SENTRY :
 				m_pSentryGun = pBest;
 				break;
@@ -1265,12 +1305,12 @@ bool CBotTF2 :: hasEngineerBuilt ( eEngiBuild iBuilding )
 	case ENGI_DISP:
 		return m_pDispenser!=NULL; // TODO
 		break;
-	case ENGI_ENTRANCE:
+	/*case ENGI_ENTRANCE:
 		return m_pTeleEntrance!=NULL; // TODO
 		break;
 	case ENGI_EXIT:
 		return m_pTeleExit!=NULL; // TODO
-		break;
+		break;*/
 	}	
 
 	return false;
@@ -1919,12 +1959,12 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9));
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
-		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),1.0));
-		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
+		//utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),1.0));
+		//utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag && m_pSentryGun && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2)));
 		utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELENT,m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5))));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELEXT,m_pTeleExit!=NULL && (iMetal>=200) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.51) + ((0.5-fTeleporterExitHealthPercent)*0.5)));
+		//utils.addUtility(CBotUtility(BOT_UTIL_UPGTELENT,m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5))));
+		//utils.addUtility(CBotUtility(BOT_UTIL_UPGTELEXT,m_pTeleExit!=NULL && (iMetal>=200) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.51) + ((0.5-fTeleporterExitHealthPercent)*0.5)));
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser!=NULL && (iMetal>=200) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3)));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,(fAmmoDist/fResupplyDist)*(200.0f/(iMetal+1))));
@@ -2229,7 +2269,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				return true;
 			}
 			break;
-		case BOT_UTIL_BUILDTELENT:
+	/*	case BOT_UTIL_BUILDTELENT:
 			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,300,-1,true,false,true,NULL,false,getTeam(),true));
 
 			if ( pWaypoint )
@@ -2256,7 +2296,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				return true;
 			}
 
-			break;
+			break;*/
 		case BOT_UTIL_BUILDSENTRY:
 
 			if ( m_bSentryGunVectorValid )
@@ -2603,7 +2643,7 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 	{
 		clearFailedWeaponSelect();
 
-		if ( distanceFrom(vOrigin) > 92 )
+		if ( distanceFrom(vOrigin) > 85 )
 		{
 			setMoveTo(vOrigin,3);			
 		}
@@ -2742,8 +2782,8 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 		if ( CTeamFortress2Mod::isSentry(pEdict,iEnemyTeam) || 
 			CTeamFortress2Mod::isDispenser(pEdict,iEnemyTeam) || 
-			CTeamFortress2Mod::isTeleporterEntrance(pEdict,iEnemyTeam) || 
-			CTeamFortress2Mod::isTeleporterExit(pEdict,iEnemyTeam) )
+			CTeamFortress2Mod::isTeleporter(pEdict,iEnemyTeam) 
+			/*CTeamFortress2Mod::isTeleporterExit(pEdict,iEnemyTeam)*/ )
 		{
 			bValid = true;
 		}

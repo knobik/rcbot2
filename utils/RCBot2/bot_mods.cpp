@@ -193,7 +193,7 @@ void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *i
 		}
 	}
 }
-
+// to fix
 void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type )
 {
 	QAngle eye = CBotGlobals::playerAngles(pOwner);
@@ -206,7 +206,7 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type )
 	bool bValid;
 	int team;
 
-	if ( (type != ENGI_ENTRANCE) && (type != ENGI_EXIT) )
+	if ( (type != ENGI_TELE ) ) //(type != ENGI_ENTRANCE) && (type != ENGI_EXIT) )
 		return;
 
 	int iIndex = ENTINDEX(pOwner)-1;
@@ -235,12 +235,12 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type )
 			{
 				switch ( type )
 				{
-				case ENGI_ENTRANCE :
-					bValid = CTeamFortress2Mod::isTeleporterEntrance(pEntity,team);
+				case ENGI_TELE :
+					bValid = CTeamFortress2Mod::isTeleporter(pEntity,team);//Entrance(pEntity,team);
 					break;
-				case ENGI_EXIT:
-					bValid = CTeamFortress2Mod::isTeleporterExit(pEntity,team);
-					break;
+				//case ENGI_EXIT:
+				//	bValid = CTeamFortress2Mod::isTeleporter(pEntity,team);//Exit(pEntity,team);
+				//	break;
 				}
 
 				if ( bValid )
@@ -254,7 +254,7 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type )
 
 	if ( pBest )
 	{
-			switch ( type )
+			/*switch ( type )
 			{
 			case ENGI_ENTRANCE :
 				m_Teleporters[iIndex].entrance = MyEHandle(pBest);
@@ -264,7 +264,7 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type )
 				break;
 			default:
 				return;
-			}
+			}*/
 	}
 }
 //
@@ -750,14 +750,53 @@ bool CTeamFortress2Mod :: isSentry ( edict_t *pEntity, int iTeam )
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_sentrygun")==0);
 }
 
+bool CTeamFortress2Mod :: isTeleporter ( edict_t *pEntity, int iTeam )
+{
+	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter")==0);
+}
+
+
 bool CTeamFortress2Mod :: isTeleporterEntrance ( edict_t *pEntity, int iTeam )
 {
-	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter_entrance")==0);
+	/*if ( isTeleporter(pEntity,iTeam))
+	{
+		int i;
+
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			if ( m_Teleporters[i].entrance.get() == pEntity )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}*/
+
+	return false;
+	//return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter_entrance")==0);
 }
 
 bool CTeamFortress2Mod :: isTeleporterExit ( edict_t *pEntity, int iTeam )
 {
-	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter_exit")==0);
+	/*
+	if ( isTeleporter(pEntity,iTeam))
+	{
+		int i;
+
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			if ( m_Teleporters[i].exit.get() == pEntity )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}*/
+
+	return false;
+	//return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter_exit")==0);
 }
 
 bool CTeamFortress2Mod :: isPipeBomb ( edict_t *pEntity, int iTeam)

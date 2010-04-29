@@ -255,6 +255,8 @@ public:
 
 	static bool isSentry ( edict_t *pEntity, int iTeam );
 
+	static bool isTeleporter ( edict_t *pEntity, int iTeam );
+
 	static bool isTeleporterEntrance ( edict_t *pEntity, int iTeam );
 
 	static bool isTeleporterExit ( edict_t *pEntity, int iTeam );

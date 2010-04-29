@@ -53,12 +53,19 @@ enum
 	TF_TEAM_GREEN = 3,
 	TF_TEAM_YELLOW = 4
 };
-
+/*
 typedef enum
 {
 	ENGI_DISP = 0,
 	ENGI_ENTRANCE,
 	ENGI_EXIT,
+	ENGI_SENTRY,
+	ENGI_SAPPER
+}eEngiBuild;*/
+typedef enum
+{
+	ENGI_DISP = 0,
+	ENGI_TELE,
 	ENGI_SENTRY,
 	ENGI_SAPPER
 }eEngiBuild;

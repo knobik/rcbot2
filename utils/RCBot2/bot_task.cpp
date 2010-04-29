@@ -1232,6 +1232,7 @@ void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( (pWeapon != NULL) && (pWeapon != pBot->getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 	{
+		//pBot->selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
 		pBot->selectWeapon(pWeapon->getWeaponIndex());
 	}
 
