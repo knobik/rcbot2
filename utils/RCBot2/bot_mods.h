@@ -289,7 +289,7 @@ public:
 
 	static float TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass );
 
-	static void teleporterBuilt ( edict_t *pOwner, eEngiBuild type );
+	static void teleporterBuilt ( edict_t *pOwner, eEngiBuild type, int index );
 
 	static edict_t *getTeleporterExit ( edict_t *pTele );
 

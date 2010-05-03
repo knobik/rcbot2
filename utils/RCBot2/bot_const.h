@@ -71,6 +71,12 @@ typedef enum
 	LOOK_NOISE
 }eLookTask;
 
+typedef enum
+{
+	TELE_ENTRANCE = 0,
+	TELE_EXIT
+}eTeleMode;
+
 #define BOT_CONFIG_FOLDER "config"
 #define BOT_MOD_FILE "bot_mods"
 #define BOT_ACCESS_CLIENT_FILE "accessclients"

@@ -116,11 +116,11 @@ void CTF2BuiltObjectEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 
-	//CTeamFortress2Mod::teleporterBuilt(m_pActivator,(eEngiBuild)pEvent->getInt("object"));
+	CTeamFortress2Mod::teleporterBuilt(m_pActivator,(eEngiBuild)pEvent->getInt("object"),pEvent->getInt("index"));
 
 	if ( pBot && pBot->isTF() )
 	{
-		((CBotFortress*)pBot)->engiBuildSuccess((eEngiBuild)pEvent->getInt("object"));
+		((CBotFortress*)pBot)->engiBuildSuccess((eEngiBuild)pEvent->getInt("object"),pEvent->getInt("index"));
 	}
 }
 

@@ -1,3 +1,9 @@
+0.545 beta!
+- fixed with latest Tf2 update
+- engi's build teleporters again
+- bots use teleporters again
+- improved engineer building detection
+
 0.54 beta
 - works with latest TF2 updates
 - engineers don't listen to things when building

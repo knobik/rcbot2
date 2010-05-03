@@ -67,7 +67,9 @@ typedef enum
 	ENGI_DISP = 0,
 	ENGI_TELE,
 	ENGI_SENTRY,
-	ENGI_SAPPER
+	ENGI_SAPPER,
+	ENGI_EXIT,
+	ENGI_ENTRANCE,
 }eEngiBuild;
 
 typedef enum
@@ -176,7 +178,7 @@ public:
 
 	virtual void checkHealingValid ();
 
-	virtual edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding ) { return false; }
+	virtual edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding, int index ) { return false; }
 
 	virtual void engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd ) {};
 
@@ -188,7 +190,7 @@ public:
 
 	virtual bool hasEngineerBuilt ( eEngiBuild iBuilding ) {return false;}
 
-	virtual void engiBuildSuccess ( eEngiBuild iObject ) {};
+	virtual void engiBuildSuccess ( eEngiBuild iObject, int index ) {};
 
 	virtual bool healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer ) { return false; }
 	virtual bool upgradeBuilding ( edict_t *pBuilding ) {return false;}
@@ -359,7 +361,7 @@ public:
 
 	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 
-	void engiBuildSuccess ( eEngiBuild iObject );
+	void engiBuildSuccess ( eEngiBuild iObject, int index );
 
 	bool lookAfterBuildings (float *fTime);
 
@@ -381,7 +383,7 @@ public:
 
 	void checkBuildingsValid ();
 
-	edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding );
+	edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding, int index );
 
 	bool isEnemy ( edict_t *pEdict,bool bCheckWeapons = true );
 

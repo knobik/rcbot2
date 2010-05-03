@@ -96,6 +96,7 @@ public:
 	static bool getMedigunHealing ( edict_t *edict );
 	static int getMedigunTarget ( edict_t *edict );
 	static void setTickBase ( edict_t *edict, int tickbase );
+	static int isTeleporterMode (edict_t *edict, eTeleMode mode );
 };
 
 class MyEHandle 

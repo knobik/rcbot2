@@ -846,6 +846,29 @@ int CClassInterface :: getEffects ( edict_t *edict )
 	return *(int *)((char *)pEntity + offset);
 }
 
+int CClassInterface :: isTeleporterMode ( edict_t *edict, eTeleMode mode )
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_iObjectMode","CObjectTeleporter");
+	
+	if (!offset)
+		return 0;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return 0;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return (*(int *)((char *)pEntity + offset))==(int)mode;
+	
+}
+
 bool CClassInterface :: getMedigunHealing ( edict_t *edict )
 {
 	static unsigned int offset = 0;
