@@ -185,6 +185,28 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2ObjectSapped : public CBotEvent
+{
+public:
+	CTF2ObjectSapped()
+	{
+		setType("player_sapped_object");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CTF2ObjectDestroyed : public CBotEvent
+{
+public:
+	CTF2ObjectDestroyed()
+	{
+		setType("object_destroyed");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CTF2PointCaptured : public CBotEvent
 {
 public:

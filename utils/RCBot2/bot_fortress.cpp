@@ -2852,3 +2852,12 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 	
 }
 
+void CBotTF2 :: buildingSapped ( eEngiBuild building, edict_t *pSapper )
+{
+
+}
+
+void CBotTF2 :: sapperDestroyed ( edict_t *pSapper )
+{
+
+}

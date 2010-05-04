@@ -69,7 +69,8 @@ typedef enum
 	SCHED_ATTACKPOINT,
 	SCHED_DEFENDPOINT,
 	SCHED_TF2_PUSH_PAYLOADBOMB,
-	SCHED_TF2_DEFEND_PAYLOADBOMB
+	SCHED_TF2_DEFEND_PAYLOADBOMB,
+	SCHED_TF2_DEMO_PIPETRAP
 }eBotSchedule;
 
 class CBotSchedule
@@ -269,6 +270,14 @@ public:
 
 private:
 	dataQueue <CBotSchedule*> m_Schedules;
+};
+///////////////////////////////////////////
+class CBotTF2DemoPipeTrapSched : public CBotSchedule
+{
+public:
+	CBotTF2DemoPipeTrapSched ( Vector vLoc, Vector vSpread );
+
+	void init();
 };
 
 ///////////////////////////////////////////////////

@@ -112,6 +112,70 @@ void CBulletImpactEvent :: execute ( IBotEventInterface *pEvent )
 	}
 }
 /////////////////////////////////////////
+
+/*
+[RCBot] [DEBUG game_event] player_sapped_object
+[RCBot] [DEBUG game_event] userid = 2
+[RCBot] [DEBUG game_event] ownerid = 4
+[RCBot] [DEBUG game_event] object = 2
+[RCBot] [DEBUG game_event] sapperid = 400
+*/
+void CTF2ObjectSapped :: execute ( IBotEventInterface *pEvent )
+{
+	int owner = pEvent->getInt("ownerid",-1);
+	int building = pEvent->getInt("object",-1);
+	int sapperid = pEvent->getInt("sapperid",-1);
+
+	if ( (owner>=0) && (building>=0) && (sapperid>=0) )
+	{
+		edict_t *pOwner = INDEXENT(owner);
+		edict_t *pSapper = INDEXENT(sapperid);
+		CBotTF2 *pBot = (CBotTF2*)CBots::getBotPointer(pOwner);
+
+		if ( pBot )
+		{
+			pBot->buildingSapped((eEngiBuild)building,pSapper);
+		}
+	}
+}
+/*
+[RCBot] [DEBUG game_event] object_destroyed
+[RCBot] [DEBUG game_event] userid = 2
+[RCBot] [DEBUG game_event] attacker = 4
+[RCBot] [DEBUG game_event] weapon = wrench
+[RCBot] [DEBUG game_event] weapon_logclassname = wrench
+[RCBot] [DEBUG game_event] weaponid = 10
+[RCBot] [DEBUG game_event] priority = 6
+[RCBot] [DEBUG game_event] objecttype = 3
+[RCBot] [DEBUG game_event] index = 436
+[RCBot] [DEBUG game_event] was_building = 0
+*/
+void CTF2ObjectDestroyed :: execute ( IBotEventInterface *pEvent )
+{
+	int owner = pEvent->getInt("userid",-1);
+	int type = pEvent->getInt("objecttype",-1);
+	int index = pEvent->getInt("index",-1);
+	int was_building = pEvent->getInt("was_building",0);
+
+	if ( (owner>=0) && (type>=0) && (index>=0) && (was_building>=0) )
+	{
+		if ( !was_building )
+		{ // could be a sapper
+			if ( (eEngiBuild)type == ENGI_SAPPER )
+			{
+				edict_t *pOwner = INDEXENT(owner);
+				edict_t *pSapper = INDEXENT(index);
+				CBotTF2 *pBot = (CBotTF2*)CBots::getBotPointer(pOwner);
+
+				if ( pBot )
+					pBot->sapperDestroyed(pSapper);
+			}
+		}
+	}
+
+
+}
+
 void CTF2BuiltObjectEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
@@ -288,11 +352,14 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CBulletImpactEvent());
 	addEvent(new CFlagEvent());
 	addEvent(new CPlayerSpawnEvent());
+	////////////// tf2
 	addEvent(new CTF2BuiltObjectEvent());
 	addEvent(new CTF2ChangeClass());
 	addEvent(new CTF2RoundStart());
 	addEvent(new CTF2PointCaptured());
 	addEvent(new CTF2PointStartCapture());
+	addEvent(new CTF2ObjectSapped());
+	addEvent(new CTF2ObjectDestroyed());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

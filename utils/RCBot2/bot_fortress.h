@@ -424,6 +424,10 @@ public:
 	bool upgradeBuilding ( edict_t *pBuilding );
 
 	void setup ();
+
+	void buildingSapped ( eEngiBuild building, edict_t *pSapper );
+
+	void sapperDestroyed ( edict_t *pSapper );
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
 
 private:

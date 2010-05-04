@@ -123,6 +123,23 @@ private:
 	int m_iInt;
 };
 
+class CBotTF2DemomanPipeTrap : public CBotTask
+{
+public:
+	CBotTF2DemomanPipeTrap ( Vector vLoc, Vector vSpread );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotTF2DemomanPipeTrap");
+	}
+private:
+	Vector m_vLocation;
+	Vector m_vSpread;
+
+};
+
 class CBotTF2MedicHeal : public CBotTask
 {
 public:

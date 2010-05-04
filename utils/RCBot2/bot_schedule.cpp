@@ -34,7 +34,22 @@
 #include "bot_client.h"
 #include "bot_weapons.h"
 #include "bot_globals.h"
+////////////////////////////////////
 
+
+CBotTF2DemoPipeTrapSched :: CBotTF2DemoPipeTrapSched ( Vector vLoc, Vector vSpread )
+{
+	addTask(new CFindPathTask(vLoc));
+	addTask(new CBotTF2DemomanPipeTrap(vLoc,vSpread));
+}
+
+void CBotTF2DemoPipeTrapSched :: init()
+{
+	setID(SCHED_TF2_DEMO_PIPETRAP);
+}
+
+
+//////////////////////////////////////
 CBotTF2HealSched::CBotTF2HealSched(edict_t *pHeal)
 {
 	addTask(new CFindPathTask(CBotGlobals::entityOrigin(pHeal)));

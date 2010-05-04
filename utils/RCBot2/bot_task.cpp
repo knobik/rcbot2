@@ -1292,7 +1292,7 @@ void CFindLastEnemy::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	if ( m_fTime < engine->Time() )
 		complete();
 }
-
+////////////////////////////////////////////////////////
 CHideTask :: CHideTask( Vector vHideFrom )
 {
 	m_vHideFrom = vHideFrom;
@@ -1321,6 +1321,18 @@ void CHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	if ( m_fHideTime < engine->Time() )
 		complete();
 }
+//////////////////////////////////////////
+CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( Vector vLoc, Vector vSpread)
+{
+	m_vLocation = vLoc;
+	m_vSpread = vSpread;
+}
+	
+void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Base Task
