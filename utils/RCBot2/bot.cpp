@@ -528,6 +528,7 @@ void CBot :: think ()
 	// 
 	m_bOpenFire = true;
 	m_bWantToListen = true;
+	m_bWantToChangeWeapon = true;
 	//
 
 	getTasks();	
@@ -590,7 +591,7 @@ void CBot :: think ()
 
 		pWeapon = getBestWeapon(m_pEnemy);
 
-		if ( (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
+		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 		{
 			//selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
 			selectWeapon(pWeapon->getWeaponIndex());
@@ -729,7 +730,7 @@ bool CBot::handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		clearFailedWeaponSelect();
 
 		if ( pWeapon->isMelee() )
-			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),2);
+			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),10);
 
 		if ( pWeapon->mustHoldAttack() )
 			primaryAttack(true);

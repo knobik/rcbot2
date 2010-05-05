@@ -1326,11 +1326,23 @@ CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( Vector vLoc, Vector vSpread)
 {
 	m_vLocation = vLoc;
 	m_vSpread = vSpread;
+	m_iState = 0;
+	m_iStickies = 6;
 }
 	
 void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	bool bFail = false;
+	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
+
+	pBot->wantToChangeWeapon(false);
 	
+	pTF2Bot->deployStickies(m_vLocation,m_vSpread,&m_iState,&m_iStickies,&bFail);
+
+	if ( bFail )
+		fail();
+
+
 }
 
 

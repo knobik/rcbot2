@@ -2030,6 +2030,77 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.freeMemory();
 }
 
+
+bool CBotTF2 :: canDeployStickies ()
+{
+	// enough ammo???
+	CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS));
+
+	if ( pWeapon )
+	{
+		return ( pWeapon->getAmmo(this) >= 6 );
+	}
+
+	return false;
+}
+
+#define STICKY_INIT			0
+#define STICKY_SELECTWEAP	1
+#define STICKY_RELOAD		2
+#define STICKY_FACEVECTOR   3
+
+// returns true when finished
+bool CBotTF2 ::deployStickies(Vector vLocation, Vector vSpread, int *iState,int *iStickyNum, bool *bFail)
+{
+	CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS));
+	int iPipesLeft = 0;
+
+	if ( pWeapon )
+	{
+		iPipesLeft = pWeapon->getAmmo(this);
+	}
+
+	if ( *iState == STICKY_INIT )
+	{
+		if ( iPipesLeft < 6 )
+			*iStickyNum = iPipesLeft;
+		else
+			*iStickyNum = 6;
+	}
+	else if ( *iState == STICKY_SELECTWEAP )
+	{
+		if ( pWeapon	) 
+			this->selectBotWeapon(pWeapon);
+		else
+			*bFail = true;
+	}
+	else if ( *iState == STICKY_RELOAD )
+	{
+		m_pButtons->tap(IN_RELOAD);
+	}
+	else if ( *iState == STICKY_FACEVECTOR )
+	{
+		primaryAttack();
+	}
+
+	if ( (*iStickyNum == 0) || (iPipesLeft==0)  )
+	{
+		m_bDeployedStickies = true;
+	}
+	else
+	{
+		
+	}
+
+	return m_bDeployedStickies;
+}
+
+void CBotTF2::detonateStickies()
+{
+	secondaryAttack();
+	m_bDeployedStickies = false;
+}
+
 bool CBotTF2::lookAfterBuildings ( float *fTime )
 {
 	static float prevSentryHealth = 0;

@@ -137,6 +137,9 @@ public:
 private:
 	Vector m_vLocation;
 	Vector m_vSpread;
+	float m_fTime;
+	int m_iState;
+	int m_iStickies;
 
 };
 
@@ -358,22 +361,6 @@ private:
 	float m_fTime;
 };
 
-/*
-
-To Do
-
-
-class CBotTF2DeployStickies : public CBotTask
-{
-public:
-	CBotTF2DeployStickies (); // going here
-	
-	void execute (CBot *pBot,CBotSchedule *pSchedule);
-	virtual void debugString ( char *string );
-private:
-	float m_fReloadTime;
-	float m_fTime;
-};*/
 
 class CBotTFRocketJump : public CBotTask
 {

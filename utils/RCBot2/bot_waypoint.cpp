@@ -418,17 +418,19 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 
 			succ->unClose();
 
-			if ( !succ->isOpen() )
-			{
-				open(succ);
-			}
-
 			succ->setParent(iCurrentNode);
 			succ->setCost(fCost+m_fBelief[iSucc]);	
 			succ->setWaypoint(iSucc);
 
 			if ( !succ->heuristicSet() )		
-				succ->setHeuristic(m_pBot->distanceFrom(succWpt->getOrigin())+succWpt->distanceFrom(vTo));			
+				succ->setHeuristic(m_pBot->distanceFrom(succWpt->getOrigin())+succWpt->distanceFrom(vTo));		
+
+			// Fix: do this AFTER setting heuristic and cost!!!!
+			if ( !succ->isOpen() )
+			{
+				open(succ);
+			}
+
 		}
 
 		curr->close(); // close chosen node

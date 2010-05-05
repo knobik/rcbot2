@@ -430,6 +430,12 @@ public:
 	void sapperDestroyed ( edict_t *pSapper );
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
 
+	bool deployStickies ( Vector vLocation, Vector vSpread, int *iState, int *iStickyNum, bool *bFail );
+
+	void detonateStickies ();
+
+	bool canDeployStickies ();
+
 private:
 	// time for next jump
 	float m_fDoubleJumpTime;
