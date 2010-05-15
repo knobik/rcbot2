@@ -159,6 +159,22 @@ private:
 
 };
 
+class CBotBackstab : public CBotTask
+{
+public:
+	CBotBackstab ( edict_t *_pEnemy );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotBackstab");
+	}
+private:
+	float m_fTime;
+	edict_t *pEnemy;
+};
+
 class CBotDefendTask : public CBotTask
 {
 public:

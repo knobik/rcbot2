@@ -1,3 +1,13 @@
+0.56
+- snipers fixed
+- spies backstabbing improved
+- default rcbot_anglespeed value reduced to 8
+- spy notice time reduced significantly
+- spies plan to backstab from afar
+
+0.546 beta!
+- fixed bug with pathfinding
+
 0.545 beta!
 - fixed with latest Tf2 update
 - engi's build teleporters again

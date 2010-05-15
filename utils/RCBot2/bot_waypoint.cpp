@@ -646,7 +646,9 @@ void CWaypointNavigator :: updatePosition ()
 	}
 
 	m_pBot->setMoveTo(vWptOrigin+m_vOffset);
-	m_pBot->setAiming(vWptOrigin+(vaim*1024));
+
+	if ( pWaypoint->isAiming() )
+		m_pBot->setAiming(vWptOrigin+(vaim*1024));
 }
 
 // free up memory
@@ -1492,6 +1494,17 @@ void CWaypoint :: removePathTo ( int iWaypointIndex )
 void CWaypoint :: info ( edict_t *pEdict )
 {
 	CWaypointTypes::printInfo(this,pEdict);
+}
+
+bool CWaypoint ::isAiming()
+{
+	return (m_iFlags & (CWaypointTypes::W_FL_DEFEND | 
+		CWaypointTypes::W_FL_ROCKET_JUMP | 
+		CWaypointTypes::W_FL_DOUBLEJUMP | 
+		CWaypointTypes::W_FL_SENTRY | 
+		CWaypointTypes::W_FL_SNIPER | 
+		CWaypointTypes::W_FL_TELE_EXIT | 
+		CWaypointTypes::W_FL_TELE_ENTRANCE )) > 0;
 }
 
 /////////////////////////////////////

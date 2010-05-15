@@ -331,6 +331,12 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	
 }
 
+void CBotFortress ::waitBackstab ()
+{
+	m_fBackstabTime = engine->Time() + randomFloat(5.0f,10.0f);
+	m_pLastEnemy = NULL;
+}
+
 bool CBotFortress :: isAlive ()
 {
 	return !m_pPlayerInfo->IsDead()&&!m_pPlayerInfo->IsObserver();
@@ -355,8 +361,10 @@ void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
 
+	m_fBackstabTime = 0.0f;
 	m_fPickupTime = 0.0f;
 	m_fDefendTime = 0.0f;
+	m_fLookAfterSentryTime = 0.0f;
 
 	m_fSnipeAttackTime = 0.0f;
 	m_fSpyCloakTime = engine->Time() + randomFloat(10.0f,15.0f);
@@ -863,7 +871,7 @@ void CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait )
 void CBotFortress :: foundSpy (edict_t *pEdict) 
 {
 	m_pPrevSpy = pEdict;
-	m_fSeeSpyTime = engine->Time() + randomFloat(10.0f,30.0f);
+	m_fSeeSpyTime = engine->Time() + randomFloat(5.0f,10.0f);
 };
 
 // got shot by someone
@@ -1928,7 +1936,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,(fAmmoDist/fResupplyDist)*(200.0f/(iMetal+1))));
 		utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(fResupplyDist/fAmmoDist)*(100.0f/(iMetal+1))));
 
-		utils.addUtility(CBotUtility(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,m_pSentryGun!=NULL,0.5));
+		utils.addUtility(CBotUtility(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,(m_pSentryGun!=NULL) && (m_fLookAfterSentryTime<engine->Time()),0.5));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMSENTRY,!bHasFlag && m_pNearestAllySentry && (m_pNearestAllySentry!=m_pSentryGun) && (iMetal>=200) && ((iAllySentryLevel<3)||(fAllySentryHealthPercent<1.0f)),0.8+((1.0f-fAllySentryHealthPercent)*0.2)));
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMDISP,(m_pNearestDisp!=NULL)&&(m_pNearestDisp!=m_pDispenser) && (iMetal>=200) && ((iAllyDispLevel<3)||(fAllyDispenserHealthPercent<1.0f)),0.7+((1.0f-fAllyDispenserHealthPercent)*0.3)));
@@ -1972,6 +1980,14 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,(m_iCurrentAttackArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||(CTeamFortress2Mod::isMapType(TF_MAP_ARENA)&&CTeamFortress2Mod::isArenaPointOpen())||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility));
 	// only defend if defend area is > 0
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
+
+	//utils.addUtility(CBotUtility(BOT_UTIL_SAP_SENTRY,(m_iClass==TF_CLASS_SPY) && (m_pNearestEnemySentry)));
+	//utils.addUtility(CBotUtility(BOT_UTIL_SAP_SENTRY,(m_iClass==TF_CLASS_SPY) && (m_pLastEnemy&&CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(m_iTeam)))),getHealthPercent());
+
+	utils.addUtility(CBotUtility(BOT_UTIL_BACKSTAB,!hasFlag() && (m_fBackstabTime<engine->Time()) && (m_iClass==TF_CLASS_SPY) && 
+		((m_pEnemy&& CBotGlobals::isAlivePlayer(m_pEnemy))|| 
+		(m_pLastEnemy&& CBotGlobals::isAlivePlayer(m_pLastEnemy))),
+		getHealthPercent()));
 
 	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
 	{
@@ -2347,6 +2363,16 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				return true;
 			}
 			break;
+		case BOT_UTIL_BACKSTAB:
+			if ( m_pEnemy  && CBotGlobals::isAlivePlayer(m_pEnemy) )
+			{
+				m_pSchedules->add(new CBotBackstabSched(m_pEnemy));
+			}
+			else if ( m_pLastEnemy &&  CBotGlobals::isAlivePlayer(m_pLastEnemy) )
+			{
+				m_pSchedules->add(new CBotBackstabSched(m_pLastEnemy));
+			}
+			break;
 		case BOT_UTIL_BUILDDISP:
 
 			if ( m_bDispenserVectorValid )
@@ -2594,7 +2620,12 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	{
 		if ( isDisguised() )
 		{
-			if ( (m_fFrenzyTime < engine->Time()) && ((distanceFrom(pEnemy)>130) || fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > 75 ))
+
+			if ( ( distanceFrom(pEnemy) < 130 ) && CBotGlobals::isAlivePlayer(pEnemy) && ( fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > 75 ) )
+			{
+				;
+			}
+			else if ( m_fFrenzyTime < engine->Time() ) 
 				return true;
 		}
 	}

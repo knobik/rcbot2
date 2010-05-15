@@ -69,7 +69,11 @@ const char *g_szUtils[BOT_UTIL_MAX] =
     "BOT_UTIL_DEFEND_FLAG_LASTKNOWN",
     "BOT_UTIL_PUSH_PAYLOAD_BOMB",
     "BOT_UTIL_DEFEND_PAYLOAD_BOMB",
-	"BOT_UTIL_MEDIC_HEAL"
+	"BOT_UTIL_MEDIC_HEAL",
+	"BOT_UTIL_MEDIC_FINDPLAYER",
+	"BOT_UTIL_SAP_SENTRY",
+	"BOT_UTIL_SAP_DISP",
+	"BOT_UTIL_BACKSTAB"
 };
 
 // Execute a list of possible actions and put them into order of available actions against utility

@@ -125,6 +125,24 @@ void CBotTFEngiUpgrade :: init ()
 }
 
 //////////////////////////////////////////////////
+CBotBackstabSched :: CBotBackstabSched ( edict_t *pEnemy )
+{
+	Vector vrear;
+	Vector vangles;
+
+	AngleVectors(CBotGlobals::entityEyeAngles(pEnemy),&vangles);
+	vrear = CBotGlobals::entityOrigin(pEnemy) - (vangles * 45) + Vector(0,0,32);
+
+	addTask(new CFindPathTask(vrear));
+	addTask(new CBotBackstab(pEnemy));
+}
+
+void CBotBackstabSched :: init ()
+{
+	setID(SCHED_BACKSTAB);
+}
+
+///////////
 
 CBotTF2SnipeSched :: CBotTF2SnipeSched ( Vector vOrigin )
 {

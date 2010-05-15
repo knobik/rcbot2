@@ -252,10 +252,7 @@ public:
 
 	void drawPathBeam ( CWaypoint *to, unsigned short int iDrawType );
 
-	void setUsed ( bool bUsed )
-	{
-		m_bUsed = bUsed;
-	}
+	inline void setUsed ( bool bUsed ){	m_bUsed = bUsed;}
 
 	inline void clearPaths ();
 
@@ -274,16 +271,15 @@ public:
 
 	void save ( FILE *bfp );
 
-	int getFlags ()
-	{
-		return m_iFlags;
-	}
+	inline int getFlags (){return m_iFlags;}
 
 	bool forTeam ( int iTeam );
 
 	inline float getRadius () { return m_fRadius; }
 
 	inline void setRadius ( float fRad ) { m_fRadius = fRad; }
+
+	bool isAiming ( void );
 
 private:
 	Vector m_vOrigin;

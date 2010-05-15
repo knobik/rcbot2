@@ -186,6 +186,8 @@ public:
 
 	virtual bool lookAfterBuildings (float *fTime) { return false; }
 
+	inline void nextLookAfterSentryTime ( float fTime ) { m_fLookAfterSentryTime = fTime; }
+
 	inline edict_t *getSentry () { return m_pSentryGun; }
 
 	virtual bool hasEngineerBuilt ( eEngiBuild iBuilding ) {return false;}
@@ -250,6 +252,8 @@ public:
 
 	virtual bool needAmmo ();
 
+	void waitBackstab ();
+ 
 protected:
 	virtual void selectTeam ();
 
@@ -289,6 +293,7 @@ protected:
 	float m_fSpyDisguiseTime;
 	float m_fLastSaySpy;
 	float m_fPickupTime;
+	float m_fLookAfterSentryTime;
 
 	// valid flag point area
 	Vector m_vLastKnownFlagPoint;
@@ -306,6 +311,8 @@ protected:
 	// 1 minute wait
 	float m_fLastKnownFlagTime;
 	float m_fLastKnownTeamFlagTime;
+
+	float m_fBackstabTime;
 
 	TF_Class m_iClass;
 

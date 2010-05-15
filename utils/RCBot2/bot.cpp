@@ -49,6 +49,7 @@
 #include "usercmd.h"
 #include "bitbuf.h"
 #include "in_buttons.h"
+#include "ndebugoverlay.h"
 #include "vstdlib/random.h" // for random functions
 #include "iservernetworkable.h" // may come in handy
 
@@ -104,7 +105,7 @@ float  CBots :: m_flAddKickBotTime = 0;
 #define TICK_INTERVAL			(gpGlobals->interval_per_tick)
 #define TIME_TO_TICKS( dt )		( (int)( 0.5f + (float)(dt) / TICK_INTERVAL ) )
 
-
+extern IVDebugOverlay *debugoverlay;
 ////////////////////////////////////////////////
 void CBot :: runPlayerMove()
 {
@@ -533,9 +534,7 @@ void CBot :: think ()
 
 	getTasks();	
 
-	// update m_pEnemy with findEnemy()
-	m_pOldEnemy = m_pEnemy;
-	m_pEnemy = NULL;
+
 
 	m_pSchedules->execute(this);
 
@@ -550,6 +549,10 @@ void CBot :: think ()
 		stopMoving(2);
 		setLookAtTask(LOOK_AROUND,2);
 	}
+
+	// update m_pEnemy with findEnemy()
+	m_pOldEnemy = m_pEnemy;
+	m_pEnemy = NULL;
 
 	if ( m_pOldEnemy )
 		findEnemy(m_pOldEnemy); // any better enemies than this one?
@@ -1434,13 +1437,32 @@ void CBot :: getLookAtVector ()
 			setLookAt(m_vWaypointAim);
 		break;
 	case LOOK_BUILD:
+		{
+			if ( m_fLookAroundTime < engine->Time() )
+			{
+				float fTime = randomFloat(4.0f,8.0f);
+				m_fLookAroundTime = engine->Time() + fTime;
+
+				m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
+			}
+
+			setLookAt(m_vWaypointAim+m_vLookAroundOffset);
+		}
+		break;
 	case LOOK_SNIPE:
 		{
 			if ( m_fLookAroundTime < engine->Time() )
 			{
-				m_fLookAroundTime = engine->Time() + randomFloat(4.0f,8.0f);
+				float fTime = randomFloat(4.0f,8.0f);
+				m_fLookAroundTime = engine->Time() + fTime;
 
 				m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
+
+				if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
+				{
+					debugoverlay->AddLineOverlay (getOrigin(), m_vWaypointAim, 255,100,100, false, fTime);
+					debugoverlay->AddLineOverlay (getOrigin(), m_vWaypointAim+m_vLookAroundOffset, 255,40,40, false, fTime);
+				}
 			}
 
 			setLookAt(m_vWaypointAim+m_vLookAroundOffset);

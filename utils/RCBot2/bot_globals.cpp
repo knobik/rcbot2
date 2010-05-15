@@ -103,6 +103,11 @@ void CBotGlobals :: init ()
 	m_szGameFolder[0] = 0;
 }
 
+bool CBotGlobals ::isAlivePlayer ( edict_t *pEntity )
+{
+	return pEntity && ENTINDEX(pEntity) && (ENTINDEX(pEntity) <= gpGlobals->maxClients) && (entityIsAlive(pEntity));
+}
+
 //new map
 void CBotGlobals :: setMapName ( const char *szMapName ) 
 { 

@@ -579,6 +579,108 @@ void CBotTF2WaitAmmoTask :: debugString ( char *string )
 {
 	sprintf(string,"CBotTF2WaitAmmoTask");
 }
+/////////////////////////////
+CBotBackstab :: CBotBackstab (edict_t *_pEnemy)
+{
+	m_fTime = 0.0f;
+	pEnemy = _pEnemy;
+}
+	
+void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	Vector vrear;
+	Vector vangles;
+	CBotWeapon *pBotWeapon;
+	CWeapon *pWeapon;
+	CBotFortress *pTF2Bot = (CBotFortress*)pBot;
+
+	pBot->wantToChangeWeapon(false);
+	pBot->wantToShoot(false);
+	pBot->wantToListen(false);
+
+	pBotWeapon = pBot->getCurrentWeapon();
+
+	if ( !pBotWeapon )
+	{
+		fail();
+		pTF2Bot->waitBackstab();
+		return;
+	}
+
+	pWeapon = pBotWeapon->getWeaponInfo();
+
+	if (pWeapon == NULL)
+	{
+		fail();
+		pTF2Bot->waitBackstab();
+		return;
+	}
+
+	if ( !CBotGlobals::isAlivePlayer(pEnemy) )
+		fail();
+
+	if ( !m_fTime )
+		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
+
+	if ( m_fTime < engine->Time() )
+	{
+		fail();
+		pTF2Bot->waitBackstab();
+		return;
+	}
+	else if ( !pEnemy || !CBotGlobals::entityIsValid(pEnemy) || !CBotGlobals::entityIsAlive(pEnemy) )
+	{
+		if ( pBot->getEnemy() && (pEnemy != pBot->getEnemy()) && pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && CBotGlobals::isAlivePlayer(pBot->getEnemy()) )
+		{
+			pEnemy = pBot->getEnemy();
+		}
+		else
+		{
+			fail();
+		}
+
+		pTF2Bot->waitBackstab();
+		return;
+	}
+	else if ( !pBot->isVisible(pEnemy) )
+	{
+		// this guy will do
+		if ( pBot->getEnemy() && (pEnemy != pBot->getEnemy()) && pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && CBotGlobals::isAlivePlayer(pBot->getEnemy()) )
+		{
+			pEnemy = pBot->getEnemy();
+		}
+		else
+		{
+			fail();
+		}
+
+		pTF2Bot->waitBackstab();
+		return;
+	}
+	else if (pWeapon->getID() != TF2_WEAPON_KNIFE)
+	{
+		if ( !pBot->select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_KNIFE)) )
+		{
+			fail();
+			pTF2Bot->waitBackstab();
+			return;
+		}
+	}
+	
+	AngleVectors(CBotGlobals::entityEyeAngles(pEnemy),&vangles);
+	vrear = CBotGlobals::entityOrigin(pEnemy) - (vangles * 45) + Vector(0,0,32);
+
+	if ( pBot->distanceFrom(vrear) > 40 ) 
+	{
+		pBot->setMoveTo(vrear,8);
+	}
+	else
+	{
+		pBot->handleAttack(pBotWeapon,pEnemy);
+	}
+}
+
+
 ////////////////////////////
 
 void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -606,7 +708,10 @@ void CBotTF2EngiLookAfter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	else if ( m_fTime < engine->Time() )
 		complete();
 	else if ( tfBot->lookAfterBuildings(&m_fHitSentry) )
+	{
+		tfBot->nextLookAfterSentryTime(engine->Time()+randomFloat(20.0f,50.0f));
 		complete();
+	}
 }
 
 ////////////////////////
@@ -1032,7 +1137,7 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 		else
 		{
-			pBot->setLookAtTask(LOOK_SNIPE);
+			pBot->setLookAtTask(LOOK_SNIPE,5);
 
 			if (m_fTime<engine->Time() )
 			{

@@ -83,6 +83,8 @@ public:
 		return ( !FNullEnt(pEntity) && !pEntity->IsFree() && pEntity->GetNetworkable() && pEntity->GetIServerEntity() && pEntity->GetCollideable() );
 	}
 
+	static bool isAlivePlayer ( edict_t *pEntity );
+
 	static bool setWaypointDisplayType ( int iType );
 
 	static void fixFloatDegrees360 ( float *pFloat );

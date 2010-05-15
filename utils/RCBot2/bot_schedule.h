@@ -70,7 +70,8 @@ typedef enum
 	SCHED_DEFENDPOINT,
 	SCHED_TF2_PUSH_PAYLOADBOMB,
 	SCHED_TF2_DEFEND_PAYLOADBOMB,
-	SCHED_TF2_DEMO_PIPETRAP
+	SCHED_TF2_DEMO_PIPETRAP,
+	SCHED_BACKSTAB
 }eBotSchedule;
 
 class CBotSchedule
@@ -376,6 +377,14 @@ public:
 	CBotGetMetalSched ( Vector vOrigin );
 
 	void init ();
+};
+
+class CBotBackstabSched : public CBotSchedule
+{
+public:
+	CBotBackstabSched ( edict_t *pEnemy );
+
+	void init();
 };
 
 class CBotTFEngiLookAfterSentry : public CBotSchedule
