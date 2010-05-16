@@ -1998,7 +1998,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		fGetFlagUtility+(getHealthPercent()/10)));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_SAP_ENEMY_SENTRY,
-										m_pEnemy && CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) && !CTeamFortress2Mod::isSentrySapped(m_pEnemy),
+										m_pEnemy && CTeamFortress2Mod::isSentry(m_pEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) && !CTeamFortress2Mod::isSentrySapped(m_pEnemy),
 										fGetFlagUtility+(getHealthPercent()/5)));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_SAP_NEAREST_SENTRY,m_pNearestEnemySentry && 
