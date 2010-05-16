@@ -1998,7 +1998,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		fGetFlagUtility+(getHealthPercent()/10)));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_SAP_ENEMY_SENTRY,
-										m_pEnemy && CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())),
+										m_pEnemy && CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) && !CTeamFortress2Mod::isSentrySapped(m_pEnemy),
 										fGetFlagUtility+(getHealthPercent()/5)));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_SAP_NEAREST_SENTRY,m_pNearestEnemySentry && 
@@ -2006,7 +2006,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			fGetFlagUtility+(getHealthPercent()/5)));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_SAP_LASTENEMY_SENTRY,
-			m_pLastEnemy && CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())),fGetFlagUtility+(getHealthPercent()/5)));
+			m_pLastEnemy && CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) && !CTeamFortress2Mod::isSentrySapped(m_pLastEnemy),fGetFlagUtility+(getHealthPercent()/5)));
 	}
 
 
