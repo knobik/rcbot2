@@ -136,6 +136,8 @@ void CTF2ObjectSapped :: execute ( IBotEventInterface *pEvent )
 		{
 			pBot->buildingSapped((eEngiBuild)building,pSapper);
 		}
+
+		CTeamFortress2Mod::sapperPlaced(pOwner,(eEngiBuild)building);
 	}
 }
 /*
@@ -169,6 +171,8 @@ void CTF2ObjectDestroyed :: execute ( IBotEventInterface *pEvent )
 
 				if ( pBot )
 					pBot->sapperDestroyed(pSapper);
+
+				CTeamFortress2Mod::sapperDestroyed(pOwner,(eEngiBuild)type);
 			}
 		}
 	}
@@ -178,9 +182,17 @@ void CTF2ObjectDestroyed :: execute ( IBotEventInterface *pEvent )
 
 void CTF2BuiltObjectEvent :: execute ( IBotEventInterface *pEvent )
 {
+	eEngiBuild type = (eEngiBuild)pEvent->getInt("object");
+	int index = pEvent->getInt("index");
+	edict_t *pBuilding = INDEXENT(index);
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 
-	CTeamFortress2Mod::teleporterBuilt(m_pActivator,(eEngiBuild)pEvent->getInt("object"),pEvent->getInt("index"));
+	if ( type == ENGI_TELE )
+		CTeamFortress2Mod::teleporterBuilt(m_pActivator,type,pBuilding);
+	if ( type == ENGI_SENTRY )
+		CTeamFortress2Mod::sentryBuilt(m_pActivator,type,pBuilding);
+	if ( type == ENGI_DISP )
+		CTeamFortress2Mod::dispenserBuilt(m_pActivator,type,pBuilding);
 
 	if ( pBot && pBot->isTF() )
 	{

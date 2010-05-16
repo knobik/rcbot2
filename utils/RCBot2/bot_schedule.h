@@ -71,7 +71,8 @@ typedef enum
 	SCHED_TF2_PUSH_PAYLOADBOMB,
 	SCHED_TF2_DEFEND_PAYLOADBOMB,
 	SCHED_TF2_DEMO_PIPETRAP,
-	SCHED_BACKSTAB
+	SCHED_BACKSTAB,
+	SCHED_REMOVESAPPER
 }eBotSchedule;
 
 class CBotSchedule
@@ -326,7 +327,7 @@ public:
 class CBotSpySapBuildingSched : public CBotSchedule
 {
 public:
-	CBotSpySapBuildingSched ( edict_t *pBuilding );
+	CBotSpySapBuildingSched ( edict_t *pBuilding, eEngiBuild id );
 
 	void init ();
 };
@@ -354,6 +355,14 @@ public:
 	CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin );
 
 	void init ();
+};
+
+class CBotRemoveSapperSched : public CBotSchedule
+{
+public:
+	CBotRemoveSapperSched ( edict_t *pBuilding, eEngiBuild id );
+
+	void init();
 };
 
 class CBotTF2HealSched : public CBotSchedule

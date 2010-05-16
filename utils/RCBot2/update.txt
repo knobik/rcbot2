@@ -1,4 +1,5 @@
 0.56
+- spies use sappers
 - snipers fixed
 - spies backstabbing improved
 - default rcbot_anglespeed value reduced to 8

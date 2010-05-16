@@ -159,6 +159,23 @@ private:
 
 };
 
+class CBotRemoveSapper : public CBotTask
+{
+public:
+	CBotRemoveSapper ( edict_t *pBuilding, eEngiBuild id );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotRemoveSapper");
+	}
+private:
+	float m_fTime;
+	edict_t *m_pBuilding;
+	eEngiBuild m_id;
+};
+
 class CBotBackstab : public CBotTask
 {
 public:
@@ -394,7 +411,7 @@ private:
 class CBotTF2SpySap : public CBotTask
 {
 public:
-	CBotTF2SpySap ( edict_t *pBuilding ); // going to use this 
+	CBotTF2SpySap ( edict_t *pBuilding, eEngiBuild id ); // going to use this 
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -402,6 +419,7 @@ public:
 private:
 	edict_t *m_pBuilding;
 	float m_fTime;
+	eEngiBuild m_id;
 };
 
 class CBotTFUseTeleporter : public CBotTask

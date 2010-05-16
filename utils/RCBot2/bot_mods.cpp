@@ -44,6 +44,8 @@ edict_t *CTeamFortress2Mod::m_pFlagCarrierRed = NULL;
 edict_t *CTeamFortress2Mod::m_pFlagCarrierBlue = NULL;
 float CTeamFortress2Mod::m_fArenaPointOpenTime = 0.0f;
 float CTeamFortress2Mod::m_fPointTime = 0.0f;
+tf_sentry_t CTeamFortress2Mod::m_SentryGuns[MAX_PLAYERS];	// used to let bots know if sentries have been sapped or not
+tf_disp_t  CTeamFortress2Mod::m_Dispensers[MAX_PLAYERS];	// used to let bots know where friendly/enemy dispensers are
 
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 {
@@ -194,16 +196,9 @@ void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *i
 	}
 }
 // to fix
-void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, int index )
+void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
 {
-	//QAngle eye = CBotGlobals::playerAngles(pOwner);
-	//Vector vForward;
-	//Vector vOrigin;
-	edict_t *pEntity;
-	//edict_t *pBest = NULL;
-	//float fDistance;
-	//float fMinDistance = 100;
-	//bool bValid;
+
 	int team;
 
 	if ( (type != ENGI_TELE ) ) //(type != ENGI_ENTRANCE) && (type != ENGI_EXIT) )
@@ -216,14 +211,64 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, in
 
 	team = getTeam(pOwner);
 
-	pEntity = INDEXENT(index);
-
-	if ( CTeamFortress2Mod::isTeleporterEntrance(pEntity,team) )
-		m_Teleporters[iIndex].entrance = MyEHandle(pEntity);
-	else if ( CTeamFortress2Mod::isTeleporterExit(pEntity,team) )
-		m_Teleporters[iIndex].exit = MyEHandle(pEntity);
+	if ( CTeamFortress2Mod::isTeleporterEntrance(pBuilding,team) )
+		m_Teleporters[iIndex].entrance = MyEHandle(pBuilding);
+	else if ( CTeamFortress2Mod::isTeleporterExit(pBuilding,team) )
+		m_Teleporters[iIndex].exit = MyEHandle(pBuilding);
 
 
+}
+
+void CTeamFortress2Mod::sapperPlaced(edict_t *pOwner,eEngiBuild type)
+{
+	int index = ENTINDEX(pOwner)-1;
+
+	if ( (index>=0) && (index<MAX_PLAYERS) )
+	{
+		if ( type == ENGI_TELE )
+			m_Teleporters[index].sapped = true;
+		else if ( type == ENGI_DISP )
+			m_Dispensers[index].sapped = true;
+		else if ( type == ENGI_SENTRY )
+			m_SentryGuns[index].sapped = true;
+	}
+}
+
+void CTeamFortress2Mod::sapperDestroyed(edict_t *pOwner,eEngiBuild type)
+{
+	int index = ENTINDEX(pOwner)-1;
+
+	if ( (index>=0) && (index<MAX_PLAYERS) )
+	{
+		if ( type == ENGI_TELE )
+			m_Teleporters[index].sapped = false;
+		else if ( type == ENGI_DISP )
+			m_Dispensers[index].sapped = false;
+		else if ( type == ENGI_SENTRY )
+			m_SentryGuns[index].sapped = false;
+	}
+}
+
+void CTeamFortress2Mod::sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
+{
+	int index = ENTINDEX(pOwner)-1;
+
+	if ( (index>=0) && (index<MAX_PLAYERS) )
+	{
+		if ( type == ENGI_SENTRY )
+			m_SentryGuns[index].sentry = MyEHandle(pBuilding);
+	}
+}
+
+void CTeamFortress2Mod::dispenserBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
+{
+	int index = ENTINDEX(pOwner)-1;
+
+	if ( (index>=0) && (index<MAX_PLAYERS) )
+	{
+		if ( type == ENGI_DISP )
+			m_Dispensers[index].disp = MyEHandle(pBuilding);
+	}
 }
 //
 //
@@ -773,14 +818,17 @@ bool CTeamFortress2Mod :: isRocket ( edict_t *pEntity, int iTeam )
 
 void CTeamFortress2Mod :: initMod ()
 {
+	unsigned int i;
 	// Setup Weapons
 
-	for ( unsigned int i = 0; i < TF2_WEAPON_MAX; i ++ )
+	for ( i = 0; i < TF2_WEAPON_MAX; i ++ )
 		CWeapons::addWeapon(new CWeapon(TF2Weaps[i].iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference));
+
 }
 
 void CTeamFortress2Mod :: mapInit ()
 {
+	unsigned int i = 0;
 	string_t mapname = gpGlobals->mapname;
 
 	const char *szmapname = mapname.ToCStr();
@@ -810,6 +858,18 @@ void CTeamFortress2Mod :: mapInit ()
 
 	m_pFlagCarrierRed = NULL;
 	m_pFlagCarrierBlue = NULL;
+
+	for ( i = 0; i < MAX_PLAYERS; i ++ )
+	{
+		m_Teleporters[i].entrance = MyEHandle(NULL);
+		m_Teleporters[i].exit = MyEHandle(NULL);
+		m_Teleporters[i].sapped = false;
+		m_SentryGuns[i].sapped = false;
+		m_SentryGuns[i].sentry = MyEHandle(NULL);
+		m_Dispensers[i].sapped = false;
+		m_Dispensers[i].disp = MyEHandle(NULL);
+	}
+
 
 	CPoints::loadMapScript();
 }

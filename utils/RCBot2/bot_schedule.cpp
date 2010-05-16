@@ -235,10 +235,10 @@ void CBotSpySapBuildingSched :: init ()
 	setID(SCHED_SPY_SAP_BUILDING);
 }
 
-CBotSpySapBuildingSched :: CBotSpySapBuildingSched ( edict_t *pBuilding )
+CBotSpySapBuildingSched :: CBotSpySapBuildingSched ( edict_t *pBuilding, eEngiBuild id )
 {
 	addTask(new CFindPathTask(pBuilding)); // first
-	addTask(new CBotTF2SpySap(pBuilding)); // second
+	addTask(new CBotTF2SpySap(pBuilding,id)); // second
 }
 
 ///////////////////////////////////////////
@@ -292,8 +292,18 @@ void CBotDefendSched :: init ()
 	setID(SCHED_DEFEND);
 }
 
+//////
 
+CBotRemoveSapperSched :: CBotRemoveSapperSched ( edict_t *pBuilding, eEngiBuild id )
+{
+	addTask(new CFindPathTask(CBotGlobals::entityOrigin(pBuilding)));
+	addTask(new CBotRemoveSapper(pBuilding,id));
+}
 
+void CBotRemoveSapperSched :: init ()
+{
+	setID(SCHED_REMOVESAPPER);
+}
 ///////////
 CGotoHideSpotSched :: CGotoHideSpotSched ( edict_t *pEdict )
 {

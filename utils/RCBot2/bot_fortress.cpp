@@ -1933,10 +1933,19 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELEXT,m_pTeleExit!=NULL && (iMetal>=200) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.51) + ((0.5-fTeleporterExitHealthPercent)*0.5)));
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser!=NULL && (iMetal>=200) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3)));
 
+		// remove sappers
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag&&(m_pSentryGun!=NULL) && CTeamFortress2Mod::isMySentrySapped(m_pEdict),1.1f));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,!bHasFlag&&(m_pDispenser!=NULL) && CTeamFortress2Mod::isMyDispenserSapped(m_pEdict),1.1f));
+
 		utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,(fAmmoDist/fResupplyDist)*(200.0f/(iMetal+1))));
 		utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(fResupplyDist/fAmmoDist)*(100.0f/(iMetal+1))));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,(m_pSentryGun!=NULL) && (m_fLookAfterSentryTime<engine->Time()),0.5));
+
+		// remove sappers
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMSENTRY,m_pNearestAllySentry && CTeamFortress2Mod::isSentrySapped(m_pNearestAllySentry),1.1f));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMDISP,m_pNearestDisp && CTeamFortress2Mod::isDispenserSapped(m_pNearestDisp),1.1f));
+
 
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMSENTRY,!bHasFlag && m_pNearestAllySentry && (m_pNearestAllySentry!=m_pSentryGun) && (iMetal>=200) && ((iAllySentryLevel<3)||(fAllySentryHealthPercent<1.0f)),0.8+((1.0f-fAllySentryHealthPercent)*0.2)));
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMDISP,(m_pNearestDisp!=NULL)&&(m_pNearestDisp!=m_pDispenser) && (iMetal>=200) && ((iAllyDispLevel<3)||(fAllyDispenserHealthPercent<1.0f)),0.7+((1.0f-fAllyDispenserHealthPercent)*0.3)));
@@ -1981,13 +1990,26 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	// only defend if defend area is > 0
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
-	//utils.addUtility(CBotUtility(BOT_UTIL_SAP_SENTRY,(m_iClass==TF_CLASS_SPY) && (m_pNearestEnemySentry)));
-	//utils.addUtility(CBotUtility(BOT_UTIL_SAP_SENTRY,(m_iClass==TF_CLASS_SPY) && (m_pLastEnemy&&CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(m_iTeam)))),getHealthPercent());
-
+	if ( m_iClass==TF_CLASS_SPY )
+	{
 	utils.addUtility(CBotUtility(BOT_UTIL_BACKSTAB,!hasFlag() && (m_fBackstabTime<engine->Time()) && (m_iClass==TF_CLASS_SPY) && 
 		((m_pEnemy&& CBotGlobals::isAlivePlayer(m_pEnemy))|| 
 		(m_pLastEnemy&& CBotGlobals::isAlivePlayer(m_pLastEnemy))),
-		getHealthPercent()));
+		fGetFlagUtility+(getHealthPercent()/10)));
+
+		utils.addUtility(CBotUtility(BOT_UTIL_SAP_ENEMY_SENTRY,
+										m_pEnemy && CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())),
+										fGetFlagUtility+(getHealthPercent()/5)));
+
+		utils.addUtility(CBotUtility(BOT_UTIL_SAP_NEAREST_SENTRY,m_pNearestEnemySentry && 
+			!CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry),
+			fGetFlagUtility+(getHealthPercent()/5)));
+
+		utils.addUtility(CBotUtility(BOT_UTIL_SAP_LASTENEMY_SENTRY,
+			m_pLastEnemy && CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())),fGetFlagUtility+(getHealthPercent()/5)));
+	}
+
+
 
 	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
 	{
@@ -2434,6 +2456,15 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 			m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 
+			return true;
+		case BOT_UTIL_SAP_LASTENEMY_SENTRY:
+			m_pSchedules->add(new CBotSpySapBuildingSched(m_pLastEnemy,ENGI_SENTRY));
+			return true;
+		case BOT_UTIL_SAP_ENEMY_SENTRY:
+			m_pSchedules->add(new CBotSpySapBuildingSched(m_pEnemy,ENGI_SENTRY));
+			return true;
+		case BOT_UTIL_SAP_NEAREST_SENTRY:
+			m_pSchedules->add(new CBotSpySapBuildingSched(m_pNearestEnemySentry,ENGI_SENTRY));
 			return true;
 		case BOT_UTIL_GETAMMOKIT:
 			m_pSchedules->removeSchedule(SCHED_PICKUP);
@@ -2956,10 +2987,10 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 
 void CBotTF2 :: buildingSapped ( eEngiBuild building, edict_t *pSapper )
 {
-
+	
 }
 
 void CBotTF2 :: sapperDestroyed ( edict_t *pSapper )
 {
-
+	
 }

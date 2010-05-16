@@ -213,11 +213,25 @@ typedef enum
 	TF_MAP_KOTH
 }eTFMapType;
 
+// These must be MyEHandles because they may be destroyed at any time
 typedef struct
 {
 	MyEHandle entrance;
 	MyEHandle exit;
+	bool sapped;
 }tf_tele_t;
+
+typedef struct
+{
+	MyEHandle sentry;
+	bool sapped;
+}tf_sentry_t;
+
+typedef struct
+{
+	MyEHandle disp;
+	bool sapped;
+}tf_disp_t;
 
 class CTeamFortress2Mod : public CBotMod
 {
@@ -289,7 +303,7 @@ public:
 
 	static float TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass );
 
-	static void teleporterBuilt ( edict_t *pOwner, eEngiBuild type, int index );
+	static void teleporterBuilt ( edict_t *pOwner, eEngiBuild type, edict_t *pBuilding );
 
 	static edict_t *getTeleporterExit ( edict_t *pTele );
 
@@ -321,13 +335,96 @@ public:
 	{
 		return (m_pFlagCarrierBlue==pPlayer)||(m_pFlagCarrierRed==pPlayer);
 	}
+
+	static void sapperPlaced(edict_t *pOwner,eEngiBuild type);
+	static void sapperDestroyed(edict_t *pOwner,eEngiBuild type);
+	static void sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding);
+	static void dispenserBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding);
+
+	static bool isMySentrySapped ( edict_t *pOwner ) 
+	{
+		int id = ENTINDEX(pOwner)-1;
+
+		if ( id>=0 )
+		{
+			return (m_SentryGuns[id].sentry.get()!=NULL)&&(m_SentryGuns[id].sapped);
+		}
+
+		return false;
+	}
+
+	static bool isMyTeleporterSapped ( edict_t *pOwner )
+	{
+		int id = ENTINDEX(pOwner)-1;
+
+		if ( id>=0 )
+		{
+			return ((m_Teleporters[id].exit.get()!=NULL)||(m_Teleporters[id].entrance.get()!=NULL))&&(m_Teleporters[id].sapped);
+		}
+
+		return false;
+	}
+
+	static bool isMyDispenserSapped ( edict_t *pOwner )
+	{
+		int id = ENTINDEX(pOwner)-1;
+
+		if ( id>=0 )
+		{
+			return (m_Dispensers[id].disp.get()!=NULL)&&(m_Dispensers[id].sapped);
+		}
+
+		return false;
+	}
+
+	static bool isSentrySapped ( edict_t *pSentry )
+	{
+		unsigned int i;
+
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			if ( m_SentryGuns[i].sentry.get() == pSentry )
+				return m_SentryGuns[i].sapped;
+		}
+
+		return false;
+	}
+
+	static bool isTeleporterSapped ( edict_t *pTele )
+	{
+		unsigned int i;
+
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			if ( (m_Teleporters[i].entrance.get() == pTele) || (m_Teleporters[i].exit.get() == pTele) )
+				return m_Teleporters[i].sapped;
+		}
+
+		return false;
+	}
+
+	static bool isDispenserSapped ( edict_t *pDisp )
+	{
+		unsigned int i;
+
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			if ( m_Dispensers[i].disp.get() == pDisp )
+				return m_Dispensers[i].sapped;
+		}
+
+		return false;
+	}
+
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
 
 	static eTFMapType m_MapType;	
 
-	static tf_tele_t m_Teleporters[MAX_PLAYERS];
+	static tf_tele_t m_Teleporters[MAX_PLAYERS];	// used to let bots know who made a teleport ans where it goes
+	static tf_sentry_t m_SentryGuns[MAX_PLAYERS];	// used to let bots know if sentries have been sapped or not
+	static tf_disp_t  m_Dispensers[MAX_PLAYERS];	// used to let bots know where friendly/enemy dispensers are
 
 	static int m_iArea;
 
