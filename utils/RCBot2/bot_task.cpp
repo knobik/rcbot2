@@ -1310,7 +1310,7 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( pBot->distanceFrom(m_pBuilding) > 100 )
 		{
-			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding));
+			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding),10);
 		}
 		else
 		{

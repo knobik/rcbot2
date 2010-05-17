@@ -64,6 +64,15 @@ CBroadcastCapturedPoint :: CBroadcastCapturedPoint ( int iPoint, int iTeam, cons
 	m_szName = CStrings::getString(szName);
 }
 
+void CBroadcastSpySap :: execute ( CBot *pBot )
+{
+	if ( CTeamFortress2Mod::getTeam(m_pSpy) != pBot->getTeam() )
+	{
+		if ( pBot->isVisible(m_pSpy) )
+			((CBotTF2*)pBot)->foundSpy(m_pSpy);
+	}
+}
+
 void CBroadcastFlagDropped :: execute ( CBot *pBot )
 {
 	if ( pBot->getTeam() == m_iTeam )
@@ -260,7 +269,16 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 			if ( CTeamFortress2Mod::isSentry(pEntity,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 			{
 				if ( !m_pNearestEnemySentry || (pEntity != m_pNearestEnemySentry) && (distanceFrom(pEntity) < distanceFrom(m_pNearestEnemySentry)) )
+				{
 					m_pNearestEnemySentry = pEntity;
+
+					if ( !CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry) && !m_pSchedules->hasSchedule(SCHED_SPY_SAP_BUILDING) )
+					{
+						m_pSchedules->freeMemory();
+						m_pSchedules->add(new CBotSpySapBuildingSched(m_pNearestEnemySentry,ENGI_SENTRY));
+					}
+					
+				}
 			}
 		}
 		else if ( pEntity == m_pNearestEnemySentry )
@@ -871,7 +889,8 @@ void CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait )
 void CBotFortress :: foundSpy (edict_t *pEdict) 
 {
 	m_pPrevSpy = pEdict;
-	m_fSeeSpyTime = engine->Time() + randomFloat(5.0f,10.0f);
+	m_fSeeSpyTime = engine->Time() + randomFloat(9.0f,18.0f);
+	//m_fFirstSeeSpy = engine->Time(); // to do, add delayed action
 };
 
 // got shot by someone
@@ -1934,8 +1953,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser!=NULL && (iMetal>=200) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3)));
 
 		// remove sappers
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag&&(m_pSentryGun!=NULL) && CTeamFortress2Mod::isMySentrySapped(m_pEdict),1.1f));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,!bHasFlag&&(m_pDispenser!=NULL) && CTeamFortress2Mod::isMyDispenserSapped(m_pEdict),1.1f));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag&&(m_pSentryGun!=NULL) && CTeamFortress2Mod::isMySentrySapped(m_pEdict),1000.0f));
+		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,!bHasFlag&&(m_pDispenser!=NULL) && CTeamFortress2Mod::isMyDispenserSapped(m_pEdict),1000.0f));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,(fAmmoDist/fResupplyDist)*(200.0f/(iMetal+1))));
 		utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(fResupplyDist/fAmmoDist)*(100.0f/(iMetal+1))));
@@ -2985,12 +3004,17 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 	
 }
 
-void CBotTF2 :: buildingSapped ( eEngiBuild building, edict_t *pSapper )
+void CBotTF2 :: buildingSapped ( eEngiBuild building, edict_t *pSapper, edict_t *pSpy )
 {
-	
+	m_pSchedules->freeMemory();
+
+	if ( isVisible(pSpy) )
+	{
+		foundSpy(pSpy);
+	}
 }
 
 void CBotTF2 :: sapperDestroyed ( edict_t *pSapper )
 {
-	
+	m_pSchedules->freeMemory();
 }

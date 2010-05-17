@@ -126,6 +126,11 @@ public:
 
 		return NULL;
 	}
+
+	edict_t *get_old ()
+	{
+		return m_pEnt;
+	}
 private:
 	int m_iSerialNumber;
 	edict_t *m_pEnt;

@@ -216,36 +216,48 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, ed
 	else if ( CTeamFortress2Mod::isTeleporterExit(pBuilding,team) )
 		m_Teleporters[iIndex].exit = MyEHandle(pBuilding);
 
+	m_Teleporters[iIndex].sapper = MyEHandle();
+
 
 }
 
-void CTeamFortress2Mod::sapperPlaced(edict_t *pOwner,eEngiBuild type)
+void CTeamFortress2Mod::sapperPlaced(edict_t *pOwner,eEngiBuild type,edict_t *pSapper)
 {
 	int index = ENTINDEX(pOwner)-1;
 
 	if ( (index>=0) && (index<MAX_PLAYERS) )
 	{
 		if ( type == ENGI_TELE )
-			m_Teleporters[index].sapped = true;
+			m_Teleporters[index].sapper = MyEHandle(pSapper);
 		else if ( type == ENGI_DISP )
-			m_Dispensers[index].sapped = true;
+			m_Dispensers[index].sapper = MyEHandle(pSapper);
 		else if ( type == ENGI_SENTRY )
-			m_SentryGuns[index].sapped = true;
+			m_SentryGuns[index].sapper = MyEHandle(pSapper);
 	}
 }
 
-void CTeamFortress2Mod::sapperDestroyed(edict_t *pOwner,eEngiBuild type)
+void CTeamFortress2Mod::sapperDestroyed(edict_t *pOwner,eEngiBuild type, edict_t *pSapper)
 {
-	int index = ENTINDEX(pOwner)-1;
+	int index; 
 
-	if ( (index>=0) && (index<MAX_PLAYERS) )
+	for ( index = 0; index < MAX_PLAYERS; index ++ )
 	{
 		if ( type == ENGI_TELE )
-			m_Teleporters[index].sapped = false;
+		{
+			if ( m_Teleporters[index].sapper.get_old() == pSapper )
+				m_Teleporters[index].sapper = MyEHandle();
+			
+		}
 		else if ( type == ENGI_DISP )
-			m_Dispensers[index].sapped = false;
+		{
+			if ( m_Dispensers[index].sapper.get_old() == pSapper )
+				m_Dispensers[index].sapper = MyEHandle();
+		}
 		else if ( type == ENGI_SENTRY )
-			m_SentryGuns[index].sapped = false;
+		{
+			if ( m_SentryGuns[index].sapper.get_old() == pSapper )
+				m_SentryGuns[index].sapper = MyEHandle();
+		}
 	}
 }
 
@@ -256,7 +268,10 @@ void CTeamFortress2Mod::sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *p
 	if ( (index>=0) && (index<MAX_PLAYERS) )
 	{
 		if ( type == ENGI_SENTRY )
+		{
 			m_SentryGuns[index].sentry = MyEHandle(pBuilding);
+			m_SentryGuns[index].sapper = MyEHandle();
+		}
 	}
 }
 
@@ -267,7 +282,10 @@ void CTeamFortress2Mod::dispenserBuilt(edict_t *pOwner, eEngiBuild type, edict_t
 	if ( (index>=0) && (index<MAX_PLAYERS) )
 	{
 		if ( type == ENGI_DISP )
+		{
 			m_Dispensers[index].disp = MyEHandle(pBuilding);
+			m_Dispensers[index].sapper = MyEHandle();
+		}
 	}
 }
 //
@@ -863,10 +881,10 @@ void CTeamFortress2Mod :: mapInit ()
 	{
 		m_Teleporters[i].entrance = MyEHandle(NULL);
 		m_Teleporters[i].exit = MyEHandle(NULL);
-		m_Teleporters[i].sapped = false;
-		m_SentryGuns[i].sapped = false;
+		m_Teleporters[i].sapper = MyEHandle(NULL);
+		m_SentryGuns[i].sapper = MyEHandle(NULL);
 		m_SentryGuns[i].sentry = MyEHandle(NULL);
-		m_Dispensers[i].sapped = false;
+		m_Dispensers[i].sapper = MyEHandle(NULL);
 		m_Dispensers[i].disp = MyEHandle(NULL);
 	}
 

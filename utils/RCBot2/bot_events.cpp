@@ -126,18 +126,24 @@ void CTF2ObjectSapped :: execute ( IBotEventInterface *pEvent )
 	int building = pEvent->getInt("object",-1);
 	int sapperid = pEvent->getInt("sapperid",-1);
 
-	if ( (owner>=0) && (building>=0) && (sapperid>=0) )
+	if ( m_pActivator && (owner>=0) && (building>=0) && (sapperid>=0) )
 	{
-		edict_t *pOwner = INDEXENT(owner);
+		edict_t *pSpy = m_pActivator;
+		edict_t *pOwner = CBotGlobals::playerByUserId(owner);
 		edict_t *pSapper = INDEXENT(sapperid);
 		CBotTF2 *pBot = (CBotTF2*)CBots::getBotPointer(pOwner);
-
+		
 		if ( pBot )
 		{
-			pBot->buildingSapped((eEngiBuild)building,pSapper);
+			pBot->buildingSapped((eEngiBuild)building,pSapper,pSpy);
 		}
 
-		CTeamFortress2Mod::sapperPlaced(pOwner,(eEngiBuild)building);
+		CTeamFortress2Mod::sapperPlaced(pOwner,(eEngiBuild)building,pSapper);
+
+		CBroadcastSpySap *spysap = new CBroadcastSpySap(pSpy);
+
+		CBots::botFunction(spysap);
+
 	}
 }
 /*
@@ -154,25 +160,25 @@ void CTF2ObjectSapped :: execute ( IBotEventInterface *pEvent )
 */
 void CTF2ObjectDestroyed :: execute ( IBotEventInterface *pEvent )
 {
-	int owner = pEvent->getInt("userid",-1);
 	int type = pEvent->getInt("objecttype",-1);
 	int index = pEvent->getInt("index",-1);
+	int engi = pEvent->getInt("attacker",-1);
 	int was_building = pEvent->getInt("was_building",0);
 
-	if ( (owner>=0) && (type>=0) && (index>=0) && (was_building>=0) )
+	if ( (engi>=0) && m_pActivator && (type>=0) && (index>=0) && (was_building>=0) )
 	{
 		if ( !was_building )
 		{ // could be a sapper
 			if ( (eEngiBuild)type == ENGI_SAPPER )
 			{
-				edict_t *pOwner = INDEXENT(owner);
+				edict_t *pOwner = CBotGlobals::playerByUserId(engi);
 				edict_t *pSapper = INDEXENT(index);
 				CBotTF2 *pBot = (CBotTF2*)CBots::getBotPointer(pOwner);
 
 				if ( pBot )
 					pBot->sapperDestroyed(pSapper);
 
-				CTeamFortress2Mod::sapperDestroyed(pOwner,(eEngiBuild)type);
+				CTeamFortress2Mod::sapperDestroyed(pOwner,(eEngiBuild)type,pSapper);
 			}
 		}
 	}

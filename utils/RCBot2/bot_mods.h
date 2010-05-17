@@ -218,19 +218,19 @@ typedef struct
 {
 	MyEHandle entrance;
 	MyEHandle exit;
-	bool sapped;
+	MyEHandle sapper;
 }tf_tele_t;
 
 typedef struct
 {
 	MyEHandle sentry;
-	bool sapped;
+	MyEHandle sapper;
 }tf_sentry_t;
 
 typedef struct
 {
 	MyEHandle disp;
-	bool sapped;
+	MyEHandle sapper;
 }tf_disp_t;
 
 class CTeamFortress2Mod : public CBotMod
@@ -336,8 +336,8 @@ public:
 		return (m_pFlagCarrierBlue==pPlayer)||(m_pFlagCarrierRed==pPlayer);
 	}
 
-	static void sapperPlaced(edict_t *pOwner,eEngiBuild type);
-	static void sapperDestroyed(edict_t *pOwner,eEngiBuild type);
+	static void sapperPlaced(edict_t *pOwner,eEngiBuild type,edict_t *pSapper);
+	static void sapperDestroyed(edict_t *pOwner,eEngiBuild type,edict_t *pSapper);
 	static void sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding);
 	static void dispenserBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding);
 
@@ -347,7 +347,7 @@ public:
 
 		if ( id>=0 )
 		{
-			return (m_SentryGuns[id].sentry.get()!=NULL)&&(m_SentryGuns[id].sapped);
+			return (m_SentryGuns[id].sentry.get()!=NULL)&&(m_SentryGuns[id].sapper.get()!=NULL);
 		}
 
 		return false;
@@ -359,7 +359,7 @@ public:
 
 		if ( id>=0 )
 		{
-			return ((m_Teleporters[id].exit.get()!=NULL)||(m_Teleporters[id].entrance.get()!=NULL))&&(m_Teleporters[id].sapped);
+			return ((m_Teleporters[id].exit.get()!=NULL)||(m_Teleporters[id].entrance.get()!=NULL))&&(m_Teleporters[id].sapper.get()!=NULL);
 		}
 
 		return false;
@@ -371,7 +371,7 @@ public:
 
 		if ( id>=0 )
 		{
-			return (m_Dispensers[id].disp.get()!=NULL)&&(m_Dispensers[id].sapped);
+			return (m_Dispensers[id].disp.get()!=NULL)&&(m_Dispensers[id].sapper.get()!=NULL);
 		}
 
 		return false;
@@ -384,7 +384,7 @@ public:
 		for ( i = 0; i < MAX_PLAYERS; i ++ )
 		{
 			if ( m_SentryGuns[i].sentry.get() == pSentry )
-				return m_SentryGuns[i].sapped;
+				return m_SentryGuns[i].sapper.get()!=NULL;
 		}
 
 		return false;
@@ -397,7 +397,7 @@ public:
 		for ( i = 0; i < MAX_PLAYERS; i ++ )
 		{
 			if ( (m_Teleporters[i].entrance.get() == pTele) || (m_Teleporters[i].exit.get() == pTele) )
-				return m_Teleporters[i].sapped;
+				return m_Teleporters[i].sapper.get()!=NULL;
 		}
 
 		return false;
@@ -410,7 +410,7 @@ public:
 		for ( i = 0; i < MAX_PLAYERS; i ++ )
 		{
 			if ( m_Dispensers[i].disp.get() == pDisp )
-				return m_Dispensers[i].sapped;
+				return m_Dispensers[i].sapper.get()!=NULL;
 		}
 
 		return false;

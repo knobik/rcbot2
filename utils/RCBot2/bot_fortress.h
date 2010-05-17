@@ -91,6 +91,16 @@ private:
 	int m_iType;
 };
 
+class CBroadcastSpySap : public IBotFunction
+{
+public:
+	CBroadcastSpySap (edict_t *pSpy) { m_pSpy = pSpy; }
+	void execute ( CBot *pBot );
+
+private:
+	edict_t *m_pSpy;
+};
+
 class CBroadcastFlagDropped : public IBotFunction
 {
 public:
@@ -432,7 +442,7 @@ public:
 
 	void setup ();
 
-	void buildingSapped ( eEngiBuild building, edict_t *pSapper );
+	void buildingSapped ( eEngiBuild building, edict_t *pSapper, edict_t *pSpy );
 
 	void sapperDestroyed ( edict_t *pSapper );
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
