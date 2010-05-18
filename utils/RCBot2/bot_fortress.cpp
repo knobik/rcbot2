@@ -2815,7 +2815,8 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 
 void CBotTF2::waitRemoveSap ()
 {
-	m_fRemoveSapTime = engine->Time()+randomFloat(1.5f,3.0f);
+	// this gives engi bot some time to attack spy that has been sapping a sentry
+	m_fRemoveSapTime = engine->Time()+randomFloat(2.5f,4.0f);
 	// TO DO :: add spy check task 
 }
 
