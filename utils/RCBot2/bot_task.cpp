@@ -616,6 +616,7 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
+
 	if ( !CBotGlobals::isAlivePlayer(pEnemy) )
 		fail();
 
@@ -676,7 +677,11 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else
 	{
-		pBot->handleAttack(pBotWeapon,pEnemy);
+		// uncloak
+		if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pBot->getEdict()) )
+			pBot->secondaryAttack();
+		else
+			pBot->handleAttack(pBotWeapon,pEnemy);
 	}
 }
 
@@ -1100,7 +1105,7 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( !CTeamFortress2Mod::isDispenserSapped(pBuilding) )
 		{
 			if ( m_fHealTime == 0.0f )
-				m_fHealTime = engine->Time() + randomFloat(1.0f,2.0f);
+				m_fHealTime = engine->Time() + randomFloat(2.0f,3.0f);
 			else if ( m_fHealTime < engine->Time() )
 			{
 				complete();
@@ -1119,7 +1124,7 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( !CTeamFortress2Mod::isTeleporterSapped(pBuilding) )
 		{
 			if ( m_fHealTime == 0.0f )
-				m_fHealTime = engine->Time() + randomFloat(1.0f,2.0f);
+				m_fHealTime = engine->Time() + randomFloat(2.0f,3.0f);
 			else if ( m_fHealTime < engine->Time() )
 			{
 				complete();
@@ -1138,7 +1143,7 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( !CTeamFortress2Mod::isSentrySapped(pBuilding) )
 		{
 			if ( m_fHealTime == 0.0f )
-				m_fHealTime = engine->Time() + randomFloat(1.0f,2.0f);
+				m_fHealTime = engine->Time() + randomFloat(2.0f,3.0f);
 			else if ( m_fHealTime < engine->Time() )
 			{
 				complete();
@@ -1343,7 +1348,9 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 		else
 		{
-			if ( randomInt(0,1) )
+			if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pBot->getEdict()) )
+				pBot->secondaryAttack();
+			else if ( randomInt(0,1) )
 				pBot->tapButton(IN_ATTACK);
 			//complete();
 		}
@@ -1565,6 +1572,7 @@ void CHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 //////////////////////////////////////////
 CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( Vector vLoc, Vector vSpread)
 {
+	m_vPoint = vLoc;
 	m_vLocation = vLoc;
 	m_vSpread = vSpread;
 	m_iState = 0;
@@ -1578,7 +1586,7 @@ void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	pBot->wantToChangeWeapon(false);
 	
-	pTF2Bot->deployStickies(m_vLocation,m_vSpread,&m_iState,&m_iStickies,&bFail);
+	pTF2Bot->deployStickies(m_vLocation,m_vSpread,&m_vPoint,&m_iState,&m_iStickies,&bFail);
 
 	if ( bFail )
 		fail();

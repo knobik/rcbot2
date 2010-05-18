@@ -275,7 +275,7 @@ protected:
 
 	static int getSpyDisguiseClass ( int iTeam );
 
-	bool thinkSpyIsEnemy ( edict_t *pEdict );
+	virtual bool thinkSpyIsEnemy ( edict_t *pEdict );
 
 	float m_fCallMedic;
 	float m_fTauntTime;
@@ -449,11 +449,13 @@ public:
 	void sapperDestroyed ( edict_t *pSapper );
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
 
-	bool deployStickies ( Vector vLocation, Vector vSpread, int *iState, int *iStickyNum, bool *bFail );
+	bool deployStickies ( Vector vLocation, Vector vSpread, Vector *vPoint, int *iState, int *iStickyNum, bool *bFail );
 
 	void detonateStickies ();
 
 	bool canDeployStickies ();
+
+	bool thinkSpyIsEnemy ( edict_t *pEdict );
 
 private:
 	// time for next jump
@@ -478,6 +480,8 @@ private:
 	// and it can deploy stickies again
 	bool m_bDeployedStickies;
 	float m_fRemoveSapTime;
+	//
+	edict_t *m_pCloakedSpy;
 };
 
 class CBotFF : public CBotFortress

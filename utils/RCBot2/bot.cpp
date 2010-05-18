@@ -1184,7 +1184,7 @@ inline Vector CBot :: getOrigin ()
 // found a new enemy
 void CBot :: enemyFound (edict_t *pEnemy)
 {
-	
+	m_bLookedForEnemyLast = false;
 }
 // work move velocity
 void CBot :: doMove ()

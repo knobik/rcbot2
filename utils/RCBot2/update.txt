@@ -1,4 +1,6 @@
 0.56
+- engineers favour building sentries up to level 2 before building a teleporter exit
+- bots detect uncloaking spies
 - spies use sappers
 - snipers fixed
 - spies backstabbing improved

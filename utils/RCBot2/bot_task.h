@@ -135,6 +135,7 @@ public:
 		sprintf(string,"CBotTF2DemomanPipeTrap");
 	}
 private:
+	Vector m_vPoint;
 	Vector m_vLocation;
 	Vector m_vSpread;
 	float m_fTime;

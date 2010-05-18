@@ -123,7 +123,7 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 		if ( iType == BELIEF_SAFETY )
 		{
 			if ( m_fBelief[iWptIndex] > 0)
-				m_fBelief[iWptIndex] -= (fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
+				m_fBelief[iWptIndex] *= 0.5f;//(fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
 			if ( m_fBelief[iWptIndex] < 0 )
 				m_fBelief[iWptIndex] = 0;
 		}
