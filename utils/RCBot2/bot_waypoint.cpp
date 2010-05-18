@@ -136,6 +136,16 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 		}
 	}
 }
+
+float CWaypointNavigator :: getCurrentBelief ( )
+{
+	if ( m_iCurrentWaypoint >= 0 )
+	{
+		return m_fBelief[m_iCurrentWaypoint];
+	}
+
+	return 0;
+}
 // get the hide spot position (vCover) from origin vCoverOrigin
 bool CWaypointNavigator :: getHideSpotPosition ( Vector vCoverOrigin, Vector *vCover )
 {
@@ -297,13 +307,21 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 		}
 		
 		m_vPreviousPoint = vFrom;
+		// get closest waypoint -- ignore previous failed waypoint
 		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());
 
+		// no nearest waypoint -- find nearest waypoint
 		if ( m_iCurrentWaypoint == -1 )
 		{
-			*bFail = true;
-			m_bWorkingRoute = false;
-			return true;
+			// don't ignore this time
+			m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,-1,true,false,true,NULL,false,m_pBot->getTeam());
+
+			if ( m_iCurrentWaypoint == -1 )
+			{
+				*bFail = true;
+				m_bWorkingRoute = false;
+				return true;
+			}
 		}
 
 		// reset
@@ -559,6 +577,9 @@ void CWaypointNavigator :: rollBackPosition ()
 				m_iCurrentWaypoint = m_currentRoute.Pop();
 		}
 	}
+
+	if ( m_iCurrentWaypoint == -1 ) 
+		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(m_pBot->getOrigin(),CWaypointLocations::REACHABLE_RANGE,-1,true,false,true,NULL,false,m_pBot->getTeam());
 	// find waypoint in route
 }
 // update the bots current walk vector

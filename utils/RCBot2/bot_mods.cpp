@@ -125,6 +125,21 @@ bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity, int iTeam )
 	return ((strncmp(pEntity->GetClassName(),"mapobj_cart_dispenser",21)==0) && (CClassInterface::getTeam(pEntity)==iTeam));
 }
 
+void CTeamFortress2Mod:: clientCommand ( int argc, const char *pcmd, const char *arg1, const char *arg2 )
+{
+	if ( argc > 2 )
+	{
+		if ( strcmp(pcmd,"voicemenu") == 0 )
+		{
+			if ( (strcmp(arg1,"0") == 0) && (strcmp(arg2,"0")==0) )
+			{
+				// somebody shouted "Medic!"
+
+			}
+		}
+	}
+}
+
 void CTeamFortress2Mod :: getResetPoints (int iTeam, int *iCurrentDefendArea, int *iCurrentAttackArea)
 {
 	char *mapname = CBotGlobals::getMapName();

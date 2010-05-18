@@ -529,6 +529,7 @@ PLUGIN_RESULT CRCBotPlugin::ClientConnect( bool *bAllowConnect, edict_t *pEntity
 PLUGIN_RESULT CRCBotPlugin::ClientCommand( edict_t *pEntity, const CCommand &args )
 {
 	const char *pcmd = args.Arg(0);
+	CBotMod *pMod;
 	//const char *pcmd = engine->Cmd_Argv(0);
 
 	if ( !pEntity || pEntity->IsFree() ) 
@@ -563,6 +564,11 @@ PLUGIN_RESULT CRCBotPlugin::ClientCommand( edict_t *pEntity, const CCommand &arg
 
 		return PLUGIN_STOP; // we handled this function
 	}
+
+
+	pMod = CBotGlobals::getCurrentMod();
+
+	pMod->clientCommand(args.ArgC(),pcmd,args.Arg(1),args.Arg(2));
 
 	return PLUGIN_CONTINUE;
 }

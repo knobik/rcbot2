@@ -430,6 +430,8 @@ public:
 
 	void pointCaptured ();
 
+	void waitRemoveSap ();
+
 	virtual bool needAmmo();
 
 	TF_Class getClass ();
@@ -475,6 +477,7 @@ private:
 	// once the demoman explodes them then this becomes false
 	// and it can deploy stickies again
 	bool m_bDeployedStickies;
+	float m_fRemoveSapTime;
 };
 
 class CBotFF : public CBotFortress

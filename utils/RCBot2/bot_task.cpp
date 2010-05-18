@@ -1071,42 +1071,84 @@ void CBotTFDoubleJump :: debugString ( char *string )
 CBotRemoveSapper :: CBotRemoveSapper ( edict_t *pBuilding, eEngiBuild id )
 {
 	m_fTime = 0.0f;
-	m_pBuilding = pBuilding;
+	m_pBuilding = MyEHandle(pBuilding);
 	m_id = id;
+	m_fHealTime = 0.0f;
 }
 	
 void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	//int i = 0;
+	edict_t *pBuilding;
+	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
 
 	pBot->wantToShoot(false);
 
 	if (!m_fTime )
-		m_fTime = engine->Time() + randomFloat(9.0f,11.0f);
+		m_fTime = engine->Time() + randomFloat(8.0f,12.0f);
+
+	pBuilding = m_pBuilding.get();
+
+	if ( !pBuilding )
+	{
+		fail();
+		return;
+	}
 
 	if ( m_id == ENGI_DISP )
 	{
-		if ( !CTeamFortress2Mod::isDispenserSapped(m_pBuilding) )
+		if ( !CTeamFortress2Mod::isDispenserSapped(pBuilding) )
 		{
-			complete();
+			if ( m_fHealTime == 0.0f )
+				m_fHealTime = engine->Time() + randomFloat(1.0f,2.0f);
+			else if ( m_fHealTime < engine->Time() )
+			{
+				complete();
+				return;
+			}
+		}
+		else if ( m_fHealTime > 0.0f )
+		{
+			fail();
+			pTF2Bot->waitRemoveSap();
 			return;
 		}
-
-
 	}
 	else if ( m_id == ENGI_TELE )
 	{
-		if ( !CTeamFortress2Mod::isTeleporterSapped(m_pBuilding) )
+		if ( !CTeamFortress2Mod::isTeleporterSapped(pBuilding) )
 		{
-			complete();
+			if ( m_fHealTime == 0.0f )
+				m_fHealTime = engine->Time() + randomFloat(1.0f,2.0f);
+			else if ( m_fHealTime < engine->Time() )
+			{
+				complete();
+				return;
+			}
+		}
+		else if ( m_fHealTime > 0.0f )
+		{
+			fail();
+			pTF2Bot->waitRemoveSap();
 			return;
 		}
 	}
 	else if ( m_id == ENGI_SENTRY )
 	{
-		if ( !CTeamFortress2Mod::isSentrySapped(m_pBuilding) )
+		if ( !CTeamFortress2Mod::isSentrySapped(pBuilding) )
 		{
-			complete();
+			if ( m_fHealTime == 0.0f )
+				m_fHealTime = engine->Time() + randomFloat(1.0f,2.0f);
+			else if ( m_fHealTime < engine->Time() )
+			{
+				complete();
+				return;
+			}
+		}
+		else if ( m_fHealTime > 0.0f )
+		{
+			fail();
+			pTF2Bot->waitRemoveSap();
 			return;
 		}
 	}
@@ -1115,31 +1157,20 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		fail();
 	}// Fix 16/07/09
-	else if ( !CBotGlobals::entityIsValid(m_pBuilding) )
+	else if ( !pBot->isVisible(pBuilding) )
 	{
-		fail();
-		return;
-	}
-	else if ( !pBot->isVisible(m_pBuilding) )
-	{
-		if ( pBot->distanceFrom(m_pBuilding) > 200 )
+		if ( pBot->distanceFrom(pBuilding) > 200 )
 			fail();
-		else if ( pBot->distanceFrom(m_pBuilding) > 100 )
-			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding),3);
+		else if ( pBot->distanceFrom(pBuilding) > 100 )
+			pBot->setMoveTo(CBotGlobals::entityOrigin(pBuilding),3);
 		
 		pBot->setLookAtTask(LOOK_EDICT,3);
-		pBot->lookAtEdict(m_pBuilding);
+		pBot->lookAtEdict(pBuilding);
 	}
 	else
 	{
-
-		if ( CBotGlobals::entityIsValid(m_pBuilding) && CBotGlobals::entityIsAlive(m_pBuilding) )
-		{
-			if ( !((CBotFortress*)pBot)->upgradeBuilding(m_pBuilding) )
-				fail();
-		}
-	
-		fail();
+		if ( !((CBotFortress*)pBot)->upgradeBuilding(pBuilding) )
+			fail();
 	}
 }
 
@@ -1238,13 +1269,15 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 CBotTF2SpySap :: CBotTF2SpySap ( edict_t *pBuilding, eEngiBuild id )
 {
-	m_pBuilding = pBuilding;
+	m_pBuilding = MyEHandle(pBuilding);
 	m_fTime = 0.0f;
 	m_id = id;
 }
 
 void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	edict_t *pBuilding;
+
 	if ( !pBot->isTF() )
 	{
 		fail();
@@ -1258,21 +1291,17 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CBotWeapon *weapon;
 	pBot->wantToShoot(false);
 
-	if ( tf2Bot->getClass() != TF_CLASS_SPY )
-	{
-		fail();
-		return;
-	}
+	pBuilding = m_pBuilding.get();
 
-	if ( !m_pBuilding || !CBotGlobals::entityIsValid(m_pBuilding) || !CBotGlobals::entityIsAlive(m_pBuilding) )
+	if ( !pBuilding )
 	{
-		fail();
+		complete();
 		return;
 	}
 
 	if ( m_id == ENGI_SENTRY )
 	{
-		if ( CTeamFortress2Mod::isSentrySapped(m_pBuilding) )
+		if ( CTeamFortress2Mod::isSentrySapped(pBuilding) )
 		{
 			complete();
 			return;
@@ -1280,7 +1309,7 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else if ( m_id == ENGI_DISP )
 	{
-		if ( CTeamFortress2Mod::isDispenserSapped(m_pBuilding) )
+		if ( CTeamFortress2Mod::isDispenserSapped(pBuilding) )
 		{
 			complete();
 			return;
@@ -1288,14 +1317,14 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else if ( m_id == ENGI_TELE) 
 	{
-		if ( CTeamFortress2Mod::isTeleporterSapped(m_pBuilding) )
+		if ( CTeamFortress2Mod::isTeleporterSapped(pBuilding) )
 		{
 			complete();
 			return;
 		}
 	}
 
-	pBot->lookAtEdict(m_pBuilding);
+	pBot->lookAtEdict(pBuilding);
 	pBot->setLookAtTask(LOOK_EDICT,5);
 	weapon = tf2Bot->getCurrentWeapon();
 
@@ -1308,14 +1337,15 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else 
 	{
-		if ( pBot->distanceFrom(m_pBuilding) > 100 )
+		if ( pBot->distanceFrom(pBuilding) > 100 )
 		{
-			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding),10);
+			pBot->setMoveTo(CBotGlobals::entityOrigin(pBuilding),10);
 		}
 		else
 		{
-			pBot->tapButton(IN_ATTACK);
-			complete();
+			if ( randomInt(0,1) )
+				pBot->tapButton(IN_ATTACK);
+			//complete();
 		}
 	}
 

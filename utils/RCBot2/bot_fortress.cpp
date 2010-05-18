@@ -271,13 +271,6 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 				if ( !m_pNearestEnemySentry || (pEntity != m_pNearestEnemySentry) && (distanceFrom(pEntity) < distanceFrom(m_pNearestEnemySentry)) )
 				{
 					m_pNearestEnemySentry = pEntity;
-
-					if ( !CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry) && !m_pSchedules->hasSchedule(SCHED_SPY_SAP_BUILDING) )
-					{
-						m_pSchedules->freeMemory();
-						m_pSchedules->add(new CBotSpySapBuildingSched(m_pNearestEnemySentry,ENGI_SENTRY));
-					}
-					
 				}
 			}
 		}
@@ -913,6 +906,8 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	m_fRemoveSapTime = 0.0f;
+
 	// stickies destroyed now
 	m_bDeployedStickies = false;
 
@@ -1415,11 +1410,14 @@ void CBotTF2 :: modThink ()
 
 			if ( !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict)  )
 			{
-				if (m_fSpyCloakTime < engine->Time())
+				if ( m_pNavigator->getCurrentBelief() > 10.0f )
 				{
-					m_fSpyCloakTime = engine->Time() + randomFloat(40.0f,60.0f);
-
-					secondaryAttack();
+					if (m_fSpyCloakTime < engine->Time())
+					{
+						m_fSpyCloakTime = engine->Time() + randomFloat(40.0f,60.0f);
+						
+						secondaryAttack();
+					}
 				}
 			}
 			// uncloak
@@ -1427,17 +1425,29 @@ void CBotTF2 :: modThink ()
 			{
 				secondaryAttack();
 			}
-/* --- Sapping --- not working
-			if ( m_pNearestEnemySentry && ( m_fSpySapTime < engine->Time() ))
-			{
-				m_fSpySapTime = engine->Time() + randomFloat(3.0f,8.0f);
 
-				if ( !m_pSchedules->isCurrentSchedule(SCHED_SPY_SAP_BUILDING) )
-				{
-					m_pSchedules->removeSchedule(SCHED_SPY_SAP_BUILDING);
-					m_pSchedules->addFront(new CBotSpySapBuildingSched(m_pNearestEnemySentry));
-				}				
-			}*/
+			if ( m_pNearestEnemySentry && ( m_fSpySapTime < engine->Time() ) && !CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry) && !m_pSchedules->hasSchedule(SCHED_SPY_SAP_BUILDING) )
+			{
+				m_fSpySapTime = engine->Time() + randomFloat(1.0f,4.0f);
+				m_pSchedules->freeMemory();
+				m_pSchedules->add(new CBotSpySapBuildingSched(m_pNearestEnemySentry,ENGI_SENTRY));
+			}
+		}
+	}
+	else if ( m_iClass == TF_CLASS_ENGINEER )
+	{
+		if ( !m_pSchedules->hasSchedule(SCHED_REMOVESAPPER) )
+		{
+			if ( (m_fRemoveSapTime<engine->Time()) && m_pNearestAllySentry && CBotGlobals::entityIsValid(m_pNearestAllySentry) && CTeamFortress2Mod::isSentrySapped(m_pNearestAllySentry) )
+			{
+					m_pSchedules->freeMemory();
+					m_pSchedules->add(new CBotRemoveSapperSched(m_pNearestAllySentry,ENGI_SENTRY));
+			}
+			else if ( (m_fRemoveSapTime<engine->Time()) && m_pSentryGun && CBotGlobals::entityIsValid(m_pSentryGun) && CTeamFortress2Mod::isSentrySapped(m_pSentryGun) )
+			{
+					m_pSchedules->freeMemory();
+					m_pSchedules->add(new CBotRemoveSapperSched(m_pSentryGun,ENGI_SENTRY));
+			}
 		}
 	}
 
@@ -1953,8 +1963,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,m_pDispenser!=NULL && (iMetal>=200) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3)));
 
 		// remove sappers
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,!bHasFlag&&(m_pSentryGun!=NULL) && CTeamFortress2Mod::isMySentrySapped(m_pEdict),1000.0f));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGDISP,!bHasFlag&&(m_pDispenser!=NULL) && CTeamFortress2Mod::isMyDispenserSapped(m_pEdict),1000.0f));
+		utils.addUtility(CBotUtility(BOT_UTIL_REMOVE_SENTRY_SAPPER,(m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pSentryGun!=NULL) && CTeamFortress2Mod::isMySentrySapped(m_pEdict),1000.0f));
+		utils.addUtility(CBotUtility(BOT_UTIL_REMOVE_DISP_SAPPER,(m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pDispenser!=NULL) && CTeamFortress2Mod::isMyDispenserSapped(m_pEdict),1000.0f));
 
 		utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,(fAmmoDist/fResupplyDist)*(200.0f/(iMetal+1))));
 		utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(fResupplyDist/fAmmoDist)*(100.0f/(iMetal+1))));
@@ -1962,8 +1972,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,(m_pSentryGun!=NULL) && (m_fLookAfterSentryTime<engine->Time()),0.5));
 
 		// remove sappers
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMSENTRY,m_pNearestAllySentry && CTeamFortress2Mod::isSentrySapped(m_pNearestAllySentry),1.1f));
-		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMDISP,m_pNearestDisp && CTeamFortress2Mod::isDispenserSapped(m_pNearestDisp),1.1f));
+		utils.addUtility(CBotUtility(BOT_UTIL_REMOVE_TMSENTRY_SAPPER,(m_fRemoveSapTime<engine->Time()) &&m_pNearestAllySentry && CTeamFortress2Mod::isSentrySapped(m_pNearestAllySentry),1.1f));
+		utils.addUtility(CBotUtility(BOT_UTIL_REMOVE_TMDISP_SAPPER,(m_fRemoveSapTime<engine->Time()) &&m_pNearestDisp && CTeamFortress2Mod::isDispenserSapped(m_pNearestDisp),1.1f));
 
 
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGTMSENTRY,!bHasFlag && m_pNearestAllySentry && (m_pNearestAllySentry!=m_pSentryGun) && (iMetal>=200) && ((iAllySentryLevel<3)||(fAllySentryHealthPercent<1.0f)),0.8+((1.0f-fAllySentryHealthPercent)*0.2)));
@@ -2123,30 +2133,33 @@ bool CBotTF2 ::deployStickies(Vector vLocation, Vector vSpread, int *iState,int 
 			*iStickyNum = iPipesLeft;
 		else
 			*iStickyNum = 6;
-	}
-	else if ( *iState == STICKY_SELECTWEAP )
-	{
-		if ( pWeapon	) 
-			this->selectBotWeapon(pWeapon);
-		else
-			*bFail = true;
-	}
-	else if ( *iState == STICKY_RELOAD )
-	{
-		m_pButtons->tap(IN_RELOAD);
-	}
-	else if ( *iState == STICKY_FACEVECTOR )
-	{
-		primaryAttack();
+
+		*iState = *iState + 1;
 	}
 
-	if ( (*iStickyNum == 0) || (iPipesLeft==0)  )
-	{
-		m_bDeployedStickies = true;
-	}
+	if ( pWeapon != getCurrentWeapon() )
+		selectBotWeapon(pWeapon);
 	else
 	{
-		
+
+		if ( *iState == STICKY_RELOAD )
+		{
+			m_pButtons->tap(IN_RELOAD);
+		}
+		else if ( *iState == STICKY_FACEVECTOR )
+		{
+			primaryAttack();
+		}
+
+		if ( (*iStickyNum == 0) || (iPipesLeft==0)  )
+		{
+			m_bDeployedStickies = true;
+		}
+		else
+		{
+			
+		}
+
 	}
 
 	return m_bDeployedStickies;
@@ -2408,11 +2421,39 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			if ( m_pEnemy  && CBotGlobals::isAlivePlayer(m_pEnemy) )
 			{
 				m_pSchedules->add(new CBotBackstabSched(m_pEnemy));
+				return true;
 			}
 			else if ( m_pLastEnemy &&  CBotGlobals::isAlivePlayer(m_pLastEnemy) )
 			{
 				m_pSchedules->add(new CBotBackstabSched(m_pLastEnemy));
+				return true;
 			}
+			
+			break;
+		case BOT_UTIL_REMOVE_SENTRY_SAPPER:
+
+			
+			m_pSchedules->add(new CBotRemoveSapperSched(m_pSentryGun,ENGI_SENTRY));
+			return true;
+
+			break;
+		case BOT_UTIL_REMOVE_DISP_SAPPER:
+
+			m_pSchedules->add(new CBotRemoveSapperSched(m_pDispenser,ENGI_DISP));
+			return true;
+
+			break;
+		case BOT_UTIL_REMOVE_TMSENTRY_SAPPER:
+
+			m_pSchedules->add(new CBotRemoveSapperSched(m_pNearestAllySentry,ENGI_SENTRY));
+			return true;
+
+			break;
+		case BOT_UTIL_REMOVE_TMDISP_SAPPER:
+
+			m_pSchedules->add(new CBotRemoveSapperSched(m_pNearestDisp,ENGI_DISP));
+			return true;
+
 			break;
 		case BOT_UTIL_BUILDDISP:
 
@@ -2770,6 +2811,12 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 	m_fLookSetTime = engine->Time() + randomFloat(3.0,8.0);
 
 	return true;
+}
+
+void CBotTF2::waitRemoveSap ()
+{
+	m_fRemoveSapTime = engine->Time()+randomFloat(1.5f,3.0f);
+	// TO DO :: add spy check task 
 }
 
 void CBotTF2::roundReset(bool bFullReset)

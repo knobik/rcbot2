@@ -101,6 +101,8 @@ public:
 	// nearest cover postion to both vectors
 	virtual bool getHideSpotPosition ( Vector vCoverOrigin, Vector *vCover ) = 0;
 
+	virtual float getCurrentBelief ( ) { return 0; }
+
 	static const int MAX_PATH_TICKS = 200;
 
 protected:
@@ -353,6 +355,8 @@ public:
 	Vector getCoverOrigin ( Vector vCover );
 
 	void clearOpenList ();
+
+	float getCurrentBelief ( );
 
 	//virtual void goBack();
 	

@@ -172,7 +172,8 @@ public:
 	}
 private:
 	float m_fTime;
-	edict_t *m_pBuilding;
+	float m_fHealTime;
+	MyEHandle m_pBuilding;
 	eEngiBuild m_id;
 };
 
@@ -417,7 +418,7 @@ public:
 
 	virtual void debugString ( char *string );
 private:
-	edict_t *m_pBuilding;
+	MyEHandle m_pBuilding;
 	float m_fTime;
 	eEngiBuild m_id;
 };
