@@ -492,6 +492,7 @@ private:
 	// once the demoman explodes them then this becomes false
 	// and it can deploy stickies again
 	bool m_bDeployedStickies;
+	Vector m_vStickyLocation;
 	float m_fRemoveSapTime;
 	//
 	edict_t *m_pCloakedSpy;

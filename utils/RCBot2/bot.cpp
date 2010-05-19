@@ -514,7 +514,7 @@ void CBot :: think ()
 
 	if ( m_pController->IsEFlagSet(EFL_BOT_FROZEN)  || (m_iFlags & FL_FROZEN) )
 	{
-		stopMoving(10);
+		stopMoving(12);
 		return;
 	}
 

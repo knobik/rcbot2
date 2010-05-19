@@ -2073,6 +2073,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( (m_iClass == TF_CLASS_HWGUY) || (m_iClass == TF_CLASS_DEMOMAN) || (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_PYRO) )
 		fDefendFlagUtility = bot_defrate.GetFloat() - randomFloat(0.0f,fDefendFlagUtility);
 
+	//utils.addUtility(CBotUtility(BOT_UTIL_DEMO_STICKYTRAP,m_pLastEnemy&&(m_iClass==TF_CLASS_DEMOMAN) && canDeployStickies(),0.8f));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,fHealthDist/fResupplyDist));
 
@@ -2617,6 +2618,10 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 
 			return true;
+		case BOT_UTIL_DEMO_STICKYTRAP:
+// to do
+			m_pSchedules->add(new CBotTF2DemoPipeTrapSched(m_vLastSeeEnemy,Vector(200,200,20)));
+			return false;
 		case BOT_UTIL_SAP_LASTENEMY_SENTRY:
 			m_pSchedules->add(new CBotSpySapBuildingSched(m_pLastEnemy,ENGI_SENTRY));
 			return true;

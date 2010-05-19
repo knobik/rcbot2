@@ -80,7 +80,8 @@ const char *g_szUtils[BOT_UTIL_MAX] =
 	"BOT_UTIL_REMOVE_SENTRY_SAPPER",
 	"BOT_UTIL_REMOVE_DISP_SAPPER",
 	"BOT_UTIL_REMOVE_TMSENTRY_SAPPER",
-	"BOT_UTIL_REMOVE_TMDISP_SAPPER"
+	"BOT_UTIL_REMOVE_TMDISP_SAPPER",
+	"BOT_UTIL_DEMO_STICKYTRAP"
 };
 
 // Execute a list of possible actions and put them into order of available actions against utility
