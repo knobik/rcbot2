@@ -397,7 +397,6 @@ void CBotFortress :: spawnInit ()
 
 int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTime, int *iTries )
 {
-	wantToShoot(false);
 
 	switch ( *iState )
 	{
@@ -898,7 +897,9 @@ void CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow )
 
 	if ( pAttacker )
 	{
-		m_fFrenzyTime = engine->Time() + randomFloat(5.0f,15.0f);
+		if ( !CTeamFortress2Mod::isSentry(pAttacker,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
+			m_fFrenzyTime = engine->Time() + randomFloat(5.0f,10.0f);
+
 		return;
 	}
 }
@@ -1428,7 +1429,7 @@ void CBotTF2 :: modThink ()
 				}
 			}
 			// uncloak
-			else if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			else if (  wantToShoot() && CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 			{
 				secondaryAttack();
 			}
@@ -1579,6 +1580,9 @@ bool CBotFortress :: wantToFollowEnemy ()
 
     if ( ((ENTINDEX(m_pLastEnemy) > 0)&&(ENTINDEX(m_pLastEnemy)<=gpGlobals->maxClients)) && (CClassInterface::getTF2Class(m_pLastEnemy) == TF_CLASS_SPY) && (thinkSpyIsEnemy(m_pLastEnemy)) )
         return true; // always find spies!
+
+	if ( m_iClass == TF_CLASS_ENGINEER )
+		return false; // stick to engi duties
     
     return CBot::wantToFollowEnemy();
 }
@@ -1983,7 +1987,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9));
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
-		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),1.0));
+		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f));
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&m_pSentryGun&&(iSentryLevel>1)&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,(m_fRemoveSapTime<engine->Time()) &&!bHasFlag && m_pSentryGun && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2)));
 		utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));

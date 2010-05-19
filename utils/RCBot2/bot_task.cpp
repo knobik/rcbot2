@@ -738,6 +738,8 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !pBot->isTF() )
 		fail();
 
+	pBot->wantToShoot(false);
+
 	tfBot = (CBotFortress*)pBot;
 
 	if ( tfBot->getClass() != TF_CLASS_ENGINEER )

@@ -795,6 +795,8 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 		// draw area
 		if ( pEdict )
 		{
+			
+
 			if ( distanceFrom(CBotGlobals::entityOrigin(pEdict)) < 250 )
 			{
 				CWaypointTypes::printInfo(this,pEdict,1.0);
@@ -806,6 +808,22 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 					else
 						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+16.0f),0,1,255,0,0,255,"%d",m_iArea);
 				}
+
+				if ( CClients::clientsDebugging() )
+				{
+					CClient *pClient = CClients::get(pEdict);
+
+					if ( pClient )
+					{
+						CBot *pBot = pClient->getDebugBot();
+						if ( pBot )
+						{
+							debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+32.0f),0,1,0,0,255,255,"%0.4f",pBot->getNavigator()->getBelief(CWaypoints::getWaypointIndex(this)));
+						}
+
+					}
+				}
+
 			}
 		}
 	case DRAWTYPE_DEBUGENGINE:

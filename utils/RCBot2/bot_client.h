@@ -113,6 +113,7 @@ public:
 
 	inline void setDebugBot ( CBot *pBot ) { m_pDebugBot = pBot; }	
 	inline bool isDebuggingBot ( CBot *pBot ) { return m_pDebugBot == pBot; }
+	inline CBot *getDebugBot () { return m_pDebugBot; }
 
 	void think ();
 

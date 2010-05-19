@@ -103,6 +103,8 @@ public:
 
 	virtual float getCurrentBelief ( ) { return 0; }
 
+	virtual float getBelief ( int index ) { return 0; }
+
 	static const int MAX_PATH_TICKS = 200;
 
 protected:
@@ -329,6 +331,8 @@ public:
 	Vector getNextPoint ();
 
 	void updatePosition ();
+
+    float getBelief ( int index ) { if ( index >= 0 ) return m_fBelief[index]; return 0; }
 
 	void failMove ();
 
