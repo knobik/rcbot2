@@ -69,6 +69,12 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
+	else if ( pBot->getCurrentWeapon() == NULL )
+	{
+		((CBotFortress*)pBot)->clearHealingEntity();
+		pBot->getNavigator()->rollBackPosition();
+		fail();
+	}
 	else if ( !CBotGlobals::entityIsValid(pHeal) || !CBotGlobals::entityIsAlive(pHeal) )
 	{
 		((CBotFortress*)pBot)->clearHealingEntity();
@@ -81,13 +87,7 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 		((CBotFortress*)pBot)->clearHealingEntity();
 		fail();
 	}*/
-	else if ( pBot->distanceFrom(pHeal) > 200 )
-	{
-		((CBotFortress*)pBot)->clearHealingEntity();
-		pBot->getNavigator()->rollBackPosition();
-		fail();
-	}
-	else if ( pBot->getCurrentWeapon() == NULL )
+	else if ( pBot->distanceFrom(pHeal) > 300 )
 	{
 		((CBotFortress*)pBot)->clearHealingEntity();
 		pBot->getNavigator()->rollBackPosition();
@@ -107,8 +107,6 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 			((CBotFortress*)pBot)->clearHealingEntity();
 			fail();
 		}
-
-
 	}
 
 

@@ -568,7 +568,7 @@ PLUGIN_RESULT CRCBotPlugin::ClientCommand( edict_t *pEntity, const CCommand &arg
 
 	pMod = CBotGlobals::getCurrentMod();
 
-	pMod->clientCommand(args.ArgC(),pcmd,args.Arg(1),args.Arg(2));
+	pMod->clientCommand(pEntity,args.ArgC(),pcmd,args.Arg(1),args.Arg(2));
 
 	return PLUGIN_CONTINUE;
 }

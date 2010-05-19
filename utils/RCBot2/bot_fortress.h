@@ -101,6 +101,16 @@ private:
 	edict_t *m_pSpy;
 };
 
+class CBroadcastMedicCall : public IBotFunction
+{
+public:
+	CBroadcastMedicCall (edict_t *pPlayer) { m_pPlayer = pPlayer; };
+	void execute ( CBot *pBot );
+
+private:
+	edict_t *m_pPlayer;
+};
+
 class CBroadcastFlagDropped : public IBotFunction
 {
 public:
@@ -242,6 +252,8 @@ public:
 
 	inline void droppedFlag () { m_bHasFlag = false; }
 
+	void medicCalled ( edict_t *pPlayer );
+
 	bool isAlive ();
 
 	bool isTeleporterUseful ( edict_t *pTele );
@@ -283,6 +295,7 @@ protected:
 	float m_fDefendTime;
 
 	edict_t *m_pHeal;
+	edict_t *m_pLastHeal;
 	edict_t *m_pSentryGun;
 	edict_t *m_pDispenser;
 	edict_t *m_pTeleEntrance;

@@ -97,7 +97,7 @@ public:
 
 	virtual void entitySpawn ( edict_t *pEntity );
 
-	virtual void clientCommand ( int argc,const char *pcmd, const char *arg1, const char *arg2 ) {};
+	virtual void clientCommand ( edict_t *pEntity, int argc,const char *pcmd, const char *arg1, const char *arg2 ) {};
 
 private:
 	char *m_szModFolder;
@@ -245,7 +245,7 @@ public:
 
 	void mapInit ();
 
-	void clientCommand ( int argc, const char *pcmd, const char *arg1, const char *arg2 );
+	void clientCommand ( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 );
 
 	virtual const char *getPlayerClass ()
 	{

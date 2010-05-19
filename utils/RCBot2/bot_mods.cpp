@@ -125,7 +125,7 @@ bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity, int iTeam )
 	return ((strncmp(pEntity->GetClassName(),"mapobj_cart_dispenser",21)==0) && (CClassInterface::getTeam(pEntity)==iTeam));
 }
 
-void CTeamFortress2Mod:: clientCommand ( int argc, const char *pcmd, const char *arg1, const char *arg2 )
+void CTeamFortress2Mod:: clientCommand ( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 )
 {
 	if ( argc > 2 )
 	{
@@ -134,7 +134,9 @@ void CTeamFortress2Mod:: clientCommand ( int argc, const char *pcmd, const char 
 			if ( (strcmp(arg1,"0") == 0) && (strcmp(arg2,"0")==0) )
 			{
 				// somebody shouted "Medic!"
+				CBroadcastMedicCall mediccall = CBroadcastMedicCall(pEntity); 
 
+				CBots::botFunction(&mediccall);
 			}
 		}
 	}

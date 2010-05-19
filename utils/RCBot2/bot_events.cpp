@@ -140,9 +140,9 @@ void CTF2ObjectSapped :: execute ( IBotEventInterface *pEvent )
 
 		CTeamFortress2Mod::sapperPlaced(pOwner,(eEngiBuild)building,pSapper);
 
-		CBroadcastSpySap *spysap = new CBroadcastSpySap(pSpy);
+		CBroadcastSpySap spysap = CBroadcastSpySap(pSpy);
 
-		CBots::botFunction(spysap);
+		CBots::botFunction(&spysap);
 
 	}
 }
@@ -224,12 +224,12 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 {
 	// 04/07/09 : add full reset
 
-	  CBroadcastRoundStart *roundstart = new CBroadcastRoundStart(pEvent->getInt("full_reset") == 1);
+	  CBroadcastRoundStart roundstart = CBroadcastRoundStart(pEvent->getInt("full_reset") == 1);
 	  
 	  if ( pEvent->getInt("full_reset") == 1 )
 		CPoints::resetPoints();
 	  // MUST BE AFTER RESETPOINTS
-	  CBots::botFunction(roundstart);
+	  CBots::botFunction(&roundstart);
 
 	  CTeamFortress2Mod::resetSetupTime();
 	
@@ -260,11 +260,11 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 
 void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
 {
-	CBroadcastCapturedPoint *cap = new CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"),pEvent->getString("cpname"));
+	CBroadcastCapturedPoint cap = CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"),pEvent->getString("cpname"));
 	
 	CPoints::pointCaptured(pEvent->getInt("team"),pEvent->getString("cpname"));
     // MUST BE AFTER POINTCAPTURED
-    CBots::botFunction(cap);
+    CBots::botFunction(&cap);
 }
 
 void CFlagEvent :: execute ( IBotEventInterface *pEvent )
@@ -294,9 +294,8 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 
 			if ( p )
 			{
-				CBroadcastFlagCaptured *captured = new CBroadcastFlagCaptured(p->GetTeamIndex());
-				CBots::botFunction(captured);
-				delete captured;
+				CBroadcastFlagCaptured captured = CBroadcastFlagCaptured(p->GetTeamIndex());
+				CBots::botFunction(&captured);
 			}
 
 			if ( pBot && pBot->isTF() )
@@ -317,9 +316,8 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 
 			if ( p )
 			{
-				CBroadcastFlagDropped *dropped = new CBroadcastFlagDropped(p->GetTeamIndex(),CBotGlobals::entityOrigin(pPlayer));
-				CBots::botFunction(dropped);
-				delete dropped;
+				CBroadcastFlagDropped dropped = CBroadcastFlagDropped(p->GetTeamIndex(),CBotGlobals::entityOrigin(pPlayer));
+				CBots::botFunction(&dropped);
 			}
 
 			if ( pBot && pBot->isTF() )
