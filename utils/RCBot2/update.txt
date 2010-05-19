@@ -4,6 +4,7 @@
 - spies use sappers
 - snipers fixed
 - spies backstabbing improved
+- engineers remove sappers from sentries & dispensers
 - default rcbot_anglespeed value reduced to 8
 - spy notice time reduced significantly
 - spies plan to backstab from afar

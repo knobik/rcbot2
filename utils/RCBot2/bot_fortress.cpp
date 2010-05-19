@@ -2260,6 +2260,18 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 	static float prevTeleExtHealth = 0;
 	static float prevTeleEntHealth = 0;
 
+	CBotWeapon *pWeapon = getCurrentWeapon();
+
+	wantToListen(false);
+
+	if ( !pWeapon )
+		return false;
+	else if ( pWeapon->getID() != TF2_WEAPON_WRENCH )
+	{
+		if ( !select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH)) )
+			return false;
+	}
+
 	if ( m_pSentryGun )
 	{
 		if ( prevSentryHealth > CClassInterface::getHealth(m_pSentryGun) )
