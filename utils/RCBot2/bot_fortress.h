@@ -32,6 +32,15 @@ class CBotUtility;
 
 typedef enum
 {
+	TF_TRAP_TYPE_NONE,
+	TF_TRAP_TYPE_WPT,
+	TF_TRAP_TYPE_POINT,
+	TF_TRAP_TYPE_FLAG,
+	TF_TRAP_TYPE_PL
+}eDemoTrapType;
+
+typedef enum
+{
 	TF_CLASS_CIVILIAN = 0,
 	TF_CLASS_SCOUT,
 	TF_CLASS_SNIPER,
@@ -368,7 +377,7 @@ public:
 		m_pRedPayloadBomb = NULL;
 		m_pBluePayloadBomb = NULL;
 		m_bFixWeapons = false;
-		m_bDeployedStickies = false;
+		m_iTrapType = TF_TRAP_TYPE_NONE;
 	}
 
 	void enemyAtIntel ( Vector vPos, int type = EVENT_FLAG_PICKUP );
@@ -462,7 +471,7 @@ public:
 	void sapperDestroyed ( edict_t *pSapper );
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
 
-	bool deployStickies ( Vector vLocation, Vector vSpread, Vector *vPoint, int *iState, int *iStickyNum, bool *bFail );
+	bool deployStickies ( eDemoTrapType type, Vector vStand, Vector vLocation, Vector vSpread, Vector *vPoint, int *iState, int *iStickyNum, bool *bFail, float *fTime );
 
 	void detonateStickies ();
 
@@ -491,7 +500,8 @@ private:
 	// if demoman has already deployed stickies this is true
 	// once the demoman explodes them then this becomes false
 	// and it can deploy stickies again
-	bool m_bDeployedStickies;
+	//bool m_bDeployedStickies;
+	eDemoTrapType m_iTrapType;
 	Vector m_vStickyLocation;
 	float m_fRemoveSapTime;
 	//

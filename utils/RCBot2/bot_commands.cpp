@@ -82,7 +82,41 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointCopy());
 	add(new CWaypointPaste());
 	add(new CWaypointShiftAreas());
+	add(new CWaypointTeleportCommand());
+}///////////////
+
+CWaypointTeleportCommand :: CWaypointTeleportCommand()
+{
+	setName("show");
+	setHelp("show <waypoint ID>, shows you to this waypoint");
 }
+
+eBotCommandResult CWaypointTeleportCommand::execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		int wpt = atoi(pcmd);
+		CWaypoint *pwpt = CWaypoints::getWaypoint(wpt);
+
+		if ( pwpt )
+		{
+			g_pEffects->Beam( CBotGlobals::entityOrigin(pClient->getPlayer()), pwpt->getOrigin(), CWaypoints::waypointTexture(), 
+				0, 0, 1,
+				5, 12, 12, 255, 
+				10, 255, 255, 255, 200, 10);	
+
+			//pClient->setShowWpt(wpt);
+
+			return COMMAND_ACCESSED;
+		}
+		//else
+			//pClient->setShowWpt(-1);
+	}
+
+	return COMMAND_ERROR;
+}
+
+//////////////
 
 CWaypointCopy :: CWaypointCopy()
 {

@@ -277,7 +277,7 @@ private:
 class CBotTF2DemoPipeTrapSched : public CBotSchedule
 {
 public:
-	CBotTF2DemoPipeTrapSched ( Vector vLoc, Vector vSpread );
+	CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread );
 
 	void init();
 };

@@ -299,13 +299,23 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 		m_bWorkingRoute = true;
 		m_iGoalWaypoint = CWaypointLocations::NearestWaypoint(vTo,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,&m_iFailedGoals,false,m_pBot->getTeam());
 
+		if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
+		{
+			char str[64];
+
+			sprintf(str,"goal waypoint = %d",m_iGoalWaypoint);
+
+			CClients::clientDebugMsg(BOT_DEBUG_NAV,str,m_pBot);
+
+		}
+
 		if ( m_iGoalWaypoint == -1 )
 		{
 			*bFail = true;
 			m_bWorkingRoute = false;
 			return true;
 		}
-		
+			
 		m_vPreviousPoint = vFrom;
 		// get closest waypoint -- ignore previous failed waypoint
 		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());

@@ -957,7 +957,7 @@ void CBotTF2 :: spawnInit()
 	m_fRemoveSapTime = 0.0f;
 
 	// stickies destroyed now
-	m_bDeployedStickies = false;
+	m_iTrapType = TF_TRAP_TYPE_NONE;
 
 	m_fBlockPushTime = 0.0f;
 
@@ -1409,7 +1409,18 @@ void CBotTF2 :: modThink ()
 		m_iPrevWeaponSelectFailed = 0;
 	}
 
-	if ( m_iClass == TF_CLASS_SNIPER )
+	if ( m_iClass == TF_CLASS_DEMOMAN )
+	{
+		if ( m_iTrapType != TF_TRAP_TYPE_NONE )
+		{
+			if ( m_pEnemy )
+			{
+				if ( (CBotGlobals::entityOrigin(m_pEnemy)-m_vStickyLocation).Length()<300 )
+					detonateStickies();
+			}
+		}
+	}
+	else if ( m_iClass == TF_CLASS_SNIPER )
 	{
 		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
 			m_fFov = 20.0f; // Jagger
@@ -2029,8 +2040,21 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9));
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
-		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f));
-		utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&m_pSentryGun&&(iSentryLevel>1)&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
+	
+
+				
+		if ( (CTeamFortress2Mod::isMapType(TF_MAP_CART) || CTeamFortress2Mod::isMapType(TF_MAP_CP)) && (getTeam() == TF_TEAM_BLUE) )
+		{
+			utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
+			utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f));
+
+		}
+		else
+		{
+			utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&((m_pSentryGun&&(iSentryLevel>1))||(!m_pSentryGun))&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f));
+			utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&m_pSentryGun&&(iSentryLevel>1)&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
+		}
+
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGSENTRY,(m_fRemoveSapTime<engine->Time()) &&!bHasFlag && m_pSentryGun && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2)));
 		utils.addUtility(CBotUtility(BOT_UTIL_GETAMMODISP,m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0));
 		utils.addUtility(CBotUtility(BOT_UTIL_UPGTELENT,(m_fRemoveSapTime<engine->Time()) &&m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5))));
@@ -2073,7 +2097,6 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( (m_iClass == TF_CLASS_HWGUY) || (m_iClass == TF_CLASS_DEMOMAN) || (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_PYRO) )
 		fDefendFlagUtility = bot_defrate.GetFloat() - randomFloat(0.0f,fDefendFlagUtility);
 
-	//utils.addUtility(CBotUtility(BOT_UTIL_DEMO_STICKYTRAP,m_pLastEnemy&&(m_iClass==TF_CLASS_DEMOMAN) && canDeployStickies(),0.8f));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
 	utils.addUtility(CBotUtility(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,fHealthDist/fResupplyDist));
 
@@ -2148,10 +2171,40 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		else
 		{
 			m_pPushPayloadBomb = NULL;
-			m_pDefendPayloadBomb = m_pRedPayloadBomb;
+			m_pDefendPayloadBomb = m_pBluePayloadBomb;
 			// Defend Payload bomb
 			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,(m_pDefendPayloadBomb!=NULL),fDefendFlagUtility));
 		}
+	}
+
+	if( ( m_iClass==TF_CLASS_DEMOMAN ) && (m_iTrapType==TF_TRAP_TYPE_NONE) )
+	{
+		utils.addUtility(CBotUtility(BOT_UTIL_DEMO_STICKYTRAP_LASTENEMY,m_pLastEnemy && 
+			(m_iTrapType==TF_TRAP_TYPE_NONE) && canDeployStickies(),
+			randomFloat(min(fDefendFlagUtility,fGetFlagUtility),max(fDefendFlagUtility,fGetFlagUtility))));
+
+		utils.addUtility(CBotUtility(BOT_UTIL_DEMO_STICKYTRAP_FLAG,
+			CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && 
+			(!m_fLastKnownTeamFlagTime || (m_fLastKnownTeamFlagTime < engine->Time())) &&
+			canDeployStickies(),
+			fDefendFlagUtility+0.3f));
+
+		utils.addUtility(CBotUtility(BOT_UTIL_DEMO_STICKYTRAP_FLAG_LASTKNOWN,
+			CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && 
+			(m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time())) &&
+			canDeployStickies(),fDefendFlagUtility+0.4f));
+
+		utils.addUtility(CBotUtility(BOT_UTIL_DEMO_STICKYTRAP_POINT,(m_iCurrentDefendArea>0) && 
+			(CTeamFortress2Mod::isMapType(TF_MAP_CART)||
+			CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||
+			CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||
+			CTeamFortress2Mod::isMapType(TF_MAP_TC)) &&  canDeployStickies(),
+			fDefendFlagUtility+0.4f));
+
+		utils.addUtility(CBotUtility(BOT_UTIL_DEMO_STICKYTRAP_PL,
+			(CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)) && 
+			(m_pDefendPayloadBomb!=NULL) &&  canDeployStickies(),
+			fDefendFlagUtility+0.4f));
 	}
 
 	/////////////////////////////////////////////////////////
@@ -2196,7 +2249,7 @@ bool CBotTF2 :: canDeployStickies ()
 #define STICKY_FACEVECTOR   3
 
 // returns true when finished
-bool CBotTF2 ::deployStickies(Vector vLocation, Vector vSpread, Vector *vPoint, int *iState,int *iStickyNum, bool *bFail)
+bool CBotTF2 ::deployStickies(eDemoTrapType type, Vector vStand, Vector vLocation, Vector vSpread, Vector *vPoint, int *iState,int *iStickyNum, bool *bFail, float *fTime)
 {
 	CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS));
 	int iPipesLeft = 0;
@@ -2222,18 +2275,24 @@ bool CBotTF2 ::deployStickies(Vector vLocation, Vector vSpread, Vector *vPoint, 
 	{
 		if ( *iState == 1 )
 		{
-			*vPoint = vLocation + Vector(randomFloat(-vSpread.x,vSpread.x),randomFloat(-vSpread.y,vSpread.y),randomFloat(-vSpread.z,vSpread.z));
+			*vPoint = vLocation + Vector(randomFloat(-vSpread.x,vSpread.x),randomFloat(-vSpread.y,vSpread.y),0);
 			*iState = 2;
 		}
 
+		if ( distanceFrom(vStand) > 70 )
+			setMoveTo(vStand,9);
+		else
+			stopMoving(9);
+
 		if ( *iState == 2 )
 		{
-			setLookAt(*vPoint);
+			setLookVector(*vPoint);
 			setLookAtTask(LOOK_VECTOR,7);
 
-			if ( CBotGlobals::yawAngleFromEdict(m_pEdict,*vPoint) < 20 )
+			if ( (*fTime < engine->Time()) && (CBotGlobals::yawAngleFromEdict(m_pEdict,*vPoint) < 20) )
 			{
 				primaryAttack();
+				*fTime = engine->Time() + randomFloat(1.0f,1.5f);
 				*iState = 1;
 				*iStickyNum = *iStickyNum - 1;
 			}
@@ -2241,17 +2300,22 @@ bool CBotTF2 ::deployStickies(Vector vLocation, Vector vSpread, Vector *vPoint, 
 
 		if ( (*iStickyNum == 0) || (iPipesLeft==0)  )
 		{
-			m_bDeployedStickies = true;
+			m_iTrapType = type;
+			m_vStickyLocation = vLocation;
 		}
 	}
 
-	return m_bDeployedStickies;
+	return m_iTrapType!=TF_TRAP_TYPE_NONE;
 }
 
 void CBotTF2::detonateStickies()
 {
-	secondaryAttack();
-	m_bDeployedStickies = false;
+	// don't try to blow myself up
+	if ( distanceFrom(m_vStickyLocation) > 50 )
+	{
+		secondaryAttack();
+		m_iTrapType = TF_TRAP_TYPE_NONE;
+	}
 }
 
 bool CBotTF2::lookAfterBuildings ( float *fTime )
@@ -2338,7 +2402,7 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 //
 bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWaypoint *pWaypointHealth, CWaypoint *pWaypointAmmo )
 {
-	CWaypoint *pWaypoint;
+	static CWaypoint *pWaypoint;
 
 		switch ( id )
 		{
@@ -2618,10 +2682,97 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			m_fPickupTime = engine->Time() + randomFloat(5.0f,10.0f);
 
 			return true;
-		case BOT_UTIL_DEMO_STICKYTRAP:
+		case BOT_UTIL_DEMO_STICKYTRAP_LASTENEMY:
+		case BOT_UTIL_DEMO_STICKYTRAP_FLAG:
+		case BOT_UTIL_DEMO_STICKYTRAP_FLAG_LASTKNOWN:
+		case BOT_UTIL_DEMO_STICKYTRAP_POINT:
+		case BOT_UTIL_DEMO_STICKYTRAP_PL:
 // to do
-			m_pSchedules->add(new CBotTF2DemoPipeTrapSched(m_vLastSeeEnemy,Vector(200,200,20)));
-			return false;
+			{
+				
+				Vector vStand;
+				Vector vPoint;
+				Vector vDemoStickyPoint;
+				eDemoTrapType iDemoTrapType = TF_TRAP_TYPE_NONE;
+
+				if ( id == BOT_UTIL_DEMO_STICKYTRAP_LASTENEMY )
+				{
+					pWaypoint =  CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vLastSeeEnemy,400,-1,true,false,true,0,false,getTeam(),true));
+					iDemoTrapType = TF_TRAP_TYPE_WPT;
+				}
+				else if ( id == BOT_UTIL_DEMO_STICKYTRAP_FLAG )
+				{
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_FLAG,CTeamFortress2Mod::getEnemyTeam(getTeam()));
+					iDemoTrapType = TF_TRAP_TYPE_FLAG;
+				}
+				else if ( id == BOT_UTIL_DEMO_STICKYTRAP_FLAG_LASTKNOWN )
+				{
+					pWaypoint =  CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vLastKnownFlagPoint,400,-1,true,false,true,0,false,getTeam(),true));
+					iDemoTrapType = TF_TRAP_TYPE_FLAG;
+				}
+				else if ( id == BOT_UTIL_DEMO_STICKYTRAP_POINT )
+				{
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea,true);
+					iDemoTrapType = TF_TRAP_TYPE_POINT;
+				}
+				else if ( id == BOT_UTIL_DEMO_STICKYTRAP_PL )
+				{
+					pWaypoint =  CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint( CBotGlobals::entityOrigin(m_pDefendPayloadBomb),400,-1,true,false,true,0,false,getTeam(),true));
+					iDemoTrapType = TF_TRAP_TYPE_PL;
+				}
+				
+				if ( pWaypoint )
+				{
+					CWaypoint *pStand = NULL;
+					CWaypoint *pTemp;
+					float fDist = 9999.0f;
+					float fClosest = 9999.0f;
+
+					vPoint = pWaypoint->getOrigin();
+
+					dataUnconstArray<int> m_iVisibles;
+
+		//int m_iVisiblePoints[CWaypoints::MAX_WAYPOINTS]; // make searching quicker
+
+					CWaypointLocations::GetAllVisible(vPoint,vPoint,&m_iVisibles);
+
+					for ( int i = 0; i < m_iVisibles.Size(); i ++ )
+					{
+						if ( m_iVisibles[i] == CWaypoints::getWaypointIndex(pWaypoint) )
+							continue;
+
+						pTemp = CWaypoints::getWaypoint(i);
+
+						if ( pTemp->distanceFrom(pWaypoint) < 512 )
+						{
+							fDist = distanceFrom(pTemp->getOrigin());
+
+							if ( fDist < fClosest )
+							{
+								fClosest = fDist;
+								pStand = CWaypoints::getWaypoint(i);
+							}
+						}
+					}
+
+					if ( !pStand )
+					{
+						pStand = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(pWaypoint->getOrigin(),400,CWaypoints::getWaypointIndex(pWaypoint),true,false,true,0,false,getTeam(),true));
+					}
+
+					if ( pStand )
+					{
+						vStand = pStand->getOrigin();
+
+						if ( pWaypoint )
+						{
+							m_pSchedules->add(new CBotTF2DemoPipeTrapSched(iDemoTrapType,vStand,vPoint,Vector(150,150,20)));
+							return true;
+						}
+					}
+				}
+			}
+			break;
 		case BOT_UTIL_SAP_LASTENEMY_SENTRY:
 			m_pSchedules->add(new CBotSpySapBuildingSched(m_pLastEnemy,ENGI_SENTRY));
 			return true;
@@ -2738,25 +2889,26 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 		{
 			switch ( pWp->getID() )
 			{
-			case TF2_WEAPON_ROCKETLAUNCHER:
-			{
-				vAim = vAim - Vector(0,0,randomFloat(16.0f,36.0f));
-			}
-			// fall through
-			case TF2_WEAPON_GRENADELAUNCHER:
-			{
-				CClient *pClient = CClients::get(pEntity);
-				Vector vVelocity;
-
-				if ( pClient )
+				case TF2_WEAPON_ROCKETLAUNCHER:
 				{
-					vVelocity = pClient->getVelocity();
-					vAim = vAim + (vVelocity*randomFloat(0.4f,0.9f));
+					if ( vAim.z <= getOrigin().z )
+						vAim = vAim - Vector(0,0,randomFloat(8.0f,24.0f));
 				}
+				// fall through
+				case TF2_WEAPON_GRENADELAUNCHER:
+				{
+					CClient *pClient = CClients::get(pEntity);
+					Vector vVelocity;
 
-				if ( pWp->getID() == TF2_WEAPON_GRENADELAUNCHER )
-					vAim = vAim + Vector(0,0,sqrt(fDist));
-			}
+					if ( pClient )
+					{
+						vVelocity = pClient->getVelocity();
+						vAim = vAim + (vVelocity*randomFloat(0.25f,0.75f));
+					}
+
+					if ( pWp->getID() == TF2_WEAPON_GRENADELAUNCHER )
+						vAim = vAim + Vector(0,0,sqrt(fDist));
+				}
 			break;
 			}
 		}
@@ -3123,6 +3275,11 @@ bool CBotFF :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 // Go back to Cap/Flag to 
 void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 {
+	if ( ( m_iClass == TF_CLASS_DEMOMAN ) && ( m_iTrapType != TF_TRAP_TYPE_NONE ) && ( m_iTrapType != TF_TRAP_TYPE_WPT ) )
+	{
+		detonateStickies();
+	}
+
 	if ( !m_pPlayerInfo )
 		return;
 

@@ -1,5 +1,6 @@
 0.56
-- engineers favour building sentries up to level 2 before building a teleporter exit
+- engineers favour building sentries up to level 2 before 
+  building a teleporter exit (attacking engineers don't worry)
 - bots detect uncloaking spies
 - spies use sappers
 - snipers fixed
@@ -10,6 +11,9 @@
 - spies plan to backstab from afar
 - fixed memory leak
 - medics try to heal more often
+- demomen place & detonate stickies
+- new command "rcbot waypoint show <wpt id>" (shows a line to a waypoint ID)
+- fixed cp_steel and pl_goldrush waypoints
 
 0.546 beta!
 - fixed bug with pathfinding

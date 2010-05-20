@@ -458,6 +458,7 @@ void CPoints :: loadMapScript ( )
 				
 			}
 		}
+		fclose(fp);
 	}
 	else
 		return;

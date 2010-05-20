@@ -126,7 +126,7 @@ private:
 class CBotTF2DemomanPipeTrap : public CBotTask
 {
 public:
-	CBotTF2DemomanPipeTrap ( Vector vLoc, Vector vSpread );
+	CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -136,9 +136,11 @@ public:
 	}
 private:
 	Vector m_vPoint;
+	Vector m_vStand;
 	Vector m_vLocation;
 	Vector m_vSpread;
 	float m_fTime;
+	eDemoTrapType m_iTrapType;
 	int m_iState;
 	int m_iStickies;
 

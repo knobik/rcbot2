@@ -37,10 +37,10 @@
 ////////////////////////////////////
 
 
-CBotTF2DemoPipeTrapSched :: CBotTF2DemoPipeTrapSched ( Vector vLoc, Vector vSpread )
+CBotTF2DemoPipeTrapSched :: CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread )
 {
-	addTask(new CFindPathTask(vLoc));
-	addTask(new CBotTF2DemomanPipeTrap(vLoc,vSpread));
+	addTask(new CFindPathTask(vStand));
+	addTask(new CBotTF2DemomanPipeTrap(type,vStand,vLoc,vSpread));
 }
 
 void CBotTF2DemoPipeTrapSched :: init()

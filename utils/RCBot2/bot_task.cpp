@@ -1570,13 +1570,16 @@ void CHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		complete();
 }
 //////////////////////////////////////////
-CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( Vector vLoc, Vector vSpread)
+CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread)
 {
 	m_vPoint = vLoc;
 	m_vLocation = vLoc;
 	m_vSpread = vSpread;
 	m_iState = 0;
 	m_iStickies = 6;
+	m_iTrapType = type;
+	m_vStand = vStand;
+	m_fTime = 0.0f;
 }
 	
 void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -1585,13 +1588,21 @@ void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
 
 	pBot->wantToChangeWeapon(false);
+
+	if ( pBot->getEnemy() && pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	{
+		if ( CTeamFortress2Mod::hasRoundStarted() )
+		{
+			pBot->secondaryAttack();
+			fail();
+		}
+	}
 	
-	pTF2Bot->deployStickies(m_vLocation,m_vSpread,&m_vPoint,&m_iState,&m_iStickies,&bFail);
+	if ( pTF2Bot->deployStickies(m_iTrapType,m_vStand,m_vLocation,m_vSpread,&m_vPoint,&m_iState,&m_iStickies,&bFail,&m_fTime) )
+		complete();
 
 	if ( bFail )
 		fail();
-
-
 }
 
 
