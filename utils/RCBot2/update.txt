@@ -14,6 +14,8 @@
 - demomen place & detonate stickies
 - new command "rcbot waypoint show <wpt id>" (shows a line to a waypoint ID)
 - fixed cp_steel and pl_goldrush waypoints
+- new config.ini for setting up bot cvars
+- fixed defending payload bomb in cart maps
 
 0.546 beta!
 - fixed bug with pathfinding
