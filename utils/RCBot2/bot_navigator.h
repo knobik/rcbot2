@@ -421,9 +421,9 @@ public:
 
 	void rollBackPosition () {};
 
-	void init ();
+    void init ();
 
-	void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType );
+    void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType ){}; //bir3yk
 
 	//void rememberEnemyPosition ( Vector vOrigin );
 

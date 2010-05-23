@@ -378,39 +378,46 @@ bool CBotGlobals :: walkableFromTo (edict_t *pPlayer, Vector v_src, Vector v_des
 	CTraceFilterVis filter = CTraceFilterVis(pPlayer);//	CTraceFilterHitAll filter;
 
 	CBotGlobals::traceLine(v_src,v_src-Vector(0,0,256.0),MASK_NPCSOLID_BRUSHONLY,&filter);
+#ifndef __linux__
 	debugoverlay->AddLineOverlay(v_src,v_src-Vector(0,0,256.0),255,0,255,false,3);
-
+#endif
 	Vector v_ground_src = CBotGlobals::getTraceResult()->endpos + Vector(0,0,1);
 
 	CBotGlobals::traceLine(v_dest,v_dest-Vector(0,0,256.0),MASK_NPCSOLID_BRUSHONLY,&filter);
+#ifndef __linux__
 	debugoverlay->AddLineOverlay(v_dest,v_dest-Vector(0,0,256.0),255,255,0,false,3);
-
+#endif
 	Vector v_ground_dest = CBotGlobals::getTraceResult()->endpos + Vector(0,0,1);
 
 	if ( !CBotGlobals::isVisible(pPlayer,v_ground_src,v_ground_dest) )
 	{
+#ifndef __linux__
 		debugoverlay->AddLineOverlay(v_ground_src,v_ground_dest,0,255,255,false,3);		
-
+#endif
 		trace_t *tr = CBotGlobals::getTraceResult();
 
 		// no slope there
 		if ( tr->endpos.z > v_src.z )
 		{
+#ifndef __linux__
 			debugoverlay->AddTextOverlay((v_ground_src+v_ground_dest)/2,0,3,"ground fail");
+#endif
 
 			CBotGlobals::traceLine(tr->endpos,tr->endpos-Vector(0,0,45),MASK_NPCSOLID_BRUSHONLY,&filter);
 
 			Vector v_jsrc = tr->endpos;
 
+#ifndef __linux__
 			debugoverlay->AddLineOverlay(v_jsrc,v_jsrc-Vector(0,0,45),255,255,255,false,3);	
-
+#endif
 			// can't jump there
 			if ( ((v_jsrc.z - tr->endpos.z) + (v_dest.z-v_jsrc.z)) > 45.0f )
 			{
 				//if ( (tr->endpos.z > (v_src.z+45)) && (fDistance > 64.0f) )
 				//{
+#ifndef __linux__
 					debugoverlay->AddTextOverlay(tr->endpos,0,3,"jump fail");
-
+#endif
 					// check for slope or stairs
 					Vector v_norm = v_dest-v_src;
 					v_norm = v_norm/sqrt(v_norm.LengthSqr());
@@ -424,7 +431,9 @@ bool CBotGlobals :: walkableFromTo (edict_t *pPlayer, Vector v_src, Vector v_des
 
 						if ( CBotGlobals::traceVisible(NULL) )
 						{
+#ifndef __linux__
 							debugoverlay->AddTextOverlay(tr->endpos,0,3,"step/jump fail");
+#endif
 							return false;
 						}
 					}
@@ -552,9 +561,13 @@ bool CBotGlobals :: makeFolders ( char *szFile )
 
 		i++;
 		szFolderName[folderNameSize++]=*delimiter;//next
-		szFolderName[folderNameSize] = 0;
-		
-		mkdir(szFolderName);
+        szFolderName[folderNameSize] = 0;
+        
+#ifndef __linux__
+        mkdir(szFolderName);
+#else
+        mkdir(szFolderName, O_CREAT); //bir3yk
+#endif   
 	}
 
 	return true;

@@ -644,7 +644,11 @@ class dataUnconstArray
 			if ( array.size() == 0  )
 				return;
 
-			vector<T>::iterator it;
+#ifndef __linux__
+            vector<T> ::iterator it;
+#else
+            typename vector<T> ::iterator it;
+#endif
 
 			for ( it = array.begin(); it != array.end(); ++ it )
 			{

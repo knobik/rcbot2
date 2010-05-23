@@ -59,19 +59,33 @@ public:
 
 	void print(double *high);
 
-	inline __int64 getOverall ()
-	{
-		return m_overall;
-	}
+#ifndef __linux__
+    inline __int64 getOverall ()
+#else
+    inline long long getOverall ()
+#endif
+    {
+        return m_overall;
+    }
     
 private:
+#ifndef __linux__
     unsigned __int64  start_cycle;
     unsigned __int64  end_cycle;
-	unsigned __int64  m_average;
-	unsigned __int64  m_min;
-	unsigned __int64  m_max;
-	unsigned __int64  m_last;
-	unsigned __int64  m_overall;
+    unsigned __int64  m_average;
+    unsigned __int64  m_min;
+    unsigned __int64  m_max;
+    unsigned __int64  m_last;
+    unsigned __int64  m_overall;
+#else    
+    unsigned long long  start_cycle;
+    unsigned long long  end_cycle;
+    unsigned long long  m_average;
+    unsigned long long  m_min;
+    unsigned long long  m_max;
+    unsigned long long  m_last;
+    unsigned long long  m_overall;
+#endif
 	
 	const char *m_szFunction;
 

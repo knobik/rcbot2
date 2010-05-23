@@ -46,15 +46,27 @@ CProfileTimer("updateVisables()") // BOT_VISION_TIMER
 // initialise update time
 float CProfileTimers::m_fNextUpdate = 0;
 
-inline unsigned __int64 RDTSC(void)
-{
-    _asm    _emit 0x0F
-    _asm    _emit 0x31
-}
 // if windows USE THE QUERYPERFORMANCECOUNTER
 #ifdef _WIN32
- #define WIN32_LEAN_AND_MEAN
- #include <windows.h>
+inline unsigned __int64 RDTSC(void)
+    {
+            _asm    _emit 0x0F
+            _asm    _emit 0x31
+    }
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#else
+// #define rdtsc _emit  0x0f _asm _emit  0x31
+// inline unsigned long long rdtsc(void)
+//    __asm__ volatile (".byte 0x0f, 0x31" : "=A" (void));
+//    {
+//    }
+   extern __inline__ unsigned long long int rdtsc()
+   {
+     unsigned long long int x;
+     __asm__ volatile (".byte 0x0f, 0x31" : "=A" (x));
+     return x;
+   }
 #endif
 
 CProfileTimer :: CProfileTimer (const char *szFunction)
@@ -71,21 +83,21 @@ CProfileTimer :: CProfileTimer (const char *szFunction)
 void CProfileTimer :: Start()
 {
 #ifdef _WIN32
-	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&start_cycle));
+    QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&start_cycle));
 #else
-    start_cycle = RDTSC();
+        start_cycle = rdtsc();
 #endif
 
 }
 // Stop Timer, work out min/max values and set invoked
 void CProfileTimer :: Stop()
 {
-	unsigned __int64 end_cycle;
-
 #ifdef _WIN32
-	QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&end_cycle));
+    unsigned __int64 end_cycle;
+    QueryPerformanceCounter(reinterpret_cast<LARGE_INTEGER*>(&end_cycle));
 #else
-	end_cycle = RDTSC();
+    unsigned long long end_cycle;
+    end_cycle = rdtsc();
 #endif
 
 	m_last = end_cycle - start_cycle;

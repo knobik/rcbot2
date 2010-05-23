@@ -28,8 +28,7 @@
  *    version.
  *
  */
-#include <vector>
-using namespace std;
+
 
 #include "bot.h"
 
@@ -38,6 +37,9 @@ using namespace std;
 #include "bot_waypoint_locations.h"
 #include "bot_genclass.h"
 #include "bot_globals.h"
+
+#include <vector>    //bir3yk
+using namespace std;    //bir3yk
 #include "bot_script.h"
 
 unsigned char CWaypointLocations :: g_iFailedWaypoints[CWaypoints::MAX_WAYPOINTS];

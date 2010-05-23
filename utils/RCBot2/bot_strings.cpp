@@ -31,11 +31,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <vector>
-
-// (RCBOT2 String Interning Pool)
 #include "bot.h"
 #include "bot_strings.h"
+#include <vector>    //bir3yk
 
 vector<char *> CStrings::m_Strings[MAX_STRINGS_HASH];
 

@@ -448,7 +448,11 @@ class CTeamFortress2ModDedicated : public CTeamFortress2Mod
 public:
 	CTeamFortress2ModDedicated()
 	{
-		setup("tf","source dedicated server",MOD_TF2,BOTTYPE_TF2);
+#ifdef __linux__
+        setup("tf","orangebox",MOD_TF2,BOTTYPE_TF2);    //bir3yk
+#else
+        setup("tf","source dedicated server",MOD_TF2,BOTTYPE_TF2);
+#endif
 	}
 
 private:

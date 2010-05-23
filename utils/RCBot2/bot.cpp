@@ -46,12 +46,18 @@
 #include "vector.h"
 #include "vplane.h"
 #include "eiface.h"
+#ifdef __linux__
+#include "shareddefs.h" //bir3yk
+#endif
 #include "usercmd.h"
 #include "bitbuf.h"
 #include "in_buttons.h"
 #include "ndebugoverlay.h"
 #include "vstdlib/random.h" // for random functions
 #include "iservernetworkable.h" // may come in handy
+#ifdef __linux__
+#include "shake.h"    //bir3yk
+#endif
 
 //#include "cbase.h"
 //#include "basehlcombatweapon.h"
@@ -1175,7 +1181,7 @@ void CBot :: freeAllMemory ()
 	return;
 }
 
-inline Vector CBot :: getOrigin ()
+Vector CBot :: getOrigin ()
 {	
 	return m_pController->GetLocalOrigin();
 	//return CBotGlobals::entityOrigin(m_pEdict);//m_pEdict->GetCollideable()->GetCollisionOrigin();
@@ -1457,12 +1463,13 @@ void CBot :: getLookAtVector ()
 				m_fLookAroundTime = engine->Time() + fTime;
 
 				m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
-
+#ifndef __linux__
 				if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
 				{
 					debugoverlay->AddLineOverlay (getOrigin(), m_vWaypointAim, 255,100,100, false, fTime);
 					debugoverlay->AddLineOverlay (getOrigin(), m_vWaypointAim+m_vLookAroundOffset, 255,40,40, false, fTime);
 				}
+#endif
 			}
 
 			setLookAt(m_vWaypointAim+m_vLookAroundOffset);

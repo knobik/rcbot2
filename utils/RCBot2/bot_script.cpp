@@ -320,10 +320,14 @@ void CPoints :: loadMapScript ( )
 
 			len = strlen(line);
 
-			if ( line[len-1] == '\n' )
-				line[--len] = 0;
-			if ( len < 1 )
-				continue;
+            if ( line[len-1] == '\n' )
+                line[--len] = 0;
+#ifdef __linux__
+            if ( line[len-1] == '\r' )    
+                line[--len] = 0;
+#endif
+            if ( len < 1 )
+                continue;
 
 			// control character
 			if ( line[0] == ':' )

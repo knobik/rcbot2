@@ -40,7 +40,10 @@
 #include "interface.h"
 #include "engine/iserverplugin.h"
 #include "iplayerinfo.h"
-#include "IEngineTrace.h"
+#ifdef __linux__
+#include "shake.h"    //bir3yk
+#endif
+#include "IEngineTrace.h" // for traceline functions
 #include "tier2/tier2.h"
 #include "IEffects.h"
 #include "vplane.h"

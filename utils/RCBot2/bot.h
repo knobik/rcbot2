@@ -43,10 +43,16 @@
 #include "interface.h"
 #include "engine/iserverplugin.h"
 #include "iplayerinfo.h"
+#ifdef __linux__
+#include "shake.h"    //bir3yk
+#endif
 #include "IEngineTrace.h" // for traceline functions
 #include "IEffects.h"
 #include "vplane.h"
 #include "eiface.h"
+#ifdef __linux__
+#include "shareddefs.h" //bir3yk
+#endif
 #include "igameevents.h"
 #include "Color.h"
 #include "usercmd.h"
@@ -243,7 +249,7 @@ public:
 		return (vOrigin-m_pController->GetLocalOrigin()).Length();
 	}
 
-	inline Vector getOrigin ();
+	Vector getOrigin ();
 	/*
 	 * init()
 	 *

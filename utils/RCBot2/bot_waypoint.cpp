@@ -28,8 +28,6 @@
  *    version.
  *
  */
-#include <vector>
-using namespace std;
 
 #include "filesystem.h"
 #include "interface.h"
@@ -54,6 +52,9 @@ using namespace std;
 #include "bot_script.h"
 
 #include "bot_wpt_dist.h"
+
+#include <vector>    //bir3yk
+using namespace std;    //bir3yk
 
 int CWaypoints::m_iNumWaypoints = 0;
 CWaypoint CWaypoints::m_theWaypoints[CWaypoints::MAX_WAYPOINTS];
@@ -730,9 +731,13 @@ void CWaypoint :: drawPathBeam ( CWaypoint *to, unsigned short int iDrawType )
 		1, PATHWAYPOINT_WIDTH, PATHWAYPOINT_WIDTH, 255, 
 		1, 200, 200, 200, 200, 10);	
 		break;
+#ifndef __linux__
 	case DRAWTYPE_DEBUGENGINE2:
 	case DRAWTYPE_DEBUGENGINE:
 		debugoverlay->AddLineOverlay (m_vOrigin, to->getOrigin(), 200,200,200, false, 1);
+		break;
+#endif
+	default:
 		break;
 	}
 }
@@ -811,6 +816,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 			{
 				CWaypointTypes::printInfo(this,pEdict,1.0);
 
+#ifndef __linux__
 				if ( m_iFlags )
 				{
 					if ( CPoints::isValidArea(m_iArea) )
@@ -834,9 +840,13 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 					}
 				}
 
+#endif
+
 			}
 		}
 	case DRAWTYPE_DEBUGENGINE:
+
+#ifndef __linux__
 		// draw waypoint
 		debugoverlay->AddLineOverlay (m_vOrigin - Vector(0,0,fHeight), m_vOrigin + Vector(0,0,fHeight), r,g,b, false, 1);
 
@@ -848,6 +858,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 		{
 			debugoverlay->AddBoxOverlay(m_vOrigin,Vector(-m_fRadius,-m_fRadius,-fHeight),Vector(m_fRadius,m_fRadius,fHeight),QAngle(0,0,0),255,255,255,50,1);
 		}
+#endif
 		break;
 	case DRAWTYPE_EFFECTS:
 		g_pEffects->Beam( m_vOrigin - Vector(0,0,fHeight), m_vOrigin + Vector(0,0,fHeight), CWaypoints::waypointTexture(), 
@@ -1672,8 +1683,9 @@ void CWaypointTypes:: printInfo ( CWaypoint *pWpt, edict_t *pPrintTo, float dura
 
 	strcat(szMessage,"]");
 
+#ifndef __linux__
 	debugoverlay->AddTextOverlay(pWpt->getOrigin()+Vector(0,0,24),duration,szMessage);
-
+#endif
 	//CRCBotPlugin :: HudTextMessage (pPrintTo,"wptinfo","Waypoint Info",szMessage,Color(255,0,0,255),1,2);
 }
 /*

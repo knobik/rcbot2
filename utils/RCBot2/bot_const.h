@@ -115,7 +115,11 @@ typedef enum
 #define ENTINDEX(pEdict) engine->IndexOfEdict(pEdict)
 
 #define BOT_NAME "RCBot"
-#define BOT_VER "TF2 0.4 Beta (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
+#ifdef __linux__
+#define BOT_VER "TF2 0.56 Beta linux 146 (BUILD " __DATE__ "-" __TIME__ ")" //bir3yk
+#else
+#define BOT_VER "TF2 0.56 Beta (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
+#endif
 #define BOT_NAME_VER "RCbot version"
 #define BOT_VER_CVAR "rcbot_ver"
 #define BOT_FOLDER "rcbot2"
