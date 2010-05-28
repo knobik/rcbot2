@@ -493,8 +493,8 @@ public:
 
 	void lookAtEdict ( edict_t *pEdict );
 
-	bool select_CWeapon ( CWeapon *pWeapon );
-	bool selectBotWeapon ( CBotWeapon *pBotWeapon );
+	virtual bool select_CWeapon ( CWeapon *pWeapon );
+	virtual bool selectBotWeapon ( CBotWeapon *pBotWeapon );
 
 	void updatePosition ();
 

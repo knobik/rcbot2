@@ -1586,6 +1586,8 @@ void CBotTF2 :: modThink ()
 				m_pSchedules->freeMemory();
 				m_pSchedules->add(new CBotTF2HealSched(m_pHeal));
 			}
+
+			wantToShoot(false);
 		}
 	}
 
@@ -1960,7 +1962,7 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	p = playerinfomanager->GetPlayerInfo(pPlayer);
 
 	// Simple UBER check
-	if ( ((((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth())<0.25) || (getHealthPercent()<0.25) )
+	if ( (m_pEnemy&&isVisible(m_pEnemy)) || (((((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth())<0.25) || (getHealthPercent()<0.25) ))
 	{
 		if ( randomInt(0,100) > 50 )
 		{
@@ -2284,8 +2286,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	// only defend if defend area is > 0
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
-	utils.addUtility(CBotUtility(BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal),1.0f));
-	utils.addUtility(CBotUtility(BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && CBotGlobals::entityIsAlive(m_pLastHeal),0.99f)); 
+	utils.addUtility(CBotUtility(BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal) && wantToHeal(m_pHeal),0.99f));
+	utils.addUtility(CBotUtility(BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && CBotGlobals::entityIsAlive(m_pLastHeal) && wantToHeal(m_pLastHeal),1.0f)); 
 
 	if ( m_iClass==TF_CLASS_SPY )
 	{
@@ -2563,6 +2565,39 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 
 	return false;
 }
+
+bool CBotTF2 :: select_CWeapon ( CWeapon *pWeapon )
+{
+	char cmd[128];
+
+	sprintf(cmd,"use %s",pWeapon->getWeaponName());
+
+	helpers->ClientCommand(m_pEdict,cmd);
+
+	return true;
+}
+
+bool CBotTF2 :: selectBotWeapon ( CBotWeapon *pBotWeapon )
+{
+	CWeapon *pSelect = pBotWeapon->getWeaponInfo();
+
+	if ( pSelect )
+	{
+		//int id = pSelect->getWeaponIndex();
+		char cmd[128];
+
+		sprintf(cmd,"use %s",pSelect->getWeaponName());
+
+		helpers->ClientCommand(m_pEdict,cmd);
+
+		return true;
+	}
+	else
+		failWeaponSelect();
+
+	return false;
+}
+
 //
 // Execute a given Action
 //

@@ -12,6 +12,7 @@
 - new waitopen waypoint type for arena/koth maps where waypoints can only be used once the point is open
   must use :arena_point_time:<seconds> in script
 - + various spy tweaks
+- fixed: loop in medic behaviour
   
 0.56
 - engineers favour building sentries up to level 2 before 

@@ -305,6 +305,9 @@ public:
 	void waitBackstab ();
 
 	void wantToDisguise ( bool bSet );
+
+	virtual bool select_CWeapon ( CWeapon *pWeapon ) { return CBot::select_CWeapon(pWeapon); }
+	virtual bool selectBotWeapon ( CBotWeapon *pBotWeapon ) { return CBot::selectBotWeapon(pBotWeapon); }
  
 protected:
 	virtual void selectTeam ();
@@ -506,6 +509,9 @@ public:
 	bool thinkSpyIsEnemy ( edict_t *pEdict );
 
 	void voiceCommand ( eVoiceCMD cmd );
+
+	virtual bool select_CWeapon ( CWeapon *pWeapon );
+	virtual bool selectBotWeapon ( CBotWeapon *pBotWeapon );
 
 private:
 	// time for next jump
