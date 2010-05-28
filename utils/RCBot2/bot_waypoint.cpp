@@ -65,6 +65,8 @@ vector<CWaypointType*> CWaypointTypes::m_Types;
 
 extern IVDebugOverlay *debugoverlay;
 
+extern ConVar bot_belief_fade;
+
 ///////////////////////////////////////////////////////////////
 // initialise
 void CWaypointNavigator :: init ()
@@ -104,7 +106,7 @@ bool CWaypointNavigator :: getCoverPosition ( Vector vCoverOrigin, Vector *vCove
 
 	return true;
 }
-#define MAX_BELIEF 200.0f
+
 // get belief nearest to current origin using waypoints to store belief
 void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief, float fStrength, BotBelief iType )
 {
@@ -124,7 +126,7 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 		if ( iType == BELIEF_SAFETY )
 		{
 			if ( m_fBelief[iWptIndex] > 0)
-				m_fBelief[iWptIndex] *= 0.5f;//(fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
+				m_fBelief[iWptIndex] *= bot_belief_fade.GetFloat();//(fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
 			if ( m_fBelief[iWptIndex] < 0 )
 				m_fBelief[iWptIndex] = 0;
 		}
@@ -1639,6 +1641,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_DEFEND,"defend","bot will defend at this position",WptColor(160,50,50)));
 	addType(new CWaypointType(W_FL_AREAONLY,"areaonly","bot will only use this waypoint at certain areas of map",WptColor(150,200,150)));
 	addType(new CWaypointType(W_FL_ROUTE,"route","bot will attempt to go through one of these",WptColor(100,100,100)));
+	addType(new CWaypointType(W_FL_WAIT_OPEN,"waitopen","bot will wait until arena point is open to use this waypoint",WptColor(200,100,50)));
 }
 
 void CWaypointTypes :: freeMemory ()

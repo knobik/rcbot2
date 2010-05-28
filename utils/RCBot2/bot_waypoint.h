@@ -124,6 +124,7 @@ public:
 	static const int W_FL_DEFEND = 262144;
 	static const int W_FL_AREAONLY = 524288;
 	static const int W_FL_ROUTE = 1048576;
+	static const int W_FL_WAIT_OPEN = 2097152;
 
 	static void setup ();
 

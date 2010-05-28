@@ -36,6 +36,37 @@
 #include "bot_globals.h"
 ////////////////////////////////////
 
+const char *szSchedules[] = 
+{
+	"SCHED_NONE",
+	"SCHED_ATTACK",
+	"SCHED_RUN_FOR_COVER",
+	"SCHED_GOTO_ORIGIN",
+	"SCHED_GOOD_HIDE_SPOT",
+	"SCHED_TF2_GET_FLAG",
+	"SCHED_TF2_GET_HEALTH",
+	"SCHED_TF_BUILD",
+	"SCHED_HEAL",
+	"SCHED_GET_METAL",
+	"SCHED_SNIPE",
+	"SCHED_UPGRADE",
+	"SCHED_USE_TELE",
+	"SCHED_SPY_SAP_BUILDING",
+	"SCHED_USE_DISPENSER",
+	"SCHED_PICKUP",
+	"SCHED_TF2_GET_AMMO",
+	"SCHED_TF2_FIND_FLAG",
+	"SCHED_LOOKAFTERSENTRY",
+	"SCHED_DEFEND",
+	"SCHED_ATTACKPOINT",
+	"SCHED_DEFENDPOINT",
+	"SCHED_TF2_PUSH_PAYLOADBOMB",
+	"SCHED_TF2_DEFEND_PAYLOADBOMB",
+	"SCHED_TF2_DEMO_PIPETRAP",
+	"SCHED_BACKSTAB",
+	"SCHED_REMOVESAPPER"
+};
+
 
 CBotTF2DemoPipeTrapSched :: CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread )
 {
@@ -360,7 +391,7 @@ CBotAttackPointSched :: CBotAttackPointSched ( Vector vPoint, int iRadius, int i
 }
 
 void CBotAttackPointSched ::init ()
-{
+{	
 	setID(SCHED_ATTACKPOINT);
 }
  
@@ -397,7 +428,7 @@ void CBotSchedule :: execute ( CBot *pBot )
 			pTask->fail(); // fail
 		else
 		{			
-			if ( CClients::clientsDebugging() )
+			if ( CClients::clientsDebugging() && CClients::clientsDebugging(BOT_DEBUG_TASK) )
 			{
 				char dbg[512];
 

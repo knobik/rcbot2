@@ -87,6 +87,7 @@ extern CGlobalVars *gpGlobals;
 class CClassInterface
 {
 public:
+	static int getScore ( edict_t *edict );
     static int getFlags ( edict_t *edict );
 	static int getTeam ( edict_t *edict );
 	static float getHealth ( edict_t *edict );

@@ -28,6 +28,8 @@
  *    version.
  *
  */
+#include "server_class.h"
+
 #include "bot.h"
 #include "bot_mods.h"
 #include "bot_globals.h"
@@ -46,6 +48,9 @@ float CTeamFortress2Mod::m_fArenaPointOpenTime = 0.0f;
 float CTeamFortress2Mod::m_fPointTime = 0.0f;
 tf_sentry_t CTeamFortress2Mod::m_SentryGuns[MAX_PLAYERS];	// used to let bots know if sentries have been sapped or not
 tf_disp_t  CTeamFortress2Mod::m_Dispensers[MAX_PLAYERS];	// used to let bots know where friendly/enemy dispensers are
+edict_t *CTeamFortress2Mod::m_pResourceEntity = NULL;
+
+extern ConVar bot_use_disp_dist;
 
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 {
@@ -236,6 +241,60 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, ed
 	m_Teleporters[iIndex].sapper = MyEHandle();
 
 
+}
+
+int CTeamFortress2Mod ::getHighestScore ()
+{
+	int highest = 0;
+	int score;
+	int i = 0;
+edict_t *edict;
+	for ( i = 0; i < gpGlobals->maxClients; i ++ )
+	{
+		edict = INDEXENT(i);
+
+		if ( edict && CBotGlobals::entityIsValid(edict) )
+		{
+			score = CClassInterface::getScore(edict);
+		
+			if ( score > highest )
+			{
+				highest = score;
+			}
+		}
+	}
+
+	return highest;
+}
+
+edict_t *CTeamFortress2Mod :: nearestDispenser ( Vector vOrigin, int team )
+{
+	edict_t *pNearest = NULL;
+	edict_t *pDisp;
+	float fDist;
+	float fNearest = bot_use_disp_dist.GetFloat();
+
+	for ( unsigned int i = 0; i < MAX_PLAYERS; i ++ )
+	{
+		//m_Dispensers[i]
+		pDisp = m_Dispensers[i].disp.get();
+
+		if ( pDisp )
+		{
+			if ( CTeamFortress2Mod::getTeam(pDisp) == team )
+			{
+				fDist = (CBotGlobals::entityOrigin(pDisp) - vOrigin).Length();
+
+				if ( fDist < fNearest )
+				{
+					pNearest = pDisp;
+					fNearest = fDist;
+				}
+			}
+		}
+	}
+
+	return pNearest;
 }
 
 void CTeamFortress2Mod::sapperPlaced(edict_t *pOwner,eEngiBuild type,edict_t *pSapper)
@@ -703,6 +762,47 @@ bool CTeamFortress2Mod :: TF2_IsPlayerOnFire(edict_t *pPlayer)
     return ((pcond & TF2_PLAYER_ONFIRE) == TF2_PLAYER_ONFIRE);
 }
 
+// http://svn.alliedmods.net/viewvc.cgi/trunk/extensions/tf2/extension.cpp?revision=2183&root=sourcemod&pathrev=2183
+edict_t *FindEntityByNetClass(int start, const char *classname)
+{
+	edict_t *current;
+
+	for (int i = ((start != -1) ? start : 0); i < gpGlobals->maxEntities; i++)
+	{
+		current = engine->PEntityOfEntIndex(i);
+		if (current == NULL)
+		{
+			continue;
+		}
+
+		IServerNetworkable *network = current->GetNetworkable();
+
+		if (network == NULL)
+		{
+			continue;
+		}
+
+		ServerClass *sClass = network->GetServerClass();
+		const char *name = sClass->GetName();
+		
+
+		if (strcmp(name, classname) == 0)
+		{
+			return current;
+		}
+	}
+
+	return NULL;
+}
+
+edict_t *CTeamFortress2Mod :: findResourceEntity()
+{
+	if ( !m_pResourceEntity )
+		m_pResourceEntity = FindEntityByNetClass(-1, "CTFPlayerResource");
+
+	return m_pResourceEntity;
+}
+
 float CTeamFortress2Mod :: TF2_GetClassSpeed(int iClass) 
 { 
 switch (iClass) 
@@ -867,6 +967,8 @@ void CTeamFortress2Mod :: mapInit ()
 	string_t mapname = gpGlobals->mapname;
 
 	const char *szmapname = mapname.ToCStr();
+
+	m_pResourceEntity = NULL;
 
 	if ( strncmp(szmapname,"ctf_",4) == 0 )
 		m_MapType = TF_MAP_CTF;

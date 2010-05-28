@@ -241,6 +241,8 @@ public:
 	CTeamFortress2Mod()
 	{
 		setup("tf","team fortress 2",MOD_TF2,BOTTYPE_TF2);
+
+		m_pResourceEntity = NULL;
 	}
 
 	void mapInit ();
@@ -324,6 +326,10 @@ public:
 	static bool isArenaPointOpen ();
 
 	static bool hasRoundStarted ();
+
+	static int getHighestScore ();
+
+	static edict_t *CTeamFortress2Mod :: nearestDispenser ( Vector vOrigin, int team );
 
 	static void flagPickedUp (int iTeam, edict_t *pPlayer);
 
@@ -420,6 +426,8 @@ public:
 		return false;
 	}
 
+	static edict_t *findResourceEntity ();
+
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
@@ -441,6 +449,8 @@ private:
 
 	static float m_fPointTime;
 	static float m_fArenaPointOpenTime;
+
+	static edict_t *m_pResourceEntity;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

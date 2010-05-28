@@ -50,10 +50,10 @@ CPerceptron :: CPerceptron (unsigned int iInputs,ITransfer *transferFunction)
 	m_iInputs = iInputs;
 	
 	// bias weight
-	m_weights.push_back(randomFloat(0,1));
+	m_Bias = -0.5;
 	
 	for ( unsigned int i = 0; i < m_iInputs; i++ )
-		m_weights.push_back(-1+randomFloat(0,2));
+		m_weights.push_back(-0.3f+randomFloat(0.0f,0.6f));
 	
 	m_transferFunction = transferFunction;
 	
@@ -80,11 +80,11 @@ void CPerceptron :: input ( vector <ga_nn_value> inputs )
 ga_nn_value CPerceptron :: execute ()
 {
 	// bias weight
-	ga_nn_value fNetInput = m_weights[0];
+	ga_nn_value fNetInput = m_Bias;
 	
 	for ( unsigned int i = 0; i < m_inputs.size(); i ++ )	
 	{
-		fNetInput = m_weights[i+1]*m_inputs[i];
+		fNetInput = m_weights[i]*m_inputs[i];
 	}
 	
 	m_output = m_transferFunction->transfer(fNetInput);
@@ -105,10 +105,10 @@ ga_nn_value CPerceptron :: getOutput ()
 void CPerceptron :: train ( ga_nn_value expectedOutput )
 {
 	// bias
-	m_weights[0] = m_weights[0] + m_LearnRate*(expectedOutput-m_output)*m_Bias;
+	m_Bias += m_LearnRate*(expectedOutput-m_output);
 	
-	for ( unsigned int i = 1; i < m_weights.size(); i ++ )
+	for ( unsigned int i = 0; i < m_weights.size(); i ++ )
 	{
-		m_weights[i] = m_weights[i] + m_LearnRate*(expectedOutput-m_output)*m_inputs[i-1];
+		m_weights[i] = m_weights[i] + m_LearnRate*(expectedOutput-m_output)*m_inputs[i];
 	}
 }

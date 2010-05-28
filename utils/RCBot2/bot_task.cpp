@@ -244,6 +244,8 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			if ( (((CBotTF2*)pBot)->getClass() == TF_CLASS_SPY) && (((CBotTF2*)pBot)->isDisguised()))
 				pBot->primaryAttack(); // remove disguise to capture
 
+			((CBotFortress*)pBot)->wantToDisguise(false);
+
 			if ( fdist < 32 )
 			{
 				pBot->stopMoving(5);
@@ -303,12 +305,13 @@ void CBotTF2PushPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		//m_vMoveTo = m_vOrigin + Vector(randomFloat(-10,10),randomFloat(-10,10),0);
 		m_vMoveTo = m_vOrigin + m_vRandomOffset;
 
-		if ( pBot->distanceFrom(m_vMoveTo) < 80 )
+		if ( pBot->distanceFrom(m_vMoveTo) < 100 )
 		{	
-			if ( (((CBotFortress*)pBot)->getClass() == TF_CLASS_SPY) && ((CBotFortress*)pBot)->isDisguised() )
-			{
-				pBot->primaryAttack();
-			}
+			if ( (((CBotTF2*)pBot)->getClass() == TF_CLASS_SPY) && (((CBotTF2*)pBot)->isDisguised()))
+				pBot->primaryAttack(); // remove disguise to capture
+
+			((CBotFortress*)pBot)->wantToDisguise(false);
+
 		}
 		else
 			pBot->setMoveTo(m_vMoveTo,3);
@@ -1405,11 +1408,11 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 
 		if ( pBot->distanceFrom(vTele) > 48 )
-			pBot->setMoveTo(vTele,5);
+			pBot->setMoveTo(vTele,9);
 		else
-			pBot->stopMoving(5);
+			pBot->stopMoving(6);
 
-		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 48 )
+		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 50 )
 		{
 			pBot->getNavigator()->freeMapMemory();
 			

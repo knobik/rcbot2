@@ -30,6 +30,25 @@ class CBotUtility;
 #define TF2_PLAYER_TAUNTING	    (1 << 7)    // 128
 #define TF2_PLAYER_ONFIRE	    (1 << 14)   // 16384
 
+//#define TF2_SPY_FOV_KNIFEATTACK 90.0f
+
+typedef enum
+{
+	TF_VC_MEDIC = 0,
+	TF_VC_SPY,
+	TF_VC_HELP,
+	TF_VC_DISP,
+	TF_VC_SENTRY,
+	TF_VC_TELE,
+	TF_VC_SENTRYAHEAD,
+	TF_VC_YES,
+	TF_VC_NO,
+	TF_VC_GOGOGO,
+	TF_VC_MOVEUP,
+	TF_VC_INCOMING,
+	TF_VC_GOODSHOT
+}eVoiceCMD;
+
 typedef enum
 {
 	TF_TRAP_TYPE_NONE,
@@ -284,6 +303,8 @@ public:
 	virtual bool needAmmo ();
 
 	void waitBackstab ();
+
+	void wantToDisguise ( bool bSet );
  
 protected:
 	virtual void selectTeam ();
@@ -353,6 +374,11 @@ protected:
 
 	bool m_bHasFlag;	
 	float m_fSnipeAttackTime;
+
+	// time left before the bot decides if it wants to change class
+	float m_fChangeClassTime;
+	// bot should check if he can change class now
+	bool m_bCheckClass;
 };
 //
 //
@@ -478,6 +504,8 @@ public:
 	bool canDeployStickies ();
 
 	bool thinkSpyIsEnemy ( edict_t *pEdict );
+
+	void voiceCommand ( eVoiceCMD cmd );
 
 private:
 	// time for next jump

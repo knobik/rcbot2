@@ -1,3 +1,18 @@
+?.??
+- hwguys rev mini gun at dangerous locations
+- spies no longer trie to shoot sentries/instead focus on sapping/attacking the engi
+- to do: better demoman/soldier aiming (use distance***)
+- added: rcbot_rocket_pred <value> command , a multiplier for 
+         adding prediction to soldier rockets/demoman grenades. default: 0.45
+- fixed: spies try not to uncloak when enemy is facing them
+- to do: spies to avoid enemies if facing them
+- bots use dispensers more
+- bots change classes automatically (use rcbot_change_classes 1 command)
+- bots no longer cry SPY when a player is disguised as their enemy team
+- new waitopen waypoint type for arena/koth maps where waypoints can only be used once the point is open
+  must use :arena_point_time:<seconds> in script
+- + various spy tweaks
+  
 0.56
 - engineers favour building sentries up to level 2 before 
   building a teleporter exit (attacking engineers don't worry)

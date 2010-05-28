@@ -82,9 +82,11 @@
 
 static ICvar *s_pCVar;
 
+ConVar bot_spyknifefov("rcbot_spyknifefov","80",0,"the FOV from the enemy that spies must backstab from");
 ConVar bot_visrevs("rcbot_visrevs","9",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
 ConVar bot_pathrevs("rcbot_pathrevs","40",0,"how many revs the bot searches for a path each frame, lower to reduce cpu usage, but causes bots to stand still more");
 ConVar bot_command("rcbot_cmd","",0,"issues a command to all bots");
+ConVar bot_rocketpredict( "rcbot_rocketpred", "0.45", 0, "multiplier for soldier / demoman rocket/grenade prediction" );
 ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
 ConVar bot_scoutdj( "rcbot_scoutdj", "0.28", 0, "time scout uses to double jump" );
 ConVar bot_anglespeed( "rcbot_anglespeed", "8.0", 0, "speed that bots turn" );
@@ -92,7 +94,13 @@ ConVar bot_stop( "rcbot_stop", "0", 0, "Make bots stop thinking!");
 ConVar bot_waypointpathdist("rcbot_wpt_pathdist","512",0,"Length for waypoints to automatically add paths at");
 ConVar bot_rj("rcbot_rj","0.01",0,"time for soldier to fire rocket after jumping");
 ConVar bot_defrate("rcbot_defrate","0.24",0,"rate for bots to defend");
-ConVar bot_beliefmulti("rcbot_beliefmulti","10.0",0,"multiplier for bot belief");
+ConVar bot_beliefmulti("rcbot_beliefmulti","20.0",0,"multiplier for increasing bot belief");
+ConVar bot_belief_fade("rcbot_belief_fade","0.75",0,"the multiplayer rate bot belief decreases");
+ConVar bot_change_class("rcbot_change_classes","0",0,"bots change classes at random intervals");
+ConVar bot_use_vc_commands("rcbot_voice_cmds","1",0,"bots use voice commands e.g. medic/spy etc");
+ConVar bot_use_disp_dist("rcbot_disp_dist","800.0",0,"distance that bots will go back to use a dispenser");
+ConVar bot_max_cc_time("rcbot_max_cc_time","240",0,"maximum time for bots to consider changing class <seconds>");
+ConVar bot_min_cc_time("rcbot_min_cc_time","60",0,"minimum time for bots to consider changing class <seconds>");
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
 IFileSystem *filesystem = NULL;  // file I/O 
@@ -129,7 +137,7 @@ CRCBotPlugin::~CRCBotPlugin()
 //---------------------------------------------------------------------------------
 // Purpose: an example of how to implement a new command
 //---------------------------------------------------------------------------------
-static ConVar empty_cvar(BOT_VER_CVAR, BOT_VER, 0, BOT_NAME_VER);
+static ConVar empty_cvar(BOT_VER_CVAR, BOT_VER, FCVAR_REPLICATED, BOT_NAME_VER);
 
 CON_COMMAND( rcbotd, "access the bot commands on a server" )
 {
@@ -837,6 +845,32 @@ bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int 
 	*offset = temp_info.actual_offset;
 
 	return true;
+}
+
+int CClassInterface ::getScore (edict_t *edict)
+{
+	static unsigned int offset = 0;
+	edict_t *res;
+ 
+	if (!offset)
+		offset = findOffset("m_iTotalScore","CTFPlayerResource");
+	
+	if (!offset)
+		return 0;
+
+	res = CTeamFortress2Mod::findResourceEntity();
+
+	IServerUnknown *pUnknown = (IServerUnknown *)res->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return 0;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return *(int *)((char *)pEntity + (offset + (ENTINDEX(edict)*4)));
+
 }
 
 int CClassInterface :: getEffects ( edict_t *edict )

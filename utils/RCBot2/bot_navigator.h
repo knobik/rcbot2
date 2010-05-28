@@ -46,6 +46,8 @@ using namespace std;
 class CNavMesh;
 class CWaypointVisibilityTable;
 
+#define MAX_BELIEF 200.0f
+
 class INavigatorNode
 {
 public:

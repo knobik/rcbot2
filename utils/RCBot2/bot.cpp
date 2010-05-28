@@ -250,7 +250,8 @@ bool CBot :: FVisible ( Vector &vOrigin )
 bool CBot :: FVisible ( edict_t *pEdict )
 {
 	Vector eye = getEyePosition();
-	return CBotGlobals::isVisible(m_pEdict,eye,CBotGlobals::entityOrigin(pEdict)+Vector(0,0,36.0f));
+
+	return CBotGlobals::isVisible(m_pEdict,eye,CBotGlobals::entityOrigin(pEdict)+Vector(0,0,50.0f));
 }
 
 QAngle CBot :: eyeAngles ()
@@ -1207,22 +1208,43 @@ void CBot :: doMove ()
 		// fAngle is got from world realting to bots origin, not angles
 		float fAngle;
 		float radians;
+		float fDist;
 
 		if ( m_pAvoidEntity && (m_fAvoidTime < engine->Time()) )
 		{
 			if ( canAvoid(m_pAvoidEntity) )
 			{
-				Vector m_vAvoid = (getOrigin()-CBotGlobals::entityOrigin(m_pAvoidEntity));
+				Vector m_vAvoidOrigin = CBotGlobals::entityOrigin(m_pAvoidEntity);
+				Vector vMove = m_vMoveTo-getOrigin();
+				Vector vLeft;
+				Vector vRight;
 
+				vMove = vMove.Cross(Vector(0,0,1));
+
+				vLeft = getOrigin() - (vMove*64.0f);
+				vRight = getOrigin() + (vMove*64.0f);
+
+				if ( (m_vAvoidOrigin-vLeft).Length() < (m_vAvoidOrigin-vRight).Length() )
+					m_vMoveTo = vLeft;
+				else
+					m_vMoveTo = vRight;
+
+				/*
+				Vector m_vAvoid = m_vAvoidOrigin-getOrigin();
+		
 				m_vAvoid = m_vAvoid/m_vAvoid.Length();
+
+				m_vAvoid = m_vAvoid.Cross(Vector(0.0f,0.0f,1.0f));
 				//?			
-				m_vMoveTo = m_vMoveTo - (m_vAvoid*(distanceFrom(m_vMoveTo)));
+				
+				m_vMoveTo = m_vMoveTo + (m_vAvoid*90.0f);*/
 			}
 			else
 				m_pAvoidEntity = NULL;
 		}
 
 		fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo);
+		fDist = distanceFrom(m_vMoveTo);
 
 		/////////
 		radians = fAngle * 3.141592f / 180.0f; // degrees to radians
@@ -1259,6 +1281,12 @@ void CBot :: doMove ()
 			m_fForwardSpeed = 0.0;
 		if ( fabs(m_fSideSpeed) < 1.0 )
 			m_fSideSpeed = 0.0;
+		if ( fDist < 2.0f )
+		{
+			m_fForwardSpeed = 0.0f;
+			m_fSideSpeed = 0.0f;
+		}
+
 
 		//if ( isUnderWater() )
 		//{
@@ -1340,7 +1368,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	m_vAimVector = v_org + (fDistFactor*Vector(randomFloat(v_min.x,v_max.x),randomFloat(v_min.y,v_max.y),randomFloat(v_min.z,v_max.z))) + (fDistFactor*Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16)));
 
 	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
-		m_vAimVector = m_vAimVector + Vector(0,0,36);
+		m_vAimVector = m_vAimVector + Vector(0,0,40.0f);
 
 	return m_vAimVector;
 }
@@ -1444,7 +1472,12 @@ void CBot :: getLookAtVector ()
 		break;
 	case LOOK_BUILD:
 		{
-			if ( m_fLookAroundTime < engine->Time() )
+			if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			{
+				setLookAtTask(LOOK_ENEMY,4);
+				return;
+			}
+			else if ( m_fLookAroundTime < engine->Time() )
 			{
 				float fTime = randomFloat(4.0f,8.0f);
 				m_fLookAroundTime = engine->Time() + fTime;
@@ -1477,7 +1510,12 @@ void CBot :: getLookAtVector ()
 		break;
 	case LOOK_NOISE:
 		{
-			if ( !m_bListenPositionValid || (m_fListenTime < engine->Time()) ) // already listening to something ?
+			if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			{
+				setLookAtTask(LOOK_ENEMY,4);
+				return;
+			}
+			else if ( !m_bListenPositionValid || (m_fListenTime < engine->Time()) ) // already listening to something ?
 			{
 				setLookAtTask(LOOK_WAYPOINT,4);
 				return;
@@ -1494,7 +1532,7 @@ void CBot :: getLookAtVector ()
 			{
 				m_vLookAroundOffset = Vector(randomFloat(-128,128),randomFloat(-128,128),randomFloat(0,32));
 				
-				m_fLookAroundTime = engine->Time() + randomFloat(8.0f,18.0f);
+				m_fLookAroundTime = engine->Time() + randomFloat(2.0f,8.0f);
 
 			//setLookAt();
 			//setLookAt(...);

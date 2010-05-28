@@ -614,6 +614,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_perceptron.h"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_profile.h"
 				>
 			</File>
