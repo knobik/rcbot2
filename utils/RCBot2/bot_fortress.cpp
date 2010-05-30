@@ -1449,9 +1449,72 @@ void CBotTF2 :: modThink ()
 				// get score for this class
 				float scoreValue = CClassInterface::getScore(m_pEdict);
 
+				// if I think I could do better
 				if ( randomFloat(0.0f,1.0f) > (scoreValue / CTeamFortress2Mod::getHighestScore()) )
 				{
+					float fClassFitness[10];
+					float fTotalFitness = 0;
+					float fRandom;
+
+					int i = 0;
+					int iTeam = getTeam();
+					int iClass;
+					edict_t *pPlayer;
+
+					for ( i = 1; i < 10; i ++ )
+						fClassFitness[i] = 1.0f;
+
+					if ( (m_iClass >= 0) && (m_iClass < 10) )
+						fClassFitness[m_iClass] = 0.1f;
+
+					for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+					{
+						pPlayer = INDEXENT(i);
+						
+						if ( CBotGlobals::entityIsValid(pPlayer) && (CTeamFortress2Mod::getTeam(pPlayer) == iTeam))
+						{
+							iClass = CClassInterface::getTF2Class(pPlayer);
+
+							if ( (iClass >= 0) && (iClass < 10) )
+								fClassFitness [iClass] *= 0.6f; 
+						}
+					}
+
+					// attacking team?
+					if ( CTeamFortress2Mod::isAttackDefendMap() )
+					{
+						if ( getTeam() == TF2_TEAM_BLUE )
+						{
+							fClassFitness[TF_CLASS_ENGINEER] *= 0.5;
+							fClassFitness[TF_CLASS_SPY] *= 1.2;
+							fClassFitness[TF_CLASS_SCOUT] *= 1.05;
+						}
+						else
+						{
+							fClassFitness[TF_CLASS_ENGINEER] *= 2.0;
+							fClassFitness[TF_CLASS_SCOUT] *= 0.5;
+							fClassFitness[TF_CLASS_HWGUY] *= 1.5;
+							fClassFitness[TF_CLASS_MEDIC] *= 1.1;
+						}
+					}
+
+					for ( int i = 1; i < 10; i ++ )
+						fTotalFitness += fClassFitness[i];
+
+					fRandom = randomFloat(0,fTotalFitness);
+
+					fTotalFitness = 0;
+
 					m_iDesiredClass = 0;
+
+					for ( int i = 1; i < 10; i ++ )
+					{
+						fTotalFitness += fClassFitness[i];
+
+						if ( fRandom <= fTotalFitness )
+							m_iDesiredClass = i;
+					}
+					
 					// change class
 					selectClass();
 				}
@@ -1477,7 +1540,7 @@ void CBotTF2 :: modThink ()
 
 			if ( pWeapon && (pWeapon->getID() == TF2_WEAPON_MINIGUN) )
 			{
-				if ( m_pNavigator->getCurrentBelief() >= (MAX_BELIEF/2) )
+				if ( m_pNavigator->getCurrentBelief() >= ((float)MAX_BELIEF*0.6) )
 				{
 					if ( pWeapon->getAmmo(this) > 50 )
 					{
@@ -1742,6 +1805,8 @@ bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
 
 bool CBotFortress :: wantToFollowEnemy ()
 {
+	if ( !CTeamFortress2Mod::hasRoundStarted() )
+		return false;
     if ( !m_pLastEnemy )
         return false;
     if ( hasFlag() )
@@ -2206,7 +2271,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	
 
 				
-		if ( (CTeamFortress2Mod::isMapType(TF_MAP_CART) || CTeamFortress2Mod::isMapType(TF_MAP_CP)) && (getTeam() == TF_TEAM_BLUE) )
+		if ( CTeamFortress2Mod::isAttackDefendMap() && (getTeam() == TF_TEAM_BLUE) )
 		{
 			utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
 			utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f));
@@ -2686,7 +2751,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				if ( (m_fUseRouteTime < engine->Time()) )
 				{
 				// find random route
-					pRoute = CWaypoints::randomRouteWaypoint(getOrigin(),pWaypoint->getOrigin(),getTeam(),m_iCurrentAttackArea);
+					pRoute = CWaypoints::randomRouteWaypoint(this,getOrigin(),pWaypoint->getOrigin(),getTeam(),m_iCurrentAttackArea);
 
 					if ( pRoute )
 					{
@@ -3019,7 +3084,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				if ( (m_fUseRouteTime < engine->Time()) )
 				{
 				// find random route
-					pRoute = CWaypoints::randomRouteWaypoint(getOrigin(),pWaypoint->getOrigin(),getTeam(),m_iCurrentAttackArea);
+					pRoute = CWaypoints::randomRouteWaypoint(this,getOrigin(),pWaypoint->getOrigin(),getTeam(),m_iCurrentAttackArea);
 
 					if ( pRoute )
 					{

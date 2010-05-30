@@ -13,7 +13,11 @@
   must use :arena_point_time:<seconds> in script
 - + various spy tweaks
 - fixed: loop in medic behaviour
-  
+- changed: weapon selection method in TF2
+- waypoint belief change / route waypoints chosen based on bot's belief
+- waypoint belief change / waypoints bots took change belief when they get killed
+- add: new ":attack_defend_map:1" in bot map script to let bots know reds are defending on this map
+
 0.56
 - engineers favour building sentries up to level 2 before 
   building a teleporter exit (attacking engineers don't worry)

@@ -386,6 +386,7 @@ private:
 	bool m_bWorkingRoute;
 
 	dataStack<int> m_currentRoute;
+	queue<int> m_oldRoute;
 
 	int m_iLastFailedWpt;
 

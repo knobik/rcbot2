@@ -303,6 +303,21 @@ private:
 	int m_iRadius;
 };
 
+
+class CBotTF2ShootLastEnemyPosition : public CBotTask
+{
+public:
+	CBotTF2ShootLastEnemyPosition ( Vector vPosition, edict_t *pEnemy, Vector velocity );
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	virtual void debugString ( char *string );
+private:
+    edict_t *m_pEnemy;
+	Vector m_vPosition;
+	float m_fTime;
+};
+
+
 class CBotTF2DefendPoint : public CBotTask
 {
 public:

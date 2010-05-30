@@ -81,6 +81,8 @@ void CWaypointNavigator :: init ()
 	m_iGoalWaypoint = -1;
 
 	m_currentRoute.Destroy();
+	while( !m_oldRoute.empty() )
+		m_oldRoute.pop();
 
 	m_iLastFailedWpt = -1;
 	m_bWorkingRoute = false;
@@ -110,6 +112,10 @@ bool CWaypointNavigator :: getCoverPosition ( Vector vCoverOrigin, Vector *vCove
 // get belief nearest to current origin using waypoints to store belief
 void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief, float fStrength, BotBelief iType )
 {
+	int i;
+	float factor;
+	int iWptIndex;
+
 	dataUnconstArray<int> m_iVisibles;
 	//int m_iVisiblePoints[CWaypoints::MAX_WAYPOINTS]; // make searching quicker
 
@@ -118,10 +124,10 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 	CWaypointLocations::GetAllVisible(vOrigin,vOrigin,&m_iVisibles);
 	CWaypointLocations::GetAllVisible(vOrigin,m_pBot->getEyePosition(),&m_iVisibles);
 
-	for ( int i = 0; i < m_iVisibles.Size(); i ++ )
+	for ( i = 0; i < m_iVisibles.Size(); i ++ )
 	{
 		CWaypoint *pWpt = CWaypoints::getWaypoint(m_iVisibles[i]);
-		int iWptIndex = CWaypoints::getWaypointIndex(pWpt);
+		iWptIndex = CWaypoints::getWaypointIndex(pWpt);
 
 		if ( iType == BELIEF_SAFETY )
 		{
@@ -137,6 +143,36 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 			if ( m_fBelief[iWptIndex] > MAX_BELIEF )
 				m_fBelief[iWptIndex] = MAX_BELIEF;
 		}
+	}
+
+	i = m_oldRoute.size();
+
+	while ( !m_oldRoute.empty() )
+	{
+		iWptIndex = m_oldRoute.front();
+
+		factor = ((float)i)/m_oldRoute.size();
+		i--;
+
+		if ( iWptIndex >= 0 )
+		{
+			if ( iType == BELIEF_SAFETY )
+			{
+				if ( m_fBelief[iWptIndex] > 0)
+					m_fBelief[iWptIndex] *= bot_belief_fade.GetFloat()*factor;//(fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
+				if ( m_fBelief[iWptIndex] < 0 )
+					m_fBelief[iWptIndex] = 0;
+			}
+			else if ( iType == BELIEF_DANGER )
+			{
+				if ( m_fBelief[iWptIndex] < MAX_BELIEF )
+					m_fBelief[iWptIndex] += factor*fBelief;
+				if ( m_fBelief[iWptIndex] > MAX_BELIEF )
+					m_fBelief[iWptIndex] = MAX_BELIEF;
+			}
+		}
+
+		m_oldRoute.pop();
 	}
 }
 
@@ -493,6 +529,9 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 		return true; // waypoint not found but searching is complete
 	}
 
+	while ( !m_oldRoute.empty() )
+		m_oldRoute.pop();
+
 	iCurrentNode = m_iGoalWaypoint;
 
 	m_currentRoute.Destroy();
@@ -508,6 +547,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 		iLoops++;
 
 		m_currentRoute.Push(iCurrentNode);
+		m_oldRoute.push(iCurrentNode);
 
 		iParent = paths[iCurrentNode].getParent();
 
@@ -523,6 +563,9 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 	// erh??
 	if ( iLoops > iNumWaypoints )
 	{
+		while ( !m_oldRoute.empty () )
+			m_oldRoute.pop();
+
 		m_currentRoute.Destroy();
 		*bFail = true;
 	}
@@ -1409,11 +1452,12 @@ int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist,
 	return iwpt;
 }
 
-CWaypoint *CWaypoints :: randomRouteWaypoint ( Vector vOrigin, Vector vGoal, int iTeam, int iArea )
+CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vector vGoal, int iTeam, int iArea )
 {
 	register int i = 0;
 	int size = numWaypoints();
 	CWaypoint *pWpt;
+	IBotNavigator *pNav = pBot->getNavigator();
 
 	dataUnconstArray<CWaypoint*> goals;
 
@@ -1456,7 +1500,35 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( Vector vOrigin, Vector vGoal, int
 	pWpt = NULL;
 
 	if ( !goals.IsEmpty() )
-		pWpt = goals.Random();
+	{
+		float fBelief = 0;
+		float fSelect;
+
+		//pWpt = goals.Random();
+
+		for ( i = 0; i < goals.Size(); i ++ )
+		{
+			fBelief += MAX_BELIEF - pNav->getBelief(CWaypoints::getWaypointIndex(goals[i]));
+		}
+	
+		fSelect = randomFloat(0,fBelief);
+
+		fBelief = 0;
+		
+		for ( i = 0; i < goals.Size(); i ++ )
+		{
+			fBelief += MAX_BELIEF - pNav->getBelief(CWaypoints::getWaypointIndex(goals[i]));
+
+			if ( fSelect <= fBelief )
+			{
+				pWpt = goals[i];
+				break;
+			}
+		}
+	
+		if ( pWpt == NULL )
+			pWpt = goals.Random();
+	}
 
 	goals.Clear();
 

@@ -333,6 +333,9 @@ public:
 
 	static void flagPickedUp (int iTeam, edict_t *pPlayer);
 
+	static void setAttackDefendMap ( bool bSet ) { m_bAttackDefendMap = bSet; }
+	static bool isAttackDefendMap () { return m_bAttackDefendMap; }
+
 	static void flagDropped (int iTeam)
 	{
 		if ( iTeam == TF2_TEAM_BLUE )
@@ -451,6 +454,7 @@ private:
 	static float m_fArenaPointOpenTime;
 
 	static edict_t *m_pResourceEntity;
+	static bool m_bAttackDefendMap;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

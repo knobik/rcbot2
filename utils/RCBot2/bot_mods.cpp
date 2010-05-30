@@ -49,6 +49,7 @@ float CTeamFortress2Mod::m_fPointTime = 0.0f;
 tf_sentry_t CTeamFortress2Mod::m_SentryGuns[MAX_PLAYERS];	// used to let bots know if sentries have been sapped or not
 tf_disp_t  CTeamFortress2Mod::m_Dispensers[MAX_PLAYERS];	// used to let bots know where friendly/enemy dispensers are
 edict_t *CTeamFortress2Mod::m_pResourceEntity = NULL;
+bool CTeamFortress2Mod::m_bAttackDefendMap = false;
 
 extern ConVar bot_use_disp_dist;
 
@@ -1006,6 +1007,8 @@ void CTeamFortress2Mod :: mapInit ()
 		m_Dispensers[i].sapper = MyEHandle(NULL);
 		m_Dispensers[i].disp = MyEHandle(NULL);
 	}
+
+	m_bAttackDefendMap = false;
 
 
 	CPoints::loadMapScript();

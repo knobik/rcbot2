@@ -336,6 +336,10 @@ void CPoints :: loadMapScript ( )
 				{
 					CTeamFortress2Mod::setPointOpenTime(atoi(&line[18]));
 				}
+				if ( strncmp(&line[1],"attack_defend_map:",18) == 0 )
+				{
+					CTeamFortress2Mod::setAttackDefendMap(atoi(&line[19]));
+				}
 				else if ( strncmp(&line[1],"setup_time:",11) == 0 )
 				{
 					CTeamFortress2Mod::setSetupTime(atoi(&line[12]));
