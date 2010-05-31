@@ -85,7 +85,11 @@ const char *g_szUtils[BOT_UTIL_MAX] =
 	"BOT_UTIL_DEMO_STICKYTRAP_POINT",
 	"BOT_UTIL_DEMO_STICKYTRAP_FLAG",
 	"BOT_UTIL_DEMO_STICKYTRAP_FLAG_LASTKNOWN",
-	"BOT_UTIL_DEMO_STICKYTRAP_PL"
+	"BOT_UTIL_DEMO_STICKYTRAP_PL",
+	"BOT_UTIL_REMOVE_TMTELE_SAPPER",
+    "BOT_UTIL_SAP_NEAREST_TELE",
+    "BOT_UTIL_SAP_ENEMY_TELE",
+    "BOT_UTIL_SAP_LASTENEMY_TELE"
 };
 
 // Execute a list of possible actions and put them into order of available actions against utility

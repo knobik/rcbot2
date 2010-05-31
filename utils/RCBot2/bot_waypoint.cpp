@@ -92,6 +92,42 @@ void CWaypointNavigator :: init ()
 	m_iFailedGoals.Destroy();//.clear();//Destroy();
 }
 
+CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals )
+{
+	int i;
+	CWaypoint *pWpt = NULL;
+
+	float fBelief = 0;
+	float fSelect;
+
+	//pWpt = goals.Random();
+
+	for ( i = 0; i < goals->Size(); i ++ )
+	{
+		fBelief += MAX_BELIEF - m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
+	}
+
+	fSelect = randomFloat(0,fBelief);
+
+	fBelief = 0;
+	
+	for ( i = 0; i < goals->Size(); i ++ )
+	{
+		fBelief += MAX_BELIEF -m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
+
+		if ( fSelect <= fBelief )
+		{
+			pWpt = (*goals)[i];
+			break;
+		}
+	}
+
+	if ( pWpt == NULL )
+		pWpt = goals->Random();
+
+	return pWpt;
+}
+
 // get the covering waypoint vector vCover
 bool CWaypointNavigator :: getCoverPosition ( Vector vCoverOrigin, Vector *vCover )
 {
@@ -1476,9 +1512,10 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vecto
 
 				Vector vRoute = pWpt->getOrigin();
 
-				//if ( (vRoute - vOrigin).Length() < (vGoal - vOrigin).Length() )
-				//{
-					Vector vecLOS;
+				if ( (vRoute - vOrigin).Length() < ((vGoal - vOrigin).Length()+128.0f) )
+				{
+				//if ( CWaypointDistances::getDistance() )
+					/*Vector vecLOS;
 					float flDot;
 					Vector vForward;
 					// in fov? Check angle to edict
@@ -1490,9 +1527,9 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vecto
 
 					flDot = DotProduct (vecLOS , vForward );
 
-					if ( flDot > 0.17f ) // 80 degrees
-						goals.Add(pWpt);
-				//}
+					if ( flDot > 0.17f ) // 80 degrees*/
+					goals.Add(pWpt);
+				}
 			}
 		}
 	}
@@ -1535,11 +1572,12 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vecto
 	return pWpt;
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea )
+CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot )
 {
 	register int i = 0;
 	int size = numWaypoints();
 	CWaypoint *pWpt;
+
 
 	dataUnconstArray<CWaypoint*> goals;
 
@@ -1564,7 +1602,20 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, 
 	pWpt = NULL;
 
 	if ( !goals.IsEmpty() )
-		pWpt = goals.Random();
+	{
+		CWaypointNavigator *pNav;
+		
+		if ( pBot )
+		{
+			pNav = (CWaypointNavigator*)pBot->getNavigator();
+
+			pWpt = pNav->chooseBestFromBelief(&goals);
+		}
+		else
+			pWpt = goals.Random();
+
+		//pWpt = goals.Random();
+	}
 
 	goals.Clear();
 

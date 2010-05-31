@@ -326,6 +326,8 @@ public:
 
 	void init ();
 
+	CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals );
+
 	bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false  );
 
 	bool getNextRoutePoint ( Vector *vPoint );

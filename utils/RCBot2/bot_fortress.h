@@ -308,6 +308,9 @@ public:
 
 	virtual bool select_CWeapon ( CWeapon *pWeapon ) { return CBot::select_CWeapon(pWeapon); }
 	virtual bool selectBotWeapon ( CBotWeapon *pBotWeapon ) { return CBot::selectBotWeapon(pBotWeapon); }
+
+	// found a new enemy
+	virtual void enemyFound (edict_t *pEnemy){CBot::enemyFound(pEnemy); }
  
 protected:
 	virtual void selectTeam ();
@@ -332,6 +335,7 @@ protected:
 	edict_t *m_pSentryGun;
 	edict_t *m_pDispenser;
 	edict_t *m_pTeleEntrance;
+
 	edict_t *m_pTeleExit;
 	edict_t *m_pAmmo;
 	edict_t *m_pHealthkit;
@@ -339,6 +343,8 @@ protected:
 	edict_t *m_pNearestDisp;
 	edict_t *m_pNearestEnemySentry;
 	edict_t *m_pNearestAllySentry;
+	edict_t *m_pNearestEnemyTeleporter;
+	edict_t *m_pNearestTeleEntrance;
 
 	edict_t *m_pFlag;
 	edict_t *m_pPrevSpy;
@@ -408,6 +414,9 @@ public:
 		m_bFixWeapons = false;
 		m_iTrapType = TF_TRAP_TYPE_NONE;
 	}
+
+	// found a new enemy
+	void enemyFound (edict_t *pEnemy);
 
 	void enemyAtIntel ( Vector vPos, int type = EVENT_FLAG_PICKUP );
 	//
@@ -538,6 +547,8 @@ private:
 	eDemoTrapType m_iTrapType;
 	Vector m_vStickyLocation;
 	float m_fRemoveSapTime;
+	float m_fRevMiniGunTime;
+	float m_fNextRevMiniGunTime;
 	//
 	edict_t *m_pCloakedSpy;
 };

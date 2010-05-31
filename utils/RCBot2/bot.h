@@ -409,7 +409,7 @@ public:
 	}
 
 	void findEnemy ( edict_t *pOldEnemy = NULL );
-	void enemyFound ( edict_t *pEnemy );
+	virtual void enemyFound ( edict_t *pEnemy );
 
 	virtual void checkDependantEntities ();
 
