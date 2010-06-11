@@ -35,7 +35,8 @@
 
 #define BOT_DEFAULT_FOV 75.0f
 
-#define strlow(str) { int len = strlen(str); int i;	for ( i = 0; i < len; i ++ ) { str[i] = tolower(str[i]); } }
+#define to_lower(a) (((a)>='A')&&((a)<='Z'))?('a'+((a)-'A')):(a)
+#define strlow(str) { int len = strlen(str); int i;	for ( i = 0; i < len; i ++ ) { str[i] = to_lower(str[i]); } }
 #define round(a) (((a-(int)a) >= 0.5) ? ((int)a+1) : ((int)a))
 //#define RANDOM_INT(min,max) (min + round(((float)rand()/RAND_MAX)*(float)(max-min)))
 //#define RANDOM_FLOAT(min,max) (min + ((float)rand()/RAND_MAX)*(float)(max-min))

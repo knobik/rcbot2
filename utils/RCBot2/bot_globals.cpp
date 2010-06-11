@@ -29,7 +29,6 @@
  *
  */
 
-#define tolower(a) (((a)>='A')&&((a)<='Z'))?('a'+((a)-'A')):(a)
 #include "bot.h"
 #include "bot_globals.h"
 #include "bot_strings.h"
