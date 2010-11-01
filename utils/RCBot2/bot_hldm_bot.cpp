@@ -28,6 +28,7 @@
  *    version.
  *
  */
+#include "in_buttons.h"
 #include "bot.h"
 #include "bot_hldm_bot.h"
 #include "bot_buttons.h"
@@ -95,11 +96,17 @@ void CHLDMBot :: modThink ()
 	{
 		if ( !strcmp("weapon_physcannon",m_pPlayerInfo->GetWeaponName()) )
 		{			
-			m_pController->SetActiveWeapon("weapon_pistol");			
+			m_pController->SetActiveWeapon("weapon_smg1");			
 		}
 		else if ( !FStrEq(m_pProfile->getWeapon(),"default") && !FStrEq(m_pProfile->getWeapon(),m_pPlayerInfo->GetWeaponName()))
 		{
 			m_pController->SetActiveWeapon(m_pProfile->getWeapon());
 		}
+	}
+
+	if ( m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time()) )
+	{
+		m_fLastSeeEnemy = 0;
+		m_pButtons->tap(IN_RELOAD);
 	}
 }

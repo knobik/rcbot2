@@ -3671,6 +3671,13 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 	if ( m_iClass == TF_CLASS_ENGINEER )
 		return; // got work to do...
 
+	// bot is already capturing a point
+	if ( m_pSchedules->isCurrentSchedule(SCHED_ATTACKPOINT) )
+	{
+		if ( distanceFrom(m_pNavigator->getGoalOrigin()) < (distanceFrom(vPos)*0.5f) )
+			return;
+	}
+
 	if ( type == EVENT_CAPPOINT )
 	{
 		if ( !m_iCurrentDefendArea )

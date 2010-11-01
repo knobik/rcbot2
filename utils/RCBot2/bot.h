@@ -710,6 +710,9 @@ public:
 
 	static void init ();
 
+	static void controlBotSetup ( bool m_bSetting ) { m_bControlBotsOnly = m_bSetting; }
+
+	// If true, then a puppet bot must be added to be controlled
 	static bool controlBots () { return m_bControlBotsOnly; }
 
 	static bool controlBot ( edict_t *pEdict );

@@ -97,7 +97,7 @@ const float CBot :: m_fAttackLowestHoldTime = 0.1f;
 const float CBot :: m_fAttackHighestHoldTime = 0.6f;
 const float CBot :: m_fAttackLowestLetGoTime = 0.1f;
 const float CBot :: m_fAttackHighestLetGoTime = 0.5f;
-bool CBots :: m_bControlBotsOnly = true;
+bool CBots :: m_bControlBotsOnly = false;
 bool CBots :: m_bControlNext = false;
 CBotProfile *CBots :: m_pNextProfile = NULL;
 queue<edict_t*> CBots :: m_ControlQueue;

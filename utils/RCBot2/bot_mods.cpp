@@ -528,7 +528,6 @@ void CBotMods :: parseFile ()
 
 	if ( curmod )
 	{
-
 		curmod->setup(gamefolder,steamfolder,modtype,bottype);
 		m_Mods.push_back(curmod);
 	}
@@ -951,11 +950,12 @@ bool CTeamFortress2Mod :: isRocket ( edict_t *pEntity, int iTeam )
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"tf_projectile_rocket")==0);
 }
 
-
 void CTeamFortress2Mod :: initMod ()
 {
 	unsigned int i;
 	// Setup Weapons
+
+	CBots::controlBotSetup(true);
 
 	for ( i = 0; i < TF2_WEAPON_MAX; i ++ )
 		CWeapons::addWeapon(new CWeapon(TF2Weaps[i].iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference));
