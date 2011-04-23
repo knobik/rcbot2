@@ -694,6 +694,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\public\const.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\public\tier0\dbg.h"
 				>
 			</File>

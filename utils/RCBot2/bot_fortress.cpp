@@ -3672,9 +3672,9 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 		return; // got work to do...
 
 	// bot is already capturing a point
-	if ( m_pSchedules->isCurrentSchedule(SCHED_ATTACKPOINT) )
+	if ( m_pSchedules && m_pSchedules->isCurrentSchedule(SCHED_ATTACKPOINT) )
 	{
-		if ( distanceFrom(m_pNavigator->getGoalOrigin()) < (distanceFrom(vPos)*0.5f) )
+		if ( m_pNavigator && (distanceFrom(m_pNavigator->getGoalOrigin()) < (distanceFrom(vPos)*0.5f)) )
 			return;
 	}
 
