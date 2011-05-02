@@ -145,7 +145,7 @@ void CBot :: runPlayerMove()
 			CClients::clientDebugMsg(BOT_DEBUG_BUTTONS,dbg,this);
 	}
 
-	m_pController->PostClientMessagesSent();
+	//m_pController->PostClientMessagesSent();
 
 	// IS THIS REQUIRED????
 	//float frametime = gpGlobals->frametime;
