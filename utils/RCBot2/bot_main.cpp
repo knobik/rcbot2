@@ -512,6 +512,7 @@ void CRCBotPlugin::SetCommandClient( int index )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::ClientSettingsChanged( edict_t *pEdict )
 {
+	/*
 	if ( playerinfomanager )
 	{
 		IPlayerInfo *playerinfo = playerinfomanager->GetPlayerInfo( pEdict );
@@ -527,7 +528,7 @@ void CRCBotPlugin::ClientSettingsChanged( edict_t *pEdict )
 			engine->ClientPrintf( pEdict, msg ); // this is the bad way to check this, the better option it to listen for the "player_changename" event in FireGameEvent()
 												// this is here to give a real example of how to use the playerinfo interface
 		}
-	}
+	}*/
 }
 
 //---------------------------------------------------------------------------------

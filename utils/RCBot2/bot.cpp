@@ -2149,10 +2149,17 @@ void CBots :: botThink ()
 
 CBot *CBots :: getBotPointer ( edict_t *pEdict )
 {
+	int slot;
+
 	if ( !pEdict )
 		return NULL;
 
-	CBot *pBot = m_Bots[slotOfEdict(pEdict)];
+	slot = slotOfEdict(pEdict);
+
+	if ( (slot < 0) || (slot >= MAX_PLAYERS) )
+		return NULL;
+
+	CBot *pBot = m_Bots[slot];
 
 	if ( pBot->inUse() )
 		return pBot;

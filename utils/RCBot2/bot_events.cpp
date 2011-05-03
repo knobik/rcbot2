@@ -267,10 +267,18 @@ void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
     CBots::botFunction(&cap);
 }
 
+/* Flag has been picked up or dropped */
+#define FLAG_PICKUP		1
+#define FLAG_CAPTURED	2
+#define FLAG_DEFEND		3
+#define FLAG_DROPPED	4
+#define FLAG_RETURN		5
+
 void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 {
+	// dropped / picked up ID
 	int type = pEvent->getInt("eventtype");
-
+	// player id
 	int player = pEvent->getInt("player");
 
 	edict_t *pPlayer = INDEXENT(player);
@@ -279,7 +287,7 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 
 	switch ( type )
 	{
-	case 1: // pickup
+	case FLAG_PICKUP: // pickup
 		if ( pBot && pBot->isTF() )
 		{
 			((CBotTF2*)pBot)->pickedUpFlag();
@@ -288,9 +296,12 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 		if ( pPlayer )
 			CTeamFortress2Mod::flagPickedUp(CTeamFortress2Mod::getTeam(pPlayer),pPlayer);
 		break;
-	case 2: // captured
+	case FLAG_CAPTURED: // captured
 		{
-			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+			IPlayerInfo *p = NULL;
+			
+			if( pPlayer )
+				playerinfomanager->GetPlayerInfo(pPlayer);
 
 			if ( p )
 			{
@@ -310,7 +321,7 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 			
 		}
 		break;
-	case 4: // drop
+	case FLAG_DROPPED: // drop
 		{
 			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
 
