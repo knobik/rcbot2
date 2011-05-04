@@ -281,9 +281,15 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 	// player id
 	int player = pEvent->getInt("player");
 
-	edict_t *pPlayer = INDEXENT(player);
-
-	CBot *pBot = CBots::getBotPointer(pPlayer);
+	edict_t *pPlayer = NULL;
+	CBot *pBot = NULL;
+	
+	// Crash fix
+	if ( player )
+	{
+		pPlayer = INDEXENT(player);
+		pBot = CBots::getBotPointer(pPlayer);
+	}
 
 	switch ( type )
 	{
@@ -301,12 +307,14 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 			IPlayerInfo *p = NULL;
 			
 			if( pPlayer )
-				playerinfomanager->GetPlayerInfo(pPlayer);
-
-			if ( p )
 			{
-				CBroadcastFlagCaptured captured = CBroadcastFlagCaptured(p->GetTeamIndex());
-				CBots::botFunction(&captured);
+				p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+				if ( p )
+				{
+					CBroadcastFlagCaptured captured = CBroadcastFlagCaptured(p->GetTeamIndex());
+					CBots::botFunction(&captured);
+				}
 			}
 
 			if ( pBot && pBot->isTF() )
