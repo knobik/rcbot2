@@ -2099,8 +2099,9 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	{
 		if ( randomInt(0,100) > 50 )
 		{
-			// uber if ready
-			m_pButtons->tap(IN_ATTACK2);
+			// uber if ready / and round has started
+			if ( wantToShoot() )
+				m_pButtons->tap(IN_ATTACK2);
 		}
 	}
 
