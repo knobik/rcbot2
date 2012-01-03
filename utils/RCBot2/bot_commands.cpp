@@ -826,9 +826,9 @@ eBotCommandResult CWaypointInfoCommand :: execute ( CClient *pClient, const char
 eBotCommandResult CWaypointSaveCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( CWaypoints::save(false) )
-		CBotGlobals::botMessage(pClient->getPlayer(),0,"waypoints saved");
+		CBotGlobals::botMessage(NULL,0,"waypoints saved");
 	else
-		CBotGlobals::botMessage(pClient->getPlayer(),0,"error: could not save waypoints");
+		CBotGlobals::botMessage(NULL,0,"error: could not save waypoints");
 
 	return COMMAND_ACCESSED;
 }
@@ -847,9 +847,9 @@ eBotCommandResult CWaypointLoadCommand :: execute ( CClient *pClient, const char
 		bLoadOK = CWaypoints::load();
 
 	if ( bLoadOK )
-		CBotGlobals::botMessage(pClient->getPlayer(),0,"waypoints %s loaded",szMapName);
+		CBotGlobals::botMessage(NULL,0,"waypoints %s loaded",szMapName);
 	else
-		CBotGlobals::botMessage(pClient->getPlayer(),0,"error: could not load %s waypoints",szMapName);
+		CBotGlobals::botMessage(NULL,0,"error: could not load %s waypoints",szMapName);
 
 	return COMMAND_ACCESSED;
 }

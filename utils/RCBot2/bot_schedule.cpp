@@ -415,6 +415,12 @@ void CBotSchedule :: execute ( CBot *pBot )
 	CBotTask *pTask = m_Tasks.GetFrontInfo();
 	static eTaskState iState;
 
+	if ( pTask == NULL )
+	{
+		m_bFailed = TRUE;
+		return;
+	}
+
 	iState = pTask->isInterrupted(pBot);
 
 	if ( iState == STATE_FAIL )

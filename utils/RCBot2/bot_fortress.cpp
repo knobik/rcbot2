@@ -1889,6 +1889,8 @@ bool CBotFortress :: wantToFollowEnemy ()
         return true; // always find spies!
 	if ( m_iClass == TF_CLASS_ENGINEER )
 		return false; // stick to engi duties
+	if ( CTeamFortress2Mod::isFlagCarrier(m_pLastEnemy) )
+		return true; // follow flag carriers to the death
     
     return CBot::wantToFollowEnemy();
 }
@@ -3339,13 +3341,22 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	{
 		if ( isDisguised() )
 		{
-
 			if ( ( distanceFrom(pEnemy) < 130 ) && CBotGlobals::isAlivePlayer(pEnemy) && ( fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > bot_spyknifefov.GetFloat() ) )
 			{
 				;
 			}
 			else if ( m_fFrenzyTime < engine->Time() ) 
 				return true;
+			else if ( (CClassInterface::getTF2Class(pEnemy) == TF_CLASS_ENGINEER) && 
+						   ( 
+						     CTeamFortress2Mod::isMySentrySapped(pEnemy) || 
+						     CTeamFortress2Mod::isMyTeleporterSapped(pEnemy) || 
+							 CTeamFortress2Mod::isMyDispenserSapped(pEnemy) 
+						   )
+						)
+			{
+				return true;
+			}
 		}
 	}
 

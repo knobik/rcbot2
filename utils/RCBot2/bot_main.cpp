@@ -232,7 +232,7 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	LOAD_INTERFACE(gameeventmanager,IGameEventManager2,INTERFACEVERSION_GAMEEVENTSMANAGER2)
 	LOAD_INTERFACE(gameeventmanager1,IGameEventManager,INTERFACEVERSION_GAMEEVENTSMANAGER)
 
-	if ( (servergamedll = (IServerGameDLL*)gameServerFactory("ServerGameDLL006",NULL)) == NULL ) 
+	if ( (servergamedll = (IServerGameDLL*)gameServerFactory("ServerGameDLL007",NULL)) == NULL ) 
 	{ 
 		Msg("[RCBOT] Cannot open game server interface ServerGameDLL006 for TF2\nChecking for older version..");
 
