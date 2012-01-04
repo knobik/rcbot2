@@ -667,7 +667,11 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 				return 1;
 			}
 			else
+			{
 				tapButton(IN_ATTACK);
+				// crouch too
+				m_pButtons->holdButton(IN_DUCK,engine->Time(),1.0,0);
+			}
 		}
 		break;
 	}
@@ -947,7 +951,8 @@ void CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait )
 		{
 			if ( (getClass() == TF_CLASS_SPY) && isDisguised() )
 			{
-				primaryAttack();
+				if ( !CTeamFortress2Mod::isFlagCarried(getTeam()) )
+					primaryAttack();
 			}
 
 			stopMoving(2);
@@ -1796,7 +1801,35 @@ void CBotTF2 :: modThink ()
 		}
 	}
 
+	m_bDoWeapons = false; // Handle attacking in CBotTF2
+	
+	//
+	// Handle attacking at this point
+	//
+	if ( m_pEnemy && !hasSomeConditions(CONDITION_ENEMY_DEAD) && 
+		hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && wantToShoot() && 
+		isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
+	{
+		CBotWeapon *pWeapon;
 
+		pWeapon = getBestWeapon(m_pEnemy,!hasFlag(),!hasFlag());
+
+		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
+		{
+			//selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
+			selectWeapon(pWeapon->getWeaponIndex());
+		}
+
+		setLookAtTask(LOOK_ENEMY,9);
+
+		if ( !handleAttack ( pWeapon, m_pEnemy ) )
+		{
+			m_pEnemy = NULL;
+			m_pOldEnemy = NULL;
+			wantToShoot(false);
+		}
+	}
+	
 }
 
 void CBotTF2::enemyFound (edict_t *pEnemy)
@@ -2097,17 +2130,15 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	p = playerinfomanager->GetPlayerInfo(pPlayer);
 
 	// Simple UBER check
-	if ( (m_pEnemy&&isVisible(m_pEnemy)) || (((((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth())<0.25) || (getHealthPercent()<0.25) ))
+	if ( (m_pEnemy&&isVisible(m_pEnemy)) || (((((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth())<0.33) || (getHealthPercent()<0.33) ))
 	{
-		if ( randomInt(0,100) > 50 )
-		{
+		//if ( randomInt(0,100) > 75 )
+		//{
 			// uber if ready / and round has started
-			if ( wantToShoot() )
-				m_pButtons->tap(IN_ATTACK2);
-		}
+		if ( wantToShoot() )	
+			m_pButtons->tap(IN_ATTACK2);
+		//}
 	}
-
-	
 
 	return true;
 }

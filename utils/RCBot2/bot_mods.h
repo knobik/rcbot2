@@ -349,6 +349,16 @@ public:
 		return (m_pFlagCarrierBlue==pPlayer)||(m_pFlagCarrierRed==pPlayer);
 	}
 
+	static bool isFlagCarried (int iTeam)
+	{
+		if ( iTeam == TF2_TEAM_BLUE )
+			return (m_pFlagCarrierBlue != NULL);
+		else if ( iTeam == TF2_TEAM_RED )
+			return (m_pFlagCarrierRed != NULL);
+
+		return false;
+	}
+
 	static void sapperPlaced(edict_t *pOwner,eEngiBuild type,edict_t *pSapper);
 	static void sapperDestroyed(edict_t *pOwner,eEngiBuild type,edict_t *pSapper);
 	static void sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding);

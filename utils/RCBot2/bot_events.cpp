@@ -347,6 +347,11 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 				CTeamFortress2Mod::flagDropped(CTeamFortress2Mod::getTeam(pPlayer));
 		}
 		break;
+	case FLAG_RETURN:
+		{
+			//CTeamFortress2Mod::flagReturned(
+		}
+		break;
 	default:	
 		break;
 	}

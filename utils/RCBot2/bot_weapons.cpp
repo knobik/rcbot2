@@ -142,7 +142,7 @@ CBotWeapons :: CBotWeapons ( CBot *pBot )
 	}
 }
 
-CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
+CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bool bAllowMeleeFallback )
 {
 	CBotWeapon *m_theBestWeapon = NULL;
 	CBotWeapon *m_FallbackMelee = NULL;
@@ -166,6 +166,9 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 			continue;
 
 		if ( !pWeapon->hasWeapon() )
+			continue;
+
+		if ( !bAllowMelee && pWeapon->isMelee() )
 			continue;
 
 		if ( !pWeapon->isMelee() || pWeapon->isSpecial() )
@@ -195,7 +198,7 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy )
 		}
 	}
 
-	if ( (m_theBestWeapon == NULL) && (flDist < 512) && (fabs(vEnemyOrigin.z-m_pBot->getOrigin().z)<BOT_JUMP_HEIGHT) )
+	if ( bAllowMeleeFallback && ((m_theBestWeapon == NULL) && (flDist < 512) && (fabs(vEnemyOrigin.z-m_pBot->getOrigin().z)<BOT_JUMP_HEIGHT)) )
 		m_theBestWeapon = m_FallbackMelee;
 
 	return m_theBestWeapon;

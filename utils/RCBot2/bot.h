@@ -279,7 +279,7 @@ public:
 
 	bool isUnderWater ( );
 
-	CBotWeapon *getBestWeapon ( edict_t *pEnemy );
+	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true );
 
 	void setLookAtTask ( eLookTask lookTask, int iPriority = 1 );
 
@@ -687,6 +687,8 @@ protected:
 
 
 	bool m_bWantToChangeWeapon;
+
+	bool m_bDoWeapons;
 };
 
 class IBotFunction

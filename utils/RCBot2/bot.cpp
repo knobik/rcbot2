@@ -451,9 +451,9 @@ void CBot :: selectWeaponSlot ( int iSlot )
 	//m_iSelectWeapon = iSlot;
 }
 
-CBotWeapon *CBot :: getBestWeapon (edict_t *pEnemy)
+CBotWeapon *CBot :: getBestWeapon (edict_t *pEnemy,bool bAllowMelee, bool bAllowMeleeFallback )
 {
-	return m_pWeapons->getBestWeapon(pEnemy);
+	return m_pWeapons->getBestWeapon(pEnemy,bAllowMelee,bAllowMeleeFallback);
 }
 
 void CBot :: debugMsg ( int iLev, const char *szMsg )
@@ -471,6 +471,7 @@ void CBot :: debugMsg ( int iLev, const char *szMsg )
 void CBot :: think ()
 {
 	float fTime = engine->Time();
+	m_bDoWeapons = true;
 
 //	Vector *pvVelocity;
 
@@ -590,30 +591,33 @@ void CBot :: think ()
 
 	modThink();
 
-	//
-	// Handle attacking at this point
-	//
-	if ( m_pEnemy && !hasSomeConditions(CONDITION_ENEMY_DEAD) && 
-		hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && wantToShoot() && 
-		isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
+	if ( m_bDoWeapons )
 	{
-		CBotWeapon *pWeapon;
-
-		pWeapon = getBestWeapon(m_pEnemy);
-
-		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
+		//
+		// Handle attacking at this point
+		//
+		if ( m_pEnemy && !hasSomeConditions(CONDITION_ENEMY_DEAD) && 
+			hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && wantToShoot() && 
+			isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
 		{
-			//selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
-			selectWeapon(pWeapon->getWeaponIndex());
-		}
+			CBotWeapon *pWeapon;
 
-		setLookAtTask(LOOK_ENEMY,9);
+			pWeapon = getBestWeapon(m_pEnemy);
 
-		if ( !handleAttack ( pWeapon, m_pEnemy ) )
-		{
-			m_pEnemy = NULL;
-			m_pOldEnemy = NULL;
-			wantToShoot(false);
+			if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
+			{
+				//selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
+				selectWeapon(pWeapon->getWeaponIndex());
+			}
+
+			setLookAtTask(LOOK_ENEMY,9);
+
+			if ( !handleAttack ( pWeapon, m_pEnemy ) )
+			{
+				m_pEnemy = NULL;
+				m_pOldEnemy = NULL;
+				wantToShoot(false);
+			}
 		}
 	}
 

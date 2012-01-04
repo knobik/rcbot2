@@ -330,7 +330,9 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
 
 			if ( (((CBotTF2*)pBot)->getClass() == TF_CLASS_SPY) && (((CBotTF2*)pBot)->isDisguised()))
+			{
 				pBot->primaryAttack(); // remove disguise to capture
+			}
 
 			((CBotFortress*)pBot)->wantToDisguise(false);
 
@@ -1608,7 +1610,7 @@ void CAutoBuy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 CFindLastEnemy::CFindLastEnemy (Vector vLast,Vector vVelocity)
 {
-	m_vLast = vLast+vVelocity;
+	m_vLast = vLast+(vVelocity*10);
 	m_fTime = 0;
 }
 
