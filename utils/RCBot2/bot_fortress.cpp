@@ -926,7 +926,7 @@ void CBotFortress :: selectClass ()
 	m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
 }
 
-void CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait )
+void CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag )
 {
 		if ( seeFlag(false) != NULL )
 		{
@@ -949,7 +949,7 @@ void CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait )
 			setMoveTo(*vOrigin,2);
 		else
 		{
-			if ( (getClass() == TF_CLASS_SPY) && isDisguised() )
+			if ( !bFindFlag && ((getClass() == TF_CLASS_SPY) && isDisguised()) )
 			{
 				if ( !CTeamFortress2Mod::isFlagCarried(getTeam()) )
 					primaryAttack();
@@ -2458,7 +2458,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	if ( m_iClass==TF_CLASS_SPY )
 	{
-		utils.addUtility(CBotUtility(BOT_UTIL_BACKSTAB,(!m_pNearestEnemySentry || (CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry))) && !hasFlag() && (m_fBackstabTime<engine->Time()) && (m_iClass==TF_CLASS_SPY) && 
+		utils.addUtility(CBotUtility(BOT_UTIL_BACKSTAB,!hasFlag() && (!m_pNearestEnemySentry || (CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry))) && (m_fBackstabTime<engine->Time()) && (m_iClass==TF_CLASS_SPY) && 
 		((m_pEnemy&& CBotGlobals::isAlivePlayer(m_pEnemy))|| 
 		(m_pLastEnemy&& CBotGlobals::isAlivePlayer(m_pLastEnemy))),
 		fGetFlagUtility+(getHealthPercent()/10)));
@@ -3456,18 +3456,24 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 	Vector vOrigin = CBotGlobals::entityOrigin(pBuilding);
 
 	CBotWeapon *pWeapon = getCurrentWeapon();
+	int iMetal = 0;
 
 	wantToListen(false);
 
 	if ( !pWeapon )
 		return false;
-	else if ( pWeapon->getID() != TF2_WEAPON_WRENCH )
+
+	iMetal = pWeapon->getAmmo(this);
+	
+	if ( pWeapon->getID() != TF2_WEAPON_WRENCH )
 	{
 		if ( !select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH)) )
 			return false;
 	}
-	else
-	{
+	else if ( iMetal == 0 ) // finished / out of metal
+		return true;
+	else 
+	{	
 		clearFailedWeaponSelect();
 
 		if ( distanceFrom(vOrigin) > 85 )
