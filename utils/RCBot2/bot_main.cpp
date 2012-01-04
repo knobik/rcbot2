@@ -245,7 +245,7 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 			Msg("[RCBOT] Found older game server interface");
 	}
 	else
-		Msg("[RCBOT] Found interface ServerGameDLL006 for TF2\n"); 
+		Msg("[RCBOT] Found interface %s for TF2\n",INTERFACEVERSION_SERVERGAMEDLL); 
 
 	//LOAD_GAME_SERVER_INTERFACE(servergamedll,IServerGameDLL,"ServerGameDLL006");
 
