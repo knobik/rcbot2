@@ -116,6 +116,7 @@ CGlobalVars *gpGlobals = NULL;
 IVDebugOverlay *debugoverlay = NULL;
 IServerGameEnts *servergameents = NULL; // for accessing the server game entities
 IServerGameDLL *servergamedll = NULL;
+
 // 
 // The plugin is a static singleton that is exported as an interface
 //

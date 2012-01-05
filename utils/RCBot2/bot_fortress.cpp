@@ -669,8 +669,7 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			else
 			{
 				tapButton(IN_ATTACK);
-				// crouch too
-				m_pButtons->holdButton(IN_DUCK,engine->Time(),1.0,0);
+				duck(true);// crouch too
 			}
 		}
 		break;
