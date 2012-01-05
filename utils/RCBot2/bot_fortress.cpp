@@ -362,13 +362,13 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		if ( pEntity == m_pFlag )
 			m_pFlag = NULL;
-		if ( pEntity == m_pNearestDisp )
+		else if ( pEntity == m_pNearestDisp )
 			m_pNearestDisp = NULL;
-		if ( pEntity == m_pAmmo )
+		else if ( pEntity == m_pAmmo )
 			m_pAmmo = NULL;
-		if ( pEntity == m_pHealthkit )
+		else if ( pEntity == m_pHealthkit )
 			m_pHealthkit = NULL;
-		if ( pEntity == m_pHeal )
+		else if ( pEntity == m_pHeal )
 			m_pHeal = NULL;
 	}
 	
@@ -1724,13 +1724,18 @@ void CBotTF2 :: modThink ()
 	{
 		if ( wantToFollowEnemy() )
 		{
+			Vector *engineVelocity = NULL;
 			Vector vVelocity = Vector(0,0,0);
 			CClient *pClient = CClients::get(m_pLastEnemy);
 			CBotSchedule *pSchedule = new CBotSchedule();
 			
 			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);	
 			
-			if ( pClient )
+			engineVelocity = CClassInterface :: getVelocity(m_pLastEnemy);
+
+			if ( engineVelocity )
+				vVelocity = *engineVelocity;
+			else
 				vVelocity = pClient->getVelocity();
 
 			m_pSchedules->freeMemory();
@@ -1884,6 +1889,31 @@ bool CBotFortress :: canAvoid ( edict_t *pEntity )
 	return false;
 }
 
+void CBotTF2::checkStuckonSpy(void)
+{
+	edict_t *pPlayer;
+
+	int i = 0;
+	int iTeam = getTeam();
+	
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		pPlayer = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pPlayer) && (CTeamFortress2Mod::getTeam(pPlayer) != iTeam))
+		{
+			if ( CClassInterface::getTF2Class(pPlayer) == TF_CLASS_SPY )
+			{
+				if ( distanceFrom(pPlayer) < 80 ) // touching distance
+				{
+					foundSpy(pPlayer);
+					return;
+				}
+			}
+		}
+	}
+}
+
 bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
 {
 	int i = 0;
@@ -1993,6 +2023,17 @@ void CBotTF2 ::voiceCommand ( eVoiceCMD cmd )
 			break;
 		}
 	}
+}
+
+bool CBotTF2 ::checkStuck(void)
+{
+	if ( CBot::checkStuck() )
+	{
+		checkStuckonSpy();
+		return true;
+	}
+	
+	return false;
 }
 
 void CBotTF2 :: foundSpy (edict_t *pEdict)

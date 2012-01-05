@@ -325,6 +325,8 @@ protected:
 
 	virtual bool thinkSpyIsEnemy ( edict_t *pEdict );
 
+	virtual bool checkStuck ( void ) { return CBot::checkStuck(); }
+
 	float m_fCallMedic;
 	float m_fTauntTime;
 	float m_fTaunting;
@@ -521,6 +523,10 @@ public:
 
 	virtual bool select_CWeapon ( CWeapon *pWeapon );
 	virtual bool selectBotWeapon ( CBotWeapon *pBotWeapon );
+
+	void checkStuckonSpy ( void );
+
+	bool checkStuck ( void );
 
 private:
 	// time for next jump

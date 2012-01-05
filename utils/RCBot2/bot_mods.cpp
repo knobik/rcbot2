@@ -218,6 +218,7 @@ void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *i
 		}
 	}
 }
+
 // to fix
 void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
 {
