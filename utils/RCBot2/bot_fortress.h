@@ -1,3 +1,35 @@
+/*
+ *    part of https://rcbot2.svn.sourceforge.net/svnroot/rcbot2
+ *
+ *    This file is part of RCBot.
+ *
+ *    RCBot by Paul Murphy adapted from Botman's HPB Bot 2 template.
+ *
+ *    RCBot is free software; you can redistribute it and/or modify it
+ *    under the terms of the GNU General Public License as published by the
+ *    Free Software Foundation; either version 2 of the License, or (at
+ *    your option) any later version.
+ *
+ *    RCBot is distributed in the hope that it will be useful, but
+ *    WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *    General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with RCBot; if not, write to the Free Software Foundation,
+ *    Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ *    In addition, as a special exception, the author gives permission to
+ *    link the code of this program with the Half-Life Game Engine ("HL
+ *    Engine") and Modified Game Libraries ("MODs") developed by Valve,
+ *    L.L.C ("Valve").  You must obey the GNU General Public License in all
+ *    respects for all of the code used other than the HL Engine and MODs
+ *    from Valve.  If you modify this file, you may extend this exception
+ *    to your version of the file, but you are not obligated to do so.  If
+ *    you do not wish to do so, delete this exception statement from your
+ *    version.
+ *
+ */
 #ifndef __BOT_FORTRESS_H__
 #define __BOT_FORTRESS_H__
 
@@ -70,7 +102,7 @@ typedef enum
 	TF_CLASS_PYRO,
 	TF_CLASS_SPY,
 	TF_CLASS_ENGINEER,
-	TF_CLASS_UNDEFINED
+	TF_CLASS_MAX
 }TF_Class;
 
 enum
@@ -110,13 +142,14 @@ typedef enum
 class CBotTF2FunctionEnemyAtIntel : public IBotFunction
 {
 public:
-	CBotTF2FunctionEnemyAtIntel( int iTeam, Vector vPos, int type ){m_iTeam = iTeam;m_vPos = vPos;m_iType = type;}
+	CBotTF2FunctionEnemyAtIntel( int iTeam, Vector vPos, int type, edict_t *pPlayer = NULL ){m_iTeam = iTeam;m_vPos = vPos;m_iType = type; m_pPlayer = pPlayer; }
 
 	void execute (CBot *pBot);
 private:
 	int m_iTeam;
 	Vector m_vPos;
 	int m_iType;
+	edict_t *m_pPlayer;
 };
 
 class CBroadcastSpySap : public IBotFunction
@@ -415,6 +448,7 @@ public:
 		m_pBluePayloadBomb = NULL;
 		m_bFixWeapons = false;
 		m_iTrapType = TF_TRAP_TYPE_NONE;
+		m_pLastEnemySentry = MyEHandle(NULL);
 	}
 
 	// found a new enemy
@@ -528,6 +562,8 @@ public:
 
 	bool checkStuck ( void );
 
+	void init (bool bVarInit=false);
+
 private:
 	// time for next jump
 	float m_fDoubleJumpTime;
@@ -557,6 +593,7 @@ private:
 	float m_fNextRevMiniGunTime;
 	//
 	edict_t *m_pCloakedSpy;
+	MyEHandle m_pLastEnemySentry;
 };
 
 class CBotFF : public CBotFortress

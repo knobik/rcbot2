@@ -246,7 +246,14 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 [RCBot] [DEBUG game_event] cappers = 
 [RCBot] [DEBUG game_event] priority = 7
 */
-    int capteam = pEvent->getInt("capteam",0);
+	int capteam = pEvent->getInt("capteam",0);
+	//int player = pEvent->getInt("player",0);
+	//edict_t *pPlayer = NULL;
+
+	//if ( player )
+	//	pPlayer = INDEXENT(player);
+
+
 //	const char *cpname = pEvent->getString("cpname","");
 //	int cp = pEvent->getInt("cp",0);
 

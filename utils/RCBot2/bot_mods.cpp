@@ -50,6 +50,7 @@ tf_sentry_t CTeamFortress2Mod::m_SentryGuns[MAX_PLAYERS];	// used to let bots kn
 tf_disp_t  CTeamFortress2Mod::m_Dispensers[MAX_PLAYERS];	// used to let bots know where friendly/enemy dispensers are
 edict_t *CTeamFortress2Mod::m_pResourceEntity = NULL;
 bool CTeamFortress2Mod::m_bAttackDefendMap = false;
+//float g_fBotUtilityPerturb [TF_CLASS_MAX][BOT_UTIL_MAX];
 
 extern ConVar bot_use_disp_dist;
 
@@ -824,7 +825,7 @@ return 0.0;
 float CTeamFortress2Mod :: TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass ) 
 { 
 if (TF2_IsPlayerSlowed(pPlayer)) 
-return 27.0; 
+return 20.0; 
 else 
 return TF2_GetClassSpeed(iClass) * 1.58; 
 } 
@@ -961,6 +962,7 @@ void CTeamFortress2Mod :: initMod ()
 	for ( i = 0; i < TF2_WEAPON_MAX; i ++ )
 		CWeapons::addWeapon(new CWeapon(TF2Weaps[i].iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference));
 
+	//memset(g_fBotUtilityPerturb,0,sizeof(float)*TF_CLASS_MAX*BOT_UTIL_MAX);
 }
 
 void CTeamFortress2Mod :: mapInit ()

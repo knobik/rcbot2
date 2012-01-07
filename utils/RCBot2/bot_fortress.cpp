@@ -1,4 +1,6 @@
 /*
+ *    part of https://rcbot2.svn.sourceforge.net/svnroot/rcbot2
+ *
  *    This file is part of RCBot.
  *
  *    RCBot by Paul Murphy adapted from Botman's HPB Bot 2 template.
@@ -28,6 +30,7 @@
  *    version.
  *
  */
+
 #include "bot.h"
 #include "bot_fortress.h"
 #include "bot_buttons.h"
@@ -53,6 +56,9 @@ extern ConVar bot_use_vc_commands;
 extern ConVar bot_max_cc_time;
 extern ConVar bot_min_cc_time;
 extern ConVar bot_change_class;
+
+//extern float g_fBotUtilityPerturb [TF_CLASS_MAX][BOT_UTIL_MAX];
+
 // Payload stuff by   The_Shadow
 
 //#include "vstdlib/random.h" // for random functions
@@ -87,8 +93,10 @@ void CBroadcastFlagDropped :: execute ( CBot *pBot )
 
 void CBotTF2FunctionEnemyAtIntel :: execute (CBot *pBot)
 {
+
 	if ( pBot->getTeam() != m_iTeam )
 	{
+
 		((CBotTF2*)pBot)->enemyAtIntel(m_vPos,m_iType);
 	}
 }
@@ -168,7 +176,7 @@ void CBotFortress :: init (bool bVarInit)
 
 	m_bCheckClass = false;
 	m_bHasFlag = false;
-	m_iClass = TF_CLASS_UNDEFINED; // important
+	m_iClass = TF_CLASS_MAX; // important
 
 }
 
@@ -187,7 +195,7 @@ bool CBotFortress :: startGame()
 	{
 		selectTeam();
 	}
-	else if ( (m_iDesiredClass && (m_iClass != m_iDesiredClass)) || (m_iClass == TF_CLASS_UNDEFINED) )
+	else if ( (m_iDesiredClass && (m_iClass != m_iDesiredClass)) || (m_iClass == TF_CLASS_MAX) )
 	{
 		selectClass();
 	}
@@ -1021,7 +1029,7 @@ void CBotTF2 :: spawnInit()
 
 void CBotTF2 :: fixWeapons ()
 {
-	if ( m_pWeapons && (m_iClass != TF_CLASS_UNDEFINED) )
+	if ( m_pWeapons && (m_iClass != TF_CLASS_MAX) )
 	{
 		m_pWeapons->clearWeapons();
 		
@@ -1270,6 +1278,9 @@ void CBotTF2 :: died ( edict_t *pKiller )
 	if ( pKiller && CBotGlobals::entityIsValid(pKiller) )
 		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 
+	if ( CTeamFortress2Mod::isSentry(pKiller,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
+		m_pLastEnemySentry = MyEHandle(pKiller);
+
 	m_bCheckClass = true;
 }
 
@@ -1452,6 +1463,33 @@ void CBotTF2 :: modThink ()
 	bool bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
 	// mod specific think code here
 	CBotFortress :: modThink();
+
+	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
+	{
+		if ( getTeam() == TF2_TEAM_BLUE )
+		{
+		    m_pDefendPayloadBomb = m_pRedPayloadBomb;
+		    m_pPushPayloadBomb = m_pBluePayloadBomb;
+		}
+		else
+		{
+		    m_pDefendPayloadBomb = m_pBluePayloadBomb;
+		    m_pPushPayloadBomb = m_pRedPayloadBomb;
+		}
+	}
+	else if ( CTeamFortress2Mod::isMapType(TF_MAP_CART) )
+	{
+		if ( getTeam() == TF2_TEAM_BLUE )
+		{
+		    m_pPushPayloadBomb = m_pBluePayloadBomb;
+			m_pDefendPayloadBomb = NULL;
+		}
+		else
+		{
+			m_pPushPayloadBomb = NULL;
+			m_pDefendPayloadBomb = m_pBluePayloadBomb;
+		}
+	}
 
 	// when respawned -- check if I should change class
 	if ( m_bCheckClass && !m_pPlayerInfo->IsDead())
@@ -1734,8 +1772,13 @@ void CBotTF2 :: modThink ()
 			engineVelocity = CClassInterface :: getVelocity(m_pLastEnemy);
 
 			if ( engineVelocity )
+			{
 				vVelocity = *engineVelocity;
-			else
+
+				if ( pClient && (vVelocity == Vector(0,0,0)) )
+					vVelocity = pClient->getVelocity();
+			}
+			else if ( pClient )
 				vVelocity = pClient->getVelocity();
 
 			m_pSchedules->freeMemory();
@@ -1906,8 +1949,11 @@ void CBotTF2::checkStuckonSpy(void)
 			{
 				if ( distanceFrom(pPlayer) < 80 ) // touching distance
 				{
-					foundSpy(pPlayer);
-					return;
+					if ( isVisible(pPlayer) )
+					{
+						foundSpy(pPlayer);
+						return;
+					}
 				}
 			}
 		}
@@ -2513,7 +2559,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		utils.addUtility(CBotUtility(BOT_UTIL_SAP_LASTENEMY_SENTRY,
 			m_pLastEnemy && CTeamFortress2Mod::isSentry(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) && !CTeamFortress2Mod::isSentrySapped(m_pLastEnemy),fGetFlagUtility+(getHealthPercent()/5)));
-////////////////
+
+		utils.addUtility(CBotUtility(BOT_UTIL_SAP_LASTENEMY_SENTRY,
+			m_pLastEnemySentry.get()!=NULL,fGetFlagUtility+(getHealthPercent()/5)));
+		////////////////
 		// sap tele
 		utils.addUtility(CBotUtility(BOT_UTIL_SAP_ENEMY_TELE,
 										m_pEnemy && CTeamFortress2Mod::isTeleporter(m_pEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) && !CTeamFortress2Mod::isTeleporterSapped(m_pEnemy),
@@ -2525,44 +2574,34 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		utils.addUtility(CBotUtility(BOT_UTIL_SAP_LASTENEMY_TELE,
 			m_pLastEnemy && CTeamFortress2Mod::isTeleporter(m_pLastEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) && !CTeamFortress2Mod::isTeleporterSapped(m_pLastEnemy),fGetFlagUtility+(getHealthPercent()/6)));
-
-
 	}
 
-
+	fGetFlagUtility = 0.2+randomFloat(0.0f,0.2f);
 
 	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
 	{
 		if ( getTeam() == TF2_TEAM_BLUE )
 		{
-		    m_pDefendPayloadBomb = m_pRedPayloadBomb;
-		    m_pPushPayloadBomb = m_pBluePayloadBomb;
-			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pDefendPayloadBomb!=NULL),fDefendFlagUtility));
-			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pPushPayloadBomb!=NULL),fGetFlagUtility));
+			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pDefendPayloadBomb!=NULL),fDefendFlagUtility+randomFloat(-0.1,0.2)));
+			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pPushPayloadBomb!=NULL),fGetFlagUtility+randomFloat(-0.1,0.2)));
 		}
 		else
 		{
-		    m_pDefendPayloadBomb = m_pBluePayloadBomb;
-		    m_pPushPayloadBomb = m_pRedPayloadBomb;
-			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pDefendPayloadBomb!=NULL),fDefendFlagUtility));
-			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pPushPayloadBomb!=NULL),fGetFlagUtility));
+			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pDefendPayloadBomb!=NULL),fDefendFlagUtility+randomFloat(-0.1,0.2)));
+			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pPushPayloadBomb!=NULL),fGetFlagUtility+randomFloat(-0.1,0.2)));
 		}
 	}
 	else if ( CTeamFortress2Mod::isMapType(TF_MAP_CART) )
 	{
 		if ( getTeam() == TF2_TEAM_BLUE )
 		{
-		    m_pPushPayloadBomb = m_pBluePayloadBomb;
-			m_pDefendPayloadBomb = NULL;
-			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pPushPayloadBomb!=NULL),fGetFlagUtility));
+			utils.addUtility(CBotUtility(BOT_UTIL_PUSH_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pPushPayloadBomb!=NULL),fGetFlagUtility+randomFloat(-0.1,0.2)));
 			// Goto Payload bomb
 		}
 		else
 		{
-			m_pPushPayloadBomb = NULL;
-			m_pDefendPayloadBomb = m_pBluePayloadBomb;
 			// Defend Payload bomb
-			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pDefendPayloadBomb!=NULL),fDefendFlagUtility));
+			utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_PAYLOAD_BOMB,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_pDefendPayloadBomb!=NULL),fDefendFlagUtility+randomFloat(-0.1,0.2)));
 		}
 	}
 
@@ -2739,13 +2778,15 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 			stopMoving();
 
 		lookAtEdict(m_pSentryGun);
-		setLookAt(LOOK_BUILD);
+		setLookAt(LOOK_EDICT); // LOOK_EDICT fix engineers not looking at their sentry
 
 		if ( *fTime < engine->Time() )
 		{
 			m_pButtons->tap(IN_ATTACK);
 			*fTime = engine->Time() + randomFloat(10.0f,20.0f);
 		}
+
+		duck(true); // crouch too
 
 	}
 	else
@@ -3305,8 +3346,8 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 	}
 }
 
-#define TF2_ROCKETSPEED   600.0f
-//#define TF2_GRENADESPEED  250.0f
+#define TF2_ROCKETSPEED   1100
+#define TF2_GRENADESPEED  1065 // TF2 wiki
 
 Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 {
@@ -3326,10 +3367,14 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 		}
 		else if ( (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_DEMOMAN) )
 		{
+			int iSpeed = 0;
+
 			switch ( pWp->getID() )
 			{
 				case TF2_WEAPON_ROCKETLAUNCHER:
 				{
+					iSpeed = TF2_ROCKETSPEED;
+
 					if ( vAim.z <= getOrigin().z )
 						vAim = vAim - Vector(0,0,randomFloat(8.0f,24.0f));
 				}
@@ -3338,14 +3383,26 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 				{
 					CClient *pClient = CClients::get(pEntity);
 					Vector vVelocity;
+					Vector *engineVelocity;
+
+					engineVelocity = CClassInterface :: getVelocity(pEntity);
 
 					if ( pClient )
 					{
-						vVelocity = pClient->getVelocity();
+						if ( engineVelocity )
+						{
+							vVelocity = *engineVelocity;
+
+							if ( pClient && (vVelocity == Vector(0,0,0)) )
+								vVelocity = pClient->getVelocity();
+						}
+						else if ( pClient )
+							vVelocity = pClient->getVelocity();
+
 						// speed = distance/time
 						// .'.
 						// time = distance/speed
-						fTime = fDist/TF2_ROCKETSPEED;
+						fTime = fDist/iSpeed;
 
 						vAim = vAim + ((vVelocity*fTime)*bot_rocketpredict.GetFloat());
 					}
@@ -3738,6 +3795,11 @@ bool CBotFF :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 // Go back to Cap/Flag to 
 void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 {
+	if ( CBotGlobals::entityIsValid(m_pDefendPayloadBomb) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)) )
+	{
+		vPos = CBotGlobals::entityOrigin(m_pDefendPayloadBomb);
+	}
+
 	if ( ( m_iClass == TF_CLASS_DEMOMAN ) && ( m_iTrapType != TF_TRAP_TYPE_NONE ) && ( m_iTrapType != TF_TRAP_TYPE_WPT ) )
 	{
 		detonateStickies();
@@ -3812,4 +3874,14 @@ void CBotTF2 :: buildingSapped ( eEngiBuild building, edict_t *pSapper, edict_t 
 void CBotTF2 :: sapperDestroyed ( edict_t *pSapper )
 {
 	m_pSchedules->freeMemory();
+}
+
+void CBotTF2 ::init(bool bVarInit)
+{
+	if( bVarInit )
+	{
+		CBotTF2();
+	}
+
+	CBotFortress::init(bVarInit);
 }

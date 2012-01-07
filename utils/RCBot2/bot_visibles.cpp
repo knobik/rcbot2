@@ -147,7 +147,11 @@ void CBotVisibles :: debugString ( char *string )
 		strcat(string,szNum);
 	}
 }
-
+/*
+@param	pEntity		entity to check
+@param	iTicks		the pointer to the bot's traceline ticker
+@param	bVisible	returns if the entity is visible or not
+*/
 void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisible )
 {
 	// make these static, calling a function with data many times	
@@ -162,7 +166,6 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 	// update
 	if ( CBotGlobals::entityIsValid(pEntity) )
 	{
-
 		//if ( CClients::clientsDebugging() && CClients::get(0)->isDebuggingBot(m_pBot) && (ENTINDEX(pEntity)<CBotGlobals::maxClients()) )
 		//	debugoverlay->AddLineOverlay(m_pBot->getOrigin(),CBotGlobals::entityOrigin(pEntity),255,255,255,false,1);			
 
@@ -181,7 +184,7 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 
 			if ( playerInPVS )
 			{
-				// update tick
+				// update tick -- counts the number of tracelines done (cpu intensive)
 				*iTicks = *iTicks + 1;
 
 				*bVisible = m_pBot->FVisible(pEntity);

@@ -1,4 +1,6 @@
 /*
+ *    part of https://rcbot2.svn.sourceforge.net/svnroot/rcbot2
+ *
  *    This file is part of RCBot.
  *
  *    RCBot by Paul Murphy adapted from Botman's HPB Bot 2 template.
@@ -28,8 +30,6 @@
  *    version.
  *
  */
-//#include "vstdlib/random.h" // for random functions
-
 #include "bot_mtrand.h"
 #include "bot.h"
 #include "bot_schedule.h"
@@ -1469,7 +1469,6 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( !m_pTele || !CBotGlobals::entityIsValid(m_pTele) )
 	{
-	
 		fail();
 		return;
 	}
@@ -1484,7 +1483,7 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	if ( !m_fTime )
-		m_fTime = engine->Time() + 12.0f;
+		m_fTime = engine->Time() + 13.0f;
 
 	// FIX BUG
 	//if ( !((CBotFortress*)pBot)->isTeleporterUseful(m_pTele) )
@@ -1496,17 +1495,16 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		Vector vTele = CBotGlobals::entityOrigin(m_pTele);		
 
-
 		if ( pBot->distanceFrom(vTele) > 48 )
 			pBot->setMoveTo(vTele,9);
 		else
-			pBot->stopMoving(6);
+			pBot->stopMoving(8);
 
 		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 50 )
 		{
-			pBot->getNavigator()->freeMapMemory();
+			pBot->getNavigator()->freeMapMemory(); // restart navigator
 			
-			complete();
+			complete(); // finished
 		}
 		else
 			m_vLastOrigin = pBot->getOrigin();

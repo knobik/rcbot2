@@ -86,7 +86,7 @@ ConVar bot_spyknifefov("rcbot_spyknifefov","80",0,"the FOV from the enemy that s
 ConVar bot_visrevs("rcbot_visrevs","9",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
 ConVar bot_pathrevs("rcbot_pathrevs","40",0,"how many revs the bot searches for a path each frame, lower to reduce cpu usage, but causes bots to stand still more");
 ConVar bot_command("rcbot_cmd","",0,"issues a command to all bots");
-ConVar bot_rocketpredict( "rcbot_rocketpred", "0.45", 0, "multiplier for soldier / demoman rocket/grenade prediction" );
+ConVar bot_rocketpredict( "rcbot_rocketpred", "0.4", 0, "multiplier for soldier / demoman rocket/grenade prediction" );
 ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
 ConVar bot_scoutdj( "rcbot_scoutdj", "0.28", 0, "time scout uses to double jump" );
 ConVar bot_anglespeed( "rcbot_anglespeed", "8.0", 0, "speed that bots turn" );

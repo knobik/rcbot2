@@ -1,4 +1,6 @@
 /*
+ *    part of https://rcbot2.svn.sourceforge.net/svnroot/rcbot2
+ *
  *    This file is part of RCBot.
  *
  *    RCBot by Paul Murphy adapted from Botman's HPB Bot 2 template.
@@ -28,6 +30,7 @@
  *    version.
  *
  */
+
 //=============================================================================//
 //
 // HPB_bot2.h - bot header file (Copyright 2004, Jeffrey "botman" Broome)
