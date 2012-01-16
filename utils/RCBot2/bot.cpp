@@ -128,7 +128,7 @@ void CBot :: runPlayerMove()
 	cmd.viewangles = m_vViewAngles;
 	cmd.weaponselect = m_iSelectWeapon;
 	cmd.tick_count = gpGlobals->tickcount;
-	//cmd.hasbeenpredicted
+	//cmd.hasbeenpredicted = false;
 
 	if ( bot_attack.GetInt() == 1 )
 		cmd.buttons = IN_ATTACK;
@@ -145,6 +145,8 @@ void CBot :: runPlayerMove()
 			CClients::clientDebugMsg(BOT_DEBUG_BUTTONS,dbg,this);
 	}
 
+	m_pController->RunPlayerMove(&cmd);
+
 	//m_pController->PostClientMessagesSent();
 
 	// IS THIS REQUIRED????
@@ -156,7 +158,9 @@ void CBot :: runPlayerMove()
 	//float flTimeBase = gpGlobals->curtime + gpGlobals->frametime - frametime;
 
 	//CClassInterface::setTickBase(m_pEdict,TIME_TO_TICKS(flTimeBase));
-	m_pController->RunPlayerMove(&cmd);
+	
+	//m_pController->PostClientMessagesSent();
+	//cmd.hasbeenpredicted = true;
 
 	// Restore the globals..
 	//gpGlobals->frametime = flOldFrametime;
@@ -2069,6 +2073,25 @@ CBot *CBots :: findBotByProfile ( CBotProfile *pProfile )
 	
 	return NULL;
 }
+
+void CBots :: runPlayerMoveAll ()
+{
+	static CBot *pBot;
+	extern ConVar bot_stop;
+
+	bool bBotStop = bot_stop.GetInt() > 0;
+
+	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
+	{
+		pBot = m_Bots[i];
+
+		if ( pBot->inUse() )
+		{
+			pBot->runPlayerMove();
+		}
+	}
+}
+
 
 void CBots :: botThink ()
 {

@@ -168,6 +168,8 @@ public:
 	virtual void			LevelInit( char const *pMapName );
 	virtual void			ServerActivate( edict_t *pEdictList, int edictCount, int clientMax );
 	virtual void			GameFrame( bool simulating );
+		// Called once per simulation frame on the final tick
+	virtual void			PreClientUpdate( bool simulating );
 	virtual void			LevelShutdown( void );
 	virtual void			ClientActive( edict_t *pEntity );
 	virtual void			ClientDisconnect( edict_t *pEntity );
@@ -755,6 +757,8 @@ public:
 	static void botFunction ( IBotFunction *function );
 
 	static void handleAutomaticControl ();
+
+	static void runPlayerMoveAll ();
 
 private:
 	static CBot **m_Bots;

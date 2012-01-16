@@ -348,6 +348,9 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			}
 
 			pBot->setLookAtTask(LOOK_AROUND,5);
+
+			if ( ((CBotTF2*)pBot)->checkAttackPoint() )
+				complete();
 		}
 		else if ( m_fTime < engine->Time() )
 		{

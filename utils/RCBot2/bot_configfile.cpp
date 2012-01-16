@@ -139,7 +139,39 @@ void CBotConfigFile :: doNextCommand ()
 	}
 }
 
+void CRCBotTF2UtilFile :: loadConfig()
+{
+	 unsigned short int iFile = 0;
+	 char szFullFilename[512];
+	 char szFilename[64];
+	 char line[256];
+	 FILE *fp;
 
-	
-	
-	
+	 for ( iFile = 0; iFile < UTIL_TYPE_MAX; iFile ++ )
+	 {
+		 if ( iFile == 0 )
+			sprintf(szFilename,"attack_util.csv");
+		 else
+			sprintf(szFilename,"normal_util.csv");
+
+		CBotGlobals::buildFileName(szFullFilename,szFilename);
+		fp = CBotGlobals::openFile(szFullFilename,"r");
+
+		if ( !fp )
+		{
+			while ( fgets(line,255,fp) != NULL )
+			{
+				if ( line[0] == '#' )
+					continue;
+				if ( line[0] == '\n' )
+					continue;
+				if ( line[0] == '\r' )
+					continue;
+				if ( line[0] == '/' )
+					continue;
+
+			}
+		}
+	 }
+
+}

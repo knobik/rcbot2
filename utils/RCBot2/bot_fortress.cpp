@@ -998,6 +998,7 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	m_fAttackPointTime = 0.0f;
 	m_fNextRevMiniGunTime = 0.0f;
 	m_fRevMiniGunTime = 0.0f;
 
@@ -1025,6 +1026,18 @@ void CBotTF2 :: spawnInit()
 	m_iPrevWeaponSelectFailed = 0;
 
 	
+}
+
+// return true if we don't want to hang around on the point
+bool CBotTF2 ::checkAttackPoint()
+{
+	if ( CTeamFortress2Mod::isMapType(TF_MAP_CART) || CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
+	{
+		m_fAttackPointTime = engine->Time() + randomFloat(5.0f,15.0f);
+		return true;
+	}
+
+	return false;
 }
 
 void CBotTF2 :: fixWeapons ()
@@ -1275,11 +1288,16 @@ void CBotTF2 :: died ( edict_t *pKiller )
 
 	spawnInit();
 
-	if ( pKiller && CBotGlobals::entityIsValid(pKiller) )
-		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
+	if ( pKiller )
+	{
+		if ( CBotGlobals::entityIsValid(pKiller) )
+		{
+			m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 
-	if ( CTeamFortress2Mod::isSentry(pKiller,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
-		m_pLastEnemySentry = MyEHandle(pKiller);
+			if (CTeamFortress2Mod::isSentry(pKiller,CTeamFortress2Mod::getEnemyTeam(getTeam())))
+				m_pLastEnemySentry = MyEHandle(pKiller);
+		}
+	}
 
 	m_bCheckClass = true;
 }
@@ -2456,9 +2474,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9));
 		utils.addUtility(CBotUtility(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
-	
-
-				
+		
 		if ( CTeamFortress2Mod::isAttackDefendMap() && (getTeam() == TF_TEAM_BLUE) )
 		{
 			utils.addUtility(CBotUtility(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
@@ -2535,7 +2551,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	
 	// only attack if attack area is > 0
-	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_iCurrentAttackArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||(CTeamFortress2Mod::isMapType(TF_MAP_ARENA)&&CTeamFortress2Mod::isArenaPointOpen())||(CTeamFortress2Mod::isMapType(TF_MAP_KOTH)&&CTeamFortress2Mod::isArenaPointOpen())||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility));
+	utils.addUtility(CBotUtility(BOT_UTIL_ATTACK_POINT,(m_fAttackPointTime<engine->Time()) && ((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_iCurrentAttackArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||(CTeamFortress2Mod::isMapType(TF_MAP_ARENA)&&CTeamFortress2Mod::isArenaPointOpen())||(CTeamFortress2Mod::isMapType(TF_MAP_KOTH)&&CTeamFortress2Mod::isArenaPointOpen())||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility));
 	// only defend if defend area is > 0
 	utils.addUtility(CBotUtility(BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
@@ -3384,6 +3400,9 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 					CClient *pClient = CClients::get(pEntity);
 					Vector vVelocity;
 					Vector *engineVelocity;
+
+					if ( iSpeed == 0 )
+						iSpeed = TF2_GRENADESPEED;
 
 					engineVelocity = CClassInterface :: getVelocity(pEntity);
 

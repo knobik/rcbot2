@@ -564,6 +564,8 @@ public:
 
 	void init (bool bVarInit=false);
 
+	bool checkAttackPoint ( void );
+
 private:
 	// time for next jump
 	float m_fDoubleJumpTime;
@@ -594,6 +596,8 @@ private:
 	//
 	edict_t *m_pCloakedSpy;
 	MyEHandle m_pLastEnemySentry;
+
+	float m_fAttackPointTime; // used in cart maps
 };
 
 class CBotFF : public CBotFortress

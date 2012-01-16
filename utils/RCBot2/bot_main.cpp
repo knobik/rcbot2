@@ -421,6 +421,14 @@ void CRCBotPlugin::ServerActivate( edict_t *pEdictList, int edictCount, int clie
 	CBotGlobals::setClientMax(clientMax);
 }
 
+void CRCBotPlugin::PreClientUpdate(bool simulating)
+{
+	//if ( simulating && CBotGlobals::IsMapRunning() )
+	//{
+	//	CBots::runPlayerMoveAll();
+	//}
+}
+
 //---------------------------------------------------------------------------------
 // Purpose: called once per server frame, do recurring work here (like checking for timeouts)
 //---------------------------------------------------------------------------------
