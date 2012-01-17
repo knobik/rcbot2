@@ -36,6 +36,7 @@
 #include "bot_fortress.h"
 #include "bot_weapons.h"
 #include "bot_script.h"
+#include "bot_configfile.h"
 
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
@@ -962,6 +963,7 @@ void CTeamFortress2Mod :: initMod ()
 	for ( i = 0; i < TF2_WEAPON_MAX; i ++ )
 		CWeapons::addWeapon(new CWeapon(TF2Weaps[i].iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference));
 
+	CRCBotTF2UtilFile::loadConfig();
 	//memset(g_fBotUtilityPerturb,0,sizeof(float)*TF_CLASS_MAX*BOT_UTIL_MAX);
 }
 

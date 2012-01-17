@@ -79,9 +79,14 @@
 #include "bot_configfile.h"
 #include "bot_strings.h"
 
+#include "bot_fortress.h"
+
 vector <char *> CBotConfigFile::m_Commands;
 unsigned int CBotConfigFile::m_iCmd = 0; // current command (time delayed)
 float CBotConfigFile::m_fNextCommandTime = 0.0f;
+
+// 
+float CRCBotTF2UtilFile::m_fUtils[UTIL_TYPE_MAX][BOT_UTIL_MAX][9];
 
 void CBotConfigFile :: load ()
 {
@@ -139,38 +144,87 @@ void CBotConfigFile :: doNextCommand ()
 	}
 }
 
+void CRCBotTF2UtilFile :: init()
+{
+	short unsigned int i,j,k;
+
+	for ( i = 0; i < UTIL_TYPE_MAX; i ++ )
+		for ( j = 0; j < BOT_UTIL_MAX; j ++ )
+			for ( k = 0; k < 9; k ++ )
+				m_fUtils[i][j][k] = 0;
+}
+
+void CRCBotTF2UtilFile :: addUtilPerturbation (eBotAction iAction, eTF2UtilType iUtil, float *fUtility)
+{
+	short unsigned int i;
+
+	for ( i = 0; i < 9; i ++ )
+		m_fUtils[iUtil][iAction][i] = fUtility[i];
+}
+
 void CRCBotTF2UtilFile :: loadConfig()
 {
-	 unsigned short int iFile = 0;
+	 eTF2UtilType iFile;
 	 char szFullFilename[512];
 	 char szFilename[64];
 	 char line[256];
 	 FILE *fp;
 
-	 for ( iFile = 0; iFile < UTIL_TYPE_MAX; iFile ++ )
+	 init();
+
+	 for ( iFile = BOT_ATT_UTIL; iFile < UTIL_TYPE_MAX; iFile = (eTF2UtilType)((int)iFile+1) )
 	 {
-		 if ( iFile == 0 )
+		 if ( iFile == BOT_ATT_UTIL )
+		 {
 			sprintf(szFilename,"attack_util.csv");
+		 }
 		 else
+		 {
 			sprintf(szFilename,"normal_util.csv");
+		}
 
 		CBotGlobals::buildFileName(szFullFilename,szFilename);
 		fp = CBotGlobals::openFile(szFullFilename,"r");
 
-		if ( !fp )
+		if ( fp )
 		{
+			eBotAction iUtil = (eBotAction)0;
+
 			while ( fgets(line,255,fp) != NULL )
 			{
-				if ( line[0] == '#' )
-					continue;
-				if ( line[0] == '\n' )
-					continue;
-				if ( line[0] == '\r' )
-					continue;
-				if ( line[0] == '/' )
-					continue;
+				float iClassList[TF_CLASS_MAX];
+				char utiltype[64];
 
+				if ( line[0] == 'B' && line[1] == 'O' && line[2] == 'T' ) // OK
+				{
+
+					// Format:    U, 1, 2, 3, 4, 5, 6, 7, 8, 9
+					//                
+					//               s  s  s  d  m  h  p  s  e
+					//               c  n  o  e  e  w  y  p  n
+					//               o  i  l  m  d  g  r  y  g
+					// 
+					sscanf(line,"%[^,],%f,%f,%f,%f,%f,%f,%f,%f,%f\r\n",utiltype,&iClassList[0],
+						&iClassList[1],
+						&iClassList[2],
+						&iClassList[3],
+						&iClassList[4],
+						&iClassList[5],
+						&iClassList[6],
+						&iClassList[7],
+						&iClassList[8]);					
+
+					addUtilPerturbation(iUtil,iFile,iClassList);
+
+					iUtil = (eBotAction)((int)iUtil+1);
+
+					if ( iUtil >= BOT_UTIL_MAX )
+						break;
+
+				}
 			}
+
+			fclose(fp);
 		}
 	 }
 

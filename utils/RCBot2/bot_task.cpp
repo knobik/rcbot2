@@ -1486,31 +1486,51 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	if ( !m_fTime )
+	{
+		// initialize
 		m_fTime = engine->Time() + 13.0f;
+		m_vLastOrigin = pBot->getOrigin();
+	}
 
 	// FIX BUG
 	//if ( !((CBotFortress*)pBot)->isTeleporterUseful(m_pTele) )
 	//	fail();
 
 	if ( m_fTime < engine->Time() )
+	{
+		if ( CClients::clientsDebugging(BOT_DEBUG_TASK) )
+			CClients::clientDebugMsg(BOT_DEBUG_TASK,"TELEPORT: TIMEOUT",pBot);
+
 		fail();
+
+	}
 	else
 	{
-		Vector vTele = CBotGlobals::entityOrigin(m_pTele);		
-
-		if ( pBot->distanceFrom(vTele) > 48 )
-			pBot->setMoveTo(vTele,9);
-		else
-			pBot->stopMoving(8);
-
-		if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 50 )
+		if ( CTeamFortress2Mod::getTeleporterExit(m_pTele) ) // exit is still alive?
 		{
-			pBot->getNavigator()->freeMapMemory(); // restart navigator
-			
-			complete(); // finished
+			Vector vTele = CBotGlobals::entityOrigin(m_pTele);		
+
+			if ( pBot->distanceFrom(vTele) > 48 )
+			{
+				pBot->setMoveTo(vTele,9);		
+				
+				if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 50 )
+				{
+					pBot->getNavigator()->freeMapMemory(); // restart navigator
+				
+					complete(); // finished
+				}
+			}
+			else
+			{
+				pBot->stopMoving(8);
+			}
+		
+			m_vLastOrigin = pBot->getOrigin();
+
 		}
 		else
-			m_vLastOrigin = pBot->getOrigin();
+			fail();
 	}
 }
 

@@ -1132,10 +1132,11 @@ void CBotTF2 :: setClass ( TF_Class _class )
 
 void CBotTF2 :: taunt ()
 {
-	if ( !m_pEnemy && (m_fTauntTime < engine->Time()) )
+	// haven't taunted for a while, no emeny, not ubered, OK! Taunt!
+	if ( !m_pEnemy && (m_fTauntTime < engine->Time()) && (!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict)) )
 	{
 		helpers->ClientCommand(m_pEdict,"taunt");
-		m_fTauntTime = engine->Time() + randomFloat(40.0,100.0);
+		m_fTauntTime = engine->Time() + randomFloat(40.0,100.0); // Don't taunt for another minute or two
 		m_fTaunting = engine->Time() + 5.0;
 	}
 }

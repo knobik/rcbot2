@@ -2079,8 +2079,6 @@ void CBots :: runPlayerMoveAll ()
 	static CBot *pBot;
 	extern ConVar bot_stop;
 
-	bool bBotStop = bot_stop.GetInt() > 0;
-
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
 		pBot = m_Bots[i];

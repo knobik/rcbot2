@@ -6,13 +6,6 @@
 #include <vector>
 using namespace std;
 
-class CConfigFile
-{
-public:
-	virtual void loadConfig () = 0;
-};
-
-
 typedef enum
 {
 	BOT_ATT_UTIL = 0,
@@ -20,12 +13,16 @@ typedef enum
 	UTIL_TYPE_MAX
 }eTF2UtilType;
 
-class CRCBotTF2UtilFile : public CConfigFile
+class CRCBotTF2UtilFile
 {
+private:
+	static void addUtilPerturbation (eBotAction iAction, eTF2UtilType iUtil, float fUtility[9]);
+
+	static void init ();
 public:
-	void loadConfig ();
+	static void loadConfig ();
 	// 2 Teams / 2 Types Attack/Defend / 
-	static float m_fUtils[2][UTIL_TYPE_MAX][BOT_UTIL_MAX];
+	static float m_fUtils[UTIL_TYPE_MAX][BOT_UTIL_MAX][9];
 };
 
 
