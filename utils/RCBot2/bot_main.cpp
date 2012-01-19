@@ -123,6 +123,7 @@ IServerGameDLL *servergamedll = NULL;
 CRCBotPlugin g_RCBOTServerPlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CRCBotPlugin, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_RCBOTServerPlugin );
 
+
 //---------------------------------------------------------------------------------
 // Purpose: constructor/destructor
 //---------------------------------------------------------------------------------
@@ -135,6 +136,7 @@ CRCBotPlugin::~CRCBotPlugin()
 {
 }
 
+//------------
 //---------------------------------------------------------------------------------
 // Purpose: an example of how to implement a new command
 //---------------------------------------------------------------------------------
@@ -259,6 +261,8 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 
 	LOAD_GAME_SERVER_INTERFACE(gameclients,IServerGameClients,INTERFACEVERSION_SERVERGAMECLIENTS);
 
+	//initUserCmdHook(gameclients);
+
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
 	ConVar_Register( 0 );
 	//InitCVars( interfaceFactory ); // register any cvars we have defined
@@ -324,6 +328,8 @@ void CRCBotPlugin::ShowLicense ( void )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::Unload( void )
 {
+	//unloadUserCmdHook(gameclients);
+
 	CBots::freeAllMemory();
 	CStrings::freeAllMemory();
 	CBotGlobals::freeMemory();
@@ -444,6 +450,7 @@ void CRCBotPlugin::GameFrame( bool simulating )
 	if ( simulating && CBotGlobals::IsMapRunning() )
 	{
 		CBots::botThink();
+		//gameclients->PostClientMessagesSent();
 		CBots::handleAutomaticControl();
 		CClients::clientThink();
 
@@ -910,6 +917,19 @@ int CClassInterface :: getEffects ( edict_t *edict )
 	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
 
 	return *(int *)((char *)pEntity + offset);
+}
+
+void CClassInterface ::test()
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("ProcessUsercmds","CServerGameClients");
+	
+	if (!offset)
+		return;
+
+	//return offset;
 }
 
 int CClassInterface :: isTeleporterMode ( edict_t *edict, eTeleMode mode )

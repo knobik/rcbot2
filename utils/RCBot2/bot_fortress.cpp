@@ -626,6 +626,7 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			// Wait for Built object message
 
 			m_pButtons->tap(IN_ATTACK);
+			duck(true);// crouch too
 
 			if ( *fTime < engine->Time() )
 			{
@@ -1220,25 +1221,37 @@ void CBotTF2 :: checkBuildingsValid ()
 	if ( m_pSentryGun )
 	{
 		if ( !CBotGlobals::entityIsValid(m_pSentryGun) || !CBotGlobals::entityIsAlive(m_pSentryGun) || !CTeamFortress2Mod::isSentry(m_pSentryGun,getTeam()) )
+		{
 			m_pSentryGun = NULL;
+			m_prevSentryHealth = 0;
+		}
 	}
 
 	if ( m_pDispenser )
 	{
 		if ( !CBotGlobals::entityIsValid(m_pDispenser) || !CBotGlobals::entityIsAlive(m_pDispenser) || !CTeamFortress2Mod::isDispenser(m_pDispenser,getTeam()) )
+		{
 			m_pDispenser = NULL;
+			m_prevDispHealth = 0;
+		}
 	}
 
 	if ( m_pTeleEntrance )
 	{
 		if ( !CBotGlobals::entityIsValid(m_pTeleEntrance) || !CBotGlobals::entityIsAlive(m_pTeleEntrance) || !CTeamFortress2Mod::isTeleporterEntrance(m_pTeleEntrance,getTeam()) )
+		{
 			m_pTeleEntrance = NULL;
+			m_prevTeleEntHealth = 0;
+		}
 	}
 
 	if ( m_pTeleExit )
 	{
 		if ( !CBotGlobals::entityIsValid(m_pTeleExit) || !CBotGlobals::entityIsAlive(m_pTeleExit) || !CTeamFortress2Mod::isTeleporterExit(m_pTeleExit,getTeam()) )
+		{
 			m_pTeleExit = NULL;
+			m_prevTeleExtHealth = 0;
+		}
 	}
 }
 
@@ -2765,14 +2778,11 @@ void CBotTF2::detonateStickies()
 
 bool CBotTF2::lookAfterBuildings ( float *fTime )
 {
-	static float prevSentryHealth = 0;
-	static float prevDispHealth = 0;
-	static float prevTeleExtHealth = 0;
-	static float prevTeleEntHealth = 0;
-
 	CBotWeapon *pWeapon = getCurrentWeapon();
 
 	wantToListen(false);
+
+	setLookAtTask(LOOK_AROUND,3);
 
 	if ( !pWeapon )
 		return false;
@@ -2784,10 +2794,10 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 
 	if ( m_pSentryGun )
 	{
-		if ( prevSentryHealth > CClassInterface::getHealth(m_pSentryGun) )
+		if ( m_prevSentryHealth > CClassInterface::getHealth(m_pSentryGun) )
 			return true;
 
-		prevSentryHealth = CClassInterface::getHealth(m_pSentryGun);
+		m_prevSentryHealth = CClassInterface::getHealth(m_pSentryGun);
 
 		if ( distanceFrom(m_pSentryGun) > 100 )
 			setMoveTo(CBotGlobals::entityOrigin(m_pSentryGun),3);
@@ -2795,7 +2805,7 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 			stopMoving();
 
 		lookAtEdict(m_pSentryGun);
-		setLookAt(LOOK_EDICT); // LOOK_EDICT fix engineers not looking at their sentry
+		setLookAtTask(LOOK_EDICT,9); // LOOK_EDICT fix engineers not looking at their sentry
 
 		if ( *fTime < engine->Time() )
 		{
@@ -2806,41 +2816,30 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 		duck(true); // crouch too
 
 	}
-	else
-		return false;
-
+	
 	if ( m_pDispenser )
 	{
-		if ( prevDispHealth > CClassInterface::getHealth(m_pDispenser) )
+		if ( m_prevDispHealth > CClassInterface::getHealth(m_pDispenser) )
 			return true;
 
-		prevDispHealth = CClassInterface::getHealth(m_pDispenser);
+		m_prevDispHealth = CClassInterface::getHealth(m_pDispenser);
 	}
-	else
-		return false;
 
 	if ( m_pTeleExit )
 	{
-		if ( prevTeleExtHealth > CClassInterface::getHealth(m_pTeleExit) )
+		if ( m_prevTeleExtHealth > CClassInterface::getHealth(m_pTeleExit) )
 			return true;
 
-		prevTeleExtHealth = CClassInterface::getHealth(m_pTeleExit);
+		m_prevTeleExtHealth = CClassInterface::getHealth(m_pTeleExit);
 	}
-	else
-		return false;
 
 	if ( m_pTeleEntrance )
 	{
-		if ( prevTeleEntHealth > CClassInterface::getHealth(m_pTeleEntrance) )
+		if ( m_prevTeleEntHealth > CClassInterface::getHealth(m_pTeleEntrance) )
 			return true;
 
-		prevTeleEntHealth = CClassInterface::getHealth(m_pTeleEntrance);
+		m_prevTeleEntHealth = CClassInterface::getHealth(m_pTeleEntrance);
 	}
-	else
-		return false;
-
-	setLookAtTask(LOOK_AROUND,3);
-
 
 	return false;
 }
@@ -3381,6 +3380,25 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 		{
 			if ( pWp->getID() == TF2_WEAPON_SYRINGEGUN )
 				vAim = vAim + Vector(0,0,sqrt(fDist)*2);
+		}
+		else if ( m_iClass == TF_CLASS_HWGUY )
+		{
+			if ( pWp->getID() == TF2_WEAPON_MINIGUN )
+			{
+					Vector vForward;
+					Vector vRight;
+					QAngle eyes;
+
+					eyes = eyeAngles();
+
+					// in fov? Check angle to edict
+					AngleVectors(eyes,&vForward);
+					vForward = vForward.NormalizeInPlace();
+
+					vRight = vForward.Cross(Vector(0,0,1));
+
+					vAim = vAim + (vRight * 24) - Vector(0,0,24);
+			}
 		}
 		else if ( (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_DEMOMAN) )
 		{

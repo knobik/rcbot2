@@ -449,6 +449,10 @@ public:
 		m_bFixWeapons = false;
 		m_iTrapType = TF_TRAP_TYPE_NONE;
 		m_pLastEnemySentry = MyEHandle(NULL);
+		m_prevSentryHealth = 0;
+		m_prevDispHealth = 0;
+		m_prevTeleExtHealth = 0;
+		m_prevTeleEntHealth = 0;
 	}
 
 	// found a new enemy
@@ -598,6 +602,11 @@ private:
 	MyEHandle m_pLastEnemySentry;
 
 	float m_fAttackPointTime; // used in cart maps
+
+	 float m_prevSentryHealth;
+	 float m_prevDispHealth;
+	 float m_prevTeleExtHealth;
+	 float m_prevTeleEntHealth;
 };
 
 class CBotFF : public CBotFortress
