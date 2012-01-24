@@ -575,13 +575,19 @@ eBotCommandResult CControlCommand :: execute ( CClient *pClient, const char *pcm
 
 	if ( pClient )
 		pEntity = pClient->getPlayer();
+	if ( pcmd && *pcmd )
+	{
 
-	if ( CBots::controlBot(pcmd,pcmd,arg2,arg3) )
-		CBotGlobals::botMessage(pEntity,0,"bot added");
+		if ( CBots::controlBot(pcmd,pcmd,arg2,arg3) )
+			CBotGlobals::botMessage(pEntity,0,"bot added");
+		else
+			CBotGlobals::botMessage(pEntity,0,"error: couldn't control bot '%s'",pcmd);
+
+		return COMMAND_ACCESSED;
+
+	}
 	else
-		CBotGlobals::botMessage(pEntity,0,"error: couldn't create bot! (Check maxplayers)");
-
-	return COMMAND_ACCESSED;
+		return COMMAND_ERROR;
 }
 ////////////////////
 
