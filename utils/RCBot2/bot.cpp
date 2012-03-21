@@ -364,6 +364,8 @@ bool CBot :: canAvoid ( edict_t *pEntity )
 	float distance;
 	Vector vAvoidOrigin;
 
+	extern ConVar bot_avoid_radius;
+
 	if ( !CBotGlobals::entityIsValid(pEntity) )
 		return false;
 	if ( m_pEdict == pEntity ) // can't avoid self!!!
@@ -377,7 +379,7 @@ bool CBot :: canAvoid ( edict_t *pEntity )
 
 	distance = distanceFrom(vAvoidOrigin);
 
-	if ( ( distance > 1 ) && ( distance < 160 ) && (fabs(getOrigin().z - vAvoidOrigin.z) < 32) )
+	if ( ( distance > 1 ) && ( distance < bot_avoid_radius.GetFloat() ) && (fabs(getOrigin().z - vAvoidOrigin.z) < 32) )
 	{
 		SolidType_t solid = pEntity->GetCollideable()->GetSolid() ;
 
@@ -1222,20 +1224,20 @@ void CBot :: doMove ()
 		{
 			if ( canAvoid(m_pAvoidEntity) )
 			{
+				extern ConVar bot_avoid_strength;
+				float fAvoidDist = distanceFrom(m_pAvoidEntity);
+
 				Vector m_vAvoidOrigin = CBotGlobals::entityOrigin(m_pAvoidEntity);
 				Vector vMove = m_vMoveTo-getOrigin();
 				Vector vLeft;
-				Vector vRight;
 
-				vMove = vMove.Cross(Vector(0,0,1));
+				vLeft = vMove.Cross(Vector(0,0,1));
+				vLeft = (vLeft/vLeft.Length());
 
-				vLeft = getOrigin() - (vMove*64.0f);
-				vRight = getOrigin() + (vMove*64.0f);
-
-				if ( (m_vAvoidOrigin-vLeft).Length() < (m_vAvoidOrigin-vRight).Length() )
-					m_vMoveTo = vLeft;
-				else
-					m_vMoveTo = vRight;
+				//if ( (m_vAvoidOrigin-vLeft).Length() < (m_vAvoidOrigin-vRight).Length() )
+				m_vMoveTo = (vMove/vMove.Length())*fAvoidDist + (vLeft*bot_avoid_strength.GetFloat());
+				//else
+				//	m_vMoveTo = vRight;
 
 				/*
 				Vector m_vAvoid = m_vAvoidOrigin-getOrigin();

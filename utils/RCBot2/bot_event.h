@@ -218,6 +218,28 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2PointStopCapture : public CBotEvent
+{
+public:
+	CTF2PointStopCapture()
+	{
+		setType("teamplay_capture_broken");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CTF2PointBlockedCapture : public CBotEvent
+{
+public:
+	CTF2PointBlockedCapture()
+	{
+		setType("teamplay_capture_blocked ");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CTF2PointStartCapture : public CBotEvent
 {
 public:
@@ -257,6 +279,17 @@ public:
 	CTF2BuiltObjectEvent()
 	{
 		setType("player_builtobject");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CTF2UpgradeObjectEvent : public CBotEvent
+{
+public:
+	CTF2UpgradeObjectEvent()
+	{
+		setType("player_upgradedobject");
 	}
 
 	void execute ( IBotEventInterface *pEvent );

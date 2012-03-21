@@ -37,6 +37,8 @@
 #include "bot_strings.h"
 #include "bot_fortress.h"
 
+#define MAX_CAP_POINTS 32
+
 #include <vector>
 using namespace std;
 
@@ -223,18 +225,21 @@ typedef struct
 	MyEHandle entrance;
 	MyEHandle exit;
 	MyEHandle sapper;
+//	short builder;
 }tf_tele_t;
 
 typedef struct
 {
 	MyEHandle sentry;
 	MyEHandle sapper;
+//	short builder;
 }tf_sentry_t;
 
 typedef struct
 {
 	MyEHandle disp;
 	MyEHandle sapper;
+//	short builder;
 }tf_disp_t;
 
 class CTeamFortress2Mod : public CBotMod
@@ -443,6 +448,47 @@ public:
 
 	static edict_t *findResourceEntity ();
 
+	static void addCapper ( int cp, int capper )
+	{
+		if ( capper && (cp < MAX_CAP_POINTS) )
+			m_Cappers[cp] |= (1<<(capper-1));
+	}
+
+	static void removeCappers ( int cp )
+	{
+		m_Cappers[cp] = 0;
+	}
+
+	static bool isCapping ( edict_t *pPlayer )
+	{
+		int index = ENTINDEX(pPlayer)-1;
+
+		if ( index >= 0 )
+		{
+			int i = 0;
+
+			for ( i = 0; i < MAX_CAP_POINTS; i ++ )
+			{
+				if ( (m_Cappers[i] & (1<<index)) )
+					return true;
+			}
+		}
+
+		return false;
+	}
+
+	static void resetCappers ()
+	{
+		int i = 0;
+
+		for ( i = 0; i < MAX_CAP_POINTS; i ++ )
+		{
+			m_Cappers[i] = 0;
+		}
+	}
+
+	static edict_t *getBuildingOwner (eEngiBuild object, short index);
+
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
@@ -467,6 +513,8 @@ private:
 
 	static edict_t *m_pResourceEntity;
 	static bool m_bAttackDefendMap;
+
+	static int m_Cappers[MAX_CAP_POINTS];
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

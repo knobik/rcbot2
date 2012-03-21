@@ -101,6 +101,9 @@ ConVar bot_use_vc_commands("rcbot_voice_cmds","1",0,"bots use voice commands e.g
 ConVar bot_use_disp_dist("rcbot_disp_dist","800.0",0,"distance that bots will go back to use a dispenser");
 ConVar bot_max_cc_time("rcbot_max_cc_time","240",0,"maximum time for bots to consider changing class <seconds>");
 ConVar bot_min_cc_time("rcbot_min_cc_time","60",0,"minimum time for bots to consider changing class <seconds>");
+ConVar bot_avoid_radius("rcbot_avoid_radius","100",0,"radius in units for bots to avoid things");
+ConVar bot_avoid_strength("rcbot_avoid_strength","64",0,"strength of avoidance (0 = disable)");
+
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
 IFileSystem *filesystem = NULL;  // file I/O 
@@ -122,7 +125,15 @@ IServerGameDLL *servergamedll = NULL;
 //
 CRCBotPlugin g_RCBOTServerPlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CRCBotPlugin, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_RCBOTServerPlugin );
+/* shameless hack
+typedef float (*HKPROCESSUSERCMDS) ( edict_t *, bf_read *, int , int ,int , bool , bool  );
 
+HKPROCESSUSERCMDS ProcessUserCmds = NULL;
+
+float MyProcessUsercmds( edict_t *player, bf_read *buf, int numcmds, int totalcmds, int dropped_packets, bool ignore, bool paused )
+{
+	return ProcessUserCmds(player,buf,numcmds,totalcmds,dropped_packets,ignore,paused);
+}*/
 
 //---------------------------------------------------------------------------------
 // Purpose: constructor/destructor
@@ -261,7 +272,15 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 
 	LOAD_GAME_SERVER_INTERFACE(gameclients,IServerGameClients,INTERFACEVERSION_SERVERGAMECLIENTS);
 
-	//initUserCmdHook(gameclients);
+/*	int* vptr =  *(int**)gameclients;
+
+	ProcessUserCmds = (HKPROCESSUSERCMDS)vptr[9];
+
+	int src = (int)&MyProcessUsercmds;
+	memcpy(&(vptr[9]),&src,sizeof(int));
+
+	//ProcessUserCmds = gameclients->ProcessUsercmds;
+	//initUserCmdHook(gameclients);*/
 
 	MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
 	ConVar_Register( 0 );

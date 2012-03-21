@@ -52,7 +52,7 @@ tf_disp_t  CTeamFortress2Mod::m_Dispensers[MAX_PLAYERS];	// used to let bots kno
 edict_t *CTeamFortress2Mod::m_pResourceEntity = NULL;
 bool CTeamFortress2Mod::m_bAttackDefendMap = false;
 //float g_fBotUtilityPerturb [TF_CLASS_MAX][BOT_UTIL_MAX];
-
+int CTeamFortress2Mod::m_Cappers[MAX_CAP_POINTS];
 extern ConVar bot_use_disp_dist;
 
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
@@ -139,13 +139,16 @@ void CTeamFortress2Mod:: clientCommand ( edict_t *pEntity, int argc, const char 
 	{
 		if ( strcmp(pcmd,"voicemenu") == 0 )
 		{
-			if ( (strcmp(arg1,"0") == 0) && (strcmp(arg2,"0")==0) )
-			{
-				// somebody shouted "Medic!"
-				CBroadcastMedicCall mediccall = CBroadcastMedicCall(pEntity); 
+			// somebody said a voice command
+			u_VOICECMD vcmd;
 
-				CBots::botFunction(&mediccall);
-			}
+			vcmd.voicecmd = 0;
+			vcmd.b1.v1 = atoi(arg1);
+			vcmd.b1.v2 = atoi(arg2);
+
+			CBroadcastVoiceCommand voicecmd = CBroadcastVoiceCommand(pEntity,vcmd.voicecmd); 
+
+			CBots::botFunction(&voicecmd);
 		}
 	}
 }
@@ -226,6 +229,12 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, ed
 {
 
 	int team;
+	//short userid = 0;
+
+	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pOwner);
+
+	//if ( p )
+	//	userid = p->GetUserID();
 
 	if ( (type != ENGI_TELE ) ) //(type != ENGI_ENTRANCE) && (type != ENGI_EXIT) )
 		return;
@@ -244,7 +253,7 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, ed
 
 	m_Teleporters[iIndex].sapper = MyEHandle();
 
-
+	//m_Teleporters[iIndex].builder = userid;
 }
 
 int CTeamFortress2Mod ::getHighestScore ()
@@ -269,6 +278,41 @@ edict_t *edict;
 	}
 
 	return highest;
+}
+
+edict_t *CTeamFortress2Mod ::getBuildingOwner (eEngiBuild object, short index)
+{
+	int i;
+
+	switch ( object )
+	{
+	case ENGI_DISP:
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			if ( m_Dispensers[i].disp.get() && (ENTINDEX(m_Dispensers[i].disp.get())==index) )
+				return INDEXENT(i+1);
+		}
+		//m_SentryGuns[i].
+		break;
+	case ENGI_SENTRY:
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			if ( m_SentryGuns[i].sentry.get() && (ENTINDEX(m_SentryGuns[i].sentry.get())==index) )
+				return INDEXENT(i+1);
+		}
+		break;
+	case ENGI_TELE:
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			if ( m_Teleporters[i].entrance.get() && (ENTINDEX(m_Teleporters[i].entrance.get())==index) )
+				return INDEXENT(i+1);
+			if ( m_Teleporters[i].exit.get() && (ENTINDEX(m_Teleporters[i].exit.get())==index) )
+				return INDEXENT(i+1);
+		}
+		break;
+	}
+
+	return NULL;
 }
 
 edict_t *CTeamFortress2Mod :: nearestDispenser ( Vector vOrigin, int team )
@@ -344,6 +388,12 @@ void CTeamFortress2Mod::sapperDestroyed(edict_t *pOwner,eEngiBuild type, edict_t
 void CTeamFortress2Mod::sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
 {
 	int index = ENTINDEX(pOwner)-1;
+	//short userid = 0;
+
+	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pOwner);
+
+	//if ( p )
+	//	userid = p->GetUserID();
 
 	if ( (index>=0) && (index<MAX_PLAYERS) )
 	{
@@ -351,6 +401,7 @@ void CTeamFortress2Mod::sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *p
 		{
 			m_SentryGuns[index].sentry = MyEHandle(pBuilding);
 			m_SentryGuns[index].sapper = MyEHandle();
+			//m_SentryGuns[index].builder = userid;
 		}
 	}
 }
@@ -358,6 +409,12 @@ void CTeamFortress2Mod::sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *p
 void CTeamFortress2Mod::dispenserBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
 {
 	int index = ENTINDEX(pOwner)-1;
+	//short userid = 0;
+
+	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pOwner);
+
+	//if ( p )
+	//	userid = p->GetUserID();
 
 	if ( (index>=0) && (index<MAX_PLAYERS) )
 	{
@@ -365,6 +422,7 @@ void CTeamFortress2Mod::dispenserBuilt(edict_t *pOwner, eEngiBuild type, edict_t
 		{
 			m_Dispensers[index].disp = MyEHandle(pBuilding);
 			m_Dispensers[index].sapper = MyEHandle();
+			//m_Dispensers[index].builder = userid;
 		}
 	}
 }
@@ -1014,6 +1072,8 @@ void CTeamFortress2Mod :: mapInit ()
 	}
 
 	m_bAttackDefendMap = false;
+
+	resetCappers();
 
 
 	CPoints::loadMapScript();

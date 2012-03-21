@@ -86,7 +86,7 @@ unsigned int CBotConfigFile::m_iCmd = 0; // current command (time delayed)
 float CBotConfigFile::m_fNextCommandTime = 0.0f;
 
 // 
-float CRCBotTF2UtilFile::m_fUtils[UTIL_TYPE_MAX][BOT_UTIL_MAX][9];
+bot_util_t CRCBotTF2UtilFile::m_fUtils[UTIL_TYPE_MAX][BOT_UTIL_MAX][9];
 
 void CBotConfigFile :: load ()
 {
@@ -149,17 +149,27 @@ void CRCBotTF2UtilFile :: init()
 	short unsigned int i,j,k;
 
 	for ( i = 0; i < UTIL_TYPE_MAX; i ++ )
+	{
 		for ( j = 0; j < BOT_UTIL_MAX; j ++ )
+		{
 			for ( k = 0; k < 9; k ++ )
-				m_fUtils[i][j][k] = 0;
+			{
+				m_fUtils[i][j][k].min = 0;
+				m_fUtils[i][j][k].max = 0;
+			}
+		}
+	}
 }
 
-void CRCBotTF2UtilFile :: addUtilPerturbation (eBotAction iAction, eTF2UtilType iUtil, float *fUtility)
+void CRCBotTF2UtilFile :: addUtilPerturbation (eBotAction iAction, eTF2UtilType iUtil, float fUtility[9][2])
 {
 	short unsigned int i;
 
 	for ( i = 0; i < 9; i ++ )
-		m_fUtils[iUtil][iAction][i] = fUtility[i];
+	{
+		m_fUtils[iUtil][iAction][i].min = fUtility[i][0];
+		m_fUtils[iUtil][iAction][i].max = fUtility[i][1];
+	}
 }
 
 void CRCBotTF2UtilFile :: loadConfig()
@@ -183,7 +193,7 @@ void CRCBotTF2UtilFile :: loadConfig()
 			sprintf(szFilename,"normal_util.csv");
 		}
 
-		CBotGlobals::buildFileName(szFullFilename,szFilename);
+		CBotGlobals::buildFileName(szFullFilename,szFilename,BOT_CONFIG_FOLDER);
 		fp = CBotGlobals::openFile(szFullFilename,"r");
 
 		if ( fp )
@@ -192,10 +202,11 @@ void CRCBotTF2UtilFile :: loadConfig()
 
 			while ( fgets(line,255,fp) != NULL )
 			{
-				float iClassList[TF_CLASS_MAX];
+				float iClassList[TF_CLASS_MAX][2];
 				char utiltype[64];
 
-				if ( line[0] == 'B' && line[1] == 'O' && line[2] == 'T' ) // OK
+				if ( line[0] == 'B' && line[1] == 'O' && 
+					 line[2] == 'T' && line[3] == '_') // OK
 				{
 
 					// Format:    U, 1, 2, 3, 4, 5, 6, 7, 8, 9
@@ -204,22 +215,27 @@ void CRCBotTF2UtilFile :: loadConfig()
 					//               c  n  o  e  e  w  y  p  n
 					//               o  i  l  m  d  g  r  y  g
 					// 
-					sscanf(line,"%[^,],%f,%f,%f,%f,%f,%f,%f,%f,%f\r\n",utiltype,&iClassList[0],
-						&iClassList[1],
-						&iClassList[2],
-						&iClassList[3],
-						&iClassList[4],
-						&iClassList[5],
-						&iClassList[6],
-						&iClassList[7],
-						&iClassList[8]);					
+					
+					if ( sscanf(line,"%[^,],%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\r\n",utiltype,
+						&(iClassList[0][0]),&(iClassList[0][1]),
+						&(iClassList[1][0]),&(iClassList[1][1]),
+						&(iClassList[2][0]),&(iClassList[2][1]),
+						&(iClassList[3][0]),&(iClassList[3][1]),
+						&(iClassList[4][0]),&(iClassList[4][1]),
+						&(iClassList[5][0]),&(iClassList[5][1]),
+						&(iClassList[6][0]),&(iClassList[6][1]),
+						&(iClassList[7][0]),&(iClassList[7][1]),
+						&(iClassList[8][0]),&(iClassList[8][1])) )
+					{
 
-					addUtilPerturbation(iUtil,iFile,iClassList);
+						addUtilPerturbation(iUtil,iFile,iClassList);
 
-					iUtil = (eBotAction)((int)iUtil+1);
+						iUtil = (eBotAction)((int)iUtil+1);
 
-					if ( iUtil >= BOT_UTIL_MAX )
-						break;
+						if ( iUtil >= BOT_UTIL_MAX )
+							break;
+
+					}
 
 				}
 			}

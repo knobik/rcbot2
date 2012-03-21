@@ -39,6 +39,7 @@
 #include <vector>
 using namespace std;
 
+class CBot;
 
 typedef enum
 {
@@ -102,12 +103,7 @@ typedef enum
 class CBotUtility
 {
 public:
-	CBotUtility ( eBotAction id, bool bCanDo, float fUtil )
-	{
-		m_fUtility = fUtil;
-		m_id = id;
-		m_bCanDo = bCanDo;
-	}
+	CBotUtility ( CBot *pBot, eBotAction id, bool bCanDo, float fUtil );
 
 	inline float getUtility () { return m_fUtility; }
 
@@ -119,6 +115,7 @@ private:
 	float m_fUtility;
 	bool m_bCanDo;
 	eBotAction m_id;
+	CBot *m_pBot;
 };
 
 

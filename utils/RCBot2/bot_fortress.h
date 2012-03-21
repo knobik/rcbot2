@@ -66,20 +66,43 @@ class CBotUtility;
 
 typedef enum
 {
-	TF_VC_MEDIC = 0,
-	TF_VC_SPY,
-	TF_VC_HELP,
-	TF_VC_DISP,
-	TF_VC_SENTRY,
-	TF_VC_TELE,
-	TF_VC_SENTRYAHEAD,
-	TF_VC_YES,
-	TF_VC_NO,
-	TF_VC_GOGOGO,
-	TF_VC_MOVEUP,
-	TF_VC_INCOMING,
-	TF_VC_GOODSHOT
+    TF_VC_MEDIC = 0,
+	TF_VC_INCOMING = 1,
+	TF_VC_HELP = 2,
+    TF_VC_THANKS = 4,
+	TF_VC_SPY = 5,
+	TF_VC_BATTLECRY = 6,
+    TF_VC_GOGOGO = 8,
+    TF_VC_SENTRYAHEAD = 9,
+	TF_VC_CHEERS = 10,
+    TF_VC_MOVEUP = 12,
+    TF_VC_TELEPORTERHERE =13,
+    TF_VC_JEERS = 14,
+    TF_VC_GOLEFT = 16,
+	TF_VC_DISPENSERHERE = 17,
+	TF_VC_POSITIVE = 18,
+    TF_VC_GORIGHT = 20,
+    TF_VC_SENTRYHERE = 21,
+    TF_VC_NEGATIVE = 22,
+    TF_VC_YES = 24,
+    TF_VC_ACTIVATEUBER = 25,
+    TF_VC_NICESHOT = 26,
+    TF_VC_NO = 28,
+    TF_VC_UBERREADY = 29,
+    TF_VC_GOODJOB = 30
 }eVoiceCMD;
+
+typedef union
+{
+	 struct
+	 {
+		  unsigned v1:2;
+		  unsigned v2:3;
+		  unsigned unused:4;
+	 }b1;
+
+	 byte voicecmd;
+}u_VOICECMD;
 
 typedef enum
 {
@@ -162,14 +185,15 @@ private:
 	edict_t *m_pSpy;
 };
 
-class CBroadcastMedicCall : public IBotFunction
+class CBroadcastVoiceCommand : public IBotFunction
 {
 public:
-	CBroadcastMedicCall (edict_t *pPlayer) { m_pPlayer = pPlayer; };
+	CBroadcastVoiceCommand (edict_t *pPlayer, byte voicecmd) { m_pPlayer = pPlayer; m_VoiceCmd = voicecmd; };
 	void execute ( CBot *pBot );
 
 private:
 	edict_t *m_pPlayer;
+	byte m_VoiceCmd;
 };
 
 class CBroadcastFlagDropped : public IBotFunction
@@ -569,6 +593,8 @@ public:
 	void init (bool bVarInit=false);
 
 	bool checkAttackPoint ( void );
+
+	bool canAvoid ( edict_t *pEntity );
 
 private:
 	// time for next jump

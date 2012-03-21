@@ -186,6 +186,40 @@ void CTF2ObjectDestroyed :: execute ( IBotEventInterface *pEvent )
 
 }
 
+/*
+player_upgradedobject
+Name: 	player_upgradedobject
+Structure: 	
+short 	userid 	
+byte 	object 	
+short 	index 	
+bool 	isbuilder 	
+*/
+void CTF2UpgradeObjectEvent :: execute ( IBotEventInterface *pEvent )
+{
+	extern ConVar bot_use_vc_commands;
+
+	if ( bot_use_vc_commands.GetBool() )
+	{
+		eEngiBuild object = (eEngiBuild)pEvent->getInt("object",0);
+		bool isbuilder = (pEvent->getInt("isbuilder")>0);
+		short index = pEvent->getInt("index");
+	
+		if ( !isbuilder )
+		{
+			// see if builder is a bot
+			edict_t *pOwner = CTeamFortress2Mod::getBuildingOwner (object, index);
+			CBotTF2 *pBot;
+
+			if ( (pBot = (CBotTF2*)CBots::getBotPointer(pOwner)) != NULL )
+			{
+				pBot->voiceCommand(TF_VC_THANKS);
+			}
+		}
+	}
+}
+
+
 void CTF2BuiltObjectEvent :: execute ( IBotEventInterface *pEvent )
 {
 	eEngiBuild type = (eEngiBuild)pEvent->getInt("object");
@@ -234,6 +268,38 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	  CTeamFortress2Mod::resetSetupTime();
 	
 }
+/*
+teamplay_capture_broken
+Name: 	teamplay_capture_broken
+Structure: 	
+byte 	cp 	
+string 	cpname 	
+float 	time_remaining 
+*/
+void CTF2PointStopCapture :: execute ( IBotEventInterface *pEvent )
+{
+	int capindex = pEvent->getInt("cp",0);
+
+	CTeamFortress2Mod::removeCappers(capindex);
+	
+}
+/*
+teamplay_capture_blocked
+
+Note: When a player blocks the capture of a control point
+Name: 	teamplay_capture_blocked
+Structure: 	
+byte 	cp 	index of the point that was blocked
+string 	cpname 	name of the point
+byte 	blocker 	index of the player that blocked the cap 
+*/
+void CTF2PointBlockedCapture :: execute ( IBotEventInterface *pEvent )
+{
+	int capindex = pEvent->getInt("cp",0);
+
+	CTeamFortress2Mod::removeCappers(capindex);
+	
+}
 
 void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 {/*
@@ -247,15 +313,20 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 [RCBot] [DEBUG game_event] priority = 7
 */
 	int capteam = pEvent->getInt("capteam",0);
-	//int player = pEvent->getInt("player",0);
-	//edict_t *pPlayer = NULL;
+	int capindex = pEvent->getInt("cp",0);
+	const char *cappers = pEvent->getString("cappers",NULL);
 
-	//if ( player )
-	//	pPlayer = INDEXENT(player);
+	
+	if ( cappers )
+	{
+		int i = 0;
 
-
-//	const char *cpname = pEvent->getString("cpname","");
-//	int cp = pEvent->getInt("cp",0);
+		while ( cappers[i] != 0 )
+		{
+			CTeamFortress2Mod::addCapper(capindex,(int)cappers[i]);
+			i++;
+		}
+	}
 
 	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(capteam,Vector(0,0,0),EVENT_CAPPOINT);
 
@@ -407,6 +478,9 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CTF2PointStartCapture());
 	addEvent(new CTF2ObjectSapped());
 	addEvent(new CTF2ObjectDestroyed());
+	addEvent(new CTF2PointStopCapture());
+	addEvent(new CTF2PointBlockedCapture());
+	addEvent(new CTF2UpgradeObjectEvent());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

@@ -13,16 +13,22 @@ typedef enum
 	UTIL_TYPE_MAX
 }eTF2UtilType;
 
+typedef struct
+{
+	float min;
+	float max;
+}bot_util_t;
+
 class CRCBotTF2UtilFile
 {
-private:
-	static void addUtilPerturbation (eBotAction iAction, eTF2UtilType iUtil, float fUtility[9]);
+public:
+	static void addUtilPerturbation (eBotAction iAction, eTF2UtilType iUtil, float fUtility[9][2]);
 
 	static void init ();
-public:
+
 	static void loadConfig ();
 	// 2 Teams / 2 Types Attack/Defend / 
-	static float m_fUtils[UTIL_TYPE_MAX][BOT_UTIL_MAX][9];
+	static bot_util_t m_fUtils[UTIL_TYPE_MAX][BOT_UTIL_MAX][9];
 };
 
 
