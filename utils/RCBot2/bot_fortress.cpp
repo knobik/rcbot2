@@ -2347,6 +2347,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	static float fGetFlagUtility = 0.5;
 	static float fDefendFlagUtility = 0.5;
 
+	extern ConVar bot_messaround;
+
 	extern ConVar bot_defrate;
 	//static float fResupplyUtil = 0.5;
 	//static float fHealthUtil = 0.5;
@@ -2681,6 +2683,19 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			(m_pDefendPayloadBomb!=NULL) &&  canDeployStickies(),
 			fDefendFlagUtility+0.4f));
 	}
+
+	//if ( !CTeamFortress2Mod::hasRoundStarted() && (getTeam() == TF_TEAM_BLUE) )
+	//{
+	if ( bot_messaround.GetBool() )
+	{
+		float fMessUtil = fGetFlagUtility+0.1;
+
+		if ( getClass() == TF_CLASS_MEDIC )
+			fMessUtil -= randomFloat(0.0f,0.2f);
+
+		utils.addUtility(CBotUtility(this,BOT_UTIL_MESSAROUND,(getHealthPercent()>0.9) && ((getTeam()==TF2_TEAM_BLUE)||(!CTeamFortress2Mod::isAttackDefendMap())) && !CTeamFortress2Mod::hasRoundStarted(),fMessUtil));
+	}
+	//}
 
 	/////////////////////////////////////////////////////////
 	// Work out utilities
@@ -3312,6 +3327,48 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				m_pSchedules->add(new CBotTF2FindFlagSched(m_vLastKnownFlagPoint));
 				return true;
+			}
+			break;
+		case BOT_UTIL_MESSAROUND:
+			{
+				// find a nearby friendly
+				int i = 0;
+				edict_t *pEdict;
+				edict_t *pNearby = NULL;
+				float fMaxDistance = 500;
+				float fDistance;
+
+				for ( i = 0; i < CBotGlobals::maxClients(); i ++ )
+				{
+					pEdict = INDEXENT(i);
+
+					if ( CBotGlobals::entityIsValid(pEdict) )
+					{
+						if ( CClassInterface::getTeam(pEdict) == getTeam() )
+						{
+							if ( (fDistance=distanceFrom(pEdict)) < fMaxDistance )
+							{
+								if ( isVisible(pEdict) )
+								{
+									// add a little bit of randomness
+									if ( !pNearby || randomInt(0,1) )
+									{
+										pNearby = pEdict;
+										fMaxDistance = fDistance;
+									}
+								}
+							}
+						}
+					}
+				}
+
+				if ( pNearby )
+				{
+					m_pSchedules->add(new CBotTF2MessAroundSched(pNearby));
+					return true;
+				}
+
+				return false;
 			}
 			break;
 		case BOT_UTIL_GETFLAG:

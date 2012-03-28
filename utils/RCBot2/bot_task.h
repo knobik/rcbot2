@@ -196,6 +196,22 @@ private:
 	edict_t *pEnemy;
 };
 
+class CBotNest : public CBotTask
+{
+public:
+	CBotNest ( int iNest );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotNest");
+	}
+private:
+	float m_fTime;
+	edict_t *pEnemy;
+};
+
 class CBotDefendTask : public CBotTask
 {
 public:
@@ -516,6 +532,24 @@ private:
 	Vector m_vVector;
 	edict_t *m_pEdict;
 };
+
+class CMessAround : public CBotTask
+{
+public:
+	CMessAround ( edict_t *pFriendly );
+
+	void execute ( CBot *pBot, CBotSchedule *pSchedule );
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CMessAround");
+	}
+private:
+	float m_fTime;
+	edict_t *m_pFriendly;
+	int m_iType; // 0 = attack friendly , 1 = taunt, 2 = random voice command
+};
+
 
 class CFindLastEnemy : public CBotTask
 {

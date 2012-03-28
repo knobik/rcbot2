@@ -72,7 +72,9 @@ typedef enum
 	SCHED_TF2_DEFEND_PAYLOADBOMB,
 	SCHED_TF2_DEMO_PIPETRAP,
 	SCHED_BACKSTAB,
-	SCHED_REMOVESAPPER
+	SCHED_REMOVESAPPER,
+	SCHED_GOTONEST,
+	SCHED_MESSAROUND
 }eBotSchedule;
 
 class CBotSchedule
@@ -282,6 +284,15 @@ public:
 	void init();
 };
 
+///////////////////////////////////////////////
+class CBotTF2MessAroundSched : public CBotSchedule
+{
+public:
+	CBotTF2MessAroundSched ( edict_t *pFriendly );
+
+	void init();
+};
+
 ///////////////////////////////////////////////////
 
 class CBotUseTeleSched : public CBotSchedule
@@ -473,6 +484,7 @@ public:
 class CRunForCover : public CBotSchedule
 {
 public:
+	// run for cover to this spot
 	CRunForCover ( Vector vOrigin );
 
 	void init ()
@@ -484,9 +496,23 @@ public:
 class CGotoHideSpotSched : public CBotSchedule
 {
 public:
+	// find a hide spot
+	// hide from an enemy (pEdict)
 	CGotoHideSpotSched ( edict_t *pEdict );
+	// hide from a Vector
 	CGotoHideSpotSched ( Vector vOrigin );
 
 	void init ();
 };
+
+class CGotoNestSched : public CBotSchedule
+{
+public:
+	// iWaypoint = the waypoint number the bot will go to (to nest)
+	// if iWaypoint is -1 it will find a random, suitable nest
+	CGotoNestSched ( int iWaypoint );
+
+	void init ();
+};
+
 #endif

@@ -371,6 +371,17 @@ void CGotoHideSpotSched :: init ()
 {
 	setID(SCHED_GOOD_HIDE_SPOT);
 }
+///////////////
+CGotoNestSched :: CGotoNestSched (int iWaypoint )
+{
+	//addTask(new CFindGoodHideSpot(1));
+	//addTask(new CNestTask());
+}
+void CGotoNestSched :: init ()
+{
+	setID(SCHED_GOTONEST);
+}
+
 /////////////
 CBotAttackSched :: CBotAttackSched ( edict_t *pEdict )
 {
@@ -396,6 +407,16 @@ CBotAttackPointSched :: CBotAttackPointSched ( Vector vPoint, int iRadius, int i
 void CBotAttackPointSched ::init ()
 {	
 	setID(SCHED_ATTACKPOINT);
+}
+///////////////
+CBotTF2MessAroundSched :: CBotTF2MessAroundSched ( edict_t *pFriendly )
+{
+	addTask(new CMessAround(pFriendly));
+}
+
+void CBotTF2MessAroundSched :: init()
+{
+	setID(SCHED_MESSAROUND);
 }
  
 //////////////////////////////////////////////////

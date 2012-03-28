@@ -1269,6 +1269,12 @@ CWaypoint *CWaypoints :: getPinchPointFromWaypoint ( Vector vPlayerOrigin, Vecto
 	return getWaypoint(iWpt);
 }
 
+CWaypoint *CWaypoints :: getNestWaypoint ( int iTeam, int iArea, bool bForceArea, CBot *pBot )
+{
+	//m_theWaypoints
+	return NULL;
+}
+
 void CWaypoints :: deleteWaypoint ( int iIndex )
 {	
 	// mark as not used
@@ -1867,3 +1873,4 @@ bool CWaypoint :: forTeam ( int iTeam )
 
 	return true;	
 }
+

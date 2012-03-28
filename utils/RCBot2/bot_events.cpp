@@ -219,6 +219,10 @@ void CTF2UpgradeObjectEvent :: execute ( IBotEventInterface *pEvent )
 	}
 }
 
+void CTF2SetupFinished ::execute(IBotEventInterface *pEvent )
+{
+	CTeamFortress2Mod::roundStarted();
+}
 
 void CTF2BuiltObjectEvent :: execute ( IBotEventInterface *pEvent )
 {
@@ -261,12 +265,14 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	  CBroadcastRoundStart roundstart = CBroadcastRoundStart(pEvent->getInt("full_reset") == 1);
 	  
 	  if ( pEvent->getInt("full_reset") == 1 )
+	  {
 		CPoints::resetPoints();
-	  // MUST BE AFTER RESETPOINTS
-	  CBots::botFunction(&roundstart);
+	  }
 
+	  // MUST BE AFTER RESETPOINTS
+	  CTeamFortress2Mod::roundReset();
+	  CBots::botFunction(&roundstart);
 	  CTeamFortress2Mod::resetSetupTime();
-	
 }
 /*
 teamplay_capture_broken
@@ -481,6 +487,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CTF2PointStopCapture());
 	addEvent(new CTF2PointBlockedCapture());
 	addEvent(new CTF2UpgradeObjectEvent());
+	addEvent(new CTF2SetupFinished());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

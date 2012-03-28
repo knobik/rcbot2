@@ -234,7 +234,7 @@ class CTF2PointBlockedCapture : public CBotEvent
 public:
 	CTF2PointBlockedCapture()
 	{
-		setType("teamplay_capture_blocked ");
+		setType("teamplay_capture_blocked");
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -257,6 +257,17 @@ public:
 	CTF2RoundStart()
 	{
 		setType("teamplay_round_start");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CTF2SetupFinished : public CBotEvent
+{
+public:
+	CTF2SetupFinished()
+	{
+		setType("teamplay_setup_finished");
 	}
 
 	void execute ( IBotEventInterface *pEvent );

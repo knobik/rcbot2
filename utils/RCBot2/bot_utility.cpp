@@ -34,7 +34,7 @@
 #include "bot_utility.h"
 
 
-const char *g_szUtils[BOT_UTIL_MAX] =
+const char *g_szUtils[BOT_UTIL_MAX+1] =
 {
 	"BOT_UTIL_BUILDSENTRY",
 	"BOT_UTIL_BUILDDISP",
@@ -89,7 +89,10 @@ const char *g_szUtils[BOT_UTIL_MAX] =
 	"BOT_UTIL_REMOVE_TMTELE_SAPPER",
     "BOT_UTIL_SAP_NEAREST_TELE",
     "BOT_UTIL_SAP_ENEMY_TELE",
-    "BOT_UTIL_SAP_LASTENEMY_TELE"
+    "BOT_UTIL_SAP_LASTENEMY_TELE",
+	"BOT_UTIL_GOTO_NEST",
+	"BOT_UTIL_MESSAROUND",
+	"BOT_UTIL_MAX"
 };
 
 // Execute a list of possible actions and put them into order of available actions against utility

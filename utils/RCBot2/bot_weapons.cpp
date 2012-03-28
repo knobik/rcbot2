@@ -149,14 +149,15 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bo
 	int iBestPreference = 0;
 	Vector vEnemyOrigin;
 
-	if ( !pEnemy )
-		return NULL;
-
-	vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
+	if ( pEnemy )
+		vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
+	else
+		vEnemyOrigin = m_pBot->getOrigin();
 
 	float flDist = 0;
 
-	flDist = m_pBot->distanceFrom(vEnemyOrigin);
+	if ( pEnemy )
+		flDist = m_pBot->distanceFrom(vEnemyOrigin);
 
 	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 	{

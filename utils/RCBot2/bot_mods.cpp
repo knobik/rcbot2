@@ -53,7 +53,10 @@ edict_t *CTeamFortress2Mod::m_pResourceEntity = NULL;
 bool CTeamFortress2Mod::m_bAttackDefendMap = false;
 //float g_fBotUtilityPerturb [TF_CLASS_MAX][BOT_UTIL_MAX];
 int CTeamFortress2Mod::m_Cappers[MAX_CAP_POINTS];
+bool CTeamFortress2Mod::m_bHasRoundStarted = true;
+
 extern ConVar bot_use_disp_dist;
+
 
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 {
@@ -108,7 +111,9 @@ void CTeamFortress2Mod :: resetSetupTime ()
 
 bool CTeamFortress2Mod::hasRoundStarted ()
 {
-	return (engine->Time() > m_fRoundTime);
+	return m_bHasRoundStarted;
+
+	//return (engine->Time() > (m_fRoundTime+m_fSetupTime));
 }
 
 void CTeamFortress2Mod :: setPointOpenTime ( int time )

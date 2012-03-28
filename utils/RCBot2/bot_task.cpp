@@ -1718,7 +1718,126 @@ void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( bFail )
 		fail();
 }
+/////////
 
+CMessAround::CMessAround ( edict_t *pFriendly )
+{
+	m_fTime = 0.0f;
+	m_pFriendly = pFriendly;
+	m_iType = randomInt(0,3);
+}
+
+void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
+{
+	CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
+
+	if ( !m_pFriendly || !CBotGlobals::entityIsValid(m_pFriendly) )
+		fail();
+
+	if ( m_iType == 0 )
+	{
+		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
+		bool ok = true;
+
+		if ( !pBotTF2->FInViewCone(m_pFriendly) )
+		{
+			pBotTF2->setLookAt(origin);
+			pBotTF2->setLookAtTask(LOOK_VECTOR,11);
+			ok = false;
+		}
+
+		if ( pBotTF2->distanceFrom(m_pFriendly) > 100 )
+		{
+			pBotTF2->setMoveTo(origin,11);
+			ok = false;
+		}
+
+		if ( ok )
+		{
+			CBotWeapon *pWeapon = pBotTF2->getBestWeapon(NULL,true,true);
+
+			if ( pWeapon )
+			{
+				pBotTF2->selectBotWeapon(pWeapon);
+
+				if ( randomInt(0,1) )
+					pBotTF2->primaryAttack();
+			}
+		}
+
+		if ( !m_fTime )
+			m_fTime = engine->Time() + randomFloat(3.5f,8.0f);
+	}
+	else if ( m_iType == 1 )
+	{
+		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
+		bool ok = true;
+
+		if ( !pBotTF2->FInViewCone(m_pFriendly) )
+		{
+			pBotTF2->setLookAt(origin);
+			pBotTF2->setLookAtTask(LOOK_VECTOR,10);
+			ok = false;
+		}
+
+		if ( pBotTF2->distanceFrom(m_pFriendly) > 100 )
+		{
+			pBotTF2->setMoveTo(origin,10);
+			ok = false;
+		}
+
+		if ( ok )
+			pBotTF2->taunt();
+
+		if ( !m_fTime )
+			m_fTime = engine->Time() + randomFloat(3.5f,6.5f);
+
+	}
+	else if ( m_iType == 2 )
+	{
+		if ( !m_fTime )
+			pBotTF2->voiceCommand((eVoiceCMD)randomInt(0,31));
+
+		if ( !m_fTime )
+			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);
+	}
+	else if ( m_iType == 3 )
+	{
+		if ( randomInt(0,1) )
+			pBotTF2->jump();
+		else
+			pBotTF2->secondaryAttack(true);
+
+		if ( !m_fTime )
+			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);
+	}
+
+
+	if ( m_fTime < engine->Time() )
+		complete();
+
+	if ( CTeamFortress2Mod::hasRoundStarted() )
+		complete();
+
+}
+
+/////////////
+
+void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
+{
+	CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
+
+	if ( m_fTime == 0 )
+		m_fTime = engine->Time() + randomFloat(5.0,10.0);
+
+	if ( m_fTime < engine->Time() )
+	{
+		complete();
+		pBotTF2->voiceCommand(TF_VC_GOGOGO);
+	}
+	//else
+		//pBotTF2->nest();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Base Task

@@ -351,6 +351,16 @@ public:
 			m_pFlagCarrierRed = NULL;
 	}
 
+	static void roundStarted ()
+	{
+		m_bHasRoundStarted = true;
+	}
+
+	static void roundReset ()
+	{
+		m_bHasRoundStarted = false;
+	}
+
 	static bool isFlagCarrier (edict_t *pPlayer)
 	{
 		return (m_pFlagCarrierBlue==pPlayer)||(m_pFlagCarrierRed==pPlayer);
@@ -515,6 +525,8 @@ private:
 	static bool m_bAttackDefendMap;
 
 	static int m_Cappers[MAX_CAP_POINTS];
+
+	static bool m_bHasRoundStarted;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

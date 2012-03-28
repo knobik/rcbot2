@@ -367,6 +367,7 @@ public:
 	static CWaypointVisibilityTable *getVisiblity () { return m_pVisibilityTable; }
 	static void setupVisibility ();
 	static CWaypoint *getPinchPointFromWaypoint ( Vector vPlayerOrigin, Vector vPinchOrigin );
+	static CWaypoint *getNestWaypoint ( int iTeam, int iArea, bool bForceArea = false, CBot *pBot = NULL );
 
 private:
 	static CWaypoint m_theWaypoints[MAX_WAYPOINTS];	
