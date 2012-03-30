@@ -143,7 +143,6 @@ public:
 	inline bool hasPassVector () { return ((m_bitsPass&BITS_SCHED_PASS_VECTOR)>0); }
 	inline bool hasPassEdict () { return ((m_bitsPass&BITS_SCHED_PASS_EDICT)>0); }
 
-protected:
 	inline void setID ( eBotSchedule iId ) { m_iSchedId = iId; }
 
 

@@ -111,9 +111,9 @@ void CTeamFortress2Mod :: resetSetupTime ()
 
 bool CTeamFortress2Mod::hasRoundStarted ()
 {
-	return m_bHasRoundStarted;
+	//return m_bHasRoundStarted;
 
-	//return (engine->Time() > (m_fRoundTime+m_fSetupTime));
+	return (engine->Time() > m_fRoundTime);
 }
 
 void CTeamFortress2Mod :: setPointOpenTime ( int time )

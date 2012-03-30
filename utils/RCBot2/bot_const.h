@@ -143,6 +143,7 @@ typedef enum
 #define CONDITION_NEED_HEALTH	 128
 #define CONDITION_SEE_LOOK_VECTOR 256
 #define CONDITION_POINT_CAPTURED 512
+#define CONDITION_PUSH 1024
 ////////////////////////
 
 ///////////////////////

@@ -1734,6 +1734,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	if ( !m_pFriendly || !CBotGlobals::entityIsValid(m_pFriendly) )
 		fail();
 
+	// smack the friendly player with my melee attack
 	if ( m_iType == 0 )
 	{
 		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
@@ -1768,6 +1769,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(3.5f,8.0f);
 	}
+	// taunt at my friendly player
 	else if ( m_iType == 1 )
 	{
 		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
@@ -1793,6 +1795,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 			m_fTime = engine->Time() + randomFloat(3.5f,6.5f);
 
 	}
+	// say some random voice commands
 	else if ( m_iType == 2 )
 	{
 		if ( !m_fTime )
@@ -1801,6 +1804,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);
 	}
+	// press some random buttons, such as attack2, jump
 	else if ( m_iType == 3 )
 	{
 		if ( randomInt(0,1) )
@@ -1827,16 +1831,48 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 {
 	CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
 
+	if ( !pBotTF2->wantToNest() )
+	{
+			complete();
+			pBotTF2->voiceCommand(TF_VC_GOGOGO);
+			return;
+	}
+	else if ( pBot->hasSomeConditions(CONDITION_PUSH) )
+	{
+		complete();
+		pBot->removeCondition(CONDITION_PUSH);
+		pBotTF2->voiceCommand(TF_VC_YES);
+		return;
+	}
+
 	if ( m_fTime == 0 )
+	{
 		m_fTime = engine->Time() + randomFloat(5.0,10.0);
 
-	if ( m_fTime < engine->Time() )
+		if ( randomInt(0,1) )
+			pBotTF2->voiceCommand(TF_VC_HELP);
+	}
+	else if ( m_fTime < engine->Time() )
 	{
 		complete();
 		pBotTF2->voiceCommand(TF_VC_GOGOGO);
 	}
-	//else
-		//pBotTF2->nest();
+
+	// wait around
+	// wait for more friendlies
+	// heal up
+	// 
+
+	pBot->setLookAtTask(LOOK_AROUND,11);
+
+	pBot->stopMoving(11);
+
+}
+
+CBotNest::CBotNest()
+{
+	m_fTime = 0.0f;
+	m_pEnemy = NULL;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////

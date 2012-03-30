@@ -465,7 +465,7 @@ public:
 
 	virtual void setVisible ( edict_t *pEntity, bool bVisible );
 
-	virtual void hurt ( edict_t *pAttacker, int iHealthNow );
+	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide = false );
 	virtual void shot ( edict_t *pEnemy );
 	virtual void shotmiss ();
 	//inline void setAvoidEntity (edict_t *pEntity) { m_pAvoidEntity = pEntity; };
@@ -534,6 +534,8 @@ public:
 	inline void wantToShoot ( bool bSet ) { m_bOpenFire = bSet; }
 	inline void wantToListen ( bool bSet ) { m_bWantToListen = bSet; }
 	inline void wantToChangeWeapon ( bool bSet ) { m_bWantToChangeWeapon = bSet; }
+
+	int nearbyFriendlies (float fDistance);
 
 protected:
 
@@ -695,6 +697,8 @@ protected:
 	bool m_bWantToChangeWeapon;
 
 	bool m_bDoWeapons;
+	bool m_bAvoidRight;
+	float m_fAvoidSideSwitch;
 };
 
 class IBotFunction

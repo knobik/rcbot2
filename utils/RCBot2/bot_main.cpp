@@ -101,8 +101,8 @@ ConVar bot_use_vc_commands("rcbot_voice_cmds","1",0,"bots use voice commands e.g
 ConVar bot_use_disp_dist("rcbot_disp_dist","800.0",0,"distance that bots will go back to use a dispenser");
 ConVar bot_max_cc_time("rcbot_max_cc_time","240",0,"maximum time for bots to consider changing class <seconds>");
 ConVar bot_min_cc_time("rcbot_min_cc_time","60",0,"minimum time for bots to consider changing class <seconds>");
-ConVar bot_avoid_radius("rcbot_avoid_radius","100",0,"radius in units for bots to avoid things");
-ConVar bot_avoid_strength("rcbot_avoid_strength","64",0,"strength of avoidance (0 = disable)");
+ConVar bot_avoid_radius("rcbot_avoid_radius","128",0,"radius in units for bots to avoid things");
+ConVar bot_avoid_strength("rcbot_avoid_strength","96",0,"strength of avoidance (0 = disable)");
 ConVar bot_messaround("rcbot_messaround","1",0,"bots mess around at start up");
 
 // Interfaces from the engine*/

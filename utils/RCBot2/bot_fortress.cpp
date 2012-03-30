@@ -104,17 +104,56 @@ void CBotTF2FunctionEnemyAtIntel :: execute (CBot *pBot)
 
 void CBroadcastVoiceCommand :: execute ( CBot *pBot )
 {
-	switch ( m_VoiceCmd )
+	CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
+
+	if ( !m_pPlayer )
+		return;
+
+	if ( m_pPlayer == pBot->getEdict() )
+		return;
+
+	if ( pBot->isEnemy(m_pPlayer,false) )
+		return;
+
+	pBotTF2->hearVoiceCommand(m_pPlayer,m_VoiceCmd);
+}
+
+void CBotTF2 :: hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd )
+{
+
+	switch ( eVoiceCmd )
 	{
 	// somebody shouted "MEDIC!"
 	case TF_VC_MEDIC:
-		if ( m_pPlayer )
+		medicCalled(pPlayer);
+		break;
+	case TF_VC_HELP:
+		// add utility can find player
+		if ( isVisible(pPlayer) )
 		{
-			if ( (m_pPlayer != pBot->getEdict()) && (CTeamFortress2Mod::getTeam(m_pPlayer) == pBot->getTeam()) )
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_GOTO_ORIGIN) )
 			{
-				((CBotFortress*)pBot)->medicCalled(m_pPlayer);
+				m_pSchedules->removeSchedule(SCHED_GOTO_ORIGIN);
+
+				m_pSchedules->addFront(new CBotGotoOriginSched(pPlayer));
 			}
 		}
+		break;
+	case TF_VC_GOGOGO:
+		// if bot is nesting, or waiting for something, it will go
+		if ( distanceFrom(pPlayer) > 500 )
+			return;
+
+		updateCondition(CONDITION_PUSH);
+		break;
+	case TF_VC_ACTIVATEUBER:
+		if ( getClass() == TF_CLASS_MEDIC )
+		{
+			if ( m_pHeal == pPlayer )
+				secondaryAttack();
+		}
+		break;
+	case TF_VC_MOVEUP:
 		break;
 	default:
 		break;
@@ -985,18 +1024,59 @@ void CBotFortress :: foundSpy (edict_t *pEdict)
 };
 
 // got shot by someone
-void CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow )
+bool CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 {
+	if ( !pAttacker )
+		return false;
+
 	if (( m_iClass != TF_CLASS_MEDIC ) || (!m_pHeal) )
-		CBot::hurt(pAttacker,iHealthNow);
+	{
+		if ( CBot::hurt(pAttacker,iHealthNow) )
+		{
+			if ( !bDontHide)
+			{
+				if ( wantToNest() )
+				{
+					CBotSchedule *pSchedule = new CBotSchedule();
+
+					pSchedule->setID(SCHED_GOOD_HIDE_SPOT);
+
+					// run at flank while shooting	
+					CFindPathTask *pHideGoalPoint = new CFindPathTask();
+					Vector vOrigin = CBotGlobals::entityOrigin(pAttacker);
+					
+					// no interrupts, should be a quick waypoint path anyway
+					pHideGoalPoint->setNoInterruptions();
+					// get vector from good hide spot task
+					pHideGoalPoint->getPassedVector();
+					
+					pSchedule->addTask(new CFindGoodHideSpot(vOrigin));
+					pSchedule->addTask(pHideGoalPoint);
+					pSchedule->addTask(new CBotNest());
+
+					m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
+					m_pSchedules->addFront(pSchedule);
+				}
+				else
+				{
+					m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
+					m_pSchedules->addFront(new CGotoHideSpotSched(m_vHurtOrigin));
+				}
+			}
+
+			return true;
+		}
+	}
 
 	if ( pAttacker )
 	{
 		if ( !CTeamFortress2Mod::isSentry(pAttacker,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 			m_fFrenzyTime = engine->Time() + randomFloat(2.0f,6.0f);
 
-		return;
+
 	}
+
+			return false;
 }
 
 
@@ -1497,6 +1577,34 @@ void CBotTF2 :: callMedic ()
 	voiceCommand(TF_VC_MEDIC);
 }
 
+bool CBotFortress:: wantToCloak()
+{
+	if ( !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict)  )
+	{
+		if ( m_pNavigator->getCurrentBelief() > 50.0f )
+		{
+			if (m_fSpyCloakTime < engine->Time())
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CBotFortress:: wantToUnCloak ()
+{
+	if (  wantToShoot() && m_pEnemy && CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	{
+		// hopefully the enemy can't see me
+		if ( CBotGlobals::isAlivePlayer(m_pEnemy) && ( fabs(CBotGlobals::yawAngleFromEdict(m_pEnemy,getOrigin())) > bot_spyknifefov.GetFloat() ) ) 
+			return true;
+	}
+
+	return false;
+}
+
 void CBotTF2 :: modThink ()
 {
 	bool bNeedHealth = hasSomeConditions(CONDITION_NEED_HEALTH);
@@ -1732,23 +1840,14 @@ void CBotTF2 :: modThink ()
 				m_fSpyDisguiseTime = engine->Time() + 5.0f;
 			}
 
-			if ( !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict)  )
+			if ( wantToCloak() )
 			{
-				if ( m_pNavigator->getCurrentBelief() > 50.0f )
-				{
-					if (m_fSpyCloakTime < engine->Time())
-					{
-						m_fSpyCloakTime = engine->Time() + randomFloat(20.0f,34.0f);
+				m_fSpyCloakTime = engine->Time() + randomFloat(20.0f,34.0f);
 						
-						secondaryAttack();
-					}
-				}
+				secondaryAttack();
 			}
-			// uncloak
-			else if (  wantToShoot() && m_pEnemy && CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			else if ( wantToUnCloak() )
 			{
-				// hopefully the enemy can't see me
-				if ( CBotGlobals::isAlivePlayer(m_pEnemy) && ( fabs(CBotGlobals::yawAngleFromEdict(m_pEnemy,getOrigin())) > bot_spyknifefov.GetFloat() ) ) 
 					secondaryAttack();
 			}
 
@@ -2326,6 +2425,12 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 	fPreFactor += distanceFrom(pEnemy);
 
 	return fPreFactor;
+}
+
+
+bool CBotFortress :: wantToNest ()
+{
+	return (!hasFlag() && ((getClass() != TF_CLASS_MEDIC) || !m_pHeal) && (getHealthPercent() < 0.9) && (nearbyFriendlies(512.0f)<2));
 }
 
 void CBotTF2 :: getTasks ( unsigned int iIgnore )
@@ -3338,7 +3443,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				float fMaxDistance = 500;
 				float fDistance;
 
-				for ( i = 0; i < CBotGlobals::maxClients(); i ++ )
+				for ( i = 1; i <= CBotGlobals::maxClients(); i ++ )
 				{
 					pEdict = INDEXENT(i);
 
@@ -3455,7 +3560,7 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 			if ( pWp->getID() == TF2_WEAPON_SYRINGEGUN )
 				vAim = vAim + Vector(0,0,sqrt(fDist)*2);
 		}
-		else if ( m_iClass == TF_CLASS_HWGUY )
+		/*else if ( m_iClass == TF_CLASS_HWGUY )
 		{
 			if ( pWp->getID() == TF2_WEAPON_MINIGUN )
 			{
@@ -3473,7 +3578,7 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 
 					vAim = vAim + (vRight * 24) - Vector(0,0,24);
 			}
-		}
+		}*/
 		else if ( (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_DEMOMAN) )
 		{
 			int iSpeed = 0;

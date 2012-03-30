@@ -323,7 +323,7 @@ public:
 
 	bool isTF () { return true; }
 
-	virtual void hurt ( edict_t *pAttacker, int iHealthNow );
+	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide  = false );
 
 	virtual TF_Class getClass () { return TF_CLASS_CIVILIAN; }
 
@@ -368,6 +368,12 @@ public:
 
 	// found a new enemy
 	virtual void enemyFound (edict_t *pEnemy){CBot::enemyFound(pEnemy); }
+
+	bool wantToNest ();
+
+	bool wantToCloak();
+
+	bool wantToUnCloak();
  
 protected:
 	virtual void selectTeam ();
@@ -596,6 +602,8 @@ public:
 
 	bool canAvoid ( edict_t *pEntity );
 
+	void hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd );
+		
 private:
 	// time for next jump
 	float m_fDoubleJumpTime;

@@ -857,6 +857,10 @@ void CBot :: spawnInit ()
 	m_bLookAtIsValid = false;
 	m_iSelectWeapon = 0;
 
+	m_fAvoidSideSwitch = 0.0f;
+
+	m_bAvoidRight = (randomInt(0,1)==0);
+
 	m_iLookTask = LOOK_WAYPOINT;
 
 	//
@@ -948,10 +952,10 @@ void CBot :: shot ( edict_t *pEnemy )
 
 }
 // got shot by someone
-void CBot :: hurt ( edict_t *pAttacker, int iHealthNow )
+bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 {
 	if ( !pAttacker )
-		return;
+		return false;
 
 	m_vHurtOrigin = CBotGlobals::entityOrigin(pAttacker);
 
@@ -976,10 +980,18 @@ void CBot :: hurt ( edict_t *pAttacker, int iHealthNow )
 	// TO DO: replace with perceptron method
 	if ( m_iAccumulatedDamage > (m_pPlayerInfo->GetMaxHealth()*0.4) )
 	{
-		m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-		m_pSchedules->addFront(new CGotoHideSpotSched(m_vHurtOrigin));
+		if ( !bDontHide )
+		{
+			m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
+			m_pSchedules->addFront(new CGotoHideSpotSched(m_vHurtOrigin));
+		}
+
 		m_iAccumulatedDamage = 0;
+
+		return true;
 	}
+
+	return false;
 }
 
 void CBot :: setLookAtTask ( eLookTask lookTask, int iPriority ) 
@@ -1032,6 +1044,34 @@ bool CBot :: isAlive ()
 int CBot :: getTeam ()
 {
 	return m_pPlayerInfo->GetTeamIndex();
+}
+
+int CBot :: nearbyFriendlies (float fDistance)
+{
+	int num = 0;
+	int i = 0;
+	edict_t *pEdict;
+
+	for ( i = 0; i <= CBotGlobals::maxClients(); i ++ )
+	{
+		pEdict = INDEXENT(i);
+
+		if ( !CBotGlobals::entityIsValid(pEdict) )
+			continue;
+
+		if ( distanceFrom(pEdict) > fDistance )
+			continue;
+
+		if ( !isVisible(pEdict) )
+			continue;
+
+		if ( isEnemy(pEdict) )
+			continue;
+
+		num ++;
+	}
+
+	return num;
 }
 
 void CBot :: freeMapMemory ()
@@ -1156,8 +1196,8 @@ void CBot :: listenForPlayers ()
 							{
 								m_vListenPosition = p->GetAbsOrigin();
 
-								if ( !isEnemy(pPlayer) )
-									m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
+								//if ( !isEnemy(pPlayer) )
+								//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
 							}
 							else
 							{
@@ -1171,7 +1211,7 @@ void CBot :: listenForPlayers ()
 							}
 
 							m_bListenPositionValid = true;
-							m_fListenTime = engine->Time() + randomFloat(2.0f,4.0f);
+							m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
 						}
 					}
 				}
@@ -1235,7 +1275,18 @@ void CBot :: doMove ()
 				vLeft = (vLeft/vLeft.Length());
 
 				//if ( (m_vAvoidOrigin-vLeft).Length() < (m_vAvoidOrigin-vRight).Length() )
-				m_vMoveTo = (vMove/vMove.Length())*fAvoidDist + (vLeft*bot_avoid_strength.GetFloat());
+
+				if ( m_fAvoidSideSwitch < engine->Time() )
+				{
+					m_fAvoidSideSwitch = engine->Time() + randomFloat(2.0f,3.0f);
+					m_bAvoidRight = !m_bAvoidRight;
+				}
+
+				if ( m_bAvoidRight )
+					m_vMoveTo = ((vMove/vMove.Length())*fAvoidDist) + (vLeft*bot_avoid_strength.GetFloat());
+				else
+					m_vMoveTo = ((vMove/vMove.Length())*fAvoidDist) - (vLeft*bot_avoid_strength.GetFloat());
+
 				//else
 				//	m_vMoveTo = vRight;
 
@@ -1502,7 +1553,16 @@ void CBot :: getLookAtVector ()
 		{
 			if ( m_fLookAroundTime < engine->Time() )
 			{
-				float fTime = randomFloat(4.0f,8.0f);
+				CTraceFilterWorldAndPropsOnly filter;
+				float fTime;
+				Vector vOrigin = getOrigin();
+
+				trace_t *tr = CBotGlobals::getTraceResult();
+				// forward
+				CBotGlobals::traceLine(vOrigin,m_vWaypointAim+m_vLookAroundOffset,MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);	
+
+				fTime = tr->fraction * randomFloat(4.0f,8.0f);
+
 				m_fLookAroundTime = engine->Time() + fTime;
 
 				m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
@@ -1513,6 +1573,8 @@ void CBot :: getLookAtVector ()
 					debugoverlay->AddLineOverlay (getOrigin(), m_vWaypointAim+m_vLookAroundOffset, 255,40,40, false, fTime);
 				}
 #endif
+
+				//m_vWaypointAim = m_vWaypointAim + m_vLookAroundOffset;
 			}
 
 			setLookAt(m_vWaypointAim+m_vLookAroundOffset);

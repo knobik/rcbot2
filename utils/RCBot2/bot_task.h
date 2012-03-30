@@ -199,7 +199,7 @@ private:
 class CBotNest : public CBotTask
 {
 public:
-	CBotNest ( int iNest );
+	CBotNest ();
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -209,7 +209,7 @@ public:
 	}
 private:
 	float m_fTime;
-	edict_t *pEnemy;
+	edict_t *m_pEnemy;
 };
 
 class CBotDefendTask : public CBotTask
