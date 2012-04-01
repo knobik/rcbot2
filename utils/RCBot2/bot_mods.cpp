@@ -828,6 +828,50 @@ bool CTeamFortress2Mod :: TF2_IsPlayerOnFire(edict_t *pPlayer)
     return ((pcond & TF2_PLAYER_ONFIRE) == TF2_PLAYER_ONFIRE);
 }
 
+int CTeamFortress2Mod ::numClassOnTeam( int iTeam, int iClass )
+{
+	int i = 0;
+	int num = 0;
+	edict_t *pEdict;
+
+	for ( i = 1; i < CBotGlobals::numClients(); i ++ )
+	{
+		pEdict = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pEdict) )
+		{
+			if ( getTeam(pEdict) == iTeam )
+			{
+				if ( CClassInterface::getTF2Class(pEdict) == iClass )
+					num++;
+			}
+		}
+	}
+
+	return num;
+}
+
+int CTeamFortress2Mod ::numPlayersOnTeam(int iTeam)
+{
+	int i = 0;
+	int num = 0;
+	edict_t *pEdict;
+
+	for ( i = 1; i < CBotGlobals::numClients(); i ++ )
+	{
+		pEdict = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pEdict) )
+		{
+			if ( CTeamFortress2Mod::getTeam(pEdict) == iTeam )
+			{
+				num++;
+			}
+		}
+	}
+	return num;
+}
+
 // http://svn.alliedmods.net/viewvc.cgi/trunk/extensions/tf2/extension.cpp?revision=2183&root=sourcemod&pathrev=2183
 edict_t *FindEntityByNetClass(int start, const char *classname)
 {

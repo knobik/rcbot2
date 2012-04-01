@@ -2336,6 +2336,7 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	//pBot->selectWeapon(0);
 
 	pWeapon = INDEXENT(pWeap->getWeaponIndex());
+
 	if ( pWeapon == NULL )
 		return false;
 
@@ -2345,6 +2346,11 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	}
 	else
 	{
+		pPlayer = CClassInterface::getMedigunTarget(pWeapon);
+
+		if ( pPlayer )
+			m_pHeal = pPlayer;
+
 		if ( pPrevPlayer != pPlayer )
 			primaryAttack(true);
 	}
@@ -2695,6 +2701,13 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal) && wantToHeal(m_pHeal),0.99f));
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && CBotGlobals::entityIsAlive(m_pLastHeal) && wantToHeal(m_pLastHeal),1.0f)); 
+
+	int numplayersonteam = CTeamFortress2Mod::numPlayersOnTeam(getTeam());
+
+	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_FINDPLAYER,(m_iClass == TF_CLASS_MEDIC) && 
+		!m_pHeal && 
+		( (numplayersonteam>1) && 
+		  (numplayersonteam>CTeamFortress2Mod::numClassOnTeam(getTeam(),getClass())) ),0.95f));
 
 	if ( m_iClass==TF_CLASS_SPY )
 	{
@@ -3432,6 +3445,18 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				m_pSchedules->add(new CBotTF2FindFlagSched(m_vLastKnownFlagPoint));
 				return true;
+			}
+			break;
+		case BOT_UTIL_MEDIC_FINDPLAYER:
+			{
+				// roam
+				pWaypoint = CWaypoints::randomWaypointGoal(-1,getTeam(),0,false,this);
+
+				if ( pWaypoint )
+				{
+					m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+					return true;
+				}
 			}
 			break;
 		case BOT_UTIL_MESSAROUND:

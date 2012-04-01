@@ -997,7 +997,7 @@ bool CClassInterface :: getMedigunHealing ( edict_t *edict )
 	return *(bool *)((char *)pEntity + offset);
 }
 
-int CClassInterface :: getMedigunTarget ( edict_t *edict )
+edict_t *CClassInterface :: getMedigunTarget ( edict_t *edict )
 {
 	static unsigned int offset = 0;
  
@@ -1005,7 +1005,7 @@ int CClassInterface :: getMedigunTarget ( edict_t *edict )
 		offset = findOffset("m_hHealingTarget","CWeaponMedigun");
 	
 	if (!offset)
-		return 0;
+		return NULL;
  
 	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
 
@@ -1016,7 +1016,7 @@ int CClassInterface :: getMedigunTarget ( edict_t *edict )
  
 	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
 
-	return *(int*)((char *)pEntity + offset);
+	return INDEXENT(*(byte*)((char *)pEntity + offset));
 }
 
 void CClassInterface :: setTickBase ( edict_t *edict, int tick )

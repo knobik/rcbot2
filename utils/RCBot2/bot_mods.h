@@ -497,6 +497,9 @@ public:
 		}
 	}
 
+	static int numPlayersOnTeam ( int iTeam );
+	static int numClassOnTeam ( int iTeam, int iClass );
+
 	static edict_t *getBuildingOwner (eEngiBuild object, short index);
 
 private:
