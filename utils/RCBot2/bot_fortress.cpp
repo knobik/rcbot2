@@ -63,6 +63,11 @@ extern ConVar bot_change_class;
 // Payload stuff by   The_Shadow
 
 //#include "vstdlib/random.h" // for random functions
+
+void CBroadcastOvertime ::execute (CBot*pBot)
+{
+	pBot->updateCondition(CONDITION_PUSH);
+}
 void CBroadcastCapturedPoint :: execute ( CBot *pBot )
 {
 	((CBotTF2*)pBot)->pointCaptured(m_iPoint,m_iTeam,m_szName);
@@ -217,6 +222,13 @@ void CBotFortress :: init (bool bVarInit)
 void CBotFortress :: setup ()
 {
 	CBot::setup();
+}
+
+inline bool CBotFortress::someoneCalledMedic()
+{
+	return (getClass()==TF_CLASS_MEDIC) && 
+			(m_pLastCalledMedic.get() != NULL) && 
+			((m_fLastCalledMedicTime+30.0f)>engine->Time());
 }
 
 bool CBotFortress :: startGame()
@@ -971,38 +983,43 @@ void CBotFortress :: selectClass ()
 	m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
 }
 
-void CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag )
+bool CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag )
 {
-		if ( seeFlag(false) != NULL )
-		{
-			edict_t *m_pFlag = seeFlag(false);
+	if ( someoneCalledMedic() )
+		return false;
 
-			if ( CBotGlobals::entityIsValid(m_pFlag) )
-			{
-				lookAtEdict(m_pFlag);
-				setLookAtTask(LOOK_EDICT,2);
-				*vOrigin = CBotGlobals::entityOrigin(m_pFlag);
-				*fWait = engine->Time() + 5.0f;
-			}
-			else
-				seeFlag(true);
+	if ( seeFlag(false) != NULL )
+	{
+		edict_t *m_pFlag = seeFlag(false);
+
+		if ( CBotGlobals::entityIsValid(m_pFlag) )
+		{
+			lookAtEdict(m_pFlag);
+			setLookAtTask(LOOK_EDICT,2);
+			*vOrigin = CBotGlobals::entityOrigin(m_pFlag);
+			*fWait = engine->Time() + 5.0f;
 		}
 		else
-			setLookAtTask(LOOK_AROUND);
+			seeFlag(true);
+	}
+	else
+		setLookAtTask(LOOK_AROUND);
 
-		if ( distanceFrom(*vOrigin) > 48 )
-			setMoveTo(*vOrigin,2);
-		else
+	if ( distanceFrom(*vOrigin) > 48 )
+		setMoveTo(*vOrigin,2);
+	else
+	{
+		if ( !bFindFlag && ((getClass() == TF_CLASS_SPY) && isDisguised()) )
 		{
-			if ( !bFindFlag && ((getClass() == TF_CLASS_SPY) && isDisguised()) )
-			{
-				if ( !CTeamFortress2Mod::isFlagCarried(getTeam()) )
-					primaryAttack();
-			}
-
-			stopMoving(2);
+			if ( !CTeamFortress2Mod::isFlagCarried(getTeam()) )
+				primaryAttack();
 		}
-		
+
+		stopMoving(2);
+	}
+
+	return true;
+	
 		//taunt();
 }
 
@@ -1927,7 +1944,7 @@ void CBotTF2 :: modThink ()
 	if ( m_fTaunting > engine->Time() )
 	{
 		m_pButtons->letGoAllButtons(true);
-		stopMoving(10);
+		stopMoving(99);
 	}
 
 	if ( m_fDoubleJumpTime && (m_fDoubleJumpTime < engine->Time()) )
@@ -2830,6 +2847,15 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 bool CBotTF2 :: canDeployStickies ()
 {
+	if ( m_pEnemy.get() != NULL )
+	{
+		if ( CBotGlobals::isAlivePlayer(m_pEnemy) )
+		{
+			if ( isVisible(m_pEnemy) )
+				return false;		
+		}
+	}
+
 	// enough ammo???
 	CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS));
 

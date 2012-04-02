@@ -173,12 +173,23 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class COverTimeBegin : public CBotEvent
+{
+public:
+	COverTimeBegin()
+	{
+		setType("teamplay_overtime_begin");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CPlayerHealed : public CBotEvent
 {
 public:
 	CPlayerHealed()
 	{
-		setType("player_healedmediccall");
+		setType("player_healed");
 	}
 
 	void execute ( IBotEventInterface *pEvent );

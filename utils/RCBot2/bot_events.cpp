@@ -146,18 +146,34 @@ void CTF2ObjectSapped :: execute ( IBotEventInterface *pEvent )
 
 	}
 }
+
+void COverTimeBegin :: execute ( IBotEventInterface *pEvent )
+{
+	CBroadcastOvertime function;
+	
+	CBots::botFunction(&function);
+}
+
+
 void CPlayerHealed ::execute(IBotEventInterface *pEvent)
 {
-	if ( m_pActivator )
+	int patient = pEvent->getInt("patient",-1);
+
+	if ( patient != -1 )
 	{
-		CBot *pBot = CBots::getBotPointer(m_pActivator);
+		m_pActivator = CBotGlobals::playerByUserId(patient);
 
-		if ( pBot )
+		if ( m_pActivator )
 		{
-			CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
+			CBot *pBot = CBots::getBotPointer(m_pActivator);
 
-			if ( pBotTF2 && randomInt(0,1) )
-				pBotTF2->voiceCommand(TF_VC_THANKS);
+			if ( pBot )
+			{
+				CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
+
+				if ( pBotTF2 && randomInt(0,1) )
+					pBotTF2->voiceCommand(TF_VC_THANKS);
+			}
 		}
 	}
 }
@@ -504,6 +520,8 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CTF2PointBlockedCapture());
 	addEvent(new CTF2UpgradeObjectEvent());
 	addEvent(new CTF2SetupFinished());
+	addEvent(new COverTimeBegin());
+	addEvent(new CPlayerHealed());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

@@ -280,7 +280,10 @@ void CBotTF2WaitFlagTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else
 	{		
-		((CBotFortress*)pBot)->waitForFlag(&m_vOrigin,&m_fWaitTime,m_bFind);
+		if ( !((CBotFortress*)pBot)->waitForFlag(&m_vOrigin,&m_fWaitTime,m_bFind) )
+		{
+			fail();
+		}
 	}
 }
 
@@ -1830,6 +1833,9 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 {
 	CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
+
+	if ( pBotTF2->someoneCalledMedic() )
+		fail();
 
 	if ( !pBotTF2->wantToNest() )
 	{

@@ -196,6 +196,13 @@ private:
 	byte m_VoiceCmd;
 };
 
+class CBroadcastOvertime : public IBotFunction
+{
+public:
+	CBroadcastOvertime () {};
+	void execute (CBot *pBot);
+};
+
 class CBroadcastFlagDropped : public IBotFunction
 {
 public:
@@ -343,7 +350,7 @@ public:
 
 	bool isTeleporterUseful ( edict_t *pTele );
 
-	void waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag );
+	bool waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag );
 
 	void flagDropped ( Vector vOrigin );
 	void teamFlagDropped ( Vector vOrigin );
@@ -374,6 +381,9 @@ public:
 	bool wantToCloak();
 
 	bool wantToUnCloak();
+
+	inline bool someoneCalledMedic ();
+
  
 protected:
 	virtual void selectTeam ();

@@ -255,6 +255,7 @@ CBotUseDispSched :: CBotUseDispSched ( edict_t *pDisp )
 {
 	addTask(new CFindPathTask(pDisp)); // first
 	addTask(new CBotTF2WaitHealthTask(CBotGlobals::entityOrigin(pDisp))); // second
+	addTask(new CBotNest()); // third
 }
 
 void CBotUseDispSched :: init ()
