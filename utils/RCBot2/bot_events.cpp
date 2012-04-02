@@ -146,6 +146,22 @@ void CTF2ObjectSapped :: execute ( IBotEventInterface *pEvent )
 
 	}
 }
+void CPlayerHealed ::execute(IBotEventInterface *pEvent)
+{
+	if ( m_pActivator )
+	{
+		CBot *pBot = CBots::getBotPointer(m_pActivator);
+
+		if ( pBot )
+		{
+			CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
+
+			if ( pBotTF2 && randomInt(0,1) )
+				pBotTF2->voiceCommand(TF_VC_THANKS);
+		}
+	}
+}
+
 /*
 [RCBot] [DEBUG game_event] object_destroyed
 [RCBot] [DEBUG game_event] userid = 2
@@ -199,7 +215,7 @@ void CTF2UpgradeObjectEvent :: execute ( IBotEventInterface *pEvent )
 {
 	extern ConVar bot_use_vc_commands;
 
-	if ( bot_use_vc_commands.GetBool() )
+	if ( bot_use_vc_commands.GetBool() && randomInt(0,1) )
 	{
 		eEngiBuild object = (eEngiBuild)pEvent->getInt("object",0);
 		bool isbuilder = (pEvent->getInt("isbuilder")>0);

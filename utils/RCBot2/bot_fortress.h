@@ -454,6 +454,7 @@ protected:
 	// bot should check if he can change class now
 	bool m_bCheckClass;
 	MyEHandle m_pLastCalledMedic;
+	float m_fLastCalledMedicTime;
 };
 //
 //

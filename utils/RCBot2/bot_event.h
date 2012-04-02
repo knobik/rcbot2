@@ -173,6 +173,16 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CPlayerHealed : public CBotEvent
+{
+public:
+	CPlayerHealed()
+	{
+		setType("player_healedmediccall");
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
 
 class CWeaponFireEvent : public CBotEvent
 {

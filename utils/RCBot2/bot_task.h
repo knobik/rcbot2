@@ -119,7 +119,7 @@ private:
 	bool m_bGetPassedVector;
 	bool m_bDontLookAtWaypoints;
 	Vector m_vVector;
-	edict_t *m_pEdict;
+	MyEHandle m_pEdict;
 	int m_iInt;
 };
 
@@ -158,7 +158,7 @@ public:
 		sprintf(string,"CBotTF2MedicHeal");
 	}
 private:
-	edict_t *m_pHeal;
+	MyEHandle m_pHeal;
 
 };
 
@@ -193,7 +193,7 @@ public:
 	}
 private:
 	float m_fTime;
-	edict_t *pEnemy;
+	MyEHandle pEnemy;
 };
 
 class CBotNest : public CBotTask
@@ -209,7 +209,7 @@ public:
 	}
 private:
 	float m_fTime;
-	edict_t *m_pEnemy;
+	MyEHandle m_pEnemy;
 };
 
 class CBotDefendTask : public CBotTask
@@ -328,7 +328,7 @@ public:
 
 	virtual void debugString ( char *string );
 private:
-    edict_t *m_pEnemy;
+    MyEHandle m_pEnemy;
 	Vector m_vPosition;
 	float m_fTime;
 };
@@ -390,7 +390,7 @@ public:
 
 	virtual void debugString ( char *string );
 private:
-	edict_t *m_pBuilding;
+	MyEHandle m_pBuilding;
 	float m_fTime;
 };
 
@@ -465,7 +465,7 @@ public:
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 	virtual void debugString ( char *string );
 private:
-	edict_t *m_pTele;
+	MyEHandle m_pTele;
 	float m_fTime;
 	Vector m_vLastOrigin;
 };
@@ -493,7 +493,7 @@ public:
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 	virtual void debugString ( char *string );
 private:
-	edict_t *m_pEdict;
+	MyEHandle m_pEdict;
 };
 
 ////////////////////
@@ -530,7 +530,7 @@ public:
 private:
 	float fPrevDist;
 	Vector m_vVector;
-	edict_t *m_pEdict;
+	MyEHandle m_pEdict;
 };
 
 class CMessAround : public CBotTask
@@ -546,7 +546,7 @@ public:
 	}
 private:
 	float m_fTime;
-	edict_t *m_pFriendly;
+	MyEHandle m_pFriendly;
 	int m_iType; // 0 = attack friendly , 1 = taunt, 2 = random voice command
 };
 

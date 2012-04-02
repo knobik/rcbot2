@@ -1536,7 +1536,7 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 void CBotTFUseTeleporter :: debugString ( char *string )
 {
-	sprintf(string,"CBotTFUseTeleporter %x",(int)m_pTele);
+	sprintf(string,"CBotTFUseTeleporter %x",(int)m_pTele.get());
 }
 
 ///////////////////////////////////////////////////

@@ -196,26 +196,12 @@ CBotFortress :: CBotFortress()
 	m_fSeeSpyTime = 0.0f;
 	m_bEntranceVectorValid = false;
 	m_pLastCalledMedic = NULL;
+	m_fLastCalledMedicTime = 0.0f;
 }
 
 void CBotFortress :: checkDependantEntities ()
 {
 	CBot::checkDependantEntities();
-
-	/*checkEntity(&m_pNearestEnemyTeleporter);
-	checkEntity(&m_pPrevSpy);
-	checkEntity(&m_pFlag); 
-	checkEntity(&m_pHeal); 
-	checkEntity(&m_pSentryGun); 
-	checkEntity(&m_pDispenser); 
-	checkEntity(&m_pTeleExit); 
-	checkEntity(&m_pTeleEntrance); 
-	checkEntity(&m_pNearestTeleEntrance);
-	checkEntity(&m_pNearestDisp); 
-	checkEntity(&m_pNearestEnemySentry); 
-	checkEntity(&m_pNearestAllySentry);
-	checkEntity(&m_pAmmo);
-	checkEntity(&m_pHealthkit);*/
 }
 
 void CBotFortress :: init (bool bVarInit)
@@ -427,21 +413,22 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 		else if ( pEntity == m_pHeal )
 			m_pHeal = NULL;
 	}
-	
 }
 
 void CBotFortress :: medicCalled(edict_t *pPlayer )
 {
 	bool bGoto = true;
 
-	m_pLastCalledMedic = pPlayer;
-
 	if ( m_iClass != TF_CLASS_MEDIC )
 		return; // nothing to do
-	if ( m_pHeal == pPlayer )
-		return; // already healing
 	if ( distanceFrom(pPlayer) > 1024 ) // a bit far away
 		return; // ignore
+
+	m_pLastCalledMedic = pPlayer;
+	m_fLastCalledMedicTime = engine->Time();
+
+	if ( m_pHeal == pPlayer )
+		return; // already healing
 
 	if ( m_pHeal  )
 	{
@@ -2708,7 +2695,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	int numplayersonteam = CTeamFortress2Mod::numPlayersOnTeam(getTeam());
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_FINDPLAYER,(m_iClass == TF_CLASS_MEDIC) && 
-		!m_pHeal && m_pLastCalledMedic && 
+		!m_pHeal && m_pLastCalledMedic && ((m_fLastCalledMedicTime+30.0f)>engine->Time()) && 
 		( (numplayersonteam>1) && 
 		  (numplayersonteam>CTeamFortress2Mod::numClassOnTeam(getTeam(),getClass())) ),0.95f));
 
@@ -3913,7 +3900,6 @@ void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 
 bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
-	
 	int iEnemyTeam;
 	bool bIsPipeBomb = false;
 	bool bIsRocket = false;
@@ -3924,7 +3910,6 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 	if ( ENTINDEX(pEdict) <= CBotGlobals::maxClients() )
 	{
-
 		if ( CBotGlobals::getTeam(pEdict) != getTeam() )
 		{
 			// don't waste fire on ubered players
