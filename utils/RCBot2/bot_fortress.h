@@ -395,24 +395,24 @@ protected:
 	float m_fTaunting;
 	float m_fDefendTime;
 
-	edict_t *m_pHeal;
-	edict_t *m_pLastHeal;
-	edict_t *m_pSentryGun;
-	edict_t *m_pDispenser;
-	edict_t *m_pTeleEntrance;
+	MyEHandle m_pHeal;
+	MyEHandle m_pLastHeal;
+	MyEHandle m_pSentryGun;
+	MyEHandle m_pDispenser;
+	MyEHandle m_pTeleEntrance;
+	MyEHandle m_pTeleExit;
 
-	edict_t *m_pTeleExit;
 	edict_t *m_pAmmo;
 	edict_t *m_pHealthkit;
 
-	edict_t *m_pNearestDisp;
-	edict_t *m_pNearestEnemySentry;
-	edict_t *m_pNearestAllySentry;
-	edict_t *m_pNearestEnemyTeleporter;
-	edict_t *m_pNearestTeleEntrance;
+	MyEHandle m_pNearestDisp;
+	MyEHandle m_pNearestEnemySentry;
+	MyEHandle m_pNearestAllySentry;
+	MyEHandle m_pNearestEnemyTeleporter;
+	MyEHandle m_pNearestTeleEntrance;
 
 	edict_t *m_pFlag;
-	edict_t *m_pPrevSpy;
+	MyEHandle m_pPrevSpy;
 
 	float m_fFrenzyTime;
 	float m_fSpyCloakTime;
@@ -453,6 +453,7 @@ protected:
 	float m_fChangeClassTime;
 	// bot should check if he can change class now
 	bool m_bCheckClass;
+	MyEHandle m_pLastCalledMedic;
 };
 //
 //
@@ -483,6 +484,7 @@ public:
 		m_prevDispHealth = 0;
 		m_prevTeleExtHealth = 0;
 		m_prevTeleEntHealth = 0;
+
 	}
 
 	// found a new enemy
@@ -632,7 +634,7 @@ private:
 	float m_fRevMiniGunTime;
 	float m_fNextRevMiniGunTime;
 	//
-	edict_t *m_pCloakedSpy;
+	MyEHandle m_pCloakedSpy;
 	MyEHandle m_pLastEnemySentry;
 
 	float m_fAttackPointTime; // used in cart maps

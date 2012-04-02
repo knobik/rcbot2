@@ -1011,12 +1011,12 @@ void CBot :: checkEntity ( edict_t **pEdict )
 
 void CBot :: checkDependantEntities ()
 {
-	checkEntity(&m_pOldEnemy);
-	checkEntity(&m_pLookEdict);
-	checkEntity(&m_pAvoidEntity);
-	checkEntity(&m_pEnemy);
-	checkEntity(&m_pLastEnemy);
-	checkEntity(&m_pPickup);
+	//checkEntity(&m_pOldEnemy);
+	//checkEntity(&m_pLookEdict);
+	//checkEntity(&m_pAvoidEntity);
+	//checkEntity(&m_pEnemy);
+	//checkEntity(&m_pLastEnemy);
+	//checkEntity(&m_pPickup);
 }
 
 void CBot :: findEnemy ( edict_t *pOldEnemy )

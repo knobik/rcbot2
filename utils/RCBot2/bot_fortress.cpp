@@ -195,13 +195,14 @@ CBotFortress :: CBotFortress()
 	m_pPrevSpy = NULL;
 	m_fSeeSpyTime = 0.0f;
 	m_bEntranceVectorValid = false;
+	m_pLastCalledMedic = NULL;
 }
 
 void CBotFortress :: checkDependantEntities ()
 {
 	CBot::checkDependantEntities();
 
-	checkEntity(&m_pNearestEnemyTeleporter);
+	/*checkEntity(&m_pNearestEnemyTeleporter);
 	checkEntity(&m_pPrevSpy);
 	checkEntity(&m_pFlag); 
 	checkEntity(&m_pHeal); 
@@ -214,7 +215,7 @@ void CBotFortress :: checkDependantEntities ()
 	checkEntity(&m_pNearestEnemySentry); 
 	checkEntity(&m_pNearestAllySentry);
 	checkEntity(&m_pAmmo);
-	checkEntity(&m_pHealthkit);
+	checkEntity(&m_pHealthkit);*/
 }
 
 void CBotFortress :: init (bool bVarInit)
@@ -432,6 +433,8 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 void CBotFortress :: medicCalled(edict_t *pPlayer )
 {
 	bool bGoto = true;
+
+	m_pLastCalledMedic = pPlayer;
 
 	if ( m_iClass != TF_CLASS_MEDIC )
 		return; // nothing to do
@@ -2705,7 +2708,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	int numplayersonteam = CTeamFortress2Mod::numPlayersOnTeam(getTeam());
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_FINDPLAYER,(m_iClass == TF_CLASS_MEDIC) && 
-		!m_pHeal && 
+		!m_pHeal && m_pLastCalledMedic && 
 		( (numplayersonteam>1) && 
 		  (numplayersonteam>CTeamFortress2Mod::numClassOnTeam(getTeam(),getClass())) ),0.95f));
 
@@ -3262,7 +3265,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				return true;
 			}
 			break;
-		case BOT_UTIL_MEDIC_HEAL:
+		case BOT_UTIL_MEDIC_HEAL:			
 			m_pSchedules->add(new CBotTF2HealSched(m_pHeal));
 			return true;
 		case BOT_UTIL_MEDIC_HEAL_LAST:
@@ -3449,14 +3452,15 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_MEDIC_FINDPLAYER:
 			{
+				m_pSchedules->add(new CBotTF2HealSched(m_pLastCalledMedic));
 				// roam
-				pWaypoint = CWaypoints::randomWaypointGoal(-1,getTeam(),0,false,this);
+				//pWaypoint = CWaypoints::randomWaypointGoal(-1,getTeam(),0,false,this);
 
-				if ( pWaypoint )
-				{
-					m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
-					return true;
-				}
+				//if ( pWaypoint )
+				//{
+				//	m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				//	return true;
+				//}
 			}
 			break;
 		case BOT_UTIL_MESSAROUND:
@@ -3903,8 +3907,13 @@ void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 // take a pEdict entity to check if its an enemy
 // return TRUE to "OPEN FIRE" (Attack)
 // return FALSE to ignore
+#define RCBOT_ISENEMY_UNDEF -1
+#define RCBOT_ISENEMY_TRUE 1
+#define RCBOT_ISENEMY_FALSE 0
+
 bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
+	
 	int iEnemyTeam;
 	bool bIsPipeBomb = false;
 	bool bIsRocket = false;
@@ -3915,6 +3924,7 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 	if ( ENTINDEX(pEdict) <= CBotGlobals::maxClients() )
 	{
+
 		if ( CBotGlobals::getTeam(pEdict) != getTeam() )
 		{
 			// don't waste fire on ubered players

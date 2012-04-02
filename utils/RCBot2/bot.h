@@ -142,6 +142,31 @@ public:
 	{
 		return m_pEnt;
 	}
+
+	operator edict_t * const ()
+	{
+		return get();
+	}
+
+	inline bool operator == ( int a )
+	{
+		return ((int)get() == a);
+	}
+
+	inline bool operator == ( edict_t *pent )
+	{
+		return (get() == pent);
+	}
+
+	inline edict_t * operator = ( edict_t *pent )
+	{
+		m_pEnt = pent;
+
+		if ( pent )
+			m_iSerialNumber = pent->m_NetworkSerialNumber;
+
+		return m_pEnt;
+	}
 private:
 	int m_iSerialNumber;
 	edict_t *m_pEnt;
@@ -504,7 +529,7 @@ public:
 
 	void updatePosition ();
 
-	edict_t *m_pLookEdict;
+	MyEHandle m_pLookEdict;
 
 	CBotWeapons *getWeapons () { return m_pWeapons; }
 
@@ -560,7 +585,7 @@ protected:
 	///////////////////////////////////
 	// bots edict
 	edict_t *m_pEdict;
-	edict_t *m_pAvoidEntity;
+	MyEHandle m_pAvoidEntity;
 	// is bot used in the game?
 	bool m_bUsed;
 	// time the bot was made in the server
@@ -640,15 +665,15 @@ protected:
 	IBotController *m_pController; //-- actuators
 	CBotCmd cmd; // actuator command
 	////////////////////////////////////
-	edict_t *m_pEnemy; // current enemy
-	edict_t *m_pOldEnemy;
+	MyEHandle m_pEnemy; // current enemy
+	MyEHandle m_pOldEnemy;
 	Vector m_vLastSeeEnemy;
-	edict_t *m_pLastEnemy; // enemy we were fighting before we lost it
+	MyEHandle m_pLastEnemy; // enemy we were fighting before we lost it
 	//edict_t *m_pAvoidEntity; // avoid this guy
 	Vector m_vHurtOrigin;
 	Vector m_vLookVector;
 	Vector m_vLookAroundOffset;
-	edict_t *m_pPickup;
+	MyEHandle m_pPickup;
 	Vector m_vWaypointAim;
 
 	Vector m_vMoveTo;
