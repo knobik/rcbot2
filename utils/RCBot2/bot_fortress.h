@@ -354,6 +354,7 @@ public:
 
 	void flagDropped ( Vector vOrigin );
 	void teamFlagDropped ( Vector vOrigin );
+	void teamFlagPickup ();
 
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
 	inline void teamFlagReset () { m_fLastKnownTeamFlagTime = 0.0f; }

@@ -465,7 +465,8 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 		break;
 	case FLAG_RETURN:
 		{
-			//CTeamFortress2Mod::flagReturned(
+			CTeamFortress2Mod::flagReturned(0);
+			//CBroadcastFlagReturned returned = CBroadcastFlagReturned();//p->GetTeamIndex(),CBotGlobals::entityOrigin(pPlayer));
 		}
 		break;
 	default:	

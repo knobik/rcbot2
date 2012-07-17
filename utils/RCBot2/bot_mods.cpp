@@ -54,6 +54,7 @@ bool CTeamFortress2Mod::m_bAttackDefendMap = false;
 //float g_fBotUtilityPerturb [TF_CLASS_MAX][BOT_UTIL_MAX];
 int CTeamFortress2Mod::m_Cappers[MAX_CAP_POINTS];
 bool CTeamFortress2Mod::m_bHasRoundStarted = true;
+int CTeamFortress2Mod::m_iFlagCarrierTeam = 0;
 
 extern ConVar bot_use_disp_dist;
 
@@ -84,12 +85,32 @@ bool CTeamFortress2Mod :: isHealthKit ( edict_t *pEntity )
 	return strncmp(pEntity->GetClassName(),"item_healthkit",14)==0;
 }
 
+bool CTeamFortress2Mod::canTeamPickupFlag_SD(int iTeam,bool bGetUnknown)
+{
+	if ( isArenaPointOpen() )
+	{
+		if ( bGetUnknown )
+			return (m_iFlagCarrierTeam==iTeam);
+		else
+			return (m_iFlagCarrierTeam==0);
+	}
+
+	return false;
+}
+
+void CTeamFortress2Mod::flagReturned(int iTeam)
+{
+	m_iFlagCarrierTeam = 0;
+}
+
 void CTeamFortress2Mod:: flagPickedUp (int iTeam, edict_t *pPlayer)
 {
 	if ( iTeam == TF2_TEAM_BLUE )
 		m_pFlagCarrierBlue = pPlayer;
 	else if ( iTeam == TF2_TEAM_RED )
 		m_pFlagCarrierRed = pPlayer;
+
+	m_iFlagCarrierTeam = iTeam;
 
 	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(iTeam,CBotGlobals::entityOrigin(pPlayer),EVENT_FLAG_PICKUP);
 
@@ -1097,6 +1118,8 @@ void CTeamFortress2Mod :: mapInit ()
 		m_MapType = TF_MAP_ARENA;
 	else if ( strncmp(szmapname,"koth_",5) == 0 )
 		m_MapType = TF_MAP_KOTH;
+	else if ( strncmp(szmapname,"sd_",3) == 0 )
+		m_MapType = TF_MAP_SD;
 	else
 		m_MapType = TF_MAP_DM;
 
@@ -1108,6 +1131,7 @@ void CTeamFortress2Mod :: mapInit ()
 
 	m_pFlagCarrierRed = NULL;
 	m_pFlagCarrierBlue = NULL;
+	m_iFlagCarrierTeam = 0;
 
 	for ( i = 0; i < MAX_PLAYERS; i ++ )
 	{

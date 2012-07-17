@@ -96,15 +96,15 @@ void CBroadcastFlagDropped :: execute ( CBot *pBot )
 	else
 		((CBotTF2*)pBot)->teamFlagDropped(m_vOrigin);
 }
-
+// flag picked up
 void CBotTF2FunctionEnemyAtIntel :: execute (CBot *pBot)
 {
-
 	if ( pBot->getTeam() != m_iTeam )
 	{
-
 		((CBotTF2*)pBot)->enemyAtIntel(m_vPos,m_iType);
 	}
+	else
+		((CBotTF2*)pBot)->teamFlagPickup();
 }
 
 void CBroadcastVoiceCommand :: execute ( CBot *pBot )
@@ -1534,7 +1534,6 @@ void CBotFortress :: flagDropped ( Vector vOrigin )
 
 	if ( m_pSchedules->hasSchedule(SCHED_TF2_GET_FLAG) )
 		m_pSchedules->removeSchedule(SCHED_TF2_GET_FLAG);
-
 }
 
 void CBotFortress :: teamFlagDropped ( Vector vOrigin )
@@ -1571,6 +1570,16 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_WAIT_OPEN) )
 		{
 			return ( CTeamFortress2Mod::isArenaPointOpen() );
+		}
+
+		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_NO_FLAG) )
+		{
+			return ( !hasFlag() );
+		}
+
+		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_FLAGONLY) )
+		{
+			return hasFlag();
 		}
 
 		return true;
@@ -2537,7 +2546,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( iClass == TF_CLASS_ENGINEER )
 		checkBuildingsValid();
 
-	utils.addUtility(CBotUtility(this,BOT_UTIL_CAPTURE_FLAG,CTeamFortress2Mod::isMapType(TF_MAP_CTF) && bHasFlag,0.95));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_CAPTURE_FLAG,(CTeamFortress2Mod::isMapType(TF_MAP_CTF)||CTeamFortress2Mod::isMapType(TF_MAP_SD)) && bHasFlag,0.95));
 
 	if ( iClass == TF_CLASS_ENGINEER )
 	{
@@ -2691,20 +2700,25 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	utils.addUtility(CBotUtility(this,BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0));
 	utils.addUtility(CBotUtility(this,BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0));
 
-	utils.addUtility(CBotUtility(this,BOT_UTIL_GETFLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && CTeamFortress2Mod::isMapType(TF_MAP_CTF),fGetFlagUtility));
-	utils.addUtility(CBotUtility(this,BOT_UTIL_GETFLAG_LASTKNOWN, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), fGetFlagUtility+0.1));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_GETFLAG, (CTeamFortress2Mod::isMapType(TF_MAP_CTF)||(CTeamFortress2Mod::isMapType(TF_MAP_SD)&&CTeamFortress2Mod::canTeamPickupFlag_SD(getTeam(),false))) && !bHasFlag,fGetFlagUtility));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_GETFLAG_LASTKNOWN, (CTeamFortress2Mod::isMapType(TF_MAP_CTF)||(CTeamFortress2Mod::isMapType(TF_MAP_SD)&&CTeamFortress2Mod::canTeamPickupFlag_SD(getTeam(),true))) && !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), fGetFlagUtility+0.1));
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_DEFEND_FLAG, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag, fDefendFlagUtility+0.1));
-	utils.addUtility(CBotUtility(this,BOT_UTIL_DEFEND_FLAG_LASTKNOWN, CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && (m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time())), fDefendFlagUtility+(randomFloat(0.0,0.2)-0.1)));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_DEFEND_FLAG_LASTKNOWN, !bHasFlag &&
+		(CTeamFortress2Mod::isMapType(TF_MAP_CTF) || 
+		(CTeamFortress2Mod::isMapType(TF_MAP_SD) && 
+		(CTeamFortress2Mod::getFlagCarrierTeam()==CTeamFortress2Mod::getEnemyTeam(getTeam())))) &&
+		(m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time())), 
+		fDefendFlagUtility+(randomFloat(0.0,0.2)-0.1)));
 	utils.addUtility(CBotUtility(this,BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95));	
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_ROAM,true,0.0001));
 	utils.addUtility(CBotUtility(this,BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,fResupplyDist/fHealthDist));
 	
 	// only attack if attack area is > 0
-	utils.addUtility(CBotUtility(this,BOT_UTIL_ATTACK_POINT,(m_fAttackPointTime<engine->Time()) && ((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_iCurrentAttackArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||(CTeamFortress2Mod::isMapType(TF_MAP_ARENA)&&CTeamFortress2Mod::isArenaPointOpen())||(CTeamFortress2Mod::isMapType(TF_MAP_KOTH)&&CTeamFortress2Mod::isArenaPointOpen())||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_ATTACK_POINT,(m_fAttackPointTime<engine->Time()) && ((m_iClass!=TF_CLASS_SPY)||!isDisguised()) && (m_iCurrentAttackArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_SD)||CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||(CTeamFortress2Mod::isMapType(TF_MAP_ARENA)&&CTeamFortress2Mod::isArenaPointOpen())||(CTeamFortress2Mod::isMapType(TF_MAP_KOTH)&&CTeamFortress2Mod::isArenaPointOpen())||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility));
 	// only defend if defend area is > 0
-	utils.addUtility(CBotUtility(this,BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_SD)||CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal) && wantToHeal(m_pHeal),0.99f));
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && CBotGlobals::entityIsAlive(m_pLastHeal) && wantToHeal(m_pLastHeal),1.0f)); 
@@ -2792,12 +2806,13 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			fDefendFlagUtility+0.3f));
 
 		utils.addUtility(CBotUtility(this,BOT_UTIL_DEMO_STICKYTRAP_FLAG_LASTKNOWN,
-			CTeamFortress2Mod::isMapType(TF_MAP_CTF) && !bHasFlag && 
+			(CTeamFortress2Mod::isMapType(TF_MAP_CTF)||(CTeamFortress2Mod::isMapType(TF_MAP_SD) && 
+		(CTeamFortress2Mod::getFlagCarrierTeam()==CTeamFortress2Mod::getEnemyTeam(getTeam())))) && !bHasFlag && 
 			(m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time())) &&
 			canDeployStickies(),fDefendFlagUtility+0.4f));
 
 		utils.addUtility(CBotUtility(this,BOT_UTIL_DEMO_STICKYTRAP_POINT,(getTeam()==TF2_TEAM_RED)&&(m_iCurrentDefendArea>0) && 
-			(CTeamFortress2Mod::isMapType(TF_MAP_CART)||
+			(CTeamFortress2Mod::isMapType(TF_MAP_SD)||CTeamFortress2Mod::isMapType(TF_MAP_CART)||
 			CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||
 			CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||
 			CTeamFortress2Mod::isMapType(TF_MAP_TC)) &&  canDeployStickies(),
@@ -3849,6 +3864,12 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 	m_fLookSetTime = engine->Time() + randomFloat(3.0,8.0);
 
 	return true;
+}
+
+void CBotFortress::teamFlagPickup ()
+{
+	if ( CTeamFortress2Mod::isMapType(TF_MAP_SD) && m_pSchedules->hasSchedule(SCHED_TF2_GET_FLAG) )
+		m_pSchedules->removeSchedule(SCHED_TF2_GET_FLAG); 
 }
 
 void CBotTF2::waitRemoveSap ()

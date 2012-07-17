@@ -1750,7 +1750,7 @@ void CWaypointTypes :: setup ()
 {	
 	addType(new CWaypointType(W_FL_JUMP,"jump","bot will jump here",WptColor(255,255,255)));
 	addType(new CWaypointType(W_FL_CROUCH,"crouch","bot will duck here",WptColor(200,100,0)));
-	addType(new CWaypointType(W_FL_UNREACHABLE,"unreachable","bot can't go here (used for visibility only)",WptColor(200,200,200)));
+	addType(new CWaypointType(W_FL_UNREACHABLE,"unreachable","bot can't go here (used for visibility purposes only)",WptColor(200,200,200)));
 	addType(new CWaypointType(W_FL_LADDER,"ladder","bot will climb a ladder",WptColor(255,255,0)));
 	addType(new CWaypointType(W_FL_FLAG,"flag","bot will find a flag here",WptColor(255,255,0)));
 	addType(new CWaypointType(W_FL_CAPPOINT,"capture","bot will find a capture point here",WptColor(255,255,0)));
@@ -1770,7 +1770,10 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_DEFEND,"defend","bot will defend at this position",WptColor(160,50,50)));
 	addType(new CWaypointType(W_FL_AREAONLY,"areaonly","bot will only use this waypoint at certain areas of map",WptColor(150,200,150)));
 	addType(new CWaypointType(W_FL_ROUTE,"route","bot will attempt to go through one of these",WptColor(100,100,100)));
-	addType(new CWaypointType(W_FL_WAIT_OPEN,"waitopen","bot will wait until arena point is open to use this waypoint",WptColor(200,100,50)));
+	addType(new CWaypointType(W_FL_WAIT_OPEN,"waitopen","bot will wait until arena point is open to use this waypoint",WptColor(150,150,100)));
+	addType(new CWaypointType(W_FL_NO_FLAG,"noflag","bot will lose flag if he goes thorugh here",WptColor(200,100,50)));
+	addType(new CWaypointType(W_FL_LIFT,"lift","bot needs to wait on a lift here",WptColor(50,80,180)));
+	addType(new CWaypointType(W_FL_FLAGONLY,"flagonly","bot needs the flag to go through here",WptColor(180,50,80)));
 }
 
 void CWaypointTypes :: freeMemory ()

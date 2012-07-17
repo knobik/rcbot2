@@ -216,7 +216,8 @@ typedef enum
 	TF_MAP_CART,
 	TF_MAP_CARTRACE,
 	TF_MAP_ARENA,
-	TF_MAP_KOTH
+	TF_MAP_KOTH,
+	TF_MAP_SD // special delivery : added 15 jul 12
 }eTFMapType;
 
 // These must be MyEHandles because they may be destroyed at any time
@@ -339,6 +340,7 @@ public:
 	static edict_t *CTeamFortress2Mod :: nearestDispenser ( Vector vOrigin, int team );
 
 	static void flagPickedUp (int iTeam, edict_t *pPlayer);
+	static void flagReturned (int iTeam);
 
 	static void setAttackDefendMap ( bool bSet ) { m_bAttackDefendMap = bSet; }
 	static bool isAttackDefendMap () { return m_bAttackDefendMap; }
@@ -349,6 +351,8 @@ public:
 			m_pFlagCarrierBlue = NULL;
 		else if ( iTeam == TF2_TEAM_RED )
 			m_pFlagCarrierRed = NULL;
+
+		m_iFlagCarrierTeam = iTeam;
 	}
 
 	static void roundStarted ()
@@ -359,6 +363,7 @@ public:
 	static void roundReset ()
 	{
 		m_bHasRoundStarted = false;
+		m_iFlagCarrierTeam = 0;
 	}
 
 	static bool isFlagCarrier (edict_t *pPlayer)
@@ -500,6 +505,9 @@ public:
 	static int numPlayersOnTeam ( int iTeam );
 	static int numClassOnTeam ( int iTeam, int iClass );
 
+	static int getFlagCarrierTeam () { return m_iFlagCarrierTeam; }
+	static bool CTeamFortress2Mod::canTeamPickupFlag_SD(int iTeam,bool bGetUnknown);
+
 	static edict_t *getBuildingOwner (eEngiBuild object, short index);
 
 private:
@@ -530,6 +538,8 @@ private:
 	static int m_Cappers[MAX_CAP_POINTS];
 
 	static bool m_bHasRoundStarted;
+
+	static int m_iFlagCarrierTeam;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod
