@@ -88,6 +88,14 @@ void CBroadcastSpySap :: execute ( CBot *pBot )
 			((CBotTF2*)pBot)->foundSpy(m_pSpy);
 	}
 }
+// special delivery
+void CBroadcastFlagReturned :: execute ( CBot*pBot )
+{
+	//if ( pBot->getTeam() == m_iTeam )
+		//((CBotTF2*)pBot)->flagReturned_SD(m_vOrigin);
+	//else
+	//	((CBotTF2*)pBot)->teamFlagDropped(m_vOrigin);	
+}
 
 void CBroadcastFlagDropped :: execute ( CBot *pBot )
 {
@@ -159,6 +167,10 @@ void CBotTF2 :: hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd )
 		}
 		break;
 	case TF_VC_MOVEUP:
+
+		if ( distanceFrom(pPlayer) > 1000 )
+			return;
+		updateCondition(CONDITION_PUSH);
 		break;
 	default:
 		break;

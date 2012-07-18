@@ -97,7 +97,7 @@ bool CTeamFortress2Mod::canTeamPickupFlag_SD(int iTeam,bool bGetUnknown)
 
 	return false;
 }
-
+// for special delivery mod
 void CTeamFortress2Mod::flagReturned(int iTeam)
 {
 	m_iFlagCarrierTeam = 0;

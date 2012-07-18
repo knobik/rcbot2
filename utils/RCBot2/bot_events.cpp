@@ -465,8 +465,14 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 		break;
 	case FLAG_RETURN:
 		{
-			CTeamFortress2Mod::flagReturned(0);
-			//CBroadcastFlagReturned returned = CBroadcastFlagReturned();//p->GetTeamIndex(),CBotGlobals::entityOrigin(pPlayer));
+			if ( CTeamFortress2Mod::isMapType(TF_MAP_SD) )
+			{
+				CBroadcastFlagReturned returned = CBroadcastFlagReturned(CTeamFortress2Mod::getFlagCarrierTeam());
+				CBots::botFunction(&returned);
+			}
+
+			CTeamFortress2Mod::flagReturned(0); // for special delivery
+			//p->GetTeamIndex(),CBotGlobals::entityOrigin(pPlayer));
 		}
 		break;
 	default:	

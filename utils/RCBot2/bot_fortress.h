@@ -203,6 +203,16 @@ public:
 	void execute (CBot *pBot);
 };
 
+class CBroadcastFlagReturned : public IBotFunction
+{
+public:
+	CBroadcastFlagReturned (int iTeam) { m_iTeam = iTeam; }
+	void execute ( CBot *pBot );
+
+private:
+	int m_iTeam;
+};
+
 class CBroadcastFlagDropped : public IBotFunction
 {
 public:
