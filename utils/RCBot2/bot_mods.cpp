@@ -581,6 +581,11 @@ void CBotMods :: parseFile ()
 				modtype = MOD_NS2;
 				curmod = new CBotMod();
 			}
+			else if ( !strcmp("SYNERGY",val) )
+			{
+				modtype = MOD_SYNERGY;
+				curmod = new CSynergyMod();
+			}
 			else
 				curmod = new CBotMod();
 		}

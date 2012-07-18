@@ -207,6 +207,21 @@ public:
 	}
 };
 
+class CSynergyMod : public CBotMod
+{
+public:
+	CSynergyMod()
+	{
+		setup("synergy","synergy",MOD_SYNERGY,BOTTYPE_COOP);
+	}
+
+	//void initMod ();
+
+	//void mapInit ();
+
+	//void entitySpawn ( edict_t *pEntity );
+};
+
 typedef enum
 {
 	TF_MAP_DM = 0,

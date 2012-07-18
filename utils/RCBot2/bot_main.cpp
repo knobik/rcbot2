@@ -363,7 +363,8 @@ void CRCBotPlugin::Unload( void )
 
 	//ConVar_Unregister();
 
-	gameeventmanager1->RemoveListener( this ); // make sure we are unloaded from the event system
+	if ( gameeventmanager1 )
+		gameeventmanager1->RemoveListener( this ); // make sure we are unloaded from the event system
 	if ( gameeventmanager )
 	{
 		if ( eventListener2 )
