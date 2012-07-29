@@ -104,6 +104,8 @@ ConVar bot_min_cc_time("rcbot_min_cc_time","60",0,"minimum time for bots to cons
 ConVar bot_avoid_radius("rcbot_avoid_radius","128",0,"radius in units for bots to avoid things");
 ConVar bot_avoid_strength("rcbot_avoid_strength","96",0,"strength of avoidance (0 = disable)");
 ConVar bot_messaround("rcbot_messaround","1",0,"bots mess around at start up");
+ConVar bot_heavyaimoffset("rcbot_heavyaimoffset","0.1",0,"fraction of how much the heavy aims at a diagonal offset");
+ConVar bot_aimsmoothing("rcbot_aimsmooting","0.4",0,"fraction of how quickly the bots aim smoothly (1 = no smoothing)");
 
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
@@ -219,6 +221,52 @@ void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMsgName, char *s
 #define LOAD_INTERFACE(var,type,version) if ( (var = (type*)interfaceFactory(version,NULL)) == NULL ) { Warning("[RCBOT] Cannot open interface "## #version ##" "## #type ##" "## #var ##"\n"); return false; } else { Msg("[RCBOT] Found interface "## #version ##" "## #type ##" "## #var ## "\n"); }
 #define LOAD_GAME_SERVER_INTERFACE(var,type,version) if ( (var = (type*)gameServerFactory(version,NULL)) == NULL ) { Warning("[RCBOT] Cannot open game server interface "## #version ##" "## #type ##" "## #var ##"\n"); return false; } else { Msg("[RCBOT] Found interface "## #version ##" "## #type ##" "## #var ## "\n"); }
 #endif
+
+#define FILESYSTEM_INT FILESYSTEM_INTERFACE_VERSION
+#define FILESYSTEM_MAXVER 19
+
+#define RCBot_LoadUndefinedInterface(var,type,vername,maxver,minver) { \
+	int ver = maxver; \
+	char str [256]; \
+	char tempver[8]; \
+	do{ \
+		strcpy(str,vername); \
+		sprintf(tempver,"%03d",ver); \
+		strcat(str,tempver); \
+		ver--; \
+		var = (type*)interfaceFactory(str,NULL); \
+		Msg("Trying... %s\n",str); \
+	}while((var==NULL)&&(ver>minver)); \
+    if ( var == NULL ) \
+    { \
+	Warning("[RCBOT] Cannot open interface "## #vername ##" "## #type ##" "## #var ##" (Max ver: "## #maxver ##") Min ver: ("## #minver ##") \n"); \
+		return false; \
+	} else { \
+	Msg("[RCBOT] Found interface "## #vername ##" "## #type ##" "## #var ##", ver = %03d\n",ver+1); \
+	}\
+}
+
+#define RCBot_LoadUndefinedGameInterface(var,type,vername,maxver,minver) { \
+	int ver = maxver; \
+	char str [256]; \
+	char tempver[8]; \
+	do{ \
+		strcpy(str,vername); \
+		sprintf(tempver,"%03d",ver); \
+		strcat(str,tempver); \
+		ver--; \
+		var = (type*)gameServerFactory(str,NULL); \
+		Msg("Trying... %s\n",str); \
+	}while((var==NULL)&&(ver>minver)); \
+    if ( var == NULL ) \
+    { \
+	Warning("[RCBOT] Cannot open interface "## #vername ##" "## #type ##" "## #var ##" (Max ver: "## #maxver ##") Min ver: ("## #minver ##") \n"); \
+		return false; \
+	} else { \
+	Msg("[RCBOT] Found interface "## #vername ##" "## #type ##" "## #var ##", ver = %03d\n",ver+1); \
+	}\
+}
+
 //---------------------------------------------------------------------------------
 // Purpose: called when the plugin is loaded, load the interface we need from the engine
 //---------------------------------------------------------------------------------
@@ -234,7 +282,8 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	gpGlobals = playerinfomanager->GetGlobalVars();	
 
 	LOAD_INTERFACE(engine,IVEngineServer,INTERFACEVERSION_VENGINESERVER);
-	LOAD_INTERFACE(filesystem,IFileSystem,FILESYSTEM_INTERFACE_VERSION);
+	//LOAD_INTERFACE(filesystem,IFileSystem,FILESYSTEM_INTERFACE_VERSION);
+	RCBot_LoadUndefinedInterface(filesystem,IFileSystem,"VFileSystem",20,1);
 	LOAD_INTERFACE(helpers,IServerPluginHelpers,INTERFACEVERSION_ISERVERPLUGINHELPERS);
 	LOAD_INTERFACE(enginetrace,IEngineTrace,INTERFACEVERSION_ENGINETRACE_SERVER);
 	LOAD_GAME_SERVER_INTERFACE(servergameents,IServerGameEnts,INTERFACEVERSION_SERVERGAMEENTS);
@@ -247,31 +296,43 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	LOAD_INTERFACE(gameeventmanager,IGameEventManager2,INTERFACEVERSION_GAMEEVENTSMANAGER2)
 	LOAD_INTERFACE(gameeventmanager1,IGameEventManager,INTERFACEVERSION_GAMEEVENTSMANAGER)
 
-	if ( (servergamedll = (IServerGameDLL*)gameServerFactory(INTERFACEVERSION_SERVERGAMEDLL,NULL)) == NULL ) 
-	{ 
-		Msg("[RCBOT] Cannot open latest game server interface for TF2\nChecking for older version...");
+	RCBot_LoadUndefinedGameInterface(servergamedll,IServerGameDLL,"ServerGameDLL",8,2);
+/*
+		if ( (servergamedll = (IServerGameDLL*)gameServerFactory("ServerGameDLL008",NULL)) == NULL ) 
+		{ 
 
-		if ( (servergamedll = (IServerGameDLL*)gameServerFactory("ServerGameDLL006",NULL)) == NULL )
-		{
-			Msg("[RCBOT] Cannot open older game server interface\nChecking for older version...");
+			if ( (servergamedll = (IServerGameDLL*)gameServerFactory(INTERFACEVERSION_SERVERGAMEDLL,NULL)) == NULL ) 
+			{ 
+				Msg("[RCBOT] Cannot open latest game server interface for TF2\nChecking for older version...");
 
-			if ( (servergamedll = (IServerGameDLL*)gameServerFactory("ServerGameDLL005",NULL)) == NULL )
-			{
-				Warning("[RCBOT] Cannot open older game server interface\n");
-				return false;
+				if ( (servergamedll = (IServerGameDLL*)gameServerFactory("ServerGameDLL006",NULL)) == NULL )
+				{
+					Msg("[RCBOT] Cannot open older game server interface\nChecking for older version...");
+
+					if ( (servergamedll = (IServerGameDLL*)gameServerFactory("ServerGameDLL005",NULL)) == NULL )
+					{
+						Warning("[RCBOT] Cannot open older game server interface\n");
+						return false;
+					}
+					else
+						Msg("[RCBOT] Found older game server interface");
+				}
+				else
+					Msg("[RCBOT] Found older game server interface");
 			}
 			else
-				Msg("[RCBOT] Found older game server interface");
+				Msg("[RCBOT] Found interface %s for TF2\n",INTERFACEVERSION_SERVERGAMEDLL); 
+
 		}
 		else
-			Msg("[RCBOT] Found older game server interface");
-	}
-	else
-		Msg("[RCBOT] Found interface %s for TF2\n",INTERFACEVERSION_SERVERGAMEDLL); 
+			Msg("[RCBOT] Found interface ServerGameDLL008 for TF2\n"); 
+
+*/
 
 	//LOAD_GAME_SERVER_INTERFACE(servergamedll,IServerGameDLL,"ServerGameDLL006");
 
-	LOAD_GAME_SERVER_INTERFACE(gameclients,IServerGameClients,INTERFACEVERSION_SERVERGAMECLIENTS);
+	//RCBot_LoadUndefinedGameInterface(gameclients,IServerGameClients,"ServerGameClients",4,3);
+	//LOAD_GAME_SERVER_INTERFACE(gameclients,IServerGameClients,INTERFACEVERSION_SERVERGAMECLIENTS);
 
 /*	int* vptr =  *(int**)gameclients;
 
@@ -294,7 +355,9 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 
 	// Initialize bot variables
 	CBotProfiles::setupProfiles();
-	CBotGlobals::gameStart();	
+
+	if ( !CBotGlobals::gameStart() )
+		return false;
 	//CBotEvents::setupEvents();
 	CWaypointTypes::setup();
 	CWaypoints::setupVisibility();
@@ -942,13 +1005,13 @@ int CClassInterface :: getEffects ( edict_t *edict )
 
 void CClassInterface ::test()
 {
-	static unsigned int offset = 0;
+	//static unsigned int offset = 0;
  
-	if (!offset)
-		offset = findOffset("ProcessUsercmds","CServerGameClients");
+	//if (!offset)
+	//	offset = findOffset("ProcessUsercmds","CServerGameClients");
 	
-	if (!offset)
-		return;
+	//if (!offset)
+	//	return;
 
 	//return offset;
 }

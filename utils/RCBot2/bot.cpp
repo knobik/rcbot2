@@ -265,9 +265,11 @@ QAngle CBot :: eyeAngles ()
 
 Vector CBot :: getEyePosition ()
 {
-	Vector vOrigin;
+	
+	Vector vOrigin = getOrigin();
+	vOrigin.z = m_pPlayerInfo->GetPlayerMaxs().z;
 
-	gameclients->ClientEarPosition(m_pEdict,&vOrigin);
+	//gameclients->ClientEarPosition(m_pEdict,&vOrigin);
 
 	return vOrigin;
 }
@@ -524,13 +526,13 @@ void CBot :: think ()
 
 	/////////////////////////////
 
-	m_iFlags = CClassInterface::getFlags(m_pEdict);
+	//m_iFlags = CClassInterface::getFlags(m_pEdict);
 
-	if ( m_pController->IsEFlagSet(EFL_BOT_FROZEN)  || (m_iFlags & FL_FROZEN) )
-	{
-		stopMoving(12);
-		return;
-	}
+	//if ( m_pController->IsEFlagSet(EFL_BOT_FROZEN)  || (m_iFlags & FL_FROZEN) )
+	//{
+	//	stopMoving(12);
+	//	return;
+	//}
 
 	//////////////////////////////
 
@@ -1396,7 +1398,24 @@ float CBot :: DotProductFromOrigin ( Vector &pOrigin )
 
 	//return m_pBaseEdict->FInViewCone(CBaseEntity::Instance(pEntity));
 }
+/*
+Vector BOTUTIL_SmoothAim( Vector aiming, float dist, QAngle angles )
+{
+		extern ConVar bot_aimsmoothing;
+		Vector v_forward;
+		Vector v_comp;
 
+		AngleVectors(angles,&v_forward);
+
+		v_forward = v_forward.NormalizeInPlace();
+
+		v_forward = v_forward * dist;
+
+		v_comp = (aiming - v_forward)*bot_aimsmoothing.GetFloat();
+
+		return v_forward + v_comp;
+}
+*/
 Vector CBot :: getAimVector ( edict_t *pEntity )
 {
 	Vector v_right;
@@ -1406,7 +1425,9 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	Vector v_org;
 	
 	if ( m_fNextUpdateAimVector > engine->Time() )
-		return m_vAimVector;	
+	{
+		return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
+	}
 
 	fDistFactor = (distanceFrom(pEntity)/2048.0f)*(m_fFov/90.0f);
 
@@ -1431,7 +1452,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
 		m_vAimVector = m_vAimVector + Vector(0,0,40.0f);
 
-	return m_vAimVector;
+	return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
 }
 
 void CBot :: setLookAt ( Vector vNew )
@@ -1512,7 +1533,9 @@ void CBot :: getLookAtVector ()
 	case LOOK_ENEMY:
 		{
 			if ( m_pEnemy )
+			{
 				setLookAt(getAimVector(m_pEnemy));
+			}
 			else
 				setLookAtTask(LOOK_WAYPOINT,2);
 		}		
@@ -2258,11 +2281,15 @@ CBot *CBots :: getBotPointer ( edict_t *pEdict )
 
 void CBots :: freeMapMemory ()
 {
+	if ( m_Bots == NULL )
+		return;
+
 	//bots should have been freed when they disconnected
 	// just incase do this 
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		m_Bots[i]->freeMapMemory();
+		if ( m_Bots[i] )
+			m_Bots[i]->freeMapMemory();
 	}
 }
 

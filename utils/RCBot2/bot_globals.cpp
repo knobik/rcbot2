@@ -213,7 +213,7 @@ void CBotGlobals :: freeMemory ()
 	m_pCommands->freeMemory();
 }
 
-void CBotGlobals :: gameStart ()
+bool CBotGlobals :: gameStart ()
 {
 	char szGameFolder[512];
 	engine->GetGameDir(szGameFolder,512);	
@@ -253,9 +253,19 @@ void CBotGlobals :: gameStart ()
 		m_iCurrentMod = m_pCurrentMod->getModId();
 
 		m_pCurrentMod->initMod();
+
+		CBots::init();
+
+		return true;
+	}
+	else
+	{
+		Msg("[BOT ERROR] Mod not found. Please edit the bot_mods.ini in the bot config folder\nsteamdir = %s\ngamedir = %s\n",m_szModFolder,m_szGameFolder);
+
+		return false;
 	}
 
-	CBots::init();
+	
 }
 
 void CBotGlobals :: levelInit ()
@@ -687,9 +697,10 @@ float CBotGlobals :: yawAngleFromEdict (edict_t *pEntity,Vector vOrigin)
 	QAngle qBotAngles = playerAngles(pEntity);
 	QAngle qAngles;
 	Vector vAngles;
-	Vector vPlayerOrigin;;
+	Vector vPlayerOrigin;
 
-	gameclients->ClientEarPosition(pEntity,&vPlayerOrigin);
+	vPlayerOrigin = CBotGlobals::entityOrigin(pEntity);//gameclients->ClientEarPosition(pEntity,&vPlayerOrigin);
+
 	vAngles = vOrigin - vPlayerOrigin;
 
 	VectorAngles(vAngles/vAngles.Length(),qAngles);

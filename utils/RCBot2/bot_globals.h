@@ -47,7 +47,7 @@ public:
 
 	static void init ();
 
-	static void gameStart ();	
+	static bool gameStart ();	
 
 	static QAngle entityEyeAngles ( edict_t *pEntity );
 

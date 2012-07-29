@@ -3629,25 +3629,27 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 			if ( pWp->getID() == TF2_WEAPON_SYRINGEGUN )
 				vAim = vAim + Vector(0,0,sqrt(fDist)*2);
 		}
-		/*else if ( m_iClass == TF_CLASS_HWGUY )
+		else if ( m_iClass == TF_CLASS_HWGUY )
 		{
 			if ( pWp->getID() == TF2_WEAPON_MINIGUN )
 			{
-					Vector vForward;
-					Vector vRight;
-					QAngle eyes;
+				extern ConVar bot_heavyaimoffset;
 
-					eyes = eyeAngles();
+				Vector vForward;
+				Vector vRight;
+				QAngle eyes;
 
-					// in fov? Check angle to edict
-					AngleVectors(eyes,&vForward);
-					vForward = vForward.NormalizeInPlace();
+				eyes = eyeAngles();
 
-					vRight = vForward.Cross(Vector(0,0,1));
+				// in fov? Check angle to edict
+				AngleVectors(eyes,&vForward);
+				vForward = vForward.NormalizeInPlace();
 
-					vAim = vAim + (vRight * 24) - Vector(0,0,24);
+				vRight = vForward.Cross(Vector(0,0,1));
+
+				vAim = vAim + (((vRight * 24) - Vector(0,0,24))* bot_heavyaimoffset.GetFloat());
 			}
-		}*/
+		}
 		else if ( (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_DEMOMAN) )
 		{
 			int iSpeed = 0;
