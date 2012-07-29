@@ -266,10 +266,10 @@ QAngle CBot :: eyeAngles ()
 Vector CBot :: getEyePosition ()
 {
 	
-	Vector vOrigin = getOrigin();
-	vOrigin.z = m_pPlayerInfo->GetPlayerMaxs().z;
+	Vector vOrigin;//'/ = getOrigin();
+	//vOrigin.z = m_pPlayerInfo->GetPlayerMaxs().z;
 
-	//gameclients->ClientEarPosition(m_pEdict,&vOrigin);
+	gameclients->ClientEarPosition(m_pEdict,&vOrigin);
 
 	return vOrigin;
 }

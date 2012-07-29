@@ -331,7 +331,7 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 
 	//LOAD_GAME_SERVER_INTERFACE(servergamedll,IServerGameDLL,"ServerGameDLL006");
 
-	//RCBot_LoadUndefinedGameInterface(gameclients,IServerGameClients,"ServerGameClients",4,3);
+	RCBot_LoadUndefinedGameInterface(gameclients,IServerGameClients,"ServerGameClients",4,1);
 	//LOAD_GAME_SERVER_INTERFACE(gameclients,IServerGameClients,INTERFACEVERSION_SERVERGAMECLIENTS);
 
 /*	int* vptr =  *(int**)gameclients;
@@ -534,7 +534,7 @@ void CRCBotPlugin::GameFrame( bool simulating )
 	if ( simulating && CBotGlobals::IsMapRunning() )
 	{
 		CBots::botThink();
-		//gameclients->PostClientMessagesSent();
+		gameclients->PostClientMessagesSent();
 		CBots::handleAutomaticControl();
 		CClients::clientThink();
 

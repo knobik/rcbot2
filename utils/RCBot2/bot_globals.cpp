@@ -699,7 +699,7 @@ float CBotGlobals :: yawAngleFromEdict (edict_t *pEntity,Vector vOrigin)
 	Vector vAngles;
 	Vector vPlayerOrigin;
 
-	vPlayerOrigin = CBotGlobals::entityOrigin(pEntity);//gameclients->ClientEarPosition(pEntity,&vPlayerOrigin);
+	gameclients->ClientEarPosition(pEntity,&vPlayerOrigin);
 
 	vAngles = vOrigin - vPlayerOrigin;
 
