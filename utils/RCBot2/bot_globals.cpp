@@ -264,8 +264,6 @@ bool CBotGlobals :: gameStart ()
 
 		return false;
 	}
-
-	
 }
 
 void CBotGlobals :: levelInit ()
