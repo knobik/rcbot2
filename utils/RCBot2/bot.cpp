@@ -318,6 +318,12 @@ bool CBot :: checkStuck ()
 	if ( m_fCheckStuckTime > fTime )
 		return m_bThinkStuck;
 
+	if ( hasSomeConditions(CONDITION_LIFT) )//fabs(m_vMoveTo.z - getOrigin().z) > 48 )
+	{
+		if ( m_vVelocity.z != 0.0f )
+			return false;
+	}
+
 	fSpeed = m_vVelocity.Length();
 	fIdealSpeed = m_fIdealMoveSpeed;
 
@@ -784,6 +790,11 @@ void CBot::	 stopMoving (int iPriority )
 		m_fWaypointStuckTime = 0;
 		m_fCheckStuckTime = engine->Time() + randomFloat(3.0f,5.0f);
 	}
+}
+
+bool CBot ::isOnLift()
+{
+	return ((m_vVelocity.z < -8.0f)||(m_vVelocity.z >= 8.0f));//&&(CClassInterface::getFlags(m_pEdict) & FL_ONGROUND);
 }
 
 void CBot :: spawnInit ()

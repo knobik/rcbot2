@@ -118,9 +118,9 @@ typedef enum
 
 #define BOT_NAME "RCBot"
 #ifdef __linux__
-#define BOT_VER "TF2 0.56 Beta linux 146 (BUILD " __DATE__ "-" __TIME__ ")" //bir3yk
+#define BOT_VER "TF2 0.63 Beta linux 163 (BUILD " __DATE__ "-" __TIME__ ")" //bir3yk
 #else
-#define BOT_VER "TF2 0.56 Beta (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
+#define BOT_VER "TF2 0.63 Beta (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
 #endif
 #define BOT_NAME_VER "RCbot version"
 #define BOT_VER_CVAR "rcbot_ver"
@@ -145,6 +145,7 @@ typedef enum
 #define CONDITION_SEE_LOOK_VECTOR 256
 #define CONDITION_POINT_CAPTURED 512
 #define CONDITION_PUSH 1024
+#define CONDITION_LIFT	2048
 ////////////////////////
 
 ///////////////////////

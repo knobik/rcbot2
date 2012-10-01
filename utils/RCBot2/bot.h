@@ -562,6 +562,8 @@ public:
 
 	int nearbyFriendlies (float fDistance);
 
+	bool isOnLift (void);
+
 protected:
 
 	static void checkEntity ( edict_t **pEdict );

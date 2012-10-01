@@ -740,6 +740,15 @@ void CWaypointNavigator :: updatePosition ()
 	{
 		m_pBot->duck(true);
 	}
+	
+	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_LIFT) )
+	{
+		m_pBot->updateCondition(CONDITION_LIFT);
+	}
+	else
+	{
+		m_pBot->removeCondition(CONDITION_LIFT);
+	}
 
 	if ( !m_bOffsetApplied )
 	{
