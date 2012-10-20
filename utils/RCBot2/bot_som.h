@@ -43,7 +43,7 @@ public:
 
 	CSomNeuron ();
 
-	CSomNeuron ( int iInp, int iX, int iY );
+	CSomNeuron ( unsigned short id, int iInp, int iX, int iY );
 
 	inline float getX()
 	{
@@ -65,10 +65,15 @@ public:
 	
 	float neighbourDistance ( CSomNeuron *other );
 
+	inline void setClassID ( unsigned short iId ) { m_iId = iId; }
+
+	inline unsigned short getClassID () { return m_iId; }
+
 private:
 	vector<float> fWeights;
 	float m_iX;
 	float m_iY;
+	unsigned short m_iId;
 };
 
 class CSom

@@ -36,6 +36,8 @@ float CSom :: m_fLearnRate = 1.0;
 
 CSom :: CSom ( int iW, int iH, int iIn )
 {       
+	unsigned short id = 0;
+
 	m_iW = iW;
 	m_iH = iH;
 
@@ -45,7 +47,7 @@ CSom :: CSom ( int iW, int iH, int iIn )
 	for ( int i = 0; i < iH; i ++ )
 	{
 		for ( int j = 0; j < iW; j ++ )
-			m_Neurons.push_back(new CSomNeuron(iIn,j,i));
+			m_Neurons.push_back(new CSomNeuron(id++,iIn,j,i));
 	}
 
 	m_iEpochs = 0;
@@ -143,13 +145,15 @@ CSomNeuron :: ~CSomNeuron ()
 
 CSomNeuron :: CSomNeuron ()
 {
+	m_iId = 0;
 	return;
 }
 
-CSomNeuron :: CSomNeuron ( int iInp, int iX, int iY )
+CSomNeuron :: CSomNeuron ( unsigned short iId, int iInp, int iX, int iY )
 {				
 	m_iX = (float)iX;
 	m_iY = (float)iY;
+	m_iId = 0;
 	
 	for ( int i = 0; i < iInp; i ++ )
 		fWeights.push_back(randomFloat(0,1));

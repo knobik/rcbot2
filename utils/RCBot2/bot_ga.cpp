@@ -163,14 +163,14 @@ void CGA :: epoch ()
 
 	float fCurAvgFitness = m_thePopulation.averageFitness();
 
-	CBotGlobals::botMessage(NULL,0,"------Generation %d------",m_iNumGenerations);
+	/*CBotGlobals::botMessage(NULL,0,"------Generation %d------",m_iNumGenerations);
 	CBotGlobals::botMessage(NULL,0,"best fitness = %0.5f",m_thePopulation.bestFitness());
 	CBotGlobals::botMessage(NULL,0,"avg fitness = %0.5f",fCurAvgFitness);
 	CBotGlobals::botMessage(NULL,0,"prev. avg fitness = %0.5f",m_fPrevAvgFitness);
 	if ( fCurAvgFitness>=m_fPrevAvgFitness )
 		CBotGlobals::botMessage(NULL,0,"Getting Better :)");
 	else
-		CBotGlobals::botMessage(NULL,0,"Getting Worse! :(");
+		CBotGlobals::botMessage(NULL,0,"Getting Worse! :(");*/
 
 	m_fPrevAvgFitness = fCurAvgFitness;
 }

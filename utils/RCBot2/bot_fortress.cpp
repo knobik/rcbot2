@@ -575,11 +575,9 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			// forward
 			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
 
-			if ( tr->fraction > bestfraction )
-			{
-				iNextState = 8;
-				bestfraction = tr->fraction;
-			}
+			iNextState = 8;
+			bestfraction = tr->fraction;
+
 			////////////////////////////////////////
 			turn = eyes;
 			turn.y = turn.y - 90.0f;
@@ -627,11 +625,11 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			}
 			////////////////////////////////////
 			*iState = iNextState;
-
 		}
 	case 2:
 		{
 			// let go
+			m_pButtons->letGo(IN_ATTACK2);
 			*iState = *iState + 1;
 		}
 		break;
@@ -644,6 +642,7 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 	case 4:
 		{
 			// let go
+			m_pButtons->letGo(IN_ATTACK2);
 			*iState = *iState + 1;
 		}
 		break;
@@ -657,6 +656,7 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 
 		{
 			// let go 
+			m_pButtons->letGo(IN_ATTACK2);
 			*iState = *iState + 1;
 		}
 		break;
@@ -669,6 +669,7 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 	case 8:
 		{
 			// let go (wait)
+			m_pButtons->letGo(IN_ATTACK2);
 			*iState = *iState + 1;
 		}
 		break;
