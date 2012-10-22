@@ -58,7 +58,7 @@ int CTeamFortress2Mod::m_iFlagCarrierTeam = 0;
 
 extern ConVar bot_use_disp_dist;
 
-
+// get the teleporter exit of an entrance
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 {
 	int i;
@@ -80,11 +80,13 @@ edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
 	return false;
 }
 
+// check if the entity is a health kit
 bool CTeamFortress2Mod :: isHealthKit ( edict_t *pEntity )
 {
 	return strncmp(pEntity->GetClassName(),"item_healthkit",14)==0;
 }
 
+// cehc kif the team can pick up a flag in SD mode (special delivery)
 bool CTeamFortress2Mod::canTeamPickupFlag_SD(int iTeam,bool bGetUnknown)
 {
 	if ( isArenaPointOpen() )
@@ -158,7 +160,7 @@ bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity, int iTeam )
 {
 	return ((strncmp(pEntity->GetClassName(),"mapobj_cart_dispenser",21)==0) && (CClassInterface::getTeam(pEntity)==iTeam));
 }
-
+// check voice commands
 void CTeamFortress2Mod:: clientCommand ( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 )
 {
 	if ( argc > 2 )
@@ -178,7 +180,7 @@ void CTeamFortress2Mod:: clientCommand ( edict_t *pEntity, int argc, const char 
 		}
 	}
 }
-
+// find the waypoint areas to use when the round is reset
 void CTeamFortress2Mod :: getResetPoints (int iTeam, int *iCurrentDefendArea, int *iCurrentAttackArea)
 {
 	char *mapname = CBotGlobals::getMapName();
@@ -250,7 +252,7 @@ void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *i
 	}
 }
 
-// to fix
+// to fixed
 void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
 {
 
@@ -281,13 +283,14 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, ed
 
 	//m_Teleporters[iIndex].builder = userid;
 }
-
+// used for changing class if I'm doing badly in my team
 int CTeamFortress2Mod ::getHighestScore ()
 {
 	int highest = 0;
 	int score;
 	int i = 0;
-edict_t *edict;
+	edict_t *edict;
+
 	for ( i = 0; i < gpGlobals->maxClients; i ++ )
 	{
 		edict = INDEXENT(i);
@@ -306,6 +309,7 @@ edict_t *edict;
 	return highest;
 }
 
+// get the owner of 
 edict_t *CTeamFortress2Mod ::getBuildingOwner (eEngiBuild object, short index)
 {
 	int i;

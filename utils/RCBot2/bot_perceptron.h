@@ -128,18 +128,22 @@ private:
 	ga_nn_value m_momentum;
 };
 
-class CNN_1_Hidden
+class CBotNeuralNet
 {
 public:
 
-	CNN_1_Hidden ( unsigned int numinputs, unsigned int inputlayer, unsigned int hiddenlayer, unsigned int outputlayer, ga_nn_value learnrate, ga_nn_value min, ga_nn_value max );
+	CBotNeuralNet ( unsigned int numinputs, unsigned int hiddenlayers, unsigned int hiddenlayer, unsigned int outputlayer, ga_nn_value learnrate, ga_nn_value min, ga_nn_value max );
 
-	CNN_1_Hidden ()
+	CBotNeuralNet ()
 	{
-		m_pInputs = NULL;
+//		m_pInputs = NULL;
 		m_pOutputs = NULL;
 		m_transferFunction = NULL;
 		m_fMin = 0;
+		m_numInputs = 0; // number of inputs
+		m_numOutputs = 0; // number of outputs
+		m_numHidden = 0; // neurons per hidden layer
+		m_numHiddenLayers = 0;
 		m_fMax = 1;
 	}
 
@@ -147,26 +151,30 @@ public:
 
 	void batch_train ( training_batch_t *batches, unsigned numbatches, unsigned int epochs );
 
-	~CNN_1_Hidden ()
+	~CBotNeuralNet ()
 	{
-		if ( m_pInputs ) 
-			delete m_pInputs;
+//		if ( m_pInputs ) 
+//			delete m_pInputs;
 		if ( m_pOutputs )
-			delete m_pOutputs;
+			delete[] m_pOutputs;
 		if ( m_transferFunction )
 			delete m_transferFunction;
 		if ( m_pHidden )
-			delete m_pHidden;
+		{
+			for ( unsigned int i = 0; i < m_numHiddenLayers; i ++ )
+				delete[] m_pHidden[i];
+		}
 	}
 private:
 	ITransfer *m_transferFunction;
-	unsigned int m_numInputs;
-	unsigned int m_numOutputs;
-	unsigned int m_numHidden;
+	unsigned int m_numInputs; // number of inputs
+	unsigned int m_numOutputs; // number of outputs
+	unsigned int m_numHidden; // neurons per hidden layer
+	unsigned int m_numHiddenLayers;
 
-	CLogisticalNeuron *m_pInputs;
+	//CLogisticalNeuron *m_pInputs;
 	CLogisticalNeuron *m_pOutputs;
-	CLogisticalNeuron *m_pHidden;
+	CLogisticalNeuron **m_pHidden;
 
 	ga_nn_value m_fMax;
 	ga_nn_value m_fMin;

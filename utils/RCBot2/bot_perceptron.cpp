@@ -132,7 +132,7 @@ void CLogisticalNeuron :: train ( ITransfer *transferFunction, bool usebias )
 	for ( unsigned int i = 0; i < m_weights.size(); i ++ )
 	{
 		delta = (m_LearnRate * m_inputs[i] * m_error);
-		delta += m_momentum * m_LearnRate;
+		delta += m_momentum * 0.9f;
 		m_weights[i] = m_weights[i] + delta;
 		m_momentum = delta;
 	}
@@ -174,43 +174,61 @@ void CLogisticalNeuron::init(unsigned int iInputs, ga_nn_value learnrate)
 		m_LearnRate = learnrate;
 }
 
-CNN_1_Hidden :: CNN_1_Hidden ( unsigned int numinputs, unsigned int inputlayer, 
-							  unsigned int hiddenlayer, unsigned int outputlayer, 
+CBotNeuralNet :: CBotNeuralNet ( unsigned int numinputs, unsigned int numhiddenlayers, 
+							  unsigned int neuronsperhiddenlayer, unsigned int numoutputs, 
 								ga_nn_value learnrate, ga_nn_value min, ga_nn_value max )
 {
-	m_pInputs = new CLogisticalNeuron[inputlayer];
-	m_pOutputs = new CLogisticalNeuron[outputlayer];
-	m_pHidden = new CLogisticalNeuron[hiddenlayer];
+	//m_pInputs = new CLogisticalNeuron[inputlayer];
+	m_pOutputs = new CLogisticalNeuron[numoutputs];
+	m_pHidden = new CLogisticalNeuron*[numhiddenlayers];
 
-	for ( unsigned int i = 0; i < inputlayer; i ++ )
-		m_pInputs[i].init(numinputs,learnrate);
+	//for ( unsigned int i = 0; i < inputlayer; i ++ )
+	//	m_pInputs[i].init(numinputs,learnrate);
 
-	for ( unsigned int i = 0; i < hiddenlayer; i ++ )
-		m_pHidden[i].init(inputlayer,learnrate);
+	for ( unsigned int j = 0; j < numhiddenlayers; j ++ )
+	{
+		m_pHidden[j] = new CLogisticalNeuron[neuronsperhiddenlayer];
 
-	for ( unsigned int i = 0; i < outputlayer; i ++ )
-		m_pOutputs[i].init(hiddenlayer,learnrate);
+		for ( unsigned int i = 0; i < neuronsperhiddenlayer; i ++ )
+		{
+			if ( j == 0 )
+				m_pHidden[j][i].init(numinputs,learnrate);
+			else
+				m_pHidden[j][i].init(neuronsperhiddenlayer,learnrate);
+		}
+	}
+
+	for ( unsigned int i = 0; i < numoutputs; i ++ )
+		m_pOutputs[i].init(neuronsperhiddenlayer,learnrate);
 
 	m_transferFunction = new CSigmoidTransfer ();
 
-	m_numInputs = inputlayer;
-	m_numOutputs = outputlayer;
-	m_numHidden = hiddenlayer;
+	m_numInputs = numinputs;
+	m_numOutputs = numoutputs;
+	m_numHidden = neuronsperhiddenlayer;
+	m_numHiddenLayers = numhiddenlayers;
 
 	m_fMax = max;
 	m_fMin = min;
 }
 
-void CNN_1_Hidden :: batch_train ( training_batch_t *batches, unsigned numbatches, unsigned int epochs )
+void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatches, unsigned int epochs )
 {
 	vector <ga_nn_value> outs;
 	ga_nn_value err = 0;
 	ga_nn_value exp_out; // expected
 	ga_nn_value act_out; // actual
+	ga_nn_value out_error;
 
 	for ( unsigned int e = 0; e < epochs; e ++ )
 	{
-		printf("-----epoch %d-----\n",e);
+		if ( !(e%100) )
+		{
+			system("CLS");
+			printf("-----epoch %d-----\n",e);
+			printf("in1\tin2\texp\tact\terr\n");
+		}
+
 
 		for ( unsigned int bi = 0; bi < numbatches; bi ++ )
 		{
@@ -218,18 +236,21 @@ void CNN_1_Hidden :: batch_train ( training_batch_t *batches, unsigned numbatche
 
 			execute(batches[bi].in,&outs);
 
-			printf("%0.6f,%0.6f,%0.6f\n",batches[bi].in[0],batches[bi].in[1],outs[0]);
-
 			// work out error for output layer
 			for ( unsigned int j = 0; j < m_numOutputs; j ++ )
 			{
 				act_out = m_pOutputs[j].getOutput();
 				exp_out = scale(batches[bi].out[j],m_fMin,m_fMax);
-
-				m_pOutputs[j].setError(act_out * (1.0f-act_out) * (exp_out - act_out));
+				out_error = act_out * (1.0f-act_out) * (exp_out - act_out);
+				m_pOutputs[j].setError(out_error);
 			}
 
-			//Send Error back to Hidden Layer
+			if ( !(e%100) )
+			{
+				printf("%0.2f\t%0.2f\t%0.2f\t%0.6f\t%0.6f\n",batches[bi].in[0],batches[bi].in[1],batches[bi].out[0],outs[0],out_error);
+			}
+
+			//Send Error back to Hidden Layer before output
 			for ( unsigned int i = 0; i < m_numHidden; i ++ )
 			{	
 				ga_nn_value err = 0;
@@ -239,32 +260,32 @@ void CNN_1_Hidden :: batch_train ( training_batch_t *batches, unsigned numbatche
 					err += m_pOutputs[j].getError(i);
 				}
 
-				m_pHidden[i].setError((m_pHidden[i].getOutput() * (1.0f-m_pHidden[i].getOutput())) * err);
+				m_pHidden[m_numHiddenLayers-1][i].setError((m_pHidden[m_numHiddenLayers-1][i].getOutput() * (1.0f-m_pHidden[m_numHiddenLayers-1][i].getOutput())) * err);
 			}
 
-			//Send Error back to Input Layer
-			for ( unsigned int i = 0; i < m_numInputs; i ++ )
-			{	
-				ga_nn_value err = 0;
+			for ( signed int l = (m_numHiddenLayers-2); l >= 0; l -- )
+			{
+				//Send Error back to Input Layer
+				for ( unsigned int i = 0; i < m_numHidden; i ++ )
+				{	
+					ga_nn_value err = 0;
 
-				for ( unsigned int j = 0; j < m_numHidden; j ++ )
-				{
-					err += m_pHidden[j].getError(i);
+					for ( unsigned int j = 0; j < m_numHidden; j ++ )
+					{
+						err += m_pHidden[l+1][j].getError(i);
+					}
+
+					m_pHidden[l][i].setError((m_pHidden[l][i].getOutput() * (1.0f-m_pHidden[l][i].getOutput())) * err);
 				}
-
-				m_pInputs[i].setError((m_pInputs[i].getOutput() * (1.0f-m_pInputs[i].getOutput())) * err);
 			}
 
-			// update weights for input layer
-			for ( unsigned int i = 0; i < m_numInputs; i ++ )
-			{	
-				m_pInputs[i].train(m_transferFunction);
-			}
-
-			// update weights for hidden layer
-			for ( unsigned int i = 0; i < m_numHidden; i ++ )
-			{	
-				m_pHidden[i].train(m_transferFunction);
+			for ( unsigned int j = 0; j < m_numHiddenLayers; j ++ )
+			{
+				// update weights for hidden layer (each neuron)
+				for ( unsigned int i = 0; i < m_numHidden; i ++ )
+				{	
+					m_pHidden[j][i].train(m_transferFunction);
+				}
 			}
 
 			// update weights for output layer
@@ -277,10 +298,10 @@ void CNN_1_Hidden :: batch_train ( training_batch_t *batches, unsigned numbatche
 
 }
 
-void CNN_1_Hidden :: execute ( vector <ga_nn_value> inputs, vector<ga_nn_value> *outputs )
+void CBotNeuralNet :: execute ( vector <ga_nn_value> inputs, vector<ga_nn_value> *outputs )
 {
-	vector <ga_nn_value> layer1output;
-	vector <ga_nn_value> layer2output;
+	vector <ga_nn_value> layeroutput;
+	vector <ga_nn_value> layerinput;
 
 	outputs->clear();
 
@@ -288,30 +309,28 @@ void CNN_1_Hidden :: execute ( vector <ga_nn_value> inputs, vector<ga_nn_value> 
 	for ( unsigned int i = 0; i < inputs.size(); i ++ )
 	{
 		inputs[i] = scale(inputs[i],m_fMin,m_fMax);
+		layeroutput.push_back(inputs[i]);
 	}
 
-	// execute input
-	for ( unsigned short i = 0; i < m_numInputs; i ++ )
+	for ( unsigned short l = 0; l < m_numHiddenLayers; l ++ )
 	{
-		m_pInputs[i].input(inputs);
-		m_pInputs[i].execute(m_transferFunction);
-		
-		layer1output.push_back(m_pInputs[i].getOutput());
-	}
+		layerinput = layeroutput;
+		layeroutput.clear();
 
-	// execute hidden
-	for ( unsigned short i = 0; i < m_numHidden; i ++ )
-	{
-		m_pHidden[i].input(layer1output);
-		m_pHidden[i].execute(m_transferFunction);
-		
-		layer2output.push_back(m_pInputs[i].getOutput());
+		// execute hidden
+		for ( unsigned short i = 0; i < m_numHidden; i ++ )
+		{
+			m_pHidden[l][i].input(layerinput);
+			m_pHidden[l][i].execute(m_transferFunction);
+
+			layeroutput.push_back(m_pHidden[l][i].getOutput());
+		}
 	}
 
 	// execute output
 	for ( unsigned short i = 0; i < m_numOutputs; i ++ )
 	{
-		m_pOutputs[i].input(layer2output);
+		m_pOutputs[i].input(layeroutput);
 		m_pOutputs[i].execute(m_transferFunction);
 		outputs->push_back(descale(m_pOutputs[i].getOutput(),m_fMin,m_fMax));
 	}
