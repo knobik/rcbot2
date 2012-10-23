@@ -6,7 +6,6 @@
 using namespace std;
 
 typedef float ga_nn_value;
-
 inline ga_nn_value scale (ga_nn_value x, ga_nn_value min, ga_nn_value max)
 {
 	return ((x-min)/(max-min));
@@ -86,12 +85,6 @@ private:
 	ITransfer *m_transferFunction;
 };
 
-typedef struct
-{
-	vector<ga_nn_value> in;
-	vector<ga_nn_value> out;
-}training_batch_t;
-
 class CLogisticalNeuron : public CNeuron
 {
 public:
@@ -108,13 +101,9 @@ public:
 
 	void init(unsigned int iInputs, ga_nn_value learnrate);
 
-	void train_back ( ga_nn_value error );
+	void train ();/// ITransfer *transferFunction, bool usebias = true );
 
-	void train_forward ( ITransfer *transferFunction );
-
-	void train ( ITransfer *transferFunction, bool usebias = true );
-
-	ga_nn_value execute ( ITransfer *transferFunction, bool usebias = true );
+	ga_nn_value execute ( ITransfer *transferFunction );//, bool usebias = true );
 
 	inline void setError ( ga_nn_value err ) { m_error = err; }
 	inline void addError ( ga_nn_value err ) { m_error += err; }
@@ -128,6 +117,12 @@ private:
 	ga_nn_value m_momentum;
 };
 
+typedef struct
+{
+	vector<ga_nn_value> in;
+	vector<ga_nn_value> out;
+}training_batch_t;
+
 class CBotNeuralNet
 {
 public:
@@ -136,7 +131,6 @@ public:
 
 	CBotNeuralNet ()
 	{
-//		m_pInputs = NULL;
 		m_pOutputs = NULL;
 		m_transferFunction = NULL;
 		m_fMin = 0;
@@ -153,16 +147,14 @@ public:
 
 	~CBotNeuralNet ()
 	{
-//		if ( m_pInputs ) 
-//			delete m_pInputs;
 		if ( m_pOutputs )
-			delete[] m_pOutputs;
+			delete [] m_pOutputs;
 		if ( m_transferFunction )
 			delete m_transferFunction;
 		if ( m_pHidden )
 		{
 			for ( unsigned int i = 0; i < m_numHiddenLayers; i ++ )
-				delete[] m_pHidden[i];
+				delete [] m_pHidden[i];
 		}
 	}
 private:
@@ -172,7 +164,6 @@ private:
 	unsigned int m_numHidden; // neurons per hidden layer
 	unsigned int m_numHiddenLayers;
 
-	//CLogisticalNeuron *m_pInputs;
 	CLogisticalNeuron *m_pOutputs;
 	CLogisticalNeuron **m_pHidden;
 

@@ -1118,7 +1118,7 @@ void CBotTF2 :: spawnInit()
 	// stickies destroyed now
 	m_iTrapType = TF_TRAP_TYPE_NONE;
 
-	m_fBlockPushTime = 0.0f;
+	//m_fBlockPushTime = 0.0f;
 
 	// update current areas
 	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
@@ -2511,14 +2511,16 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			m_pSchedules->addFront(new CGotoHideSpotSched(m_pEnemy));
 			return;
 		}
+
 	}*/
 
+	// UNUSED
 	// Shadow/Time must be Floating point
-	if(m_fBlockPushTime < engine->Time())
+	/*if(m_fBlockPushTime < engine->Time())
 	{
 		m_bBlockPushing = (randomFloat(0.0,100)>50); // 50 % block pushing
 		m_fBlockPushTime = engine->Time() + randomFloat(10.0f,30.0f); // must be floating point
-	}
+	}*/
 
 	// No Enemy now
 	if ( m_iClass == TF_CLASS_SNIPER )

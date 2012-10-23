@@ -231,9 +231,9 @@ void CBotWeapons :: addWeapon ( int iId )
 
 		if ( pEnt && CBotGlobals::entityIsValid(pEnt) )
 		{
-			if ( strcmp(pEnt->GetClassName(),classname) == 0 )
+			if ( CBotGlobals::entityOrigin(pEnt) == origin )
 			{
-				if ( CBotGlobals::entityOrigin(pEnt) == origin )
+				if ( strcmp(pEnt->GetClassName(),classname) == 0 )
 				{
 					m_theWeapons[iId].setWeaponIndex(i);
 					break;

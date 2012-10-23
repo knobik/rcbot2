@@ -493,8 +493,8 @@ public:
 		m_fSpySapTime = 0;
 		m_iCurrentDefendArea = 0;
 		m_iCurrentAttackArea = 0;
-	    m_bBlockPushing = false;
-	    m_fBlockPushTime = 0;
+	    //m_bBlockPushing = false;
+	    //m_fBlockPushTime = 0;
 		m_pDefendPayloadBomb = NULL;
 		m_pPushPayloadBomb = NULL;
 		m_pRedPayloadBomb = NULL;
@@ -637,8 +637,8 @@ private:
 	int m_iCurrentDefendArea;
 	int m_iCurrentAttackArea;
 	//
-	bool m_bBlockPushing;
-	float m_fBlockPushTime;
+	//bool m_bBlockPushing;
+	//float m_fBlockPushTime;
 	//
 	edict_t *m_pDefendPayloadBomb;
 	edict_t *m_pPushPayloadBomb;
