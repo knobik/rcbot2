@@ -1813,7 +1813,10 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( randomInt(0,1) )
 			pBotTF2->jump();
 		else
-			pBotTF2->secondaryAttack(true);
+		{
+			if ( pBotTF2->getClass() == TF_CLASS_HWGUY )
+				pBotTF2->secondaryAttack(true);
+		}
 
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);

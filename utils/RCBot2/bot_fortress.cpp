@@ -1051,7 +1051,7 @@ bool CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 
 	if (( m_iClass != TF_CLASS_MEDIC ) || (!m_pHeal) )
 	{
-		if ( CBot::hurt(pAttacker,iHealthNow) )
+		if ( CBot::hurt(pAttacker,iHealthNow,true) )
 		{
 			if ( !bDontHide)
 			{
@@ -1608,14 +1608,11 @@ void CBotTF2 :: callMedic ()
 
 bool CBotFortress:: wantToCloak()
 {
-	if ( !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict)  )
+	if ( ( m_fFrenzyTime < engine->Time() ) && (m_fSpyCloakTime < engine->Time()) && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict)  )
 	{
 		if ( m_pNavigator->getCurrentBelief() > 50.0f )
 		{
-			if (m_fSpyCloakTime < engine->Time())
-			{
-				return true;
-			}
+			return true;
 		}
 	}
 
@@ -1624,7 +1621,7 @@ bool CBotFortress:: wantToCloak()
 
 bool CBotFortress:: wantToUnCloak ()
 {
-	if (  wantToShoot() && m_pEnemy && CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	if ( wantToShoot() && m_pEnemy && CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
 		// hopefully the enemy can't see me
 		if ( CBotGlobals::isAlivePlayer(m_pEnemy) && ( fabs(CBotGlobals::yawAngleFromEdict(m_pEnemy,getOrigin())) > bot_spyknifefov.GetFloat() ) ) 
@@ -2498,7 +2495,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	// if in setup time this will tell bot not to shoot yet
 	wantToShoot(CTeamFortress2Mod::hasRoundStarted());
-
+	m_bWantToListen = CTeamFortress2Mod::hasRoundStarted();
 	bHasFlag = hasFlag();
 
 	if ( !m_pSchedules->isEmpty() )

@@ -128,11 +128,11 @@ void CLogisticalNeuron :: train ()// ITransfer *transferFunction, bool usebias )
 {
 	ga_nn_value delta;
 
-	for ( unsigned int i = 0; i < m_weights.size(); i ++ )
+	for ( register unsigned int i = 0; i < m_weights.size(); i ++ )
 	{
 		delta = (m_LearnRate * m_inputs[i] * m_error);
 		delta += m_momentum * 0.9f;
-		m_weights[i] = m_weights[i] + delta;
+		m_weights[i] += delta;
 		m_momentum = delta;
 	}
 
@@ -227,33 +227,34 @@ void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatch
 
 	for ( e = 0; e < epochs; e ++ )
 	{
-		if ( !(e%100) )
+		/*if ( !(e%100) )
 		{
 			system("CLS");
 			printf("-----epoch %d-----\n",e);
+			printf("training... %0.1f percent",(((float)e/epochs))*100);
 			printf("in1\tin2\texp\tact\terr\n");
-		}
-
+		}*/
 
 		for ( bi = 0; bi < numbatches; bi ++ )
 		{
 			outs.clear();
 
-			execute(batches[bi].in,&outs);
+			execute(&(batches[bi].in),&outs);
 
 			// work out error for output layer
 			for ( j = 0; j < m_numOutputs; j ++ )
 			{
-				act_out = m_pOutputs[j].getOutput();
+				pNode = &(m_pOutputs[j]);
+				act_out = pNode->getOutput();
 				exp_out = scale(batches[bi].out[j],m_fMin,m_fMax);
 				out_error = act_out * (1.0f-act_out) * (exp_out - act_out);
-				m_pOutputs[j].setError(out_error);
+				pNode->setError(out_error);
 			}
 
-			if ( !(e%100) )
+			/*if ( !(e%100) )
 			{
 				printf("%0.2f\t%0.2f\t%0.2f\t%0.6f\t%0.6f\n",batches[bi].in[0],batches[bi].in[1],batches[bi].out[0],outs[0],out_error);
-			}
+			}*/
 
 			//Send Error back to Hidden Layer before output
 			for ( i = 0; i < m_numHidden; i ++ )
@@ -277,9 +278,12 @@ void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatch
 				{	
 					ga_nn_value err = 0;
 
+					pNode = m_pHidden[l+1];
+
 					for ( j = 0; j < m_numHidden; j ++ )
 					{
-						err += m_pHidden[l+1][j].getError(i);
+						// check the error from the next layer
+						err += pNode[j].getError(i);
 					}
 
 					pNode = &(m_pHidden[l][i]);
@@ -290,10 +294,11 @@ void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatch
 
 			for ( j = 0; j < m_numHiddenLayers; j ++ )
 			{
+				pNode = m_pHidden[j];
 				// update weights for hidden layer (each neuron)
 				for ( i = 0; i < m_numHidden; i ++ )
 				{	
-					m_pHidden[j][i].train(); // update weights for this node
+					(&(pNode[i]))->train(); // update weights for this node
 				}
 			}
 
@@ -307,32 +312,32 @@ void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatch
 
 }
 
-void CBotNeuralNet :: execute ( vector <ga_nn_value> inputs, vector<ga_nn_value> *outputs )
+void CBotNeuralNet :: execute ( vector <ga_nn_value> *inputs, vector<ga_nn_value> *outputs )
 {
 	vector <ga_nn_value> layeroutput;
 	vector <ga_nn_value> layerinput;
 	CLogisticalNeuron *pNode;
+	CLogisticalNeuron *pLayer;
 	register unsigned int i; // i-th node
 	register unsigned short l; // layer
 
 	outputs->clear();
 
 	//scale inputs
-	for ( i = 0; i < inputs.size(); i ++ )
-	{
-		inputs[i] = scale(inputs[i],m_fMin,m_fMax);
-		layeroutput.push_back(inputs[i]);
-	}
+	for ( i = 0; i < inputs->size(); i ++ )
+		layeroutput.push_back(scale((*inputs)[i],m_fMin,m_fMax));
 
 	for ( l = 0; l < m_numHiddenLayers; l ++ )
 	{
 		layerinput = layeroutput;
 		layeroutput.clear();
 
+		pLayer = m_pHidden[l];
+
 		// execute hidden
 		for ( i = 0; i < m_numHidden; i ++ )
 		{
-			pNode = &(m_pHidden[l][i]);
+			pNode = &(pLayer[i]);
 			pNode->input(layerinput);
 			pNode->execute(m_transferFunction);
 

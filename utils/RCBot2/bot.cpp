@@ -557,6 +557,8 @@ void CBot :: think ()
 	getTasks();	
 
 
+	if ( m_bWantToListen )
+		listenForPlayers();
 
 	m_pSchedules->execute(this);
 
@@ -582,9 +584,6 @@ void CBot :: think ()
 		findEnemy();
 
 	updateConditions();
-
-	if ( m_bWantToListen )
-		listenForPlayers();
 
 	/*pvVelocity = CClassInterface::getVelocity(m_pEdict);
 

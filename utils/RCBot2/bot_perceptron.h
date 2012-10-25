@@ -5,7 +5,6 @@
 #include <vector>
 using namespace std;
 
-typedef float ga_nn_value;
 inline ga_nn_value scale (ga_nn_value x, ga_nn_value min, ga_nn_value max)
 {
 	return ((x-min)/(max-min));
@@ -141,7 +140,7 @@ public:
 		m_fMax = 1;
 	}
 
-	void execute ( vector <ga_nn_value> inputs, vector<ga_nn_value> *outputs );
+	void execute ( vector <ga_nn_value> *inputs, vector<ga_nn_value> *outputs );
 
 	void batch_train ( training_batch_t *batches, unsigned numbatches, unsigned int epochs );
 
@@ -171,4 +170,71 @@ private:
 	ga_nn_value m_fMin;
 
 };
+
+
+class CBotTrainDatum
+{
+public:
+
+	// 
+private:
+	training_batch_t batch;
+};
+
+// keep training data as not to train on the fly
+// can train during map change
+class CBotTrainData
+{
+public:
+	CBotTrainData ( unsigned int maxbatches, CBotNeuralNet *nn )
+	{
+		//assert(nn!=NULL);
+		m_nn = nn;
+		m_usedbatches = 0;
+		m_maxbatches = maxbatches;
+		m_batches = new training_batch_t[maxbatches];
+	}
+
+	~CBotTrainData()
+	{
+		delete m_batches;
+	}
+
+	bool newbatch ()
+	{
+		if ( m_usedbatches < m_maxbatches )
+		{
+			m_usedbatches++;
+			return true;
+		}
+		
+		return false;
+	}
+
+	inline void input ( ga_nn_value val, ga_nn_value scale )
+	{
+		m_batches[m_usedbatches-1].in.push_back(val/scale);
+	}
+
+	inline void output ( ga_nn_value output )
+	{
+		m_batches[m_usedbatches-1].out.push_back(output);
+	}
+
+	void train (unsigned int epochs)
+	{
+		m_nn->batch_train(m_batches,m_usedbatches,epochs);
+	}
+
+	//void check
+
+private:
+	training_batch_t *m_batches;
+	unsigned int m_maxbatches;
+	unsigned int m_usedbatches;
+	CBotNeuralNet *m_nn; // nn to train
+	//float m_fCheckTime;
+};
+
+
 #endif
