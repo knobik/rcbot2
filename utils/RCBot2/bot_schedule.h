@@ -74,7 +74,8 @@ typedef enum
 	SCHED_BACKSTAB,
 	SCHED_REMOVESAPPER,
 	SCHED_GOTONEST,
-	SCHED_MESSAROUND
+	SCHED_MESSAROUND,
+	SCHED_TF2_ENGI_MOVE_BUILDING
 }eBotSchedule;
 
 class CBotSchedule
@@ -301,6 +302,15 @@ public:
 
 	void init ();
 };
+///////////////////////////////////////////////////
+class CBotEngiMoveBuilding : public CBotSchedule
+{
+public:
+	CBotEngiMoveBuilding ( edict_t *pBuilding, Vector vNewLocation );
+
+	void init ();
+};
+
 /////////////////////////////////////////////////
 class CBotAttackPointSched : public CBotSchedule
 {
@@ -355,6 +365,14 @@ class CBotTFEngiUpgrade : public CBotSchedule
 {
 public:
 	CBotTFEngiUpgrade ( edict_t *pBuilding );
+
+	void init ();
+};
+//////////////////////////////////////////////////////
+class CBotTFEngiMoveBuilding : public CBotSchedule
+{
+public:
+	CBotTFEngiMoveBuilding ( edict_t *pBuilding, Vector vNewOrigin );
 
 	void init ();
 };

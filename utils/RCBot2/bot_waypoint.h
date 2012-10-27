@@ -202,23 +202,23 @@ public:
 
 	void init ();
 
-	void addFlag ( int iFlag )
+	inline void addFlag ( int iFlag )
 	{
 		m_iFlags |= iFlag;
 	}
 
-	void removeFlag ( int iFlag )
+	inline void removeFlag ( int iFlag )
 	{
 		m_iFlags &= ~iFlag;
 	}
 
 	// removes all waypoint flags
-	void removeFlags ()
+	inline void removeFlags ()
 	{
 		m_iFlags = 0;
 	}
 
-	bool hasFlag ( int iFlag )
+	inline bool hasFlag ( int iFlag )
 	{
 		return (m_iFlags & iFlag) == iFlag;
 	}
@@ -234,7 +234,7 @@ public:
 	bool addPathTo ( int iWaypointIndex );
 	void removePathTo ( int iWaypointIndex );
 
-	bool isUsed ()
+	inline bool isUsed ()
 	{
 		return m_bUsed;
 	}
@@ -244,13 +244,13 @@ public:
 
 	void botTouch ( CBot *pBot );
 
-	void freeMapMemory ()
+	inline void freeMapMemory ()
 	{
 		m_thePaths.Clear();//Destroy();
 	}
 
-	int getArea () { return m_iArea; }
-	void setArea (int area) { m_iArea = area; }
+	inline int getArea () { return m_iArea; }
+	inline void setArea (int area) { m_iArea = area; }
 
 	void drawPaths ( edict_t *pEdict, unsigned short int iDrawType );
 

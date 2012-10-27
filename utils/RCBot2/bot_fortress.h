@@ -665,6 +665,11 @@ private:
 	 float m_prevDispHealth;
 	 float m_prevTeleExtHealth;
 	 float m_prevTeleEntHealth;
+
+	 unsigned int m_iSentryArea;
+	 unsigned int m_iDispenserArea;
+	 unsigned int m_iTeleEntranceArea;
+	 unsigned int m_iTeleExitArea;
 };
 
 class CBotFF : public CBotFortress

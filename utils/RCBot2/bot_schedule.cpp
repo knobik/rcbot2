@@ -67,7 +67,10 @@ const char *szSchedules[] =
 	"SCHED_TF2_DEFEND_PAYLOADBOMB",
 	"SCHED_TF2_DEMO_PIPETRAP",
 	"SCHED_BACKSTAB",
-	"SCHED_REMOVESAPPER"
+	"SCHED_REMOVESAPPER",
+	"SCHED_GOTONEST",
+	"SCHED_MESSAROUND",
+	"SCHED_TF2_ENGI_MOVE_BUILDING"
 };
 
 
@@ -119,6 +122,21 @@ void CBotGetMetalSched :: init ()
 {
 	setID(SCHED_GET_METAL);
 }
+//////////////////////////////////////////////
+CBotEngiMoveBuilding :: CBotEngiMoveBuilding ( edict_t *pBuilding, Vector vNewLocation )
+{
+	addTask(new CFindPathTask(pBuilding));
+	addTask(new CBotTaskEngiPickupBuilding(pBuilding));
+	addTask(new CFindPathTask(vNewLocation));
+	addTask(new CBotTaskEngiPlaceBuilding(vNewLocation));
+}
+
+void CBotEngiMoveBuilding :: init ()
+{
+	setID(SCHED_TF2_ENGI_MOVE_BUILDING);
+}
+
+
 ///////////////////////////////////////////
 
 CBotTF2PushPayloadBombSched :: CBotTF2PushPayloadBombSched (edict_t * ePayloadBomb)

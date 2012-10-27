@@ -281,7 +281,7 @@ public:
 		return (vOrigin-m_pController->GetLocalOrigin()).Length();
 	}
 
-	Vector getOrigin ();
+	inline Vector getOrigin ();
 	/*
 	 * init()
 	 *
@@ -298,7 +298,7 @@ public:
 	 * make bot move in the game
 	 * botman : see CBasePlayer::RunNullCommand() for example of PlayerRunCommand()...
 	 */
-	void runPlayerMove();
+	inline void runPlayerMove();
 
 	/*
 	 * called when a bot dies
@@ -351,7 +351,7 @@ public:
 		m_iConditions &= ~iCondition;
 	}
 
-	bool FInViewCone ( edict_t *pEntity );	
+	 bool FInViewCone ( edict_t *pEntity );	
 
 	/*
 	 * make bot start the gmae, e.g join a team first
@@ -375,13 +375,13 @@ public:
 		return (m_bUsed && (m_pEdict!=NULL));
 	}
 
-	edict_t *getEdict ();
+	inline edict_t *getEdict ();
 
 	inline void setEdict ( edict_t *pEdict);
 
-	bool FVisible ( Vector &vOrigin );
+	inline bool FVisible ( Vector &vOrigin );
 
-	Vector getEyePosition ();
+	inline Vector getEyePosition ();
 
 	void think ();
 
@@ -390,12 +390,12 @@ public:
 	virtual void freeAllMemory ();
 
 	///////////////////////////////
-	bool moveToIsValid ()
+	inline bool moveToIsValid ()
 	{
 		return m_bMoveToIsValid;
 	}
 
-	bool lookAtIsValid ()
+	inline bool lookAtIsValid ()
 	{
 		return m_bLookAtIsValid;
 	}
@@ -427,7 +427,7 @@ public:
 	inline bool hasEnemy () { return m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY); }
 	edict_t *getEnemy () { return m_pEnemy; }
 
-	void setLookAt ( Vector vNew );
+	inline void setLookAt ( Vector vNew );
 
 	inline void setMoveTo ( Vector vNew, int iPriority = 1 )
 	{
@@ -446,7 +446,7 @@ public:
 
 	inline IBotNavigator *getNavigator () { return m_pNavigator; }
 
-	void stopMoving (int iPriority = 1);
+	inline void stopMoving (int iPriority = 1);
 
 	inline void stopLooking ( int iPriority = 1 ) 
 	{ 
@@ -463,7 +463,7 @@ public:
 
 	virtual void spawnInit ();
 
-	QAngle eyeAngles ();
+	inline QAngle eyeAngles ();
 
 	virtual bool isAlive ();
 
@@ -522,7 +522,7 @@ public:
 
 	inline int getAmmo ( int iIndex ) { if ( !m_iAmmo ) return 0; else return m_iAmmo[iIndex]; }
 
-	void lookAtEdict ( edict_t *pEdict );
+	inline void lookAtEdict ( edict_t *pEdict ) { m_pLookEdict = pEdict; }
 
 	virtual bool select_CWeapon ( CWeapon *pWeapon );
 	virtual bool selectBotWeapon ( CBotWeapon *pBotWeapon );

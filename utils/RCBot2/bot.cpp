@@ -258,12 +258,12 @@ bool CBot :: FVisible ( edict_t *pEdict )
 	return CBotGlobals::isVisible(m_pEdict,eye,CBotGlobals::entityOrigin(pEdict)+Vector(0,0,50.0f));
 }
 
-QAngle CBot :: eyeAngles ()
+inline QAngle CBot :: eyeAngles ()
 {
 	return CBotGlobals::playerAngles(m_pEdict);
 }
 
-Vector CBot :: getEyePosition ()
+inline Vector CBot :: getEyePosition ()
 {
 	
 	Vector vOrigin;//'/ = getOrigin();
@@ -570,7 +570,7 @@ void CBot :: think ()
 	}
 	else
 	{
-		stopMoving(2);
+		stopMoving(5);
 		setLookAtTask(LOOK_AROUND,2);
 	}
 
@@ -1295,9 +1295,9 @@ void CBot :: doMove ()
 				}
 
 				if ( m_bAvoidRight )
-					m_vMoveTo = ((vMove/vMove.Length())*fAvoidDist) + (vLeft*bot_avoid_strength.GetFloat());
+					m_vMoveTo = getOrigin() + ((vMove/vMove.Length())*fAvoidDist) + (vLeft*bot_avoid_strength.GetFloat());
 				else
-					m_vMoveTo = ((vMove/vMove.Length())*fAvoidDist) - (vLeft*bot_avoid_strength.GetFloat());
+					m_vMoveTo = getOrigin() + ((vMove/vMove.Length())*fAvoidDist) - (vLeft*bot_avoid_strength.GetFloat());
 
 				//else
 				//	m_vMoveTo = vRight;
@@ -1498,11 +1498,6 @@ void CBot :: checkCanPickup ( edict_t *pPickup )
 {
 
 
-}
-
-void CBot :: lookAtEdict ( edict_t *pEdict )
-{
-	m_pLookEdict = pEdict;
 }
 
 void CBot :: getLookAtVector ()

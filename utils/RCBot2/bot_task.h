@@ -470,7 +470,27 @@ private:
 	Vector m_vLastOrigin;
 };
 
+class CBotTaskEngiPickupBuilding : public CBotTask
+{
+public:
+	CBotTaskEngiPickupBuilding ( edict_t *pBuilding ); // going to use this 
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	MyEHandle m_pBuilding;
+	float m_fTime;
+};
 
+class CBotTaskEngiPlaceBuilding : public CBotTask
+{
+public:
+	CBotTaskEngiPlaceBuilding ( Vector vOrigin ); // going to use this 
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	Vector m_vOrigin;
+	float m_fTime;
+};
 
 class CBotTF2WaitFlagTask : public CBotTask
 {

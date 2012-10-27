@@ -107,6 +107,8 @@ void CBroadcastFlagDropped :: execute ( CBot *pBot )
 // flag picked up
 void CBotTF2FunctionEnemyAtIntel :: execute (CBot *pBot)
 {
+	pBot->updateCondition(CONDITION_PUSH);
+
 	if ( pBot->getTeam() != m_iTeam )
 	{
 		((CBotTF2*)pBot)->enemyAtIntel(m_vPos,m_iType);
@@ -1299,18 +1301,26 @@ void CBotTF2 :: engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd )
 		{
 		case ENGI_DISP :
 			m_pDispenser = NULL;
+			m_bDispenserVectorValid = false;
+			m_iDispenserArea = 0;
 			helpers->ClientCommand(m_pEdict,"destroy 0 0");
 			break;
 		case ENGI_SENTRY :
 			m_pSentryGun = NULL;
+			m_bSentryGunVectorValid = false;
+			m_iSentryArea = 0;
 			helpers->ClientCommand(m_pEdict,"destroy 2 0");
 			break;
 		case ENGI_ENTRANCE :
 			m_pTeleEntrance = NULL;
+			m_bEntranceVectorValid = false;
+			m_iTeleEntranceArea = 0;
 			helpers->ClientCommand(m_pEdict,"destroy 1 0");
 			break;
 		case ENGI_EXIT :
 			m_pTeleExit = NULL;
+			m_bTeleportExitVectorValid = false;
+			m_iTeleExitArea = 0;
 			helpers->ClientCommand(m_pEdict,"destroy 1 1");
 			break;
 		default:
@@ -2493,6 +2503,12 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	extern const char *g_szUtils[BOT_UTIL_MAX];
 
+	if ( hasSomeConditions(CONDITION_PUSH) )
+	{
+		fGetFlagUtility += randomFloat(0.1f,0.5f);
+		fDefendFlagUtility += randomFloat(0.1f,0.5f);
+	}
+
 	// if in setup time this will tell bot not to shoot yet
 	wantToShoot(CTeamFortress2Mod::hasRoundStarted());
 	m_bWantToListen = CTeamFortress2Mod::hasRoundStarted();
@@ -2644,14 +2660,22 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 				fAllySentryHealthPercent /= TF2_SENTRY_LEVEL3_HEALTH;	
 		}
 
+		float fSentryUtil = 0.8 + (((float)((int)bNeedAmmo))*0.1) + (((float)(int)bNeedHealth)*0.1);
+
+		//Moon utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
+
+		utils.addUtility(CBotUtility(this,BOT_UTIL_ENGI_DESTROY_SENTRY, (iMetal>=130) && (m_pSentryGun.get()!=NULL) && !CPoints::isValidArea(m_iSentryArea),fSentryUtil));
+		utils.addUtility(CBotUtility(this,BOT_UTIL_ENGI_DESTROY_DISP, (iMetal>=125) && (m_pDispenser.get()!=NULL) && !CPoints::isValidArea(m_iDispenserArea),randomFloat(0.7,0.9)));
+		utils.addUtility(CBotUtility(this,BOT_UTIL_ENGI_DESTROY_ENTRANCE, (iMetal>=125) && (m_pTeleEntrance.get()!=NULL) && !CPoints::isValidArea(m_iTeleEntranceArea),randomFloat(0.7,0.9)));
+		utils.addUtility(CBotUtility(this,BOT_UTIL_ENGI_DESTROY_EXIT, (iMetal>=125) && (m_pTeleExit.get()!=NULL) && !CPoints::isValidArea(m_iTeleExitArea),randomFloat(0.7,0.9)));
+
 		utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9));
-		utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),0.8 + (((float)(int)bNeedAmmo)*0.12) + (((float)(int)bNeedHealth)*0.12)));
+		utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),fSentryUtil));
 		
 		if ( CTeamFortress2Mod::isAttackDefendMap() && (getTeam() == TF_TEAM_BLUE) )
 		{
 			utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
 			utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f));
-
 		}
 		else
 		{
@@ -3085,12 +3109,14 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				if ( pWaypoint )
 				{
 					m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin()));
+					removeCondition(CONDITION_PUSH);
 					return true;
 				}
 
 				if ( m_pDefendPayloadBomb )
 				{
 					m_pSchedules->add(new CBotTF2DefendPayloadBombSched(m_pDefendPayloadBomb));
+					removeCondition(CONDITION_PUSH);
 					return true;
 				}
 			}
@@ -3100,6 +3126,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				if ( m_pPushPayloadBomb )
 				{
 					m_pSchedules->add(new CBotTF2PushPayloadBombSched(m_pPushPayloadBomb));
+					removeCondition(CONDITION_PUSH);
 					return true;
 				}
 			}
@@ -3124,6 +3151,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				{
 					setLookAt(pWaypoint->getOrigin());
 					m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin()));
+					removeCondition(CONDITION_PUSH);
 					return true;
 				}
 			}
@@ -3133,6 +3161,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				setLookAt(m_vLastKnownTeamFlagPoint);
 				m_pSchedules->add(new CBotDefendSched(m_vLastKnownTeamFlagPoint));
+				removeCondition(CONDITION_PUSH);
 				return true;
 			}
 			break;
@@ -3168,7 +3197,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				}
 
 				m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea(),bUseRoute,vRoute));
-
+				removeCondition(CONDITION_PUSH);
 				return true;
 			}
 			break;
@@ -3179,6 +3208,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			if ( pWaypoint )
 			{
 				m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin()));
+				removeCondition(CONDITION_PUSH);
 				return true;
 			}
 
@@ -3187,6 +3217,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			if ( pWaypoint )
 			{
 				m_pSchedules->add(new CBotDefendPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
+				removeCondition(CONDITION_PUSH);
 				return true;
 			}
 			break;
@@ -3196,20 +3227,25 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			if ( pWaypoint )
 			{
 				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				removeCondition(CONDITION_PUSH);
 				return true;
 			}
 			break;
+		case BOT_UTIL_ENGI_DESTROY_ENTRANCE: // destroy and rebuild sentry elsewhere
+			engineerBuild(ENGI_ENTRANCE,ENGI_DESTROY);
 		case BOT_UTIL_BUILDTELENT:
 			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,300,-1,true,false,true,NULL,false,getTeam(),true));
 
 			if ( pWaypoint )
 			{
 				m_pSchedules->add(new CBotTFEngiBuild(ENGI_ENTRANCE,m_vTeleportEntrance));
-
+				m_iTeleEntranceArea = pWaypoint->getArea();
 				return true;
 			}
 			
 			break;
+		case BOT_UTIL_ENGI_DESTROY_EXIT: // destroy and rebuild sentry elsewhere
+			engineerBuild(ENGI_EXIT,ENGI_DESTROY);
 		case BOT_UTIL_BUILDTELEXT:
 
 			if ( m_bTeleportExitVectorValid )
@@ -3222,22 +3258,20 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				m_bTeleportExitVectorValid = true;
 				m_vTeleportExit = pWaypoint->getOrigin();
 				m_pSchedules->add(new CBotTFEngiBuild(ENGI_EXIT,m_vTeleportExit));
-
+				m_iTeleExitArea = pWaypoint->getArea();
 				return true;
 			}
 
 			break;
+		case BOT_UTIL_ENGI_DESTROY_SENTRY: // destroy and rebuild sentry elsewhere
+			engineerBuild(ENGI_SENTRY,ENGI_DESTROY);
 		case BOT_UTIL_BUILDSENTRY:
 
 			if ( m_bSentryGunVectorValid )
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vSentryGun,150,-1,true,false,true,NULL,false,getTeam(),true));
 			else
 			{
-				//if ( CTeamFortress2Mod::isMapType(TF_MAPTYPE_CP) || CTeamFortress2Mod::isMapType(TF_MAPTYPE_PL) )
-				//	pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam(),m_iCurrentDefendArea,true);
-
-				//if ( !pWaypoint )
-					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam(),0,false,this);
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam(),0,false,this);
 			}
 
 			if ( pWaypoint )
@@ -3245,6 +3279,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				m_vSentryGun = pWaypoint->getOrigin();
 				m_bSentryGunVectorValid = true;
 				m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,m_vSentryGun));
+				m_iSentryArea = pWaypoint->getArea();
 				return true;
 			}
 			break;
@@ -3268,7 +3303,6 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 		case BOT_UTIL_REMOVE_SENTRY_SAPPER:
 
-			
 			m_pSchedules->add(new CBotRemoveSapperSched(m_pSentryGun,ENGI_SENTRY));
 			return true;
 
@@ -3289,6 +3323,8 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			return true;
 
 			break;
+		case BOT_UTIL_ENGI_DESTROY_DISP:
+			engineerBuild(ENGI_DISP,ENGI_DESTROY);
 		case BOT_UTIL_BUILDDISP:
 
 			if ( m_bDispenserVectorValid )
@@ -3301,7 +3337,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				m_vDispenser = pWaypoint->getOrigin();
 				m_bDispenserVectorValid = true;
 				m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,m_vDispenser+Vector(randomFloat(-96,96),randomFloat(-96,96),0)));
-
+				m_iDispenserArea = pWaypoint->getArea();
 				return true;
 			}
 			break;
@@ -3350,6 +3386,61 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 			m_fPickupTime = engine->Time() + randomFloat(6.0f,20.0f);
 			return true;
+		case BOT_UTIL_ENGI_MOVE_SENTRY:
+			if ( m_pSentryGun.get() )
+			{
+				CWaypoint *pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam(),0,false,this);
+
+				if ( pWaypoint )
+				{
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pSentryGun.get(),pWaypoint->getOrigin()));
+					m_iSentryArea = pWaypoint->getArea();
+					return true;
+				}
+			}
+			return false;
+		case BOT_UTIL_ENGI_MOVE_DISP:
+			if ( m_pSentryGun.get() && m_pDispenser.get() )
+			{
+				CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam(),true));		
+
+				if ( pWaypoint )
+				{
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pDispenser.get(),pWaypoint->getOrigin()));
+					m_iDispenserArea = pWaypoint->getArea();
+					return true;
+				}
+			}
+			return false;
+		case BOT_UTIL_ENGI_MOVE_ENTRANCE:
+
+			if ( m_pTeleEntrance.get() )
+			{
+				CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,512,-1,true,false,true,NULL,false,getTeam(),true));
+
+				if ( pWaypoint )
+				{
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pTeleEntrance.get(),pWaypoint->getOrigin()));
+					m_iTeleEntranceArea = pWaypoint->getArea();
+					return true;
+				}
+			}
+
+			return false;
+		case BOT_UTIL_ENGI_MOVE_EXIT:
+
+			if ( m_pTeleEntrance.get() )
+			{
+				CWaypoint *pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),0,false,this);//CTeamFortress2Mod::getArea());
+
+				if ( pWaypoint )
+				{
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pTeleEntrance.get(),pWaypoint->getOrigin()));
+					m_iTeleExitArea = pWaypoint->getArea();
+					return true;
+				}
+			}
+			return false;
 		case BOT_UTIL_GETHEALTHKIT:
 			m_pSchedules->removeSchedule(SCHED_PICKUP);
 			m_pSchedules->addFront(new CBotPickupSched(m_pHealthkit));
@@ -3616,10 +3707,16 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 {
 	extern ConVar bot_rocketpredict;
-	Vector vAim = CBot::getAimVector(pEntity);
 	CBotWeapon *pWp = getCurrentWeapon();
 	float fDist = distanceFrom(pEntity);
 	float fTime;
+
+	if ( m_fNextUpdateAimVector > engine->Time() )
+	{
+		return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
+	}
+
+	Vector vAim = CBot::getAimVector(pEntity);
 
 	if ( pWp )
 	{
@@ -3703,7 +3800,9 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 		}
 	}
 
-	return vAim;
+	m_vAimVector = vAim;
+
+	return m_vAimVector;
 }
 
 void CBotTF2 :: checkDependantEntities ()
@@ -3749,9 +3848,12 @@ eBotFuncState CBotTF2 :: rocketJump(int *iState,float *fTime)
 }
 
 
-
+// return true if the enemy is ok to shoot, return false if there is a problem (e.g. weapon problem)
 bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 {
+	if ( DotProductFromOrigin(m_vAimVector) < 0.7 ) 
+		return true; // keep enemy / don't shoot : until angle between enemy is less than 45 degrees
+
 	/* Handle Spy Attacking Choice here */
 	if ( m_iClass == TF_CLASS_SPY )	 
 	{
@@ -3762,7 +3864,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 				;
 			}
 			else if ( m_fFrenzyTime < engine->Time() ) 
-				return true;
+				return true; // return but don't attack
 			else if ( (CClassInterface::getTF2Class(pEnemy) == TF_CLASS_ENGINEER) && 
 						   ( 
 						     CTeamFortress2Mod::isMySentrySapped(pEnemy) || 
@@ -3771,7 +3873,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 						   )
 						)
 			{
-				return true;
+				return true;  // return but don't attack
 			}
 		}
 	}
@@ -3785,8 +3887,10 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 
 		if ( pWeapon->isMelee() )
 		{
-			setMoveTo(CBotGlobals::entityOrigin(pEnemy),5);
-			//dontAvoid
+			setMoveTo(CBotGlobals::entityOrigin(pEnemy),11);
+			//setLookAt(m_vAimVector);
+			setLookAtTask(LOOK_ENEMY,11);
+			// dontAvoid my enemy
 			m_fAvoidTime = engine->Time() + 1.0f;
 		}
 
@@ -3797,7 +3901,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) > 25) )
 				bSecAttack = true;
 			else
-				return false;
+				return false; // don't attack the rocket anymore
 		}
 
 		if ( (m_iClass == TF_CLASS_SNIPER) && (pWeapon->getID() == TF2_WEAPON_SNIPERRIFLE) ) 

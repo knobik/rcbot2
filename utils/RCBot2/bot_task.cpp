@@ -676,6 +676,92 @@ void CBotTF2WaitAmmoTask :: debugString ( char *string )
 {
 	sprintf(string,"CBotTF2WaitAmmoTask");
 }
+///////////////////////////
+CBotTaskEngiPickupBuilding :: CBotTaskEngiPickupBuilding ( edict_t *pBuilding )
+{
+	m_pBuilding = pBuilding;
+	m_fTime = 0.0f;
+}
+void CBotTaskEngiPickupBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fTime == 0.0f )
+		m_fTime = engine->Time() + 6.0f;
+
+	pBot->lookAtEdict(m_pBuilding.get());
+	pBot->setLookAtTask(LOOK_EDICT,10);
+
+	if ( m_fTime < engine->Time() )
+		fail();
+	else if ( pBot->distanceFrom(m_pBuilding) < 100 )
+	{
+		
+		if ( CBotGlobals::yawAngleFromEdict(pBot->getEdict(),CBotGlobals::entityOrigin(m_pBuilding)) < 25 )
+		{	
+			pBot->secondaryAttack();
+			complete();
+		}
+	}
+	else
+		pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding),10);
+}
+void CBotTaskEngiPickupBuilding :: debugString ( char *string )
+{
+	sprintf(string,"CBotTaskEngiPickupBuilding");
+}
+
+/////////////////
+CBotTaskEngiPlaceBuilding :: CBotTaskEngiPlaceBuilding ( Vector vOrigin )
+{
+	m_vOrigin = vOrigin;
+	m_fTime = 0.0f;
+}
+
+void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fTime == 0.0f )
+	{
+		
+		// forward
+		/*Vector v_start = pBot->getOrigin();
+		Vector v_comp = (pBot->getOrigin()-m_vOrigin);
+		v_comp = v_comp/v_comp.Length();
+		CBotGlobals::traceLine(v_start,v_start + (v_comp*4096.0),MASK_SOLID_BRUSHONLY,&filter);
+		trace_t *t = CBotGlobals::getTraceResult();
+
+		v_comp = t->endpos - m_vOrigin;
+		
+		if ( v_comp.Length() >  )
+*/
+		m_fTime = engine->Time() + 6.0f;
+	}
+
+	pBot->setLookAt(m_vOrigin);
+	pBot->setLookAtTask(LOOK_VECTOR,10);
+
+	if ( m_fTime < engine->Time() )
+		fail();
+	else if ( pBot->distanceFrom(m_vOrigin) < 100 )
+	{		
+		if ( CBotGlobals::yawAngleFromEdict(pBot->getEdict(),m_vOrigin) < 25 )
+		{	
+			pBot->primaryAttack();
+			complete();
+		}
+	}
+	else
+		pBot->setMoveTo(m_vOrigin,10);
+	
+	if ( pBot->hasEnemy() )
+	{
+		pBot->primaryAttack();
+		complete();
+	}
+}
+void CBotTaskEngiPlaceBuilding :: debugString ( char *string )
+{
+	sprintf(string,"CBotTaskEngiPlaceBuilding");
+}
+
 /////////////////////////////
 CBotBackstab :: CBotBackstab (edict_t *_pEnemy)
 {
