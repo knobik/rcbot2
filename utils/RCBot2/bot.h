@@ -127,7 +127,7 @@ public:
 			m_iSerialNumber = pent->m_NetworkSerialNumber;
 	}
 
-	edict_t *get ()
+	inline edict_t *get ()
 	{
 		if ( m_pEnt )
 		{
@@ -138,14 +138,20 @@ public:
 		return NULL;
 	}
 
-	edict_t *get_old ()
+	inline edict_t *get_old ()
 	{
 		return m_pEnt;
 	}
 
-	operator edict_t * const ()
-	{
-		return get();
+	inline operator edict_t * const ()
+	{ // same as get function (inlined for speed)
+		if ( m_pEnt )
+		{
+			if ( !m_pEnt->IsFree() && (m_iSerialNumber == m_pEnt->m_NetworkSerialNumber) )
+				return m_pEnt;
+		}
+
+		return NULL;
 	}
 
 	inline bool operator == ( int a )
@@ -252,6 +258,14 @@ class CWaypoint;
 class CBotWeapon;
 class CWeapon;
 
+#define MOVELOOK_DEFAULT 0
+#define MOVELOOK_THINK 1
+#define MOVELOOK_MODTHINK 2
+#define MOVELOOK_TASK 3
+#define MOVELOOK_ATTACK 4
+#define MOVELOOK_EVENT 5
+#define MOVELOOK_OVERRIDE 6
+
 class CBot 
 {
 public:
@@ -311,8 +325,6 @@ public:
 	bool isUnderWater ( );
 
 	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true );
-
-	void setLookAtTask ( eLookTask lookTask, int iPriority = 1 );
 
 	virtual void modThink () { return; }
 
@@ -427,15 +439,20 @@ public:
 	inline bool hasEnemy () { return m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY); }
 	edict_t *getEnemy () { return m_pEnemy; }
 
-	inline void setLookAt ( Vector vNew );
-
-	inline void setMoveTo ( Vector vNew, int iPriority = 1 )
+	inline void setLookAt ( Vector vNew )
 	{
-		if ( iPriority > m_iMovePriority )
+		m_vLookAt = vNew;
+		m_bLookAtIsValid = true;
+	}
+
+
+	inline void setMoveTo ( Vector vNew )
+	{
+		if ( m_iMoveLookPriority >= m_iMovePriority )
 		{
 			m_vMoveTo = vNew;
 			m_bMoveToIsValid = true;
-			m_iMovePriority = iPriority;
+			m_iMovePriority = m_iMoveLookPriority;
 		}
 	}
 
@@ -446,16 +463,37 @@ public:
 
 	inline IBotNavigator *getNavigator () { return m_pNavigator; }
 
-	inline void stopMoving (int iPriority = 1);
+	inline void setMoveLookPriority ( int iPriority ) { m_iMoveLookPriority = iPriority; }
 
-	inline void stopLooking ( int iPriority = 1 ) 
+	inline void stopMoving () 
 	{ 
-		if ( iPriority > m_iLookPriority )
+		if ( m_iMoveLookPriority >= m_iMovePriority )
 		{
-			m_bLookAtIsValid = false; 
-			m_iLookPriority = iPriority;
+			m_bMoveToIsValid = false; 
+			m_iMovePriority = m_iMoveLookPriority;
+			m_fWaypointStuckTime = 0;
+			m_fCheckStuckTime = engine->Time() + 4.0f;
 		}
 	}
+
+	inline void stopLooking () 
+	{ 
+		if ( m_iMoveLookPriority >= m_iLookPriority )
+		{
+			m_bLookAtIsValid = false; 
+			m_iLookPriority = m_iMoveLookPriority;
+		}
+	}
+
+	inline void setLookAtTask ( eLookTask lookTask ) 
+	{ 
+		if ( (m_iMoveLookPriority >= m_iLookPriority) && ( m_fLookSetTime < engine->Time() ) )
+		{
+			m_iLookPriority = m_iMoveLookPriority;
+			m_iLookTask = lookTask; 
+		}	
+	}
+
 	//////////////////////
 	virtual bool isCSS () { return false; }
 	virtual bool isHLDM () { return false; }
@@ -602,6 +640,8 @@ protected:
 
 	int m_iMovePriority;
 	int m_iLookPriority;
+
+	int m_iMoveLookPriority;
 
 	int *m_iAmmo;
 	bool m_bLookedForEnemyLast;

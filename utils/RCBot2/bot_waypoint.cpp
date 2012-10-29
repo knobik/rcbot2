@@ -772,7 +772,7 @@ void CWaypointNavigator :: updatePosition ()
 	if ( pWaypoint->isAiming() )
 		m_pBot->setAiming(vWptOrigin+(vaim*1024));
 	else if ( getBelief(CWaypoints::getWaypointIndex(pWaypoint)) > 25.0f ) 
-		m_pBot->setLookAtTask(LOOK_WAYPOINT,5);
+		m_pBot->setLookAtTask(LOOK_WAYPOINT);
 }
 
 // free up memory

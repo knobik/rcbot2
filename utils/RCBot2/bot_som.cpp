@@ -153,7 +153,7 @@ CSomNeuron :: CSomNeuron ( unsigned short iId, int iInp, int iX, int iY )
 {				
 	m_iX = (float)iX;
 	m_iY = (float)iY;
-	m_iId = 0;
+	m_iId = iId;
 	
 	for ( int i = 0; i < iInp; i ++ )
 		fWeights.push_back(randomFloat(0,1));

@@ -190,7 +190,7 @@ void CBotTF2ShootLastEnemyPosition ::  execute (CBot *pBot,CBotSchedule *pSchedu
 	}
 
 	pBot->setLookVector(m_vPosition);
-	pBot->setLookAtTask(LOOK_VECTOR,7);
+	pBot->setLookAtTask((LOOK_VECTOR));
 
 }
 
@@ -231,7 +231,7 @@ void CBotTF2WaitHealthTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		pBot->setLookAtTask(LOOK_AROUND);
 
 		if ( pBot->distanceFrom(m_vOrigin) > 50 )
-			pBot->setMoveTo(m_vOrigin,2);
+			pBot->setMoveTo((m_vOrigin));
 		else
 			pBot->stopMoving();
 
@@ -341,16 +341,16 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			if ( fdist < 32 )
 			{
-				pBot->stopMoving(5);
+				pBot->stopMoving();
 			}
 			else if ( fdist > 400 )
 				fail();
 			else
 			{				
-				pBot->setMoveTo(m_vMoveTo,3);
+				pBot->setMoveTo((m_vMoveTo));
 			}
 
-			pBot->setLookAtTask(LOOK_AROUND,5);
+			pBot->setLookAtTask((LOOK_AROUND));
 
 			if ( ((CBotTF2*)pBot)->checkAttackPoint() )
 				complete();
@@ -410,9 +410,9 @@ void CBotTF2PushPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		}
 		else
-			pBot->setMoveTo(m_vMoveTo,3);
+			pBot->setMoveTo((m_vMoveTo));
 
-		pBot->setLookAtTask(LOOK_AROUND,5);
+		pBot->setLookAtTask((LOOK_AROUND));
 	}
 	else
 		complete();
@@ -455,11 +455,11 @@ void CBotTF2DefendPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule
 		m_vMoveTo = m_vOrigin + m_vRandomOffset;
 
 		if ( pBot->distanceFrom(m_vMoveTo) > 200 )
-			pBot->setMoveTo(m_vMoveTo,3);
+			pBot->setMoveTo((m_vMoveTo));
 		else
-			pBot->stopMoving(3);
+			pBot->stopMoving();
 
-		pBot->setLookAtTask(LOOK_EDICT,3);
+		pBot->setLookAtTask((LOOK_EDICT));
 		pBot->lookAtEdict(m_pPayloadBomb);
 	}
 	else
@@ -513,19 +513,19 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
 
 			if ( fdist < 32 )
-				pBot->stopMoving(5);
+				pBot->stopMoving();
 			else if ( fdist > 400 )
 				fail();
 			else
 			{				
-				pBot->setMoveTo(m_vMoveTo,3);
+				pBot->setMoveTo((m_vMoveTo));
 			}		
 		}
 		else if ( m_fTime < engine->Time() )
 		{
 			m_fTime = 0;
 		}
-		pBot->setLookAtTask(LOOK_SNIPE,5);
+		pBot->setLookAtTask((LOOK_SNIPE));
 	}
 }
 
@@ -562,9 +562,9 @@ void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( pBot->distanceFrom(m_pBuilding) > 200 )
 			fail();
 		else if ( pBot->distanceFrom(m_pBuilding) > 100 )
-			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding),3);
+			pBot->setMoveTo((CBotGlobals::entityOrigin(m_pBuilding)));
 		
-		pBot->setLookAtTask(LOOK_EDICT,3);
+		pBot->setLookAtTask((LOOK_EDICT));
 		pBot->lookAtEdict(m_pBuilding);
 	}
 	else if ( CBotGlobals::entityIsValid(m_pBuilding) && CBotGlobals::entityIsAlive(m_pBuilding) )
@@ -622,7 +622,7 @@ void CBotTFEngiTankSentry :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( pBot->distanceFrom(vOrigin) > 32  )
 		{
 			// get into position!
-			pBot->setMoveTo(vOrigin,2);
+			pBot->setMoveTo((vOrigin));
 		}
 		else
 		{
@@ -668,7 +668,7 @@ void CBotTF2WaitAmmoTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		fail();
 	else
 	{
-		pBot->stopMoving(2);
+		pBot->stopMoving();
 	}
 }
 
@@ -688,7 +688,7 @@ void CBotTaskEngiPickupBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		m_fTime = engine->Time() + 6.0f;
 
 	pBot->lookAtEdict(m_pBuilding.get());
-	pBot->setLookAtTask(LOOK_EDICT,10);
+	pBot->setLookAtTask((LOOK_EDICT));
 
 	if ( m_fTime < engine->Time() )
 		fail();
@@ -702,7 +702,7 @@ void CBotTaskEngiPickupBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 	}
 	else
-		pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding),10);
+		pBot->setMoveTo((CBotGlobals::entityOrigin(m_pBuilding)));
 }
 void CBotTaskEngiPickupBuilding :: debugString ( char *string )
 {
@@ -736,7 +736,7 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	pBot->setLookAt(m_vOrigin);
-	pBot->setLookAtTask(LOOK_VECTOR,10);
+	pBot->setLookAtTask((LOOK_VECTOR));
 
 	if ( m_fTime < engine->Time() )
 		fail();
@@ -749,7 +749,7 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 	}
 	else
-		pBot->setMoveTo(m_vOrigin,10);
+		pBot->setMoveTo((m_vOrigin));
 	
 	if ( pBot->hasEnemy() )
 	{
@@ -856,7 +856,7 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( pBot->distanceFrom(vrear) > 40 ) 
 	{
-		pBot->setMoveTo(vrear,8);
+		pBot->setMoveTo((vrear));
 	}
 	else
 	{
@@ -876,8 +876,8 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime == 0 )
 		m_fTime = engine->Time() + randomFloat(20.0f,90.0f);
 	
-	pBot->stopMoving(5);
-	pBot->setLookAtTask(LOOK_SNIPE,5);
+	pBot->stopMoving();
+	pBot->setLookAtTask((LOOK_SNIPE));
 
 	if ( m_fTime < engine->Time() )
 		complete();
@@ -936,8 +936,8 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-	pBot->setLookAtTask(LOOK_BUILD,3);
-	bAimingOk = CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getAiming()) < 15;
+	pBot->setLookAtTask((LOOK_BUILD));
+	bAimingOk = pBot->DotProductFromOrigin(pBot->getAiming()) > 0.965925f; // 15 degrees
 
 	if ( m_iObject == ENGI_DISP )
 	{
@@ -945,15 +945,28 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( pSentry && CBotGlobals::entityIsValid(pSentry) )
 		{
-			pBot->setLookVector(pBot->getOrigin() + (pBot->getOrigin()-CBotGlobals::entityOrigin(pSentry)));
-			pBot->setLookAtTask(LOOK_VECTOR,4);
-			bAimingOk = CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getLookVector()) < 15;
+			Vector vSentry = CBotGlobals::entityOrigin(pSentry);
+			Vector vOrigin = pBot->getOrigin();
+			Vector vLookAt = vOrigin - (vSentry - vOrigin);
+
+			pBot->setLookVector(vLookAt);
+			pBot->setLookAtTask((LOOK_VECTOR));
+			
+			//LOOK_VECTOR,11);
+			bAimingOk = pBot->DotProductFromOrigin(vLookAt) > 0.965925f; // 15 degrees // < CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getLookVector()) < 15;
 		}
 		else
 		{
-			pBot->setLookVector(pBot->getOrigin() + (pBot->getOrigin()-pBot->getAiming()));
-			pBot->setLookAtTask(LOOK_VECTOR,4);
-			bAimingOk = CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getLookVector()) < 15;
+			Vector vSentry = pBot->getAiming();
+			Vector vOrigin = pBot->getOrigin();
+			Vector vLookAt = vOrigin - (vSentry - vOrigin);
+
+			pBot->setLookVector(vLookAt);
+			pBot->setLookAtTask((LOOK_VECTOR));
+
+			/*pBot->setLookVector(pBot->getAiming());
+			pBot->setLookAtTask((LOOK_VECTOR));*/
+			bAimingOk = pBot->DotProductFromOrigin(vLookAt) > 0.965925f;
 		}
 	}
 
@@ -962,7 +975,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( !CBotGlobals::isVisible(pBot->getEdict(),pBot->getEyePosition(),m_vOrigin) )
 			fail();
 		else
-			pBot->setMoveTo(m_vOrigin,2);
+			pBot->setMoveTo((m_vOrigin));
 	}
 	else if ( bAimingOk )
 	{
@@ -1154,7 +1167,7 @@ void CMoveToTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	}
 	else
 	{		
-		pBot->setMoveTo(m_vVector,3);
+		pBot->setMoveTo((m_vVector));
 
 		if ( pBot->moveFailed() )
 			fail();
@@ -1274,7 +1287,7 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	pBot->wantToShoot(false);
 
-	if (!m_fTime )
+	if ( m_fTime == 0.0f )
 		m_fTime = engine->Time() + randomFloat(8.0f,12.0f);
 
 	pBuilding = m_pBuilding.get();
@@ -1352,14 +1365,14 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( pBot->distanceFrom(pBuilding) > 200 )
 			fail();
 		else if ( pBot->distanceFrom(pBuilding) > 100 )
-			pBot->setMoveTo(CBotGlobals::entityOrigin(pBuilding),3);
+			pBot->setMoveTo((CBotGlobals::entityOrigin(pBuilding)));
 		
-		pBot->setLookAtTask(LOOK_EDICT,3);
+		pBot->setLookAtTask((LOOK_EDICT));
 		pBot->lookAtEdict(pBuilding);
 	}
 	else
 	{
-		if ( !((CBotFortress*)pBot)->upgradeBuilding(pBuilding) )
+		if ( !((CBotFortress*)pBot)->upgradeBuilding(pBuilding,true) )
 			fail();
 	}
 }
@@ -1425,11 +1438,11 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else
 	{
-		pBot->stopMoving(4);
+		pBot->stopMoving();
 
 		if ( pBot->hasEnemy() )
 		{
-			pBot->setLookAtTask(LOOK_ENEMY,6);
+			pBot->setLookAtTask((LOOK_ENEMY));
 
 			// careful that the round may have not started yet
 			if ( CTeamFortress2Mod::hasRoundStarted() )
@@ -1437,7 +1450,7 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 		else
 		{
-			pBot->setLookAtTask(LOOK_SNIPE,5);
+			pBot->setLookAtTask((LOOK_SNIPE));
 
 			if (m_fTime<engine->Time() )
 			{
@@ -1515,7 +1528,7 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	pBot->lookAtEdict(pBuilding);
-	pBot->setLookAtTask(LOOK_EDICT,5);
+	pBot->setLookAtTask((LOOK_EDICT));
 	weapon = tf2Bot->getCurrentWeapon();
 
 	// time out
@@ -1529,12 +1542,15 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( pBot->distanceFrom(pBuilding) > 100 )
 		{
-			pBot->setMoveTo(CBotGlobals::entityOrigin(pBuilding),10);
+			pBot->setMoveTo((CBotGlobals::entityOrigin(pBuilding)));
 		}
 		else
 		{
 			if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pBot->getEdict()) )
+			{
 				pBot->secondaryAttack();
+				tf2Bot->waitCloak();
+			}
 			else if ( randomInt(0,1) )
 				pBot->tapButton(IN_ATTACK);
 			//complete();
@@ -1601,7 +1617,7 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			if ( pBot->distanceFrom(vTele) > 48 )
 			{
-				pBot->setMoveTo(vTele,9);		
+				pBot->setMoveTo((vTele));		
 				
 				if ( (m_vLastOrigin - pBot->getOrigin()).Length() > 50 )
 				{
@@ -1612,7 +1628,7 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			}
 			else
 			{
-				pBot->stopMoving(8);
+				pBot->stopMoving();
 			}
 		
 			m_vLastOrigin = pBot->getOrigin();
@@ -1689,7 +1705,7 @@ void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	pBot->setEnemy(m_pEdict);
 
-	pBot->setLookAtTask(LOOK_ENEMY,2);
+	pBot->setLookAtTask((LOOK_ENEMY));
 
 	if ( !pBot->handleAttack ( pWeapon, m_pEdict ) )
 		fail();
@@ -1738,7 +1754,7 @@ void CFindLastEnemy::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	else
 		pBot->stopMoving();
 
-	pBot->setLookAtTask(LOOK_AROUND,2);
+	pBot->setLookAtTask((LOOK_AROUND));
 
 	if ( m_fTime < engine->Time() )
 		complete();
@@ -1832,13 +1848,13 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( !pBotTF2->FInViewCone(m_pFriendly) )
 		{
 			pBotTF2->setLookAt(origin);
-			pBotTF2->setLookAtTask(LOOK_VECTOR,11);
+			pBotTF2->setLookAtTask((LOOK_VECTOR));
 			ok = false;
 		}
 
 		if ( pBotTF2->distanceFrom(m_pFriendly) > 100 )
 		{
-			pBotTF2->setMoveTo(origin,11);
+			pBotTF2->setMoveTo((origin));
 			ok = false;
 		}
 
@@ -1867,13 +1883,13 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( !pBotTF2->FInViewCone(m_pFriendly) )
 		{
 			pBotTF2->setLookAt(origin);
-			pBotTF2->setLookAtTask(LOOK_VECTOR,10);
+			pBotTF2->setLookAtTask((LOOK_VECTOR));
 			ok = false;
 		}
 
 		if ( pBotTF2->distanceFrom(m_pFriendly) > 100 )
 		{
-			pBotTF2->setMoveTo(origin,10);
+			pBotTF2->setMoveTo((origin));
 			ok = false;
 		}
 
@@ -1958,9 +1974,9 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 	// heal up
 	// 
 
-	pBot->setLookAtTask(LOOK_AROUND,11);
+	pBot->setLookAtTask((LOOK_AROUND));
 
-	pBot->stopMoving(11);
+	pBot->stopMoving();
 
 }
 

@@ -317,7 +317,7 @@ public:
 	virtual void engiBuildSuccess ( eEngiBuild iObject, int index ) {};
 
 	virtual bool healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer ) { return false; }
-	virtual bool upgradeBuilding ( edict_t *pBuilding ) {return false;}
+	virtual bool upgradeBuilding ( edict_t *pBuilding, bool removesapper = false) {return false;}
 
 	virtual bool isCloaked () { return false; }
 	virtual bool isDisguised () { return false; }
@@ -395,6 +395,8 @@ public:
 
 	inline bool someoneCalledMedic ();
 
+	void waitCloak ();
+
  
 protected:
 	virtual void selectTeam ();
@@ -437,6 +439,7 @@ protected:
 
 	float m_fFrenzyTime;
 	float m_fSpyCloakTime;
+	float m_fSpyUncloakTime;
 	float m_fSeeSpyTime;
 	float m_fSpyDisguiseTime;
 	float m_fLastSaySpy;
@@ -594,7 +597,7 @@ public:
 
 	bool healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer );
 	
-	bool upgradeBuilding ( edict_t *pBuilding );
+	bool upgradeBuilding ( edict_t *pBuilding, bool removesapper = false );
 
 	void setup ();
 

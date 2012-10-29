@@ -521,6 +521,7 @@ void CBotFortress :: spawnInit ()
 
 	m_fSnipeAttackTime = 0.0f;
 	m_fSpyCloakTime = engine->Time() + randomFloat(5.0f,10.0f);
+	m_fSpyUncloakTime = 0.0f;
 
 	m_fLastSaySpy = 0.0f;
 	m_fSpyDisguiseTime = 0.0f;
@@ -1010,7 +1011,7 @@ bool CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag
 		if ( CBotGlobals::entityIsValid(m_pFlag) )
 		{
 			lookAtEdict(m_pFlag);
-			setLookAtTask(LOOK_EDICT,2);
+			setLookAtTask((LOOK_EDICT));
 			*vOrigin = CBotGlobals::entityOrigin(m_pFlag);
 			*fWait = engine->Time() + 5.0f;
 		}
@@ -1021,7 +1022,7 @@ bool CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag
 		setLookAtTask(LOOK_AROUND);
 
 	if ( distanceFrom(*vOrigin) > 48 )
-		setMoveTo(*vOrigin,2);
+		setMoveTo(*vOrigin);
 	else
 	{
 		if ( !bFindFlag && ((getClass() == TF_CLASS_SPY) && isDisguised()) )
@@ -1030,7 +1031,7 @@ bool CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag
 				primaryAttack();
 		}
 
-		stopMoving(2);
+		stopMoving();
 	}
 
 	return true;
@@ -1616,6 +1617,11 @@ void CBotTF2 :: callMedic ()
 	voiceCommand(TF_VC_MEDIC);
 }
 
+void CBotFortress ::waitCloak()
+{
+	m_fSpyCloakTime = engine->Time() + randomFloat(2.0f,6.0f);
+}
+
 bool CBotFortress:: wantToCloak()
 {
 	if ( ( m_fFrenzyTime < engine->Time() ) && (m_fSpyCloakTime < engine->Time()) && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict)  )
@@ -1631,7 +1637,7 @@ bool CBotFortress:: wantToCloak()
 
 bool CBotFortress:: wantToUnCloak ()
 {
-	if ( wantToShoot() && m_pEnemy && CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	if ( (m_fSpyUncloakTime < engine->Time()) && wantToShoot() && m_pEnemy && CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
 		// hopefully the enemy can't see me
 		if ( CBotGlobals::isAlivePlayer(m_pEnemy) && ( fabs(CBotGlobals::yawAngleFromEdict(m_pEnemy,getOrigin())) > bot_spyknifefov.GetFloat() ) ) 
@@ -1876,15 +1882,18 @@ void CBotTF2 :: modThink ()
 				m_fSpyDisguiseTime = engine->Time() + 5.0f;
 			}
 
-			if ( wantToCloak() )
+
+			if ( wantToUnCloak() )
+			{
+				secondaryAttack();
+
+				m_fSpyUncloakTime = engine->Time() + randomFloat(2.0f,4.0f);
+			}
+			else if ( wantToCloak() )
 			{
 				m_fSpyCloakTime = engine->Time() + randomFloat(20.0f,34.0f);
 						
 				secondaryAttack();
-			}
-			else if ( wantToUnCloak() )
-			{
-					secondaryAttack();
 			}
 
 			if ( m_pNearestEnemySentry && ( m_fSpySapTime < engine->Time() ) && !CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry) && !m_pSchedules->hasSchedule(SCHED_SPY_SAP_BUILDING) )
@@ -1973,7 +1982,9 @@ void CBotTF2 :: modThink ()
 	if ( m_fTaunting > engine->Time() )
 	{
 		m_pButtons->letGoAllButtons(true);
-		stopMoving(99);
+		setMoveLookPriority(MOVELOOK_OVERRIDE);
+		stopMoving();
+		setMoveLookPriority(MOVELOOK_MODTHINK);
 	}
 
 	if ( m_fDoubleJumpTime && (m_fDoubleJumpTime < engine->Time()) )
@@ -2025,6 +2036,7 @@ void CBotTF2 :: modThink ()
 
 	m_bDoWeapons = false; // Handle attacking in CBotTF2
 	
+	setMoveLookPriority(MOVELOOK_ATTACK);
 	//
 	// Handle attacking at this point
 	//
@@ -2042,7 +2054,7 @@ void CBotTF2 :: modThink ()
 			selectWeapon(pWeapon->getWeaponIndex());
 		}
 
-		setLookAtTask(LOOK_ENEMY,9);
+		setLookAtTask((LOOK_ENEMY));
 
 		if ( !handleAttack ( pWeapon, m_pEnemy ) )
 		{
@@ -2051,6 +2063,8 @@ void CBotTF2 :: modThink ()
 			wantToShoot(false);
 		}
 	}
+
+	setMoveLookPriority(MOVELOOK_MODTHINK);
 	
 }
 
@@ -2125,7 +2139,7 @@ void CBotTF2::checkStuckonSpy(void)
 	{
 		pPlayer = INDEXENT(i);
 
-		if ( CBotGlobals::entityIsValid(pPlayer) && (CTeamFortress2Mod::getTeam(pPlayer) != iTeam))
+		if ( CBotGlobals::entityIsValid(pPlayer) && CBotGlobals::entityIsAlive(pPlayer) && (CTeamFortress2Mod::getTeam(pPlayer) != iTeam))
 		{
 			if ( CClassInterface::getTF2Class(pPlayer) == TF_CLASS_SPY )
 			{
@@ -2359,7 +2373,7 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 
 	if ( distanceFrom(vOrigin) > 90 )
 	{
-		setMoveTo(vOrigin,3);
+		setMoveTo(vOrigin);
 	}
 	else
 	{
@@ -2367,7 +2381,7 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	}
 
 	lookAtEdict(m_pHeal);
-	setLookAtTask(LOOK_EDICT,7);
+	setLookAtTask((LOOK_EDICT));
 	// unselect weapon
 	//pBot->selectWeapon(0);
 
@@ -2955,14 +2969,14 @@ bool CBotTF2 ::deployStickies(eDemoTrapType type, Vector vStand, Vector vLocatio
 		}
 
 		if ( distanceFrom(vStand) > 70 )
-			setMoveTo(vStand,9);
+			setMoveTo(vStand);
 		else
-			stopMoving(9);
+			stopMoving();
 
 		if ( *iState == 2 )
 		{
 			setLookVector(*vPoint);
-			setLookAtTask(LOOK_VECTOR,7);
+			setLookAtTask((LOOK_VECTOR));
 
 			if ( (*fTime < engine->Time()) && (CBotGlobals::yawAngleFromEdict(m_pEdict,*vPoint) < 20) )
 			{
@@ -2999,7 +3013,7 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 
 	wantToListen(false);
 
-	setLookAtTask(LOOK_AROUND,3);
+	setLookAtTask((LOOK_AROUND));
 
 	if ( !pWeapon )
 		return false;
@@ -3017,12 +3031,12 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 		m_prevSentryHealth = CClassInterface::getHealth(m_pSentryGun);
 
 		if ( distanceFrom(m_pSentryGun) > 100 )
-			setMoveTo(CBotGlobals::entityOrigin(m_pSentryGun),3);
+			setMoveTo(CBotGlobals::entityOrigin(m_pSentryGun));
 		else
 			stopMoving();
 
 		lookAtEdict(m_pSentryGun);
-		setLookAtTask(LOOK_EDICT,9); // LOOK_EDICT fix engineers not looking at their sentry
+		setLookAtTask((LOOK_EDICT)); // LOOK_EDICT fix engineers not looking at their sentry
 
 		if ( *fTime < engine->Time() )
 		{
@@ -3816,7 +3830,7 @@ eBotFuncState CBotTF2 :: rocketJump(int *iState,float *fTime)
 {
 	extern ConVar bot_rj;
 
-	setLookAtTask(LOOK_GROUND,6);
+	setLookAtTask((LOOK_GROUND));
 
 	switch ( *iState )
 	{
@@ -3887,9 +3901,9 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 
 		if ( pWeapon->isMelee() )
 		{
-			setMoveTo(CBotGlobals::entityOrigin(pEnemy),11);
+			setMoveTo(CBotGlobals::entityOrigin(pEnemy));
 			//setLookAt(m_vAimVector);
-			setLookAtTask(LOOK_ENEMY,11);
+			setLookAtTask((LOOK_ENEMY));
 			// dontAvoid my enemy
 			m_fAvoidTime = engine->Time() + 1.0f;
 		}
@@ -3940,7 +3954,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	return true;
 }
 
-bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
+bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding, bool removesapper )
 {
 	Vector vOrigin = CBotGlobals::entityOrigin(pBuilding);
 
@@ -3959,7 +3973,7 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 		if ( !select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH)) )
 			return false;
 	}
-	else if ( iMetal == 0 ) // finished / out of metal
+	else if ( !removesapper && (iMetal == 0) ) // finished / out of metal // dont need metal to remove sapper
 		return true;
 	else 
 	{	
@@ -3967,7 +3981,7 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 
 		if ( distanceFrom(vOrigin) > 85 )
 		{
-			setMoveTo(vOrigin,3);			
+			setMoveTo(vOrigin);			
 		}
 		else
 		{
@@ -3978,7 +3992,7 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding )
 
 	lookAtEdict(pBuilding);
 	m_fLookSetTime = 0;
-	setLookAtTask(LOOK_EDICT,3);
+	setLookAtTask((LOOK_EDICT));
 	m_fLookSetTime = engine->Time() + randomFloat(3.0,8.0);
 
 	return true;

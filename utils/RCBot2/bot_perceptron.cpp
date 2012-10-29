@@ -213,7 +213,7 @@ CBotNeuralNet :: CBotNeuralNet ( unsigned int numinputs, unsigned int numhiddenl
 void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatches, unsigned int epochs )
 {
 	vector <ga_nn_value> outs;
-	ga_nn_value err = 0;
+	//ga_nn_value err = 0;
 	ga_nn_value exp_out; // expected
 	ga_nn_value act_out; // actual
 	ga_nn_value out_error;

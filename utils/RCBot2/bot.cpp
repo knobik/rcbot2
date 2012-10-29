@@ -493,6 +493,7 @@ void CBot :: think ()
 	//
 	m_iLookPriority = 0;
 	m_iMovePriority = 0;
+
 	//
 	// if bot is not in game, start it!!!
 	if ( !startGame() )
@@ -560,7 +561,9 @@ void CBot :: think ()
 	if ( m_bWantToListen )
 		listenForPlayers();
 
+	setMoveLookPriority(MOVELOOK_TASK);
 	m_pSchedules->execute(this);
+	setMoveLookPriority(MOVELOOK_THINK);
 
 	m_vGoal = m_pNavigator->getGoalOrigin();
 
@@ -570,8 +573,8 @@ void CBot :: think ()
 	}
 	else
 	{
-		stopMoving(5);
-		setLookAtTask(LOOK_AROUND,2);
+		stopMoving();
+		setLookAtTask((LOOK_AROUND));
 	}
 
 	// update m_pEnemy with findEnemy()
@@ -602,7 +605,10 @@ void CBot :: think ()
 		m_fUpdateOriginTime = fTime+1.0f;
 	}
 
+	setMoveLookPriority(MOVELOOK_MODTHINK);
 	modThink();
+
+	setMoveLookPriority(MOVELOOK_ATTACK);
 
 	if ( m_bDoWeapons )
 	{
@@ -623,7 +629,7 @@ void CBot :: think ()
 				selectWeapon(pWeapon->getWeaponIndex());
 			}
 
-			setLookAtTask(LOOK_ENEMY,9);
+			setLookAtTask((LOOK_ENEMY));
 
 			if ( !handleAttack ( pWeapon, m_pEnemy ) )
 			{
@@ -757,7 +763,7 @@ bool CBot::handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		clearFailedWeaponSelect();
 
 		if ( pWeapon->isMelee() )
-			setMoveTo(CBotGlobals::entityOrigin(m_pEdict),10);
+			setMoveTo(CBotGlobals::entityOrigin(m_pEdict));
 
 		if ( pWeapon->mustHoldAttack() )
 			primaryAttack(true);
@@ -778,17 +784,6 @@ int CBot :: getHealth ()
 float CBot :: getHealthPercent ()
 {
 	return (((float)m_pPlayerInfo->GetHealth())/m_pPlayerInfo->GetMaxHealth());
-}
-
-void CBot::	 stopMoving (int iPriority ) 
-{ 
-	if ( iPriority > m_iMovePriority )
-	{
-		m_bMoveToIsValid = false; 
-		m_iMovePriority = iPriority;
-		m_fWaypointStuckTime = 0;
-		m_fCheckStuckTime = engine->Time() + randomFloat(3.0f,5.0f);
-	}
 }
 
 bool CBot ::isOnLift()
@@ -974,7 +969,7 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
 		m_fLookSetTime = 0;
-		setLookAtTask(LOOK_HURT_ORIGIN,10);
+		setLookAtTask((LOOK_HURT_ORIGIN));
 		m_fLookSetTime = engine->Time() + randomFloat(3.0,8.0);
 	}
 
@@ -1004,15 +999,6 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	}
 
 	return false;
-}
-
-void CBot :: setLookAtTask ( eLookTask lookTask, int iPriority ) 
-{ 
-	if ( (iPriority > m_iLookPriority) && ( m_fLookSetTime < engine->Time() ) )
-	{
-		m_iLookPriority = iPriority;
-		m_iLookTask = lookTask; 
-	}	
 }
 
 void CBot :: checkEntity ( edict_t **pEdict )
@@ -1170,7 +1156,7 @@ void CBot :: listenForPlayers ()
 
 	if ( m_fListenTime > engine->Time() ) // already listening to something ?
 	{
-		setLookAtTask(LOOK_NOISE,4);
+		setLookAtTask((LOOK_NOISE));
 		return;
 	}
 
@@ -1465,33 +1451,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
 }
 
-void CBot :: setLookAt ( Vector vNew )
-{
-	//if ( m_vLookAt != vNew )
-	//{
-		/*float fTime = engine->Time();
-		m_fLookAtTimeStart = fTime;
 
-		float angles = CBotGlobals::yawAngleFromEdict(m_pEdict,vNew);
-
-		if ( angles != 0 )
-		{
-			//CBotGlobals::fixFloatAngle(&angles);
-			//float screen_dist = fabs(180/angles);
-			//float dist = distanceFrom(vNew);
-			//float width = 72/dist;		
-
-			// fitts meh
-			m_fLookAtTimeEnd = fTime + (1.03+(0.96*log((2*screen_dist)/width)));
-		}
-		else
-			m_fLookAtTimeEnd = fTime;*/
-
-	//}
-
-	m_vLookAt = vNew;
-	m_bLookAtIsValid = true;
-}
 
 
 void CBot :: checkCanPickup ( edict_t *pPickup )
@@ -1532,7 +1492,7 @@ void CBot :: getLookAtVector ()
 			if ( m_pLastEnemy )
 				setLookAt(m_vLastSeeEnemy);
 			else
-				setLookAtTask(LOOK_WAYPOINT,2);
+				setLookAtTask((LOOK_WAYPOINT));
 		}
 		break;
 	case LOOK_ENEMY:
@@ -1542,7 +1502,7 @@ void CBot :: getLookAtVector ()
 				setLookAt(getAimVector(m_pEnemy));
 			}
 			else
-				setLookAtTask(LOOK_WAYPOINT,2);
+				setLookAtTask((LOOK_WAYPOINT));
 		}		
 		break;
 	case LOOK_WAYPOINT:
@@ -1563,7 +1523,7 @@ void CBot :: getLookAtVector ()
 		{
 			if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 			{
-				setLookAtTask(LOOK_ENEMY,4);
+				setLookAtTask((LOOK_ENEMY));
 				return;
 			}
 			else if ( m_fLookAroundTime < engine->Time() )
@@ -1586,14 +1546,14 @@ void CBot :: getLookAtVector ()
 				Vector vOrigin = getOrigin();
 
 				trace_t *tr = CBotGlobals::getTraceResult();
+
+				m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
 				// forward
 				CBotGlobals::traceLine(vOrigin,m_vWaypointAim+m_vLookAroundOffset,MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);	
 
-				fTime = tr->fraction * randomFloat(4.0f,8.0f);
+				fTime = 1.0f + (tr->fraction * randomFloat(3.0f,7.0f));
 
 				m_fLookAroundTime = engine->Time() + fTime;
-
-				m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
 #ifndef __linux__
 				if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
 				{
@@ -1612,12 +1572,12 @@ void CBot :: getLookAtVector ()
 		{
 			if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 			{
-				setLookAtTask(LOOK_ENEMY,4);
+				setLookAtTask((LOOK_ENEMY));
 				return;
 			}
 			else if ( !m_bListenPositionValid || (m_fListenTime < engine->Time()) ) // already listening to something ?
 			{
-				setLookAtTask(LOOK_WAYPOINT,4);
+				setLookAtTask((LOOK_WAYPOINT));
 				return;
 			}
 
@@ -2223,7 +2183,10 @@ void CBots :: botThink ()
 
 				#endif
 
+				pBot->setMoveLookPriority(MOVELOOK_THINK);
 				pBot->think();
+				pBot->setMoveLookPriority(MOVELOOK_EVENT);
+
 
 				#ifdef _DEBUG
 
