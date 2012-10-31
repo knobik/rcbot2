@@ -75,7 +75,8 @@ typedef enum
 	SCHED_REMOVESAPPER,
 	SCHED_GOTONEST,
 	SCHED_MESSAROUND,
-	SCHED_TF2_ENGI_MOVE_BUILDING
+	SCHED_TF2_ENGI_MOVE_BUILDING,
+	SCHED_FOLLOW_LAST_ENEMY
 }eBotSchedule;
 
 class CBotSchedule
@@ -428,6 +429,14 @@ class CBotTFEngiLookAfterSentry : public CBotSchedule
 {
 public:
 	CBotTFEngiLookAfterSentry ( edict_t *pSentry );
+
+	void init ();
+};
+
+class CBotFollowLastEnemy : public CBotSchedule
+{
+public:
+	CBotFollowLastEnemy ( edict_t *pEnemy, Vector vLastSee );
 
 	void init ();
 };

@@ -1840,8 +1840,10 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		fail();
 
 	// smack the friendly player with my melee attack
-	if ( m_iType == 0 )
+	switch ( m_iType )
 	{
+	case 0:
+		{
 		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
 		bool ok = true;
 
@@ -1874,8 +1876,8 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(3.5f,8.0f);
 	}
-	// taunt at my friendly player
-	else if ( m_iType == 1 )
+	break;// taunt at my friendly player
+	case 1:
 	{
 		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
 		bool ok = true;
@@ -1901,7 +1903,8 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 	}
 	// say some random voice commands
-	else if ( m_iType == 2 )
+	break;
+	case 2:
 	{
 		if ( !m_fTime )
 			pBotTF2->voiceCommand((eVoiceCMD)randomInt(0,31));
@@ -1910,7 +1913,8 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);
 	}
 	// press some random buttons, such as attack2, jump
-	else if ( m_iType == 3 )
+	break;
+	case 3:
 	{
 		if ( randomInt(0,1) )
 			pBotTF2->jump();
@@ -1923,7 +1927,9 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);
 	}
-
+	default:
+		break;
+	}
 
 	if ( m_fTime < engine->Time() )
 		complete();

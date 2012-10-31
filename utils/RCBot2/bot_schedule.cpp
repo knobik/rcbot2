@@ -70,7 +70,8 @@ const char *szSchedules[] =
 	"SCHED_REMOVESAPPER",
 	"SCHED_GOTONEST",
 	"SCHED_MESSAROUND",
-	"SCHED_TF2_ENGI_MOVE_BUILDING"
+	"SCHED_TF2_ENGI_MOVE_BUILDING",
+	"SCHED_FOLLOW_LAST_ENEMY"
 };
 
 
@@ -436,6 +437,39 @@ CBotTF2MessAroundSched :: CBotTF2MessAroundSched ( edict_t *pFriendly )
 void CBotTF2MessAroundSched :: init()
 {
 	setID(SCHED_MESSAROUND);
+}
+////////////////////////////////////////////////
+
+CBotFollowLastEnemy ::	CBotFollowLastEnemy ( edict_t *pEnemy, Vector vLastSee )
+{
+	Vector *engineVelocity = NULL;
+	Vector vVelocity = Vector(0,0,0);
+	CClient *pClient = CClients::get(pEnemy);
+
+	CFindPathTask *pFindPath = new CFindPathTask(vLastSee);	
+	
+	engineVelocity = CClassInterface :: getVelocity(pEnemy);
+
+	if ( engineVelocity )
+	{
+		vVelocity = *engineVelocity;
+
+		if ( pClient && (vVelocity == Vector(0,0,0)) )
+			vVelocity = pClient->getVelocity();
+	}
+	else if ( pClient )
+		vVelocity = pClient->getVelocity();
+
+	addTask(pFindPath);
+	addTask(new CFindLastEnemy(vLastSee,vVelocity));
+
+	//////////////
+	pFindPath->setNoInterruptions();
+}
+
+void CBotFollowLastEnemy :: init ()
+{
+	setID(SCHED_FOLLOW_LAST_ENEMY);
 }
  
 //////////////////////////////////////////////////

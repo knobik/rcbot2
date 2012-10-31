@@ -1888,11 +1888,13 @@ void CBotTF2 :: modThink ()
 				secondaryAttack();
 
 				m_fSpyUncloakTime = engine->Time() + randomFloat(2.0f,4.0f);
+				m_fSpyCloakTime = m_fSpyUncloakTime + 1.0f;
 			}
 			else if ( wantToCloak() )
 			{
 				m_fSpyCloakTime = engine->Time() + randomFloat(20.0f,34.0f);
-						
+				m_fSpyUncloakTime = 0.0f;
+
 				secondaryAttack();
 			}
 
@@ -1946,35 +1948,8 @@ void CBotTF2 :: modThink ()
 	{
 		if ( wantToFollowEnemy() )
 		{
-			Vector *engineVelocity = NULL;
-			Vector vVelocity = Vector(0,0,0);
-			CClient *pClient = CClients::get(m_pLastEnemy);
-			CBotSchedule *pSchedule = new CBotSchedule();
-			
-			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);	
-			
-			engineVelocity = CClassInterface :: getVelocity(m_pLastEnemy);
-
-			if ( engineVelocity )
-			{
-				vVelocity = *engineVelocity;
-
-				if ( pClient && (vVelocity == Vector(0,0,0)) )
-					vVelocity = pClient->getVelocity();
-			}
-			else if ( pClient )
-				vVelocity = pClient->getVelocity();
-
 			m_pSchedules->freeMemory();
-
-			pSchedule->addTask(pFindPath);
-			pSchedule->addTask(new CFindLastEnemy(m_vLastSeeEnemy,vVelocity));
-
-			//////////////
-			pFindPath->setNoInterruptions();
-
-			m_pSchedules->add(pSchedule);
-
+			m_pSchedules->addFront(new CBotFollowLastEnemy(m_pLastEnemy,m_vLastSeeEnemy));
 			m_bLookedForEnemyLast = true;
 		}
 	}
@@ -2550,7 +2525,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	}*/
 
 	// No Enemy now
-	if ( m_iClass == TF_CLASS_SNIPER )
+	if ( (m_iClass == TF_CLASS_SNIPER) && (!(m_pEnemy == NULL) || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) )
 		// un zoom
 	{
 		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
