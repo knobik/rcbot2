@@ -43,18 +43,20 @@ tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
 int CTeamFortress2Mod :: m_iArea = 0;
 float CTeamFortress2Mod::m_fSetupTime = 0.0f;
 float CTeamFortress2Mod::m_fRoundTime = 0.0f;
-edict_t *CTeamFortress2Mod::m_pFlagCarrierRed = NULL;
-edict_t *CTeamFortress2Mod::m_pFlagCarrierBlue = NULL;
+MyEHandle CTeamFortress2Mod::m_pFlagCarrierRed = MyEHandle(NULL);
+MyEHandle CTeamFortress2Mod::m_pFlagCarrierBlue = MyEHandle(NULL);
 float CTeamFortress2Mod::m_fArenaPointOpenTime = 0.0f;
 float CTeamFortress2Mod::m_fPointTime = 0.0f;
 tf_sentry_t CTeamFortress2Mod::m_SentryGuns[MAX_PLAYERS];	// used to let bots know if sentries have been sapped or not
 tf_disp_t  CTeamFortress2Mod::m_Dispensers[MAX_PLAYERS];	// used to let bots know where friendly/enemy dispensers are
-edict_t *CTeamFortress2Mod::m_pResourceEntity = NULL;
+MyEHandle CTeamFortress2Mod::m_pResourceEntity = MyEHandle(NULL);
 bool CTeamFortress2Mod::m_bAttackDefendMap = false;
 //float g_fBotUtilityPerturb [TF_CLASS_MAX][BOT_UTIL_MAX];
 int CTeamFortress2Mod::m_Cappers[MAX_CAP_POINTS];
 bool CTeamFortress2Mod::m_bHasRoundStarted = true;
 int CTeamFortress2Mod::m_iFlagCarrierTeam = 0;
+MyEHandle CTeamFortress2Mod::m_pBoss = MyEHandle(NULL);
+bool CTeamFortress2Mod::m_bBossSummoned = false;
 
 extern ConVar bot_use_disp_dist;
 
@@ -1023,6 +1025,24 @@ bool CTeamFortress2Mod :: isFlag ( edict_t *pEntity, int iTeam )
 	return (!iTeam || (getEnemyTeam(iTeam) == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"item_teamflag")==0);
 }
 
+bool CTeamFortress2Mod ::isBoss ( edict_t *pEntity )
+{
+	if ( m_bBossSummoned )
+	{
+		if ( m_pBoss.get() && CBotGlobals::entityIsAlive(m_pBoss.get()) )
+			return m_pBoss.get() == pEntity;
+		else if ( (strcmp(pEntity->GetClassName(),"merasmus")==0)||
+			(strcmp(pEntity->GetClassName(),"headless_hatman")==0)||
+			(strcmp(pEntity->GetClassName(),"eyeball_boss")==0) )
+		{
+			m_pBoss = pEntity;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool CTeamFortress2Mod :: isSentry ( edict_t *pEntity, int iTeam )
 {
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_sentrygun")==0);
@@ -1038,46 +1058,11 @@ bool CTeamFortress2Mod :: isTeleporter ( edict_t *pEntity, int iTeam )
 bool CTeamFortress2Mod :: isTeleporterEntrance ( edict_t *pEntity, int iTeam )
 {
 	return isTeleporter(pEntity,iTeam) && CClassInterface::isTeleporterMode(pEntity,TELE_ENTRANCE);
-	/*if ( isTeleporter(pEntity,iTeam))
-	{
-		int i;
-
-		for ( i = 0; i < MAX_PLAYERS; i ++ )
-		{
-			if ( m_Teleporters[i].entrance.get() == pEntity )
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}*/
-
-	//return false;
-	//return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter_entrance")==0);
 }
 
 bool CTeamFortress2Mod :: isTeleporterExit ( edict_t *pEntity, int iTeam )
 {
 	return isTeleporter(pEntity,iTeam) && CClassInterface::isTeleporterMode(pEntity,TELE_EXIT);
-	/*
-	if ( isTeleporter(pEntity,iTeam))
-	{
-		int i;
-
-		for ( i = 0; i < MAX_PLAYERS; i ++ )
-		{
-			if ( m_Teleporters[i].exit.get() == pEntity )
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}*/
-
-	//return false;
-	//return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter_exit")==0);
 }
 
 bool CTeamFortress2Mod :: isPipeBomb ( edict_t *pEntity, int iTeam)
@@ -1114,21 +1099,25 @@ void CTeamFortress2Mod :: mapInit ()
 	m_pResourceEntity = NULL;
 
 	if ( strncmp(szmapname,"ctf_",4) == 0 )
-		m_MapType = TF_MAP_CTF;
+		m_MapType = TF_MAP_CTF; // capture the flag
 	else if ( strncmp(szmapname,"cp_",3) == 0 )
-		m_MapType = TF_MAP_CP;
+		m_MapType = TF_MAP_CP; // control point
 	else if ( strncmp(szmapname,"tc_",3) == 0 )
-		m_MapType = TF_MAP_TC;
+		m_MapType = TF_MAP_TC; // territory control
 	else if ( strncmp(szmapname,"pl_",3) == 0 )
-		m_MapType = TF_MAP_CART;
+		m_MapType = TF_MAP_CART; // pipeline
 	else if ( strncmp(szmapname,"plr_",4) == 0 )
-		m_MapType = TF_MAP_CARTRACE;
+		m_MapType = TF_MAP_CARTRACE; // pipeline racing
 	else if ( strncmp(szmapname,"arena_",6) == 0 )
-		m_MapType = TF_MAP_ARENA;
+		m_MapType = TF_MAP_ARENA; // arena mode
 	else if ( strncmp(szmapname,"koth_",5) == 0 )
-		m_MapType = TF_MAP_KOTH;
+		m_MapType = TF_MAP_KOTH; // king of the hill
 	else if ( strncmp(szmapname,"sd_",3) == 0 )
-		m_MapType = TF_MAP_SD;
+		m_MapType = TF_MAP_SD; // special delivery
+	else if ( strncmp(szmapname,"tr_",3) == 0 )
+		m_MapType = TF_MAP_TR; // training mode
+	else if ( strncmp(szmapname,"mvm_",4) == 0 )
+		m_MapType = TF_MAP_MVM; // mann vs machine
 	else
 		m_MapType = TF_MAP_DM;
 
@@ -1154,10 +1143,10 @@ void CTeamFortress2Mod :: mapInit ()
 	}
 
 	m_bAttackDefendMap = false;
+	m_pBoss = NULL;
+	m_bBossSummoned = false;
 
 	resetCappers();
 
-
-	CPoints::loadMapScript();
 }
 

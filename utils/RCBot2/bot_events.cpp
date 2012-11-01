@@ -160,6 +160,15 @@ void COverTimeBegin :: execute ( IBotEventInterface *pEvent )
 	CBots::botFunction(&function);
 }
 
+void CBossSummonedEvent :: execute ( IBotEventInterface *pEvent )
+{
+	CTeamFortress2Mod::initBoss(true);
+}
+
+void CBossKilledEvent :: execute ( IBotEventInterface *pEvent )
+{
+	CTeamFortress2Mod::initBoss(false);
+}
 
 void CPlayerHealed ::execute(IBotEventInterface *pEvent)
 {
@@ -498,6 +507,7 @@ void CBotEvent :: setType ( char *szType )
 {
 	m_szType = CStrings::getString(szType);
 }
+
 bool CBotEvent :: forCurrentMod ()
 {
 	return ((m_iModId == MOD_ANY) || (CBotGlobals::isMod(m_iModId)));
@@ -535,6 +545,25 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CTF2SetupFinished());
 	addEvent(new COverTimeBegin());
 	addEvent(new CPlayerHealed());
+/*
+pumpkin_lord_summoned 
+merasmus_summoned 
+eyeball_boss_summoned 
+
+pumpkin_lord_killed 
+merasmus_killed 
+merasmus_escaped 
+eyeball_boss_killed 
+eyeball_boss_escaped */
+
+	addEvent(new CBossSummonedEvent("pumpkin_lord_summoned"));
+	addEvent(new CBossSummonedEvent("merasmus_summoned"));
+	addEvent(new CBossSummonedEvent("eyeball_boss_summoned"));
+	addEvent(new CBossKilledEvent("pumpkin_lord_killed"));
+	addEvent(new CBossKilledEvent("merasmus_killed"));
+	addEvent(new CBossKilledEvent("merasmus_escaped"));
+	addEvent(new CBossKilledEvent("eyeball_boss_killed"));
+	addEvent(new CBossKilledEvent("eyeball_boss_escaped"));
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

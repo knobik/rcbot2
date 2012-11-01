@@ -2449,7 +2449,11 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 	{
 		if ( CTeamFortress2Mod::isSentry(pEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
-			fPreFactor = -400;
+			fPreFactor = -400.0f;
+		}
+		else if ( CTeamFortress2Mod::isBoss(pEnemy) )
+		{
+			fPreFactor = -1000.0f;
 		}
 	}
 
@@ -4058,6 +4062,7 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	bool bIsPipeBomb = false;
 	bool bIsRocket = false;
 	int bValid = false;
+	bool bIsBoss = false;
 
 	if ( !CBotGlobals::entityIsAlive(pEdict) )
 		return false;
@@ -4110,6 +4115,10 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 				bValid = true;
 		}
 	}
+	else if ( CTeamFortress2Mod::isBoss(pEdict) )
+	{
+		bIsBoss = bValid = true;
+	}
 	// "FrenzyTime" is the time it takes for the bot to check out where he got hurt
 	else if ( (m_iClass != TF_CLASS_SPY) || (m_fFrenzyTime > engine->Time()) )	
 	{
@@ -4144,6 +4153,8 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 				if ( bIsPipeBomb && !pWeapon->canDestroyPipeBombs() )
 					return false;
 				else if ( bIsRocket && !pWeapon->canDeflectRockets() )
+					return false;
+				else if ( bIsBoss && pWeapon->isMelee() )
 					return false;
 			}
 		}

@@ -338,6 +338,28 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CBossSummonedEvent : public CBotEvent
+{
+public:
+	CBossSummonedEvent(char *psztype)
+	{
+		setType(psztype);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CBossKilledEvent : public CBotEvent
+{
+public:
+	CBossKilledEvent(char *psztype)
+	{
+		setType(psztype);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+
+};
 
 class CFlagEvent : public CBotEvent
 {

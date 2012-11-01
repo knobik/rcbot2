@@ -232,7 +232,9 @@ typedef enum
 	TF_MAP_CARTRACE,
 	TF_MAP_ARENA,
 	TF_MAP_KOTH,
-	TF_MAP_SD // special delivery : added 15 jul 12
+	TF_MAP_SD, // special delivery : added 15 jul 12
+	TF_MAP_TR,
+	TF_MAP_MVM
 }eTFMapType;
 
 // These must be MyEHandles because they may be destroyed at any time
@@ -525,6 +527,12 @@ public:
 
 	static edict_t *getBuildingOwner (eEngiBuild object, short index);
 
+	static bool isBoss ( edict_t *pEntity );
+
+	static void initBoss ( bool bSummoned ) { m_bBossSummoned = bSummoned; m_pBoss = NULL; }
+
+	static bool isBossSummoned () { return m_bBossSummoned; }
+
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
@@ -541,13 +549,13 @@ private:
 
 	static float m_fRoundTime;
 
-	static edict_t *m_pFlagCarrierRed;
-	static edict_t *m_pFlagCarrierBlue;
+	static MyEHandle m_pFlagCarrierRed;
+	static MyEHandle m_pFlagCarrierBlue;
 
 	static float m_fPointTime;
 	static float m_fArenaPointOpenTime;
 
-	static edict_t *m_pResourceEntity;
+	static MyEHandle m_pResourceEntity;
 	static bool m_bAttackDefendMap;
 
 	static int m_Cappers[MAX_CAP_POINTS];
@@ -555,6 +563,8 @@ private:
 	static bool m_bHasRoundStarted;
 
 	static int m_iFlagCarrierTeam;
+	static MyEHandle m_pBoss;
+	static bool m_bBossSummoned;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

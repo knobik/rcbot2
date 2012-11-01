@@ -1132,6 +1132,9 @@ bool CWaypoints :: load (const char *szMapName)
 	if ( szMapName == NULL )
 		CWaypointDistances::load();
 
+	// script coupled to waypoints
+	CPoints::loadMapScript();
+
 	return true;
 }
 
