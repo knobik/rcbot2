@@ -338,10 +338,6 @@ public:
 
 	static edict_t *getTeleporterExit ( edict_t *pTele );
 
-	static void getResetPoints (int iTeam,int *iCurrentDefendArea, int *iCurrentAttackArea);
-
-	static void getNextPoints (int iPoint,int iTeam,int iMyTeam,int *iCurrentDefendArea,int *iCurrentAttackArea);
-
 	static void setPointOpenTime ( int time );
 
 	static void setSetupTime ( int time );
@@ -523,7 +519,7 @@ public:
 	static int numClassOnTeam ( int iTeam, int iClass );
 
 	static int getFlagCarrierTeam () { return m_iFlagCarrierTeam; }
-	static bool CTeamFortress2Mod::canTeamPickupFlag_SD(int iTeam,bool bGetUnknown);
+	static bool canTeamPickupFlag_SD(int iTeam,bool bGetUnknown);
 
 	static edict_t *getBuildingOwner (eEngiBuild object, short index);
 
@@ -532,6 +528,8 @@ public:
 	static void initBoss ( bool bSummoned ) { m_bBossSummoned = bSummoned; m_pBoss = NULL; }
 
 	static bool isBossSummoned () { return m_bBossSummoned; }
+
+	static bool isSentryGun ( edict_t *pEdict );
 
 private:
 

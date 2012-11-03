@@ -59,7 +59,7 @@ public:
 
 	void setType ( char *szType );
 
-	bool isType ( const char *szType );
+	inline bool isType ( const char *szType );
 
 	inline void setActivator ( edict_t *pEdict ) { m_pActivator = pEdict;}
 
@@ -179,6 +179,7 @@ public:
 	COverTimeBegin()
 	{
 		setType("teamplay_overtime_begin");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -190,6 +191,7 @@ public:
 	CPlayerHealed()
 	{
 		setType("player_healed");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -212,6 +214,7 @@ public:
 	CTF2ObjectSapped()
 	{
 		setType("player_sapped_object");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -223,6 +226,7 @@ public:
 	CTF2ObjectDestroyed()
 	{
 		setType("object_destroyed");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -234,6 +238,7 @@ public:
 	CTF2PointCaptured()
 	{
 		setType("teamplay_point_captured");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -245,6 +250,7 @@ public:
 	CTF2PointStopCapture()
 	{
 		setType("teamplay_capture_broken");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -256,6 +262,7 @@ public:
 	CTF2PointBlockedCapture()
 	{
 		setType("teamplay_capture_blocked");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -267,6 +274,7 @@ public:
 	CTF2PointStartCapture()
 	{
 		setType("teamplay_point_startcapture");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -278,6 +286,7 @@ public:
 	CTF2RoundStart()
 	{
 		setType("teamplay_round_start");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -289,6 +298,7 @@ public:
 	CTF2SetupFinished()
 	{
 		setType("teamplay_setup_finished");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -300,6 +310,7 @@ public:
 	CBulletImpactEvent()
 	{
 		setType("bullet_impact");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -311,6 +322,7 @@ public:
 	CTF2BuiltObjectEvent()
 	{
 		setType("player_builtobject");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );
@@ -322,6 +334,7 @@ public:
 	CTF2UpgradeObjectEvent()
 	{
 		setType("player_upgradedobject");
+		setMod(MOD_TF2);
 	}
 
 	void execute ( IBotEventInterface *pEvent );

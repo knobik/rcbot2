@@ -182,94 +182,16 @@ void CTeamFortress2Mod:: clientCommand ( edict_t *pEntity, int argc, const char 
 		}
 	}
 }
-// find the waypoint areas to use when the round is reset
-void CTeamFortress2Mod :: getResetPoints (int iTeam, int *iCurrentDefendArea, int *iCurrentAttackArea)
-{
-	char *mapname = CBotGlobals::getMapName();
-
-	if ( (strcmp(mapname,"cp_granary") == 0) || (strcmp(mapname,"cp_well") == 0) || (strcmp(mapname,"cp_badlands") == 0) )
-	{
-		*iCurrentDefendArea = 2;
-		*iCurrentAttackArea = 2;
-	}
-	else if ( strcmp(mapname,"cp_dustbowl") == 0 )
-	{
-		*iCurrentDefendArea = 0;
-		*iCurrentAttackArea = 0;
-	}
-}
-
-// NOT USED NOW!!! See CPoints class
-void CTeamFortress2Mod :: getNextPoints (int iPoint,int iTeam,int iMyTeam,int *iCurrentDefendArea,int *iCurrentAttackArea)
-{
-	char *mapname = CBotGlobals::getMapName();
-
-	int iAttackPoint;
-
-	if ( (strcmp(mapname,"cp_granary") == 0) || (strcmp(mapname,"cp_well") == 0) || (strcmp(mapname,"cp_badlands") == 0) )
-	{
-		if ( iTeam == TF2_TEAM_BLUE )
-		{
-			iAttackPoint = iPoint + 1;
-
-			if ( iMyTeam == TF2_TEAM_BLUE )
-			{
-				*iCurrentDefendArea = iPoint;
-				*iCurrentAttackArea = iAttackPoint;
-			}
-			else
-			{
-				*iCurrentDefendArea = iAttackPoint;
-				*iCurrentAttackArea = iPoint;
-			}
-		}
-		else
-		{
-			iAttackPoint = iPoint - 1;
-
-			if ( iMyTeam == TF2_TEAM_BLUE )
-			{
-				*iCurrentDefendArea = iAttackPoint;
-				*iCurrentAttackArea = iPoint;
-			}
-			else
-			{
-				*iCurrentDefendArea = iPoint;
-				*iCurrentAttackArea = iAttackPoint;
-			}
-		}
-	}
-	else if ( strcmp(mapname,"cp_dustbowl") == 0 )
-	{
-		if ( iMyTeam == TF2_TEAM_BLUE )
-		{
-			*iCurrentAttackArea = iPoint + 1;
-			*iCurrentDefendArea = iPoint + 1;
-		}
-		else
-		{
-			*iCurrentAttackArea = iPoint;
-			*iCurrentDefendArea = iPoint + 1;
-		}
-	}
-}
 
 // to fixed
 void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
 {
-
 	int team;
-	//short userid = 0;
-
-	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pOwner);
-
-	//if ( p )
-	//	userid = p->GetUserID();
 
 	if ( (type != ENGI_TELE ) ) //(type != ENGI_ENTRANCE) && (type != ENGI_EXIT) )
 		return;
 
-	int iIndex = ENTINDEX(pOwner)-1;
+	short int iIndex = ENTINDEX(pOwner)-1;
 
 	if ( (iIndex < 0) || (iIndex > gpGlobals->maxClients) )
 		return;
@@ -282,15 +204,13 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, ed
 		m_Teleporters[iIndex].exit = MyEHandle(pBuilding);
 
 	m_Teleporters[iIndex].sapper = MyEHandle();
-
-	//m_Teleporters[iIndex].builder = userid;
 }
 // used for changing class if I'm doing badly in my team
 int CTeamFortress2Mod ::getHighestScore ()
 {
-	int highest = 0;
-	int score;
-	int i = 0;
+	short int highest = 0;
+	short int score;
+	short int i = 0;
 	edict_t *edict;
 
 	for ( i = 0; i < gpGlobals->maxClients; i ++ )
@@ -299,7 +219,7 @@ int CTeamFortress2Mod ::getHighestScore ()
 
 		if ( edict && CBotGlobals::entityIsValid(edict) )
 		{
-			score = CClassInterface::getScore(edict);
+			score = (short int)CClassInterface::getScore(edict);
 		
 			if ( score > highest )
 			{
@@ -314,7 +234,8 @@ int CTeamFortress2Mod ::getHighestScore ()
 // get the owner of 
 edict_t *CTeamFortress2Mod ::getBuildingOwner (eEngiBuild object, short index)
 {
-	int i;
+	static short int i;
+	static tf_tele_t *tele;
 
 	switch ( object )
 	{
@@ -334,12 +255,16 @@ edict_t *CTeamFortress2Mod ::getBuildingOwner (eEngiBuild object, short index)
 		}
 		break;
 	case ENGI_TELE:
+		tele = m_Teleporters;
+
 		for ( i = 0; i < MAX_PLAYERS; i ++ )
 		{
-			if ( m_Teleporters[i].entrance.get() && (ENTINDEX(m_Teleporters[i].entrance.get())==index) )
+			if ( tele->entrance.get() && (ENTINDEX(tele->entrance.get())==index) )
 				return INDEXENT(i+1);
-			if ( m_Teleporters[i].exit.get() && (ENTINDEX(m_Teleporters[i].exit.get())==index) )
+			if ( tele->exit.get() && (ENTINDEX(tele->exit.get())==index) )
 				return INDEXENT(i+1);
+
+			tele++;
 		}
 		break;
 	}
@@ -379,7 +304,9 @@ edict_t *CTeamFortress2Mod :: nearestDispenser ( Vector vOrigin, int team )
 
 void CTeamFortress2Mod::sapperPlaced(edict_t *pOwner,eEngiBuild type,edict_t *pSapper)
 {
-	int index = ENTINDEX(pOwner)-1;
+	static short int index;
+	
+	index = ENTINDEX(pOwner)-1;
 
 	if ( (index>=0) && (index<MAX_PLAYERS) )
 	{
@@ -394,7 +321,7 @@ void CTeamFortress2Mod::sapperPlaced(edict_t *pOwner,eEngiBuild type,edict_t *pS
 
 void CTeamFortress2Mod::sapperDestroyed(edict_t *pOwner,eEngiBuild type, edict_t *pSapper)
 {
-	int index; 
+	static short int index; 
 
 	for ( index = 0; index < MAX_PLAYERS; index ++ )
 	{
@@ -419,41 +346,55 @@ void CTeamFortress2Mod::sapperDestroyed(edict_t *pOwner,eEngiBuild type, edict_t
 
 void CTeamFortress2Mod::sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
 {
-	int index = ENTINDEX(pOwner)-1;
-	//short userid = 0;
-
-	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pOwner);
-
-	//if ( p )
-	//	userid = p->GetUserID();
+	static short int index;
+	static tf_sentry_t *temp;
+	
+	index = ENTINDEX(pOwner)-1;
 
 	if ( (index>=0) && (index<MAX_PLAYERS) )
 	{
 		if ( type == ENGI_SENTRY )
 		{
-			m_SentryGuns[index].sentry = MyEHandle(pBuilding);
-			m_SentryGuns[index].sapper = MyEHandle();
-			//m_SentryGuns[index].builder = userid;
+			temp = &(m_SentryGuns[index]);
+			temp->sentry = MyEHandle(pBuilding);
+			temp->sapper = MyEHandle();
+			//m_SentryGuns[index].builder
 		}
 	}
 }
 
+bool CTeamFortress2Mod::isSentryGun (edict_t *pEdict )
+{
+	static short int i;
+	static tf_sentry_t *temp;
+
+	temp = m_SentryGuns;
+
+	for ( i = 0; i < MAX_PLAYERS; i ++ )
+	{
+		if ( temp->sentry == pEdict )
+			return true;
+
+		temp++;
+	}
+
+	return false;
+}
+
 void CTeamFortress2Mod::dispenserBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
 {
-	int index = ENTINDEX(pOwner)-1;
-	//short userid = 0;
-
-	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pOwner);
-
-	//if ( p )
-	//	userid = p->GetUserID();
+	static short int index;
+	static tf_disp_t *temp;
+	
+	index = ENTINDEX(pOwner)-1;
 
 	if ( (index>=0) && (index<MAX_PLAYERS) )
 	{
 		if ( type == ENGI_DISP )
 		{
-			m_Dispensers[index].disp = MyEHandle(pBuilding);
-			m_Dispensers[index].sapper = MyEHandle();
+			temp = &(m_Dispensers[index]);
+			temp->disp = MyEHandle(pBuilding);
+			temp->sapper = MyEHandle();
 			//m_Dispensers[index].builder = userid;
 		}
 	}

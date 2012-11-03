@@ -208,7 +208,7 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bo
 void CBotWeapons :: addWeapon ( int iId )
 {
 
-	int i = 0;
+	register int i = 0;
 	Vector origin;
 	edict_t *pEnt;
 	const char *classname;
@@ -245,7 +245,7 @@ void CBotWeapons :: addWeapon ( int iId )
 
 CBotWeapon *CBotWeapons :: getWeapon ( CWeapon *pWeapon )
 {
-	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
+	for ( register unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 	{
 		if ( m_theWeapons[i].getWeaponInfo() == pWeapon )
 			return &(m_theWeapons[i]);
@@ -256,7 +256,7 @@ CBotWeapon *CBotWeapons :: getWeapon ( CWeapon *pWeapon )
 
 void CBotWeapons :: clearWeapons ()
 {
-	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
+	for ( register unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 		m_theWeapons[i].setHasWeapon(false);	
 }
 

@@ -807,6 +807,7 @@ void CBot :: spawnInit ()
 	m_bOpenFire = true;
 	m_fListenTime = 0.0f;
 	m_bListenPositionValid = false;
+	m_bPrevAimVectorValid = false;
 	m_fLastSeeEnemy = 0;
 	m_fAvoidTime = 0;
 	m_vLookAroundOffset = Vector(0,0,0);
@@ -1353,7 +1354,7 @@ void CBot :: doMove ()
 				m_fUpSpeed = m_fIdealMoveSpeed;
 			else if ( m_vMoveTo.z < (getOrigin().z - 32.0) )
 				m_fUpSpeed = -m_fIdealMoveSpeed;
-		//}
+		//}d
 	}
 	else
 	{	
@@ -1367,7 +1368,9 @@ void CBot :: doMove ()
 
 bool CBot :: FInViewCone ( edict_t *pEntity )
 {	
-	Vector origin = CBotGlobals::entityOrigin(pEntity);
+	static Vector origin;
+	
+	origin = CBotGlobals::entityOrigin(pEntity);
 
 	return ( ((origin - getEyePosition()).Length()>1) && (DotProductFromOrigin(origin) > 0) ); // 90 degree !! 0.422618f ); // 65 degree field of view   
 }
@@ -1394,31 +1397,14 @@ float CBot :: DotProductFromOrigin ( Vector &pOrigin )
 
 	//return m_pBaseEdict->FInViewCone(CBaseEntity::Instance(pEntity));
 }
-/*
-Vector BOTUTIL_SmoothAim( Vector aiming, float dist, QAngle angles )
-{
-		extern ConVar bot_aimsmoothing;
-		Vector v_forward;
-		Vector v_comp;
 
-		AngleVectors(angles,&v_forward);
-
-		v_forward = v_forward.NormalizeInPlace();
-
-		v_forward = v_forward * dist;
-
-		v_comp = (aiming - v_forward)*bot_aimsmoothing.GetFloat();
-
-		return v_forward + v_comp;
-}
-*/
 Vector CBot :: getAimVector ( edict_t *pEntity )
 {
-	Vector v_right;
-	QAngle angles;
-	float fDistFactor;
-	Vector v_max,v_min;
-	Vector v_org;
+	static Vector v_right;
+	static QAngle angles;
+	static float fDistFactor;
+	static Vector v_max,v_min;
+	static Vector v_org;
 	
 	if ( m_fNextUpdateAimVector > engine->Time() )
 	{

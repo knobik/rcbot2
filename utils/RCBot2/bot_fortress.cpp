@@ -1343,6 +1343,7 @@ void CBotTF2 :: checkBuildingsValid ()
 		{
 			m_pSentryGun = NULL;
 			m_prevSentryHealth = 0;
+			m_iSentryArea = 0;
 		}
 	}
 
@@ -1352,6 +1353,7 @@ void CBotTF2 :: checkBuildingsValid ()
 		{
 			m_pDispenser = NULL;
 			m_prevDispHealth = 0;
+			m_iDispenserArea = 0;
 		}
 	}
 
@@ -1361,6 +1363,7 @@ void CBotTF2 :: checkBuildingsValid ()
 		{
 			m_pTeleEntrance = NULL;
 			m_prevTeleEntHealth = 0;
+			m_iTeleEntranceArea = 0;
 		}
 	}
 
@@ -1370,6 +1373,7 @@ void CBotTF2 :: checkBuildingsValid ()
 		{
 			m_pTeleExit = NULL;
 			m_prevTeleExtHealth = 0;
+			m_iTeleExitArea = 0;
 		}
 	}
 }
@@ -1649,8 +1653,12 @@ bool CBotFortress:: wantToUnCloak ()
 
 void CBotTF2 :: modThink ()
 {
-	bool bNeedHealth = hasSomeConditions(CONDITION_NEED_HEALTH);
-	bool bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
+	static bool bNeedHealth;
+	static bool bNeedAmmo;
+
+	bNeedHealth = hasSomeConditions(CONDITION_NEED_HEALTH);
+	bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
+
 	// mod specific think code here
 	CBotFortress :: modThink();
 
@@ -1798,7 +1806,9 @@ void CBotTF2 :: modThink ()
 
 	if ( m_iClass == TF_CLASS_HWGUY )
 	{
-		bool bRevMiniGun = false;
+		static bool bRevMiniGun;
+		
+		bRevMiniGun = false;
 
 		if ( wantToShoot() )
 		{
@@ -2064,7 +2074,7 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 
 	if ( !CBotGlobals::entityIsValid(pEntity) )
 		return false;
-	if ( m_pEdict == pEntity ) // can't avoid self!!!
+	if ( m_pEdict == pEntity ) // can't avoid self!!!!
 		return false;
 	if ( m_pLookEdict == pEntity )
 		return false;
@@ -2453,7 +2463,9 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 		}
 		else if ( CTeamFortress2Mod::isBoss(pEnemy) )
 		{
-			fPreFactor = -1000.0f;
+			extern ConVar bot_bossattackfactor;
+
+			fPreFactor = -1500.0f * bot_bossattackfactor.GetFloat();
 		}
 	}
 
@@ -3694,19 +3706,34 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 	}
 }
 
+
+inline Vector BOTUTIL_SmoothAim( Vector aiming_start, Vector aiming_end, float timestart, float timenow, float timeend )
+{
+		// linear
+		return aiming_start + ((aiming_end - aiming_start) * ((timenow - timestart)/(timeend - timestart)));
+}
+
+
 #define TF2_ROCKETSPEED   1100
 #define TF2_GRENADESPEED  1065 // TF2 wiki
 
 Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 {
+	extern ConVar bot_aimsmoothing;
 	extern ConVar bot_rocketpredict;
-	CBotWeapon *pWp = getCurrentWeapon();
-	float fDist = distanceFrom(pEntity);
-	float fTime;
+	static CBotWeapon *pWp;
+	static float fDist;
+	static float fTime;
+
+	pWp = getCurrentWeapon();
+	fDist = distanceFrom(pEntity);
 
 	if ( m_fNextUpdateAimVector > engine->Time() )
 	{
-		return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
+		if ( m_bPrevAimVectorValid && bot_aimsmoothing.GetBool() )
+			return BOTUTIL_SmoothAim(m_vPrevAimVector,m_vAimVector,m_fStartUpdateAimVector,engine->Time(),m_fNextUpdateAimVector);
+
+		return m_vAimVector;
 	}
 
 	Vector vAim = CBot::getAimVector(pEntity);
@@ -3793,7 +3820,21 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 		}
 	}
 
+	m_fStartUpdateAimVector = engine->Time();
 	m_vAimVector = vAim;
+
+	if ( bot_aimsmoothing.GetBool() )
+	{
+		if ( m_bPrevAimVectorValid )
+		{
+			return BOTUTIL_SmoothAim(m_vPrevAimVector,m_vAimVector,m_fStartUpdateAimVector,engine->Time(),m_fNextUpdateAimVector);
+		}
+		else
+		{
+			m_vPrevAimVector = m_vAimVector;
+			m_bPrevAimVectorValid = true;
+		}
+	}
 
 	return m_vAimVector;
 }
@@ -4058,11 +4099,16 @@ void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 
 bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
-	int iEnemyTeam;
-	bool bIsPipeBomb = false;
-	bool bIsRocket = false;
-	int bValid = false;
-	bool bIsBoss = false;
+	static short int iEnemyTeam;
+	static bool bIsPipeBomb;
+	static bool bIsRocket;
+	static int bValid;
+	static bool bIsBoss;
+
+	bIsPipeBomb = false;
+	bIsRocket = false;
+	bValid = false;
+	bIsBoss = false;
 
 	if ( !CBotGlobals::entityIsAlive(pEdict) )
 		return false;

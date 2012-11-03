@@ -37,7 +37,10 @@
 #include "bot_profiling.h"
 
 #include "ndebugoverlay.h"
+
 extern IVDebugOverlay *debugoverlay;
+extern ConVar bot_visrevs;
+extern ConVar bot_visrevs_clients;
 ////////////////////////////////////////////
 
 byte CBotVisibles :: m_bPvs[MAX_MAP_CLUSTERS/8];
@@ -212,14 +215,19 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 
 void CBotVisibles :: updateVisibles ()
 {
-	bool bVisible;
-	edict_t *pEntity;
+	static bool bVisible;
+	static edict_t *pEntity;
 
-	extern ConVar bot_visrevs;
+	static int iTicks;
+	static int iMaxTicks;  //m_pBot->getProfile()->getVisionTicks();
+	static int iStartIndex;
+	static int iMaxClientTicks; 
+	static int iStartPlayerIndex;
 
-	int iTicks = 0;
-	int iMaxTicks = bot_visrevs.GetInt(); //m_pBot->getProfile()->getVisionTicks();
-	int iStartIndex = m_iCurrentIndex;
+	iTicks = 0;
+	iMaxTicks = bot_visrevs.GetInt();
+	iStartIndex = m_iCurrentIndex;
+	iMaxClientTicks = bot_visrevs_clients.GetInt();
 
 	if ( iMaxTicks <= 0 )
 		iMaxTicks = 10;
@@ -233,11 +241,7 @@ void CBotVisibles :: updateVisibles ()
 	}
 #endif
 
-	//edict_t *pAvoidEntity = NULL;
-//	float fNearestAvoidEntity = 0;
-//	float fDist;
-
-	int iStartPlayerIndex = m_iCurPlayer;
+	iStartPlayerIndex = m_iCurPlayer;
 
 	if ( m_pBot->moveToIsValid() )
 	{
@@ -248,7 +252,7 @@ void CBotVisibles :: updateVisibles ()
 	}
 
 	// we'll start searching some players first for quick player checking
-	while ( iTicks < 4 )
+	while ( iTicks < iMaxClientTicks )
 	{
 		pEntity = INDEXENT(m_iCurPlayer);
 
@@ -270,8 +274,6 @@ void CBotVisibles :: updateVisibles ()
 
 	if ( iMaxTicks > m_iMaxIndex )
 		iMaxTicks = m_iMaxIndex;
-
-//	m_pBot->setAvoidEntity(pAvoidEntity);
 
 	if ( m_iCurPlayer >= m_iCurrentIndex )
 		return;
@@ -309,9 +311,13 @@ void CBotVisibles :: updateVisibles ()
 
 bool CBotVisibles :: isVisible ( edict_t *pEdict ) 
 { 
-	int iIndex = ENTINDEX(pEdict)-1;
-	int iByte = iIndex/8;
-	int iBit = iIndex%8;
+	static int iIndex;
+	static int iByte;
+	static int iBit;
+
+	iIndex = ENTINDEX(pEdict)-1;
+	iByte = iIndex/8;
+	iBit = iIndex%8;
 
 	if ( iIndex < 0 )
 		return false;

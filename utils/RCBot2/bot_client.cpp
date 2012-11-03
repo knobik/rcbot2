@@ -358,7 +358,7 @@ void CClient :: setWaypointCut (CWaypoint *pWaypoint)
 {
 	if ( pWaypoint )
 	{
-		int i = 0;
+		register int i = 0;
 
 		setWaypointCopy(pWaypoint);
 

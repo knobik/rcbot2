@@ -513,7 +513,7 @@ bool CBotEvent :: forCurrentMod ()
 	return ((m_iModId == MOD_ANY) || (CBotGlobals::isMod(m_iModId)));
 }
 // should we execute this ??
-bool CBotEvent :: isType ( const char *szType )
+inline bool CBotEvent :: isType ( const char *szType )
 {
 	return forCurrentMod() && FStrEq(m_szType,szType);
 }
@@ -606,7 +606,7 @@ void CBotEvents :: executeEvent( void *pEvent, eBotEventType iType )
 	if ( iType != TYPE_IGAMEEVENT )
 		iEventId = pInterface->getInt("eventid");
 
-	for ( unsigned int i = 0; i < m_theEvents.size(); i ++ )
+	for ( register unsigned int i = 0; i < m_theEvents.size(); i ++ )
 	{
 		pFound = m_theEvents[i];
 

@@ -82,8 +82,9 @@
 
 static ICvar *s_pCVar;
 
+ConVar bot_visrevs_clients("rcbot_visrevs_clients","4",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
 ConVar bot_spyknifefov("rcbot_spyknifefov","80",0,"the FOV from the enemy that spies must backstab from");
-ConVar bot_visrevs("rcbot_visrevs","9",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
+ConVar bot_visrevs("rcbot_visrevs","9",0,"how many revs the bot searches for visible monsters, lower to reduce cpu usage min:5");
 ConVar bot_pathrevs("rcbot_pathrevs","40",0,"how many revs the bot searches for a path each frame, lower to reduce cpu usage, but causes bots to stand still more");
 ConVar bot_command("rcbot_cmd","",0,"issues a command to all bots");
 ConVar bot_rocketpredict( "rcbot_rocketpred", "0.4", 0, "multiplier for soldier / demoman rocket/grenade prediction" );
@@ -105,7 +106,8 @@ ConVar bot_avoid_radius("rcbot_avoid_radius","128",0,"radius in units for bots t
 ConVar bot_avoid_strength("rcbot_avoid_strength","96",0,"strength of avoidance (0 = disable)");
 ConVar bot_messaround("rcbot_messaround","1",0,"bots mess around at start up");
 ConVar bot_heavyaimoffset("rcbot_heavyaimoffset","0.1",0,"fraction of how much the heavy aims at a diagonal offset");
-ConVar bot_aimsmoothing("rcbot_aimsmooting","0.4",0,"fraction of how quickly the bots aim smoothly (1 = no smoothing)");
+ConVar bot_aimsmoothing("rcbot_aimsmooting","0",0,"(0 = no smoothing)");
+ConVar bot_bossattackfactor("rcbot_bossattackfactor","1.0",0,"the higher the more ofetn the bots will shoot the boss");
 
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
@@ -122,128 +124,13 @@ CGlobalVars *gpGlobals = NULL;
 IVDebugOverlay *debugoverlay = NULL;
 IServerGameEnts *servergameents = NULL; // for accessing the server game entities
 IServerGameDLL *servergamedll = NULL;
-/*
-abstract_class IServerGameDLLInterface
-{
-public:
-	// Initialize the game (one-time call when the DLL is first loaded )
-	// Return false if there is an error during startup.
-	virtual bool			DLLInit(	CreateInterfaceFn engineFactory, 
-										CreateInterfaceFn physicsFactory, 
-										CreateInterfaceFn fileSystemFactory, 
-										CGlobalVars *pGlobals) = 0;
-	
-	virtual bool			ReplayInit( CreateInterfaceFn replayFactory ) = 0;
-	
-	// This is called when a new game is started. (restart, map)
-	virtual bool			GameInit( void ) = 0;
 
-	// Called any time a new level is started (after GameInit() also on level transitions within a game)
-	virtual bool			LevelInit( char const *pMapName, 
-									char const *pMapEntities, char const *pOldLevel, 
-									char const *pLandmarkName, bool loadGame, bool background ) = 0;
-
-	// The server is about to activate
-	virtual void			ServerActivate( edict_t *pEdictList, int edictCount, int clientMax ) = 0;
-
-	// The server should run physics/think on all edicts
-	virtual void			GameFrame( bool simulating ) = 0;
-
-	// Called once per simulation frame on the final tick
-	virtual void			PreClientUpdate( bool simulating ) = 0;
-
-	// Called when a level is shutdown (including changing levels)
-	virtual void			LevelShutdown( void ) = 0;
-	// This is called when a game ends (server disconnect, death, restart, load)
-	// NOT on level transitions within a game
-	virtual void			GameShutdown( void ) = 0;
-
-	// Called once during DLL shutdown
-	virtual void			DLLShutdown( void ) = 0;
-
-	// Get the simulation interval (must be compiled with identical values into both client and game .dll for MOD!!!)
-	// Right now this is only requested at server startup time so it can't be changed on the fly, etc.
-	virtual float			GetTickInterval( void ) const = 0;
-
-	// Give the list of datatable classes to the engine.  The engine matches class names from here with
-	//  edict_t::classname to figure out how to encode a class's data for networking
-	virtual ServerClass*	GetAllServerClasses( void ) = 0;
-
-	// Returns string describing current .dll.  e.g., TeamFortress 2, Half-Life 2.  
-	//  Hey, it's more descriptive than just the name of the game directory
-	virtual const char     *GetGameDescription( void ) = 0;      
-	
-	// Let the game .dll allocate it's own network/shared string tables
-	virtual void			CreateNetworkStringTables( void ) = 0;
-	
-	// Save/restore system hooks
-	virtual CSaveRestoreData  *SaveInit( int size ) = 0;
-	virtual void			SaveWriteFields( CSaveRestoreData *, const char *, void *, datamap_t *, typedescription_t *, int ) = 0;
-	virtual void			SaveReadFields( CSaveRestoreData *, const char *, void *, datamap_t *, typedescription_t *, int ) = 0;
-	virtual void			SaveGlobalState( CSaveRestoreData * ) = 0;
-	virtual void			RestoreGlobalState( CSaveRestoreData * ) = 0;
-	virtual void			PreSave( CSaveRestoreData * ) = 0;
-	virtual void			Save( CSaveRestoreData * ) = 0;
-	virtual void			GetSaveComment( char *comment, int maxlength, float flMinutes, float flSeconds, bool bNoTime = false ) = 0;
-	virtual void			WriteSaveHeaders( CSaveRestoreData * ) = 0;
-	virtual void			ReadRestoreHeaders( CSaveRestoreData * ) = 0;
-	virtual void			Restore( CSaveRestoreData *, bool ) = 0;
-	virtual bool			IsRestoring() = 0;
-
-	// Returns the number of entities moved across the transition
-	virtual int				CreateEntityTransitionList( CSaveRestoreData *, int ) = 0;
-	// Build the list of maps adjacent to the current map
-	virtual void			BuildAdjacentMapList( void ) = 0;
-
-	// Retrieve info needed for parsing the specified user message
-	virtual bool			GetUserMessageInfo( int msg_type, char *name, int maxnamelength, int& size ) = 0;
-
-	// Hand over the StandardSendProxies in the game DLL's module.
-	virtual CStandardSendProxies*	GetStandardSendProxies() = 0;
-
-	// Called once during startup, after the game .dll has been loaded and after the client .dll has also been loaded
-	virtual void			PostInit() = 0;
-	// Called once per frame even when no level is loaded...
-	virtual void			Think( bool finalTick ) = 0;
-
-#ifdef _XBOX
-	virtual void			GetTitleName( const char *pMapName, char* pTitleBuff, int titleBuffSize ) = 0;
-#endif
-
-	virtual void			PreSaveGameLoaded( char const *pSaveName, bool bCurrentlyInGame ) = 0;
-
-	// Returns true if the game DLL wants the server not to be made public.
-	// Used by commentary system to hide multiplayer commentary servers from the master.
-	virtual bool			ShouldHideServer( void ) = 0;
-
-	virtual void			InvalidateMdlCache() = 0;
-
-	// * This function is new with version 6 of the interface.
-	//
-	// This is called when a query from IServerPluginHelpers::StartQueryCvarValue is finished.
-	// iCookie is the value returned by IServerPluginHelpers::StartQueryCvarValue.
-	// Added with version 2 of the interface.
-	virtual void			OnQueryCvarValueFinished( QueryCvarCookie_t iCookie, edict_t *pPlayerEntity, EQueryCvarValueStatus eStatus, const char *pCvarName, const char *pCvarValue ) = 0;
-	
-	// Called after the steam API has been activated post-level startup
-	virtual void			GameServerSteamAPIActivated( void ) = 0;
-	
-	virtual void			GameServerSteamAPIShutdown( void ) = 0;
-};*/
 // 
 // The plugin is a static singleton that is exported as an interface
 //
 CRCBotPlugin g_RCBOTServerPlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CRCBotPlugin, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_RCBOTServerPlugin );
-/* shameless hack
-typedef float (*HKPROCESSUSERCMDS) ( edict_t *, bf_read *, int , int ,int , bool , bool  );
 
-HKPROCESSUSERCMDS ProcessUserCmds = NULL;
-
-float MyProcessUsercmds( edict_t *player, bf_read *buf, int numcmds, int totalcmds, int dropped_packets, bool ignore, bool paused )
-{
-	return ProcessUserCmds(player,buf,numcmds,totalcmds,dropped_packets,ignore,paused);
-}*/
 
 //---------------------------------------------------------------------------------
 // Purpose: constructor/destructor

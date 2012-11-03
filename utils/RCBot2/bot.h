@@ -724,7 +724,10 @@ protected:
 	bool m_bHasGoal;
 	QAngle m_vViewAngles;
 	float m_fNextUpdateAimVector;
+	float m_fStartUpdateAimVector;
 	Vector m_vAimVector;
+	Vector m_vPrevAimVector;
+	bool m_bPrevAimVectorValid;
 
 	eLookTask m_iLookTask;
 
