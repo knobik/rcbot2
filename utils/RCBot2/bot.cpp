@@ -995,6 +995,7 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 		}
 
 		m_iAccumulatedDamage = 0;
+		m_fUpdateDamageTime = 0;
 
 		return true;
 	}

@@ -119,6 +119,7 @@ private:
 	static vector <int> m_BlueDefend; 
 	static vector <int> m_RedDefend; 
 	static int m_iValidAreas;
+	static float m_fLoadedScript;
 };
 
 

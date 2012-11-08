@@ -216,6 +216,8 @@ CBotFortress :: CBotFortress()
 	m_bEntranceVectorValid = false;
 	m_pLastCalledMedic = NULL;
 	m_fLastCalledMedicTime = 0.0f;
+	m_bIsBeingHealed = false;
+	m_bCanBeUbered = false;
 }
 
 void CBotFortress :: checkDependantEntities ()
@@ -1054,9 +1056,14 @@ bool CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 
 	if (( m_iClass != TF_CLASS_MEDIC ) || (!m_pHeal) )
 	{
-		if ( CBot::hurt(pAttacker,iHealthNow,true) )
+		if( m_bCanBeUbered )
 		{
-			if ( !bDontHide)
+			if ( this->isTF2()) // hack
+				((CBotTF2*)this)->voiceCommand(TF_VC_ACTIVATEUBER);
+		}
+		else if ( CBot::hurt(pAttacker,iHealthNow,true) )
+		{
+			if ( !bDontHide )
 			{
 				if ( wantToNest() )
 				{
@@ -1095,11 +1102,9 @@ bool CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	{
 		if ( !CTeamFortress2Mod::isSentry(pAttacker,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 			m_fFrenzyTime = engine->Time() + randomFloat(2.0f,6.0f);
-
-
 	}
 
-			return false;
+	return false;
 }
 
 
@@ -1662,6 +1667,8 @@ void CBotTF2 :: modThink ()
 	// mod specific think code here
 	CBotFortress :: modThink();
 
+	checkBeingHealed();
+
 	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
 	{
 		if ( getTeam() == TF2_TEAM_BLUE )
@@ -2196,53 +2203,6 @@ void CBotTF2 ::voiceCommand ( eVoiceCMD cmd )
 		sprintf(scmd,"voicemenu %d %d",vcmd.b1.v1,vcmd.b1.v2);
 
 		helpers->ClientCommand(m_pEdict,scmd);
-
-		/*
-		switch ( cmd )
-		{
-		case TF_VC_SPY:
-			helpers->ClientCommand(m_pEdict,"voicemenu 1 1");
-			break;
-		case TF_VC_MEDIC:
-			helpers->ClientCommand(m_pEdict,"voicemenu 0 0");
-			break;
-		case TF_VC_HELP:
-			helpers->ClientCommand(m_pEdict,"voicemenu 2 0");
-			break;
-		case TF_VC_DISP:
-			helpers->ClientCommand(m_pEdict,"voicemenu 1 4");
-			break;
-		case TF_VC_SENTRY:
-			helpers->ClientCommand(m_pEdict,"voicemenu 1 5");
-			break;
-		case TF_VC_TELE:
-			helpers->ClientCommand(m_pEdict,"voicemenu 1 3");
-			break;
-		case TF_VC_SENTRYAHEAD:
-			helpers->ClientCommand(m_pEdict,"voicemenu 1 2");
-			break;
-		case TF_VC_YES:
-			helpers->ClientCommand(m_pEdict,"voicemenu 0 6");
-			break;
-		case TF_VC_NO:
-			helpers->ClientCommand(m_pEdict,"voicemenu 0 7");
-			break;
-		case TF_VC_GOGOGO:
-			helpers->ClientCommand(m_pEdict,"voicemenu 0 2");
-			break;
-		case TF_VC_MOVEUP:
-			helpers->ClientCommand(m_pEdict,"voicemenu 0 3");
-			break;
-		case TF_VC_GOODSHOT:
-			helpers->ClientCommand(m_pEdict,"voicemenu 2 6");
-			break;
-		case TF_VC_THANKS:
-			helpers->ClientCommand(m_pEdict,"voicemenu 0 1");
-			break;
-		case TF_VC_INCOMING:
-			helpers->ClientCommand(m_pEdict,"voicemenu 1 0");
-			break;
-		}*/
 	}
 }
 
@@ -2336,6 +2296,56 @@ void CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 	
 }
 
+void CBotTF2 :: checkBeingHealed ()
+{
+	static short i;
+	static edict_t *p;
+	static edict_t *pWeapon;
+	static IPlayerInfo *pi;
+	static const char *szWeaponName;
+	
+
+	if ( m_fCheckHealTime > engine->Time() )
+		return;
+
+	m_fCheckHealTime = engine->Time() + 1.0f;
+
+	m_bIsBeingHealed = false;
+	m_bCanBeUbered = false;
+
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		p = INDEXENT(i);
+
+		if ( p == m_pEdict )
+			continue;
+
+		pi = playerinfomanager->GetPlayerInfo(p);
+
+		if ( p && pi && (pi->GetTeamIndex()==getTeam()) && CBotGlobals::entityIsValid(p) && p->GetNetworkable()->GetClassName() )
+		{
+			szWeaponName = pi->GetWeaponName();
+
+			if ( szWeaponName && *szWeaponName && strcmp(szWeaponName,"tf_weapon_medigun") == 0 )
+			{
+				pWeapon = CTeamFortress2Mod:: getMediGun(p);
+
+				if ( !pWeapon )
+					continue;
+
+				if ( CClassInterface::getMedigunHealing(pWeapon) && (CClassInterface::isMedigunTargetting(pWeapon,m_pEdict)) )
+				{
+					if ( CClassInterface::getUberChargeLevel(pWeapon) > 99 )
+						m_bCanBeUbered = true;
+
+					m_bIsBeingHealed = true;
+				}
+			}
+		}
+	}
+
+}
+
 // Preconditions :  Current weapon is Medigun
 //					pPlayer is not NULL
 //
@@ -2377,17 +2387,45 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 
 	if ( !CClassInterface::getMedigunHealing(pWeapon) )
 	{
-		primaryAttack(true);
+		if ( m_fHealClickTime < engine->Time() )
+		{
+			primaryAttack(true);
+			m_fHealClickTime = engine->Time() + randomFloat(0.75f,1.25f);
+		}
 	}
 	else
 	{
-		pPlayer = CClassInterface::getMedigunTarget(pWeapon);
+		edict_t *pent;
+
+		pPlayer = NULL;
+
+		for ( unsigned short i = 1; i <= gpGlobals->maxClients; i++ )
+		{
+			pent = INDEXENT(i);
+
+			if ( pent && CBotGlobals::entityIsValid(pent) )
+			{
+				if (CClassInterface::isMedigunTargetting(pWeapon,pent) )
+				{
+					pPlayer = pent;
+					break;
+				}
+			}
+		}
 
 		if ( pPlayer )
+		{
 			m_pHeal = pPlayer;
-
-		if ( pPrevPlayer != pPlayer )
-			primaryAttack(true);
+			
+			if ( pPrevPlayer != pPlayer )
+			{
+				if ( m_fHealClickTime < engine->Time() )
+				{
+					primaryAttack(true);
+					m_fHealClickTime = engine->Time() + randomFloat(1.0f,2.0f);
+				}
+			}
+		}
 	}
 	//else
 	//	m_pHeal = CClassInterface::getMedigunTarget(INDEXENT(pWeap->getWeaponIndex()));
@@ -2402,8 +2440,8 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 		//if ( randomInt(0,100) > 75 )
 		//{
 			// uber if ready / and round has started
-		if ( wantToShoot() )	
-			m_pButtons->tap(IN_ATTACK2);
+		//if ( wantToShoot() )	
+		m_pButtons->tap(IN_ATTACK2);
 		//}
 	}
 
@@ -2761,9 +2799,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	// only defend if defend area is > 0
 	utils.addUtility(CBotUtility(this,BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && (CTeamFortress2Mod::isMapType(TF_MAP_SD)||CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility));
 
-	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal) && wantToHeal(m_pHeal),0.99f));
-	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && CBotGlobals::entityIsAlive(m_pLastHeal) && wantToHeal(m_pLastHeal),1.0f)); 
-
+	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal) && wantToHeal(m_pHeal),0.98f));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && CBotGlobals::entityIsAlive(m_pLastHeal) && wantToHeal(m_pLastHeal),0.99f)); 
+	utils.addUtility(CBotUtility(this,BOT_UTIL_HIDE_FROM_ENEMY,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY),1.0f));
+	
 	int numplayersonteam = CTeamFortress2Mod::numPlayersOnTeam(getTeam());
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_FINDPLAYER,(m_iClass == TF_CLASS_MEDIC) && 
@@ -3346,6 +3385,30 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				return true;
 			}
 			break;
+		case BOT_UTIL_HIDE_FROM_ENEMY:
+			{
+				CBotSchedule *pSchedule = new CBotSchedule();
+
+				pSchedule->setID(SCHED_GOOD_HIDE_SPOT);
+
+				// run at flank while shooting	
+				CFindPathTask *pHideGoalPoint = new CFindPathTask();
+				Vector vOrigin = CBotGlobals::entityOrigin(m_pEnemy);
+				
+				// no interrupts, should be a quick waypoint path anyway
+				pHideGoalPoint->setNoInterruptions();
+				// get vector from good hide spot task
+				pHideGoalPoint->getPassedVector();
+				
+				pSchedule->addTask(new CFindGoodHideSpot(vOrigin));
+				pSchedule->addTask(pHideGoalPoint);
+				pSchedule->addTask(new CBotNest());
+
+				m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
+				m_pSchedules->addFront(pSchedule);
+
+				return true;
+			}
 		case BOT_UTIL_MEDIC_HEAL:			
 			m_pSchedules->add(new CBotTF2HealSched(m_pHeal));
 			return true;

@@ -124,7 +124,7 @@ CGlobalVars *gpGlobals = NULL;
 IVDebugOverlay *debugoverlay = NULL;
 IServerGameEnts *servergameents = NULL; // for accessing the server game entities
 IServerGameDLL *servergamedll = NULL;
-
+//CBaseEntityList * g_pEntityList;
 // 
 // The plugin is a static singleton that is exported as an interface
 //
@@ -183,10 +183,30 @@ CON_COMMAND( rcbotd, "access the bot commands on a server" )
 
 void CRCBotPlugin::OnEdictAllocated( edict_t *edict )
 {
+#ifdef _DEBUG
+	static char msg[256];
+
+	if ( CClients::clientsDebugging(BOT_DEBUG_EDICTS) )
+	{
+		sprintf(msg,"%x : %s\n",(int)edict,edict->GetClassName());
+
+		CClients::clientDebugMsg(BOT_DEBUG_EDICTS,msg);
+	}
+#endif
 }
 
 void CRCBotPlugin::OnEdictFreed( const edict_t *edict  )
 {
+#ifdef _DEBUG
+	static char msg[256];
+
+	if ( CClients::clientsDebugging(BOT_DEBUG_EDICTS) )
+	{
+		sprintf(msg,"%x : %s\n",(int)edict,edict->GetClassName());
+
+		CClients::clientDebugMsg(BOT_DEBUG_EDICTS,msg);
+	}
+#endif
 }
 
 
@@ -996,6 +1016,59 @@ void CClassInterface ::test()
 	//return offset;
 }
 
+int CClassInterface :: getUberChargeLevel (edict_t *pWeapon)
+{
+	static unsigned int offset = 0;
+ 
+	if (!offset)
+		offset = findOffset("m_flChargeLevel","CWeaponMedigun");
+	
+	if (!offset)
+		return 0;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)pWeapon->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return 0;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	return (int)((*(float*)((char *)pEntity + offset)) * 100.0f);
+}
+// unused -- problem
+edict_t *CClassInterface :: getCurrentWeapon ( edict_t *player )
+{
+	static unsigned int offset = 0;
+	static int weapon;
+	static int id;
+ 
+	if (!offset)
+		offset = findOffset("m_hActiveWeapon","CTFPlayer");
+	
+	if (!offset)
+		return 0;
+ 
+	IServerUnknown *pUnknown = (IServerUnknown *)player->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return 0;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	weapon = *(int*)((int)pEntity + offset);
+
+	if ( weapon == -1 )
+		return NULL;
+return NULL;
+	//id = *(int*)((int)pEntity + offset);
+
+	//return (edict_t*)((int)pEntity + offset);
+}
+
 int CClassInterface :: isTeleporterMode ( edict_t *edict, eTeleMode mode )
 {
 	static unsigned int offset = 0;
@@ -1041,10 +1114,37 @@ bool CClassInterface :: getMedigunHealing ( edict_t *edict )
 	return *(bool *)((char *)pEntity + offset);
 }
 
-edict_t *CClassInterface :: getMedigunTarget ( edict_t *edict )
+bool CClassInterface :: isMedigunTargetting ( edict_t *pgun, edict_t *ptarget )
 {
 	static unsigned int offset = 0;
+	static int ref;
+
+	if (!offset)
+		offset = findOffset("m_hHealingTarget","CWeaponMedigun");
+	
+	if (!offset)
+		return NULL;
  
+	IServerUnknown *pUnknown = (IServerUnknown *)pgun->GetUnknown();
+
+	if (!pUnknown)
+	{
+		return NULL;
+	}
+ 
+	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
+
+	CBaseHandle &hndl = *(CBaseHandle *)((unsigned char *)pEntity + offset);
+
+	ref = ptarget->GetNetworkable()->GetEntityHandle()->GetRefEHandle().GetEntryIndex();
+
+	return hndl.GetEntryIndex() == ref;//hndl.Get() == (IHandleEntity*)(ptarget->GetUnknown()->GetBaseEntity());
+}
+
+CBaseEntity * CClassInterface :: getMedigunTarget ( edict_t *edict )
+{
+	static unsigned int offset = 0;
+
 	if (!offset)
 		offset = findOffset("m_hHealingTarget","CWeaponMedigun");
 	
@@ -1060,7 +1160,29 @@ edict_t *CClassInterface :: getMedigunTarget ( edict_t *edict )
  
 	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
 
-	return INDEXENT(*(byte*)((char *)pEntity + offset));
+	CBaseHandle &hndl = *(CBaseHandle *)((unsigned char *)pEntity + offset);
+
+	return (CBaseEntity*)INDEXENT(hndl.GetEntryIndex());
+	/*
+	entRef = hndl1.GetEntryIndex();
+
+	if ((unsigned)entRef == INVALID_EHANDLE_INDEX)
+	{
+		return INVALID_EHANDLE_INDEX;
+	}
+
+	int hndlValue = entRef & ~(1<<31);
+	CBaseHandle hndl(hndlValue);
+
+	if (hndl.GetEntryIndex() < MAX_EDICTS)
+	{
+		return hndl.GetEntryIndex();
+	}
+
+	return entRef;
+
+	//return entryindex;
+	//return *(short*)((char *)pEntity + offset);*/
 }
 
 void CClassInterface :: setTickBase ( edict_t *edict, int tick )

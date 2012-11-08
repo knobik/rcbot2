@@ -104,9 +104,12 @@ public:
 	static float getTF2SpyCloakMeter ( edict_t *edict );
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health );
 	static bool getMedigunHealing ( edict_t *edict );
-	static edict_t *getMedigunTarget ( edict_t *edict );
+	static CBaseEntity *getMedigunTarget ( edict_t *edict );
+	static bool isMedigunTargetting ( edict_t *pgun, edict_t *ptarget);
 	static void setTickBase ( edict_t *edict, int tickbase );
 	static int isTeleporterMode (edict_t *edict, eTeleMode mode );
+	static edict_t *getCurrentWeapon (edict_t *player);
+	static int getUberChargeLevel (edict_t *pWeapon);
 	static void test ();
 };
 
@@ -769,6 +772,7 @@ protected:
 	bool m_bDoWeapons;
 	bool m_bAvoidRight;
 	float m_fAvoidSideSwitch;
+	float m_fHealClickTime;
 };
 
 class IBotFunction

@@ -531,6 +531,10 @@ public:
 
 	static bool isSentryGun ( edict_t *pEdict );
 
+	static edict_t *getMediGun ( edict_t *pPlayer );
+
+	static void findMediGun ( edict_t *pPlayer );
+
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
@@ -563,6 +567,9 @@ private:
 	static int m_iFlagCarrierTeam;
 	static MyEHandle m_pBoss;
 	static bool m_bBossSummoned;
+
+	static MyEHandle pMediGuns[MAX_PLAYERS];
+
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

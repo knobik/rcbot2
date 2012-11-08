@@ -57,8 +57,42 @@ bool CTeamFortress2Mod::m_bHasRoundStarted = true;
 int CTeamFortress2Mod::m_iFlagCarrierTeam = 0;
 MyEHandle CTeamFortress2Mod::m_pBoss = MyEHandle(NULL);
 bool CTeamFortress2Mod::m_bBossSummoned = false;
+MyEHandle CTeamFortress2Mod::pMediGuns[MAX_PLAYERS];
 
 extern ConVar bot_use_disp_dist;
+
+edict_t *CTeamFortress2Mod:: getMediGun ( edict_t *pPlayer )
+{
+	if ( CClassInterface::getTF2Class(pPlayer) == TF_CLASS_MEDIC )
+		return pMediGuns[ENTINDEX(pPlayer)-1];
+	return NULL;
+}
+
+void CTeamFortress2Mod :: findMediGun ( edict_t *pPlayer )
+{
+	static int i;
+	static edict_t *pEnt;
+	static Vector vOrigin;
+
+	vOrigin = CBotGlobals::entityOrigin(pPlayer);
+
+	for ( i = (gpGlobals->maxClients+1); i <= gpGlobals->maxEntities; i ++ )
+	{
+		pEnt = INDEXENT(i);
+
+		if ( pEnt && CBotGlobals::entityIsValid(pEnt) )
+		{
+			if ( strcmp(pEnt->GetClassName(),"tf_weapon_medigun") == 0 )
+			{
+				if ( CBotGlobals::entityOrigin(pEnt) == vOrigin )
+				{
+					pMediGuns[ENTINDEX(pPlayer)-1] = pEnt;
+					break;
+				}
+			}
+		}
+	}
+}
 
 // get the teleporter exit of an entrance
 edict_t *CTeamFortress2Mod :: getTeleporterExit ( edict_t *pTele )
@@ -1081,6 +1115,7 @@ void CTeamFortress2Mod :: mapInit ()
 		m_SentryGuns[i].sentry = MyEHandle(NULL);
 		m_Dispensers[i].sapper = MyEHandle(NULL);
 		m_Dispensers[i].disp = MyEHandle(NULL);
+		pMediGuns[i] = NULL;
 	}
 
 	m_bAttackDefendMap = false;
@@ -1088,6 +1123,7 @@ void CTeamFortress2Mod :: mapInit ()
 	m_bBossSummoned = false;
 
 	resetCappers();
+	CPoints::loadMapScript();
 
 }
 

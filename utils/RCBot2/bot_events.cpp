@@ -106,6 +106,13 @@ void CPlayerSpawnEvent :: execute ( IBotEventInterface *pEvent )
 
 	if ( pBot )
 		pBot->spawnInit();
+
+	if ( pEvent->getInt("class") == TF_CLASS_MEDIC )
+	{
+		// find medigun
+		CTeamFortress2Mod::findMediGun(m_pActivator);
+	}
+
 }
 
 void CBulletImpactEvent :: execute ( IBotEventInterface *pEvent )

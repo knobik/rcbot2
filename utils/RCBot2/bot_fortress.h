@@ -340,6 +340,8 @@ public:
 
 	bool isTF () { return true; }
 
+	virtual bool isTF2 () { return false; }
+
 	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide  = false );
 
 	virtual TF_Class getClass () { return TF_CLASS_CIVILIAN; }
@@ -479,6 +481,11 @@ protected:
 	bool m_bCheckClass;
 	MyEHandle m_pLastCalledMedic;
 	float m_fLastCalledMedicTime;
+	bool m_bIsBeingHealed;
+
+	bool m_bCanBeUbered;
+	float m_fCheckHealTime;
+
 };
 //
 //
@@ -509,7 +516,8 @@ public:
 		m_prevDispHealth = 0;
 		m_prevTeleExtHealth = 0;
 		m_prevTeleEntHealth = 0;
-
+		m_fHealClickTime = 0;
+		m_fCheckHealTime = 0;
 	}
 
 	// found a new enemy
@@ -518,6 +526,8 @@ public:
 	void enemyAtIntel ( Vector vPos, int type = EVENT_FLAG_PICKUP );
 	//
 	void fixWeapons ();
+
+	bool isTF2 () { return true; }
 
 	void checkDependantEntities ();
 
@@ -631,6 +641,9 @@ public:
 
 	void hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd );
 		
+	void checkBeingHealed ( );
+
+	inline void setHealStatus ( bool beinghealed, bool bcanbeubered ) { m_bIsBeingHealed = beinghealed; m_bCanBeUbered = bcanbeubered; }
 private:
 	// time for next jump
 	float m_fDoubleJumpTime;
@@ -673,6 +686,7 @@ private:
 	 unsigned int m_iDispenserArea;
 	 unsigned int m_iTeleEntranceArea;
 	 unsigned int m_iTeleExitArea;
+
 };
 
 class CBotFF : public CBotFortress

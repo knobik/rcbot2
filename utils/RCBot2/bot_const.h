@@ -54,6 +54,7 @@
 #define BOT_DEBUG_USERCMD 64
 #define BOT_DEBUG_UTIL 128
 #define BOT_DEBUG_PROFILE 256
+#define BOT_DEBUG_EDICTS 512
 
 typedef enum
 {

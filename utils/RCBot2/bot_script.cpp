@@ -43,6 +43,7 @@ vector <int> CPoints::m_RedAttack;
 vector <int> CPoints::m_BlueDefend; 
 vector <int> CPoints::m_RedDefend;
 int CPoints::m_iValidAreas = 0;
+float CPoints::m_fLoadedScript = 0.0f;
 
 CPointStyle::CPointStyle (int iPointArea,ePointStyle iStyle)
 {
@@ -205,6 +206,7 @@ void CPoints :: resetPoints()
 	m_RedDefend.clear(); 
 	m_iValidAreas = 0;
 	//m_ValidAreas.clear();
+	m_fLoadedScript = 0.0f;
 
 	if ( p )
 	{
@@ -291,6 +293,11 @@ void CPoints :: loadMapScript ( )
 
 	vector < CResetPoint* > points;
 	CResetPoint *currentpoint = NULL;
+
+	//if ( m_fLoadedScript > engine->Time() )
+	//	return;
+
+	//m_fLoadedScript = engine->Time() + 10.0f;
 
 	freeMemory();
 	
