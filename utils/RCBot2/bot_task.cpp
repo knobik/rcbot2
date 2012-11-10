@@ -53,31 +53,35 @@ CBotTF2MedicHeal :: CBotTF2MedicHeal ()
 void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 {	
 	edict_t *pHeal;
+	CBotTF2 *pBotTF2;
 
 	pBot->wantToShoot(false);
 
-	if ( !pBot->isTF() )
+	if ( !pBot->isTF2() )
 	{
 		fail();
 		return;
 	}
 
-	pHeal = ((CBotFortress*)pBot)->getHealingEntity();
+	pBotTF2 = (CBotTF2*)pBot;
+
+	pHeal = pBotTF2->getHealingEntity();
 
 	if ( !pHeal )
 	{
+		// because the medic would have followed this guy, he would have lost his own waypoint
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
 	else if ( pBot->getCurrentWeapon() == NULL )
 	{
-		((CBotFortress*)pBot)->clearHealingEntity();
+		pBotTF2->clearHealingEntity();
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
 	else if ( !CBotGlobals::entityIsValid(pHeal) || !CBotGlobals::entityIsAlive(pHeal) )
 	{
-		((CBotFortress*)pBot)->clearHealingEntity();
+		pBotTF2->clearHealingEntity();
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}/*
@@ -89,7 +93,7 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	}*/
 	else if ( pBot->distanceFrom(pHeal) > 300 )
 	{
-		((CBotFortress*)pBot)->clearHealingEntity();
+		pBotTF2->clearHealingEntity();
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
@@ -101,17 +105,15 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->clearFailedWeaponSelect();
 
-		if ( !((CBotFortress*)pBot)->healPlayer(pHeal,m_pHeal) )
+		if ( !pBotTF2->healPlayer(pHeal,m_pHeal) )
 		{
 			pBot->getNavigator()->rollBackPosition();
-			((CBotFortress*)pBot)->clearHealingEntity();
+			pBotTF2->clearHealingEntity();
 			fail();
 		}
 	}
 
-
-	
-m_pHeal = pHeal;
+	m_pHeal = pHeal;
 }
 
 ///////////

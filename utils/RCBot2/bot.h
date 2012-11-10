@@ -260,6 +260,8 @@ class CBotProfile;
 class CWaypoint;
 class CBotWeapon;
 class CWeapon;
+class CBotNeuralNet;
+class CTrainingSet;
 
 #define MOVELOOK_DEFAULT 0
 #define MOVELOOK_THINK 1
@@ -605,6 +607,8 @@ public:
 
 	bool isOnLift (void);
 
+	virtual bool isTF2 () { return false; }
+
 protected:
 
 	static void checkEntity ( edict_t **pEdict );
@@ -766,13 +770,15 @@ protected:
 	bool m_bWantToListen;
 	float m_fUseRouteTime;
 
-
 	bool m_bWantToChangeWeapon;
 
 	bool m_bDoWeapons;
 	bool m_bAvoidRight;
 	float m_fAvoidSideSwitch;
 	float m_fHealClickTime;
+
+	//CBotNeuralNet *stucknet;
+	//CTrainingSet *stucknet_tset;
 };
 
 class IBotFunction

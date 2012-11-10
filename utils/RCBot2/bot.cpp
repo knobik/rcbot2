@@ -340,10 +340,8 @@ bool CBot :: checkStuck ()
 		{
 			m_bThinkStuck = true;
 
-
 			m_pButtons->jump();
 			m_pButtons->duck(0.25f,randomFloat(0.2f,0.4f));
-			
 
 			if ( m_fStrafeTime < engine->Time() )
 			{
@@ -920,6 +918,10 @@ void CBot :: setup ()
 	m_pFindEnemyFunc = new CFindEnemyFunc(this);
 	/////////////////////////////////
 	m_pWeapons = new CBotWeapons(this);
+
+	//stucknet = new CBotNeuralNet(3,2,2,1,0.5f);
+	//stucknet_tset = new CTrainingSet(3,1,10);
+
 //	m_pGAvStuck = new CBotStuckValues();
 //	m_pGAStuck = new CGA(10);
 	//m_pThinkStuck = new CPerceptron(2);
@@ -1136,6 +1138,16 @@ void CBot :: freeMapMemory ()
 		m_pWeapons = NULL;
 	}
 
+	/*if ( stucknet != NULL )
+		delete stucknet;
+	
+	stucknet = NULL;
+	
+	if ( stucknet_tset != NULL )
+		delete stucknet_tset;
+
+	stucknet_tset = NULL;
+*/
 	m_iAmmo = NULL;
 	/////////////////////////////////
 	init();
@@ -2187,6 +2199,8 @@ void CBots :: botThink ()
 			if ( bot_command.GetString() && *bot_command.GetString() )
 			{
 				helpers->ClientCommand(pBot->getEdict(),bot_command.GetString());
+
+				bot_command.SetValue("");
 			}
 
 			pBot->runPlayerMove();
@@ -2202,8 +2216,6 @@ void CBots :: botThink ()
 
 #endif
 
-	bot_command.SetValue("");
-	
 	if ( needToAddBot () )
 	{
 		createBot(NULL,NULL,NULL);

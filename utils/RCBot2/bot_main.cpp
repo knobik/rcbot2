@@ -103,12 +103,12 @@ ConVar bot_use_disp_dist("rcbot_disp_dist","800.0",0,"distance that bots will go
 ConVar bot_max_cc_time("rcbot_max_cc_time","240",0,"maximum time for bots to consider changing class <seconds>");
 ConVar bot_min_cc_time("rcbot_min_cc_time","60",0,"minimum time for bots to consider changing class <seconds>");
 ConVar bot_avoid_radius("rcbot_avoid_radius","128",0,"radius in units for bots to avoid things");
-ConVar bot_avoid_strength("rcbot_avoid_strength","96",0,"strength of avoidance (0 = disable)");
+ConVar bot_avoid_strength("rcbot_avoid_strength","128",0,"strength of avoidance (0 = disable)");
 ConVar bot_messaround("rcbot_messaround","1",0,"bots mess around at start up");
 ConVar bot_heavyaimoffset("rcbot_heavyaimoffset","0.1",0,"fraction of how much the heavy aims at a diagonal offset");
 ConVar bot_aimsmoothing("rcbot_aimsmooting","0",0,"(0 = no smoothing)");
 ConVar bot_bossattackfactor("rcbot_bossattackfactor","1.0",0,"the higher the more ofetn the bots will shoot the boss");
-
+ConVar rcbot_enemyshootfov("rcbot_enemyshootfov","0.7",0,"the fov dot product before the bot shoots an enemy 0.7 = 45 degrees");
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
 IFileSystem *filesystem = NULL;  // file I/O 

@@ -40,6 +40,8 @@
 
 #define MAX_MAP_STRING_LEN 64
 
+#define MAX_ENTITIES 2048
+
 class CBotGlobals
 {
 public:
@@ -83,7 +85,8 @@ public:
 
 	static inline bool entityIsValid ( edict_t *pEntity )
 	{
-		return ( !FNullEnt(pEntity) && !pEntity->IsFree() && pEntity->GetNetworkable() && pEntity->GetIServerEntity() && pEntity->GetCollideable() );
+		return pEntity && !pEntity->IsFree() && pEntity->GetNetworkable();
+		//return ( !FNullEnt(pEntity) && !pEntity->IsFree() && pEntity->GetNetworkable() && pEntity->GetIServerEntity() && pEntity->GetCollideable() );
 	}
 
 	static bool isAlivePlayer ( edict_t *pEntity );
@@ -142,8 +145,6 @@ public:
 	static bool entityIsAlive ( edict_t *pEntity );
 	static int numClients ();
 
-
-
 	static void levelInit();
 
 	static inline void setClientMax ( int iMaxClients ) { m_iMaxClients = iMaxClients; }
@@ -182,7 +183,7 @@ private:
 	static int m_iEventVersion;
 	static int m_iWaypointDisplayType;
 	static bool m_bTeamplay;
-	
+
 	/*static Vector m_vForward;
 	static Vector m_vRight;
 	static Vector m_vUp;*/

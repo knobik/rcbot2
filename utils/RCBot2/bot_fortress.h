@@ -518,6 +518,7 @@ public:
 		m_prevTeleEntHealth = 0;
 		m_fHealClickTime = 0;
 		m_fCheckHealTime = 0;
+		//memset(m_fClassDisguiseFitness,0,sizeof(float)*10);
 	}
 
 	// found a new enemy
@@ -686,6 +687,8 @@ private:
 	 unsigned int m_iDispenserArea;
 	 unsigned int m_iTeleEntranceArea;
 	 unsigned int m_iTeleExitArea;
+
+	 float m_fClassDisguiseFitness[10]; // classes disguised as fitness
 
 };
 

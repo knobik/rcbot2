@@ -29,6 +29,7 @@
  *
  */
 #include <math.h>
+#include <mem.h>
 //#include "vstdlib/random.h" // for random functions
 #include "bot_mtrand.h"
 #include "bot_perceptron.h"
@@ -36,69 +37,55 @@
 ga_nn_value CPerceptron::m_fDefaultLearnRate = 0.5f;
 ga_nn_value CPerceptron::m_fDefaultBias = 1.0f;
 
-ga_nn_value CSigmoidTransfer :: transfer ( ga_nn_value netInput )
-{
-	return 1/(1+exp(-netInput));
-}
-
-ga_nn_value CSigmoidTransfer :: deriv ( ga_nn_value x )
-{
-	ga_nn_value ex = exp(x);
-	ga_nn_value ex1 = (1 + ex);
-	return (ex / (ex1*ex1));
-}
-
-static ga_nn_value m_fDefaultLearnRate;// = 0.5f;
-static ga_nn_value m_fDefaultBias;// = 1.0f;
-
 CNeuron :: CNeuron ()
 {
-	
+	m_weights = NULL;
+	m_inputs = NULL;
 }
 
-CPerceptron :: CPerceptron (unsigned int iInputs,ITransfer *transferFunction)
+CPerceptron :: CPerceptron (unsigned short int iInputs)
 {
-	m_inputs.clear();
+	m_inputs = new ga_nn_value [iInputs];//.clear();
+	m_weights = new ga_nn_value[iInputs];
 	m_iInputs = iInputs;
 	
 	// bias weight
 	m_Bias = -0.5;
 	
-	for ( unsigned int i = 0; i < m_iInputs; i++ )
-		m_weights.push_back(-0.3f+randomFloat(0.0f,0.6f));
-	
-	m_transferFunction = transferFunction;
-	
-	if ( m_transferFunction == NULL )
-		m_transferFunction = new CSigmoidTransfer();
+	for ( unsigned short int i = 0; i < m_iInputs; i++ )
+		m_weights[i] = -0.3f+randomFloat(0.0f,0.6f);
 }
 
-void CPerceptron :: setWeights ( vector <ga_nn_value> weights )
+void CPerceptron :: setWeights ( ga_nn_value *weights )
 {
-	m_weights.clear();
-	
-	for ( unsigned int i = 0; i < weights.size(); i ++ )
-		m_weights.push_back(weights[i]);
+	memcpy(m_weights,weights,sizeof(ga_nn_value)*m_iInputs);
 }
 
-void CNeuron :: input ( vector <ga_nn_value> inputs )
+void CNeuron :: input ( ga_nn_value *inputs )
 {
-	m_inputs.clear();
-	
-	for ( unsigned int i = 0; i < inputs.size(); i ++ )
-		m_inputs.push_back(inputs[i]);		
+	memcpy(m_inputs,inputs,sizeof(ga_nn_value)*m_iInputs);
 }
+
 ga_nn_value CPerceptron :: execute ()
 {
+	static unsigned short int i;
+	static ga_nn_value *w;
+	static ga_nn_value *x;
 	// bias weight
-	ga_nn_value fNetInput = m_Bias;
+	m_output = m_Bias;
+
+	w = m_weights;
+	x = m_inputs;
 	
-	for ( unsigned int i = 0; i < m_inputs.size(); i ++ )	
+	for ( i = 0; i < m_iInputs; i ++ )
 	{
-		fNetInput += m_weights[i]*m_inputs[i];
+		m_output += (*w) * (*x);
+		w++;
+		x++;
 	}
 	
-	m_output = m_transferFunction->transfer(fNetInput);
+	// sigmoid function
+	m_output = 1.0f/(1.0f+exp(-m_output)); //m_transferFunction->transfer(fNetInput);
 	
 	return m_output;
 }
@@ -115,73 +102,103 @@ ga_nn_value CPerceptron :: getOutput ()
 
 void CPerceptron :: train ( ga_nn_value expectedOutput )
 {
+	static unsigned short int i;
+	static ga_nn_value *w;
+	static ga_nn_value *x;
+
+	w = m_weights;
+	x = m_inputs;
+
 	// bias
 	m_Bias += m_LearnRate*(expectedOutput-m_output);
 	
-	for ( unsigned int i = 0; i < m_weights.size(); i ++ )
+	for ( i = 0; i < m_iInputs; i ++ )
 	{
-		m_weights[i] = m_weights[i] + m_LearnRate*(expectedOutput-m_output)*m_inputs[i];
+		*w = *w + m_LearnRate*(expectedOutput-m_output)* (*x);
+		w++;
+		x++;
 	}
 }
 
 void CLogisticalNeuron :: train ()// ITransfer *transferFunction, bool usebias )
 {
-	ga_nn_value delta;
+	static unsigned short int i;
+	static ga_nn_value *w;
+	static ga_nn_value *x;
+	static ga_nn_value delta;
 
-	for ( register unsigned int i = 0; i < m_weights.size(); i ++ )
+	w = m_weights;
+	x = m_inputs;
+
+	for ( i = 0; i < m_iInputs; i ++ )
 	{
-		delta = (m_LearnRate * m_inputs[i] * m_error);
+		delta = (m_LearnRate * (*x) * m_error);
 		delta += m_momentum * 0.9f;
-		m_weights[i] += delta;
+		*w = *w + delta;
 		m_momentum = delta;
+		x++;
+		w++;
 	}
 
-	//if ( usebias )
 	m_Bias += m_LearnRate * m_error;
 }
 
-ga_nn_value CLogisticalNeuron :: execute ( ITransfer *transferFunction )//, bool usebias )
+ga_nn_value CLogisticalNeuron :: execute (  )//, bool usebias )
 {
+	static unsigned short int i;
+	static ga_nn_value *w;
+	static ga_nn_value *x;
+
 	m_netinput = 0;
+	w = m_weights;
+	x = m_inputs;
 
 	// bias weight
-	//if ( usebias )
 	m_netinput = m_Bias;
 	
-	for ( unsigned int i = 0; i < m_inputs.size(); i ++ )	
+	for ( i = 0; i < m_iInputs; i ++ )	
 	{
-		m_netinput += m_weights[i]*m_inputs[i];
+		m_netinput += (*w) * (*x);
+		w++;
+		x++;
 	}
 
-	m_output = transferFunction->transfer(m_netinput);
+	m_output = 1/(1+exp(-m_netinput));//transferFunction->transfer(m_netinput);
 	
 	return m_output;
 }
 
-void CLogisticalNeuron::init(unsigned int iInputs, ga_nn_value learnrate)
+void CLogisticalNeuron::init(unsigned short int iInputs, ga_nn_value learnrate)
 {
+		m_weights = new ga_nn_value[iInputs];
+		m_inputs = new ga_nn_value[iInputs];
+
 		m_error = 0;
 		m_netinput = 0;
 		m_LearnRate = 0.2f;
 		m_output = 0;
 		m_momentum = 0;
 
-		for ( unsigned int i = 0; i < iInputs; i ++ )
-			m_weights.push_back(randomFloat(-0.99f,0.99f));
+		// initialise?
+		for ( unsigned short int i = 0; i < iInputs; i ++ )
+			m_weights[i] = randomFloat(-0.99f,0.99f);
 
 		m_iInputs = iInputs;
 		m_LearnRate = learnrate;
 }
 
-CBotNeuralNet :: CBotNeuralNet ( unsigned int numinputs, unsigned int numhiddenlayers, 
-							  unsigned int neuronsperhiddenlayer, unsigned int numoutputs, 
-								ga_nn_value learnrate, ga_nn_value min, ga_nn_value max )
+CBotNeuralNet :: CBotNeuralNet ( unsigned short int numinputs, unsigned short int numhiddenlayers, 
+							  unsigned short int neuronsperhiddenlayer, unsigned short int numoutputs, 
+								ga_nn_value learnrate)
 {
-	register unsigned int i;
-	register unsigned int j;
+	register unsigned short int i;
+	register unsigned short int j;
 
 	m_pOutputs = new CLogisticalNeuron[numoutputs];
 	m_pHidden = new CLogisticalNeuron*[numhiddenlayers];
+
+	m_layerinput = new ga_nn_value[_MAX(numinputs,neuronsperhiddenlayer)];
+	m_layeroutput = new ga_nn_value[_MAX(numoutputs,_MAX(numinputs,neuronsperhiddenlayer))];
 
 	for ( j = 0; j < numhiddenlayers; j ++ )
 	{
@@ -199,31 +216,33 @@ CBotNeuralNet :: CBotNeuralNet ( unsigned int numinputs, unsigned int numhiddenl
 	for ( i = 0; i < numoutputs; i ++ )
 		m_pOutputs[i].init(neuronsperhiddenlayer,learnrate);
 
-	m_transferFunction = new CSigmoidTransfer ();
+	//m_transferFunction = new CSigmoidTransfer ();
 
 	m_numInputs = numinputs;
 	m_numOutputs = numoutputs;
 	m_numHidden = neuronsperhiddenlayer;
 	m_numHiddenLayers = numhiddenlayers;
 
-	m_fMax = max;
-	m_fMin = min;
 }
 
-void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatches, unsigned int epochs )
+void CBotNeuralNet :: batch_train ( CTrainingSet *tset, unsigned short int epochs )
 {
-	vector <ga_nn_value> outs;
-	//ga_nn_value err = 0;
+	ga_nn_value *outs;
 	ga_nn_value exp_out; // expected
 	ga_nn_value act_out; // actual
 	ga_nn_value out_error;
-	unsigned int e; // epoch
-	register unsigned int bi; // batch iterator
-	register unsigned int i; // ith node
-	register unsigned int j; //jth output
-	register signed int l; // layer
-	CLogisticalNeuron *pNode;
+	unsigned short int e; // epoch
+	register unsigned short int bi; // batch iterator
+	register unsigned short int i; // ith node
+	register unsigned short int j; //jth output
+	register signed short int l; // layer
+	CLogisticalNeuron *pNode, *pOutputNode;
+	unsigned short int numbatches = tset->getNumBatches();
+	training_batch_t *batches = tset->getBatches();
+	ga_nn_value min_value = tset->getMinScale();
+	ga_nn_value max_value = tset->getMaxScale();
 
+	outs = new ga_nn_value [m_numOutputs];
 
 	for ( e = 0; e < epochs; e ++ )
 	{
@@ -237,18 +256,20 @@ void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatch
 
 		for ( bi = 0; bi < numbatches; bi ++ )
 		{
-			outs.clear();
+			memset(outs,0,sizeof(ga_nn_value)*m_numOutputs);
 
-			execute(&(batches[bi].in),&outs);
+			execute(batches[bi].in,outs,min_value,max_value);
+
+			pNode = m_pOutputs;
 
 			// work out error for output layer
 			for ( j = 0; j < m_numOutputs; j ++ )
 			{
-				pNode = &(m_pOutputs[j]);
 				act_out = pNode->getOutput();
-				exp_out = scale(batches[bi].out[j],m_fMin,m_fMax);
+				exp_out = batches[bi].out[j];
 				out_error = act_out * (1.0f-act_out) * (exp_out - act_out);
 				pNode->setError(out_error);
+				pNode++;
 			}
 
 			/*if ( !(e%100) )
@@ -256,23 +277,29 @@ void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatch
 				printf("%0.2f\t%0.2f\t%0.2f\t%0.6f\t%0.6f\n",batches[bi].in[0],batches[bi].in[1],batches[bi].out[0],outs[0],out_error);
 			}*/
 
+			pNode = m_pHidden[m_numHiddenLayers-1];
+
 			//Send Error back to Hidden Layer before output
 			for ( i = 0; i < m_numHidden; i ++ )
 			{	
 				ga_nn_value err = 0;
+				pOutputNode = m_pOutputs;
 
 				for ( j = 0; j < m_numOutputs; j ++ )
 				{
-					err += m_pOutputs[j].getError(i);
+					err += pOutputNode->getError(i);
+					pOutputNode++;
 				}
 
-				pNode = &m_pHidden[m_numHiddenLayers-1][i];
+				//pNode = &m_pHidden[m_numHiddenLayers-1][i];
 
 				pNode->setError(pNode->getOutput() * (1.0f-pNode->getOutput()) * err);
+				pNode++;
 			}
 
 			for ( l = (m_numHiddenLayers-2); l >= 0; l -- )
 			{
+				pOutputNode = m_pHidden[l];
 				//Send Error back to Input Layer
 				for ( i = 0; i < m_numHidden; i ++ )
 				{	
@@ -283,12 +310,12 @@ void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatch
 					for ( j = 0; j < m_numHidden; j ++ )
 					{
 						// check the error from the next layer
-						err += pNode[j].getError(i);
+						err += pNode->getError(i);
+						pNode++;
 					}
 
-					pNode = &(m_pHidden[l][i]);
-
-					pNode->setError((pNode->getOutput() * (1.0f-pNode->getOutput())) * err);
+					pOutputNode->setError((pOutputNode->getOutput() * (1.0f-pOutputNode->getOutput())) * err);
+					pOutputNode ++;
 				}
 			}
 
@@ -298,7 +325,8 @@ void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatch
 				// update weights for hidden layer (each neuron)
 				for ( i = 0; i < m_numHidden; i ++ )
 				{	
-					(&(pNode[i]))->train(); // update weights for this node
+					pNode->train(); // update weights for this node
+					pNode++;
 				}
 			}
 
@@ -310,47 +338,52 @@ void CBotNeuralNet :: batch_train ( training_batch_t *batches, unsigned numbatch
 		}
 	}
 
+	delete[] outs;
 }
 
-void CBotNeuralNet :: execute ( vector <ga_nn_value> *inputs, vector<ga_nn_value> *outputs )
+void CBotNeuralNet :: execute ( ga_nn_value *inputs, ga_nn_value *outputs, ga_nn_value fMin, ga_nn_value fMax )
 {
-	vector <ga_nn_value> layeroutput;
-	vector <ga_nn_value> layerinput;
-	CLogisticalNeuron *pNode;
-	CLogisticalNeuron *pLayer;
-	register unsigned int i; // i-th node
-	register unsigned short l; // layer
 
-	outputs->clear();
+	static CLogisticalNeuron *pNode;
+	static CLogisticalNeuron *pLayer;
+	static unsigned short int i; // i-th node
+	static unsigned short l; // layer
+	static ga_nn_value *output_it;
 
-	//scale inputs
-	for ( i = 0; i < inputs->size(); i ++ )
-		layeroutput.push_back(scale((*inputs)[i],m_fMin,m_fMax));
+	memset(outputs,0,sizeof(ga_nn_value)*m_numOutputs);
+	memset(m_layeroutput,0,sizeof(ga_nn_value)*m_numInputs);
+	memcpy(m_layerinput,inputs,sizeof(ga_nn_value)*m_numInputs);
 
 	for ( l = 0; l < m_numHiddenLayers; l ++ )
 	{
-		layerinput = layeroutput;
-		layeroutput.clear();
+		output_it = m_layeroutput;
 
 		pLayer = m_pHidden[l];
+
+		pNode = pLayer;
 
 		// execute hidden
 		for ( i = 0; i < m_numHidden; i ++ )
 		{
-			pNode = &(pLayer[i]);
-			pNode->input(layerinput);
-			pNode->execute(m_transferFunction);
+			pNode->input(m_layerinput);
+			pNode->execute();//m_transferFunction);
 
-			layeroutput.push_back(pNode->getOutput());
+			*output_it = pNode->getOutput();
+			output_it ++;
+
+			pNode++; // next
+			//layeroutput.push_back(pNode->getOutput());
 		}
+
+		memcpy(m_layerinput,m_layeroutput,sizeof(ga_nn_value) * m_numHidden);
 	}
 
 	// execute output
 	for ( i = 0; i < m_numOutputs; i ++ )
 	{
 		pNode = &m_pOutputs[i];
-		pNode->input(layeroutput);
-		pNode->execute(m_transferFunction);
-		outputs->push_back(descale(pNode->getOutput(),m_fMin,m_fMax));
+		pNode->input(m_layeroutput);
+		pNode->execute();//m_transferFunction);
+		outputs[i] = gdescale(pNode->getOutput(),fMin,fMax);
 	}
 }
