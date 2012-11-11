@@ -71,7 +71,8 @@ const char *szSchedules[] =
 	"SCHED_GOTONEST",
 	"SCHED_MESSAROUND",
 	"SCHED_TF2_ENGI_MOVE_BUILDING",
-	"SCHED_FOLLOW_LAST_ENEMY"
+	"SCHED_FOLLOW_LAST_ENEMY",
+	"SCHED_SHOOT_LAST_ENEMY_POS"
 };
 
 
@@ -440,7 +441,7 @@ void CBotTF2MessAroundSched :: init()
 }
 ////////////////////////////////////////////////
 
-CBotFollowLastEnemy ::	CBotFollowLastEnemy ( edict_t *pEnemy, Vector vLastSee )
+CBotFollowLastEnemy ::	CBotFollowLastEnemy ( CBot *pBot, edict_t *pEnemy, Vector vLastSee )
 {
 	Vector *engineVelocity = NULL;
 	Vector vVelocity = Vector(0,0,0);
@@ -461,17 +462,38 @@ CBotFollowLastEnemy ::	CBotFollowLastEnemy ( edict_t *pEnemy, Vector vLastSee )
 		vVelocity = pClient->getVelocity();
 
 	addTask(pFindPath);
+
+	if ( pBot->isTF2() )
+	{
+		int playerclass = ((CBotTF2*)pBot)->getClass();
+		
+		if ( ( playerclass == TF_CLASS_SOLDIER ) || (playerclass == TF_CLASS_DEMOMAN) )
+			addTask(new CBotTF2ShootLastEnemyPosition(vLastSee,pEnemy,vVelocity));
+	}
+
 	addTask(new CFindLastEnemy(vLastSee,vVelocity));
 
 	//////////////
 	pFindPath->setNoInterruptions();
 }
-
+///////////////////////////////////////////////////
 void CBotFollowLastEnemy :: init ()
 {
 	setID(SCHED_FOLLOW_LAST_ENEMY);
 }
  
+
+CBotTF2ShootLastEnemyPos::CBotTF2ShootLastEnemyPos ( Vector vLastSeeEnemyPos, Vector vVelocity, edict_t *pLastEnemy )
+{
+	addTask(new CBotTF2ShootLastEnemyPosition(vLastSeeEnemyPos,pLastEnemy,vVelocity));
+}
+
+void CBotTF2ShootLastEnemyPos::init()
+{
+	setID(SCHED_SHOOT_LAST_ENEMY_POS);
+}
+
+
 //////////////////////////////////////////////////
 CBotDefendPointSched ::	CBotDefendPointSched ( Vector vPoint, int iRadius, int iArea )
 {

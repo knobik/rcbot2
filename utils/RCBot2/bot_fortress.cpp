@@ -156,10 +156,17 @@ void CBotTF2 :: hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd )
 		break;
 	case TF_VC_GOGOGO:
 		// if bot is nesting, or waiting for something, it will go
-		if ( distanceFrom(pPlayer) > 500 )
+		if ( distanceFrom(pPlayer) > 512 )
 			return;
 
 		updateCondition(CONDITION_PUSH);
+
+		if ( getClass() == TF_CLASS_MEDIC )
+		{
+			if ( m_pHeal == pPlayer )
+				secondaryAttack();
+		}
+
 		break;
 	case TF_VC_ACTIVATEUBER:
 		if ( getClass() == TF_CLASS_MEDIC )
@@ -2008,7 +2015,7 @@ void CBotTF2 :: modThink ()
 		if ( wantToFollowEnemy() )
 		{
 			m_pSchedules->freeMemory();
-			m_pSchedules->addFront(new CBotFollowLastEnemy(m_pLastEnemy,m_vLastSeeEnemy));
+			m_pSchedules->addFront(new CBotFollowLastEnemy(this, m_pLastEnemy,m_vLastSeeEnemy));
 			m_bLookedForEnemyLast = true;
 		}
 	}

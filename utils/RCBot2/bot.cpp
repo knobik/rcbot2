@@ -353,7 +353,7 @@ bool CBot :: checkStuck ()
 				m_fStrafeTime = engine->Time() + 2.0f;
 			}
 
-			m_fCheckStuckTime = m_fCheckStuckTime + 4.0f;
+			m_fCheckStuckTime = engine->Time() + 2.04f;
 		}
 	}
 

@@ -121,7 +121,13 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 
 CBotTF2ShootLastEnemyPosition :: CBotTF2ShootLastEnemyPosition  ( Vector vPosition, edict_t *pEnemy, Vector m_vVelocity )
 {
-	m_vPosition = vPosition - ((m_vVelocity/m_vVelocity.Length())*16);
+	float len = m_vVelocity.Length();
+
+	m_vPosition = vPosition;
+
+	if ( len > 0 )
+		m_vPosition = m_vPosition - ((m_vVelocity/m_vVelocity.Length())*16);
+	
 	m_pEnemy = pEnemy;
 	m_fTime = 0;
 }
@@ -1960,7 +1966,7 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 	{
 		complete();
 		pBot->removeCondition(CONDITION_PUSH);
-		pBotTF2->voiceCommand(TF_VC_YES);
+		pBotTF2->voiceCommand(TF_VC_GOGOGO);
 		return;
 	}
 

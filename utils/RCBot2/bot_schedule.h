@@ -76,7 +76,8 @@ typedef enum
 	SCHED_GOTONEST,
 	SCHED_MESSAROUND,
 	SCHED_TF2_ENGI_MOVE_BUILDING,
-	SCHED_FOLLOW_LAST_ENEMY
+	SCHED_FOLLOW_LAST_ENEMY,
+	SCHED_SHOOT_LAST_ENEMY_POS
 }eBotSchedule;
 
 class CBotSchedule
@@ -286,6 +287,15 @@ public:
 };
 
 ///////////////////////////////////////////////
+class CBotTF2ShootLastEnemyPos : public CBotSchedule
+{
+public:
+	CBotTF2ShootLastEnemyPos ( Vector vLastSeeEnemyPos, Vector vVelocity, edict_t *pLastEnemy );
+
+	void init();
+};
+
+///////////////////////////////////////////////
 class CBotTF2MessAroundSched : public CBotSchedule
 {
 public:
@@ -436,7 +446,7 @@ public:
 class CBotFollowLastEnemy : public CBotSchedule
 {
 public:
-	CBotFollowLastEnemy ( edict_t *pEnemy, Vector vLastSee );
+	CBotFollowLastEnemy ( CBot *pBot, edict_t *pEnemy, Vector vLastSee );
 
 	void init ();
 };
