@@ -399,7 +399,7 @@ public:
 
 	void waitCloak ();
 
- 
+	void detectedAsSpy ();
 protected:
 	virtual void selectTeam ();
 
@@ -409,7 +409,7 @@ protected:
 
 	static bool isClassOnTeam ( int iClass, int iTeam );
 
-	static int getSpyDisguiseClass ( int iTeam );
+	int getSpyDisguiseClass ( int iTeam );
 
 	virtual bool thinkSpyIsEnemy ( edict_t *pEdict );
 
@@ -486,6 +486,10 @@ protected:
 	bool m_bCanBeUbered;
 	float m_fCheckHealTime;
 
+	float m_fClassDisguiseFitness[10]; // classes disguised as fitness
+	float m_fClassDisguiseTime[10];
+	float m_fDisguiseTime;
+	unsigned short m_iDisguiseClass;
 };
 //
 //
@@ -518,7 +522,11 @@ public:
 		m_prevTeleEntHealth = 0;
 		m_fHealClickTime = 0;
 		m_fCheckHealTime = 0;
-		//memset(m_fClassDisguiseFitness,0,sizeof(float)*10);
+		
+		for ( unsigned int i = 0; i < 10; i ++ )
+			m_fClassDisguiseFitness[i] = 1.0f;
+
+		memset(m_fClassDisguiseTime,0,sizeof(float)*10);
 	}
 
 	// found a new enemy
@@ -688,7 +696,6 @@ private:
 	 unsigned int m_iTeleEntranceArea;
 	 unsigned int m_iTeleExitArea;
 
-	 float m_fClassDisguiseFitness[10]; // classes disguised as fitness
 
 };
 

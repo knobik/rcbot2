@@ -223,7 +223,10 @@ CBotNeuralNet :: CBotNeuralNet ( unsigned short int numinputs, unsigned short in
 	m_numHidden = neuronsperhiddenlayer;
 	m_numHiddenLayers = numhiddenlayers;
 
+
 }
+
+#define RCPP_VERB_EPOCHS 1000
 
 void CBotNeuralNet :: batch_train ( CTrainingSet *tset, unsigned short int epochs )
 {
@@ -246,7 +249,7 @@ void CBotNeuralNet :: batch_train ( CTrainingSet *tset, unsigned short int epoch
 
 	for ( e = 0; e < epochs; e ++ )
 	{
-		/*if ( !(e%100) )
+		/*if ( !(e%RCPP_VERB_EPOCHS) )
 		{
 			system("CLS");
 			printf("-----epoch %d-----\n",e);
@@ -272,7 +275,7 @@ void CBotNeuralNet :: batch_train ( CTrainingSet *tset, unsigned short int epoch
 				pNode++;
 			}
 
-			/*if ( !(e%100) )
+			/*if (  !(e%RCPP_VERB_EPOCHS) )
 			{
 				printf("%0.2f\t%0.2f\t%0.2f\t%0.6f\t%0.6f\n",batches[bi].in[0],batches[bi].in[1],batches[bi].out[0],outs[0],out_error);
 			}*/
@@ -354,13 +357,15 @@ void CBotNeuralNet :: execute ( ga_nn_value *inputs, ga_nn_value *outputs, ga_nn
 	memset(m_layeroutput,0,sizeof(ga_nn_value)*m_numInputs);
 	memcpy(m_layerinput,inputs,sizeof(ga_nn_value)*m_numInputs);
 
+	//pLayer = m_pHidden;
+
 	for ( l = 0; l < m_numHiddenLayers; l ++ )
 	{
 		output_it = m_layeroutput;
 
-		pLayer = m_pHidden[l];
+		//pLayer = m_pHidden[l];
 
-		pNode = pLayer;
+		pNode = m_pHidden[l];
 
 		// execute hidden
 		for ( i = 0; i < m_numHidden; i ++ )
@@ -376,6 +381,8 @@ void CBotNeuralNet :: execute ( ga_nn_value *inputs, ga_nn_value *outputs, ga_nn
 		}
 
 		memcpy(m_layerinput,m_layeroutput,sizeof(ga_nn_value) * m_numHidden);
+
+		//pLayer++;
 	}
 
 	// execute output
@@ -387,3 +394,4 @@ void CBotNeuralNet :: execute ( ga_nn_value *inputs, ga_nn_value *outputs, ga_nn
 		outputs[i] = gdescale(pNode->getOutput(),fMin,fMax);
 	}
 }
+

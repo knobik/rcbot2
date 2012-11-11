@@ -166,27 +166,15 @@ public:
 		init();
 	}
 
-	void reset()
+	~CTrainingSet()
+	{
+		freeMemory();
+	}
+
+	void reset ()
 	{
 		freeMemory();
 		init();
-	}
-
-	void init ()
-	{
-		m_batchNum = 0;
-		m_fMin = 0;
-		m_fMax = 1;
-		m_inputNum = m_outputNum = 0;
-		batches = new training_batch_t[m_numBatches];
-
-		for ( unsigned short int i = 0; i < m_numBatches; i ++ )
-		{
-			batches[i].in = new ga_nn_value[m_numInputs];
-			batches[i].out = new ga_nn_value[m_numOutputs];
-			memset(batches[i].in,0,sizeof(ga_nn_value)*m_numInputs);
-			memset(batches[i].out,0,sizeof(ga_nn_value)*m_numOutputs);
-		}
 	}
 
 	void freeMemory ()
@@ -205,9 +193,21 @@ public:
 		batches = NULL;
 	}
 
-	~CTrainingSet()
+	void init ()
 	{
-		freeMemory();
+		m_batchNum = -1;
+		m_fMin = 0;
+		m_fMax = 1;
+		m_inputNum = m_outputNum = 0;
+		batches = new training_batch_t[m_numBatches];
+
+		for ( unsigned short int i = 0; i < m_numBatches; i ++ )
+		{
+			batches[i].in = new ga_nn_value[m_numInputs];
+			batches[i].out = new ga_nn_value[m_numOutputs];
+			memset(batches[i].in,0,sizeof(ga_nn_value)*m_numInputs);
+			memset(batches[i].out,0,sizeof(ga_nn_value)*m_numOutputs);
+		}
 	}
 
 	inline void setScale ( ga_nn_value min, ga_nn_value max )
@@ -219,14 +219,16 @@ public:
 // input and scale between -1 and 1
 	inline void in ( ga_nn_value input )
 	{
-		if ( m_inputNum < m_numInputs ) 
+		//assert(m_batchNum>=0);
+		if ( (m_batchNum >= 0) && (m_batchNum < m_numBatches) && (m_inputNum < m_numInputs) ) 
 			batches[m_batchNum].in[m_inputNum++] = scale(input);
 	}
 
 	// output and scale between 0 and 1
 	inline void out ( ga_nn_value output )
 	{
-		if ( m_outputNum < m_numOutputs )
+		//assert(m_batchNum>=0);
+		if ( (m_batchNum >= 0) && (m_batchNum < m_numBatches) && (m_outputNum < m_numOutputs) ) 
 			batches[m_batchNum].out[m_outputNum++] = zeroscale(output,m_fMin,m_fMax);
 	}
 
@@ -265,7 +267,7 @@ private:
 	unsigned short int m_numInputs;
 	unsigned short int m_numOutputs;
 	unsigned short int m_numBatches;
-	unsigned short int m_batchNum;
+	signed short int m_batchNum;
 	unsigned short int m_inputNum;
 	unsigned short int m_outputNum;
 
@@ -277,9 +279,8 @@ class CBotNeuralNet
 {
 public:
 
-	CBotNeuralNet  ( unsigned short int numinputs, unsigned short int numhiddenlayers, 
-							  unsigned short int neuronsperhiddenlayer, unsigned short int numoutputs, 
-								ga_nn_value learnrate);
+	CBotNeuralNet ( unsigned short int numinputs, unsigned short int hiddenlayers, unsigned short int hiddenlayer, unsigned short int outputlayer, ga_nn_value learnrate );
+
 	CBotNeuralNet ()
 	{
 		m_pOutputs = NULL;
@@ -309,8 +310,8 @@ public:
 				delete [] m_pHidden[i];
 		}
 
-		delete m_layeroutput;
 		delete m_layerinput;
+		delete m_layeroutput;
 	}
 
 

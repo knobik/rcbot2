@@ -513,11 +513,40 @@ void CBotFortress ::wantToDisguise(bool bSet)
 		m_fSpyDisguiseTime = engine->Time() + 2.0f;
 }
 
+void CBotFortress :: detectedAsSpy()
+{
+	float fTime = engine->Time() - m_fDisguiseTime;
+	float fTotal = 0;
+
+	if ( (m_fDisguiseTime < 1) || (fTime < 3.0f) )
+		return;
+
+	if ( m_fClassDisguiseTime[m_iDisguiseClass] == 0 )
+		m_fClassDisguiseTime [m_iDisguiseClass] = fTime;
+	else
+		m_fClassDisguiseTime [m_iDisguiseClass] = (m_fClassDisguiseTime [m_iDisguiseClass] /2) + (fTime / 2);
+
+	for ( unsigned short int i = 0; i < 10; i ++ )
+	{
+		fTotal += m_fClassDisguiseTime[i];
+	}
+	
+	for ( unsigned short int i = 0; i < 10; i ++ )
+	{
+		if ( m_fClassDisguiseTime[i] > 0 )
+			m_fClassDisguiseFitness[i] = (m_fClassDisguiseTime[i] / fTotal);
+	}
+
+	m_fDisguiseTime = 0.0f;
+}
+
 void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
 
 	m_pLastHeal = NULL;
+
+	m_fDisguiseTime = 0.0f;
 
 	m_pNearestEnemyTeleporter = NULL;
 	m_pNearestTeleEntrance = NULL;
@@ -1106,7 +1135,12 @@ bool CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	if ( pAttacker )
 	{
 		if ( !CTeamFortress2Mod::isSentry(pAttacker,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
+		{
 			m_fFrenzyTime = engine->Time() + randomFloat(2.0f,6.0f);
+
+			if ( isDisguised() )
+				detectedAsSpy();
+		}
 	}
 
 	return false;
@@ -1470,6 +1504,9 @@ void CBotTF2 :: spyDisguise ( int iTeam, int iClass )
 		m_iImpulse = 230 + iClass;
 	else if ( iTeam == 2 )
 		m_iImpulse = 220 + iClass;
+
+	m_fDisguiseTime = engine->Time();
+	m_iDisguiseClass = iClass;
 
 	//sprintf(cmd,"disguise %d %d",iClass,iTeam);
 
@@ -2240,6 +2277,8 @@ int CBotFortress :: getSpyDisguiseClass ( int iTeam )
 	edict_t *pPlayer;
 	dataUnconstArray<int> m_classes;
 	int _class;
+	float fTotal;
+	float fRand;
 
 	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
 	{
@@ -2258,6 +2297,30 @@ int CBotFortress :: getSpyDisguiseClass ( int iTeam )
 	if ( m_classes.IsEmpty() )
 		return randomInt(1,9);
 	
+	fTotal = 0;
+
+	for ( int i = 0; i < m_classes.Size(); i ++ )
+	{
+		fTotal += m_fClassDisguiseFitness[m_classes.ReturnValueFromIndex(i)];
+	}
+
+	if ( fTotal > 0 )
+	{
+
+		fRand = randomFloat(0.0,fTotal);
+
+		fTotal = 0;
+
+		for ( int i = 0; i < m_classes.Size(); i ++ )
+		{
+			fTotal += m_fClassDisguiseFitness[m_classes.ReturnValueFromIndex(i)];
+
+			if ( fRand <= fTotal )
+				return m_classes.ReturnValueFromIndex(i);
+		}
+
+	}
+
 	return m_classes.Random();
 }
 
@@ -2793,7 +2856,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	else if ( m_iClass == TF_CLASS_SPY )
 		fGetFlagUtility = 0.6f;
 	else if ( m_iClass == TF_CLASS_MEDIC )
-		fGetFlagUtility = 1.0f - (((float)CTeamFortress2Mod::numPlayersOnTeam(iTeam))/(gpGlobals->maxClients/4));
+		fGetFlagUtility = 1.0f - (((float)CTeamFortress2Mod::numPlayersOnTeam(iTeam))/(gpGlobals->maxClients/2));
 
 	fDefendFlagUtility = bot_defrate.GetFloat()/2;
 
