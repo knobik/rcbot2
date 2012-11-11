@@ -70,15 +70,13 @@
 #include "bot_mods.h"
 #include "bot_profiling.h"
 #include "vstdlib/random.h" // for random  seed 
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
-
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
 
 #include "bot_wpt_dist.h"
 
 #include "bot_configfile.h"
+
+// memdbgon must be the last include file in a .cpp file!!!
+#include "tier0/memdbgon.h"
 
 static ICvar *s_pCVar;
 

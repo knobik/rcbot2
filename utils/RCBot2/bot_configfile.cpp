@@ -68,11 +68,6 @@
 #include "bot_mods.h"
 #include "bot_profiling.h"
 #include "vstdlib/random.h" // for random  seed 
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
-
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
 
 #include "bot_wpt_dist.h"
 
@@ -80,6 +75,9 @@
 #include "bot_strings.h"
 
 #include "bot_fortress.h"
+
+// memdbgon must be the last include file in a .cpp file!!!
+#include "tier0/memdbgon.h"
 
 vector <char *> CBotConfigFile::m_Commands;
 unsigned int CBotConfigFile::m_iCmd = 0; // current command (time delayed)

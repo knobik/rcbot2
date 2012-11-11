@@ -61,11 +61,11 @@ void WriteUsercmd( bf_write *buf, CUserCmd *cmd )
 	buf->WriteOneBit( 0 );  // tick_count
 
 	buf->WriteOneBit( 1 );
-	buf->WriteBitAngle( cmd->viewangles[0], 16 );  // viewangles[0]
+	buf->WriteBitAngle( cmd->viewangles.x, 16 );  // viewangles[0]
 	buf->WriteOneBit( 1 );
-	buf->WriteBitAngle( cmd->viewangles[1], 16 );  // viewangles[1]
+	buf->WriteBitAngle( cmd->viewangles.y, 16 );  // viewangles[1]
 	buf->WriteOneBit( 1 );
-	buf->WriteBitAngle( cmd->viewangles[2], 8 );  // viewangles[2]
+	buf->WriteBitAngle( cmd->viewangles.z, 8 );  // viewangles[2]
 
 	buf->WriteOneBit( 1 );
 	buf->WriteSBitLong( cmd->forwardmove, 16 );

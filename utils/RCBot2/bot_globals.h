@@ -85,7 +85,7 @@ public:
 
 	static inline bool entityIsValid ( edict_t *pEntity )
 	{
-		return pEntity && !pEntity->IsFree() && pEntity->GetNetworkable();
+		return pEntity && !pEntity->IsFree() && pEntity->GetNetworkable() && pEntity->GetIServerEntity();
 		//return ( !FNullEnt(pEntity) && !pEntity->IsFree() && pEntity->GetNetworkable() && pEntity->GetIServerEntity() && pEntity->GetCollideable() );
 	}
 

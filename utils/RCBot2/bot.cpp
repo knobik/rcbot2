@@ -85,10 +85,10 @@
 #include "bot_mtrand.h"
 //#include "vstdlib/random.h" // for random functions
 
-// memdbgon must be the last include file in a .cpp file!!!
-#include "tier0/memdbgon.h"
 
 #include "bot_profiling.h"
+// memdbgon must be the last include file in a .cpp file!!!
+#include "tier0/memdbgon.h"
 
 // instantiate bots -- make different for different mods
 CBot **CBots::m_Bots = NULL;
@@ -145,6 +145,10 @@ void CBot :: runPlayerMove()
 			CClients::clientDebugMsg(BOT_DEBUG_BUTTONS,dbg,this);
 	}
 
+	//bf_write *buf = new bf_write[sizeof(CBotCmd)];
+	//WriteUsercmd(buf,&cmd)
+
+	//gameclients->ProcessUsercmds(m_pEdict,buf,1,1,0,false,false);
 	m_pController->RunPlayerMove(&cmd);
 
 	//m_pController->PostClientMessagesSent();
