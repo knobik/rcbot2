@@ -161,7 +161,7 @@ void CBotTF2 :: hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd )
 
 		updateCondition(CONDITION_PUSH);
 
-		if ( getClass() == TF_CLASS_MEDIC )
+		if ( CTeamFortress2Mod::hasRoundStarted() && (getClass() == TF_CLASS_MEDIC) )
 		{
 			if ( m_pHeal == pPlayer )
 				secondaryAttack();
@@ -169,7 +169,7 @@ void CBotTF2 :: hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd )
 
 		break;
 	case TF_VC_ACTIVATEUBER:
-		if ( getClass() == TF_CLASS_MEDIC )
+		if ( CTeamFortress2Mod::hasRoundStarted() && (getClass() == TF_CLASS_MEDIC)  )
 		{
 			if ( m_pHeal == pPlayer )
 				secondaryAttack();
