@@ -161,25 +161,32 @@ void CBotTF2 :: hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd )
 
 		updateCondition(CONDITION_PUSH);
 
-		if ( CTeamFortress2Mod::hasRoundStarted() && (getClass() == TF_CLASS_MEDIC) )
-		{
-			if ( m_pHeal == pPlayer )
-				secondaryAttack();
-		}
+		if ( randomFloat(0,1.0) > 0.75f )
+			voiceCommand(TF_VC_YES);
 
-		break;
+		// don't break // flow down to uber if medic
 	case TF_VC_ACTIVATEUBER:
 		if ( CTeamFortress2Mod::hasRoundStarted() && (getClass() == TF_CLASS_MEDIC)  )
 		{
 			if ( m_pHeal == pPlayer )
-				secondaryAttack();
+			{
+				if ( !CTeamFortress2Mod::isFlagCarrier(pPlayer) )
+					secondaryAttack();
+				else if ( randomFloat(0,1.0) > 0.5f )
+					voiceCommand(TF_VC_NO);
+			}
 		}
 		break;
 	case TF_VC_MOVEUP:
 
 		if ( distanceFrom(pPlayer) > 1000 )
 			return;
+
 		updateCondition(CONDITION_PUSH);
+
+		if ( randomFloat(0,1.0) > 0.75f )
+			voiceCommand(TF_VC_YES);
+
 		break;
 	default:
 		break;
@@ -286,12 +293,19 @@ void CBotFortress :: checkHealingValid ()
 	if ( m_pHeal )
 	{
 		if ( !CBotGlobals::entityIsValid(m_pHeal) || !CBotGlobals::entityIsAlive(m_pHeal) )
+		{
 			m_pHeal = NULL;
+			removeCondition(CONDITION_SEE_HEAL);
+		}
 		else if ( !isVisible(m_pHeal) )
+		{
 			m_pHeal = NULL;
+			removeCondition(CONDITION_SEE_HEAL);
+		}
 		else if ( !wantToHeal(m_pHeal) )
 		{
 			m_pHeal = NULL;
+			removeCondition(CONDITION_SEE_HEAL);
 		}
 	}
 }
@@ -329,7 +343,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 				{
 					Vector vPlayer = CBotGlobals::entityOrigin(pEntity);
 
-					if ( distanceFrom(vPlayer) < 400 )
+					if ( distanceFrom(vPlayer) <= 384 )
 					{
 						if ( wantToHeal(pEntity) )
 						{
@@ -343,12 +357,14 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 									if ( ((float)p2->GetHealth()/p2->GetMaxHealth()) < ((float)p1->GetHealth()/p1->GetMaxHealth()) )
 									{									
 										m_pHeal = pEntity;
+										updateCondition(CONDITION_SEE_HEAL);
 									}
 								}					
 							}
 							else
 							{
 								m_pHeal = pEntity;
+								updateCondition(CONDITION_SEE_HEAL);
 							}
 						}
 					}
@@ -356,7 +372,10 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 			}
 		}
 		else if ( m_pHeal == pEntity )
+		{
 			m_pHeal = NULL;
+			removeCondition(CONDITION_SEE_HEAL);
+		}
 	}
 	else if ( m_iClass == TF_CLASS_SPY )
 	{
@@ -470,7 +489,7 @@ void CBotFortress :: medicCalled(edict_t *pPlayer )
 
 		if ( m_pHeal  )
 		{
-			if ( CClassInterface::getHealth(pPlayer) >= CClassInterface::getHealth(m_pHeal) )
+			if ( CClassInterface::getPlayerHealth(pPlayer) >= CClassInterface::getPlayerHealth(m_pHeal) )
 				bGoto = false;
 		}
 
@@ -1097,14 +1116,16 @@ bool CBotFortress :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 
 	if (( m_iClass != TF_CLASS_MEDIC ) || (!m_pHeal) )
 	{
-		if( m_bCanBeUbered )
+		if ( CBot::hurt(pAttacker,iHealthNow,true) )
 		{
-			if ( this->isTF2()) // hack
-				((CBotTF2*)this)->voiceCommand(TF_VC_ACTIVATEUBER);
-		}
-		else if ( CBot::hurt(pAttacker,iHealthNow,true) )
-		{
-			if ( !bDontHide )
+			if( m_bIsBeingHealed || m_bCanBeUbered )
+			{
+				// don't hide if I am being healed or can be ubered
+
+				if ( m_bCanBeUbered && this->isTF2() && !hasFlag() ) // hack
+					((CBotTF2*)this)->voiceCommand(TF_VC_ACTIVATEUBER);
+			}
+			else if ( !bDontHide )
 			{
 				if ( wantToNest() )
 				{
@@ -1753,7 +1774,7 @@ void CBotTF2 :: modThink ()
 		if ( bot_change_class.GetBool() && (m_fChangeClassTime < engine->Time()) )
 		{
 				// get score for this class
-				float scoreValue = CClassInterface::getScore(m_pEdict);
+				float scoreValue = CClassInterface::getTF2Score(m_pEdict);
 
 				if ( m_iClass == TF_CLASS_ENGINEER )
 				{
@@ -2736,20 +2757,20 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		{
 			fExitDist = distanceFrom(m_pTeleExit);
 
-			fTeleporterExitHealthPercent = CClassInterface::getHealth(m_pTeleExit)/180;
+			fTeleporterExitHealthPercent = CClassInterface::getTeleporterHealth(m_pTeleExit)/180;
 		}
 
 		if ( m_pTeleEntrance )
 		{
 			fEntranceDist = distanceFrom(m_pTeleEntrance);
 
-			fTeleporterEntranceHealthPercent = CClassInterface::getHealth(m_pTeleEntrance)/180;
+			fTeleporterEntranceHealthPercent = CClassInterface::getTeleporterHealth(m_pTeleEntrance)/180;
 		}
 
 		if ( m_pSentryGun )
 		{
 			iSentryLevel = CTeamFortress2Mod::getSentryLevel(m_pSentryGun);
-			fSentryHealthPercent = CClassInterface::getHealth(m_pSentryGun);
+			fSentryHealthPercent = CClassInterface::getSentryHealth(m_pSentryGun);
 
 			if ( iSentryLevel == 1 )
 				fSentryHealthPercent /= TF2_SENTRY_LEVEL1_HEALTH;		
@@ -2762,7 +2783,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		if ( m_pDispenser )
 		{
 			iDispenserLevel = CTeamFortress2Mod::getDispenserLevel(m_pDispenser);
-			fDispenserHealthPercent = CClassInterface::getHealth(m_pDispenser);
+			fDispenserHealthPercent = CClassInterface::getDispenserHealth(m_pDispenser);
 
 			if ( iDispenserLevel == 1 )
 				fDispenserHealthPercent /= TF2_DISPENSER_LEVEL1_HEALTH;
@@ -2775,7 +2796,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		if ( m_pNearestDisp && (m_pNearestDisp != m_pDispenser) )
 		{
 			iAllyDispLevel = CTeamFortress2Mod::getDispenserLevel(m_pNearestDisp);
-			fAllyDispenserHealthPercent = CClassInterface::getHealth(m_pNearestDisp);
+			fAllyDispenserHealthPercent = CClassInterface::getDispenserHealth(m_pNearestDisp);
 
 			if ( iAllyDispLevel == 1 )
 				fAllyDispenserHealthPercent /= TF2_DISPENSER_LEVEL1_HEALTH;
@@ -2788,7 +2809,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		if ( m_pNearestAllySentry && (m_pNearestAllySentry != m_pSentryGun) )
 		{
 			iAllySentryLevel = CTeamFortress2Mod::getSentryLevel(m_pNearestAllySentry);
-			fAllySentryHealthPercent = CClassInterface::getHealth(m_pNearestAllySentry);
+			fAllySentryHealthPercent = CClassInterface::getSentryHealth(m_pNearestAllySentry);
 
 			if ( iAllySentryLevel == 1 )
 				fAllySentryHealthPercent /= TF2_SENTRY_LEVEL1_HEALTH;		
@@ -2810,7 +2831,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9));
 		utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),fSentryUtil));
 		
-		if ( CTeamFortress2Mod::isAttackDefendMap() && (iTeam == TF_TEAM_BLUE) )
+		if ( CTeamFortress2Mod::isAttackDefendMap() && (iTeam == TF2_TEAM_BLUE) )
 		{
 			utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
 			utils.addUtility(CBotUtility(this,BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f));
@@ -2879,10 +2900,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	}
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_GOTODISP,m_pNearestDisp && (bNeedAmmo || bNeedHealth),1.0));
-	utils.addUtility(CBotUtility(this,BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,fHealthDist/fResupplyDist));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !bHasFlag && !m_bIsBeingHealed && pWaypointResupply && bNeedHealth && !m_pHealthkit,fHealthDist/fResupplyDist));
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0));
-	utils.addUtility(CBotUtility(this,BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_GETHEALTHKIT, bNeedHealth && !m_bIsBeingHealed && m_pHealthkit,1.0));
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_GETFLAG, (CTeamFortress2Mod::isMapType(TF_MAP_CTF)||(CTeamFortress2Mod::isMapType(TF_MAP_SD)&&CTeamFortress2Mod::canTeamPickupFlag_SD(iTeam,false))) && !bHasFlag,fGetFlagUtility));
 	utils.addUtility(CBotUtility(this,BOT_UTIL_GETFLAG_LASTKNOWN, (CTeamFortress2Mod::isMapType(TF_MAP_CTF)||(CTeamFortress2Mod::isMapType(TF_MAP_SD)&&CTeamFortress2Mod::canTeamPickupFlag_SD(iTeam,true))) && !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), fGetFlagUtility+0.1));
@@ -3160,10 +3181,10 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 
 	if ( m_pSentryGun )
 	{
-		if ( m_prevSentryHealth > CClassInterface::getHealth(m_pSentryGun) )
+		if ( m_prevSentryHealth > CClassInterface::getSentryHealth(m_pSentryGun) )
 			return true;
 
-		m_prevSentryHealth = CClassInterface::getHealth(m_pSentryGun);
+		m_prevSentryHealth = CClassInterface::getSentryHealth(m_pSentryGun);
 
 		if ( distanceFrom(m_pSentryGun) > 100 )
 			setMoveTo(CBotGlobals::entityOrigin(m_pSentryGun));
@@ -3185,26 +3206,26 @@ bool CBotTF2::lookAfterBuildings ( float *fTime )
 	
 	if ( m_pDispenser )
 	{
-		if ( m_prevDispHealth > CClassInterface::getHealth(m_pDispenser) )
+		if ( m_prevDispHealth > CClassInterface::getDispenserHealth(m_pDispenser) )
 			return true;
 
-		m_prevDispHealth = CClassInterface::getHealth(m_pDispenser);
+		m_prevDispHealth = CClassInterface::getDispenserHealth(m_pDispenser);
 	}
 
 	if ( m_pTeleExit )
 	{
-		if ( m_prevTeleExtHealth > CClassInterface::getHealth(m_pTeleExit) )
+		if ( m_prevTeleExtHealth > CClassInterface::getTeleporterHealth(m_pTeleExit) )
 			return true;
 
-		m_prevTeleExtHealth = CClassInterface::getHealth(m_pTeleExit);
+		m_prevTeleExtHealth = CClassInterface::getTeleporterHealth(m_pTeleExit);
 	}
 
 	if ( m_pTeleEntrance )
 	{
-		if ( m_prevTeleEntHealth > CClassInterface::getHealth(m_pTeleEntrance) )
+		if ( m_prevTeleEntHealth > CClassInterface::getTeleporterHealth(m_pTeleEntrance) )
 			return true;
 
-		m_prevTeleEntHealth = CClassInterface::getHealth(m_pTeleEntrance);
+		m_prevTeleEntHealth = CClassInterface::getTeleporterHealth(m_pTeleEntrance);
 	}
 
 	return false;

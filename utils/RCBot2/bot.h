@@ -87,9 +87,195 @@ extern CGlobalVars *gpGlobals;
 
 #define T_OFFSETMAX  3
 
+typedef enum
+{
+	GETPROP_UNDEF = -1,
+	GETPROP_TF2SCORE = 0,
+	GETPROP_ENTITY_FLAGS,
+	GETPROP_TEAM,
+	GETPROP_PLAYERHEALTH,
+	GETPROP_EFFECTS,
+	GETPROP_AMMO,
+	GETPROP_TF2_NUMHEALERS,
+	GETPROP_TF2_CONDITIONS,
+	GETPROP_VELOCITY,
+	GETPROP_TF2CLASS,
+	GETPROP_TF2SPYMETER,// CTFPlayer::
+	GETPROP_TF2SPYDISGUISED_TEAM,//CTFPlayer::m_nDisguiseTeam
+	GETPROP_TF2SPYDISGUISED_CLASS,//CTFPlayer::m_nDisguiseClass
+	GETPROP_TF2SPYDISGUISED_TARGET_INDEX,//CTFPlayer::m_iDisguiseTargetIndex
+	GETPROP_TF2SPYDISGUISED_DIS_HEALTH,//CTFPlayer::m_iDisguiseHealth
+ 	GETPROP_TF2MEDIGUN_HEALING,
+	GETPROP_TF2MEDIGUN_TARGETTING,
+	//SETPROP_SET_TICK_BASE,
+	GETPROP_TF2TELEPORTERMODE,
+	GETPROP_CURRENTWEAPON,
+	GETPROP_TF2UBERCHARGE_LEVEL,
+	GETPROP_TF2SENTRYHEALTH,
+	GETPROP_TF2DISPENSERHEALTH,
+	GETPROP_TF2TELEPORTERHEALTH,
+	GET_PROPDATA_MAX
+}getpropdata_id;
+
+
+class CClassInterfaceValue
+{
+public:
+	CClassInterfaceValue ()
+	{
+		m_data = NULL; 
+		m_class = NULL;
+		m_value = NULL;
+		m_offset = 0;
+	}
+
+	CClassInterfaceValue ( char *key, char *value, unsigned int preoffset )
+	{
+		init(key,value,preoffset);
+	}
+
+	void init ( char *key, char *value, unsigned int preoffset = 0 );
+
+	void findOffset ( );
+
+	void getData ( edict_t *edict );
+
+	edict_t *getEntity ( edict_t *edict );
+
+	inline bool getBool ( edict_t *edict, bool defaultvalue ) 
+	{ 
+		getData(edict);  
+		
+		if ( !m_data ) 
+			return defaultvalue; 
+		
+		return *((bool*)m_data); 
+	}
+
+	inline float getFloat ( edict_t *edict, float defaultvalue ) 
+	{ 
+		getData(edict); 
+		
+		if ( !m_data ) 
+			return defaultvalue; 
+		
+		return *((float*)m_data); 
+	}
+
+	inline char *getString (edict_t *edict ) 
+	{ 
+		getData(edict); 
+
+		return (char*)m_data; 
+	}
+
+	inline Vector *getVector ( edict_t *edict )
+	{
+		getData(edict);
+
+		return (Vector*)m_data;
+	}
+
+	inline int getInt ( edict_t *edict, int defaultvalue ) 
+	{ 
+		getData(edict); 
+		
+		if ( !m_data ) 
+			return defaultvalue; 
+		
+		return *((int*)m_data);
+	}
+
+	inline int *getIntPointer ( edict_t *edict ) 
+	{ 
+		getData(edict); 
+
+		return (int*)m_data; 
+	}
+
+	inline float getFloatFromInt ( edict_t *edict, float defaultvalue )
+	{
+		getData(edict); 
+
+		if ( !m_data ) 
+			return defaultvalue; 
+
+		return (float)(*(int *)m_data);
+	}
+
+	static void resetError () { m_berror = false; }
+	static bool isError () { return m_berror; }
+
+private:
+	unsigned int m_offset;
+	unsigned int m_preoffset;
+	void *m_data;
+	char *m_class;
+	char *m_value;
+
+	static bool m_berror;
+};
+
+
+extern CClassInterfaceValue g_GetProps[GET_PROPDATA_MAX];
+
+#define DEFINE_GETPROP(id,classname,value,preoffs)\
+ g_GetProps[id] = CClassInterfaceValue( CClassInterfaceValue ( classname, value, preoffs ) );
+
 class CClassInterface
 {
 public:
+	static void init ();
+
+	// TF2
+	static int getTF2Score ( edict_t *edict );
+	inline static int getFlags ( edict_t *edict ) { return g_GetProps[GETPROP_ENTITY_FLAGS].getInt(edict,0); }
+	inline static int getTeam ( edict_t *edict ) { return g_GetProps[GETPROP_TEAM].getInt(edict,0); }
+	inline static float getPlayerHealth ( edict_t *edict ) { return g_GetProps[GETPROP_PLAYERHEALTH].getFloatFromInt(edict,0); }
+	inline static int getEffects ( edict_t *edict ) { return g_GetProps[GETPROP_EFFECTS].getInt(edict,0); }
+	inline static int *getAmmoList ( edict_t *edict ) { return g_GetProps[GETPROP_AMMO].getIntPointer(edict); }
+	//static unsigned int findOffset(const char *szType,const char *szClass);
+	inline static int getTF2NumHealers ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_NUMHEALERS].getInt(edict,0); }
+	inline static int getTF2Conditions ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_CONDITIONS].getInt(edict,0); }
+	inline static Vector *getVelocity ( edict_t *edict ) { return g_GetProps[GETPROP_VELOCITY].getVector(edict); }
+	inline static int getTF2Class ( edict_t *edict ) { return g_GetProps[GETPROP_TF2CLASS].getInt(edict,0); }
+	inline static float getTF2SpyCloakMeter ( edict_t *edict ) { return g_GetProps[GETPROP_TF2SPYMETER].getFloat(edict,0); }
+	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health ) 
+	{ 
+		CClassInterfaceValue::resetError();
+		*_team = g_GetProps[GETPROP_TF2SPYDISGUISED_TEAM].getInt(edict,0); 
+		*_class = g_GetProps[GETPROP_TF2SPYDISGUISED_CLASS].getInt(edict,0); 
+		*_index = g_GetProps[GETPROP_TF2SPYDISGUISED_TARGET_INDEX].getInt(edict,0); 
+		*_health = g_GetProps[GETPROP_TF2SPYDISGUISED_DIS_HEALTH].getInt(edict,0);
+		return !CClassInterfaceValue::isError();
+	}
+	inline static bool getMedigunHealing ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MEDIGUN_HEALING].getBool(edict,false); }
+	inline static edict_t *getMedigunTarget ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MEDIGUN_TARGETTING].getEntity(edict); }
+	inline static bool isMedigunTargetting ( edict_t *pgun, edict_t *ptarget) { return (g_GetProps[GETPROP_TF2MEDIGUN_TARGETTING].getEntity(pgun) == ptarget); }
+	//static void setTickBase ( edict_t *edict, int tickbase ) { return ;
+	inline static int isTeleporterMode (edict_t *edict, eTeleMode mode ) { return (g_GetProps[GETPROP_TF2TELEPORTERMODE].getInt(edict,-1) == (int)mode); }
+	inline static edict_t *getCurrentWeapon (edict_t *player) { return g_GetProps[GETPROP_CURRENTWEAPON].getEntity(player); }
+	inline static int getUberChargeLevel (edict_t *pWeapon) { return (int)(g_GetProps[GETPROP_TF2UBERCHARGE_LEVEL].getFloat(pWeapon,0)*100.0); }
+	//static void test ();
+	inline static float getSentryHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2SENTRYHEALTH].getFloatFromInt(edict,100); }
+	inline static float getDispenserHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2DISPENSERHEALTH].getFloatFromInt(edict,100); }
+	inline static float getTeleporterHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2TELEPORTERHEALTH].getFloatFromInt(edict,100); }
+
+	// HL2DM
+	//static void 
+
+private:
+	static CClassInterfaceValue g_GetProps[GET_PROPDATA_MAX];
+
+};
+
+	/*
+	/
+class CClassInterface
+{
+public:
+
+	// TF2
 	static int getScore ( edict_t *edict );
     static int getFlags ( edict_t *edict );
 	static int getTeam ( edict_t *edict );
@@ -111,8 +297,12 @@ public:
 	static edict_t *getCurrentWeapon (edict_t *player);
 	static int getUberChargeLevel (edict_t *pWeapon);
 	static void test ();
-};
 
+	// HL2DM
+	//static void 
+
+};
+	*/
 class MyEHandle 
 {
 public:

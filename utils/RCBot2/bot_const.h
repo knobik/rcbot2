@@ -147,6 +147,7 @@ typedef enum
 #define CONDITION_POINT_CAPTURED 512
 #define CONDITION_PUSH 1024
 #define CONDITION_LIFT	2048
+#define CONDITION_SEE_HEAL 4096
 ////////////////////////
 
 ///////////////////////

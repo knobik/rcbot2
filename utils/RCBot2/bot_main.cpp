@@ -79,6 +79,20 @@
 #include "tier0/memdbgon.h"
 
 static ICvar *s_pCVar;
+/*
+vector<CClassInterfaceValue *> g_GetProps;
+
+
+#define DEFINE_GETPROP(c_class,classname,value)\
+	CClassInterfaceValue *c_class = new CClassInterfaceValue ( classname, value ); \
+	g_GetProps.push_back( c_class );
+
+DEFINE_GETPROP(GetPropTF2Score,"CTF2Player","m_iScore");
+*/
+
+CClassInterfaceValue CClassInterface :: g_GetProps[GET_PROPDATA_MAX];
+bool CClassInterfaceValue :: m_berror = false;
+
 
 ConVar bot_visrevs_clients("rcbot_visrevs_clients","4",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
 ConVar bot_spyknifefov("rcbot_spyknifefov","80",0,"the FOV from the enemy that spies must backstab from");
@@ -128,7 +142,6 @@ IServerGameDLL *servergamedll = NULL;
 //
 CRCBotPlugin g_RCBOTServerPlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CRCBotPlugin, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_RCBOTServerPlugin );
-
 
 //---------------------------------------------------------------------------------
 // Purpose: constructor/destructor
@@ -339,6 +352,8 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	CRCBotPlugin::ShowLicense();	
 
 	RandomSeed((unsigned int)time(NULL));
+
+	CClassInterface::init();
 
 	return true;
 }
@@ -953,6 +968,120 @@ bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int 
 	return true;
 }
 
+
+edict_t *CClassInterfaceValue :: getEntity ( edict_t *edict ) 
+{ 
+	static CBaseHandle *hndl;
+	getData(edict); 
+
+	hndl = (CBaseHandle *)m_data; 
+
+	if ( hndl )
+		return INDEXENT(hndl->GetEntryIndex());
+
+	return NULL;
+}
+
+void CClassInterfaceValue :: init ( char *key, char *value, unsigned int preoffset )
+{
+	m_class = CStrings::getString(key);
+	m_value = CStrings::getString(value);
+	m_data = NULL;
+	m_preoffset = preoffset;
+	m_offset = 0;
+}
+
+void CClassInterfaceValue :: findOffset ( )
+{
+	//if (!m_offset)
+	//{
+	ServerClass *sc = UTIL_FindServerClass(m_class);
+
+	if ( sc )
+		UTIL_FindSendPropInfo(sc,m_value,&m_offset);
+	//}
+
+	if ( m_offset > 0 )
+		m_offset += m_preoffset;
+}
+
+void CClassInterface:: init ()
+{
+		DEFINE_GETPROP(GETPROP_TF2SCORE,"CTFPlayerResource","m_iTotalScore",0);
+		DEFINE_GETPROP(GETPROP_ENTITY_FLAGS,"CBaseEntity","m_iEffectFlags",0);
+		DEFINE_GETPROP(GETPROP_TEAM,"CBaseEntity","m_iTeamNum",0);
+		DEFINE_GETPROP(GETPROP_PLAYERHEALTH,"CBasePlayer","m_iHealth",0);
+		DEFINE_GETPROP(GETPROP_EFFECTS,"CBaseEntity","m_fEffects",0);
+		DEFINE_GETPROP(GETPROP_AMMO,"CBasePlayer","m_iAmmo",0);
+		DEFINE_GETPROP(GETPROP_TF2_NUMHEALERS,"CTFPlayer","m_nNumHealers",4);
+		DEFINE_GETPROP(GETPROP_TF2_CONDITIONS,"CTFPlayer","m_nPlayerCond",0);
+		DEFINE_GETPROP(GETPROP_VELOCITY,"CBaseEntity","m_vecAbsVelocity",0);
+		DEFINE_GETPROP(GETPROP_TF2CLASS,"CTFPlayer","m_PlayerClass",4);
+		DEFINE_GETPROP(GETPROP_TF2SPYMETER,"CTFPlayer","m_flCloakMeter",4);
+		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_TEAM,"CTFPlayer","m_nDisguiseTeam",0);
+		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_CLASS,"CTFPlayer","m_nDisguiseClass",0);
+		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_TARGET_INDEX,"CTFPlayer","m_iDisguiseTargetIndex",0);
+		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_DIS_HEALTH,"CTFPlayer","m_iDisguiseHealth",0);
+		DEFINE_GETPROP(GETPROP_TF2MEDIGUN_HEALING,"CWeaponMedigun","m_bHealing",0);
+		DEFINE_GETPROP(GETPROP_TF2MEDIGUN_TARGETTING,"CWeaponMedigun","m_hHealingTarget",0);
+		DEFINE_GETPROP(GETPROP_TF2TELEPORTERMODE,"CObjectTeleporter","m_iObjectMode",0);
+		DEFINE_GETPROP(GETPROP_CURRENTWEAPON,"CBaseCombatCharacter","m_hActiveWeapon",0);
+		DEFINE_GETPROP(GETPROP_TF2UBERCHARGE_LEVEL,"CWeaponMedigun","m_flChargeLevel",0);
+		DEFINE_GETPROP(GETPROP_TF2SENTRYHEALTH,"CObjectSentrygun","m_iHealth",0);
+		DEFINE_GETPROP(GETPROP_TF2DISPENSERHEALTH,"CObjectDispenser","m_iHealth",0);
+		DEFINE_GETPROP(GETPROP_TF2TELEPORTERHEALTH,"CObjectTeleporter","m_iHealth",0);
+
+		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
+		{
+			//if ( g_GetProps[i]
+			g_GetProps[i].findOffset();
+		}
+}
+
+void CClassInterfaceValue :: getData ( edict_t *edict )
+{
+	static IServerUnknown *pUnknown;
+	static CBaseEntity *pEntity;
+
+	if (!m_offset)
+	{
+		m_data = NULL;
+		m_berror = true;
+		return;
+	}
+
+	pUnknown = (IServerUnknown *)edict->GetUnknown();
+
+	if (!pUnknown)
+	{
+		m_data = NULL;
+		m_berror = true;
+		return;
+	}
+ 
+	pEntity = pUnknown->GetBaseEntity();
+
+	m_data = (void *)((char *)pEntity + m_offset);
+}
+
+
+ int CClassInterface::getTF2Score ( edict_t *edict ) 
+	{ 
+		edict_t *res = CTeamFortress2Mod::findResourceEntity();
+		int *score_array = NULL;
+
+		if ( res )
+		{
+			score_array = g_GetProps[GETPROP_TF2SCORE].getIntPointer(res);
+
+			if ( score_array )
+				return score_array[ENTINDEX(edict)-1];
+		}
+
+		return 0;
+	}
+
+/*
 int CClassInterface ::getScore (edict_t *edict)
 {
 	static unsigned int offset = 0;
@@ -1161,26 +1290,7 @@ CBaseEntity * CClassInterface :: getMedigunTarget ( edict_t *edict )
 	CBaseHandle &hndl = *(CBaseHandle *)((unsigned char *)pEntity + offset);
 
 	return (CBaseEntity*)INDEXENT(hndl.GetEntryIndex());
-	/*
-	entRef = hndl1.GetEntryIndex();
-
-	if ((unsigned)entRef == INVALID_EHANDLE_INDEX)
-	{
-		return INVALID_EHANDLE_INDEX;
-	}
-
-	int hndlValue = entRef & ~(1<<31);
-	CBaseHandle hndl(hndlValue);
-
-	if (hndl.GetEntryIndex() < MAX_EDICTS)
-	{
-		return hndl.GetEntryIndex();
-	}
-
-	return entRef;
-
-	//return entryindex;
-	//return *(short*)((char *)pEntity + offset);*/
+	
 }
 
 void CClassInterface :: setTickBase ( edict_t *edict, int tick )
@@ -1345,7 +1455,6 @@ unsigned int CClassInterface :: findOffset(const char *szType,const char *szClas
 	unsigned int offset = 0;
 	ServerClass *sc = UTIL_FindServerClass(szClass);
 
-	
 	//SendProp *pProp = UTIL_FindSendProp(sc->m_pTable, szType);
 
 	if ( sc )
@@ -1460,3 +1569,4 @@ int CClassInterface :: getTF2Conditions ( edict_t *edict )
 	return *(int *)((char *)pEntity + offset);
 }
 
+*/

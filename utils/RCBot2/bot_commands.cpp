@@ -1150,7 +1150,7 @@ eBotCommandResult CSearchCommand :: execute ( CClient *pClient, const char *pcmd
 					{
 						model = pEdict->GetIServerEntity()->GetModelName();
 				
-						CBotGlobals::botMessage(pPlayer,0,"(%d) D:%0.2f C:'%s', Mid:%d, Mn:'%s' Health=%d, Tm:%d, Fl:%d",i,fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr(),(int)CClassInterface::getHealth(pEdict),(int)CClassInterface::getTeam(pEdict),pEdict->m_fStateFlags );
+						CBotGlobals::botMessage(pPlayer,0,"(%d) D:%0.2f C:'%s', Mid:%d, Mn:'%s' Health=%d, Tm:%d, Fl:%d",i,fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr(),(int)CClassInterface::getPlayerHealth(pEdict),(int)CClassInterface::getTeam(pEdict),pEdict->m_fStateFlags );
 					}
 				}
 			}

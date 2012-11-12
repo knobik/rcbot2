@@ -91,7 +91,9 @@ void CBotTF2DemoPipeTrapSched :: init()
 //////////////////////////////////////
 CBotTF2HealSched::CBotTF2HealSched(edict_t *pHeal)
 {
-	addTask(new CFindPathTask(CBotGlobals::entityOrigin(pHeal)));
+	CFindPathTask *findpath = new CFindPathTask(CBotGlobals::entityOrigin(pHeal));
+	findpath->setCompleteInterrupt(CONDITION_SEE_HEAL);
+	addTask(findpath);
 	addTask(new CBotTF2MedicHeal());
 }
 
