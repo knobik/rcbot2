@@ -793,6 +793,11 @@ bool CBot ::isOnLift()
 	return ((m_vVelocity.z < -8.0f)||(m_vVelocity.z >= 8.0f));//&&(CClassInterface::getFlags(m_pEdict) & FL_ONGROUND);
 }
 
+edict_t *CBot :: getVisibleSpecial ()
+{
+	return NULL;
+}
+
 void CBot :: spawnInit ()
 {
 	if ( m_pSchedules != NULL )
@@ -803,6 +808,7 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_iSpecialVisibleId = 0;
 	m_fUseRouteTime = 0.0f;
 	m_bWantToListen = true;
 	m_iPrevWeaponSelectFailed = 0;
@@ -976,7 +982,7 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
 		m_fLookSetTime = 0;
-		setLookAtTask((LOOK_HURT_ORIGIN));
+		setLookAtTask(LOOK_HURT_ORIGIN);
 		m_fLookSetTime = engine->Time() + randomFloat(3.0,8.0);
 	}
 

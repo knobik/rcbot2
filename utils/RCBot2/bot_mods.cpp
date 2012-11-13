@@ -858,7 +858,7 @@ int CTeamFortress2Mod ::numClassOnTeam( int iTeam, int iClass )
 	return num;
 }
 
-int CTeamFortress2Mod ::numPlayersOnTeam(int iTeam)
+int CTeamFortress2Mod ::numPlayersOnTeam(int iTeam, bool bAliveOnly)
 {
 	int i = 0;
 	int num = 0;
@@ -872,7 +872,13 @@ int CTeamFortress2Mod ::numPlayersOnTeam(int iTeam)
 		{
 			if ( CTeamFortress2Mod::getTeam(pEdict) == iTeam )
 			{
-				num++;
+				if ( bAliveOnly )
+				{
+					if ( CBotGlobals::entityIsAlive(pEdict) )
+						num++;
+				}
+				else 
+					num++;
 			}
 		}
 	}

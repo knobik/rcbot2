@@ -338,10 +338,10 @@ void CBotGotoOriginSched :: init ()
 	setID(SCHED_GOTO_ORIGIN);
 }
 ///////////////////////////////////////
-CBotDefendSched ::CBotDefendSched ( Vector vOrigin )
+CBotDefendSched ::CBotDefendSched ( Vector vOrigin, float fMaxTime )
 {
 	addTask(new CFindPathTask(vOrigin));
-	addTask(new CBotDefendTask(vOrigin));
+	addTask(new CBotDefendTask(vOrigin,fMaxTime));
 }
 
 void CBotDefendSched :: init ()
@@ -463,15 +463,17 @@ CBotFollowLastEnemy ::	CBotFollowLastEnemy ( CBot *pBot, edict_t *pEnemy, Vector
 	else if ( pClient )
 		vVelocity = pClient->getVelocity();
 
+	pFindPath->setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
+
 	addTask(pFindPath);
 
-	if ( pBot->isTF2() )
+	/*if ( pBot->isTF2() )
 	{
 		int playerclass = ((CBotTF2*)pBot)->getClass();
 		
 		if ( ( playerclass == TF_CLASS_SOLDIER ) || (playerclass == TF_CLASS_DEMOMAN) )
 			addTask(new CBotTF2ShootLastEnemyPosition(vLastSee,pEnemy,vVelocity));
-	}
+	}*/
 
 	addTask(new CFindLastEnemy(vLastSee,vVelocity));
 

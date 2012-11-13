@@ -308,6 +308,8 @@ void CBotFortress :: checkHealingValid ()
 			removeCondition(CONDITION_SEE_HEAL);
 		}
 	}
+	else
+		removeCondition(CONDITION_SEE_HEAL);
 }
 
 bool CBotFortress :: wantToHeal ( edict_t *pPlayer )
@@ -971,6 +973,8 @@ void CBotFortress :: modThink ()
 
 		if ( pWpt )
 		{
+			// Get the nearest waypoint outside spawn (flagged as a teleporter entrance)
+			// useful for Engineers and medics who want to camp for players
 			m_vTeleportEntrance = pWpt->getOrigin();// + Vector(randomFloat(-pWpt->getRadius(),pWpt->getRadius()),randomFloat(-pWpt->getRadius(),pWpt->getRadius()),0);
 			m_bEntranceVectorValid = true;
 		}
@@ -1324,8 +1328,15 @@ void CBotTF2 :: taunt ()
 		m_fTaunting = engine->Time() + 5.0;
 	}
 }
+// useful for quick check of mod entities (especially ones which I need to find quickly
+// e.g. sentry gun -- if I dont see it quickly it might kill me
+edict_t *CBotFortress::getVisibleSpecial()
+{
+	if ( (signed int)m_iSpecialVisibleId >= gpGlobals->maxClients )
+		m_iSpecialVisibleId = 0;
 
-
+	return CTeamFortress2Mod::getSentryGun (m_iSpecialVisibleId++);
+}
 /*
 lambda-
 NEW COMMAND SYNTAX:
@@ -1959,7 +1970,8 @@ void CBotTF2 :: modThink ()
 		{
 			if ( m_fSpyDisguiseTime < engine->Time() )
 			{
-				if ( !isDisguised() )
+				// if previously detected or isn't disguised
+				if ( (m_fDisguiseTime == 0.0f) || !isDisguised() )
 				{
 					int iteam = CTeamFortress2Mod::getEnemyTeam(getTeam());
 
@@ -2927,14 +2939,19 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal) && wantToHeal(m_pHeal),0.98f));
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && CBotGlobals::entityIsAlive(m_pLastHeal) && wantToHeal(m_pLastHeal),0.99f)); 
-	utils.addUtility(CBotUtility(this,BOT_UTIL_HIDE_FROM_ENEMY,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY),1.0f));
+	utils.addUtility(CBotUtility(this,BOT_UTIL_HIDE_FROM_ENEMY,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && !m_pHeal && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY),0.9f));
 	
 	int numplayersonteam = CTeamFortress2Mod::numPlayersOnTeam(iTeam);
+	int numplayersonteam_alive = CTeamFortress2Mod::numPlayersOnTeam(iTeam,true);
 
 	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_FINDPLAYER,(m_iClass == TF_CLASS_MEDIC) && 
 		!m_pHeal && m_pLastCalledMedic && ((m_fLastCalledMedicTime+30.0f)>engine->Time()) && 
 		( (numplayersonteam>1) && 
 		  (numplayersonteam>CTeamFortress2Mod::numClassOnTeam(iTeam,getClass())) ),0.95f));
+
+	utils.addUtility(CBotUtility(this,BOT_UTIL_MEDIC_FINDPLAYER_AT_SPAWN,(m_iClass == TF_CLASS_MEDIC) && 
+		!m_pHeal && !m_pLastCalledMedic && m_bEntranceVectorValid && (numplayersonteam>1) && 
+		(numplayersonteam_alive < numplayersonteam),0.94f));
 
 	if ( m_iClass==TF_CLASS_SPY )
 	{
@@ -3773,6 +3790,24 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				m_pSchedules->add(new CBotTF2FindFlagSched(m_vLastKnownFlagPoint));
 				return true;
+			}
+			break;
+		case BOT_UTIL_MEDIC_FINDPLAYER_AT_SPAWN:
+			{
+				CWaypoint *pWaypoint = NULL;
+				
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,300,-1,true,false,true,NULL,false,getTeam(),true));
+
+				//if ( pWaypoint && randomInt(0,1) )
+				//	pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),pWaypoint->getOrigin());
+
+				if ( pWaypoint )
+				{
+					setLookAt(pWaypoint->getOrigin());
+					m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin(),randomFloat(10.0f,25.0f)));
+					removeCondition(CONDITION_PUSH);
+					return true;
+				}
 			}
 			break;
 		case BOT_UTIL_MEDIC_FINDPLAYER:

@@ -414,7 +414,7 @@ public:
 class CBotDefendSched : public CBotSchedule
 {
 public:
-	CBotDefendSched ( Vector vOrigin );
+	CBotDefendSched ( Vector vOrigin, float fMaxTime = 0 );
 
 	void init ();
 };

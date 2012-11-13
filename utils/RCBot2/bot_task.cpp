@@ -882,10 +882,15 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( m_fTime == 0 )
-		m_fTime = engine->Time() + randomFloat(20.0f,90.0f);
+	{
+		if ( m_fMaxTime > 0 )
+			m_fTime = engine->Time() + m_fMaxTime;
+		else
+			m_fTime = engine->Time() + randomFloat(20.0f,90.0f);
+	}
 	
 	pBot->stopMoving();
-	pBot->setLookAtTask((LOOK_SNIPE));
+	pBot->setLookAtTask(LOOK_SNIPE);
 
 	if ( m_fTime < engine->Time() )
 		complete();

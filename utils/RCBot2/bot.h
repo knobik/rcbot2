@@ -799,6 +799,9 @@ public:
 
 	virtual bool isTF2 () { return false; }
 
+	// return an enemy sentry gun / special visible (e.g.) for quick checking
+	virtual edict_t *getVisibleSpecial ();
+
 protected:
 
 	static void checkEntity ( edict_t **pEdict );
@@ -967,6 +970,7 @@ protected:
 	float m_fAvoidSideSwitch;
 	float m_fHealClickTime;
 
+	unsigned int m_iSpecialVisibleId;
 	//CBotNeuralNet *stucknet;
 	//CTrainingSet *stucknet_tset;
 };

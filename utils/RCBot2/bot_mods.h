@@ -411,6 +411,11 @@ public:
 		return false;
 	}
 
+	static edict_t *getSentryGun ( int id )
+	{
+		return m_SentryGuns[id].sentry.get();
+	}
+
 	static bool isMyTeleporterSapped ( edict_t *pOwner )
 	{
 		int id = ENTINDEX(pOwner)-1;
@@ -515,7 +520,7 @@ public:
 		}
 	}
 
-	static int numPlayersOnTeam ( int iTeam );
+	static int numPlayersOnTeam ( int iTeam, bool bAliveOnly = false );
 	static int numClassOnTeam ( int iTeam, int iClass );
 
 	static int getFlagCarrierTeam () { return m_iFlagCarrierTeam; }

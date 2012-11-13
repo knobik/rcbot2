@@ -229,8 +229,10 @@ void CBotVisibles :: updateVisibles ()
 	iStartIndex = m_iCurrentIndex;
 	iMaxClientTicks = bot_visrevs_clients.GetInt();
 
-	if ( iMaxTicks <= 0 )
-		iMaxTicks = 10;
+	if ( iMaxTicks <= 2 )
+		iMaxTicks = 2;
+	if ( iMaxClientTicks < 1 )
+		iMaxClientTicks = 1;
 
 #ifdef _DEBUG
 	CProfileTimer *timer = CProfileTimers::getTimer(BOT_VISION_TIMER);
@@ -278,6 +280,19 @@ void CBotVisibles :: updateVisibles ()
 	if ( m_iCurPlayer >= m_iCurrentIndex )
 		return;
 
+	pEntity = m_pBot->getVisibleSpecial();
+
+	if ( pEntity )
+	{
+		if ( CBotGlobals::entityIsValid(pEntity) )
+		{		
+			checkVisible(pEntity,&iTicks,&bVisible);
+
+			setVisible(pEntity,bVisible);
+			m_pBot->setVisible(pEntity,bVisible);
+		}
+	}
+
 	while ( iTicks < iMaxTicks )
 	{
 		bVisible = false;
@@ -300,6 +315,7 @@ void CBotVisibles :: updateVisibles ()
 		if ( m_iCurrentIndex == iStartIndex )
 			break; // back to where we started
 	}
+
 
 #ifdef _DEBUG
 	if ( CClients::clientsDebugging(BOT_DEBUG_PROFILE) )

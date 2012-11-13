@@ -400,6 +400,10 @@ public:
 	void waitCloak ();
 
 	void detectedAsSpy ();
+
+	// return an enemy sentry gun / special visible (e.g.) for quick checking
+	virtual edict_t *getVisibleSpecial ();
+
 protected:
 	virtual void selectTeam ();
 

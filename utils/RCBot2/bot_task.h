@@ -215,7 +215,7 @@ private:
 class CBotDefendTask : public CBotTask
 {
 public:
-	CBotDefendTask ( Vector vOrigin ) { m_vOrigin = vOrigin; m_fTime = 0; setCompleteInterrupt(CONDITION_SEE_CUR_ENEMY); }
+	CBotDefendTask ( Vector vOrigin, float fMaxTime = 0 ) { m_fMaxTime = fMaxTime; m_vOrigin = vOrigin; m_fTime = 0; setCompleteInterrupt(CONDITION_SEE_CUR_ENEMY); }
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -225,6 +225,7 @@ public:
 	}
 private:
 	float m_fTime;
+	float m_fMaxTime;
 	Vector m_vOrigin;
 };
 
