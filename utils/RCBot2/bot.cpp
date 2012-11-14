@@ -560,8 +560,14 @@ void CBot :: think ()
 	getTasks();	
 
 
-	if ( m_bWantToListen )
+	if ( m_bWantToListen && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 		listenForPlayers();
+	else if ( m_fListenTime > engine->Time() )
+	{
+		// got an enemy -- reset 
+		m_fLookSetTime = 0.0f;
+		m_fListenTime = 0.0f;
+	}
 
 	setMoveLookPriority(MOVELOOK_TASK);
 	m_pSchedules->execute(this);
@@ -808,6 +814,7 @@ void CBot :: spawnInit ()
 	if ( m_pEdict && (m_iAmmo == NULL) )
 		m_iAmmo = CClassInterface::getAmmoList(m_pEdict);
 
+	m_fCurrentDanger = 0.0f;
 	m_iSpecialVisibleId = 0;
 	m_fUseRouteTime = 0.0f;
 	m_bWantToListen = true;
@@ -911,6 +918,8 @@ void CBot :: touchedWpt ( CWaypoint *pWaypoint )
 		jump();
 	if ( pWaypoint->getFlags() & CWaypointTypes::W_FL_CROUCH )
 		duck();
+
+	updateDanger(m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint)));
 }
 
 // setup buttons and data structures
@@ -1206,34 +1215,39 @@ void CBot :: listenForPlayers ()
 
 					if ( cmd.buttons & IN_ATTACK )
 					{
-						fDist = distanceFrom(pPlayer);
-
-						if ( fDist < fMinDist )
+						if ( wantToListenToPlayer(pPlayer) )
 						{
-							fMinDist = fDist;
-							pListenNearest = pPlayer;
+							fDist = distanceFrom(pPlayer);
 
-							// look at enemy
-							if ( !isVisible(pPlayer) || isEnemy(pPlayer) )
+							if ( fDist < fMinDist )
 							{
-								m_vListenPosition = p->GetAbsOrigin();
+								fMinDist = fDist;
+								pListenNearest = pPlayer;
 
-								//if ( !isEnemy(pPlayer) )
-								//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
+								// look at enemy
+								if ( !isVisible(pPlayer) || isEnemy(pPlayer) )
+								{
+									m_vListenPosition = p->GetAbsOrigin();
+
+									//if ( !isEnemy(pPlayer) )
+									//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
+								}
+								else
+								{
+									QAngle angle = p->GetAbsAngles();
+									Vector forward;
+
+									AngleVectors( angle, &forward );
+
+									// look where team mate is shooting
+									m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);
+								}
+
+								m_bListenPositionValid = true;
+								m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
+								setLookAtTask(LOOK_NOISE);
+								m_fLookSetTime = m_fListenTime;
 							}
-							else
-							{
-								QAngle angle = p->GetAbsAngles();
-								Vector forward;
-
-								AngleVectors( angle, &forward );
-
-								// look where team mate is shooting
-								m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);
-							}
-
-							m_bListenPositionValid = true;
-							m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
 						}
 					}
 				}

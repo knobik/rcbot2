@@ -1436,12 +1436,16 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw, int iArea, float fRadius )
 {
 	int iIndex = freeWaypointIndex();
+	extern ConVar rcbot_wpt_autoradius;
 
 	if ( iIndex == -1 )	
 	{
 		Msg("Waypoints full!");
 		return;
 	}
+
+	if ( (fRadius == 0) && (rcbot_wpt_autoradius.GetFloat() > 0) )
+		fRadius = rcbot_wpt_autoradius.GetFloat();
 
 	///////////////////////////////////////////////////
 	m_theWaypoints[iIndex] = CWaypoint(vOrigin,iFlags);	
@@ -1459,7 +1463,10 @@ void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, b
 	m_pVisibilityTable->workVisibilityForWaypoint(iIndex,true);
 
 	if ( bAutoPath )
+	{
 		CWaypointLocations::AutoPath(pPlayer,iIndex);
+	}
+
 }
 
 void CWaypoints :: removeWaypoint ( int iIndex )

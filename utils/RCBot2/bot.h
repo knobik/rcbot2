@@ -689,6 +689,15 @@ public:
 		}	
 	}
 
+	inline void enemyDown (edict_t *pEnemy) 
+	{ 
+		if ( pEnemy == m_pEnemy ) 
+			updateCondition(CONDITION_ENEMY_DEAD); 
+		if ( pEnemy == m_pLastEnemy )
+		{
+			m_pLastEnemy = NULL;
+		}
+	}
 	//////////////////////
 	virtual bool isCSS () { return false; }
 	virtual bool isHLDM () { return false; }
@@ -787,6 +796,7 @@ public:
 	inline float getSpeed () { return m_vVelocity.Length2D(); }
 
 	virtual void listenForPlayers ();
+	virtual bool wantToListenToPlayer ( edict_t *pPlayer ) { return true; }
 
 	inline bool wantToShoot ( void ) { return m_bOpenFire; }
 	inline void wantToShoot ( bool bSet ) { m_bOpenFire = bSet; }
@@ -801,6 +811,8 @@ public:
 
 	// return an enemy sentry gun / special visible (e.g.) for quick checking
 	virtual edict_t *getVisibleSpecial ();
+
+	void updateDanger ( float fBelief ) { m_fCurrentDanger = (m_fCurrentDanger/2) + (fBelief/2); }
 
 protected:
 
@@ -971,6 +983,7 @@ protected:
 	float m_fHealClickTime;
 
 	unsigned int m_iSpecialVisibleId;
+	float m_fCurrentDanger;
 	//CBotNeuralNet *stucknet;
 	//CTrainingSet *stucknet_tset;
 };

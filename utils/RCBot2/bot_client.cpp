@@ -275,6 +275,18 @@ CClient *CClients :: findClientBySteamID ( char *szSteamID )
 	return NULL;
 }
 
+void CClients::clientDebugMsg(CBot *pBot, int iLev, const char *fmt, ... )
+{
+	va_list argptr; 
+	static char string[1024];
+
+	va_start (argptr, fmt);
+	vsprintf (string, fmt, argptr); 
+	va_end (argptr); 
+
+	clientDebugMsg(iLev,string,pBot);
+}
+
 void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 {
 	CClient *pClient;

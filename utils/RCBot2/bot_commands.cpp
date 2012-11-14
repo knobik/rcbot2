@@ -394,6 +394,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CDebugBotCommand());
 	add(new CDebugNavCommand());
 	add(new CDebugVisCommand());
+	add(new CDebugThinkCommand());
 	add(new CDebugTaskCommand());
 	add(new CDebugButtonsCommand());
 	add(new CDebugSpeedCommand());
@@ -880,6 +881,17 @@ eBotCommandResult CDebugVisCommand :: execute ( CClient *pClient, const char *pc
 
 	return COMMAND_ACCESSED;
 }
+
+eBotCommandResult CDebugThinkCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( !pcmd || !*pcmd )
+		return COMMAND_ERROR;
+
+	pClient->setDebug(BOT_DEBUG_THINK,atoi(pcmd)>0);
+
+	return COMMAND_ACCESSED;
+}
+
 
 eBotCommandResult CDebugProfilingCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {

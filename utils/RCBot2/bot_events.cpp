@@ -81,7 +81,10 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 	pBot = CBots::getBotPointer(pAttacker);
 
 	if ( pBot )
+	{
 		pBot->killed(m_pActivator);
+		pBot->enemyDown(m_pActivator);
+	}
 }
 
 void CBombPickupEvent :: execute ( IBotEventInterface *pEvent )

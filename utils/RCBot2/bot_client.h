@@ -189,6 +189,7 @@ public:
 	static void clientThink ();
 	static bool clientsDebugging ( int iLev = 0 );
 	static void clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot = NULL );
+	static void clientDebugMsg(CBot *pBot, int iLev, const char *fmt, ... );
 	static CClient *findClientBySteamID ( char *szSteamID );
 
 private:

@@ -605,6 +605,19 @@ public:
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 
+class CDebugThinkCommand: public CBotCommand
+{
+public:
+	CDebugThinkCommand ()
+	{
+		setName("think");
+		setHelp("usage \"vis 1 or 0, 1 on, 0 off\" : shows bot thinking output");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 class CDebugVisCommand: public CBotCommand
 {
 public:

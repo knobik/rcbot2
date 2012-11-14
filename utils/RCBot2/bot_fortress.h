@@ -368,6 +368,8 @@ public:
 	void teamFlagDropped ( Vector vOrigin );
 	void teamFlagPickup ();
 
+	virtual bool wantToListenToPlayer ( edict_t *pPlayer ) { return true; }
+
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
 	inline void teamFlagReset () { m_fLastKnownTeamFlagTime = 0.0f; }
 
@@ -486,6 +488,8 @@ protected:
 	MyEHandle m_pLastCalledMedic;
 	float m_fLastCalledMedicTime;
 	bool m_bIsBeingHealed;
+	float m_fMedicUpdatePosTime;
+	Vector m_vMedicPosition;
 
 	bool m_bCanBeUbered;
 	float m_fCheckHealTime;
@@ -543,6 +547,8 @@ public:
 	bool isTF2 () { return true; }
 
 	void checkDependantEntities ();
+
+	virtual bool wantToListenToPlayer ( edict_t *pPlayer );
 
 	void getDefendArea ( vector<int> *m_iAreas );
 
@@ -656,6 +662,10 @@ public:
 		
 	void checkBeingHealed ( );
 
+	void spyCloak ();
+
+	void spyUnCloak ();
+
 	inline void setHealStatus ( bool beinghealed, bool bcanbeubered ) { m_bIsBeingHealed = beinghealed; m_bCanBeUbered = bcanbeubered; }
 private:
 	// time for next jump
@@ -684,6 +694,10 @@ private:
 	float m_fRemoveSapTime;
 	float m_fRevMiniGunTime;
 	float m_fNextRevMiniGunTime;
+
+	float m_fRevMiniGunBelief;
+	float m_fCloakBelief;
+	
 	//
 	MyEHandle m_pCloakedSpy;
 	MyEHandle m_pLastEnemySentry;

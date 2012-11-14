@@ -364,10 +364,24 @@ bool CBotGlobals :: setWaypointDisplayType ( int iType )
 
 	return false;
 }
-
+// work on this
 bool CBotGlobals :: walkableFromTo (edict_t *pPlayer, Vector v_src, Vector v_dest)
 {   
+	extern ConVar rcbot_wptplace_width;
+	CTraceFilterVis filter = CTraceFilterVis(pPlayer);
 	float fDistance = sqrt((v_dest - v_src).LengthSqr());
+	Vector vcross = v_dest - v_src;
+	Vector vleftsrc,vleftdest, vrightsrc,vrightdest;
+
+	vcross = vcross / vcross.Length();
+	vcross = vcross.Cross(Vector(0,0,1));
+	vcross = vcross * (rcbot_wptplace_width.GetFloat()/2);
+
+	vleftsrc = v_src - vcross;
+	vrightsrc = v_src + vcross;
+
+	vleftdest = v_dest - vcross;
+	vrightdest = v_dest + vcross;
 
 	if ( fDistance > CWaypointLocations::REACHABLE_RANGE )
 		return false;
@@ -382,8 +396,7 @@ bool CBotGlobals :: walkableFromTo (edict_t *pPlayer, Vector v_src, Vector v_des
 		return true;
 	}
 
-	CTraceFilterVis filter = CTraceFilterVis(pPlayer);//	CTraceFilterHitAll filter;
-
+	// find the ground
 	CBotGlobals::traceLine(v_src,v_src-Vector(0,0,256.0),MASK_NPCSOLID_BRUSHONLY,&filter);
 #ifndef __linux__
 	debugoverlay->AddLineOverlay(v_src,v_src-Vector(0,0,256.0),255,0,255,false,3);
@@ -449,7 +462,9 @@ bool CBotGlobals :: walkableFromTo (edict_t *pPlayer, Vector v_src, Vector v_des
 		}
 	}
 
-	return true;
+	return CBotGlobals::isVisible(pPlayer,vleftsrc,vleftdest) && CBotGlobals::isVisible(pPlayer,vrightsrc,vrightdest);
+
+	//return true;
 }
 
 bool CBotGlobals :: boundingBoxTouch2d ( 

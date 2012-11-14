@@ -79,7 +79,7 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
-	else if ( !CBotGlobals::entityIsValid(pHeal) || !CBotGlobals::entityIsAlive(pHeal) )
+	else if ( !pBotTF2->wantToHeal(pHeal) )
 	{
 		pBotTF2->clearHealingEntity();
 		pBot->getNavigator()->rollBackPosition();
@@ -336,9 +336,11 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( m_fTime == 0 )
 		{
-			float fdist = pBot->distanceFrom(m_vMoveTo);
+			float fdist;
+
 			m_fTime = engine->Time() + randomFloat(5.0,10.0);
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
+			fdist = pBot->distanceFrom(m_vMoveTo);
 
 			if ( (((CBotTF2*)pBot)->getClass() == TF_CLASS_SPY) && (((CBotTF2*)pBot)->isDisguised()))
 			{
@@ -516,9 +518,11 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( m_fTime == 0 )
 		{
-			float fdist = pBot->distanceFrom(m_vMoveTo);
+			float fdist;
+
 			m_fTime = engine->Time() + randomFloat(5.0,10.0);
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
+			fdist = pBot->distanceFrom(m_vMoveTo);
 
 			if ( fdist < 32 )
 				pBot->stopMoving();
@@ -783,7 +787,7 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 	Vector vangles;
 	CBotWeapon *pBotWeapon;
 	CWeapon *pWeapon;
-	CBotFortress *pTF2Bot = (CBotFortress*)pBot;
+	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
 
 	pBot->wantToChangeWeapon(false);
 	pBot->wantToShoot(false);
@@ -870,9 +874,9 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		// uncloak
 		if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pBot->getEdict()) )
-			pBot->secondaryAttack();
+			pTF2Bot->spyUnCloak();
 		else
-			pBot->handleAttack(pBotWeapon,pEnemy);
+			pTF2Bot->handleAttack(pBotWeapon,pEnemy);
 	}
 }
 

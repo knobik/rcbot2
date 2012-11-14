@@ -120,7 +120,9 @@ ConVar bot_messaround("rcbot_messaround","1",0,"bots mess around at start up");
 ConVar bot_heavyaimoffset("rcbot_heavyaimoffset","0.1",0,"fraction of how much the heavy aims at a diagonal offset");
 ConVar bot_aimsmoothing("rcbot_aimsmooting","0",0,"(0 = no smoothing)");
 ConVar bot_bossattackfactor("rcbot_bossattackfactor","1.0",0,"the higher the more ofetn the bots will shoot the boss");
-ConVar rcbot_enemyshootfov("rcbot_enemyshootfov","0.7",0,"the fov dot product before the bot shoots an enemy 0.7 = 45 degrees");
+ConVar rcbot_enemyshootfov("rcbot_enemyshootfov","0.6",0,"the fov dot product before the bot shoots an enemy 0.7 = 45 degrees");
+ConVar rcbot_wptplace_width("rcbot_wpt_width","48",0,"width of the player, automatic paths won't connect unless there is enough space for a player");
+ConVar rcbot_wpt_autoradius("rcbot_wpt_autoradius","0",0,"every waypoint added is given this radius, 0 = no radius");
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
 IFileSystem *filesystem = NULL;  // file I/O 
@@ -1017,7 +1019,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2_CONDITIONS,"CTFPlayer","m_nPlayerCond",0);
 		DEFINE_GETPROP(GETPROP_VELOCITY,"CBaseEntity","m_vecAbsVelocity",0);
 		DEFINE_GETPROP(GETPROP_TF2CLASS,"CTFPlayer","m_PlayerClass",4);
-		DEFINE_GETPROP(GETPROP_TF2SPYMETER,"CTFPlayer","m_flCloakMeter",4);
+		DEFINE_GETPROP(GETPROP_TF2SPYMETER,"CTFPlayer","m_flCloakMeter",8);
 		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_TEAM,"CTFPlayer","m_nDisguiseTeam",0);
 		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_CLASS,"CTFPlayer","m_nDisguiseClass",0);
 		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_TARGET_INDEX,"CTFPlayer","m_iDisguiseTargetIndex",0);

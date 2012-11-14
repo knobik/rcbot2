@@ -841,7 +841,7 @@ int CTeamFortress2Mod ::numClassOnTeam( int iTeam, int iClass )
 	int num = 0;
 	edict_t *pEdict;
 
-	for ( i = 1; i < CBotGlobals::numClients(); i ++ )
+	for ( i = 1; i <= CBotGlobals::numClients(); i ++ )
 	{
 		pEdict = INDEXENT(i);
 
@@ -864,7 +864,7 @@ int CTeamFortress2Mod ::numPlayersOnTeam(int iTeam, bool bAliveOnly)
 	int num = 0;
 	edict_t *pEdict;
 
-	for ( i = 1; i < CBotGlobals::numClients(); i ++ )
+	for ( i = 1; i <= CBotGlobals::numClients(); i ++ )
 	{
 		pEdict = INDEXENT(i);
 
@@ -1104,7 +1104,7 @@ void CTeamFortress2Mod :: mapInit ()
 
 	m_iArea = 0;
 
-	m_fSetupTime = 0.0f;
+	m_fSetupTime = 5.0f; // 5 seconds normal
 
 	m_fRoundTime = 0.0f;
 
