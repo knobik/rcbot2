@@ -78,6 +78,8 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+//#define PRINT_ENTPROPS 
+
 static ICvar *s_pCVar;
 /*
 vector<CClassInterfaceValue *> g_GetProps;
@@ -134,6 +136,8 @@ ConVar rcbot_move_tele_time("rcbot_move_tele_time","120",0,"seconds for bots to 
 ConVar rcbot_move_tele_tpm("rcbot_move_tele_tpm","1",0,"if no of players teleported per minute is less than this, bot will move the teleport");
 
 ConVar rcbot_move_dist("rcbot_move_dist","200",0,"minimum distance to move objects to");
+
+ConVar rcbot_move_obj("rcbot_move_obj","1",0,"if 1 rcbot engineers will move objects around");
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
 IFileSystem *filesystem = NULL;  // file I/O 

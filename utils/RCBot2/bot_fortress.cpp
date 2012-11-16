@@ -591,7 +591,7 @@ void CBotFortress :: spawnInit ()
 	m_fLookAfterSentryTime = 0.0f;
 
 	m_fSnipeAttackTime = 0.0f;
-	m_fSpyCloakTime = engine->Time() + randomFloat(5.0f,10.0f);
+	m_fSpyCloakTime = 0.0f; //engine->Time();// + randomFloat(5.0f,10.0f);
 	m_fSpyUncloakTime = 0.0f;
 
 	m_fLastSaySpy = 0.0f;
@@ -1997,8 +1997,10 @@ void CBotTF2 :: modThink ()
 			// record time when bot started revving up
 			if ( m_fRevMiniGunTime == 0 )
 			{
+				float fMinTime = (m_fCurrentDanger/200)*10;
+
 				m_fRevMiniGunTime = engine->Time();
-				m_fNextRevMiniGunTime = randomFloat(10.0f,15.0f);
+				m_fNextRevMiniGunTime = randomFloat(fMinTime,fMinTime+5.0f);
 			}
 
 			// rev for 10 seconds
@@ -2006,6 +2008,12 @@ void CBotTF2 :: modThink ()
 			{
 				secondaryAttack(true);
 				m_fIdealMoveSpeed = 30.0f;
+
+				if ( m_fCurrentDanger < 1 )
+				{
+					m_fRevMiniGunTime = 0.0f;
+					m_fNextRevMiniGunTime = 0.0f;
+				}
 			}
 			else if ( (m_fRevMiniGunTime + (2.0f*m_fNextRevMiniGunTime)) < engine->Time() )
 			{
@@ -2907,6 +2915,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		extern ConVar rcbot_move_disp_healamount;
 		extern ConVar rcbot_move_tele_time;
 		extern ConVar rcbot_move_tele_tpm;
+		extern ConVar rcbot_move_obj;
+
+		bool bMoveObjs = rcbot_move_obj.GetBool();
 
 		int iSentryLevel = 0;
 		int iDispenserLevel = 0;
@@ -2935,7 +2946,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 			fTeleporterExitHealthPercent = CClassInterface::getTeleporterHealth(m_pTeleExit)/180;
 
-			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_EXIT,m_pTeleEntrance && m_pTeleExit && 
+			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_EXIT,bMoveObjs && m_pTeleEntrance && m_pTeleExit && 
 				m_fTeleporterExtPlacedTime && (fTeleporterExtPlaceTime > rcbot_move_tele_time.GetFloat()) &&
 				(((60.0f * m_iTeleportedPlayers)/fTeleporterExtPlaceTime)<rcbot_move_tele_tpm.GetFloat()),fTeleporterExitHealthPercent*getHealthPercent()*fMetalPercent);
 
@@ -2947,7 +2958,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 			fTeleporterEntranceHealthPercent = CClassInterface::getTeleporterHealth(m_pTeleEntrance)/180;
 
-			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_ENTRANCE,m_pTeleEntrance && m_pTeleExit && 
+			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_ENTRANCE,bMoveObjs && m_bEntranceVectorValid && m_pTeleEntrance && m_pTeleExit && 
 				m_fTeleporterEntPlacedTime && (fTeleporterEntPlaceTime > rcbot_move_tele_time.GetFloat()) &&
 				(((60.0f * m_iTeleportedPlayers)/fTeleporterEntPlaceTime)<rcbot_move_tele_tpm.GetFloat()),fTeleporterEntranceHealthPercent*getHealthPercent()*fMetalPercent);
 
@@ -2966,7 +2977,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 				fSentryHealthPercent /= TF2_SENTRY_LEVEL3_HEALTH;		
 
 			// move sentry
-			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_SENTRY,(m_fSentryPlaceTime>0.0f) && !bHasFlag && m_pSentryGun && (fSentryPlaceTime>rcbot_move_sentry_time.GetFloat())&&(((60.0f*m_iSentryKills)/fSentryPlaceTime)<rcbot_move_sentry_kpm.GetFloat()), fMetalPercent*getHealthPercent()*fSentryHealthPercent);
+			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_SENTRY,bMoveObjs && (m_fSentryPlaceTime>0.0f) && !bHasFlag && m_pSentryGun && (fSentryPlaceTime>rcbot_move_sentry_time.GetFloat())&&(((60.0f*m_iSentryKills)/fSentryPlaceTime)<rcbot_move_sentry_kpm.GetFloat()), fMetalPercent*getHealthPercent()*fSentryHealthPercent);
 
 		}
 
@@ -2983,7 +2994,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 				fDispenserHealthPercent /= TF2_DISPENSER_LEVEL3_HEALTH;	
 
 			// move disp
-			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_DISP,(m_fDispenserPlaceTime>0.0f) && !bHasFlag && m_pDispenser && (fDispenserPlaceTime>rcbot_move_disp_time.GetFloat())&&(((60.0f*m_fDispenserHealAmount)/fDispenserPlaceTime)<rcbot_move_disp_healamount.GetFloat()), fMetalPercent*getHealthPercent()*fDispenserHealthPercent);
+			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_DISP,bMoveObjs && (m_fDispenserPlaceTime>0.0f) && !bHasFlag && m_pDispenser && (fDispenserPlaceTime>rcbot_move_disp_time.GetFloat())&&(((60.0f*m_fDispenserHealAmount)/fDispenserPlaceTime)<rcbot_move_disp_healamount.GetFloat()), fMetalPercent*getHealthPercent()*fDispenserHealthPercent);
 
 		}
 
@@ -3022,7 +3033,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_SENTRY, (iMetal>=130) && (m_pSentryGun.get()!=NULL) && !CPoints::isValidArea(m_iSentryArea),fSentryUtil);
 		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_DISP, (iMetal>=125) && (m_pDispenser.get()!=NULL) && !CPoints::isValidArea(m_iDispenserArea),randomFloat(0.7,0.9));
 		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_ENTRANCE, (iMetal>=125) && (m_pTeleEntrance.get()!=NULL) && !CPoints::isValidArea(m_iTeleEntranceArea),randomFloat(0.7,0.9));
-		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_EXIT, (iMetal>=125) && (m_pTeleExit.get()!=NULL) && !CPoints::isValidArea(m_iTeleExitArea),randomFloat(0.7,0.9));
+		//ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_EXIT, (iMetal>=125) && (m_pTeleExit.get()!=NULL) && !CPoints::isValidArea(m_iTeleExitArea),randomFloat(0.7,0.9));
 
 		ADD_UTILITY(BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9);
 		ADD_UTILITY(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),fSentryUtil);
@@ -3800,7 +3811,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			if ( m_pSentryGun.get() )
 			{
 				Vector vSentry = CBotGlobals::entityOrigin(m_pSentryGun);
-				CWaypoint *pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam(),0,true,this);
+				CWaypoint *pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam(),0,false,this);
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vSentry) > rcbot_move_dist.GetFloat()) )
 				{
