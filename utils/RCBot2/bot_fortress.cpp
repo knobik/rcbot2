@@ -3815,7 +3815,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vSentry) > rcbot_move_dist.GetFloat()) )
 				{
-					m_pSchedules->add(new CBotEngiMoveBuilding(m_pSentryGun.get(),pWaypoint->getOrigin()));
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pSentryGun.get(),pWaypoint->getOrigin()));
 					m_iSentryArea = pWaypoint->getArea();
 					return true;
 				}
@@ -3836,7 +3836,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vDisp) > rcbot_move_dist.GetFloat()) )
 				{
-					m_pSchedules->add(new CBotEngiMoveBuilding(m_pDispenser.get(),pWaypoint->getOrigin()));
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pDispenser.get(),pWaypoint->getOrigin()));
 					m_iDispenserArea = pWaypoint->getArea();
 					return true;
 				}
@@ -3851,7 +3851,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint &&  ( pWaypoint->distanceFrom(vTele) > rcbot_move_dist.GetFloat() ) )
 				{
-					m_pSchedules->add(new CBotEngiMoveBuilding(m_pTeleEntrance.get(),pWaypoint->getOrigin()));
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pTeleEntrance.get(),pWaypoint->getOrigin()));
 					m_iTeleEntranceArea = pWaypoint->getArea();
 					return true;
 				}
@@ -3867,7 +3867,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vTele) > rcbot_move_dist.GetFloat()) )
 				{
-					m_pSchedules->add(new CBotEngiMoveBuilding(m_pTeleExit.get(),pWaypoint->getOrigin()));
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pTeleExit.get(),pWaypoint->getOrigin()));
 					m_iTeleExitArea = pWaypoint->getArea();
 					return true;
 				}

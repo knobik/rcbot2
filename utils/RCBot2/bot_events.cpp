@@ -578,6 +578,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CTF2SetupFinished());
 	addEvent(new COverTimeBegin());
 	addEvent(new CPlayerHealed());
+	addEvent(new CPlayerTeleported());
 /*
 pumpkin_lord_summoned 
 merasmus_summoned 

@@ -317,7 +317,7 @@ public:
 class CBotEngiMoveBuilding : public CBotSchedule
 {
 public:
-	CBotEngiMoveBuilding ( edict_t *pBuilding, Vector vNewLocation );
+	CBotEngiMoveBuilding ( edict_t *pBotEdict, edict_t *pBuilding, Vector vNewLocation );
 
 	void init ();
 };

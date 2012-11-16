@@ -127,10 +127,16 @@ void CBotGetMetalSched :: init ()
 	setID(SCHED_GET_METAL);
 }
 //////////////////////////////////////////////
-CBotEngiMoveBuilding :: CBotEngiMoveBuilding ( edict_t *pBuilding, Vector vNewLocation )
+CBotEngiMoveBuilding :: CBotEngiMoveBuilding ( edict_t *pBotEdict, edict_t *pBuilding, Vector vNewLocation )
 {
-	addTask(new CFindPathTask(pBuilding));
-	addTask(new CBotTaskEngiPickupBuilding(pBuilding));
+	// not carrying
+	if ( CBotGlobals::entityOrigin(pBotEdict) != CBotGlobals::entityOrigin(pBuilding) )
+	{
+		addTask(new CFindPathTask(pBuilding));
+		addTask(new CBotTaskEngiPickupBuilding(pBuilding));
+	}
+	// otherwise already carrying
+
 	addTask(new CFindPathTask(vNewLocation));
 	addTask(new CBotTaskEngiPlaceBuilding(vNewLocation));
 }
