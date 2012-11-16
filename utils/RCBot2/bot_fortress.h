@@ -89,7 +89,8 @@ typedef enum
     TF_VC_NICESHOT = 26,
     TF_VC_NO = 28,
     TF_VC_UBERREADY = 29,
-    TF_VC_GOODJOB = 30
+    TF_VC_GOODJOB = 30,
+	TF_VC_INVALID = 31
 }eVoiceCMD;
 
 typedef union
@@ -288,7 +289,7 @@ public:
 
 	virtual void died ( edict_t *pKiller );
 
-	virtual void killed ( edict_t *pVictim );
+	virtual void killed ( edict_t *pVictim, char *weapon );
 
 	virtual void modThink ();
 
@@ -342,7 +343,10 @@ public:
 
 	virtual bool isTF2 () { return false; }
 
-	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide  = false );
+	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide  = false )
+	{
+		return CBot::hurt(pAttacker,iHealthNow,bDontHide);
+	}
 
 	virtual TF_Class getClass () { return TF_CLASS_CIVILIAN; }
 
@@ -405,6 +409,9 @@ public:
 
 	// return an enemy sentry gun / special visible (e.g.) for quick checking
 	virtual edict_t *getVisibleSpecial ();
+
+	inline bool isBeingHealed () { return m_bIsBeingHealed; }
+
 
 protected:
 	virtual void selectTeam ();
@@ -498,6 +505,12 @@ protected:
 	float m_fClassDisguiseTime[10];
 	float m_fDisguiseTime;
 	unsigned short m_iDisguiseClass;
+	float m_fSentryPlaceTime;
+	unsigned int m_iSentryKills;
+	float m_fTeleporterEntPlacedTime;
+	float m_fTeleporterExtPlacedTime;
+	unsigned m_iTeleportedPlayers;
+
 };
 //
 //
@@ -508,34 +521,9 @@ class CBotTF2 : public CBotFortress
 public:
 
 	// 
-	CBotTF2() 
-	{ 
-		CBotFortress(); 
-		m_fDoubleJumpTime = 0;
-		m_fSpySapTime = 0;
-		m_iCurrentDefendArea = 0;
-		m_iCurrentAttackArea = 0;
-	    //m_bBlockPushing = false;
-	    //m_fBlockPushTime = 0;
-		m_pDefendPayloadBomb = NULL;
-		m_pPushPayloadBomb = NULL;
-		m_pRedPayloadBomb = NULL;
-		m_pBluePayloadBomb = NULL;
-		m_bFixWeapons = false;
-		m_iTrapType = TF_TRAP_TYPE_NONE;
-		m_pLastEnemySentry = MyEHandle(NULL);
-		m_prevSentryHealth = 0;
-		m_prevDispHealth = 0;
-		m_prevTeleExtHealth = 0;
-		m_prevTeleEntHealth = 0;
-		m_fHealClickTime = 0;
-		m_fCheckHealTime = 0;
-		
-		for ( unsigned int i = 0; i < 10; i ++ )
-			m_fClassDisguiseFitness[i] = 1.0f;
+	CBotTF2();
 
-		memset(m_fClassDisguiseTime,0,sizeof(float)*10);
-	}
+	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide  = false );
 
 	// found a new enemy
 	void enemyFound (edict_t *pEnemy);
@@ -610,7 +598,7 @@ public:
 
 	void died ( edict_t *pKiller );
 
-	void killed ( edict_t *pVictim );
+	void killed ( edict_t *pVictim, char *weapon );
 
 	void capturedFlag ();
 
@@ -666,7 +654,9 @@ public:
 
 	void spyUnCloak ();
 
-	inline void setHealStatus ( bool beinghealed, bool bcanbeubered ) { m_bIsBeingHealed = beinghealed; m_bCanBeUbered = bcanbeubered; }
+	void healedPlayer ( edict_t *pPlayer, float fAmount );
+
+	void teleportedPlayer ( void );
 private:
 	// time for next jump
 	float m_fDoubleJumpTime;
@@ -709,10 +699,15 @@ private:
 	 float m_prevTeleExtHealth;
 	 float m_prevTeleEntHealth;
 
+	 float m_fDispenserHealAmount;
+	 float m_fDispenserPlaceTime;
+
 	 unsigned int m_iSentryArea;
 	 unsigned int m_iDispenserArea;
 	 unsigned int m_iTeleEntranceArea;
 	 unsigned int m_iTeleExitArea;
+
+	 eVoiceCMD m_nextVoicecmd;
 
 
 };

@@ -72,6 +72,7 @@ void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
+	const char *weapon = pEvent->getString("weapon",NULL);
 
 	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
 
@@ -82,7 +83,8 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 
 	if ( pBot )
 	{
-		pBot->killed(m_pActivator);
+		pBot->killed(m_pActivator,(char*)weapon);
+
 		pBot->enemyDown(m_pActivator);
 	}
 }
@@ -180,11 +182,25 @@ void CBossKilledEvent :: execute ( IBotEventInterface *pEvent )
 	CTeamFortress2Mod::initBoss(false);
 }
 
+void CPlayerTeleported ::execute(IBotEventInterface *pEvent)
+{
+	int builderid = pEvent->getInt("builderid");
+
+	CBot *pBot = CBots::getBotPointer(CBotGlobals::playerByUserId(builderid));
+
+	if ( pBot )
+	{
+		((CBotTF2*)pBot)->teleportedPlayer();
+	}
+}
+
 void CPlayerHealed ::execute(IBotEventInterface *pEvent)
 {
 	int patient = pEvent->getInt("patient",-1);
+	int healer = pEvent->getInt("healer",-1);
+	int amount = pEvent->getFloat("amount",0);
 
-	if ( patient != -1 )
+	if ( (healer != -1) && ( patient != -1 ) && (healer != patient) )
 	{
 		m_pActivator = CBotGlobals::playerByUserId(patient);
 
@@ -199,6 +215,13 @@ void CPlayerHealed ::execute(IBotEventInterface *pEvent)
 				if ( pBotTF2 && randomInt(0,1) )
 					pBotTF2->voiceCommand(TF_VC_THANKS);
 			}
+		}
+
+		CBot *pBot = CBots::getBotPointer(CBotGlobals::playerByUserId(healer));
+
+		if ( pBot && pBot->isTF2() )
+		{
+			((CBotTF2*)pBot)->healedPlayer(m_pActivator,amount);
 		}
 	}
 }

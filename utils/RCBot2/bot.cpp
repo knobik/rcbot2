@@ -957,7 +957,7 @@ void CBot :: died ( edict_t *pKiller )
 /*
 * called when a bot kills something
 */
-void CBot :: killed ( edict_t *pVictim )
+void CBot :: killed ( edict_t *pVictim, char *weapon )
 {	
 	m_pLastEnemy = NULL;
 
@@ -1007,7 +1007,7 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	m_iPrevHealth = iHealthNow;	
 
 	// TO DO: replace with perceptron method
-	if ( m_iAccumulatedDamage > (m_pPlayerInfo->GetMaxHealth()*0.4) )
+	if ( m_iAccumulatedDamage > (m_pPlayerInfo->GetMaxHealth()/4) )
 	{
 		if ( !bDontHide )
 		{

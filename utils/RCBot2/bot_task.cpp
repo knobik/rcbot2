@@ -244,7 +244,12 @@ void CBotTF2WaitHealthTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			pBot->stopMoving();
 
 		if ( pBot->isTF() )
+		{
 			((CBotTF2*)pBot)->taunt();
+
+			if ( ((CBotTF2*)pBot)->isBeingHealed() )
+				complete();
+		}
 	}
 }
 

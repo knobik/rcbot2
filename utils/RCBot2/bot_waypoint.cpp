@@ -948,7 +948,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 		// draw radius
 		if ( m_fRadius )
 		{
-			debugoverlay->AddBoxOverlay(m_vOrigin,Vector(-m_fRadius,-m_fRadius,-fHeight),Vector(m_fRadius,m_fRadius,fHeight),QAngle(0,0,0),255,255,255,50,1);
+			debugoverlay->AddBoxOverlay(m_vOrigin,Vector(-m_fRadius,-m_fRadius,-fHeight),Vector(m_fRadius,m_fRadius,fHeight),QAngle(0,0,0),r,g,b,40,1);
 		}
 #endif
 		break;
@@ -1381,8 +1381,10 @@ void CWaypoints :: deletePathsFrom ( int iWpt )
 void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char *type2,const char *type3,const char *type4,  bool bUseTemplate )
 {
 	int iFlags = 0;
+	int iPrevFlags = 0;
 	Vector vWptOrigin = pClient->getOrigin();
 	QAngle playerAngles = CBotGlobals::playerAngles (pClient->getPlayer());
+	float fMaxDistance = 0.0; // distance for auto type
 
 	if ( type1 && *type1 )
 	{
@@ -1414,6 +1416,9 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 		}
 
 	}
+
+	iPrevFlags = iFlags; // to detect change
+
 	//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pClient->getPlayer());
 
 	/*CBasePlayer *pPlayer = (CBasePlayer*)(CBaseEntity::Instance(pClient->getPlayer()));
@@ -1425,12 +1430,66 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 		iFlags |= CWaypoint::W_FL_CROUCH;		*/
 
+	extern ConVar rcbot_wpt_autotype;
+
+	if ( rcbot_wpt_autotype.GetInt() && (!bUseTemplate || (rcbot_wpt_autotype.GetInt()==2)) )
+	{
+		int i = 0;
+
+		edict_t *pEdict;
+		float fDistance;
+
+		for ( i = 0; i < gpGlobals->maxEntities; i ++ )
+		{
+			pEdict = INDEXENT(i);
+
+			if ( pEdict )
+			{
+				if ( !pEdict->IsFree() )
+				{
+					if ( pEdict->m_pNetworkable && pEdict->GetIServerEntity() )
+					{			
+						fDistance=(CBotGlobals::entityOrigin(pEdict) - vWptOrigin).Length();
+
+						if ( fDistance <= 64.0f )
+						{
+							if ( fDistance > fMaxDistance )
+								fMaxDistance = fDistance;
+
+							string_t model = pEdict->GetIServerEntity()->GetModelName();
+
+							if ( (fDistance < 48.0f) && (strncmp(pEdict->GetClassName(),"item_health",11) == 0) )
+								iFlags |= CWaypointTypes::W_FL_HEALTH;
+							else if ( (fDistance < 48.0f) && (strncmp(pEdict->GetClassName(),"item_ammo",9) == 0) )
+								iFlags |= CWaypointTypes::W_FL_AMMO;
+							else if ( strcmp(pEdict->GetClassName(),"prop_dynamic") == 0 )
+							{
+								if ( strcmp(model.ToCStr(),"models/props_gameplay/resupply_locker.mdl") == 0 )
+									iFlags |= CWaypointTypes::W_FL_RESUPPLY;
+							}
+							else if ( strcmp(pEdict->GetClassName(),"item_teamflag") == 0 )
+								iFlags |= CWaypointTypes::W_FL_FLAG;
+							else if ( strcmp(pEdict->GetClassName(),"team_control_point") == 0 )
+							{
+								iFlags |= CWaypointTypes::W_FL_CAPPOINT;	
+								fMaxDistance = 100;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+
 	if ( bUseTemplate )
 	{
 		addWaypoint(pClient->getPlayer(),vWptOrigin,pClient->getWptCopyFlags(),pClient->isAutoPathOn(),(int)playerAngles.y,pClient->getWptCopyArea(),pClient->getWptCopyRadius()); // sort flags out
 	}
 	else
-		addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,pClient->getWptArea(),0); // sort flags out
+	{
+		addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,pClient->getWptArea(),(iFlags!=iPrevFlags) ? (fMaxDistance/2) : 0); // sort flags out	
+	}
 }
 
 void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw, int iArea, float fRadius )

@@ -197,6 +197,18 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CPlayerTeleported : public CBotEvent
+{
+public:
+	CPlayerTeleported()
+	{
+		setType("player_teleported");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CWeaponFireEvent : public CBotEvent
 {
 public:

@@ -513,7 +513,7 @@ public:
 	 * called when a bot dies
 	 */
 	virtual void died ( edict_t *pKiller );
-	virtual void killed ( edict_t *pVictim );
+	virtual void killed ( edict_t *pVictim, char *weapon );
 
 	virtual int getTeam ();
 

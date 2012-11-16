@@ -1,5 +1,5 @@
 0.65
-update: waypoints for some event maps (thanks community)
+update: waypoints for some event maps and others (thanks community) 
 change: medic improvements
 added: bots fight halloween bosses (added cvar rcbot_bossattackfactor)
 added: bots shout 'activate uber' when being healed and can be ubered if they want to be ubered
@@ -12,6 +12,7 @@ change: a nested move+look priority system
 change: bots push on overtime and when nearby players say 'go go go' or 'move up'
 change: spy changes
 change: bots only shoot when nearly looking at enemy (added cvar rcbot_enemyshootfov)
+change: bots dont listen to medics using medi guns or engineers using wrench
 fix: bots aim jitter in tf2
 fix: engineer on blue team (attack map) bug fixed when wanting to place teleports
 fix: bots no longer pick up health if they are being healed

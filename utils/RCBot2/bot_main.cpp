@@ -123,6 +123,17 @@ ConVar bot_bossattackfactor("rcbot_bossattackfactor","1.0",0,"the higher the mor
 ConVar rcbot_enemyshootfov("rcbot_enemyshootfov","0.6",0,"the fov dot product before the bot shoots an enemy 0.7 = 45 degrees");
 ConVar rcbot_wptplace_width("rcbot_wpt_width","48",0,"width of the player, automatic paths won't connect unless there is enough space for a player");
 ConVar rcbot_wpt_autoradius("rcbot_wpt_autoradius","0",0,"every waypoint added is given this radius, 0 = no radius");
+ConVar rcbot_wpt_autotype("rcbot_wpt_autotype","1",0,"If 1, types will be automatically added to waypoints when they are added (only for resupply/health/capture/flag etc)\nIf 2: types will autoamtically be added even if the waypoint is cut/paste");
+ConVar rcbot_move_sentry_time("rcbot_move_sentry_time","120",0,"seconds for bots to start thinking about moving sentries");
+ConVar rcbot_move_sentry_kpm("rcbot_move_sentry_kpm","1",0,"kpm = kills per minute, if less than this, bots will think about moving the sentry");
+
+ConVar rcbot_move_disp_time("rcbot_move_disp_time","120",0,"seconds for bots to start thinking about moving dispensers");
+ConVar rcbot_move_disp_healamount("rcbot_move_disp_healamount","100",0,"if dispenser heals less than this per minute, bot will move the disp");
+
+ConVar rcbot_move_tele_time("rcbot_move_tele_time","120",0,"seconds for bots to start thinking about moving teleporters");
+ConVar rcbot_move_tele_tpm("rcbot_move_tele_tpm","1",0,"if no of players teleported per minute is less than this, bot will move the teleport");
+
+ConVar rcbot_move_dist("rcbot_move_dist","200",0,"minimum distance to move objects to");
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
 IFileSystem *filesystem = NULL;  // file I/O 
@@ -196,6 +207,7 @@ CON_COMMAND( rcbotd, "access the bot commands on a server" )
 
 void CRCBotPlugin::OnEdictAllocated( edict_t *edict )
 {
+	/*
 #ifdef _DEBUG
 	static char msg[256];
 
@@ -205,11 +217,11 @@ void CRCBotPlugin::OnEdictAllocated( edict_t *edict )
 
 		CClients::clientDebugMsg(BOT_DEBUG_EDICTS,msg);
 	}
-#endif
+#endif*/
 }
 
 void CRCBotPlugin::OnEdictFreed( const edict_t *edict  )
-{
+{/*
 #ifdef _DEBUG
 	static char msg[256];
 
@@ -219,7 +231,7 @@ void CRCBotPlugin::OnEdictFreed( const edict_t *edict  )
 
 		CClients::clientDebugMsg(BOT_DEBUG_EDICTS,msg);
 	}
-#endif
+#endif*/
 }
 
 
@@ -929,6 +941,7 @@ bool UTIL_FindInSendTable(SendTable *pTable,
 	{
 		prop = pTable->GetProp(i);
 		pname = prop->GetName();
+		//Msg("%s\n",pname);
 		if (pname && strcmp(name, pname) == 0)
 		{
 			info->prop = prop;
@@ -1019,7 +1032,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2_CONDITIONS,"CTFPlayer","m_nPlayerCond",0);
 		DEFINE_GETPROP(GETPROP_VELOCITY,"CBaseEntity","m_vecAbsVelocity",0);
 		DEFINE_GETPROP(GETPROP_TF2CLASS,"CTFPlayer","m_PlayerClass",4);
-		DEFINE_GETPROP(GETPROP_TF2SPYMETER,"CTFPlayer","m_flCloakMeter",8);
+		DEFINE_GETPROP(GETPROP_TF2SPYMETER,"CTFPlayer","m_flCloakMeter",0);
 		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_TEAM,"CTFPlayer","m_nDisguiseTeam",0);
 		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_CLASS,"CTFPlayer","m_nDisguiseClass",0);
 		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_TARGET_INDEX,"CTFPlayer","m_iDisguiseTargetIndex",0);
