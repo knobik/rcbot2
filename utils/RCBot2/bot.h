@@ -114,9 +114,12 @@ typedef enum
 	GETPROP_TF2SENTRYHEALTH,
 	GETPROP_TF2DISPENSERHEALTH,
 	GETPROP_TF2TELEPORTERHEALTH,
+	GETPROP_TF2OBJECTCARRIED,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
+bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int *offset);
+ServerClass *UTIL_FindServerClass(const char *name);
 
 class CClassInterfaceValue
 {
@@ -260,7 +263,7 @@ public:
 	inline static float getSentryHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2SENTRYHEALTH].getFloatFromInt(edict,100); }
 	inline static float getDispenserHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2DISPENSERHEALTH].getFloatFromInt(edict,100); }
 	inline static float getTeleporterHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2TELEPORTERHEALTH].getFloatFromInt(edict,100); }
-
+	inline static bool isObjectCarried ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTCARRIED].getBool(edict,false); }
 	// HL2DM
 	//static void 
 

@@ -297,7 +297,7 @@ public:
 
 	virtual bool wantToFollowEnemy ();
 
-	virtual void checkBuildingsValid () {};
+	virtual void checkBuildingsValid (bool bForce = false) {};
 
 	virtual void checkHealingValid ();
 
@@ -572,7 +572,7 @@ public:
 
 	bool isDisguised ();
 
-	void checkBuildingsValid ();
+	void checkBuildingsValid (bool bForce = false);
 
 	edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding, int index );
 
@@ -657,6 +657,10 @@ public:
 	void healedPlayer ( edict_t *pPlayer, float fAmount );
 
 	void teleportedPlayer ( void );
+
+	inline bool isCarrying () { return m_bIsCarryingObj; }
+
+	void updateCarrying ();
 private:
 	// time for next jump
 	float m_fDoubleJumpTime;
@@ -709,6 +713,13 @@ private:
 
 	 eVoiceCMD m_nextVoicecmd;
 
+	bool m_bIsCarryingTeleExit;
+	bool m_bIsCarryingSentry;
+	bool m_bIsCarryingDisp;
+	bool m_bIsCarryingTeleEnt;
+	bool m_bIsCarryingObj;
+
+	float m_fCheckNextCarrying;
 
 };
 

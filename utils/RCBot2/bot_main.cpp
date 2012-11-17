@@ -135,7 +135,7 @@ ConVar rcbot_move_disp_healamount("rcbot_move_disp_healamount","100",0,"if dispe
 ConVar rcbot_move_tele_time("rcbot_move_tele_time","120",0,"seconds for bots to start thinking about moving teleporters");
 ConVar rcbot_move_tele_tpm("rcbot_move_tele_tpm","1",0,"if no of players teleported per minute is less than this, bot will move the teleport");
 
-ConVar rcbot_move_dist("rcbot_move_dist","200",0,"minimum distance to move objects to");
+ConVar rcbot_move_dist("rcbot_move_dist","1000",0,"minimum distance to move objects to");
 
 ConVar rcbot_move_obj("rcbot_move_obj","1",0,"if 1 rcbot engineers will move objects around");
 // Interfaces from the engine*/
@@ -872,6 +872,8 @@ ServerClass *UTIL_FindServerClass(const char *name)
  * @param name		Property to search for.
  * @return 		SendProp pointer on success, NULL on failure.
  */
+bool g_PrintProps = false;
+
 SendProp *UTIL_FindSendProp(SendTable *pTable, const char *name)
 {
 	int count = pTable->GetNumProps();
@@ -880,6 +882,10 @@ SendProp *UTIL_FindSendProp(SendTable *pTable, const char *name)
 	for (int i=0; i<count; i++)
 	{
 		pProp = pTable->GetProp(i);
+
+		if ( g_PrintProps )
+			Msg("%s\n",pProp->GetName());
+
 		if (strcmp(pProp->GetName(), name) == 0)
 		{
 			return pProp;
@@ -945,7 +951,10 @@ bool UTIL_FindInSendTable(SendTable *pTable,
 	{
 		prop = pTable->GetProp(i);
 		pname = prop->GetName();
-		//Msg("%s\n",pname);
+
+		if ( g_PrintProps )
+			Msg("%s\n",pname);
+
 		if (pname && strcmp(name, pname) == 0)
 		{
 			info->prop = prop;
@@ -1049,6 +1058,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2SENTRYHEALTH,"CObjectSentrygun","m_iHealth",0);
 		DEFINE_GETPROP(GETPROP_TF2DISPENSERHEALTH,"CObjectDispenser","m_iHealth",0);
 		DEFINE_GETPROP(GETPROP_TF2TELEPORTERHEALTH,"CObjectTeleporter","m_iHealth",0);
+		DEFINE_GETPROP(GETPROP_TF2OBJECTCARRIED,"CObjectSentrygun","m_bCarried",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

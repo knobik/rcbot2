@@ -168,6 +168,31 @@ eBotCommandResult CWaypointCut :: execute ( CClient *pClient, const char *pcmd, 
 
 	return COMMAND_ERROR;
 }
+////////////////////////////////
+eBotCommandResult CPrintProps :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+
+		if ( pcmd && *pcmd )
+		{
+			extern bool g_PrintProps;
+			unsigned int m_offset;
+			g_PrintProps = true;
+			ServerClass *sc = UTIL_FindServerClass(pcmd);
+
+			if ( sc )
+				UTIL_FindSendPropInfo(sc,"",&m_offset);
+
+			g_PrintProps = false;
+		}
+
+
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
 ///////////////////////////////////////////
 
 CWaypointPaste :: CWaypointPaste()
@@ -402,6 +427,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CDebugUtilCommand());
 	add(new CDebugProfilingCommand());
 	add(new CDebugEdictsCommand());
+	add(new CPrintProps());
 
 }
 /////////////////////

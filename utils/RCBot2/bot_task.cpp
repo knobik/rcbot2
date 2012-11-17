@@ -699,25 +699,36 @@ CBotTaskEngiPickupBuilding :: CBotTaskEngiPickupBuilding ( edict_t *pBuilding )
 	m_pBuilding = pBuilding;
 	m_fTime = 0.0f;
 }
+// move building / move sentry / move disp / move tele
 void CBotTaskEngiPickupBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	CBotWeapon *pWeapon = pBot->getCurrentWeapon();
+
 	if ( m_fTime == 0.0f )
 		m_fTime = engine->Time() + 6.0f;
 
+	pBot->wantToShoot(false);
 	pBot->lookAtEdict(m_pBuilding.get());
 	pBot->setLookAtTask((LOOK_EDICT));
 
-	if ( m_fTime < engine->Time() )
+	((CBotTF2*)pBot)->updateCarrying();
+
+	if ( ((CBotTF2*)pBot)->isCarrying() ) //if ( CBotGlobals::entityOrigin(m_pBuilding) == CBotGlobals::entityOrigin(pBot->getEdict()) )
+		complete();
+	else if ( m_fTime < engine->Time() )
 		fail();
+	else if ( !pWeapon )
+		fail();
+	else if ( pWeapon->getID() != TF2_WEAPON_WRENCH )
+	{
+		if ( !pBot->select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH)) )
+			fail();
+	}
 	else if ( pBot->distanceFrom(m_pBuilding) < 100 )
 	{
-		
 		if ( CBotGlobals::yawAngleFromEdict(pBot->getEdict(),CBotGlobals::entityOrigin(m_pBuilding)) < 25 )
 		{	
 			pBot->secondaryAttack();
-
-			if ( CBotGlobals::entityOrigin(m_pBuilding) == CBotGlobals::entityOrigin(pBot->getEdict()) )
-				complete();
 		}
 	}
 	else
@@ -757,14 +768,17 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pBot->setLookAt(m_vOrigin);
 	pBot->setLookAtTask((LOOK_VECTOR));
 
-	if ( m_fTime < engine->Time() )
+	((CBotTF2*)pBot)->updateCarrying();
+
+	if ( !(((CBotTF2*)pBot)->isCarrying()) ) 
+		complete();
+	else if ( m_fTime < engine->Time() )
 		fail();
 	else if ( pBot->distanceFrom(m_vOrigin) < 100 )
 	{		
 		if ( CBotGlobals::yawAngleFromEdict(pBot->getEdict(),m_vOrigin) < 25 )
 		{	
 			pBot->primaryAttack();
-			complete();
 		}
 	}
 	else
@@ -773,7 +787,6 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( pBot->hasEnemy() )
 	{
 		pBot->primaryAttack();
-		complete();
 	}
 }
 void CBotTaskEngiPlaceBuilding :: debugString ( char *string )

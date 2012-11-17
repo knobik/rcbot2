@@ -87,7 +87,7 @@ void CWaypointNavigator :: init ()
 	m_iLastFailedWpt = -1;
 	m_bWorkingRoute = false;
 
-	Q_memset(m_fBelief,0,sizeof(int)*CWaypoints::MAX_WAYPOINTS);
+	Q_memset(m_fBelief,0,sizeof(float)*CWaypoints::MAX_WAYPOINTS);
 
 	m_iFailedGoals.Destroy();//.clear();//Destroy();
 }
@@ -145,17 +145,34 @@ bool CWaypointNavigator :: getCoverPosition ( Vector vCoverOrigin, Vector *vCove
 	return true;
 }
 
+void CWaypointNavigator :: beliefOne ( int iWptIndex, BotBelief iBeliefType, float fDist )
+{
+	if ( iBeliefType == BELIEF_SAFETY )
+	{
+		if ( m_fBelief[iWptIndex] > 0)
+			m_fBelief[iWptIndex] *= bot_belief_fade.GetFloat();
+		if ( m_fBelief[iWptIndex] < 0 )
+				m_fBelief[iWptIndex] = 0;
+	}
+	else // danger	
+	{
+		if ( m_fBelief[iWptIndex] < MAX_BELIEF )
+			m_fBelief[iWptIndex] += (2048.0f / fDist);
+		if ( m_fBelief[iWptIndex] > MAX_BELIEF )
+				m_fBelief[iWptIndex] = MAX_BELIEF;
+	}
+
+}
+
 // get belief nearest to current origin using waypoints to store belief
 void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief, float fStrength, BotBelief iType )
 {
-	int i;
-	float factor;
-	int iWptIndex;
+	static int i;
+	static float factor;
+	static int iWptIndex;
 
 	dataUnconstArray<int> m_iVisibles;
 	//int m_iVisiblePoints[CWaypoints::MAX_WAYPOINTS]; // make searching quicker
-
-
 
 	CWaypointLocations::GetAllVisible(vOrigin,vOrigin,&m_iVisibles);
 	CWaypointLocations::GetAllVisible(vOrigin,m_pBot->getEyePosition(),&m_iVisibles);
@@ -210,6 +227,8 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 
 		m_oldRoute.pop();
 	}
+
+	m_iVisibles.Destroy();
 }
 
 float CWaypointNavigator :: getCurrentBelief ( )
@@ -254,66 +273,11 @@ void CWaypointNavigator :: open ( AStarNode *pNode )
 AStarNode *CWaypointNavigator :: nextNode ()
 {
 	AStarNode *pNode = NULL;
-/*
-	if ( !m_theOpenList.empty() )
-	{
-		AStarNode *t = m_theOpenList.top();
-
-		t->unOpen();
-		m_theOpenList.pop();
-
-		pNode = t;
-	}*/
 
 	pNode = m_theOpenList.top();
 	m_theOpenList.pop();
 		
 	return pNode;
-
-	/*
-
-	if ( !m_theOpenList.empty() )
-	{
-		// Find node with least cost
-		float mincost = 0;
-		float cost;
-		unsigned int i;
-		AStarNode *pTemp;
-
-		// Safest method, but takes some cpu
-		for ( i = 0; i < m_theOpenList.size(); i ++ )
-		{
-			pTemp = m_theOpenList[i];
-
-			cost = pTemp->getCost() + pTemp->getHeuristic();
-
-			if ( !pNode || (cost < mincost) )
-			{
-				pNode = pTemp;
-				mincost = cost;
-			}
-		}
-
-		if ( pNode )
-		{
-			vector<AStarNode*> temp;
-
-			pNode->unOpen();
-
-			for ( i = 0; i < m_theOpenList.size(); i ++ )
-			{
-				if ( m_theOpenList[i] != pNode )
-					temp.push_back(m_theOpenList[i]);
-			}
-
-			m_theOpenList.clear();
-
-			m_theOpenList = temp;
-			
-		}
-	}
-
-	return pNode;*/
 }
 
 // clears the AStar open list

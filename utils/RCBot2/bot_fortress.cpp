@@ -607,6 +607,8 @@ void CBotFortress :: spawnInit ()
 	m_bSentryGunVectorValid = false;
 	m_bDispenserVectorValid = false;
 	m_bTeleportExitVectorValid = false;
+
+	
 }
 
 int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTime, int *iTries )
@@ -1194,6 +1196,12 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	m_bIsCarryingTeleExit = false;
+	 m_bIsCarryingSentry = false;;
+	 m_bIsCarryingDisp = false;;
+	 m_bIsCarryingTeleEnt = false;;
+	 m_bIsCarryingObj = false;;
+
 	m_nextVoicecmd = TF_VC_INVALID;
 	m_fAttackPointTime = 0.0f;
 	m_fNextRevMiniGunTime = 0.0f;
@@ -1221,6 +1229,8 @@ void CBotTF2 :: spawnInit()
 
 	m_bFixWeapons = true;
 	m_iPrevWeaponSelectFailed = 0;
+
+	m_fCheckNextCarrying = 0.0;
 
 	
 }
@@ -1435,7 +1445,17 @@ void CBotTF2 :: engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd )
 	//helpers->ClientCommand(m_pEdict,cmd);
 }
 
-void CBotTF2 :: checkBuildingsValid ()
+void CBotTF2 :: updateCarrying ()
+{
+	m_bIsCarryingTeleExit = (m_pTeleExit.get()!=NULL) && CClassInterface::isObjectCarried(m_pTeleExit);//(strcmp(&(m_pTeleExit.get()->GetIServerEntity()->GetModelName().ToCStr())[18],"teleporter_blueprint_exit.mdl")==0);
+	m_bIsCarryingSentry = (m_pSentryGun.get()!=NULL) && CClassInterface::isObjectCarried(m_pSentryGun);// && (strcmp(&(m_pSentryGun.get()->GetIServerEntity()->GetModelName().ToCStr())[18],"sentry1_blueprint.mdl")==0);
+	m_bIsCarryingDisp = (m_pDispenser.get()!=NULL) && CClassInterface::isObjectCarried(m_pDispenser);// && (strcmp(&(m_pDispenser.get()->GetIServerEntity()->GetModelName().ToCStr())[18],"dispenser_blueprint.mdl")==0);
+	m_bIsCarryingTeleEnt = (m_pTeleEntrance.get()!=NULL) && CClassInterface::isObjectCarried(m_pTeleEntrance);// && (strcmp(&(m_pTeleEntrance.get()->GetIServerEntity()->GetModelName().ToCStr())[18],"teleporter_blueprint_enter.mdl")==0);
+	m_bIsCarryingObj = m_bIsCarryingSentry || m_bIsCarryingTeleExit || m_bIsCarryingDisp || m_bIsCarryingTeleEnt;
+		//m_fCheckNextCarrying = m_fCheckNextCarrying + 0.5f;
+}
+
+void CBotTF2 :: checkBuildingsValid (bool bForce) // force check carrying
 {
 	if ( m_pSentryGun )
 	{
@@ -2048,7 +2068,7 @@ void CBotTF2 :: modThink ()
 		}
 	}
 	else if ( m_iClass == TF_CLASS_ENGINEER )
-		checkBuildingsValid();
+		checkBuildingsValid(false);
 	else if ( m_iClass == TF_CLASS_SPY )
 	{
 		if ( !hasFlag() )
@@ -2812,6 +2832,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	static float fDefendFlagUtility;
 	static int iTeam;
 	static float fMetalPercent;
+	static Vector vOrigin;
 	
 	static int numplayersonteam;
 	static int numplayersonteam_alive;
@@ -2832,6 +2853,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		return; // already got some tasks left
 
 	iMetal = 0;
+	vOrigin = getOrigin();
 	bNeedAmmo = false;
 	bNeedHealth = false;
 	fResupplyDist = 1;
@@ -2903,7 +2925,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	}
 
 	if ( iClass == TF_CLASS_ENGINEER )
-		checkBuildingsValid();
+	{
+		checkBuildingsValid(true);
+		updateCarrying();
+	}
 
 	ADD_UTILITY(BOT_UTIL_CAPTURE_FLAG,(CTeamFortress2Mod::isMapType(TF_MAP_CTF)||CTeamFortress2Mod::isMapType(TF_MAP_SD)) && bHasFlag,0.95f);
 
@@ -2946,9 +2971,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 			fTeleporterExitHealthPercent = CClassInterface::getTeleporterHealth(m_pTeleExit)/180;
 
-			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_EXIT,bMoveObjs && m_pTeleEntrance && m_pTeleExit && 
+			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_EXIT,(!m_bIsCarryingObj || m_bIsCarryingTeleExit) && bMoveObjs && m_pTeleEntrance && m_pTeleExit && 
 				m_fTeleporterExtPlacedTime && (fTeleporterExtPlaceTime > rcbot_move_tele_time.GetFloat()) &&
-				(((60.0f * m_iTeleportedPlayers)/fTeleporterExtPlaceTime)<rcbot_move_tele_tpm.GetFloat()),fTeleporterExitHealthPercent*getHealthPercent()*fMetalPercent);
+				(((60.0f * m_iTeleportedPlayers)/fTeleporterExtPlaceTime)<rcbot_move_tele_tpm.GetFloat()),(fTeleporterExitHealthPercent*getHealthPercent()*fMetalPercent) + ((int)m_bIsCarryingTeleExit));
 
 		}
 
@@ -2958,9 +2983,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 			fTeleporterEntranceHealthPercent = CClassInterface::getTeleporterHealth(m_pTeleEntrance)/180;
 
-			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_ENTRANCE,bMoveObjs && m_bEntranceVectorValid && m_pTeleEntrance && m_pTeleExit && 
+			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_ENTRANCE,(!m_bIsCarryingObj || m_bIsCarryingTeleEnt) && bMoveObjs && m_bEntranceVectorValid && m_pTeleEntrance && m_pTeleExit && 
 				m_fTeleporterEntPlacedTime && (fTeleporterEntPlaceTime > rcbot_move_tele_time.GetFloat()) &&
-				(((60.0f * m_iTeleportedPlayers)/fTeleporterEntPlaceTime)<rcbot_move_tele_tpm.GetFloat()),fTeleporterEntranceHealthPercent*getHealthPercent()*fMetalPercent);
+				(((60.0f * m_iTeleportedPlayers)/fTeleporterEntPlaceTime)<rcbot_move_tele_tpm.GetFloat()),(fTeleporterEntranceHealthPercent*getHealthPercent()*fMetalPercent)+((int)m_bIsCarryingTeleEnt));
 
 		}
 
@@ -2977,7 +3002,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 				fSentryHealthPercent /= TF2_SENTRY_LEVEL3_HEALTH;		
 
 			// move sentry
-			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_SENTRY,bMoveObjs && (m_fSentryPlaceTime>0.0f) && !bHasFlag && m_pSentryGun && (fSentryPlaceTime>rcbot_move_sentry_time.GetFloat())&&(((60.0f*m_iSentryKills)/fSentryPlaceTime)<rcbot_move_sentry_kpm.GetFloat()), fMetalPercent*getHealthPercent()*fSentryHealthPercent);
+			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_SENTRY,(!m_bIsCarryingObj || m_bIsCarryingSentry) && bMoveObjs && (m_fSentryPlaceTime>0.0f) && !bHasFlag && m_pSentryGun && (fSentryPlaceTime>rcbot_move_sentry_time.GetFloat())&&(((60.0f*m_iSentryKills)/fSentryPlaceTime)<rcbot_move_sentry_kpm.GetFloat()), (fMetalPercent*getHealthPercent()*fSentryHealthPercent)+((int)m_bIsCarryingSentry));
 
 		}
 
@@ -2994,7 +3019,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 				fDispenserHealthPercent /= TF2_DISPENSER_LEVEL3_HEALTH;	
 
 			// move disp
-			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_DISP,bMoveObjs && (m_fDispenserPlaceTime>0.0f) && !bHasFlag && m_pDispenser && (fDispenserPlaceTime>rcbot_move_disp_time.GetFloat())&&(((60.0f*m_fDispenserHealAmount)/fDispenserPlaceTime)<rcbot_move_disp_healamount.GetFloat()), fMetalPercent*getHealthPercent()*fDispenserHealthPercent);
+			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_DISP,(!m_bIsCarryingObj || m_bIsCarryingDisp) && bMoveObjs && (m_fDispenserPlaceTime>0.0f) && !bHasFlag && m_pDispenser && (fDispenserPlaceTime>rcbot_move_disp_time.GetFloat())&&(((60.0f*m_fDispenserHealAmount)/fDispenserPlaceTime)<rcbot_move_disp_healamount.GetFloat()), (fMetalPercent*getHealthPercent()*fDispenserHealthPercent) + ((int)m_bIsCarryingDisp));
 
 		}
 
@@ -3028,56 +3053,54 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		//ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
 
-		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_SENTRY,((iMetal>=130) && (m_pSentryGun.get()!=NULL) && !CPoints::isValidArea(m_iSentryArea)),fSentryUtil);
-
-		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_SENTRY, (iMetal>=130) && (m_pSentryGun.get()!=NULL) && !CPoints::isValidArea(m_iSentryArea),fSentryUtil);
-		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_DISP, (iMetal>=125) && (m_pDispenser.get()!=NULL) && !CPoints::isValidArea(m_iDispenserArea),randomFloat(0.7,0.9));
-		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_ENTRANCE, (iMetal>=125) && (m_pTeleEntrance.get()!=NULL) && !CPoints::isValidArea(m_iTeleEntranceArea),randomFloat(0.7,0.9));
+		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_SENTRY, !m_bIsCarryingObj && (iMetal>=130) && (m_pSentryGun.get()!=NULL) && !CPoints::isValidArea(m_iSentryArea),fSentryUtil);
+		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_DISP, !m_bIsCarryingObj && (iMetal>=125) && (m_pDispenser.get()!=NULL) && !CPoints::isValidArea(m_iDispenserArea),randomFloat(0.7,0.9));
+		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_ENTRANCE, !m_bIsCarryingObj && (iMetal>=125) && (m_pTeleEntrance.get()!=NULL) && !CPoints::isValidArea(m_iTeleEntranceArea),randomFloat(0.7,0.9));
 		//ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_EXIT, (iMetal>=125) && (m_pTeleExit.get()!=NULL) && !CPoints::isValidArea(m_iTeleExitArea),randomFloat(0.7,0.9));
 
-		ADD_UTILITY(BOT_UTIL_BUILDSENTRY,!bHasFlag && !m_pSentryGun && (iMetal>=130),0.9);
-		ADD_UTILITY(BOT_UTIL_BUILDDISP,!bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),fSentryUtil);
+		ADD_UTILITY(BOT_UTIL_BUILDSENTRY,!m_bIsCarryingObj && !bHasFlag && !m_pSentryGun && (iMetal>=130),0.9);
+		ADD_UTILITY(BOT_UTIL_BUILDDISP,!m_bIsCarryingObj && !bHasFlag&& m_pSentryGun && !m_pDispenser && (iMetal>=100),fSentryUtil);
 		
 		if ( CTeamFortress2Mod::isAttackDefendMap() && (iTeam == TF2_TEAM_BLUE) )
 		{
-			ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9));
-			ADD_UTILITY(BOT_UTIL_BUILDTELENT,!bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f);
+			ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!m_bIsCarryingObj && !bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9));
+			ADD_UTILITY(BOT_UTIL_BUILDTELENT,!m_bIsCarryingObj && !bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f);
 		}
 		else
 		{
-			ADD_UTILITY(BOT_UTIL_BUILDTELENT,!bHasFlag&&((m_pSentryGun&&(iSentryLevel>1))||(!m_pSentryGun))&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f);
-			ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!bHasFlag&&m_pSentryGun&&(iSentryLevel>1)&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9));
+			ADD_UTILITY(BOT_UTIL_BUILDTELENT,!m_bIsCarryingObj && !bHasFlag&&((m_pSentryGun&&(iSentryLevel>1))||(!m_pSentryGun))&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f);
+			ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!m_bIsCarryingObj && !bHasFlag&&m_pSentryGun&&(iSentryLevel>1)&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9));
 		}
 
-		ADD_UTILITY(BOT_UTIL_UPGSENTRY,(m_fRemoveSapTime<engine->Time()) &&!bHasFlag && m_pSentryGun && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2));
-		ADD_UTILITY(BOT_UTIL_GETAMMODISP,m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),1.0);
-		ADD_UTILITY(BOT_UTIL_UPGTELENT,(m_fRemoveSapTime<engine->Time()) &&m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5)));
-		ADD_UTILITY(BOT_UTIL_UPGTELEXT,(m_fRemoveSapTime<engine->Time()) &&m_pTeleExit!=NULL && (iMetal>=200) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.51) + ((0.5-fTeleporterExitHealthPercent)*0.5));
-		ADD_UTILITY(BOT_UTIL_UPGDISP,(m_fRemoveSapTime<engine->Time()) &&m_pDispenser!=NULL && (iMetal>=200) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3));
+		ADD_UTILITY(BOT_UTIL_UPGSENTRY,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag && m_pSentryGun && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2));
+		ADD_UTILITY(BOT_UTIL_GETAMMODISP,!m_bIsCarryingObj && m_pDispenser && isVisible(m_pDispenser) && (iMetal<150),2.0f );
+		ADD_UTILITY(BOT_UTIL_UPGTELENT,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5)));
+		ADD_UTILITY(BOT_UTIL_UPGTELEXT,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pTeleExit!=NULL && (iMetal>=200) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.51) + ((0.5-fTeleporterExitHealthPercent)*0.5));
+		ADD_UTILITY(BOT_UTIL_UPGDISP,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pDispenser!=NULL && (iMetal>=200) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3));
 
 
 		// remove sappers
-		ADD_UTILITY(BOT_UTIL_REMOVE_SENTRY_SAPPER,(m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pSentryGun!=NULL) && CTeamFortress2Mod::isMySentrySapped(m_pEdict),1000.0f);
-		ADD_UTILITY(BOT_UTIL_REMOVE_DISP_SAPPER,(m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pDispenser!=NULL) && CTeamFortress2Mod::isMyDispenserSapped(m_pEdict),1000.0f);
+		ADD_UTILITY(BOT_UTIL_REMOVE_SENTRY_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pSentryGun!=NULL) && CTeamFortress2Mod::isMySentrySapped(m_pEdict),1000.0f);
+		ADD_UTILITY(BOT_UTIL_REMOVE_DISP_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pDispenser!=NULL) && CTeamFortress2Mod::isMyDispenserSapped(m_pEdict),1000.0f);
 
-		ADD_UTILITY(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,(fAmmoDist/fResupplyDist)*(200.0f/(iMetal+1)));
-		ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(fResupplyDist/fAmmoDist)*(100.0f/(iMetal+1)));
+		ADD_UTILITY(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,(fAmmoDist/fResupplyDist)*(200.0f/(iMetal+1)));
+		ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,!m_bIsCarryingObj && !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(fResupplyDist/fAmmoDist)*(100.0f/(iMetal+1)));
 
-		ADD_UTILITY(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,(m_pSentryGun!=NULL) && (m_fLookAfterSentryTime<engine->Time()),0.5);
+		ADD_UTILITY(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,!m_bIsCarryingObj && (m_pSentryGun!=NULL) && (m_fLookAfterSentryTime<engine->Time()),0.5);
 
 		// remove sappers
-		ADD_UTILITY(BOT_UTIL_REMOVE_TMSENTRY_SAPPER,(m_fRemoveSapTime<engine->Time()) &&m_pNearestAllySentry && CTeamFortress2Mod::isSentrySapped(m_pNearestAllySentry),1.1f);
-		ADD_UTILITY(BOT_UTIL_REMOVE_TMDISP_SAPPER,(m_fRemoveSapTime<engine->Time()) &&m_pNearestDisp && CTeamFortress2Mod::isDispenserSapped(m_pNearestDisp),1.1f);
-		ADD_UTILITY(BOT_UTIL_REMOVE_TMTELE_SAPPER,(m_fRemoveSapTime<engine->Time()) &&m_pNearestTeleEntrance && CTeamFortress2Mod::isTeleporterSapped(m_pNearestTeleEntrance),1.1f);
+		ADD_UTILITY(BOT_UTIL_REMOVE_TMSENTRY_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pNearestAllySentry && CTeamFortress2Mod::isSentrySapped(m_pNearestAllySentry),1.1f);
+		ADD_UTILITY(BOT_UTIL_REMOVE_TMDISP_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pNearestDisp && CTeamFortress2Mod::isDispenserSapped(m_pNearestDisp),1.1f);
+		ADD_UTILITY(BOT_UTIL_REMOVE_TMTELE_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pNearestTeleEntrance && CTeamFortress2Mod::isTeleporterSapped(m_pNearestTeleEntrance),1.1f);
 
-		ADD_UTILITY(BOT_UTIL_UPGTMSENTRY,(m_fRemoveSapTime<engine->Time()) && !bHasFlag && m_pNearestAllySentry && (m_pNearestAllySentry!=m_pSentryGun) && (iMetal>=200) && ((iAllySentryLevel<3)||(fAllySentryHealthPercent<1.0f)),0.8+((1.0f-fAllySentryHealthPercent)*0.2));
-		ADD_UTILITY(BOT_UTIL_UPGTMDISP,(m_fRemoveSapTime<engine->Time()) && (m_pNearestDisp!=NULL)&&(m_pNearestDisp!=m_pDispenser) && (iMetal>=200) && ((iAllyDispLevel<3)||(fAllyDispenserHealthPercent<1.0f)),0.7+((1.0f-fAllyDispenserHealthPercent)*0.3));
+		ADD_UTILITY(BOT_UTIL_UPGTMSENTRY,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) && !bHasFlag && m_pNearestAllySentry && (m_pNearestAllySentry!=m_pSentryGun) && (iMetal>=200) && ((iAllySentryLevel<3)||(fAllySentryHealthPercent<1.0f)),0.8+((1.0f-fAllySentryHealthPercent)*0.2));
+		ADD_UTILITY(BOT_UTIL_UPGTMDISP,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) && (m_pNearestDisp!=NULL)&&(m_pNearestDisp!=m_pDispenser) && (iMetal>=200) && ((iAllyDispLevel<3)||(fAllyDispenserHealthPercent<1.0f)),0.7+((1.0f-fAllyDispenserHealthPercent)*0.3));
 // booooo
 	}
 	else
 	{
 		ADD_UTILITY(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,fAmmoDist/fResupplyDist);
-		ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,!bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,fResupplyDist/fAmmoDist);
+		ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO, !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,fResupplyDist/fAmmoDist);
 	}
 
 	if ( !m_pNearestDisp )
@@ -3815,7 +3838,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vSentry) > rcbot_move_dist.GetFloat()) )
 				{
-					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pSentryGun.get(),pWaypoint->getOrigin()));
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pSentryGun.get(),pWaypoint->getOrigin(),m_bIsCarryingSentry));
 					m_iSentryArea = pWaypoint->getArea();
 					return true;
 				}
@@ -3836,7 +3859,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vDisp) > rcbot_move_dist.GetFloat()) )
 				{
-					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pDispenser.get(),pWaypoint->getOrigin()));
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pDispenser.get(),pWaypoint->getOrigin(),m_bIsCarryingDisp));
 					m_iDispenserArea = pWaypoint->getArea();
 					return true;
 				}
@@ -3851,7 +3874,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint &&  ( pWaypoint->distanceFrom(vTele) > rcbot_move_dist.GetFloat() ) )
 				{
-					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pTeleEntrance.get(),pWaypoint->getOrigin()));
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pTeleEntrance.get(),pWaypoint->getOrigin(),m_bIsCarryingTeleEnt));
 					m_iTeleEntranceArea = pWaypoint->getArea();
 					return true;
 				}
@@ -3867,7 +3890,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vTele) > rcbot_move_dist.GetFloat()) )
 				{
-					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pTeleExit.get(),pWaypoint->getOrigin()));
+					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pTeleExit.get(),pWaypoint->getOrigin(),m_bIsCarryingTeleExit));
 					m_iTeleExitArea = pWaypoint->getArea();
 					return true;
 				}
@@ -4133,6 +4156,8 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 {
+	static int wptindex;
+
 	CBot::touchedWpt(pWaypoint);
 
 	if ( canGotoWaypoint (getOrigin(), pWaypoint) )
@@ -4149,6 +4174,15 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 			//m_pSchedules->addFront(new CBotSchedule(new CBotTFDoubleJump()));
 		}
 	}
+
+	wptindex = CWaypoints::getWaypointIndex(pWaypoint);
+
+	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) ) 
+	{
+		m_pNavigator->beliefOne(wptindex,BELIEF_DANGER,distanceFrom(m_pEnemy));
+	}
+	else
+		m_pNavigator->beliefOne(wptindex,BELIEF_SAFETY,0);
 }
 
 

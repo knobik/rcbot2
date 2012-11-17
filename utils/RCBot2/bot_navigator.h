@@ -107,6 +107,8 @@ public:
 
 	virtual float getBelief ( int index ) { return 0; }
 
+	virtual void beliefOne ( int iWptIndex, BotBelief iBeliefType, float fDist ) { return; }
+
 	static const int MAX_PATH_TICKS = 200;
 
 protected:
@@ -369,6 +371,8 @@ public:
 	//virtual void goBack();
 	
 	void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType );
+
+	void beliefOne ( int iWptIndex, BotBelief iBeliefType, float fDist );
 
 	// nearest cover position to vOrigin only
 	bool getCoverPosition ( Vector vCoverOrigin, Vector *vCover );
