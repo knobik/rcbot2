@@ -135,9 +135,14 @@ ConVar rcbot_move_disp_healamount("rcbot_move_disp_healamount","100",0,"if dispe
 ConVar rcbot_move_tele_time("rcbot_move_tele_time","120",0,"seconds for bots to start thinking about moving teleporters");
 ConVar rcbot_move_tele_tpm("rcbot_move_tele_tpm","1",0,"if no of players teleported per minute is less than this, bot will move the teleport");
 
-ConVar rcbot_move_dist("rcbot_move_dist","1000",0,"minimum distance to move objects to");
+ConVar rcbot_move_dist("rcbot_move_dist","800",0,"minimum distance to move objects to");
 
 ConVar rcbot_move_obj("rcbot_move_obj","1",0,"if 1 rcbot engineers will move objects around");
+ConVar rcbot_taunt("rcbot_taunt","1",0,"enable/disable bots taunting");
+
+ConVar *sv_gravity = NULL;
+ConVar *sv_cheats = NULL;//("sv_cheats");
+
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
 IFileSystem *filesystem = NULL;  // file I/O 
@@ -372,6 +377,9 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	RandomSeed((unsigned int)time(NULL));
 
 	CClassInterface::init();
+
+	sv_cheats = cvar->FindVar("sv_cheats");
+	sv_gravity = cvar->FindVar("sv_gravity");
 
 	return true;
 }
@@ -1059,6 +1067,10 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2DISPENSERHEALTH,"CObjectDispenser","m_iHealth",0);
 		DEFINE_GETPROP(GETPROP_TF2TELEPORTERHEALTH,"CObjectTeleporter","m_iHealth",0);
 		DEFINE_GETPROP(GETPROP_TF2OBJECTCARRIED,"CObjectSentrygun","m_bCarried",0);
+		DEFINE_GETPROP(GETPROP_TF2OBJECTUPGRADELEVEL,"CObjectSentrygun","m_iUpgradeLevel",0);
+		DEFINE_GETPROP(GETPROP_TF2OBJECTMAXHEALTH,"CObjectSentrygun","m_iMaxHealth",0);
+		DEFINE_GETPROP(GETPROP_TF2DISPMETAL,"CObjectDispenser","m_iAmmoMetal",0);
+
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

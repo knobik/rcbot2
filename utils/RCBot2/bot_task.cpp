@@ -683,6 +683,10 @@ void CBotTF2WaitAmmoTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else if ( m_fWaitTime < engine->Time() )
 		fail();
+	else if ( pBot->distanceFrom(m_vOrigin) > 100 )
+	{
+		pBot->setMoveTo(m_vOrigin);
+	}
 	else
 	{
 		pBot->stopMoving();
@@ -740,17 +744,19 @@ void CBotTaskEngiPickupBuilding :: debugString ( char *string )
 }
 
 /////////////////
-CBotTaskEngiPlaceBuilding :: CBotTaskEngiPlaceBuilding ( Vector vOrigin )
+CBotTaskEngiPlaceBuilding :: CBotTaskEngiPlaceBuilding ( eEngiBuild iObject, Vector vOrigin )
 {
 	m_vOrigin = vOrigin;
 	m_fTime = 0.0f;
+	m_iState = 1; // BEGIN HERE , otherwise bot will try to destroy the building
+	m_iObject = iObject;
+	m_iTries = 0;
 }
 
 void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( m_fTime == 0.0f )
 	{
-		
 		// forward
 		/*Vector v_start = pBot->getOrigin();
 		Vector v_comp = (pBot->getOrigin()-m_vOrigin);
@@ -778,7 +784,14 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{		
 		if ( CBotGlobals::yawAngleFromEdict(pBot->getEdict(),m_vOrigin) < 25 )
 		{	
-			pBot->primaryAttack();
+			int state = ((CBotTF2*)pBot)->engiBuildObject(&m_iState,m_iObject,&m_fTime,&m_iTries);
+
+			if ( state == 1 )
+				complete();
+			else if ( state == 0 )
+				fail();
+			
+			//pBot->primaryAttack();
 		}
 	}
 	else
@@ -837,6 +850,9 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( !m_fTime )
 		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
+
+	pBot->setLookAt(LOOK_EDICT);
+	pBot->lookAtEdict(pEnemy);
 
 	if ( m_fTime < engine->Time() )
 	{
@@ -958,7 +974,8 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !pBot->isTF() )
 		fail();
 
-	pBot->wantToShoot(false);
+	pBot->wantToShoot(false); // don't shoot enemies , want to build the damn thing
+	pBot->wantToChangeWeapon(false); // if enemy just strike them with wrench
 
 	tfBot = (CBotFortress*)pBot;
 
@@ -967,11 +984,11 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		fail();
 		return;
 	}
-	else if ( pBot->hasEnemy() && pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	/*else if ( pBot->hasEnemy() && pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
 		fail();
 		return;
-	}
+	}*/
 
 	pBot->setLookAtTask((LOOK_BUILD));
 	bAimingOk = pBot->DotProductFromOrigin(pBot->getAiming()) > 0.965925f; // 15 degrees
@@ -1126,7 +1143,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		fail();
 	}
 	else if ( m_iInt == 2 )
-	{		
+	{
 		if ( m_bNoInterruptions )
 		{
 			pBot->debugMsg(BOT_DEBUG_NAV,"Found route");
@@ -1140,8 +1157,6 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		}
 		else
 		{			
-			
-
 			if ( pBot->moveFailed() )
 			{
 				pBot->debugMsg(BOT_DEBUG_NAV,"moveFailed() == true");
@@ -1323,6 +1338,7 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
 
 	pBot->wantToShoot(false);
+	pBot->wantToChangeWeapon(false);
 
 	if ( m_fTime == 0.0f )
 		m_fTime = engine->Time() + randomFloat(8.0f,12.0f);

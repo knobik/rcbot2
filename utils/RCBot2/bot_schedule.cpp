@@ -127,7 +127,7 @@ void CBotGetMetalSched :: init ()
 	setID(SCHED_GET_METAL);
 }
 //////////////////////////////////////////////
-CBotEngiMoveBuilding :: CBotEngiMoveBuilding ( edict_t *pBotEdict, edict_t *pBuilding, Vector vNewLocation, bool bCarrying )
+CBotEngiMoveBuilding :: CBotEngiMoveBuilding ( edict_t *pBotEdict, edict_t *pBuilding, eEngiBuild iObject, Vector vNewLocation, bool bCarrying )
 {
 	// not carrying
 	if ( !bCarrying )
@@ -138,7 +138,7 @@ CBotEngiMoveBuilding :: CBotEngiMoveBuilding ( edict_t *pBotEdict, edict_t *pBui
 	// otherwise already carrying
 
 	addTask(new CFindPathTask(vNewLocation));
-	addTask(new CBotTaskEngiPlaceBuilding(vNewLocation));
+	addTask(new CBotTaskEngiPlaceBuilding(iObject,vNewLocation));
 }
 
 void CBotEngiMoveBuilding :: init ()
@@ -279,11 +279,13 @@ void CBotUseTeleSched :: init ()
 }
 //////////////////////////////////////////
 
-CBotUseDispSched :: CBotUseDispSched ( edict_t *pDisp )
+CBotUseDispSched :: CBotUseDispSched ( edict_t *pDisp )//, bool bNest )
 {
 	addTask(new CFindPathTask(pDisp)); // first
 	addTask(new CBotTF2WaitHealthTask(CBotGlobals::entityOrigin(pDisp))); // second
-	addTask(new CBotNest()); // third
+
+	//if ( bNest )
+	//	addTask(new CBotNest()); // third
 }
 
 void CBotUseDispSched :: init ()

@@ -485,12 +485,15 @@ private:
 class CBotTaskEngiPlaceBuilding : public CBotTask
 {
 public:
-	CBotTaskEngiPlaceBuilding ( Vector vOrigin ); // going to use this 
+	CBotTaskEngiPlaceBuilding ( eEngiBuild iObject, Vector vOrigin ); // going to use this 
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 	virtual void debugString ( char *string );
 private:
 	Vector m_vOrigin;
 	float m_fTime;
+	eEngiBuild m_iObject;
+	int m_iState;
+	int m_iTries;
 };
 
 class CBotTF2WaitFlagTask : public CBotTask

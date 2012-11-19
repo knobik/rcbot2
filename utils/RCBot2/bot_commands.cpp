@@ -168,6 +168,96 @@ eBotCommandResult CWaypointCut :: execute ( CClient *pClient, const char *pcmd, 
 
 	return COMMAND_ERROR;
 }
+
+////////////////////////////////
+eBotCommandResult CGetProp :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		if ( (pcmd && *pcmd) &&(arg1 && *arg1) && (arg2 && *arg2) )
+		{
+			int i = 0;
+
+			edict_t *pPlayer = pClient->getPlayer();
+			edict_t *pEdict;
+			edict_t *pNearest = NULL;
+			float fDistance;
+			float fNearest = 400.0f;
+
+			for ( i = 0; i < gpGlobals->maxEntities; i ++ )
+			{
+				pEdict = INDEXENT(i);
+
+				if ( pEdict )
+				{
+					if ( !pEdict->IsFree() )
+					{
+						if ( pEdict->m_pNetworkable && pEdict->GetIServerEntity() )
+						{				
+							if ( (fDistance=(CBotGlobals::entityOrigin(pEdict) - CBotGlobals::entityOrigin(pPlayer)).Length()) < fNearest )
+							{
+								if ( strcmp(pEdict->GetClassName(),arg1) == 0 )
+								{
+									fNearest = fDistance;
+									pNearest = pEdict;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if ( pNearest )
+			{
+					void *data = NULL;
+
+				extern bool g_PrintProps;
+				unsigned int m_offset = 0;
+
+				ServerClass *sc = UTIL_FindServerClass(pcmd);
+
+				if ( sc )
+				{
+					UTIL_FindSendPropInfo(sc,arg2,&m_offset);
+
+					if ( m_offset )
+					{
+						static IServerUnknown *pUnknown;
+						static CBaseEntity *pEntity;
+
+						pUnknown = (IServerUnknown *)pNearest->GetUnknown();
+					 
+						pEntity = pUnknown->GetBaseEntity();
+
+						int preoffs = 0;
+
+						if ( (arg3 && *arg3) )
+						{
+							preoffs = atoi(arg3);	
+						}
+
+						data = (void *)((char *)pEntity + m_offset + preoffs);
+
+						CBotGlobals::botMessage(pPlayer,0,"\n%d,%f",*(int*)data,*(float*)data);
+					}
+					else
+						CBotGlobals::botMessage(NULL,0,"OFFSET NOT FOUND\n");
+				}
+				else
+					CBotGlobals::botMessage(NULL,0,"CLASS NOT FOUND\n");
+
+			}
+			else
+				CBotGlobals::botMessage(NULL,0,"EDICT NOT FOUND\n");
+		}
+		else
+			CBotGlobals::botMessage(NULL,0,"Usage: getprop CLASS CLASSNAME KEY\n");
+
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
 ////////////////////////////////
 eBotCommandResult CPrintProps :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
@@ -428,6 +518,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CDebugProfilingCommand());
 	add(new CDebugEdictsCommand());
 	add(new CPrintProps());
+	add(new CGetProp());
 
 }
 /////////////////////
@@ -634,15 +725,22 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 	if ( pClient )
 		pEntity = pClient->getPlayer();
 
-	//if ( !pcmd || !*pcmd )
-	//	bOkay = CBots::createBot();
-	//else
-	//bOkay = CBots::createBot();
+	extern ConVar *sv_cheats;
 
-	if ( CBots::createBot(pcmd,arg1,arg2) )
-		CBotGlobals::botMessage(pEntity,0,"bot added");
+	if ( !CBotGlobals::isMod(MOD_TF2) || (!sv_cheats || sv_cheats->GetBool()) )
+	{
+		//if ( !pcmd || !*pcmd )
+		//	bOkay = CBots::createBot();
+		//else
+		//bOkay = CBots::createBot();
+
+		if ( CBots::createBot(pcmd,arg1,arg2) )
+			CBotGlobals::botMessage(pEntity,0,"bot added");
+		else
+			CBotGlobals::botMessage(pEntity,0,"error: couldn't create bot! (Check maxplayers)");
+	}
 	else
-		CBotGlobals::botMessage(pEntity,0,"error: couldn't create bot! (Check maxplayers)");
+		CBotGlobals::botMessage(pEntity,0,"error: sv_cheats must be 1 to add rcbots");
 
 	return COMMAND_ACCESSED;
 }

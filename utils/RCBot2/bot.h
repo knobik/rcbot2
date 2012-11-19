@@ -115,6 +115,9 @@ typedef enum
 	GETPROP_TF2DISPENSERHEALTH,
 	GETPROP_TF2TELEPORTERHEALTH,
 	GETPROP_TF2OBJECTCARRIED,
+	GETPROP_TF2OBJECTUPGRADELEVEL,
+	GETPROP_TF2OBJECTMAXHEALTH,
+	GETPROP_TF2DISPMETAL,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -264,6 +267,10 @@ public:
 	inline static float getDispenserHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2DISPENSERHEALTH].getFloatFromInt(edict,100); }
 	inline static float getTeleporterHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2TELEPORTERHEALTH].getFloatFromInt(edict,100); }
 	inline static bool isObjectCarried ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTCARRIED].getBool(edict,false); }
+	inline static int getTF2UpgradeLevel ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTUPGRADELEVEL].getInt(edict,0); }
+	inline static int getTF2GetBuildingMaxHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTMAXHEALTH].getInt(edict,0); }
+	inline static int getTF2DispMetal ( edict_t *edict ) { return g_GetProps[GETPROP_TF2DISPMETAL].getInt(edict,0); }
+
 	// HL2DM
 	//static void 
 

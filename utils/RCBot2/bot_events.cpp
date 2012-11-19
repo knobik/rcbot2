@@ -165,6 +165,11 @@ void CTF2ObjectSapped :: execute ( IBotEventInterface *pEvent )
 	}
 }
 
+void CTF2RoundActive :: execute ( IBotEventInterface *pEvent )
+{
+	CTeamFortress2Mod::resetSetupTime();
+}
+
 void COverTimeBegin :: execute ( IBotEventInterface *pEvent )
 {
 	CBroadcastOvertime function;
@@ -598,6 +603,7 @@ eyeball_boss_escaped */
 	addEvent(new CBossKilledEvent("merasmus_escaped"));
 	addEvent(new CBossKilledEvent("eyeball_boss_killed"));
 	addEvent(new CBossKilledEvent("eyeball_boss_escaped"));
+	addEvent(new CTF2RoundActive());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

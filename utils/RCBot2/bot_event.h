@@ -256,6 +256,20 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2RoundActive : public CBotEvent
+{
+public:
+	CTF2RoundActive()
+	{
+		setType("teamplay_round_active");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+	
+
 class CTF2PointStopCapture : public CBotEvent
 {
 public:

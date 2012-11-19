@@ -98,14 +98,15 @@ public:
 	void addTask( CBotTask *pTask );
 
 	void execute ( CBot *pBot );
-/*
+
 	CBotTask *currentTask ()
 	{
 		if ( m_Tasks.IsEmpty() )
 			return NULL;
-		return m_Tasks.Front();
+
+		return m_Tasks.GetFrontInfo();
 	}
-*/
+
 	bool hasFailed ()
 	{
 		return m_bFailed;
@@ -263,16 +264,18 @@ public:
 	{
 		return m_Schedules.IsEmpty();
 	}
-/*
+
 	CBotTask *getCurrentTask ()
 	{
-		CBotSchedule *sched;
+		CBotSchedule *sched = m_Schedules.GetFrontInfo();
 
-		if ( (sched = m_Schedules.Top()) != NULL )
+		if ( sched != NULL )
 		{
 			return sched->currentTask();
 		}
-	}*/
+
+		return NULL;
+	}
 
 private:
 	dataQueue <CBotSchedule*> m_Schedules;
@@ -317,7 +320,7 @@ public:
 class CBotEngiMoveBuilding : public CBotSchedule
 {
 public:
-	CBotEngiMoveBuilding ( edict_t *pBotEdict, edict_t *pBuilding, Vector vNewLocation, bool bCarrying );
+	CBotEngiMoveBuilding ( edict_t *pBotEdict, edict_t *pBuilding, eEngiBuild iObject, Vector vNewLocation, bool bCarrying );
 
 	void init ();
 };
