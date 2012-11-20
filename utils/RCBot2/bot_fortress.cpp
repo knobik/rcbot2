@@ -2667,9 +2667,6 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	else
 		setMoveTo(m_vMedicPosition);
 
-	lookAtEdict(m_pHeal);
-	setLookAtTask(LOOK_EDICT);
-
 	pWeapon = INDEXENT(pWeap->getWeaponIndex());
 
 	if ( pWeapon == NULL )
@@ -2719,6 +2716,9 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	}
 	//else
 	//	m_pHeal = CClassInterface::getMedigunTarget(INDEXENT(pWeap->getWeaponIndex()));
+
+	lookAtEdict(m_pHeal);
+	setLookAtTask(LOOK_EDICT);
 
 	m_pLastHeal = m_pHeal;
 
@@ -2841,6 +2841,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	static int iTeam;
 	static float fMetalPercent;
 	static Vector vOrigin;
+	static unsigned char *failedlist;
 	
 	static int numplayersonteam;
 	static int numplayersonteam_alive;
@@ -2872,6 +2873,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	fDefendFlagUtility = 0.5;
 	iTeam = getTeam();
 	bHasFlag = hasFlag();
+	failedlist = NULL;
 
 	numplayersonteam = CTeamFortress2Mod::numPlayersOnTeam(iTeam);
 	numplayersonteam_alive = CTeamFortress2Mod::numPlayersOnTeam(iTeam,true);
@@ -2918,7 +2920,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		m_pNavigator->getFailedGoals(&failed);
 
-		unsigned char *failedlist = CWaypointLocations :: resetFailedWaypoints ( failed );
+		failedlist = CWaypointLocations :: resetFailedWaypoints ( failed );
 
 		fResupplyDist = 1;
 		fHealthDist = 1;
@@ -2950,29 +2952,57 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		extern ConVar rcbot_move_tele_tpm;
 		extern ConVar rcbot_move_obj;
 
-		bool bMoveObjs = rcbot_move_obj.GetBool();
+		static bool bMoveObjs;
 
-		int iSentryLevel = 0;
-		int iDispenserLevel = 0;
-		int iAllySentryLevel = 0;
-		int iAllyDispLevel = 0;
+		static int iSentryLevel;
+		static int iDispenserLevel;
+		static int iAllySentryLevel;
+		static int iAllyDispLevel;
 
-		float fEntranceDist = 99999.0f;
-		float fExitDist = 99999.0f;
-		float fUseDispFactor = 0.0f;
+		static float fEntranceDist;
+		static float fExitDist;
+		static float fUseDispFactor;
 
-		float fAllyDispenserHealthPercent = 1.0f;
-		float fAllySentryHealthPercent = 1.0f;
+		static float fAllyDispenserHealthPercent;
+		static float fAllySentryHealthPercent;
 
-		float fSentryHealthPercent = 1.0f;
-		float fDispenserHealthPercent = 1.0f;
-		float fTeleporterEntranceHealthPercent = 1.0f;
-		float fTeleporterExitHealthPercent = 1.0f;		
+		static float fSentryHealthPercent;
+		static float fDispenserHealthPercent;
+		static float fTeleporterEntranceHealthPercent;
+		static float fTeleporterExitHealthPercent;
 
-		float fSentryPlaceTime = (engine->Time()-m_fSentryPlaceTime);
-		float fDispenserPlaceTime = (engine->Time()-m_fDispenserPlaceTime);
-		float fTeleporterEntPlaceTime = (engine->Time()-m_fTeleporterEntPlacedTime);
-		float fTeleporterExtPlaceTime = (engine->Time()-m_fTeleporterExtPlacedTime);
+		static float fSentryPlaceTime;
+		static float fDispenserPlaceTime;
+		static float fTeleporterEntPlaceTime;
+		static float fTeleporterExtPlaceTime;
+
+		static float fSentryUtil;
+		static int iMetalInDisp;
+
+		bMoveObjs = rcbot_move_obj.GetBool();
+
+		iSentryLevel = 0;
+		iDispenserLevel = 0;
+		iAllySentryLevel = 0;
+		iAllyDispLevel = 0;
+
+		fEntranceDist = 99999.0f;
+		fExitDist = 99999.0f;
+		fUseDispFactor = 0.0f;
+
+		fAllyDispenserHealthPercent = 1.0f;
+		fAllySentryHealthPercent = 1.0f;
+
+		fSentryHealthPercent = 1.0f;
+		fDispenserHealthPercent = 1.0f;
+		fTeleporterEntranceHealthPercent = 1.0f;
+		fTeleporterExitHealthPercent = 1.0f;		
+
+		fSentryPlaceTime = (engine->Time()-m_fSentryPlaceTime);
+		fDispenserPlaceTime = (engine->Time()-m_fDispenserPlaceTime);
+		fTeleporterEntPlaceTime = (engine->Time()-m_fTeleporterEntPlacedTime);
+		fTeleporterExtPlaceTime = (engine->Time()-m_fTeleporterExtPlacedTime);
+
 
 		if ( m_pTeleExit )
 		{
@@ -3002,14 +3032,6 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		{
 			iSentryLevel = CClassInterface::getTF2UpgradeLevel(m_pSentryGun);//CTeamFortress2Mod::getSentryLevel(m_pSentryGun);
 			fSentryHealthPercent = ((float)CClassInterface::getSentryHealth(m_pSentryGun))/CClassInterface::getTF2GetBuildingMaxHealth(m_pSentryGun);
-
-			/*if ( iSentryLevel == 1 )
-				fSentryHealthPercent /= TF2_SENTRY_LEVEL1_HEALTH;		
-			else if ( iSentryLevel == 2 )
-				fSentryHealthPercent /= TF2_SENTRY_LEVEL2_HEALTH;		
-			else if ( iSentryLevel == 3 )
-				fSentryHealthPercent /= TF2_SENTRY_LEVEL3_HEALTH;		
-*/
 			// move sentry
 			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_SENTRY,(!m_bIsCarryingObj || m_bIsCarryingSentry) && bMoveObjs && (m_fSentryPlaceTime>0.0f) && !bHasFlag && m_pSentryGun && (fSentryPlaceTime>rcbot_move_sentry_time.GetFloat())&&(((60.0f*m_iSentryKills)/fSentryPlaceTime)<rcbot_move_sentry_kpm.GetFloat()), (fMetalPercent*getHealthPercent()*fSentryHealthPercent)+((int)m_bIsCarryingSentry));
 
@@ -3017,7 +3039,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		if ( m_pDispenser )
 		{
-			int iMetalInDisp = CClassInterface::getTF2DispMetal(m_pDispenser);
+			iMetalInDisp = CClassInterface::getTF2DispMetal(m_pDispenser);
 			iDispenserLevel = CClassInterface::getTF2UpgradeLevel(m_pDispenser); // CTeamFortress2Mod::getDispenserLevel(m_pDispenser);
 			fDispenserHealthPercent = ((float)CClassInterface::getDispenserHealth(m_pDispenser)) / CClassInterface::getTF2GetBuildingMaxHealth(m_pDispenser);
 
@@ -3030,7 +3052,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		if ( m_pNearestDisp && (m_pNearestDisp != m_pDispenser) )
 		{
-			int iMetalInDisp = CClassInterface::getTF2DispMetal(m_pNearestDisp);
+			iMetalInDisp = CClassInterface::getTF2DispMetal(m_pNearestDisp);
 			iAllyDispLevel = CClassInterface::getTF2UpgradeLevel(m_pNearestDisp); // CTeamFortress2Mod::getDispenserLevel(m_pDispenser);
 			fAllyDispenserHealthPercent = ((float)CClassInterface::getDispenserHealth(m_pNearestDisp)) / CClassInterface::getTF2GetBuildingMaxHealth(m_pNearestDisp);
 
@@ -3051,7 +3073,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			ADD_UTILITY(BOT_UTIL_UPGTMSENTRY,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) && !bHasFlag && m_pNearestAllySentry && (m_pNearestAllySentry!=m_pSentryGun) && (iMetal>=200) && ((iAllySentryLevel<3)||(fAllySentryHealthPercent<1.0f)),0.8+((1.0f-fAllySentryHealthPercent)*0.2));	
 		}
 
-		float fSentryUtil = 0.8 + (((float)((int)bNeedAmmo))*0.1) + (((float)(int)bNeedHealth)*0.1);
+		fSentryUtil = 0.8 + (((float)((int)bNeedAmmo))*0.1) + (((float)(int)bNeedHealth)*0.1);
 
 		//ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
 
