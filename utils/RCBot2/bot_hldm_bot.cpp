@@ -74,6 +74,11 @@ void CHLDMBot :: spawnInit ()
 
 bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
+	extern ConVar rcbot_notarget;
+
+	if ( rcbot_notarget.GetBool() && (ENTINDEX(pEdict) == 1) )
+		return false;
+
 	if ( pEdict == m_pEdict )
 		return false;
 

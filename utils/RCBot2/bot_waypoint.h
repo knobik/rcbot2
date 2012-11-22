@@ -283,6 +283,8 @@ public:
 
 	inline void setRadius ( float fRad ) { m_fRadius = fRad; }
 
+	Vector applyRadius ();
+
 	bool isAiming ( void );
 
 private:

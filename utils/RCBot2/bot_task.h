@@ -55,14 +55,14 @@ public:
 	//void setFloat ( float fFloat );
 	bool timedOut ();
 	//void setEdict ( edict_t *pEdict );
-	void setFailInterrupt ( int iInterrupt );
-	void setCompleteInterrupt ( int iInterrupt );
+	void setFailInterrupt ( int iInterruptHave, int iInterruptDontHave = 0 );
+	void setCompleteInterrupt ( int iInterruptHave, int iInterruptDontHave = 0 );
 	virtual eTaskState isInterrupted (CBot *pBot);
 	void fail ();
 	void complete ();
 	inline bool hasFlag ( int iFlag ) { return (m_iFlags & iFlag) == iFlag; }
 	inline void setFlag ( int iFlag ) { m_iFlags |= iFlag; }
-	void clearFailInterrupts () { m_iFailInterruptConditions = 0; }	
+	void clearFailInterrupts () { m_iFailInterruptConditionsHave = m_iFailInterruptConditionsDontHave = 0; }	
 	virtual void debugString ( char *string ) { string[0] = 0; return; }
 
 	//bool isID ( eTaskID eTaskId ) { };
@@ -73,8 +73,10 @@ protected:
 	// flags
 	int m_iFlags;
 	// conditions that may happen to fail task
-	int m_iFailInterruptConditions;
-	int m_iCompleteInterruptConditions;
+	int m_iFailInterruptConditionsHave;
+	int m_iCompleteInterruptConditionsHave;
+	int m_iFailInterruptConditionsDontHave;
+	int m_iCompleteInterruptConditionsDontHave;
 	// current state
 	eTaskState m_iState;
 	// time out
@@ -126,7 +128,10 @@ private:
 class CBotTF2DemomanPipeTrap : public CBotTask
 {
 public:
-	CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread );
+	// Set up a pipe trap or fire pipe bombs -- 
+	// if autodetonate, detonate them when I've shot them rather than wait for an enemy
+	// such as when attacking a sentry
+	CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate = false );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -143,6 +148,7 @@ private:
 	eDemoTrapType m_iTrapType;
 	int m_iState;
 	int m_iStickies;
+	bool m_bAutoDetonate;
 
 };
 
@@ -248,7 +254,7 @@ private:
 class CBotTF2Snipe : public CBotTask
 {
 public:
-	CBotTF2Snipe (  );
+	CBotTF2Snipe ( Vector vOrigin, float fYaw );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -258,7 +264,8 @@ public:
 	}
 private:
 	float m_fTime;
-	Vector m_vAiming;
+	Vector m_vAim;
+	Vector m_vOrigin;
 };
 
 class CBotTF2SpyDisguise : public CBotTask

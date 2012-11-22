@@ -76,10 +76,10 @@ const char *szSchedules[] =
 };
 
 
-CBotTF2DemoPipeTrapSched :: CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread )
+CBotTF2DemoPipeTrapSched :: CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate )
 {
 	addTask(new CFindPathTask(vStand));
-	addTask(new CBotTF2DemomanPipeTrap(type,vStand,vLoc,vSpread));
+	addTask(new CBotTF2DemomanPipeTrap(type,vStand,vLoc,vSpread,bAutoDetonate));
 }
 
 void CBotTF2DemoPipeTrapSched :: init()
@@ -91,7 +91,7 @@ void CBotTF2DemoPipeTrapSched :: init()
 //////////////////////////////////////
 CBotTF2HealSched::CBotTF2HealSched(edict_t *pHeal)
 {
-	CFindPathTask *findpath = new CFindPathTask(CBotGlobals::entityOrigin(pHeal));
+	CFindPathTask *findpath = new CFindPathTask(pHeal);
 	findpath->setCompleteInterrupt(CONDITION_SEE_HEAL);
 	addTask(findpath);
 	addTask(new CBotTF2MedicHeal());
@@ -151,7 +151,7 @@ void CBotEngiMoveBuilding :: init ()
 
 CBotTF2PushPayloadBombSched :: CBotTF2PushPayloadBombSched (edict_t * ePayloadBomb)
 {
-	addTask(new CFindPathTask(CBotGlobals::entityOrigin(ePayloadBomb))); // first
+	addTask(new CFindPathTask(ePayloadBomb)); // first
 	addTask(new CBotTF2PushPayloadBombTask(ePayloadBomb)); // second
 }
 
@@ -206,10 +206,10 @@ void CBotBackstabSched :: init ()
 
 ///////////
 
-CBotTF2SnipeSched :: CBotTF2SnipeSched ( Vector vOrigin )
+CBotTF2SnipeSched :: CBotTF2SnipeSched ( Vector vOrigin, float fYaw )
 {
 	addTask(new CFindPathTask(vOrigin)); // first
-	addTask(new CBotTF2Snipe()); // second
+	addTask(new CBotTF2Snipe(vOrigin,fYaw)); // second
 }
 void CBotTF2SnipeSched :: init ()
 {
@@ -231,7 +231,13 @@ void CBotTFEngiLookAfterSentry :: init ()
 ////////////
 CBotTF2GetHealthSched :: CBotTF2GetHealthSched ( Vector vOrigin )
 {
-	addTask(new CFindPathTask(vOrigin)); // first
+	CFindPathTask *pathtask = new CFindPathTask(vOrigin);
+
+	// if bot doesn't have need ammo flag anymore ....
+	// fail so that the bot doesn't move onto the next task
+	pathtask->setFailInterrupt(0,CONDITION_NEED_HEALTH);
+
+	addTask(pathtask); // first
 	addTask(new CBotTF2WaitHealthTask(vOrigin)); // second
 }
 
@@ -243,7 +249,13 @@ void CBotTF2GetHealthSched :: init ()
 
 CBotTF2GetAmmoSched :: CBotTF2GetAmmoSched ( Vector vOrigin )
 {
-	addTask(new CFindPathTask(vOrigin)); // first
+	CFindPathTask *pathtask = new CFindPathTask(vOrigin);
+
+	// if bot doesn't have need ammo flag anymore ....
+	// fail so that the bot doesn't move onto the next task
+	pathtask->setFailInterrupt(0,CONDITION_NEED_AMMO);
+
+	addTask(pathtask); // first
 	addTask(new CBotTF2WaitAmmoTask(vOrigin)); // second
 }
 
@@ -361,7 +373,7 @@ void CBotDefendSched :: init ()
 
 CBotRemoveSapperSched :: CBotRemoveSapperSched ( edict_t *pBuilding, eEngiBuild id )
 {
-	addTask(new CFindPathTask(CBotGlobals::entityOrigin(pBuilding)));
+	addTask(new CFindPathTask(pBuilding));
 	addTask(new CBotRemoveSapper(pBuilding,id));
 }
 
@@ -453,18 +465,13 @@ void CBotTF2MessAroundSched :: init()
 
 CBotFollowLastEnemy ::	CBotFollowLastEnemy ( CBot *pBot, edict_t *pEnemy, Vector vLastSee )
 {
-	Vector *engineVelocity = NULL;
 	Vector vVelocity = Vector(0,0,0);
 	CClient *pClient = CClients::get(pEnemy);
 
 	CFindPathTask *pFindPath = new CFindPathTask(vLastSee);	
-	
-	engineVelocity = CClassInterface :: getVelocity(pEnemy);
 
-	if ( engineVelocity )
+	if ( CClassInterface :: getVelocity(pEnemy,&vVelocity) )
 	{
-		vVelocity = *engineVelocity;
-
 		if ( pClient && (vVelocity == Vector(0,0,0)) )
 			vVelocity = pClient->getVelocity();
 	}

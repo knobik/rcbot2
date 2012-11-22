@@ -1301,40 +1301,46 @@ void CBot :: doMove ()
 			if ( canAvoid(m_pAvoidEntity) )
 			{
 				extern ConVar bot_avoid_strength;
-				float fAvoidDist = distanceFrom(m_pAvoidEntity);
 
 				Vector m_vAvoidOrigin = CBotGlobals::entityOrigin(m_pAvoidEntity);
+
+				//m_vMoveTo = getOrigin() + ((m_vMoveTo-getOrigin())-((m_vAvoidOrigin-getOrigin())*bot_avoid_strength.GetFloat()));
+				//float fAvoidDist = distanceFrom(m_pAvoidEntity);
+
 				Vector vMove = m_vMoveTo-getOrigin();
 				Vector vLeft;
 
-				vLeft = vMove.Cross(Vector(0,0,1));
-				vLeft = (vLeft/vLeft.Length());
-
-				//if ( (m_vAvoidOrigin-vLeft).Length() < (m_vAvoidOrigin-vRight).Length() )
-
-				if ( m_fAvoidSideSwitch < engine->Time() )
+				if ( vMove.Length2D() > bot_avoid_strength.GetFloat() )
 				{
-					m_fAvoidSideSwitch = engine->Time() + randomFloat(2.0f,3.0f);
-					m_bAvoidRight = !m_bAvoidRight;
+					vLeft = vMove.Cross(Vector(0,0,1));
+					vLeft = (vLeft/vLeft.Length());
+
+					if ( m_fAvoidSideSwitch < engine->Time() )
+					{
+						m_fAvoidSideSwitch = engine->Time() + randomFloat(2.0f,3.0f);
+						m_bAvoidRight = !m_bAvoidRight;
+					}
+
+					if ( CClients::clientsDebugging(BOT_DEBUG_THINK) )
+					{
+						debugoverlay->AddLineOverlay (getOrigin(), m_vAvoidOrigin, 0,0,255, false, 0.05f);
+						debugoverlay->AddLineOverlay (getOrigin(), m_bAvoidRight ? (getOrigin()+(vLeft*bot_avoid_strength.GetFloat())):(getOrigin()-(vLeft*bot_avoid_strength.GetFloat())), 0,255,0, false, 0.05f);
+						debugoverlay->AddLineOverlay (getOrigin(), getOrigin() + ((vMove/vMove.Length())*bot_avoid_strength.GetFloat()), 255,0,0, false, 0.05f);
+						debugoverlay->AddTextOverlayRGB(getOrigin()+Vector(0,0,100),0,0.05,255,255,255,255,"Avoiding: %s",m_pAvoidEntity.get()->GetClassName());
+					}
+	//*/
+					//debugoverlay->AddLineOverlay (getOrigin(), m_vAvoidOrigin, 0,0,255, false, 0.05f);
+					//debugoverlay->AddLineOverlay (getOrigin(), m_bAvoidRight ? (getOrigin()+(vLeft*bot_avoid_strength.GetFloat())):(getOrigin()-(vLeft*bot_avoid_strength.GetFloat())), 0,255,0, false, 0.05f);
+					//debugoverlay->AddLineOverlay (getOrigin(), m_vMoveTo, 255,0,0, false, 0.05f);
+					
+
+					if ( m_bAvoidRight )
+						m_vMoveTo = getOrigin() + ((vMove/vMove.Length())*bot_avoid_strength.GetFloat()) + (vLeft*bot_avoid_strength.GetFloat());
+					else
+						m_vMoveTo = getOrigin() + ((vMove/vMove.Length())*bot_avoid_strength.GetFloat()) - (vLeft*bot_avoid_strength.GetFloat());
 				}
 
-				if ( m_bAvoidRight )
-					m_vMoveTo = getOrigin() + ((vMove/vMove.Length())*fAvoidDist) + (vLeft*bot_avoid_strength.GetFloat());
-				else
-					m_vMoveTo = getOrigin() + ((vMove/vMove.Length())*fAvoidDist) - (vLeft*bot_avoid_strength.GetFloat());
-
-				//else
-				//	m_vMoveTo = vRight;
-
-				/*
-				Vector m_vAvoid = m_vAvoidOrigin-getOrigin();
-		
-				m_vAvoid = m_vAvoid/m_vAvoid.Length();
-
-				m_vAvoid = m_vAvoid.Cross(Vector(0.0f,0.0f,1.0f));
-				//?			
-				
-				m_vMoveTo = m_vMoveTo + (m_vAvoid*90.0f);*/
+			
 			}
 			else
 				m_pAvoidEntity = NULL;
@@ -1510,14 +1516,6 @@ void CBot :: getLookAtVector ()
 			//setLookAt(getOrigin()-Vector(0,0,64));
 		}
 		break;
-	case LOOK_LAST_ENEMY:
-		{
-			if ( m_pLastEnemy )
-				setLookAt(m_vLastSeeEnemy);
-			else
-				setLookAtTask((LOOK_WAYPOINT));
-		}
-		break;
 	case LOOK_ENEMY:
 		{
 			if ( m_pEnemy )
@@ -1528,6 +1526,13 @@ void CBot :: getLookAtVector ()
 				setLookAtTask((LOOK_WAYPOINT));
 		}		
 		break;
+	case LOOK_LAST_ENEMY:
+		{
+			if ( m_pLastEnemy )
+				setLookAt(m_vLastSeeEnemy);
+			//else
+			// LOOK_WAYPOINT, below
+		}
 	case LOOK_WAYPOINT:
 		{
 			Vector vLook;
@@ -1544,14 +1549,14 @@ void CBot :: getLookAtVector ()
 		break;
 	case LOOK_BUILD:
 		{
-			if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			//if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			//{
+			//	setLookAtTask((LOOK_ENEMY));
+			//	return;
+			//}
+			if ( m_fLookAroundTime < engine->Time() )
 			{
-				setLookAtTask((LOOK_ENEMY));
-				return;
-			}
-			else if ( m_fLookAroundTime < engine->Time() )
-			{
-				float fTime = randomFloat(4.0f,8.0f);
+				float fTime = randomFloat(2.0f,4.0f);
 				m_fLookAroundTime = engine->Time() + fTime;
 
 				m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));

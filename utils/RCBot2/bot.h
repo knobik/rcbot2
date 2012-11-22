@@ -118,6 +118,9 @@ typedef enum
 	GETPROP_TF2OBJECTUPGRADELEVEL,
 	GETPROP_TF2OBJECTMAXHEALTH,
 	GETPROP_TF2DISPMETAL,
+	GETPROP_MAXSPEED,
+	GETPROP_CONSTRAINT_SPEED,
+	GETPROP_TF2OBJECTBUILDING,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -168,6 +171,16 @@ public:
 		return *((float*)m_data); 
 	}
 
+	inline float *getFloatPointer ( edict_t *edict, float defaultvalue ) 
+	{ 
+		getData(edict); 
+		
+		if ( !m_data ) 
+			return NULL; 
+		
+		return ((float*)m_data); 
+	}
+
 	inline char *getString (edict_t *edict ) 
 	{ 
 		getData(edict); 
@@ -175,11 +188,21 @@ public:
 		return (char*)m_data; 
 	}
 
-	inline Vector *getVector ( edict_t *edict )
+	inline bool getVector ( edict_t *edict, Vector *v )
 	{
+		static float *x;
+
 		getData(edict);
 
-		return (Vector*)m_data;
+		if ( m_data )
+		{
+			x = (float*)m_data;
+			*v = Vector(*x,*(x+1),*(x+2));
+
+			return true;
+		}
+
+		return false;
 	}
 
 	inline int getInt ( edict_t *edict, int defaultvalue ) 
@@ -243,7 +266,7 @@ public:
 	//static unsigned int findOffset(const char *szType,const char *szClass);
 	inline static int getTF2NumHealers ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_NUMHEALERS].getInt(edict,0); }
 	inline static int getTF2Conditions ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_CONDITIONS].getInt(edict,0); }
-	inline static Vector *getVelocity ( edict_t *edict ) { return g_GetProps[GETPROP_VELOCITY].getVector(edict); }
+	inline static bool getVelocity ( edict_t *edict, Vector *v ) {return g_GetProps[GETPROP_VELOCITY].getVector(edict,v); }
 	inline static int getTF2Class ( edict_t *edict ) { return g_GetProps[GETPROP_TF2CLASS].getInt(edict,0); }
 	inline static float getTF2SpyCloakMeter ( edict_t *edict ) { return g_GetProps[GETPROP_TF2SPYMETER].getFloat(edict,0); }
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health ) 
@@ -270,7 +293,9 @@ public:
 	inline static int getTF2UpgradeLevel ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTUPGRADELEVEL].getInt(edict,0); }
 	inline static int getTF2GetBuildingMaxHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTMAXHEALTH].getInt(edict,0); }
 	inline static int getTF2DispMetal ( edict_t *edict ) { return g_GetProps[GETPROP_TF2DISPMETAL].getInt(edict,0); }
-
+	inline static float getMaxSpeed(edict_t *edict) { return g_GetProps[GETPROP_MAXSPEED].getFloat(edict,0); }
+	inline static float getSpeedFactor(edict_t *edict) { return g_GetProps[GETPROP_CONSTRAINT_SPEED].getFloat(edict,0); } 
+	inline static bool isObjectBeingBuilt(edict_t *edict) { return g_GetProps[GETPROP_TF2OBJECTBUILDING].getBool(edict,false); }
 	// HL2DM
 	//static void 
 
@@ -690,12 +715,15 @@ public:
 		}
 	}
 
-	inline void setLookAtTask ( eLookTask lookTask ) 
+	inline void setLookAtTask ( eLookTask lookTask, float fTime = 0 ) 
 	{ 
-		if ( (m_iMoveLookPriority >= m_iLookPriority) && ( m_fLookSetTime < engine->Time() ) )
+		if ( (m_iMoveLookPriority >= m_iLookPriority) && ((fTime > 0) || ( m_fLookSetTime < engine->Time())) )
 		{
 			m_iLookPriority = m_iMoveLookPriority;
 			m_iLookTask = lookTask; 
+
+			if ( fTime > 0 )
+				m_fLookSetTime = engine->Time() + fTime;
 		}	
 	}
 

@@ -1432,9 +1432,14 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 ////////////////////////////////////////////////////
 
-CBotTF2Snipe :: CBotTF2Snipe (  )
+CBotTF2Snipe :: CBotTF2Snipe ( Vector vOrigin, float fYaw )
 {
+	QAngle angle;
 	m_fTime = 0.0f;
+	angle = QAngle(0,fYaw,0);
+	AngleVectors(angle,&m_vAim);
+	m_vAim = vOrigin + (m_vAim*1024);
+	m_vOrigin = vOrigin;
 }
 	
 void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -1489,6 +1494,15 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		complete();
 	}
+	else if ( pBot->distanceFrom(m_vOrigin) > 200 )
+	{
+		// too far away
+		fail();
+	}
+	else if ( pBot->distanceFrom(m_vOrigin) > 100 )
+	{
+		pBot->setMoveTo(m_vOrigin);
+	}
 	else
 	{
 		pBot->stopMoving();
@@ -1504,6 +1518,8 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		else
 		{
 			pBot->setLookAtTask((LOOK_SNIPE));
+			pBot->setAiming(m_vAim);
+//			pBot->setAiming(m_vAiming);
 
 			if (m_fTime<engine->Time() )
 			{
@@ -1842,7 +1858,7 @@ void CHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		complete();
 }
 //////////////////////////////////////////
-CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread)
+CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate)
 {
 	m_vPoint = vLoc;
 	m_vLocation = vLoc;
@@ -1852,6 +1868,7 @@ CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vS
 	m_iTrapType = type;
 	m_vStand = vStand;
 	m_fTime = 0.0f;
+	m_bAutoDetonate = bAutoDetonate;
 }
 	
 void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -1871,7 +1888,12 @@ void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	
 	if ( pTF2Bot->deployStickies(m_iTrapType,m_vStand,m_vLocation,m_vSpread,&m_vPoint,&m_iState,&m_iStickies,&bFail,&m_fTime) )
+	{
 		complete();
+
+		if ( m_bAutoDetonate )
+			pBot->secondaryAttack();
+	}
 
 	if ( bFail )
 		fail();
@@ -2059,15 +2081,27 @@ bool CBotTask :: timedOut ()
 
 eTaskState CBotTask :: isInterrupted (CBot *pBot)
 {
-	if ( m_iCompleteInterruptConditions )
+	if ( m_iCompleteInterruptConditionsHave )
 	{
-		if ( pBot->hasSomeConditions(m_iCompleteInterruptConditions) )
+		if ( pBot->hasSomeConditions(m_iCompleteInterruptConditionsHave) )
 			return STATE_COMPLETE;
 	}
 
-	if ( m_iFailInterruptConditions )
+	if ( m_iCompleteInterruptConditionsDontHave )
 	{
-		if ( pBot->hasSomeConditions(m_iFailInterruptConditions) )
+		if ( !pBot->hasAllConditions(m_iCompleteInterruptConditionsDontHave) )
+			return STATE_COMPLETE;
+	}
+
+	if ( m_iFailInterruptConditionsHave )
+	{
+		if ( pBot->hasSomeConditions(m_iFailInterruptConditionsHave) )
+			return STATE_FAIL;
+	}
+
+	if ( m_iFailInterruptConditionsDontHave )
+	{
+		if ( !pBot->hasAllConditions(m_iFailInterruptConditionsDontHave) )
 			return STATE_FAIL;
 	}
 
@@ -2083,8 +2117,10 @@ void CBotTask :: _init()
 //	m_fFloat = 0;
 //	m_iInt = 0;
 //	m_vVector = Vector(0,0,0);
-	m_iFailInterruptConditions = 0;
-	m_iCompleteInterruptConditions = 0;
+	m_iFailInterruptConditionsHave = 0;
+	m_iFailInterruptConditionsDontHave = 0;
+	m_iCompleteInterruptConditionsHave = 0;
+	m_iCompleteInterruptConditionsDontHave = 0;
 	init();
 }
 
@@ -2123,14 +2159,17 @@ void CBotTask :: setEdict ( edict_t *pEdict )
 	m_pEdict = pEdict;
 }
 */
-void CBotTask :: setCompleteInterrupt ( int iInterrupt )
+// if this condition is true it will complete, if bUnset is true, the condition must be false to be complete
+void CBotTask :: setCompleteInterrupt ( int iInterruptHave, int iInterruptDontHave )
 {
-	m_iCompleteInterruptConditions = iInterrupt;
+	m_iCompleteInterruptConditionsHave = iInterruptHave;
+	m_iCompleteInterruptConditionsDontHave = iInterruptDontHave;
 }
 
-void CBotTask :: setFailInterrupt ( int iInterrupt )
+void CBotTask :: setFailInterrupt ( int iInterruptHave, int iInterruptDontHave )
 {
-	m_iFailInterruptConditions = iInterrupt;
+	m_iFailInterruptConditionsHave = iInterruptHave;
+	m_iFailInterruptConditionsDontHave = iInterruptDontHave;
 }
 
 void CBotTask :: fail ()

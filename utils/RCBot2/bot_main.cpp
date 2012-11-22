@@ -116,8 +116,8 @@ ConVar bot_use_vc_commands("rcbot_voice_cmds","1",0,"bots use voice commands e.g
 ConVar bot_use_disp_dist("rcbot_disp_dist","800.0",0,"distance that bots will go back to use a dispenser");
 ConVar bot_max_cc_time("rcbot_max_cc_time","240",0,"maximum time for bots to consider changing class <seconds>");
 ConVar bot_min_cc_time("rcbot_min_cc_time","60",0,"minimum time for bots to consider changing class <seconds>");
-ConVar bot_avoid_radius("rcbot_avoid_radius","128",0,"radius in units for bots to avoid things");
-ConVar bot_avoid_strength("rcbot_avoid_strength","128",0,"strength of avoidance (0 = disable)");
+ConVar bot_avoid_radius("rcbot_avoid_radius","56",0,"radius in units for bots to avoid things");
+ConVar bot_avoid_strength("rcbot_avoid_strength","64",0,"strength of avoidance (0 = disable)");
 ConVar bot_messaround("rcbot_messaround","1",0,"bots mess around at start up");
 ConVar bot_heavyaimoffset("rcbot_heavyaimoffset","0.1",0,"fraction of how much the heavy aims at a diagonal offset");
 ConVar bot_aimsmoothing("rcbot_aimsmooting","0",0,"(0 = no smoothing)");
@@ -139,6 +139,7 @@ ConVar rcbot_move_dist("rcbot_move_dist","800",0,"minimum distance to move objec
 
 ConVar rcbot_move_obj("rcbot_move_obj","1",0,"if 1 rcbot engineers will move objects around");
 ConVar rcbot_taunt("rcbot_taunt","1",0,"enable/disable bots taunting");
+ConVar rcbot_notarget("rcbot_notarget","0",0,"bots don't shoot the host!");
 
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");
@@ -1051,7 +1052,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_AMMO,"CBasePlayer","m_iAmmo",0);
 		DEFINE_GETPROP(GETPROP_TF2_NUMHEALERS,"CTFPlayer","m_nNumHealers",4);
 		DEFINE_GETPROP(GETPROP_TF2_CONDITIONS,"CTFPlayer","m_nPlayerCond",0);
-		DEFINE_GETPROP(GETPROP_VELOCITY,"CBaseEntity","m_vecAbsVelocity",0);
+		DEFINE_GETPROP(GETPROP_VELOCITY,"CBasePlayer","m_vecVelocity[0]",0);
 		DEFINE_GETPROP(GETPROP_TF2CLASS,"CTFPlayer","m_PlayerClass",4);
 		DEFINE_GETPROP(GETPROP_TF2SPYMETER,"CTFPlayer","m_flCloakMeter",0);
 		DEFINE_GETPROP(GETPROP_TF2SPYDISGUISED_TEAM,"CTFPlayer","m_nDisguiseTeam",0);
@@ -1070,7 +1071,9 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2OBJECTUPGRADELEVEL,"CObjectSentrygun","m_iUpgradeLevel",0);
 		DEFINE_GETPROP(GETPROP_TF2OBJECTMAXHEALTH,"CObjectSentrygun","m_iMaxHealth",0);
 		DEFINE_GETPROP(GETPROP_TF2DISPMETAL,"CObjectDispenser","m_iAmmoMetal",0);
-
+		DEFINE_GETPROP(GETPROP_MAXSPEED,"CBasePlayer","m_flMaxspeed",0);
+		DEFINE_GETPROP(GETPROP_CONSTRAINT_SPEED,"CTFPlayer","m_flConstraintSpeedFactor",0);
+		DEFINE_GETPROP(GETPROP_TF2OBJECTBUILDING,"CObjectDispenser","m_bBuilding",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

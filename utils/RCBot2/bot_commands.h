@@ -637,7 +637,7 @@ public:
 	CDebugThinkCommand ()
 	{
 		setName("think");
-		setHelp("usage \"vis 1 or 0, 1 on, 0 off\" : shows bot thinking output");
+		setHelp("usage \"think 1 or 0, 1 on, 0 off\" : shows bot thinking output");
 		setAccessLevel(CMD_ACCESS_DEBUG);
 	}
 

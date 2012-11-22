@@ -405,7 +405,7 @@ public:
 
 	void waitCloak ();
 
-	void detectedAsSpy ();
+	void detectedAsSpy ( edict_t *pDetector, bool bDisguiseComprimised );
 
 	// return an enemy sentry gun / special visible (e.g.) for quick checking
 	virtual edict_t *getVisibleSpecial ();

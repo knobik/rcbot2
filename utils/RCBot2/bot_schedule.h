@@ -77,7 +77,9 @@ typedef enum
 	SCHED_MESSAROUND,
 	SCHED_TF2_ENGI_MOVE_BUILDING,
 	SCHED_FOLLOW_LAST_ENEMY,
-	SCHED_SHOOT_LAST_ENEMY_POS
+	SCHED_SHOOT_LAST_ENEMY_POS,
+	SCHED_MAX
+	//SCHED_HIDE_FROM_ENEMY
 }eBotSchedule;
 
 class CBotSchedule
@@ -284,7 +286,7 @@ private:
 class CBotTF2DemoPipeTrapSched : public CBotSchedule
 {
 public:
-	CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread );
+	CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate = false );
 
 	void init();
 };
@@ -457,7 +459,7 @@ public:
 class CBotTF2SnipeSched : public CBotSchedule
 {
 public:
-	CBotTF2SnipeSched ( Vector vOrigin );
+	CBotTF2SnipeSched ( Vector vOrigin, float fYaw );
 
 	void init ();
 };

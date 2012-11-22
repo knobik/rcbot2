@@ -593,11 +593,16 @@ bool CWaypointNavigator :: getNextRoutePoint ( Vector *point )
 {
 	if ( !m_currentRoute.IsEmpty() )
 	{
-		int *head = m_currentRoute.GetHeadInfoPointer();
+		static int *head;
+		static CWaypoint *pW;
+		
+		head = m_currentRoute.GetHeadInfoPointer();
 
 		if ( head && (*head!= -1))
 		{
-			*point = CWaypoints::getWaypoint(*head)->getOrigin();
+			pW = CWaypoints::getWaypoint(*head);
+			*point = pW->getOrigin() + pW->applyRadius();
+
 			return true;
 		}
 	}
@@ -643,9 +648,13 @@ void CWaypointNavigator :: updatePosition ()
 {
 	static Vector vWptOrigin;
 	static float fRadius;
+	static float fPrevBelief,fBelief;
 
-	QAngle aim;
-	Vector vaim;
+	static QAngle aim;
+	static Vector vaim;
+
+	fPrevBelief = 0;
+	fBelief = 0;
 
 	if ( m_iCurrentWaypoint == -1 ) // invalid
 	{
@@ -675,6 +684,8 @@ void CWaypointNavigator :: updatePosition ()
 		{
 			m_pBot->touchedWpt(pWaypoint);
 
+			fPrevBelief = getBelief(CWaypoints::getWaypointIndex(pWaypoint));
+
 			m_bOffsetApplied = false;
 
 			if ( m_currentRoute.IsEmpty() ) // reached goal!!
@@ -694,6 +705,8 @@ void CWaypointNavigator :: updatePosition ()
 				{
 					vWptOrigin = CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
 				}
+
+				fBelief = getBelief(m_iCurrentWaypoint);
 			}
 		}
 	}
@@ -735,8 +748,14 @@ void CWaypointNavigator :: updatePosition ()
 
 	if ( pWaypoint->isAiming() )
 		m_pBot->setAiming(vWptOrigin+(vaim*1024));
-	else if ( getBelief(CWaypoints::getWaypointIndex(pWaypoint)) > 25.0f ) 
-		m_pBot->setLookAtTask(LOOK_WAYPOINT);
+	
+	if ( !m_pBot->hasEnemy() && (fBelief >= (fPrevBelief+10.0f)) ) 
+		m_pBot->setLookAtTask(LOOK_LAST_ENEMY);
+	else if ( !m_pBot->hasEnemy() && (fPrevBelief > (fBelief+10.0f)) )
+	{
+		m_pBot->setLookVector(pWaypoint->getOrigin() + pWaypoint->applyRadius());
+		m_pBot->setLookAtTask(LOOK_VECTOR,randomFloat(1.0f,2.0f));
+	}
 }
 
 // free up memory
@@ -1717,6 +1736,14 @@ bool CWaypoint :: addPathTo ( int iWaypointIndex )
 	m_thePaths.Add(iWaypointIndex);
 
 	return true;
+}
+
+Vector CWaypoint :: applyRadius ()
+{
+	if ( m_fRadius > 0 )
+		return Vector(randomFloat(-m_fRadius,m_fRadius),randomFloat(m_fRadius,m_fRadius),0);
+
+	return Vector(0,0,0);
 }
 
 void CWaypoint :: removePathTo ( int iWaypointIndex )
