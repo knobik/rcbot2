@@ -109,6 +109,9 @@ typedef enum
  BOT_UTIL_ENGI_DESTROY_EXIT,
  BOT_UTIL_HIDE_FROM_ENEMY,
  BOT_UTIL_MEDIC_FINDPLAYER_AT_SPAWN, // find team players around spawn area
+ BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,
+ BOT_UTIL_HL2DM_FIND_ARMOR,
+ BOT_UTIL_FIND_LAST_ENEMY,
  BOT_UTIL_MAX
 }eBotAction;
 
@@ -167,6 +170,7 @@ private:
 };
 
 
+#define ADD_UTILITY(utilname,condition,utility) if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility)); }
 
 
 #endif

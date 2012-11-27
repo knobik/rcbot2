@@ -827,6 +827,44 @@ bool FNullEnt(const edict_t* pent)
 	return pent == NULL || ENTINDEX((edict_t*)pent) == 0; 
 }
 
+void UTIL_FindServerClassPrint(const char *name)
+{
+	bool bInterfaceErr = false;
+			try
+			{
+				ServerClass *pClass = servergamedll->GetAllServerClasses();
+
+				while (pClass)
+				{
+					if (strstr(pClass->m_pNetworkName, name) != NULL )
+					{
+						CBotGlobals::botMessage(NULL,0,"%s",pClass->m_pNetworkName);
+						//break;
+					}
+					pClass = pClass->m_pNext;
+				}
+			}
+			catch (...)
+			{
+				bInterfaceErr = true;
+			}
+
+			if ( bInterfaceErr )
+			{
+				// IServerGameDLL_004 == IServerGameDLL except without the replay init function
+				ServerClass *pClass = ((IServerGameDLL_004*)servergamedll)->GetAllServerClasses();
+
+				while (pClass)
+				{
+					if (strstr(pClass->m_pNetworkName, name) != NULL )
+					{
+						CBotGlobals::botMessage(NULL,0,"%s",pClass->m_pNetworkName);
+						//break;
+					}
+					pClass = pClass->m_pNext;
+				}
+			}
+}
 /**
  * Searches for a named Server Class.
  *
@@ -1075,6 +1113,12 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_CONSTRAINT_SPEED,"CTFPlayer","m_flConstraintSpeedFactor",0);
 		DEFINE_GETPROP(GETPROP_TF2OBJECTBUILDING,"CObjectDispenser","m_bBuilding",0);
 
+		// hl2dm
+		DEFINE_GETPROP(GETPROP_HL2DM_PHYSCANNON_ATTACHED,"CWeaponPhysCannon","m_hAttachedObject",0);
+		DEFINE_GETPROP(GETPROP_HL2DM_PHYSCANNON_OPEN,"CWeaponPhysCannon","m_bOpen",0);
+		DEFINE_GETPROP(GETPROP_HL2DM_PLAYER_AUXPOWER,"CHL2MP_Player","m_flSuitPower",0);
+		DEFINE_GETPROP(GETPROP_HL2DM_LADDER_ENT,"CHL2MP_Player","m_hLadder",0);
+	
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
 			//if ( g_GetProps[i]
@@ -1124,493 +1168,3 @@ void CClassInterfaceValue :: getData ( edict_t *edict )
 
 		return 0;
 	}
-
-/*
-int CClassInterface ::getScore (edict_t *edict)
-{
-	static unsigned int offset = 0;
-	edict_t *res;
- 
-	if (!offset)
-		offset = findOffset("m_iTotalScore","CTFPlayerResource");
-	
-	if (!offset)
-		return 0;
-
-	res = CTeamFortress2Mod::findResourceEntity();
-
-	IServerUnknown *pUnknown = (IServerUnknown *)res->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return *(int *)((char *)pEntity + (offset + (ENTINDEX(edict)*4)));
-
-}
-
-int CClassInterface :: getEffects ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_fEffects","CBaseEntity");
-	
-	if (!offset)
-		return 0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return *(int *)((char *)pEntity + offset);
-}
-
-void CClassInterface ::test()
-{
-	//static unsigned int offset = 0;
- 
-	//if (!offset)
-	//	offset = findOffset("ProcessUsercmds","CServerGameClients");
-	
-	//if (!offset)
-	//	return;
-
-	//return offset;
-}
-
-int CClassInterface :: getUberChargeLevel (edict_t *pWeapon)
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_flChargeLevel","CWeaponMedigun");
-	
-	if (!offset)
-		return 0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)pWeapon->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return (int)((*(float*)((char *)pEntity + offset)) * 100.0f);
-}
-// unused -- problem
-edict_t *CClassInterface :: getCurrentWeapon ( edict_t *player )
-{
-	static unsigned int offset = 0;
-	static int weapon;
-	static int id;
- 
-	if (!offset)
-		offset = findOffset("m_hActiveWeapon","CTFPlayer");
-	
-	if (!offset)
-		return 0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)player->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	weapon = *(int*)((int)pEntity + offset);
-
-	if ( weapon == -1 )
-		return NULL;
-return NULL;
-	//id = *(int*)((int)pEntity + offset);
-
-	//return (edict_t*)((int)pEntity + offset);
-}
-
-int CClassInterface :: isTeleporterMode ( edict_t *edict, eTeleMode mode )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_iObjectMode","CObjectTeleporter");
-	
-	if (!offset)
-		return 0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return (*(int *)((char *)pEntity + offset))==(int)mode;
-	
-}
-
-bool CClassInterface :: getMedigunHealing ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_bHealing","CWeaponMedigun");
-	
-	if (!offset)
-		return 0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return *(bool *)((char *)pEntity + offset);
-}
-
-bool CClassInterface :: isMedigunTargetting ( edict_t *pgun, edict_t *ptarget )
-{
-	static unsigned int offset = 0;
-	static int ref;
-
-	if (!offset)
-		offset = findOffset("m_hHealingTarget","CWeaponMedigun");
-	
-	if (!offset)
-		return NULL;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)pgun->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return NULL;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	CBaseHandle &hndl = *(CBaseHandle *)((unsigned char *)pEntity + offset);
-
-	ref = ptarget->GetNetworkable()->GetEntityHandle()->GetRefEHandle().GetEntryIndex();
-
-	return hndl.GetEntryIndex() == ref;//hndl.Get() == (IHandleEntity*)(ptarget->GetUnknown()->GetBaseEntity());
-}
-
-CBaseEntity * CClassInterface :: getMedigunTarget ( edict_t *edict )
-{
-	static unsigned int offset = 0;
-
-	if (!offset)
-		offset = findOffset("m_hHealingTarget","CWeaponMedigun");
-	
-	if (!offset)
-		return NULL;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return NULL;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	CBaseHandle &hndl = *(CBaseHandle *)((unsigned char *)pEntity + offset);
-
-	return (CBaseEntity*)INDEXENT(hndl.GetEntryIndex());
-	
-}
-
-void CClassInterface :: setTickBase ( edict_t *edict, int tick )
-{
-	static unsigned int offset = 0;
-	int *tickbase;
- 
-	if (!offset)
-		offset = findOffset("m_nTickBase","CBasePlayer");
-	
-	if (!offset)
-		return;
-
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	tickbase = (int *)((char *)pEntity + offset);
-
-	*tickbase = tick;
-}
-
-int CClassInterface :: getFlags ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_fFlags","CBaseEntity");
-	
-	if (!offset)
-		return 0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return *(int *)((char *)pEntity + offset);
-}
-
-int CClassInterface :: getTeam ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_iTeamNum","CBaseEntity");
-	
-	if (!offset)
-		return 0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return *(int *)((char *)pEntity + offset);
-}
-
-float CClassInterface :: getHealth ( edict_t *edict )
-{
-	static unsigned int offset1 = 0;
-
-	if (!offset1)
-		offset1 = findOffset("m_iHealth","CBasePlayer");
-
-	if (!offset1)
-		return 1.0f;
-
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 1.0f;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return (float)(*(int *)((char *)pEntity + offset1));
-}
-
-int CClassInterface :: getTF2Class ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_PlayerClass","CTFPlayer")+4;
-	
-	if (!offset)
-		return 0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return *(int *)((char *)pEntity + offset);
-}
-
-Vector *CClassInterface :: getVelocity ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_vecAbsVelocity","CBaseEntity");
-	
-	if (!offset)
-		return NULL;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return NULL;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return (Vector *)((char *)pEntity + offset);
-}
-
-int *CClassInterface :: getAmmoList ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_iAmmo","CBasePlayer");
-	
-	if (!offset)
-		return NULL;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return NULL;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return (int *)((char *)pEntity + offset);
-}
-
-unsigned int CClassInterface :: findOffset(const char *szType,const char *szClass)
-{
-	unsigned int offset = 0;
-	ServerClass *sc = UTIL_FindServerClass(szClass);
-
-	//SendProp *pProp = UTIL_FindSendProp(sc->m_pTable, szType);
-
-	if ( sc )
-	{
-		if ( UTIL_FindSendPropInfo(sc,szType,&offset) )
-			return offset;
-		else
-			return 0;
-	}
-	//if ( pProp )
-	//	return pProp->GetOffset();
-
-	return 0;
-}
-
-int CClassInterface :: getTF2NumHealers ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_nNumHealers","CTFPlayer")+4;
-	
-	if (!offset)
-		return NULL;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return NULL;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return *(int *)((char *)pEntity + offset);
-}
-
-float CClassInterface :: getTF2SpyCloakMeter ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_flCloakMeter","CTFPlayer")+4;
-	
-	if (!offset)
-		return 0.0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0.0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return *(float *)((char *)pEntity + offset);
-}
-
-bool CClassInterface :: getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health )
-{
-	static unsigned int offset[4] = {0,0,0,0};
- 
-	if (!offset[0])
-		offset[0] = findOffset("m_nDisguiseTeam","CTFPlayer");
-	if (!offset[1])
-		offset[1] = findOffset("m_nDisguiseClass","CTFPlayer");
-	if (!offset[2])
-		offset[2] = findOffset("m_iDisguiseTargetIndex","CTFPlayer");
-	if (!offset[3])
-		offset[3] = findOffset("m_iDisguiseHealth","CTFPlayer");
-	
-	if (!offset[0] || !offset[1] || !offset[2] || !offset[3])
-		return false;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return false;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	*_team = *(int *)((char *)pEntity + offset[0]);
-	*_class = *(int *)((char *)pEntity + offset[1]);
-	*_index = *(int *)((char *)pEntity + offset[2]);
-	*_health = *(int *)((char *)pEntity + offset[3]);
-
-	 return true;
-}
-
-int CClassInterface :: getTF2Conditions ( edict_t *edict )
-{
-	static unsigned int offset = 0;
- 
-	if (!offset)
-		offset = findOffset("m_nPlayerCond","CTFPlayer");
-	
-	if (!offset)
-		return 0;
- 
-	IServerUnknown *pUnknown = (IServerUnknown *)edict->GetUnknown();
-
-	if (!pUnknown)
-	{
-		return 0;
-	}
- 
-	CBaseEntity *pEntity = pUnknown->GetBaseEntity();
-
-	return *(int *)((char *)pEntity + offset);
-}
-
-*/

@@ -121,11 +121,16 @@ typedef enum
 	GETPROP_MAXSPEED,
 	GETPROP_CONSTRAINT_SPEED,
 	GETPROP_TF2OBJECTBUILDING,
+	GETPROP_HL2DM_PHYSCANNON_ATTACHED,
+	GETPROP_HL2DM_PHYSCANNON_OPEN,
+	GETPROP_HL2DM_PLAYER_AUXPOWER,
+	GETPROP_HL2DM_LADDER_ENT,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
 bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int *offset);
 ServerClass *UTIL_FindServerClass(const char *name);
+void UTIL_FindServerClassPrint(const char*name);
 
 class CClassInterfaceValue
 {
@@ -296,6 +301,11 @@ public:
 	inline static float getMaxSpeed(edict_t *edict) { return g_GetProps[GETPROP_MAXSPEED].getFloat(edict,0); }
 	inline static float getSpeedFactor(edict_t *edict) { return g_GetProps[GETPROP_CONSTRAINT_SPEED].getFloat(edict,0); } 
 	inline static bool isObjectBeingBuilt(edict_t *edict) { return g_GetProps[GETPROP_TF2OBJECTBUILDING].getBool(edict,false); }
+	inline static edict_t *gravityGunObject(edict_t *pgun) { return g_GetProps[GETPROP_HL2DM_PHYSCANNON_ATTACHED].getEntity(pgun); }
+	inline static bool gravityGunOpen(edict_t *pgun) { return g_GetProps[GETPROP_HL2DM_PHYSCANNON_OPEN].getBool(pgun,false); }
+	inline static float auxPower (edict_t *player) { return g_GetProps[GETPROP_HL2DM_PLAYER_AUXPOWER].getFloat(player,0);} 
+	inline static edict_t *onLadder ( edict_t *player ) { return g_GetProps[GETPROP_HL2DM_LADDER_ENT].getEntity(player);}
+
 	// HL2DM
 	//static void 
 

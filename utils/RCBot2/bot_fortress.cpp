@@ -2865,8 +2865,6 @@ void CBotTF2:: teleportedPlayer ( void )
 	m_iTeleportedPlayers++;
 }
 
-#define ADD_UTILITY(utilname,condition,utility) if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility)); }
-
 void CBotTF2 :: getTasks ( unsigned int iIgnore )
 {
 	static TF_Class iClass;

@@ -31,6 +31,8 @@
 #ifndef __HLDM_RCBOT_H__
 #define __HLDM_RCBOT_H__
 
+#include "bot_utility.h"
+
 // bot for HLDM
 class CHLDMBot : public CBot
 {
@@ -51,8 +53,18 @@ public:
 	void spawnInit ();
 
 	bool isEnemy ( edict_t *pEdict,bool bCheckWeapons = true );
+
+	void getTasks (unsigned int iIgnore=0);
+	bool executeAction ( eBotAction iAction );
+
+	float getArmorPercent () { return (0.01f * m_pPlayerInfo->GetArmorValue()); }
+
 private:
 	// blah blah
+	MyEHandle m_NearestPhysObj;
+	float m_flSprintTime;
+	MyEHandle m_pHealthKit;
+	MyEHandle m_pAmmoKit;
 };
 
 #endif

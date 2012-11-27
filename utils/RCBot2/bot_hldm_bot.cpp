@@ -31,10 +31,14 @@
 #include "in_buttons.h"
 #include "bot.h"
 #include "bot_hldm_bot.h"
+#include "bot_client.h"
 #include "bot_buttons.h"
 #include "bot_globals.h"
 #include "bot_profile.h"
-
+#include "bot_utility.h"
+#include "bot_task.h"
+#include "bot_schedule.h"
+#include "bot_waypoint.h"
 #include "bot_mtrand.h"
 //#include "vstdlib/random.h" // for random functions
 
@@ -70,6 +74,9 @@ void CHLDMBot :: died ( edict_t *pKiller )
 void CHLDMBot :: spawnInit ()
 {
 	CBot::spawnInit();
+
+	m_flSprintTime = 0;
+	m_NearestPhysObj = NULL;
 }
 
 bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
@@ -94,6 +101,85 @@ bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	return true;	
 }
 
+bool CHLDMBot :: executeAction ( eBotAction iAction )
+{
+	switch ( iAction )
+	{
+	case BOT_UTIL_FIND_NEAREST_HEALTH:
+		//m_pSchedules->add(new CBotTask());
+		break;
+	case BOT_UTIL_HL2DM_FIND_ARMOR:
+		//m_pSchedules->add(new CBotTask());
+		break;
+	case BOT_UTIL_FIND_NEAREST_AMMO:
+		//m_pSchedules->add(new CBotTask());
+		break;
+	case BOT_UTIL_HL2DM_GRAVIGUN_PICKUP:
+		//m_pSchedules->add(new CBotTask());
+		break;
+	case BOT_UTIL_FIND_LAST_ENEMY:
+		{
+			Vector vVelocity = Vector(0,0,0);
+			CClient *pClient = CClients::get(m_pLastEnemy);
+			CBotSchedule *pSchedule = new CBotSchedule();
+			
+			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);	
+			
+			if ( pClient )
+				vVelocity = pClient->getVelocity();
+
+			pSchedule->addTask(pFindPath);
+			pSchedule->addTask(new CFindLastEnemy(m_vLastSeeEnemy,vVelocity));
+
+			//////////////
+			pFindPath->setNoInterruptions();
+
+			m_pSchedules->add(pSchedule);
+
+			m_bLookedForEnemyLast = true;
+		}
+		break;
+	case BOT_UTIL_ROAM:
+		// roam
+		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint(getTeam()));
+
+		if ( pWaypoint )
+		{
+			m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+			return true;
+		}
+
+		break;
+	}
+
+	return false;
+}
+
+void CHLDMBot :: getTasks (unsigned int iIgnore)
+{
+	static CBotUtilities utils;
+	static CBotUtility *next;
+
+	bool isHoldingGravGun = (strcmp("weapon_physcannon",m_pPlayerInfo->GetWeaponName()) == 0);
+
+	edict_t *weapon = CClassInterface::getCurrentWeapon(m_pEdict);
+
+	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,getHealthPercent()<1.0f,1.0f-getHealthPercent());
+	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,getArmorPercent()<1.0f,1.0f-getArmorPercent());
+	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,m_iAmmo&&(m_iAmmo[0]<1),0.01f*(100-m_iAmmo[0]));
+	ADD_UTILITY(BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,isHoldingGravGun && (m_NearestPhysObj.get()!=NULL) && (CClassInterface::gravityGunObject(weapon)==NULL),1.0f);
+	ADD_UTILITY(BOT_UTIL_ROAM,true,0.1f);
+	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*(getArmorPercent()+0.1));
+
+	utils.execute();
+
+	while ( (next = utils.nextBest()) != NULL )
+	{
+		if ( executeAction(next->getId()) )
+			break;
+	}
+}
+
 void CHLDMBot :: modThink ()
 {
 	// dont use physcannon for now... switch to pistol
@@ -107,6 +193,11 @@ void CHLDMBot :: modThink ()
 		{
 			m_pController->SetActiveWeapon(m_pProfile->getWeapon());
 		}
+	}
+
+	if ( (CClassInterface::auxPower(m_pEdict) > 90.0f) && (m_flSprintTime < engine->Time()))
+	{
+		m_pButtons->holdButton(IN_RUN,0,1,0);
 	}
 
 	if ( m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time()) )
