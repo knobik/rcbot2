@@ -59,12 +59,24 @@ public:
 
 	float getArmorPercent () { return (0.01f * m_pPlayerInfo->GetArmorValue()); }
 
+	void setVisible ( edict_t *pEntity, bool bVisible );
+
+	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
+
 private:
 	// blah blah
 	MyEHandle m_NearestPhysObj;
 	float m_flSprintTime;
 	MyEHandle m_pHealthKit;
 	MyEHandle m_pAmmoKit;
+	MyEHandle m_pBattery;
+	edict_t *m_pCurrentWeapon;
+
+	CBaseHandle *m_Weapons;
+	CBaseHandle *m_hCurrentWeapon;
+
+	int m_iClip1;
+	int m_iClip2;
 };
 
 #endif

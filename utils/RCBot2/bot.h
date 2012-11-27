@@ -125,6 +125,10 @@ typedef enum
 	GETPROP_HL2DM_PHYSCANNON_OPEN,
 	GETPROP_HL2DM_PLAYER_AUXPOWER,
 	GETPROP_HL2DM_LADDER_ENT,
+	GETPROP_WEAPONLIST,
+	GETPROP_WEAPONSTATE,
+	GETPROP_WEAPONCLIP1,
+	GETPROP_WEAPONCLIP2,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -155,6 +159,8 @@ public:
 	void getData ( edict_t *edict );
 
 	edict_t *getEntity ( edict_t *edict );
+
+	CBaseHandle *getEntityHandle ( edict_t *edict );
 
 	inline bool getBool ( edict_t *edict, bool defaultvalue ) 
 	{ 
@@ -305,6 +311,11 @@ public:
 	inline static bool gravityGunOpen(edict_t *pgun) { return g_GetProps[GETPROP_HL2DM_PHYSCANNON_OPEN].getBool(pgun,false); }
 	inline static float auxPower (edict_t *player) { return g_GetProps[GETPROP_HL2DM_PLAYER_AUXPOWER].getFloat(player,0);} 
 	inline static edict_t *onLadder ( edict_t *player ) { return g_GetProps[GETPROP_HL2DM_LADDER_ENT].getEntity(player);}
+	inline static CBaseHandle *getWeaponList ( edict_t *player ) { return g_GetProps[GETPROP_WEAPONLIST].getEntityHandle(player);}
+	inline static int getWeaponState ( edict_t *pgun ) { return g_GetProps[GETPROP_WEAPONSTATE].getInt(pgun,0); }
+
+
+	inline static void getWeaponClip ( edict_t *pgun, int *iClip1, int *iClip2 ) { *iClip1 = g_GetProps[GETPROP_WEAPONCLIP1].getInt(pgun,0); *iClip2 = g_GetProps[GETPROP_WEAPONCLIP2].getInt(pgun,0); }
 
 	// HL2DM
 	//static void 

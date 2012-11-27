@@ -598,6 +598,49 @@ void CBotTF2UpgradeBuilding:: debugString ( char *string )
 	sprintf(string,"CBotTF2UpgradeBuilding");
 }
 
+void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
+{
+	static Vector vOrigin;
+
+	if ( m_fTime == 0.0f )
+	{
+		m_fSecAttTime = 0;
+		m_fTime = engine->Time() + randomFloat(2.0f,4.0f);
+	}
+
+	if ( m_fTime < engine->Time() )
+	{
+		fail();
+		return;
+	}
+
+	vOrigin = CBotGlobals::entityOrigin(m_Prop);
+
+	if ( pBot->distanceFrom(vOrigin) > 100 )
+		pBot->setMoveTo(vOrigin);
+	else
+		pBot->stopMoving();
+
+	pBot->setLookVector(vOrigin);
+	pBot->setLookAtTask(LOOK_VECTOR);
+
+	if ( pBot->DotProductFromOrigin(vOrigin) > 0.965925f )
+	{
+		edict_t *pPhys = CClassInterface::gravityGunObject(m_Weapon);
+
+		if ( pPhys == m_Prop.get() )
+			complete();
+		else if ( pPhys || CClassInterface::gravityGunOpen(m_Weapon) )
+		{
+			if ( m_fSecAttTime < engine->Time() )
+			{
+				pBot->secondaryAttack();
+				m_fSecAttTime = engine->Time() + randomFloat(0.25,0.75);
+			}
+		}
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////
 /*
 // Protect SG from Enemy
@@ -771,7 +814,7 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		m_fTime = engine->Time() + 6.0f;
 	}
 
-	pBot->setLookAt(m_vOrigin);
+	pBot->setLookVector(m_vOrigin);
 	pBot->setLookAtTask((LOOK_VECTOR));
 
 	((CBotTF2*)pBot)->updateCarrying();
@@ -851,7 +894,7 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !m_fTime )
 		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
 
-	pBot->setLookAt(LOOK_EDICT);
+	pBot->setLookAtTask(LOOK_EDICT);
 	pBot->lookAtEdict(pEnemy);
 
 	if ( m_fTime < engine->Time() )
@@ -1848,7 +1891,8 @@ void CHideTask :: init ()
 void CHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 {
 	pBot->stopMoving();	
-	pBot->setLookAt(m_vHideFrom);
+	pBot->setLookVector(m_vHideFrom);
+	pBot->setLookAtTask(LOOK_VECTOR);
 	pBot->duck(true);
 
 	if ( m_fHideTime == 0 )
@@ -1924,7 +1968,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 		if ( !pBotTF2->FInViewCone(m_pFriendly) )
 		{
-			pBotTF2->setLookAt(origin);
+			pBotTF2->setLookVector(origin);
 			pBotTF2->setLookAtTask((LOOK_VECTOR));
 			ok = false;
 		}
@@ -1959,7 +2003,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 		if ( !pBotTF2->FInViewCone(m_pFriendly) )
 		{
-			pBotTF2->setLookAt(origin);
+			pBotTF2->setLookVector(origin);
 			pBotTF2->setLookAtTask((LOOK_VECTOR));
 			ok = false;
 		}

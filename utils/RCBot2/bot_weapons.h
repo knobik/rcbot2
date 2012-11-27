@@ -34,6 +34,8 @@
 #include <vector>
 using namespace std;
 
+
+
 extern const char *g_szTF2Weapons[];
 
 #include "shareddefs.h"

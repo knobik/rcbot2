@@ -36,6 +36,41 @@ using namespace std;
 #include "bot_globals.h"
 #include "bot_weapons.h"
 
+const char *g_szHL2DMWeapons[] =
+{
+	"weapon_pistol",
+	"weapon_crowbar",
+	"weapon_357",
+	"weapon_smg1",
+	"weapon_ar2",
+	"weapon_frag",
+	"weapon_stunstick",
+	"weapon_crossbow",
+	"weapon_rpg",
+	"weapon_slam",
+	"weapon_shotgun"
+};
+
+enum
+{
+	HL2DM_WEAPON_PISTOL = 0,
+	HL2DM_WEAPON_CROWBAR,
+	HL2DM_WEAPON_357,
+	HL2DM_WEAPON_SMG1
+};
+
+TF2WeaponsData_t HL2DMWeaps[] =
+{
+/*
+	slot, id , weapon name, flags, min dist, max dist, ammo index, preference
+*/
+	{3,HL2DM_WEAPON_PISTOL,			g_szHL2DMWeapons[0],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[0],1},
+	{3,HL2DM_WEAPON_CROWBAR,		g_szHL2DMWeapons[1],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[1],1},
+	{3,HL2DM_WEAPON_357,			g_szHL2DMWeapons[2],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[2],1},
+	{0,HL2DM_WEAPON_SMG1,			g_szHL2DMWeapons[3],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[3],1}
+};
+	
+
 const char *g_szTF2Weapons[] =
 {
 "tf_weapon_bat",

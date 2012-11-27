@@ -1043,6 +1043,12 @@ bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int 
 	return true;
 }
 
+CBaseHandle *CClassInterfaceValue :: getEntityHandle ( edict_t *edict ) 
+{ 
+	getData(edict); 
+
+	return (CBaseHandle *)m_data;
+}
 
 edict_t *CClassInterfaceValue :: getEntity ( edict_t *edict ) 
 { 
@@ -1118,6 +1124,12 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_HL2DM_PHYSCANNON_OPEN,"CWeaponPhysCannon","m_bOpen",0);
 		DEFINE_GETPROP(GETPROP_HL2DM_PLAYER_AUXPOWER,"CHL2MP_Player","m_flSuitPower",0);
 		DEFINE_GETPROP(GETPROP_HL2DM_LADDER_ENT,"CHL2MP_Player","m_hLadder",0);
+		
+		DEFINE_GETPROP(GETPROP_WEAPONLIST,"CBaseCombatCharacter","m_hMyWeapons",0);
+		DEFINE_GETPROP(GETPROP_WEAPONSTATE,"CBaseCombatWeapon","m_iState",0);
+
+		DEFINE_GETPROP(GETPROP_WEAPONCLIP1,"CBaseCombatWeapon","m_iClip1",0);
+		DEFINE_GETPROP(GETPROP_WEAPONCLIP2,"CBaseCombatWeapon","m_iClip2",0);
 	
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

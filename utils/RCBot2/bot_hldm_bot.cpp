@@ -77,6 +77,10 @@ void CHLDMBot :: spawnInit ()
 
 	m_flSprintTime = 0;
 	m_NearestPhysObj = NULL;
+	m_pBattery = NULL;
+	m_pHealthKit = NULL;
+	m_pAmmoKit = NULL;
+	m_pCurrentWeapon = NULL;
 }
 
 bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
@@ -106,17 +110,20 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 	switch ( iAction )
 	{
 	case BOT_UTIL_FIND_NEAREST_HEALTH:
-		//m_pSchedules->add(new CBotTask());
-		break;
+		m_pSchedules->add(new CBotPickupSched(m_pHealthKit.get()));
+		return true;
 	case BOT_UTIL_HL2DM_FIND_ARMOR:
-		//m_pSchedules->add(new CBotTask());
-		break;
+		m_pSchedules->add(new CBotPickupSched(m_pBattery.get()));
+		return true;
 	case BOT_UTIL_FIND_NEAREST_AMMO:
-		//m_pSchedules->add(new CBotTask());
-		break;
+		m_pSchedules->add(new CBotPickupSched(m_pAmmoKit.get()));
+		return true;
 	case BOT_UTIL_HL2DM_GRAVIGUN_PICKUP:
-		//m_pSchedules->add(new CBotTask());
-		break;
+		{
+		CBotSchedule *pSched = new CBotSchedule(new CBotGravGunPickup(m_pCurrentWeapon,m_NearestPhysObj));
+		m_pSchedules->add(pSched);
+		return true;
+		}
 	case BOT_UTIL_FIND_LAST_ENEMY:
 		{
 			Vector vVelocity = Vector(0,0,0);
@@ -137,8 +144,9 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 			m_pSchedules->add(pSchedule);
 
 			m_bLookedForEnemyLast = true;
+
+			return true;
 		}
-		break;
 	case BOT_UTIL_ROAM:
 		// roam
 		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint(getTeam()));
@@ -160,14 +168,15 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	static CBotUtilities utils;
 	static CBotUtility *next;
 
+	if ( !m_pSchedules->isEmpty() )
+		return;
+
 	bool isHoldingGravGun = (strcmp("weapon_physcannon",m_pPlayerInfo->GetWeaponName()) == 0);
 
-	edict_t *weapon = CClassInterface::getCurrentWeapon(m_pEdict);
-
-	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,getHealthPercent()<1.0f,1.0f-getHealthPercent());
-	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,getArmorPercent()<1.0f,1.0f-getArmorPercent());
-	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,m_iAmmo&&(m_iAmmo[0]<1),0.01f*(100-m_iAmmo[0]));
-	ADD_UTILITY(BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,isHoldingGravGun && (m_NearestPhysObj.get()!=NULL) && (CClassInterface::gravityGunObject(weapon)==NULL),1.0f);
+	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,(m_pHealthKit.get()!=NULL) && (getHealthPercent()<1.0f),1.0f-getHealthPercent());
+	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,(m_pBattery.get() !=NULL) && (getArmorPercent()<1.0f),1.0f-(getArmorPercent()*0.5f));
+	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (m_iClip1!=-1) && (m_iClip1<1),0.01f*(100-m_iAmmo[0]));
+	ADD_UTILITY(BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,isHoldingGravGun && (m_NearestPhysObj.get()!=NULL) && (CClassInterface::gravityGunObject(m_pCurrentWeapon)==NULL),1.0f);
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.1f);
 	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*(getArmorPercent()+0.1));
 
@@ -176,14 +185,35 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	while ( (next = utils.nextBest()) != NULL )
 	{
 		if ( executeAction(next->getId()) )
+		{
+			/*if ( CClients::clientsDebugging() )
+			{
+				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[util->getId()],this);
+			}*/
 			break;
+		}
 	}
+
+	utils.freeMemory();
 }
 
 void CHLDMBot :: modThink ()
 {
+	m_pCurrentWeapon = CClassInterface::getCurrentWeapon(m_pEdict);
+
+	if ( m_pCurrentWeapon )
+		CClassInterface::getWeaponClip(m_pCurrentWeapon,&m_iClip1,&m_iClip2);
+
+	if ( CClassInterface::onLadder(m_pEdict) != NULL )
+	{
+		setMoveLookPriority(MOVELOOK_OVERRIDE);
+		setLookAtTask(LOOK_WAYPOINT);
+		m_pButtons->holdButton(IN_FORWARD,0,1,0);
+		setMoveLookPriority(MOVELOOK_MODTHINK);
+	}
+
 	// dont use physcannon for now... switch to pistol
-	if ( m_pPlayerInfo->GetWeaponName() && *(m_pPlayerInfo->GetWeaponName()) )
+	/*if ( m_pPlayerInfo->GetWeaponName() && *(m_pPlayerInfo->GetWeaponName()) )
 	{
 		if ( !strcmp("weapon_physcannon",m_pPlayerInfo->GetWeaponName()) )
 		{			
@@ -193,11 +223,15 @@ void CHLDMBot :: modThink ()
 		{
 			m_pController->SetActiveWeapon(m_pProfile->getWeapon());
 		}
-	}
+	}*/
 
-	if ( (CClassInterface::auxPower(m_pEdict) > 90.0f) && (m_flSprintTime < engine->Time()))
+	if ( (CClassInterface::auxPower(m_pEdict) > 2.0f) && (m_flSprintTime < engine->Time()))
 	{
-		m_pButtons->holdButton(IN_RUN,0,1,0);
+		m_pButtons->holdButton(IN_SPEED,0,1,0);
+	}
+	else if ( CClassInterface::auxPower(m_pEdict) <= 2.0f )
+	{
+		m_flSprintTime = engine->Time() + randomFloat(5.0f,20.0f);
 	}
 
 	if ( m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time()) )
@@ -205,4 +239,50 @@ void CHLDMBot :: modThink ()
 		m_fLastSeeEnemy = 0;
 		m_pButtons->tap(IN_RELOAD);
 	}
+}
+
+void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
+{
+	static float fDist;
+
+	CBot::setVisible(pEntity,bVisible);
+
+	fDist = distanceFrom(pEntity);
+
+	if ( bVisible )
+	{
+		if ( ( strncmp(pEntity->GetClassName(),"item_ammo",9)==0 ) && 
+			( !m_pAmmoKit.get() || (fDist<distanceFrom(m_pAmmoKit.get())) ))
+		{
+			m_pAmmoKit = pEntity;
+		}
+		else if ( ( strncmp(pEntity->GetClassName(),"item_health",11)==0 ) && 
+			( !m_pHealthKit.get() || (fDist<distanceFrom(m_pHealthKit.get())) ))
+		{
+			m_pHealthKit = pEntity;
+		}
+		else if ( ( strcmp(pEntity->GetClassName(),"item_battery")==0 ) && 
+			( !m_pBattery.get() || (fDist<distanceFrom(m_pBattery.get())) ))
+		{
+			m_pBattery = pEntity;
+		
+		}
+		else if ( ( strcmp(pEntity->GetClassName(),"prop_physics")==0 ) && 
+			( !m_NearestPhysObj.get() || (fDist<distanceFrom(m_NearestPhysObj.get())) ))
+		{
+			m_NearestPhysObj = pEntity;
+		}
+	}
+	else
+	{
+		if ( m_pAmmoKit == pEntity )
+			m_pAmmoKit = NULL;
+		else if ( m_pHealthKit == pEntity )
+			m_pHealthKit = NULL;
+		else if ( m_pBattery == pEntity )
+			m_pBattery = NULL;
+		else if ( m_NearestPhysObj == pEntity )
+			m_NearestPhysObj = NULL;
+	}
+
 }
