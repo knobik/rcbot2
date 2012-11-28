@@ -748,6 +748,8 @@ public:
 		}	
 	}
 
+	virtual void enemyLost () {};
+
 	inline void enemyDown (edict_t *pEnemy) 
 	{ 
 		if ( pEnemy == m_pEnemy ) 

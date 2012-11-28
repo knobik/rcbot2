@@ -717,7 +717,7 @@ void CBot :: updateConditions ()
 				updateCondition(CONDITION_SEE_CUR_ENEMY);
 				removeCondition(CONDITION_ENEMY_OBSCURED);
 			}
-			else
+			else if ( !m_pLastEnemy || (m_pLastEnemy != m_pEnemy) )
 			{
 				m_fLastSeeEnemy = engine->Time();
 				m_pLastEnemy = m_pEnemy;
@@ -725,6 +725,8 @@ void CBot :: updateConditions ()
 
 				removeCondition(CONDITION_SEE_CUR_ENEMY);
 				updateCondition(CONDITION_ENEMY_OBSCURED);
+
+				enemyLost();
 			}
 		}
 	}

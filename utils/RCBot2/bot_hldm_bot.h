@@ -63,6 +63,9 @@ public:
 
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
+
+	void enemyLost ();
+
 private:
 	// blah blah
 	MyEHandle m_NearestPhysObj;
@@ -73,7 +76,7 @@ private:
 	edict_t *m_pCurrentWeapon;
 
 	CBaseHandle *m_Weapons;
-	CBaseHandle *m_hCurrentWeapon;
+	edict_t *m_hCurrentWeapon;
 
 	int m_iClip1;
 	int m_iClip2;

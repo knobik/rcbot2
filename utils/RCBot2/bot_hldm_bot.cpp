@@ -35,6 +35,8 @@
 #include "bot_buttons.h"
 #include "bot_globals.h"
 #include "bot_profile.h"
+#include "bot_navigator.h"
+#include "bot_waypoint.h"
 #include "bot_utility.h"
 #include "bot_task.h"
 #include "bot_schedule.h"
@@ -60,15 +62,28 @@ bool CHLDMBot :: startGame ()
 
 void CHLDMBot :: killed ( edict_t *pVictim )
 {
-	return;
+	extern ConVar bot_beliefmulti;
+
+	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
+		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 }
 
 void CHLDMBot :: died ( edict_t *pKiller )
 {
+	extern ConVar bot_beliefmulti;
+
 	spawnInit();
 
-	if ( randomInt(0,1) )
-		m_pButtons->attack();
+	//if ( randomInt(0,1) )
+	m_pButtons->attack(); // respawn
+
+	if ( pKiller )
+	{
+		if ( CBotGlobals::entityIsValid(pKiller) )
+		{
+			m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
+		}
+	}
 }
 
 void CHLDMBot :: spawnInit ()
@@ -81,6 +96,23 @@ void CHLDMBot :: spawnInit ()
 	m_pHealthKit = NULL;
 	m_pAmmoKit = NULL;
 	m_pCurrentWeapon = NULL;
+
+	m_Weapons = CClassInterface::getWeaponList(m_pEdict);
+
+	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
+	{
+		const char *classname;
+
+		int iClip1,iClip2;
+		edict_t *pWeapon = INDEXENT(m_Weapons[i].GetEntryIndex());
+
+		if ( pWeapon && CBotGlobals::entityIsValid(pWeapon) )
+		{
+			classname = pWeapon->GetClassName();
+
+			CClassInterface::getWeaponClip(pWeapon,&iClip1,&iClip2);
+		}
+	}
 }
 
 bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
@@ -171,11 +203,11 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	if ( !m_pSchedules->isEmpty() )
 		return;
 
-	bool isHoldingGravGun = (strcmp("weapon_physcannon",m_pPlayerInfo->GetWeaponName()) == 0);
+	bool isHoldingGravGun = m_pCurrentWeapon && (strcmp("weapon_physcannon",m_pCurrentWeapon->GetClassName()) == 0);
 
 	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,(m_pHealthKit.get()!=NULL) && (getHealthPercent()<1.0f),1.0f-getHealthPercent());
 	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,(m_pBattery.get() !=NULL) && (getArmorPercent()<1.0f),1.0f-(getArmorPercent()*0.5f));
-	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (m_iClip1!=-1) && (m_iClip1<1),0.01f*(100-m_iAmmo[0]));
+	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (m_iClip1!=-1) && (m_iClip1<1),0.01f*(100-m_iClip1));
 	ADD_UTILITY(BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,isHoldingGravGun && (m_NearestPhysObj.get()!=NULL) && (CClassInterface::gravityGunObject(m_pCurrentWeapon)==NULL),1.0f);
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.1f);
 	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*(getArmorPercent()+0.1));
@@ -199,6 +231,7 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 
 void CHLDMBot :: modThink ()
 {
+	
 	m_pCurrentWeapon = CClassInterface::getCurrentWeapon(m_pEdict);
 
 	if ( m_pCurrentWeapon )
@@ -212,24 +245,11 @@ void CHLDMBot :: modThink ()
 		setMoveLookPriority(MOVELOOK_MODTHINK);
 	}
 
-	// dont use physcannon for now... switch to pistol
-	/*if ( m_pPlayerInfo->GetWeaponName() && *(m_pPlayerInfo->GetWeaponName()) )
-	{
-		if ( !strcmp("weapon_physcannon",m_pPlayerInfo->GetWeaponName()) )
-		{			
-			m_pController->SetActiveWeapon("weapon_smg1");			
-		}
-		else if ( !FStrEq(m_pProfile->getWeapon(),"default") && !FStrEq(m_pProfile->getWeapon(),m_pPlayerInfo->GetWeaponName()))
-		{
-			m_pController->SetActiveWeapon(m_pProfile->getWeapon());
-		}
-	}*/
-
-	if ( (CClassInterface::auxPower(m_pEdict) > 2.0f) && (m_flSprintTime < engine->Time()))
+	if ( (m_fCurrentDanger > 50.0f) && (CClassInterface::auxPower(m_pEdict) > 90.f ) && (m_flSprintTime < engine->Time()))
 	{
 		m_pButtons->holdButton(IN_SPEED,0,1,0);
 	}
-	else if ( CClassInterface::auxPower(m_pEdict) <= 2.0f )
+	else if ( CClassInterface::auxPower(m_pEdict) < 5.0f )
 	{
 		m_flSprintTime = engine->Time() + randomFloat(5.0f,20.0f);
 	}
@@ -285,4 +305,9 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_NearestPhysObj = NULL;
 	}
 
+}
+
+void CHLDMBot :: enemyLost ()
+{
+	m_pSchedules->freeMemory();
 }
