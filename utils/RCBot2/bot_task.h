@@ -177,6 +177,28 @@ private:
 
 };
 
+
+class CBotHL2DMUseCharger : public CBotTask
+{
+public:
+	CBotHL2DMUseCharger ( edict_t *pCharger )
+	{
+		m_pCharger = pCharger;
+		m_fTime = 0;
+	}
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"Use Charger");
+	}
+private:
+	MyEHandle m_pCharger;
+	float m_fTime;
+
+};
+
 class CBotTF2MedicHeal : public CBotTask
 {
 public:

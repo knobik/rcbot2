@@ -601,7 +601,9 @@ public:
 		setup("hl2mp","half-life 2 deathmatch",MOD_HLDM2,BOTTYPE_HL2DM);
 	}
 
-	//void initMod ();
+
+
+	void initMod ();
 
 	//void mapInit ();
 

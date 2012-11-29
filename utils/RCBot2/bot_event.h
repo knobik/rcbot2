@@ -155,7 +155,7 @@ public:
 	CPlayerSpawnEvent()
 	{
 		setType("player_spawn");
-		setMod(MOD_TF2);
+		setMod(MOD_ANY);
 	}
 	
 	void execute ( IBotEventInterface *pEvent );

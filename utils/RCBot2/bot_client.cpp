@@ -315,6 +315,8 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 		break;
 	case BOT_DEBUG_PROFILE:
 		szDebugLev = "P";
+	case BOT_DEBUG_LOOK:
+		szDebugLev = "look";
 		break;
 	default:
 		szDebugLev = "unknown";

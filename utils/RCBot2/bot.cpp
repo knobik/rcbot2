@@ -1446,10 +1446,13 @@ float CBot :: DotProductFromOrigin ( Vector &pOrigin )
 Vector CBot :: getAimVector ( edict_t *pEntity )
 {
 	static Vector v_right;
-	static QAngle angles;
+
 	static float fDistFactor;
-	static Vector v_max,v_min;
+	//static Vector v_max,v_min;
 	static Vector v_org;
+	static Vector v_size;
+
+	//return CBotGlobals::entityOrigin(pEntity);
 	
 	if ( m_fNextUpdateAimVector > engine->Time() )
 	{
@@ -1458,28 +1461,28 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 
 	fDistFactor = (distanceFrom(pEntity)/2048.0f)*(m_fFov/90.0f);
 
-	angles = eyeAngles();
-	// to the right
-	angles.y += 90;
 
-	CBotGlobals::fixFloatDegrees360(&angles.y);
-
-	AngleVectors(angles,&v_right);
-
-    v_right = v_right/VectorDistance(v_right); // normalize
 	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.1f,0.4f);
 
-	v_max = pEntity->GetCollideable()->OBBMaxs();
-	v_min = pEntity->GetCollideable()->OBBMins();
+	v_size = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
+	v_size = v_size / 2;
+
 	v_org = CBotGlobals::entityOrigin(pEntity);
 
-	// add randomised offset
-	m_vAimVector = v_org + (fDistFactor*Vector(randomFloat(v_min.x,v_max.x),randomFloat(v_min.y,v_max.y),randomFloat(v_min.z,v_max.z))) + (fDistFactor*Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16)));
+    v_right = (v_org-getOrigin()).Cross(Vector(0,0,1)); 
+	v_right = v_right / v_right.Length(); 
+
+	// add randomised offset based on size and distance
+	m_vAimVector = v_org + (fDistFactor*Vector(randomFloat(-v_size.x,v_size.x),randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));
+	
+	// add another offset based on distance
+	m_vAimVector = m_vAimVector + (fDistFactor*Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16)));
 
 	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
 		m_vAimVector = m_vAimVector + Vector(0,0,40.0f);
 
-	return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
+	return m_vAimVector;///BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
+
 }
 
 
@@ -1493,16 +1496,26 @@ void CBot :: checkCanPickup ( edict_t *pPickup )
 
 void CBot :: getLookAtVector ()
 {
+	static bool bDebug = false;
+
+	bDebug = CClients::clientsDebugging(BOT_DEBUG_LOOK);
+
 	switch ( m_iLookTask )
 	{
 	case LOOK_NONE:
 		{
 			stopLooking();
+
+			if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_NONE",this);
 		}
 		break;
 	case LOOK_VECTOR:
 		{
 			setLookAt(m_vLookVector);
+
+			if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_VECTOR",this);
 		}
 		break;
 	case LOOK_EDICT:
@@ -1510,12 +1523,17 @@ void CBot :: getLookAtVector ()
 			if ( m_pLookEdict )
 				setLookAt(getAimVector(m_pLookEdict));
 				//setLookAt(CBotGlobals::entityOrigin(m_pLookEdict)+Vector(0,0,32));
+
+			if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_EDICT",this);
 		}
 		break;
 	case LOOK_GROUND:
 		{
 			setLookAt(m_vMoveTo);
 			//setLookAt(getOrigin()-Vector(0,0,64));
+			if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_GROUND",this);
 		}
 		break;
 	case LOOK_ENEMY:
@@ -1524,8 +1542,11 @@ void CBot :: getLookAtVector ()
 			{
 				setLookAt(getAimVector(m_pEnemy));
 			}
-			else
-				setLookAtTask((LOOK_WAYPOINT));
+			//else
+			//	setLookAtTask((LOOK_WAYPOINT));
+
+			if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_ENEMY",this);
 		}		
 		break;
 	case LOOK_LAST_ENEMY:
@@ -1534,6 +1555,8 @@ void CBot :: getLookAtVector ()
 				setLookAt(m_vLastSeeEnemy);
 			//else
 			// LOOK_WAYPOINT, below
+			if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_LAST_ENEMY",this);
 		}
 	case LOOK_WAYPOINT:
 		{
@@ -1544,10 +1567,14 @@ void CBot :: getLookAtVector ()
 			else
 				setLookAt(Vector(m_vMoveTo.x,m_vMoveTo.y,m_vMoveTo.z + 36.0f));
 				
+			if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_WAYPOINT",this);
 		}
 		break;
 	case LOOK_WAYPOINT_AIM:
 			setLookAt(m_vWaypointAim);
+		if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_WAYPOINT_AIM",this);
 		break;
 	case LOOK_BUILD:
 		{
@@ -1565,6 +1592,9 @@ void CBot :: getLookAtVector ()
 			}
 
 			setLookAt(m_vWaypointAim+m_vLookAroundOffset);
+
+		if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_BUILD",this);
 		}
 		break;
 	case LOOK_SNIPE:
@@ -1596,6 +1626,10 @@ void CBot :: getLookAtVector ()
 			}
 
 			setLookAt(m_vWaypointAim+m_vLookAroundOffset);
+
+
+		if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_SNIPE",this);
 		}
 		break;
 	case LOOK_NOISE:
@@ -1612,6 +1646,9 @@ void CBot :: getLookAtVector ()
 			}
 
 			setLookAt(m_vListenPosition);
+
+		if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_NOISE",this);
 		}
 		break;
 
@@ -1629,11 +1666,18 @@ void CBot :: getLookAtVector ()
 			}
 
 			setLookAt(getEyePosition()+m_vLookAroundOffset);
+
+		if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_AROUND",this);
 		}
 		break;
 	case LOOK_HURT_ORIGIN:
 		{
 			setLookAt(m_vHurtOrigin);
+
+
+		if ( bDebug )
+				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_HURT_ORIGIN",this);
 		}
 		break;
 	default:
@@ -1826,6 +1870,12 @@ void CBot :: primaryAttack ( bool bHold )
 void CBot :: tapButton ( int iButton )
 {
 	m_pButtons->tap(iButton);
+}
+
+void CBot :: use ()
+{
+	if ( m_pButtons->canPressButton(IN_USE) )
+		m_pButtons->tap(IN_USE);
 }
 
 void CBot :: jump ()

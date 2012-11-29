@@ -63,6 +63,7 @@ public:
 
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
+	void fixWeapons ();
 
 	void enemyLost ();
 
@@ -71,12 +72,15 @@ private:
 	MyEHandle m_NearestPhysObj;
 	float m_flSprintTime;
 	MyEHandle m_pHealthKit;
-	MyEHandle m_pAmmoKit;
-	MyEHandle m_pBattery;
+	MyEHandle m_pAmmoKit; // nearest healthkit
+	MyEHandle m_pBattery; // nearest battery
+	MyEHandle m_pCharger; // nearest charger
 	edict_t *m_pCurrentWeapon;
 
 	CBaseHandle *m_Weapons;
 	edict_t *m_hCurrentWeapon;
+
+	float m_fFixWeaponTime;
 
 	int m_iClip1;
 	int m_iClip2;

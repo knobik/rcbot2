@@ -64,6 +64,7 @@ CBotButtons :: CBotButtons()
 	add(new CBotButton(IN_RELOAD));
 	add(new CBotButton(IN_SPEED)); // for sprint
 	add(new CBotButton(IN_FORWARD)); // for ladders
+	add(new CBotButton(IN_USE)); // for chargers
 
 	m_bLetGoAll = false;
 }

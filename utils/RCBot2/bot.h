@@ -129,6 +129,8 @@ typedef enum
 	GETPROP_WEAPONSTATE,
 	GETPROP_WEAPONCLIP1,
 	GETPROP_WEAPONCLIP2,
+	GETPROP_WEAPON_AMMOTYPE1,
+	GETPROP_WEAPON_AMMOTYPE2,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -314,9 +316,11 @@ public:
 	inline static CBaseHandle *getWeaponList ( edict_t *player ) { return g_GetProps[GETPROP_WEAPONLIST].getEntityHandle(player);}
 	inline static int getWeaponState ( edict_t *pgun ) { return g_GetProps[GETPROP_WEAPONSTATE].getInt(pgun,0); }
 
+	inline static int *getWeaponClip1Pointer ( edict_t *pgun ) { return g_GetProps[GETPROP_WEAPONCLIP1].getIntPointer(pgun); }
+	inline static int *getWeaponClip2Pointer ( edict_t *pgun ) { return g_GetProps[GETPROP_WEAPONCLIP2].getIntPointer(pgun); }
 
 	inline static void getWeaponClip ( edict_t *pgun, int *iClip1, int *iClip2 ) { *iClip1 = g_GetProps[GETPROP_WEAPONCLIP1].getInt(pgun,0); *iClip2 = g_GetProps[GETPROP_WEAPONCLIP2].getInt(pgun,0); }
-
+	inline static void getAmmoTypes ( edict_t *pgun, int *iAmmoType1, int *iAmmoType2 ) { *iAmmoType1 = g_GetProps[GETPROP_WEAPON_AMMOTYPE1].getInt(pgun,-1); *iAmmoType2 = g_GetProps[GETPROP_WEAPON_AMMOTYPE2].getInt(pgun,-1);} 
 	// HL2DM
 	//static void 
 
@@ -790,6 +794,7 @@ public:
 	void secondaryAttack(bool bHold=false);
 	void jump ();
 	void duck ( bool hold = false );
+	void use ();
 
 	virtual void setVisible ( edict_t *pEntity, bool bVisible );
 

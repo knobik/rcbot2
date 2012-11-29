@@ -48,26 +48,29 @@ const char *g_szHL2DMWeapons[] =
 	"weapon_crossbow",
 	"weapon_rpg",
 	"weapon_slam",
-	"weapon_shotgun"
+	"weapon_shotgun",
+	"weapon_physcannon"
 };
 
-enum
-{
-	HL2DM_WEAPON_PISTOL = 0,
-	HL2DM_WEAPON_CROWBAR,
-	HL2DM_WEAPON_357,
-	HL2DM_WEAPON_SMG1
-};
+
 
 TF2WeaponsData_t HL2DMWeaps[] =
 {
 /*
 	slot, id , weapon name, flags, min dist, max dist, ammo index, preference
 */
-	{3,HL2DM_WEAPON_PISTOL,			g_szHL2DMWeapons[0],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[0],1},
-	{3,HL2DM_WEAPON_CROWBAR,		g_szHL2DMWeapons[1],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[1],1},
-	{3,HL2DM_WEAPON_357,			g_szHL2DMWeapons[2],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[2],1},
-	{0,HL2DM_WEAPON_SMG1,			g_szHL2DMWeapons[3],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[3],1}
+	{2,HL2DM_WEAPON_PISTOL,		g_szHL2DMWeapons[0],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1000,-1,1},
+	{1,HL2DM_WEAPON_CROWBAR,	g_szHL2DMWeapons[1],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,128,-1,1},
+	{2,HL2DM_WEAPON_357,		g_szHL2DMWeapons[2],	WEAP_FL_PRIM_ATTACK,0,768,-1,2},
+	{3,HL2DM_WEAPON_SMG1,		g_szHL2DMWeapons[3],	WEAP_FL_PRIM_ATTACK,0,1500,-1,2},
+	{2,HL2DM_WEAPON_AR2,		g_szHL2DMWeapons[4],	WEAP_FL_PRIM_ATTACK|WEAP_FL_SEC_ATTACK,0,1500,-1,3},
+	{1,HL2DM_WEAPON_FRAG,		g_szHL2DMWeapons[5],	0,0,180,-1,1},
+	{2,HL2DM_WEAPON_STUNSTICK,	g_szHL2DMWeapons[6],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,128,-1,1},
+	{3,HL2DM_WEAPON_CROSSBOW,	g_szHL2DMWeapons[7],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,2000,-1,2},
+	{2,HL2DM_WEAPON_RPG,		g_szHL2DMWeapons[8],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,2000,-1,3},
+	{1,HL2DM_WEAPON_SLAM,		g_szHL2DMWeapons[9],	0,0,180,-1,1},
+	{2,HL2DM_WEAPON_SHOTGUN,	g_szHL2DMWeapons[10],	WEAP_FL_PRIM_ATTACK,0,768,-1,2},
+	{1,HL2DM_WEAPON_PHYSCANNON,	g_szHL2DMWeapons[11],	WEAP_FL_PRIM_ATTACK,0,768,-1,1}
 };
 	
 
@@ -160,9 +163,17 @@ TF2WeaponsData_t TF2Weaps[] =
 // static init (all weapons in game)
 vector<CWeapon*> CWeapons :: m_theWeapons;
 
-int CBotWeapon :: getAmmo (CBot *pBot)
+
+int CBotWeapon :: getAmmo (CBot *pBot, int type )
 {
-	return pBot->getAmmo(m_pWeaponInfo->getAmmoIndex());
+	if ( ( type == AMMO_PRIM ) && canAttack() )
+		return pBot->getAmmo(m_pWeaponInfo->getAmmoIndex1());
+
+	if ( ( type == AMMO_SEC ) && canUseSecondary() )
+		return pBot->getAmmo(m_pWeaponInfo->getAmmoIndex2());
+
+
+	return 0;
 }
 
 // Bot Weapons
@@ -240,14 +251,25 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bo
 	return m_theBestWeapon;
 }
 
-void CBotWeapons :: addWeapon ( int iId )
+void CBotWeapon :: setWeaponEntity (edict_t *pent) 
+{ 
+	int iAmmoType1,iAmmoType2;
+	m_pEnt = pent; 
+	m_iClip1 = CClassInterface::getWeaponClip1Pointer(pent);
+	m_iClip2 = CClassInterface::getWeaponClip2Pointer(pent);
+	CClassInterface::getAmmoTypes(pent,&iAmmoType1,&iAmmoType2);
+	m_pWeaponInfo->setAmmoIndex(iAmmoType1,iAmmoType2);
+}
+
+
+void CBotWeapons :: addWeapon ( int iId, edict_t *pent )
 {
 
 	register int i = 0;
 	Vector origin;
-	edict_t *pEnt;
 	const char *classname;
 	CWeapon *pWeapon;
+	edict_t *pEnt = NULL;
 
 	m_theWeapons[iId].setHasWeapon(true);
 
@@ -260,21 +282,31 @@ void CBotWeapons :: addWeapon ( int iId )
 
 	origin = m_pBot->getOrigin();
 
-	for ( i = (gpGlobals->maxClients+1); i <= gpGlobals->maxEntities; i ++ )
+	if ( pent == NULL )
 	{
-		pEnt = INDEXENT(i);
-
-		if ( pEnt && CBotGlobals::entityIsValid(pEnt) )
+		for ( i = (gpGlobals->maxClients+1); i <= gpGlobals->maxEntities; i ++ )
 		{
-			if ( CBotGlobals::entityOrigin(pEnt) == origin )
+			pEnt = INDEXENT(i);
+
+			if ( pEnt && CBotGlobals::entityIsValid(pEnt) )
 			{
-				if ( strcmp(pEnt->GetClassName(),classname) == 0 )
+				if ( CBotGlobals::entityOrigin(pEnt) == origin )
 				{
-					m_theWeapons[iId].setWeaponIndex(i);
-					break;
+					if ( strcmp(pEnt->GetClassName(),classname) == 0 )
+					{
+						pent = pEnt;
+						break;
+					}
 				}
 			}
 		}
+
+	}
+
+	if ( pent )
+	{
+		m_theWeapons[iId].setWeaponEntity(pent);
+		m_theWeapons[iId].setWeaponIndex(ENTINDEX(pent));
 	}
 }
 
@@ -356,6 +388,7 @@ class CGetWeapCName : public IWeaponFunc
 public:
 	CGetWeapCName ( const char *szWeapon )
 	{
+		m_pFound = NULL;
         m_szWeapon = szWeapon;
 	}
 

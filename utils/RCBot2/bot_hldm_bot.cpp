@@ -41,6 +41,7 @@
 #include "bot_task.h"
 #include "bot_schedule.h"
 #include "bot_waypoint.h"
+#include "bot_weapons.h"
 #include "bot_mtrand.h"
 //#include "vstdlib/random.h" // for random functions
 
@@ -96,21 +97,40 @@ void CHLDMBot :: spawnInit ()
 	m_pHealthKit = NULL;
 	m_pAmmoKit = NULL;
 	m_pCurrentWeapon = NULL;
+	m_pCharger = NULL;
+	m_fFixWeaponTime = 0;
+}
 
+void CHLDMBot :: fixWeapons ()
+{
 	m_Weapons = CClassInterface::getWeaponList(m_pEdict);
 
-	for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
+	if ( m_pWeapons ) 
 	{
-		const char *classname;
+		m_pWeapons->clearWeapons();
 
-		int iClip1,iClip2;
-		edict_t *pWeapon = INDEXENT(m_Weapons[i].GetEntryIndex());
-
-		if ( pWeapon && CBotGlobals::entityIsValid(pWeapon) )
+		for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 		{
-			classname = pWeapon->GetClassName();
+			const char *classname;
+			CWeapon *pBotWeapon;
+			CBotWeapon *pHasWeapon;
 
-			CClassInterface::getWeaponClip(pWeapon,&iClip1,&iClip2);
+			edict_t *pWeapon = INDEXENT(m_Weapons[i].GetEntryIndex());
+
+			if ( pWeapon && CBotGlobals::entityIsValid(pWeapon) )
+			{
+				classname = pWeapon->GetClassName();
+
+				pBotWeapon = CWeapons::getWeapon(classname);
+
+				if ( pBotWeapon )
+				{
+					pHasWeapon = m_pWeapons->getWeapon(pBotWeapon);
+
+					if ( !pHasWeapon || !pHasWeapon->hasWeapon() )
+						m_pWeapons->addWeapon(pBotWeapon->getID(),pWeapon);
+				}
+			}
 		}
 	}
 }
@@ -231,8 +251,12 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 
 void CHLDMBot :: modThink ()
 {
-	
-	m_pCurrentWeapon = CClassInterface::getCurrentWeapon(m_pEdict);
+	if ( m_fFixWeaponTime < engine->Time() )
+	{
+		fixWeapons();
+		m_pCurrentWeapon = CClassInterface::getCurrentWeapon(m_pEdict);
+		m_fFixWeaponTime = engine->Time() + 1.0f;
+	}
 
 	if ( m_pCurrentWeapon )
 		CClassInterface::getWeaponClip(m_pCurrentWeapon,&m_iClip1,&m_iClip2);
@@ -245,11 +269,11 @@ void CHLDMBot :: modThink ()
 		setMoveLookPriority(MOVELOOK_MODTHINK);
 	}
 
-	if ( (m_fCurrentDanger > 50.0f) && (CClassInterface::auxPower(m_pEdict) > 90.f ) && (m_flSprintTime < engine->Time()))
+	if ( (m_fCurrentDanger >= 20.0f) && (CClassInterface::auxPower(m_pEdict) > 90.f ) && (m_flSprintTime < engine->Time()))
 	{
 		m_pButtons->holdButton(IN_SPEED,0,1,0);
 	}
-	else if ( CClassInterface::auxPower(m_pEdict) < 5.0f )
+	else if (( m_fCurrentDanger < 1 ) || (CClassInterface::auxPower(m_pEdict) < 5.0f ))
 	{
 		m_flSprintTime = engine->Time() + randomFloat(5.0f,20.0f);
 	}
@@ -287,10 +311,15 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_pBattery = pEntity;
 		
 		}
-		else if ( ( strcmp(pEntity->GetClassName(),"prop_physics")==0 ) && 
+		else if ( ( strncmp(pEntity->GetClassName(),"prop_physics",12)==0 ) && 
 			( !m_NearestPhysObj.get() || (fDist<distanceFrom(m_NearestPhysObj.get())) ))
 		{
 			m_NearestPhysObj = pEntity;
+		}
+		else if ( ( strncmp(pEntity->GetClassName(),"item_suitcharger",12)==0 ) && 
+			( !m_pCharger.get() || (fDist<distanceFrom(m_pCharger.get())) ))
+		{
+			m_pCharger = pEntity;
 		}
 	}
 	else
@@ -303,6 +332,8 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_pBattery = NULL;
 		else if ( m_NearestPhysObj == pEntity )
 			m_NearestPhysObj = NULL;
+		else if ( m_pCharger == pEntity )
+			m_pCharger = NULL;
 	}
 
 }

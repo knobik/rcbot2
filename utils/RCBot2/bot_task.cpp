@@ -598,9 +598,43 @@ void CBotTF2UpgradeBuilding:: debugString ( char *string )
 	sprintf(string,"CBotTF2UpgradeBuilding");
 }
 
+void CBotHL2DMUseCharger :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	static Vector vOrigin;
+	
+	if ( m_pCharger.get() == NULL )
+	{
+		fail();
+		return;
+	}
+
+	vOrigin = CBotGlobals::entityOrigin(m_pCharger);
+
+	if ( m_fTime == 0.0f )
+	{
+		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
+	}
+
+	if ( m_fTime < engine->Time() )
+		complete();
+
+	pBot->setLookAtTask(LOOK_VECTOR);
+
+	if ( pBot->distanceFrom(m_pCharger) > 96 )
+	{
+		pBot->setMoveTo(vOrigin);
+		pBot->setLookVector(vOrigin);
+	}
+	else if ( pBot->DotProductFromOrigin(vOrigin) > 0.965925f )
+	{
+		pBot->use();
+	}
+}
+
 void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
 {
 	static Vector vOrigin;
+	static Vector vBotOrigin;
 
 	if ( m_fTime == 0.0f )
 	{
@@ -614,10 +648,13 @@ void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
+	vBotOrigin = pBot->getOrigin();
 	vOrigin = CBotGlobals::entityOrigin(m_Prop);
 
 	if ( pBot->distanceFrom(vOrigin) > 100 )
 		pBot->setMoveTo(vOrigin);
+	else if ( ((vOrigin-vBotOrigin).Length2D() < 16) && (vOrigin.z < vBotOrigin.z) )
+		pBot->setMoveTo(vBotOrigin + (vBotOrigin-vOrigin)*100);
 	else
 		pBot->stopMoving();
 
@@ -1222,7 +1259,8 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 			}
 
 			// running path
-			pBot->setLookAtTask(LOOK_WAYPOINT);
+			if ( !pBot->hasEnemy() && !pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+				pBot->setLookAtTask(LOOK_WAYPOINT);
 		}
 	}
 }

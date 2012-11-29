@@ -1130,6 +1130,9 @@ void CClassInterface:: init ()
 
 		DEFINE_GETPROP(GETPROP_WEAPONCLIP1,"CBaseCombatWeapon","m_iClip1",0);
 		DEFINE_GETPROP(GETPROP_WEAPONCLIP2,"CBaseCombatWeapon","m_iClip2",0);
+
+		DEFINE_GETPROP(GETPROP_WEAPON_AMMOTYPE1,"CBaseCombatWeapon","m_iPrimaryAmmoType",0);
+		DEFINE_GETPROP(GETPROP_WEAPON_AMMOTYPE2,"CBaseCombatWeapon","m_iSecondaryAmmoType",0);
 	
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

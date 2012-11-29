@@ -42,6 +42,7 @@ extern const char *g_szTF2Weapons[];
 
 class CBot;
 
+
 extern int m_TF2AmmoIndices[];
 
 typedef struct
@@ -56,7 +57,6 @@ typedef struct
 	int m_iPreference;
 }TF2WeaponsData_t;
 
-extern TF2WeaponsData_t TF2Weaps[];
 
 enum 
 {
@@ -97,6 +97,24 @@ enum
 	TF2_WEAPON_MAX
 };
 
+
+enum
+{
+	HL2DM_WEAPON_PISTOL = 0,
+	HL2DM_WEAPON_CROWBAR,
+	HL2DM_WEAPON_357,
+	HL2DM_WEAPON_SMG1,
+	HL2DM_WEAPON_AR2,
+	HL2DM_WEAPON_FRAG,
+	HL2DM_WEAPON_STUNSTICK,
+	HL2DM_WEAPON_CROSSBOW,
+	HL2DM_WEAPON_RPG,
+	HL2DM_WEAPON_SLAM,	
+	HL2DM_WEAPON_SHOTGUN,
+	HL2DM_WEAPON_PHYSCANNON,
+	HL2DM_WEAPON_MAX
+};
+
 #define WEAP_FL_NONE			0
 #define WEAP_FL_PRIM_ATTACK		1
 #define WEAP_FL_SEC_ATTACK		2
@@ -108,10 +126,14 @@ enum
 #define WEAP_FL_KILLPIPEBOMBS	128
 #define WEAP_FL_DEFLECTROCKETS	256
 
+
+extern TF2WeaponsData_t TF2Weaps[];
+extern TF2WeaponsData_t HL2DMWeaps[];
+
 class CWeapon
 {
 public:
-	CWeapon( int iSlot, const char *szWeaponName, int iId, int iFlags = 0, int iAmmoIndex = 0, float minPrim =0.0f, float maxPrim = 4096.0f, int iPref = 0 )
+	CWeapon( int iSlot, const char *szWeaponName, int iId, int iFlags = 0, int iAmmoIndex = -1, float minPrim =0.0f, float maxPrim = 4096.0f, int iPref = 0, int iAmmoIndex2 = -1 )
 	{
 		m_iSlot = iSlot;
 		setID(iId);
@@ -125,7 +147,8 @@ public:
 
 		m_fSecMinWeaponShootDist = 0.0f;
 		m_fSecMaxWeaponShootDist = 8192.0f;
-		m_iAmmoIndex = iAmmoIndex;
+		m_iAmmoIndex1 = iAmmoIndex;
+		m_iAmmoIndex2 = iAmmoIndex2;
 
 		m_iPreference = iPref;
 	}
@@ -222,14 +245,30 @@ public:
 		m_fSecMaxWeaponShootDist = fMaxRange;
 	}
 
-	inline int getAmmoIndex ()
+	inline int getAmmoIndex1 ()
 	{
-		return m_iAmmoIndex;
+		return m_iAmmoIndex1;
+	}
+
+	inline int getAmmoIndex2 ()
+	{
+		return m_iAmmoIndex2;
 	}
 
 	inline int getSlot ()
 	{
 		return m_iSlot;
+	}
+
+	void setAmmoIndex ( int iAmmoIndex1, int iAmmoIndex2 = -1)
+	{
+		m_iAmmoIndex1 = iAmmoIndex1;
+		m_iAmmoIndex2 = iAmmoIndex2;
+	}
+
+	inline bool canUseSecondary ()
+	{
+		return hasSomeFlags(WEAP_FL_SEC_ATTACK);
 	}
 
 private:
@@ -248,7 +287,8 @@ private:
 
 	int m_iWeaponId;			// identification
 	int m_iFlags;				// flags
-	int m_iAmmoIndex;
+	int m_iAmmoIndex1;
+	int m_iAmmoIndex2;
 	int m_iPreference;
 	int m_iSlot;
 
@@ -283,6 +323,8 @@ private:
 	// available weapons in game
 	static vector<CWeapon*> m_theWeapons;
 };
+#define AMMO_PRIM 1
+#define AMMO_SEC 2
 
 ////////////////////////////////////////////////////////////
 // Weapon but with bot holding it and ammo information etc
@@ -295,6 +337,9 @@ public:
 		m_pWeaponInfo = NULL;
 		m_bHasWeapon = false;		
 		m_iWeaponIndex = 0;
+		m_pEnt = NULL;
+		m_iClip1 = NULL;
+		m_iClip2 = NULL;
 	}
 
 	inline void setWeapon ( CWeapon *pWeapon )
@@ -337,6 +382,11 @@ public:
 		return m_pWeaponInfo->canDeflectRockets();
 	}
 
+	inline bool canUseSecondary ()
+	{
+		return m_pWeaponInfo->canUseSecondary();
+	}
+
 	inline bool isMelee ()
 	{
 		return m_pWeaponInfo->isMelee();
@@ -353,6 +403,7 @@ public:
 	}
 
 	bool outOfAmmo (CBot *pBot);
+
 	inline bool needToReload () { return false; }
 
 	inline void setHasWeapon ( bool bHas )
@@ -370,13 +421,32 @@ public:
 		return m_pWeaponInfo->canAttack();
 	}
 
-	int getAmmo ( CBot *pBot );
+	int getAmmo ( CBot *pBot, int type = AMMO_PRIM );
+
+	int getClip1 ( CBot *pBot ) 
+	{ 
+		if ( m_iClip1 ) 
+			return *m_iClip1; 
+		
+		return 0; 
+	}
+
+	int getClip2 ( CBot *pBot ) 
+	{ 
+		if ( m_iClip2 ) 
+			return *m_iClip2; 
+		
+		return 0; 
+	}
 
 	CWeapon *getWeaponInfo () { return m_pWeaponInfo; }
 
 	inline int getWeaponIndex () { return m_iWeaponIndex; }
 
-	inline void setWeaponIndex (int iIndex) { m_iWeaponIndex = iIndex; }
+	inline void setWeaponIndex (int iIndex) { m_iWeaponIndex = iIndex; } // Entity Index
+
+	void setWeaponEntity (edict_t *pent);
+
 
 private:
 
@@ -387,7 +457,10 @@ private:
 
 	bool m_bHasWeapon;
 
-	
+	edict_t *m_pEnt;
+
+	int *m_iClip1;
+	int *m_iClip2;
 };
 
 // Weapons that
@@ -399,7 +472,7 @@ public:
 /////////////////////////////////////
 	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true );
 
-	void addWeapon ( int iId );
+	void addWeapon ( int iId, edict_t *pent = NULL );
 
 	CBotWeapon *getWeapon ( CWeapon *pWeapon );
 

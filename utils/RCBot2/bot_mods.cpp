@@ -1065,6 +1065,17 @@ bool CTeamFortress2Mod :: isRocket ( edict_t *pEntity, int iTeam )
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"tf_projectile_rocket")==0);
 }
 
+void CHalfLifeDeathmatchMod :: initMod ()
+{
+	unsigned int i;
+	// Setup Weapons
+
+	CBots::controlBotSetup(false);
+
+	for ( i = 0; i < HL2DM_WEAPON_MAX; i ++ )
+		CWeapons::addWeapon(new CWeapon(HL2DMWeaps[i].iSlot,HL2DMWeaps[i].szWeaponName,HL2DMWeaps[i].iId,HL2DMWeaps[i].m_iFlags,HL2DMWeaps[i].m_iAmmoIndex,HL2DMWeaps[i].minPrimDist,HL2DMWeaps[i].maxPrimDist,HL2DMWeaps[i].m_iPreference));
+}
+
 void CTeamFortress2Mod :: initMod ()
 {
 	unsigned int i;
