@@ -332,6 +332,12 @@ void CHLDMBot :: modThink ()
 	extern ConVar rcbot_jump_obst_dist;
 	extern ConVar rcbot_jump_obst_speed;
 
+	if ( !CBotGlobals::entityIsValid(m_NearestPhysObj) )
+		m_NearestPhysObj = NULL;
+
+	if ( !CBotGlobals::entityIsValid(m_FailedPhysObj) )
+		m_FailedPhysObj = NULL;
+
 	if ( m_fFixWeaponTime < engine->Time() )
 	{
 		fixWeapons();
@@ -365,9 +371,6 @@ void CHLDMBot :: modThink ()
 		m_pButtons->tap(IN_RELOAD);
 	}
 
-	if ( !CBotGlobals::entityIsValid(m_NearestPhysObj) )
-		m_NearestPhysObj = NULL;
-
 	if ( m_NearestPhysObj.get() )
 	{
 		bool bCarry = false;
@@ -390,7 +393,7 @@ void CHLDMBot :: modThink ()
 				{
 					if ( (vel.Length() > rcbot_jump_obst_speed.GetFloat()) && 
 						
-						(CBotGlobals::entityOrigin(pEntity)-(getOrigin()+((vel/vel.Length())*distanceFrom(pEntity)))).Length() < (v_size.Length()/2) )
+						(CBotGlobals::entityOrigin(pEntity)-(CBotGlobals::entityOrigin(m_pEdict)+Vector(0,0,16)+((vel/vel.Length())*distanceFrom(pEntity)))).Length() <= (v_size.Length()/2) )
 					{
 						if ( randomInt(0,1) )
 							jump();

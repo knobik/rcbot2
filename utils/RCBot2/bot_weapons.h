@@ -410,7 +410,7 @@ public:
 
 	virtual bool outOfAmmo (CBot *pBot);
 
-	inline bool needToReload () { return false; }
+	bool needToReload (CBot *pBot);
 
 	inline void setHasWeapon ( bool bHas )
 	{

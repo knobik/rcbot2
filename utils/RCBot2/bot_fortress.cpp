@@ -2328,6 +2328,12 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 		return false;
 	if ( pEntity == m_pAmmo )
 		return false;
+	if (( pEntity == m_pSentryGun ) && ( CClassInterface::isObjectCarried(pEntity) ))
+		return false;
+	if (( pEntity == m_pDispenser ) && ( CClassInterface::isObjectCarried(pEntity) ))
+		return false;
+	if (( pEntity == m_pTeleExit ) && ( CClassInterface::isObjectCarried(pEntity) ))
+		return false;
 
 	index = ENTINDEX(pEntity);
 

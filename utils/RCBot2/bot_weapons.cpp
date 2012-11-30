@@ -159,6 +159,10 @@ TF2WeaponsData_t TF2Weaps[] =
 	{4,TF2_WEAPON_ENGIBUILD,			g_szTF2Weapons[33],0,0,0,0,3}
 };
 
+bool CBotWeapon :: needToReload (CBot *pBot) 
+{ 
+	return (m_iClip1 == 0) && (getAmmo(pBot,1)>0);
+}
 
 // static init (all weapons in game)
 vector<CWeapon*> CWeapons :: m_theWeapons;
@@ -294,8 +298,12 @@ void CBotWeapons :: addWeapon ( int iId, edict_t *pent )
 				{
 					if ( strcmp(pEnt->GetClassName(),classname) == 0 )
 					{
-						pent = pEnt;
-						break;
+						m_theWeapons[iId].setWeaponIndex(ENTINDEX(pEnt));
+
+						if ( pent )
+							break;
+						else
+							return;
 					}
 				}
 			}
@@ -304,10 +312,8 @@ void CBotWeapons :: addWeapon ( int iId, edict_t *pent )
 	}
 
 	if ( pent )
-	{
 		m_theWeapons[iId].setWeaponEntity(pent);
-		m_theWeapons[iId].setWeaponIndex(ENTINDEX(pent));
-	}
+
 }
 
 CBotWeapon *CBotWeapons :: getWeapon ( CWeapon *pWeapon )
