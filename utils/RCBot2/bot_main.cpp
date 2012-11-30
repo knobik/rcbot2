@@ -123,6 +123,7 @@ ConVar bot_heavyaimoffset("rcbot_heavyaimoffset","0.1",0,"fraction of how much t
 ConVar bot_aimsmoothing("rcbot_aimsmooting","0",0,"(0 = no smoothing)");
 ConVar bot_bossattackfactor("rcbot_bossattackfactor","1.0",0,"the higher the more ofetn the bots will shoot the boss");
 ConVar rcbot_enemyshootfov("rcbot_enemyshootfov","0.6",0,"the fov dot product before the bot shoots an enemy 0.7 = 45 degrees");
+ConVar rcbot_enemyshoot_gravgun_fov("rcbot_enemyshoot_gravgun_fov","0.97",0,"the fov dot product before the bot shoots an enemy 0.98 = 11 degrees");
 ConVar rcbot_wptplace_width("rcbot_wpt_width","48",0,"width of the player, automatic paths won't connect unless there is enough space for a player");
 ConVar rcbot_wpt_autoradius("rcbot_wpt_autoradius","0",0,"every waypoint added is given this radius, 0 = no radius");
 ConVar rcbot_wpt_autotype("rcbot_wpt_autotype","1",0,"If 1, types will be automatically added to waypoints when they are added (only for resupply/health/capture/flag etc)\nIf 2: types will autoamtically be added even if the waypoint is cut/paste");
@@ -140,6 +141,9 @@ ConVar rcbot_move_dist("rcbot_move_dist","800",0,"minimum distance to move objec
 ConVar rcbot_move_obj("rcbot_move_obj","1",0,"if 1 rcbot engineers will move objects around");
 ConVar rcbot_taunt("rcbot_taunt","1",0,"enable/disable bots taunting");
 ConVar rcbot_notarget("rcbot_notarget","0",0,"bots don't shoot the host!");
+
+ConVar rcbot_jump_obst_dist("rcbot_jump_obst_dist","80",0,"the distance from an obstacle the bot will jump");
+ConVar rcbot_jump_obst_speed("rcbot_jump_obst_speed","100",0,"the speed of the bot for the bot to jump an obstacle");
 
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");
@@ -574,6 +578,7 @@ void CRCBotPlugin::GameFrame( bool simulating )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::LevelShutdown( void ) // !!!!this can get called multiple times per map change
 {
+	CClients::initall();
 	CWaypointDistances::save();
 	CBots::freeMapMemory();	
 	CWaypoints::init();

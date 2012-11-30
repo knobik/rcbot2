@@ -39,6 +39,7 @@
 #include "bot_globals.h"
 #include "in_buttons.h"
 #include "bot_weapons.h"
+#include "bot_hldm_bot.h"
 #include "bot_fortress.h"
 #include "bot_profiling.h"
 
@@ -618,12 +619,12 @@ void CBotHL2DMUseCharger :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime < engine->Time() )
 		complete();
 
+	pBot->setLookVector(vOrigin);
 	pBot->setLookAtTask(LOOK_VECTOR);
 
 	if ( pBot->distanceFrom(m_pCharger) > 96 )
 	{
 		pBot->setMoveTo(vOrigin);
-		pBot->setLookVector(vOrigin);
 	}
 	else if ( pBot->DotProductFromOrigin(vOrigin) > 0.965925f )
 	{
@@ -644,22 +645,43 @@ void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_fTime < engine->Time() )
 	{
+		((CHLDMBot*)pBot)->setFailedObject(m_Prop);
 		fail();
 		return;
 	}
 
+	if ( !CBotGlobals::entityIsValid(m_Prop) )
+	{
+		((CHLDMBot*)pBot)->setFailedObject(m_Prop);
+		fail();
+		return;
+	}
+
+	pBot->wantToChangeWeapon(false);
+
 	vBotOrigin = pBot->getOrigin();
 	vOrigin = CBotGlobals::entityOrigin(m_Prop);
 
-	if ( pBot->distanceFrom(vOrigin) > 100 )
+	CBotWeapon *pWeapon = pBot->getCurrentWeapon();
+
+	if ( !pWeapon || ( pWeapon->getID() != HL2DM_WEAPON_PHYSCANNON)  )
+	{
+		if ( !pBot->select_CWeapon(CWeapons::getWeapon(HL2DM_WEAPON_PHYSCANNON)) )
+		{
+			fail();
+		}
+	}
+	else if ( pBot->distanceFrom(vOrigin) > 100 )
 		pBot->setMoveTo(vOrigin);
 	else if ( ((vOrigin-vBotOrigin).Length2D() < 16) && (vOrigin.z < vBotOrigin.z) )
 		pBot->setMoveTo(vBotOrigin + (vBotOrigin-vOrigin)*100);
 	else
 		pBot->stopMoving();
 
+	pBot->setMoveLookPriority(MOVELOOK_OVERRIDE);
 	pBot->setLookVector(vOrigin);
 	pBot->setLookAtTask(LOOK_VECTOR);
+	pBot->setMoveLookPriority(MOVELOOK_TASK);
 
 	if ( pBot->DotProductFromOrigin(vOrigin) > 0.965925f )
 	{
@@ -1258,9 +1280,9 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 					fail();
 			}
 
-			// running path
-			if ( !pBot->hasEnemy() && !pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
-				pBot->setLookAtTask(LOOK_WAYPOINT);
+			//// running path
+			//if ( !pBot->hasEnemy() && !pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			pBot->setLookAtTask(LOOK_WAYPOINT);
 		}
 	}
 }

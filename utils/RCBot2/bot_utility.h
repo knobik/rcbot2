@@ -113,6 +113,7 @@ typedef enum
  BOT_UTIL_HL2DM_FIND_ARMOR,
  BOT_UTIL_FIND_LAST_ENEMY,
  BOT_UTIL_HL2DM_USE_CHARGER,
+ BOT_UTIL_HL2DM_USE_HEALTH_CHARGER,
  BOT_UTIL_MAX
 }eBotAction;
 
@@ -171,7 +172,7 @@ private:
 };
 
 
-#define ADD_UTILITY(utilname,condition,utility) if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility)); }
+#define ADD_UTILITY(utilname,condition,utility) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility)); } }
 
 
 #endif

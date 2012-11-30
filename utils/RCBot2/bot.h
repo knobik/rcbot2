@@ -60,6 +60,7 @@
 #include "Color.h"
 #include "usercmd.h"
 
+#include "bot_utility.h"
 #include "bot_const.h"
 #include <queue>
 using namespace std;
@@ -828,7 +829,7 @@ public:
 
 	void tapButton ( int iButton );
 
-	inline int getAmmo ( int iIndex ) { if ( !m_iAmmo ) return 0; else return m_iAmmo[iIndex]; }
+	inline int getAmmo ( int iIndex ) { if ( !m_iAmmo ) return 0; else if ( iIndex == -1 ) return 0;  return m_iAmmo[iIndex]; }
 
 	inline void lookAtEdict ( edict_t *pEdict ) { m_pLookEdict = pEdict; }
 
@@ -1050,6 +1051,8 @@ protected:
 
 	unsigned int m_iSpecialVisibleId;
 	float m_fCurrentDanger;
+
+	float m_fUtilTimes[BOT_UTIL_MAX];
 	//CBotNeuralNet *stucknet;
 	//CTrainingSet *stucknet_tset;
 };

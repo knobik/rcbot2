@@ -192,6 +192,7 @@ public:
 	static void clientDebugMsg(CBot *pBot, int iLev, const char *fmt, ... );
 	static CClient *findClientBySteamID ( char *szSteamID );
 
+	static void initall () { for ( int i = 0; i < MAX_PLAYERS; i ++ ) { m_Clients[i].init(); } }
 private:
 	static CClient m_Clients[MAX_PLAYERS];
 	static CClient *m_pListenServerClient;

@@ -125,6 +125,7 @@ enum
 #define WEAP_FL_SPECIAL			64
 #define WEAP_FL_KILLPIPEBOMBS	128
 #define WEAP_FL_DEFLECTROCKETS	256
+#define WEAP_FL_GRAVGUN			512
 
 
 extern TF2WeaponsData_t TF2Weaps[];
@@ -146,7 +147,7 @@ public:
 		m_fPrimMaxWeaponShootDist = maxPrim;
 
 		m_fSecMinWeaponShootDist = 0.0f;
-		m_fSecMaxWeaponShootDist = 8192.0f;
+		m_fSecMaxWeaponShootDist = 512.0f;
 		m_iAmmoIndex1 = iAmmoIndex;
 		m_iAmmoIndex2 = iAmmoIndex2;
 
@@ -191,6 +192,11 @@ public:
 	inline bool canUseUnderWater ()
 	{
 		return hasAllFlags(WEAP_FL_UNDERWATER);
+	}
+
+	inline bool isGravGun()
+	{
+		return hasAllFlags(WEAP_FL_GRAVGUN);
 	}
 
 	inline bool mustHoldAttack ()
@@ -402,7 +408,7 @@ public:
 		return m_pWeaponInfo->getPreference();
 	}
 
-	bool outOfAmmo (CBot *pBot);
+	virtual bool outOfAmmo (CBot *pBot);
 
 	inline bool needToReload () { return false; }
 
@@ -461,6 +467,11 @@ private:
 
 	int *m_iClip1;
 	int *m_iClip2;
+};
+
+class CBotWeaponGravGun : public CBotWeapon
+{
+	bool outOfAmmo (CBot *pBot);
 };
 
 // Weapons that

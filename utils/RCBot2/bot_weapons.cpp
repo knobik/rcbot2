@@ -62,15 +62,15 @@ TF2WeaponsData_t HL2DMWeaps[] =
 	{2,HL2DM_WEAPON_PISTOL,		g_szHL2DMWeapons[0],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1000,-1,1},
 	{1,HL2DM_WEAPON_CROWBAR,	g_szHL2DMWeapons[1],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,128,-1,1},
 	{2,HL2DM_WEAPON_357,		g_szHL2DMWeapons[2],	WEAP_FL_PRIM_ATTACK,0,768,-1,2},
-	{3,HL2DM_WEAPON_SMG1,		g_szHL2DMWeapons[3],	WEAP_FL_PRIM_ATTACK,0,1500,-1,2},
-	{2,HL2DM_WEAPON_AR2,		g_szHL2DMWeapons[4],	WEAP_FL_PRIM_ATTACK|WEAP_FL_SEC_ATTACK,0,1500,-1,3},
+	{3,HL2DM_WEAPON_SMG1,		g_szHL2DMWeapons[3],	WEAP_FL_PRIM_ATTACK|WEAP_FL_SEC_ATTACK,0,1400,-1,2},
+	{2,HL2DM_WEAPON_AR2,		g_szHL2DMWeapons[4],	WEAP_FL_PRIM_ATTACK|WEAP_FL_SEC_ATTACK,0,1400,-1,3},
 	{1,HL2DM_WEAPON_FRAG,		g_szHL2DMWeapons[5],	0,0,180,-1,1},
 	{2,HL2DM_WEAPON_STUNSTICK,	g_szHL2DMWeapons[6],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,128,-1,1},
 	{3,HL2DM_WEAPON_CROSSBOW,	g_szHL2DMWeapons[7],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,2000,-1,2},
-	{2,HL2DM_WEAPON_RPG,		g_szHL2DMWeapons[8],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,2000,-1,3},
+	{2,HL2DM_WEAPON_RPG,		g_szHL2DMWeapons[8],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,400,2000,-1,3},
 	{1,HL2DM_WEAPON_SLAM,		g_szHL2DMWeapons[9],	0,0,180,-1,1},
 	{2,HL2DM_WEAPON_SHOTGUN,	g_szHL2DMWeapons[10],	WEAP_FL_PRIM_ATTACK,0,768,-1,2},
-	{1,HL2DM_WEAPON_PHYSCANNON,	g_szHL2DMWeapons[11],	WEAP_FL_PRIM_ATTACK,0,768,-1,1}
+	{1,HL2DM_WEAPON_PHYSCANNON,	g_szHL2DMWeapons[11],	WEAP_FL_GRAVGUN|WEAP_FL_PRIM_ATTACK,0,768,-1,4}
 };
 	
 
@@ -339,9 +339,20 @@ CBotWeapon *CBotWeapons :: getActiveWeapon ( const char *szWeaponName )
 
 	return NULL;
 }
+/*
+bool CBotWeaponGravGun ::outOfAmmo (CBot *pBot)
+{
+	if ( m_pEnt )
+		(return CClassInterface::gravityGunObject(m_pEnt)==NULL);
 
+	return true;
+}
+*/
 bool CBotWeapon :: outOfAmmo(CBot *pBot)
 {
+	if ( m_pWeaponInfo->isGravGun() && m_pEnt )
+		return (CClassInterface::gravityGunObject(m_pEnt) == NULL);
+
 	return getAmmo(pBot)==0;
 }
 /*

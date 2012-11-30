@@ -183,6 +183,9 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 			
 			vEntityOrigin = CBotGlobals::entityOrigin(pEntity);
 
+			if ( ENTINDEX(pEntity) <= gpGlobals->maxClients )
+				vEntityOrigin + Vector(0,0,32);
+
 			playerInPVS = engine->CheckOriginInPVS(vEntityOrigin,m_bPvs,sizeof(m_bPvs));//engine->CheckBoxInPVS( vectorSurroundMins, vectorSurroundMaxs, m_bPvs, sizeof( m_bPvs ) );
 
 			if ( playerInPVS )

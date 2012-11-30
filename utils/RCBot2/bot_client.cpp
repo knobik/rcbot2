@@ -58,7 +58,7 @@ void CClient :: init ()
 	m_iWptArea = 0;
 	m_bShowMenu = false;
 	m_fUpdatePos = 0.0f;
-
+	m_pDebugBot = NULL;
 	m_fCopyWptRadius = 0.0f;
 	m_iCopyWptFlags = 0;
 	m_iCopyWptArea = 0;

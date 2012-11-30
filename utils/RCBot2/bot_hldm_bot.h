@@ -37,6 +37,7 @@
 class CHLDMBot : public CBot
 {
 public:
+	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 
 	bool isHLDM () { return true; }
 
@@ -67,10 +68,14 @@ public:
 
 	void enemyLost ();
 
+	void setFailedObject ( edict_t *pent ) { m_FailedPhysObj = pent; }
+
 private:
 	// blah blah
 	MyEHandle m_NearestPhysObj;
+	edict_t *m_FailedPhysObj;
 	float m_flSprintTime;
+	MyEHandle m_pHealthCharger;
 	MyEHandle m_pHealthKit;
 	MyEHandle m_pAmmoKit; // nearest healthkit
 	MyEHandle m_pBattery; // nearest battery

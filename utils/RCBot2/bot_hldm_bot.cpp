@@ -91,6 +91,10 @@ void CHLDMBot :: spawnInit ()
 {
 	CBot::spawnInit();
 
+	if ( m_pWeapons )
+		m_pWeapons->clearWeapons();
+
+	m_FailedPhysObj = NULL;
 	m_flSprintTime = 0;
 	m_NearestPhysObj = NULL;
 	m_pBattery = NULL;
@@ -107,7 +111,7 @@ void CHLDMBot :: fixWeapons ()
 
 	if ( m_pWeapons ) 
 	{
-		m_pWeapons->clearWeapons();
+		//m_pWeapons->clearWeapons();
 
 		for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 		{
@@ -131,6 +135,10 @@ void CHLDMBot :: fixWeapons ()
 						m_pWeapons->addWeapon(pBotWeapon->getID(),pWeapon);
 				}
 			}
+			//else
+			//{
+			//	CWeapons::getWeapon();
+			//}
 		}
 	}
 }
@@ -146,6 +154,9 @@ bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 		return false;
 
 	if ( !ENTINDEX(pEdict) || (ENTINDEX(pEdict) > CBotGlobals::maxClients()) )
+		return false;
+
+	if ( !CBotGlobals::entityIsAlive(pEdict) )
 		return false;
 
 	if ( CBotGlobals::getTeamplayOn() )
@@ -169,7 +180,34 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 		return true;
 	case BOT_UTIL_FIND_NEAREST_AMMO:
 		m_pSchedules->add(new CBotPickupSched(m_pAmmoKit.get()));
+		m_fUtilTimes[BOT_UTIL_FIND_NEAREST_AMMO] = engine->Time() + randomFloat(5.0f,10.0f);
 		return true;
+	case BOT_UTIL_HL2DM_USE_HEALTH_CHARGER:
+		{
+			CBotSchedule *pSched = new CBotSchedule();
+			
+			pSched->addTask(new CFindPathTask(m_pHealthCharger));
+			pSched->addTask(new CBotHL2DMUseCharger(m_pHealthCharger));
+
+			m_pSchedules->add(pSched);
+
+			m_fUtilTimes[BOT_UTIL_HL2DM_USE_HEALTH_CHARGER] = engine->Time() + randomFloat(5.0f,10.0f);
+			return true;
+		}
+		break;
+	case BOT_UTIL_HL2DM_USE_CHARGER:
+		{
+			CBotSchedule *pSched = new CBotSchedule();
+			
+			pSched->addTask(new CFindPathTask(m_pCharger));
+			pSched->addTask(new CBotHL2DMUseCharger(m_pCharger));
+
+			m_pSchedules->add(pSched);
+
+			m_fUtilTimes[BOT_UTIL_HL2DM_USE_CHARGER] = engine->Time() + randomFloat(5.0f,10.0f);
+			return true;
+		}
+		break;
 	case BOT_UTIL_HL2DM_GRAVIGUN_PICKUP:
 		{
 		CBotSchedule *pSched = new CBotSchedule(new CBotGravGunPickup(m_pCurrentWeapon,m_NearestPhysObj));
@@ -214,6 +252,33 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 
 	return false;
 }
+bool CHLDMBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
+{
+	if ( pWeapon )
+	{
+		extern ConVar rcbot_enemyshoot_gravgun_fov;
+
+		clearFailedWeaponSelect();
+
+		if ( pWeapon->isMelee() )
+			setMoveTo(CBotGlobals::entityOrigin(m_pEdict));
+
+		if ( (pWeapon->getID() == HL2DM_WEAPON_PHYSCANNON) && (DotProductFromOrigin(m_vAimVector) < rcbot_enemyshoot_gravgun_fov.GetFloat()) ) 
+			return true; // keep enemy / don't shoot : until angle between enemy is less than 20 degrees
+
+		if ( pWeapon->canUseSecondary() && pWeapon->getAmmo(this,2) && pWeapon->secondaryInRange(distanceFrom(pEnemy)) )
+			secondaryAttack();
+
+		if ( pWeapon->mustHoldAttack() )
+			primaryAttack(true);
+		else
+			primaryAttack();
+	}
+	else
+		primaryAttack();
+
+	return true;
+}
 
 void CHLDMBot :: getTasks (unsigned int iIgnore)
 {
@@ -223,14 +288,25 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	if ( !m_pSchedules->isEmpty() )
 		return;
 
-	bool isHoldingGravGun = m_pCurrentWeapon && (strcmp("weapon_physcannon",m_pCurrentWeapon->GetClassName()) == 0);
+	CBotWeapon *gravgun = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_PHYSCANNON));
+
+	if ( gravgun )
+	{
+		edict_t *pent = INDEXENT(gravgun->getWeaponIndex());
+
+		if ( CBotGlobals::entityIsValid(pent) )
+		{
+			ADD_UTILITY(BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,(!m_pEnemy||(m_pCurrentWeapon&&(strcmp("weapon_physcannon",m_pCurrentWeapon->GetClassName())))) && gravgun && gravgun->hasWeapon() && (m_NearestPhysObj.get()!=NULL) && (gravgun->getWeaponIndex() > 0) && (CClassInterface::gravityGunObject(INDEXENT(gravgun->getWeaponIndex()))==NULL),1.0f);
+		}
+	}
 
 	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,(m_pHealthKit.get()!=NULL) && (getHealthPercent()<1.0f),1.0f-getHealthPercent());
-	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,(m_pBattery.get() !=NULL) && (getArmorPercent()<1.0f),1.0f-(getArmorPercent()*0.5f));
-	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (m_iClip1!=-1) && (m_iClip1<1),0.01f*(100-m_iClip1));
-	ADD_UTILITY(BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,isHoldingGravGun && (m_NearestPhysObj.get()!=NULL) && (CClassInterface::gravityGunObject(m_pCurrentWeapon)==NULL),1.0f);
+	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,(m_pBattery.get() !=NULL) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
+	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (getAmmo(0)<5),0.01f*(100-getAmmo(0)));
+	ADD_UTILITY(BOT_UTIL_HL2DM_USE_CHARGER,(m_pCharger.get() !=NULL) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
+	ADD_UTILITY(BOT_UTIL_HL2DM_USE_HEALTH_CHARGER,(m_pHealthCharger.get() != NULL) && (getHealthPercent()<1.0f),(1.0f-getHealthPercent()));
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.1f);
-	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*(getArmorPercent()+0.1));
+	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy,getHealthPercent()*(getArmorPercent()+0.1));
 
 	utils.execute();
 
@@ -238,6 +314,8 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	{
 		if ( executeAction(next->getId()) )
 		{
+			if ( m_fUtilTimes[next->getId()] < engine->Time() )
+				m_fUtilTimes[next->getId()] = engine->Time() + randomFloat(0.1f,2.0f);
 			/*if ( CClients::clientsDebugging() )
 			{
 				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[util->getId()],this);
@@ -251,6 +329,9 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 
 void CHLDMBot :: modThink ()
 {
+	extern ConVar rcbot_jump_obst_dist;
+	extern ConVar rcbot_jump_obst_speed;
+
 	if ( m_fFixWeaponTime < engine->Time() )
 	{
 		fixWeapons();
@@ -283,6 +364,42 @@ void CHLDMBot :: modThink ()
 		m_fLastSeeEnemy = 0;
 		m_pButtons->tap(IN_RELOAD);
 	}
+
+	if ( !CBotGlobals::entityIsValid(m_NearestPhysObj) )
+		m_NearestPhysObj = NULL;
+
+	if ( m_NearestPhysObj.get() )
+	{
+		bool bCarry = false;
+		edict_t *pEntity = m_NearestPhysObj.get();
+
+		if ( m_pCurrentWeapon && !strcmp("weapon_physcannon",m_pCurrentWeapon->GetClassName()) )
+		{
+			bCarry = (CClassInterface::gravityGunObject(m_pCurrentWeapon) == m_NearestPhysObj.get());
+		}
+
+		if ( !bCarry && (distanceFrom(pEntity) < rcbot_jump_obst_dist.GetFloat()) )
+		{
+			Vector vel;
+
+			if ( CClassInterface::getVelocity(m_pEdict,&vel) )
+			{
+				Vector v_size = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
+
+				if ( v_size.z <= 48 ) // jump height
+				{
+					if ( (vel.Length() > rcbot_jump_obst_speed.GetFloat()) && 
+						
+						(CBotGlobals::entityOrigin(pEntity)-(getOrigin()+((vel/vel.Length())*distanceFrom(pEntity)))).Length() < (v_size.Length()/2) )
+					{
+						if ( randomInt(0,1) )
+							jump();
+					}
+				}
+			}
+		}
+		
+	}
 }
 
 void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
@@ -311,15 +428,20 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_pBattery = pEntity;
 		
 		}
-		else if ( ( strncmp(pEntity->GetClassName(),"prop_physics",12)==0 ) && 
+		else if ( (pEntity != m_FailedPhysObj) && ( strncmp(pEntity->GetClassName(),"prop_physics",12)==0 ) && 
 			( !m_NearestPhysObj.get() || (fDist<distanceFrom(m_NearestPhysObj.get())) ))
 		{
 			m_NearestPhysObj = pEntity;
 		}
-		else if ( ( strncmp(pEntity->GetClassName(),"item_suitcharger",12)==0 ) && 
+		else if ( ( strncmp(pEntity->GetClassName(),"item_suitcharger",16)==0 ) && 
 			( !m_pCharger.get() || (fDist<distanceFrom(m_pCharger.get())) ))
 		{
 			m_pCharger = pEntity;
+		}
+		else if ( ( strncmp(pEntity->GetClassName(),"item_healthcharger",18)==0 ) && 
+			( !m_pHealthCharger.get() || (fDist<distanceFrom(m_pHealthCharger.get())) ))
+		{
+			m_pHealthCharger = pEntity;
 		}
 	}
 	else
@@ -334,6 +456,8 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_NearestPhysObj = NULL;
 		else if ( m_pCharger == pEntity )
 			m_pCharger = NULL;
+		else if ( m_pHealthCharger == pEntity )
+			m_pHealthCharger = NULL;
 	}
 
 }

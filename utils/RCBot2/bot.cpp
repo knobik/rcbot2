@@ -486,8 +486,16 @@ void CBot :: debugMsg ( int iLev, const char *szMsg )
 
 void CBot :: think ()
 {
-	float fTime = engine->Time();
+	static float fTime;
+	//static bool debug;
+	static bool battack;
+
+	//debug = CClients::clientsDebugging(BOT_DEBUG_THINK);
+	
+	fTime = engine->Time();
 	m_bDoWeapons = true;
+
+	
 
 //	Vector *pvVelocity;
 
@@ -596,14 +604,7 @@ void CBot :: think ()
 
 	updateConditions();
 
-	/*pvVelocity = CClassInterface::getVelocity(m_pEdict);
 
-	if ( pvVelocity )
-	{
-		m_vVelocity = *pvVelocity;
-	}
-	else
-	*/
 	if ( m_fUpdateOriginTime < fTime )
 	{
 		Vector vOrigin = getOrigin();
@@ -639,6 +640,8 @@ void CBot :: think ()
 
 			setLookAtTask((LOOK_ENEMY));
 
+			battack = true;
+
 			if ( !handleAttack ( pWeapon, m_pEnemy ) )
 			{
 				m_pEnemy = NULL;
@@ -647,6 +650,7 @@ void CBot :: think ()
 			}
 		}
 	}
+
 
 	m_iPrevHealth = m_pPlayerInfo->GetHealth();
 
@@ -717,16 +721,17 @@ void CBot :: updateConditions ()
 				updateCondition(CONDITION_SEE_CUR_ENEMY);
 				removeCondition(CONDITION_ENEMY_OBSCURED);
 			}
-			else if ( !m_pLastEnemy || (m_pLastEnemy != m_pEnemy) )
+			else 
 			{
+				if ( !m_pLastEnemy || (m_pLastEnemy != m_pEnemy ))
+					enemyLost();
+
 				m_fLastSeeEnemy = engine->Time();
 				m_pLastEnemy = m_pEnemy;
 				m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
 
 				removeCondition(CONDITION_SEE_CUR_ENEMY);
 				updateCondition(CONDITION_ENEMY_OBSCURED);
-
-				enemyLost();
 			}
 		}
 	}
@@ -734,6 +739,7 @@ void CBot :: updateConditions ()
 	{
 		removeCondition(CONDITION_SEE_CUR_ENEMY);
 		removeCondition(CONDITION_ENEMY_OBSCURED);
+		removeCondition(CONDITION_ENEMY_DEAD);
 	}
 
 	if ( FVisible(m_vLookVector) )
@@ -808,6 +814,9 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	for ( int i = 0; i < BOT_UTIL_MAX; i ++ )
+		m_fUtilTimes[i] = 0;
+
 	if ( m_pSchedules != NULL )
 		m_pSchedules->freeMemory(); // clear tasks, im dead now!!
 	if ( m_pVisibles != NULL )
@@ -1542,8 +1551,8 @@ void CBot :: getLookAtVector ()
 			{
 				setLookAt(getAimVector(m_pEnemy));
 			}
-			//else
-			//	setLookAtTask((LOOK_WAYPOINT));
+			else if ( m_pLastEnemy )
+				setLookAt(m_vLastSeeEnemy);
 
 			if ( bDebug )
 				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_ENEMY",this);
@@ -1558,6 +1567,7 @@ void CBot :: getLookAtVector ()
 			if ( bDebug )
 				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_LAST_ENEMY",this);
 		}
+		break;
 	case LOOK_WAYPOINT:
 		{
 			Vector vLook;
@@ -1565,7 +1575,10 @@ void CBot :: getLookAtVector ()
 			if ( m_pNavigator->getNextRoutePoint(&vLook) )
 				setLookAt(Vector(vLook.x,vLook.y,vLook.z + 36.0f));				
 			else
-				setLookAt(Vector(m_vMoveTo.x,m_vMoveTo.y,m_vMoveTo.z + 36.0f));
+			{
+				vLook = m_pNavigator->getPreviousPoint();
+				setLookAt(Vector(vLook.x,vLook.y,vLook.z + 36.0f));
+			}
 				
 			if ( bDebug )
 				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_WAYPOINT",this);
