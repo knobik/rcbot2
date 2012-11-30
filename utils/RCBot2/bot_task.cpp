@@ -645,7 +645,13 @@ void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_fTime < engine->Time() )
 	{
-		((CHLDMBot*)pBot)->setFailedObject(m_Prop);
+		CHLDMBot *HL2DMBot = ((CHLDMBot*)pBot);
+
+		if (HL2DMBot->getFailedObject() && (HL2DMBot->distanceFrom(HL2DMBot->getFailedObject())<=(pBot->distanceFrom(m_Prop)+48)) )
+			pBot->primaryAttack();
+
+		HL2DMBot->setFailedObject(m_Prop);
+
 		fail();
 		return;
 	}

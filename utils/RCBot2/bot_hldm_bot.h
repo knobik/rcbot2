@@ -70,6 +70,7 @@ public:
 
 	void setFailedObject ( edict_t *pent ) { m_FailedPhysObj = pent; }
 
+	edict_t *getFailedObject () { return m_FailedPhysObj; }
 private:
 	// blah blah
 	MyEHandle m_NearestPhysObj;
