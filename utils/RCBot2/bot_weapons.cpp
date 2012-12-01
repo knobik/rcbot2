@@ -286,7 +286,13 @@ void CBotWeapons :: addWeapon ( int iId, edict_t *pent )
 
 	origin = m_pBot->getOrigin();
 
-	if ( pent == NULL )
+	// if entity comes from the engine use the entity
+	if ( pent )
+	{
+		m_theWeapons[iId].setWeaponEntity(pent);
+		m_theWeapons[iId].setWeaponIndex(ENTINDEX(pent));
+	}
+	else // find the weapon entity
 	{
 		for ( i = (gpGlobals->maxClients+1); i <= gpGlobals->maxEntities; i ++ )
 		{
@@ -308,11 +314,7 @@ void CBotWeapons :: addWeapon ( int iId, edict_t *pent )
 				}
 			}
 		}
-
 	}
-
-	if ( pent )
-		m_theWeapons[iId].setWeaponEntity(pent);
 
 }
 
