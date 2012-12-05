@@ -680,7 +680,7 @@ void CWaypointNavigator :: updatePosition ()
 
 	if ( !m_bWorkingRoute )
 	{
-		if ( pWaypoint->touched(m_pBot->getOrigin(),m_vOffset) )
+		if ( pWaypoint->touched(m_pBot->getOrigin(),m_vOffset,m_pBot->getTouchDistance()) )
 		{
 			m_pBot->touchedWpt(pWaypoint);
 
@@ -822,11 +822,11 @@ bool CWaypoint :: touched ( edict_t *pEdict )
 	return touched(pEdict->m_pNetworkable->GetPVSInfo()->
 }*/
 // checks if a waypoint is touched
-bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset)
+bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset, float fTouchDist )
 {
-	if ( (vOrigin-(m_vOrigin+vOffset)).Length2D() <= 40 )
+	if ( (vOrigin-(m_vOrigin+vOffset)).Length2D() <= fTouchDist )
 	{
-		return fabs(vOrigin.z-m_vOrigin.z) < 48;
+		return fabs(vOrigin.z-m_vOrigin.z) <= fTouchDist;
 	}
 
 	return false;

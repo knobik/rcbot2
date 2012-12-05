@@ -259,7 +259,7 @@ bool CBot :: FVisible ( edict_t *pEdict )
 {
 	Vector eye = getEyePosition();
 
-	return CBotGlobals::isVisible(m_pEdict,eye,CBotGlobals::entityOrigin(pEdict)+Vector(0,0,50.0f));
+	return CBotGlobals::isVisible(m_pEdict,eye,pEdict);//CBotGlobals::entityOrigin(pEdict)+Vector(0,0,50.0f));
 }
 
 inline QAngle CBot :: eyeAngles ()
@@ -349,12 +349,59 @@ bool CBot :: checkStuck ()
 
 			if ( m_fStrafeTime < engine->Time() )
 			{
+				reduceTouchDistance();
+
 				if ( CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo) > 0 )
 					m_fSideSpeed = m_fIdealMoveSpeed/2;
 				else
 					m_fSideSpeed = -(m_fIdealMoveSpeed/2);
 
+				/*
+				CTraceFilterWorldAndPropsOnly filter;
+				Vector vOrigin = getOrigin();
+				QAngle v_eyeangles;
+				Vector vForward;
+				float left = 0;
+				float right = 0;
+
+				Vector vTr;
+
+				v_eyeangles = eyeAngles();
+
+				v_eyeangles.y -= 45;
+
+				CBotGlobals::fixFloatAngle(&(v_eyeangles.y));
+
+				VectorAngles(vForward,v_eyeangles);
+
+				vTr = (vForward / vForward.Length()) * 128;
+
+				CBotGlobals::traceLine(vOrigin,vOrigin + vTr,MASK_SOLID_BRUSHONLY,&filter);
+
+				left = CBotGlobals::getTraceResult()->fraction;
+
+				v_eyeangles.y += 90;
+
+				CBotGlobals::fixFloatAngle(&(v_eyeangles.y));
+
+				VectorAngles(vForward,v_eyeangles);
+
+				vTr = (vForward / vForward.Length()) * 128;
+
+				CBotGlobals::traceLine(vOrigin,vOrigin + vTr,MASK_SOLID_BRUSHONLY,&filter);
+
+				right = CBotGlobals::getTraceResult()->fraction;
+
+
+
+				if ( left > right )
+					m_fSideSpeed = -(m_fIdealMoveSpeed/2);
+				else
+					m_fSideSpeed = m_fIdealMoveSpeed/2;
+
 				m_fStrafeTime = engine->Time() + 2.0f;
+*/
+				
 			}
 
 			m_fCheckStuckTime = engine->Time() + 2.04f;
@@ -467,9 +514,9 @@ void CBot :: selectWeaponSlot ( int iSlot )
 	//m_iSelectWeapon = iSlot;
 }
 
-CBotWeapon *CBot :: getBestWeapon (edict_t *pEnemy,bool bAllowMelee, bool bAllowMeleeFallback )
+CBotWeapon *CBot :: getBestWeapon (edict_t *pEnemy,bool bAllowMelee, bool bAllowMeleeFallback, bool bMeleeOnly )
 {
-	return m_pWeapons->getBestWeapon(pEnemy,bAllowMelee,bAllowMeleeFallback);
+	return m_pWeapons->getBestWeapon(pEnemy,bAllowMelee,bAllowMeleeFallback,bMeleeOnly);
 }
 
 void CBot :: debugMsg ( int iLev, const char *szMsg )
@@ -488,14 +535,11 @@ void CBot :: think ()
 {
 	static float fTime;
 	//static bool debug;
-	static bool battack;
+	//static bool battack;
 
 	//debug = CClients::clientsDebugging(BOT_DEBUG_THINK);
 	
 	fTime = engine->Time();
-	m_bDoWeapons = true;
-
-	
 
 //	Vector *pvVelocity;
 
@@ -617,44 +661,45 @@ void CBot :: think ()
 	setMoveLookPriority(MOVELOOK_MODTHINK);
 	modThink();
 
-	setMoveLookPriority(MOVELOOK_ATTACK);
-
-	if ( m_bDoWeapons )
-	{
-		//
-		// Handle attacking at this point
-		//
-		if ( m_pEnemy && !hasSomeConditions(CONDITION_ENEMY_DEAD) && 
-			hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && wantToShoot() && 
-			isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
-		{
-			CBotWeapon *pWeapon;
-
-			pWeapon = getBestWeapon(m_pEnemy);
-
-			if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
-			{
-				//selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
-				selectWeapon(pWeapon->getWeaponIndex());
-			}
-
-			setLookAtTask((LOOK_ENEMY));
-
-			battack = true;
-
-			if ( !handleAttack ( pWeapon, m_pEnemy ) )
-			{
-				m_pEnemy = NULL;
-				m_pOldEnemy = NULL;
-				wantToShoot(false);
-			}
-		}
-	}
+	handleWeapons();
 
 
 	m_iPrevHealth = m_pPlayerInfo->GetHealth();
 
 	m_bInitAlive = false;
+}
+
+
+void CBot :: handleWeapons ()
+{
+	//
+	// Handle attacking at this point
+	//
+	if ( m_pEnemy && !hasSomeConditions(CONDITION_ENEMY_DEAD) && 
+		hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && wantToShoot() && 
+		isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
+	{
+		CBotWeapon *pWeapon;
+
+		setMoveLookPriority(MOVELOOK_ATTACK);
+
+		pWeapon = getBestWeapon(m_pEnemy);
+
+		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
+		{
+			//selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
+			selectWeapon(pWeapon->getWeaponIndex());
+		}
+
+		setLookAtTask((LOOK_ENEMY));
+
+		if ( !handleAttack ( pWeapon, m_pEnemy ) )
+		{
+			m_pEnemy = NULL;
+			m_pOldEnemy = NULL;
+			wantToShoot(false);
+		}
+	}
 }
 
 CBot :: CBot()
@@ -814,6 +859,8 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	resetTouchDistance(48.0f);
+
 	for ( int i = 0; i < BOT_UTIL_MAX; i ++ )
 		m_fUtilTimes[i] = 0;
 
@@ -923,6 +970,8 @@ float CBot :: getEnemyFactor ( edict_t *pEnemy )
 
 void CBot :: touchedWpt ( CWaypoint *pWaypoint )
 {
+	resetTouchDistance(48.0f);
+
 	m_fWaypointStuckTime = engine->Time() + randomFloat(7.0f,11.0f);
 
 	if ( pWaypoint->getFlags() & CWaypointTypes::W_FL_JUMP )
@@ -1479,7 +1528,9 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	v_org = CBotGlobals::entityOrigin(pEntity);
 
     v_right = (v_org-getOrigin()).Cross(Vector(0,0,1)); 
-	v_right = v_right / v_right.Length(); 
+
+	if ( v_right.Length() > 0 )
+		v_right = v_right / v_right.Length(); 
 
 	// add randomised offset based on size and distance
 	m_vAimVector = v_org + (fDistFactor*Vector(randomFloat(-v_size.x,v_size.x),randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));

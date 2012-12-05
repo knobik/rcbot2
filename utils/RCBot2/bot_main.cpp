@@ -145,8 +145,11 @@ ConVar rcbot_notarget("rcbot_notarget","0",0,"bots don't shoot the host!");
 ConVar rcbot_jump_obst_dist("rcbot_jump_obst_dist","80",0,"the distance from an obstacle the bot will jump");
 ConVar rcbot_jump_obst_speed("rcbot_jump_obst_speed","100",0,"the speed of the bot for the bot to jump an obstacle");
 
+ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee weapons");
+
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");
+ConVar *mp_teamplay = NULL;
 
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
@@ -503,11 +506,11 @@ void CRCBotPlugin::LevelInit( char const *pMapName )
 	CBotGlobals::setMapRunning(true);
 	CBotConfigFile::reset();
 	
-	//ConVar *pTeamplay = (ConVar*)rcbotd_command.GetCommands()->FindCommand("mp_teamplay");
+	mp_teamplay = cvar->FindVar("mp_teamplay");
 
-	//if ( pTeamplay )
-	//	CBotGlobals::setTeamplay(pTeamplay->GetBool());
-	//else
+	if ( mp_teamplay )
+		CBotGlobals::setTeamplay(mp_teamplay->GetBool());
+	else
 		CBotGlobals::setTeamplay(false);
 
 	gameeventmanager1->AddListener( this, true );	
@@ -832,43 +835,60 @@ bool FNullEnt(const edict_t* pent)
 	return pent == NULL || ENTINDEX((edict_t*)pent) == 0; 
 }
 
-void UTIL_FindServerClassPrint(const char *name)
+void UTIL_FindServerClassPrint(const char *name_cmd)
 {
 	bool bInterfaceErr = false;
-			try
-			{
-				ServerClass *pClass = servergamedll->GetAllServerClasses();
+	char temp[128];
+	char name[128];
 
-				while (pClass)
-				{
-					if (strstr(pClass->m_pNetworkName, name) != NULL )
-					{
-						CBotGlobals::botMessage(NULL,0,"%s",pClass->m_pNetworkName);
-						//break;
-					}
-					pClass = pClass->m_pNext;
-				}
-			}
-			catch (...)
-			{
-				bInterfaceErr = true;
-			}
+	strncpy(name,name_cmd,127);
+	name[127] = 0;
+	strlow(name);
 
-			if ( bInterfaceErr )
-			{
-				// IServerGameDLL_004 == IServerGameDLL except without the replay init function
-				ServerClass *pClass = ((IServerGameDLL_004*)servergamedll)->GetAllServerClasses();
+	try
+	{
+		ServerClass *pClass = servergamedll->GetAllServerClasses();
 
-				while (pClass)
-				{
-					if (strstr(pClass->m_pNetworkName, name) != NULL )
-					{
-						CBotGlobals::botMessage(NULL,0,"%s",pClass->m_pNetworkName);
-						//break;
-					}
-					pClass = pClass->m_pNext;
-				}
+		while (pClass)
+		{
+			strncpy(temp,pClass->m_pNetworkName,127);
+			temp[127] = 0;
+
+			strlow(temp);
+
+			if (strstr(temp,name) != NULL )
+			{
+				CBotGlobals::botMessage(NULL,0,"%s",pClass->m_pNetworkName);
+				//break;
 			}
+			pClass = pClass->m_pNext;
+		}
+	}
+	catch (...)
+	{
+		bInterfaceErr = true;
+	}
+
+	if ( bInterfaceErr )
+	{
+		// IServerGameDLL_004 == IServerGameDLL except without the replay init function
+		ServerClass *pClass = ((IServerGameDLL_004*)servergamedll)->GetAllServerClasses();
+
+		while (pClass)
+		{
+			strncpy(temp,pClass->m_pNetworkName,127);
+			temp[127] = 0;
+
+			strlow(temp);
+
+			if (strstr(temp,name) != NULL )
+			{
+				CBotGlobals::botMessage(NULL,0,"%s",pClass->m_pNetworkName);
+				//break;
+			}
+			pClass = pClass->m_pNext;
+		}
+	}
 }
 /**
  * Searches for a named Server Class.
@@ -886,7 +906,7 @@ ServerClass *UTIL_FindServerClass(const char *name)
 
 		while (pClass)
 		{
-			if (strcmp(pClass->m_pNetworkName, name) == 0)
+			if (strcmpi(pClass->m_pNetworkName, name) == 0)
 			{
 				return pClass;
 			}

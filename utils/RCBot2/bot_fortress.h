@@ -412,6 +412,8 @@ public:
 
 	inline bool isBeingHealed () { return m_bIsBeingHealed; }
 
+	virtual void handleWeapons () { CBot::handleWeapons(); }
+
 
 protected:
 	virtual void selectTeam ();
@@ -632,6 +634,8 @@ public:
 	bool thinkSpyIsEnemy ( edict_t *pEdict );
 
 	void voiceCommand ( eVoiceCMD cmd );
+
+	void handleWeapons ( void ) ;
 
 	virtual bool select_CWeapon ( CWeapon *pWeapon );
 	virtual bool selectBotWeapon ( CBotWeapon *pBotWeapon );

@@ -2248,9 +2248,22 @@ void CBotTF2 :: modThink ()
 		}
 	}
 
-	m_bDoWeapons = false; // Handle attacking in CBotTF2
+	// deal with voice commands bot wants to say,
+	// incase that he wants to use it in between frames (e.g. during an event call)
+	// deal with it here
+	if ( m_nextVoicecmd != TF_VC_INVALID )
+	{
+		voiceCommand(m_nextVoicecmd);
+		m_nextVoicecmd = TF_VC_INVALID;
+	}
+
+	setMoveLookPriority(MOVELOOK_MODTHINK);
 	
-	setMoveLookPriority(MOVELOOK_ATTACK);
+}
+
+void CBotTF2::handleWeapons()
+{
+
 	//
 	// Handle attacking at this point
 	//
@@ -2259,6 +2272,8 @@ void CBotTF2 :: modThink ()
 		isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
 	{
 		CBotWeapon *pWeapon;
+
+		setMoveLookPriority(MOVELOOK_ATTACK);
 
 		pWeapon = getBestWeapon(m_pEnemy,!hasFlag(),!hasFlag());
 
@@ -2277,18 +2292,6 @@ void CBotTF2 :: modThink ()
 			wantToShoot(false);
 		}
 	}
-
-	// deal with voice commands bot wants to say,
-	// incase that he wants to use it in between frames (e.g. during an event call)
-	// deal with it here
-	if ( m_nextVoicecmd != TF_VC_INVALID )
-	{
-		voiceCommand(m_nextVoicecmd);
-		m_nextVoicecmd = TF_VC_INVALID;
-	}
-
-	setMoveLookPriority(MOVELOOK_MODTHINK);
-	
 }
 
 void CBotTF2::enemyFound (edict_t *pEnemy)
@@ -2902,8 +2905,6 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	//static float fResupplyUtil = 0.5;
 	//static float fHealthUtil = 0.5;
 	//static float fAmmoUtil = 0.5;
-
-	extern const char *g_szUtils[BOT_UTIL_MAX];
 
 	// if in setup time this will tell bot not to shoot yet
 	wantToShoot(CTeamFortress2Mod::hasRoundStarted());

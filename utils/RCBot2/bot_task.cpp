@@ -613,7 +613,7 @@ void CBotHL2DMUseCharger :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_fTime == 0.0f )
 	{
-		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
+		m_fTime = engine->Time() + randomFloat(4.0f,6.0f);
 	}
 
 	if ( m_fTime < engine->Time() )
@@ -1288,6 +1288,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 			//// running path
 			//if ( !pBot->hasEnemy() && !pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			
 			pBot->setLookAtTask(LOOK_WAYPOINT);
 		}
 	}

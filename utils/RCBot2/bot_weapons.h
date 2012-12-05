@@ -481,7 +481,7 @@ public:
 /////////////////////////////////////
 	CBotWeapons ( CBot *pBot );    // // constructor
 /////////////////////////////////////
-	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true );
+	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true, bool bMeleeOnly = false );
 
 	void addWeapon ( int iId, edict_t *pent = NULL );
 

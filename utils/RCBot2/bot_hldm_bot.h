@@ -39,6 +39,8 @@ class CHLDMBot : public CBot
 public:
 	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 
+	void handleWeapons ();
+
 	bool isHLDM () { return true; }
 
 	void modThink ();
@@ -68,12 +70,19 @@ public:
 
 	void enemyLost ();
 
-	void setFailedObject ( edict_t *pent ) { m_FailedPhysObj = pent; }
+	inline void setFailedObject ( edict_t *pent ) 
+	{ 
+		m_FailedPhysObj = pent; 
+
+		if ( m_NearestPhysObj == pent ) 
+			m_NearestPhysObj = NULL;
+	}
 
 	edict_t *getFailedObject () { return m_FailedPhysObj; }
 private:
 	// blah blah
 	MyEHandle m_NearestPhysObj;
+	MyEHandle m_NearestBreakable;
 	edict_t *m_FailedPhysObj;
 	float m_flSprintTime;
 	MyEHandle m_pHealthCharger;
@@ -90,6 +99,9 @@ private:
 
 	int m_iClip1;
 	int m_iClip2;
+
+	eBotAction m_CurrentUtil;
+	bool m_bCarryingObject; // using grav gun
 };
 
 #endif

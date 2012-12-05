@@ -137,7 +137,7 @@ typedef enum
 
 bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int *offset);
 ServerClass *UTIL_FindServerClass(const char *name);
-void UTIL_FindServerClassPrint(const char*name);
+void UTIL_FindServerClassPrint(const char*name_cmd);
 
 class CClassInterfaceValue
 {
@@ -551,6 +551,8 @@ public:
 		return (vOrigin-m_pController->GetLocalOrigin()).Length();
 	}
 
+	virtual void handleWeapons ();
+
 	inline Vector getOrigin ();
 	/*
 	 * init()
@@ -580,7 +582,7 @@ public:
 
 	bool isUnderWater ( );
 
-	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true );
+	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true, bool bMeleeOnly = false );
 
 	virtual void modThink () { return; }
 
@@ -879,7 +881,13 @@ public:
 	// return an enemy sentry gun / special visible (e.g.) for quick checking
 	virtual edict_t *getVisibleSpecial ();
 
-	void updateDanger ( float fBelief ) { m_fCurrentDanger = (m_fCurrentDanger/2) + (fBelief/2); }
+	inline void updateDanger ( float fBelief ) { m_fCurrentDanger = (m_fCurrentDanger/2) + (fBelief/2); }
+
+	inline void reduceTouchDistance ( ) { if ( m_fWaypointTouchDistance > 20 ) m_fWaypointTouchDistance *= 0.9; }
+
+	inline void resetTouchDistance ( float fDist ) { m_fWaypointTouchDistance = fDist; }
+
+	inline float getTouchDistance () { return m_fWaypointTouchDistance; }
 
 protected:
 
@@ -1044,7 +1052,6 @@ protected:
 
 	bool m_bWantToChangeWeapon;
 
-	bool m_bDoWeapons;
 	bool m_bAvoidRight;
 	float m_fAvoidSideSwitch;
 	float m_fHealClickTime;
@@ -1053,6 +1060,8 @@ protected:
 	float m_fCurrentDanger;
 
 	float m_fUtilTimes[BOT_UTIL_MAX];
+
+	float m_fWaypointTouchDistance;
 	//CBotNeuralNet *stucknet;
 	//CTrainingSet *stucknet_tset;
 };

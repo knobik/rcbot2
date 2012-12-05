@@ -44,35 +44,45 @@
 #include "bot_weapons.h"
 #include "bot_mtrand.h"
 //#include "vstdlib/random.h" // for random functions
+extern ConVar rcbot_jump_obst_dist;
+extern ConVar rcbot_jump_obst_speed;
+extern ConVar rcbot_melee_only;
 
+// initialise , i.e. set everything to a default value
 void CHLDMBot :: init ()
 {
 	CBot::init();
 }
 
+// initialize structures and classes used be the bot
+// i.e. create 'new' classes
 void CHLDMBot :: setup ()
 {
 	CBot::setup();
 }
 
-
+// the bot doesn't need to do anything to start a game in HL2DM
 bool CHLDMBot :: startGame ()
 {
 	return true;
 }
 
+// the bot killed pVictim
 void CHLDMBot :: killed ( edict_t *pVictim )
 {
 	extern ConVar bot_beliefmulti;
 
+	// update belief around this waypoint
 	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
 		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 }
 
+// the bot was killed by pKiller
 void CHLDMBot :: died ( edict_t *pKiller )
 {
 	extern ConVar bot_beliefmulti;
 
+	// re-initialize stuff per life
 	spawnInit();
 
 	//if ( randomInt(0,1) )
@@ -87,6 +97,7 @@ void CHLDMBot :: died ( edict_t *pKiller )
 	}
 }
 
+// new life
 void CHLDMBot :: spawnInit ()
 {
 	CBot::spawnInit();
@@ -94,6 +105,8 @@ void CHLDMBot :: spawnInit ()
 	if ( m_pWeapons )
 		m_pWeapons->clearWeapons();
 
+	m_CurrentUtil = BOT_UTIL_MAX;
+	// reset objects
 	m_FailedPhysObj = NULL;
 	m_flSprintTime = 0;
 	m_NearestPhysObj = NULL;
@@ -105,6 +118,7 @@ void CHLDMBot :: spawnInit ()
 	m_fFixWeaponTime = 0;
 }
 
+// check updates on weapons every so often
 void CHLDMBot :: fixWeapons ()
 {
 	m_Weapons = CClassInterface::getWeaponList(m_pEdict);
@@ -113,8 +127,10 @@ void CHLDMBot :: fixWeapons ()
 	{
 		//m_pWeapons->clearWeapons();
 
+		// loop through the weapons array in the CBaseCombatCharacter
 		for ( unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 		{
+			// get the information from the bot 
 			const char *classname;
 			CWeapon *pBotWeapon;
 			CBotWeapon *pHasWeapon;
@@ -125,12 +141,15 @@ void CHLDMBot :: fixWeapons ()
 			{
 				classname = pWeapon->GetClassName();
 
+				// find this weapon in our initialized array in the code
 				pBotWeapon = CWeapons::getWeapon(classname);
 
 				if ( pBotWeapon )
 				{
+					// see if the bot has this weapon or not already
 					pHasWeapon = m_pWeapons->getWeapon(pBotWeapon);
 
+					// if the bot doesn't have it or the state has changed, update
 					if ( !pHasWeapon || !pHasWeapon->hasWeapon() )
 						m_pWeapons->addWeapon(pBotWeapon->getID(),pWeapon);
 				}
@@ -142,25 +161,47 @@ void CHLDMBot :: fixWeapons ()
 		}
 	}
 }
-
+// Is pEdict an enemy? return true if enemy / false if not
+// if checkWeapons is true, check if current weapon can attack enemy 
+//							return false if not 
 bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
 	extern ConVar rcbot_notarget;
+	static int entity_index;
 
-	if ( rcbot_notarget.GetBool() && (ENTINDEX(pEdict) == 1) )
+	entity_index = ENTINDEX(pEdict);
+
+	// if no target on - listen sever player is a non target
+	if ( rcbot_notarget.GetBool() && (entity_index == 1) )
 		return false;
 
+	// not myself
 	if ( pEdict == m_pEdict )
 		return false;
 
-	if ( !ENTINDEX(pEdict) || (ENTINDEX(pEdict) > CBotGlobals::maxClients()) )
-		return false;
+	// not a player - false
+	if ( !entity_index || (entity_index > CBotGlobals::maxClients()) )
+	{
+		if ( !m_bCarryingObject && pEdict->GetUnknown() && (pEdict == m_NearestBreakable) && (CClassInterface::getPlayerHealth(pEdict)>0) )
+		{
+			if ( distanceFrom(CBotGlobals::entityOrigin(pEdict)) < rcbot_jump_obst_dist.GetFloat() )
+			{
+				if ( ((CBotGlobals::entityOrigin(pEdict) - m_vMoveTo).Length()+48) < (getOrigin() - m_vMoveTo).Length() )
+					return true;
+			}
+		}
 
+		return false;
+	}
+
+	// not alive -- false
 	if ( !CBotGlobals::entityIsAlive(pEdict) )
 		return false;
 
+	// team game?
 	if ( CBotGlobals::getTeamplayOn() )
 	{
+		// same team ? false
 		if ( CBotGlobals::getTeam(pEdict) == getTeam() )
 			return false;
 	}
@@ -168,6 +209,7 @@ bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	return true;	
 }
 
+// from the bots UTILITIES , execute the given action
 bool CHLDMBot :: executeAction ( eBotAction iAction )
 {
 	switch ( iAction )
@@ -194,7 +236,6 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 			m_fUtilTimes[BOT_UTIL_HL2DM_USE_HEALTH_CHARGER] = engine->Time() + randomFloat(5.0f,10.0f);
 			return true;
 		}
-		break;
 	case BOT_UTIL_HL2DM_USE_CHARGER:
 		{
 			CBotSchedule *pSched = new CBotSchedule();
@@ -207,12 +248,11 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 			m_fUtilTimes[BOT_UTIL_HL2DM_USE_CHARGER] = engine->Time() + randomFloat(5.0f,10.0f);
 			return true;
 		}
-		break;
 	case BOT_UTIL_HL2DM_GRAVIGUN_PICKUP:
 		{
-		CBotSchedule *pSched = new CBotSchedule(new CBotGravGunPickup(m_pCurrentWeapon,m_NearestPhysObj));
-		m_pSchedules->add(pSched);
-		return true;
+			CBotSchedule *pSched = new CBotSchedule(new CBotGravGunPickup(m_pCurrentWeapon,m_NearestPhysObj));
+			m_pSchedules->add(pSched);
+			return true;
 		}
 	case BOT_UTIL_FIND_LAST_ENEMY:
 		{
@@ -252,11 +292,18 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 
 	return false;
 }
+// deal with attacking code here
+// return false if it is impossible to shoot this enemy; i.e. change enemy
+// return true: if it is possible to shoot this enemy
+// decide whether or not the bot shoot attack by calling primaryAttack or secondaryAttack
 bool CHLDMBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 {
 	if ( pWeapon )
 	{
 		extern ConVar rcbot_enemyshoot_gravgun_fov;
+		static float fDistance;
+
+		fDistance = distanceFrom(pEnemy);
 
 		clearFailedWeaponSelect();
 
@@ -266,30 +313,49 @@ bool CHLDMBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		if ( (pWeapon->getID() == HL2DM_WEAPON_PHYSCANNON) && (DotProductFromOrigin(m_vAimVector) < rcbot_enemyshoot_gravgun_fov.GetFloat()) ) 
 			return true; // keep enemy / don't shoot : until angle between enemy is less than 20 degrees
 
-		if ( pWeapon->canUseSecondary() && pWeapon->getAmmo(this,2) && pWeapon->secondaryInRange(distanceFrom(pEnemy)) )
-			secondaryAttack();
+		if ( pWeapon->canUseSecondary() && pWeapon->getAmmo(this,2) && pWeapon->secondaryInRange(fDistance) )
+		{
+			if ( randomInt(0,1) )
+			{
+				secondaryAttack();
+				return true;
+			}
+		}
 
-		if ( pWeapon->mustHoldAttack() )
-			primaryAttack(true);
-		else
-			primaryAttack();
+		// can use primary
+		if ( pWeapon->canAttack() )
+		{
+			if ( pWeapon->mustHoldAttack() )
+				primaryAttack(true);
+			else
+				primaryAttack();
+
+			return true;
+		}
 	}
 	else
+	{
 		primaryAttack();
+		return true;
+	}
 
-	return true;
+	return false;
 }
-
+// time to think about something new to do
 void CHLDMBot :: getTasks (unsigned int iIgnore)
 {
 	static CBotUtilities utils;
 	static CBotUtility *next;
+	static CBotWeapon *gravgun;
 
-	if ( !m_pSchedules->isEmpty() )
+	if ( !hasSomeConditions(CONDITION_CHANGED) && !m_pSchedules->isEmpty() )
 		return;
 
-	CBotWeapon *gravgun = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_PHYSCANNON));
+	removeCondition(CONDITION_CHANGED);
 
+	gravgun = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_PHYSCANNON));
+
+	// If I have the grav gun, think about picking something up
 	if ( gravgun )
 	{
 		edict_t *pent = INDEXENT(gravgun->getWeaponIndex());
@@ -300,26 +366,41 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 		}
 	}
 
-	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,(m_pHealthKit.get()!=NULL) && (getHealthPercent()<1.0f),1.0f-getHealthPercent());
-	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,(m_pBattery.get() !=NULL) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
-	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (getAmmo(0)<5),0.01f*(100-getAmmo(0)));
-	ADD_UTILITY(BOT_UTIL_HL2DM_USE_CHARGER,(m_pCharger.get() !=NULL) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
+	// low on health? Pick some up if there's any near by
 	ADD_UTILITY(BOT_UTIL_HL2DM_USE_HEALTH_CHARGER,(m_pHealthCharger.get() != NULL) && (getHealthPercent()<1.0f),(1.0f-getHealthPercent()));
+	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,(m_pHealthKit.get()!=NULL) && (getHealthPercent()<1.0f),1.0f-getHealthPercent());
+
+	// low on armor?
+	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,(m_pBattery.get() !=NULL) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
+	ADD_UTILITY(BOT_UTIL_HL2DM_USE_CHARGER,(m_pCharger.get() !=NULL) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
+	
+	// low on ammo? ammo nearby?
+	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (getAmmo(0)<5),0.01f*(100-getAmmo(0)));
+
+	// always able to roam around
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.1f);
+
+	// I have an enemy 
 	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy,getHealthPercent()*(getArmorPercent()+0.1));
 
 	utils.execute();
 
 	while ( (next = utils.nextBest()) != NULL )
 	{
+		if ( !m_pSchedules->isEmpty() && (m_CurrentUtil != next->getId() ) )
+			m_pSchedules->freeMemory();
+
 		if ( executeAction(next->getId()) )
 		{
+			m_CurrentUtil = next->getId();
+
 			if ( m_fUtilTimes[next->getId()] < engine->Time() )
-				m_fUtilTimes[next->getId()] = engine->Time() + randomFloat(0.1f,2.0f);
-			/*if ( CClients::clientsDebugging() )
+				m_fUtilTimes[next->getId()] = engine->Time() + randomFloat(0.1f,2.0f); // saves problems with consistent failing
+
+			if ( CClients::clientsDebugging() )
 			{
-				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[util->getId()],this);
-			}*/
+				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[next->getId()],this);
+			}
 			break;
 		}
 	}
@@ -329,9 +410,6 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 
 void CHLDMBot :: modThink ()
 {
-	extern ConVar rcbot_jump_obst_dist;
-	extern ConVar rcbot_jump_obst_speed;
-
 	if ( !CBotGlobals::entityIsValid(m_NearestPhysObj) )
 		m_NearestPhysObj = NULL;
 
@@ -378,6 +456,7 @@ void CHLDMBot :: modThink ()
 
 		if ( m_pCurrentWeapon && !strcmp("weapon_physcannon",m_pCurrentWeapon->GetClassName()) )
 		{
+			m_bCarryingObject = CClassInterface::gravityGunObject(m_pCurrentWeapon)!=NULL;
 			bCarry = (CClassInterface::gravityGunObject(m_pCurrentWeapon) == m_NearestPhysObj.get());
 		}
 
@@ -401,10 +480,44 @@ void CHLDMBot :: modThink ()
 				}
 			}
 		}
-		
 	}
 }
 
+
+void CHLDMBot :: handleWeapons ()
+{
+	//
+	// Handle attacking at this point
+	//
+	if ( m_pEnemy && !hasSomeConditions(CONDITION_ENEMY_DEAD) && 
+		hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && wantToShoot() && 
+		isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
+	{
+		CBotWeapon *pWeapon;
+
+		setMoveLookPriority(MOVELOOK_ATTACK);
+
+		pWeapon = getBestWeapon(m_pEnemy,true,true,(m_pEnemy==m_NearestBreakable)||rcbot_melee_only.GetBool());
+
+		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
+		{
+			//selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
+			selectWeapon(pWeapon->getWeaponIndex());
+		}
+
+		setLookAtTask((LOOK_ENEMY));
+
+		///battack = true;
+
+		if ( !handleAttack ( pWeapon, m_pEnemy ) )
+		{
+			m_pEnemy = NULL;
+			m_pOldEnemy = NULL;
+			wantToShoot(false);
+		}
+	}
+}
+// update some edicts in my memory if I see them or not
 void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 {
 	static float fDist;
@@ -423,27 +536,43 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		else if ( ( strncmp(pEntity->GetClassName(),"item_health",11)==0 ) && 
 			( !m_pHealthKit.get() || (fDist<distanceFrom(m_pHealthKit.get())) ))
 		{
+			//if ( getHealthPercent() < 1.0f )
+			//	updateCondition(CONDITION_CHANGED);
+
 			m_pHealthKit = pEntity;
 		}
 		else if ( ( strcmp(pEntity->GetClassName(),"item_battery")==0 ) && 
 			( !m_pBattery.get() || (fDist<distanceFrom(m_pBattery.get())) ))
 		{
 			m_pBattery = pEntity;
-		
+		}
+		else if ( ( strncmp(pEntity->GetClassName(),"prop_physics",12)==0 ) && (CClassInterface::getPlayerHealth(pEntity)>0) &&
+			( !m_NearestBreakable.get() || (fDist<distanceFrom(m_NearestBreakable.get())) ))
+		{
+			m_NearestBreakable = pEntity;
 		}
 		else if ( (pEntity != m_FailedPhysObj) && ( strncmp(pEntity->GetClassName(),"prop_physics",12)==0 ) && 
 			( !m_NearestPhysObj.get() || (fDist<distanceFrom(m_NearestPhysObj.get())) ))
 		{
+			//if ( !m_bCarryingObject )
+			//	updateCondition(CONDITION_CHANGED);
+
 			m_NearestPhysObj = pEntity;
 		}
 		else if ( ( strncmp(pEntity->GetClassName(),"item_suitcharger",16)==0 ) && 
 			( !m_pCharger.get() || (fDist<distanceFrom(m_pCharger.get())) ))
 		{
+			if ( m_pPlayerInfo->GetArmorValue() < 50 )
+				updateCondition(CONDITION_CHANGED);
+
 			m_pCharger = pEntity;
 		}
 		else if ( ( strncmp(pEntity->GetClassName(),"item_healthcharger",18)==0 ) && 
 			( !m_pHealthCharger.get() || (fDist<distanceFrom(m_pHealthCharger.get())) ))
 		{
+			if ( getHealthPercent() < 1.0f )
+				updateCondition(CONDITION_CHANGED);
+
 			m_pHealthCharger = pEntity;
 		}
 	}
@@ -461,11 +590,15 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_pCharger = NULL;
 		else if ( m_pHealthCharger == pEntity )
 			m_pHealthCharger = NULL;
+		else if ( m_NearestBreakable == pEntity )
+			m_NearestBreakable = NULL;
 	}
 
 }
 
+// lost my enemy - rethink my next move by flushiing schedules
 void CHLDMBot :: enemyLost ()
 {
-	m_pSchedules->freeMemory();
+	updateCondition(CONDITION_CHANGED);
+	//m_pSchedules->freeMemory();
 }

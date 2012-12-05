@@ -192,7 +192,7 @@ CBotWeapons :: CBotWeapons ( CBot *pBot )
 	}
 }
 
-CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bool bAllowMeleeFallback )
+CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bool bAllowMeleeFallback, bool bMeleeOnly )
 {
 	CBotWeapon *m_theBestWeapon = NULL;
 	CBotWeapon *m_FallbackMelee = NULL;
@@ -217,6 +217,9 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bo
 			continue;
 
 		if ( !pWeapon->hasWeapon() )
+			continue;
+
+		if ( bMeleeOnly && !pWeapon->isMelee() )
 			continue;
 
 		if ( !bAllowMelee && pWeapon->isMelee() )

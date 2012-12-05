@@ -287,6 +287,7 @@ eBotCommandResult CPrintProps :: execute ( CClient *pClient, const char *pcmd, c
 			extern bool g_PrintProps;
 			unsigned int m_offset;
 			g_PrintProps = true;
+			
 			ServerClass *sc = UTIL_FindServerClass(pcmd);
 
 			if ( sc )

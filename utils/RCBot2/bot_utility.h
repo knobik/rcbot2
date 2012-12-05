@@ -117,6 +117,8 @@ typedef enum
  BOT_UTIL_MAX
 }eBotAction;
 
+extern const char *g_szUtils[BOT_UTIL_MAX+1];
+
 class CBotUtility
 {
 public:
