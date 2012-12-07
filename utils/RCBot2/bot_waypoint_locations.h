@@ -67,7 +67,7 @@ class CWaypointLocations
 {
 public:
 
-	static const int REACHABLE_RANGE = 512;
+	static const int REACHABLE_RANGE = 400;
 
 	// max map size is 32768
 	static const int HALF_MAX_MAP_SIZE = 16384; // need to know half (negative + positive halves = max)
@@ -148,6 +148,10 @@ public:
 
 	static void AutoPathInBucket ( edict_t *pPlayer, int i, int j, int k, int iWpt );
 	
+	static int NearestBlastWaypoint ( const Vector &vOrigin, const Vector &vSrc, float fNearestDist, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, bool bNearestAimingOnly, int iTeam, bool bCheckArea );
+
+	static void FindNearestBlastInBucket ( int i, int j, int k, const Vector &vOrigin, const Vector &vSrc, float *pfMinDist, int *piIndex, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, bool bNearestAimingOnly, int iTeam, bool bCheckArea );
+
 private:
 	
 	//static dataStack<int> m_iLocations[MAX_WPT_BUCKETS][MAX_WPT_BUCKETS][MAX_WPT_BUCKETS];

@@ -793,7 +793,7 @@ public:
 		return m_bHasGoal;
 	}
 
-	void primaryAttack (bool bHold = false);
+	void primaryAttack ( bool bHold=false, float fTime =0.0f );
 	void secondaryAttack(bool bHold=false);
 	void jump ();
 	void duck ( bool hold = false );
@@ -883,7 +883,7 @@ public:
 
 	inline void updateDanger ( float fBelief ) { m_fCurrentDanger = (m_fCurrentDanger/2) + (fBelief/2); }
 
-	inline void reduceTouchDistance ( ) { if ( m_fWaypointTouchDistance > 20 ) m_fWaypointTouchDistance *= 0.9; }
+	inline void reduceTouchDistance ( ) { if ( m_fWaypointTouchDistance > 32 ) m_fWaypointTouchDistance *= 0.9; }
 
 	inline void resetTouchDistance ( float fDist ) { m_fWaypointTouchDistance = fDist; }
 
@@ -970,6 +970,7 @@ protected:
 
 	float m_fStrafeTime;
 	float m_fLastSeeEnemy;
+	float m_fLastUpdateLastSeeEnemy;
 
 	float m_fUpdateDamageTime;
 	// Damage bot accumulated over the last second or so
@@ -997,6 +998,7 @@ protected:
 	MyEHandle m_pEnemy; // current enemy
 	MyEHandle m_pOldEnemy;
 	Vector m_vLastSeeEnemy;
+	Vector m_vLastSeeEnemyBlastWaypoint;
 	MyEHandle m_pLastEnemy; // enemy we were fighting before we lost it
 	//edict_t *m_pAvoidEntity; // avoid this guy
 	Vector m_vHurtOrigin;

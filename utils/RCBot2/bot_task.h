@@ -177,14 +177,17 @@ private:
 
 };
 
+#define CHARGER_HEALTH 0
+#define CHARGER_ARMOR 1
 
 class CBotHL2DMUseCharger : public CBotTask
 {
 public:
-	CBotHL2DMUseCharger ( edict_t *pCharger )
+	CBotHL2DMUseCharger ( edict_t *pCharger, int type )
 	{
 		m_pCharger = pCharger;
 		m_fTime = 0;
+		m_iType = type;
 	}
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
@@ -196,6 +199,7 @@ public:
 private:
 	MyEHandle m_pCharger;
 	float m_fTime;
+	int m_iType;
 
 };
 
@@ -563,6 +567,20 @@ private:
 	bool m_bFind;
 };
 
+class CThrowGrenadeTask : public CBotTask
+{
+public:
+	CThrowGrenadeTask ( int ammo, Vector vLoc );
+	void init ();
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+	virtual void debugString ( char *string );
+private:
+	Vector m_vLoc;
+	float m_fTime;
+	float m_fHoldAttackTime;
+	int m_iAmmo;
+};
+
 class CAttackEntityTask : public CBotTask
 {
 public:
@@ -678,6 +696,13 @@ public:
 private:
 	Vector m_vHideFrom;
 	float m_fHideTime;
+};
+
+class CPrimaryAttack : public CBotTask
+{
+public:
+
+	void execute ( CBot *pBot, CBotSchedule *pSchedule );
 };
 /*
 class CAttackTask : public CBotTask

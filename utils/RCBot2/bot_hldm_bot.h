@@ -78,6 +78,10 @@ public:
 			m_NearestPhysObj = NULL;
 	}
 
+	bool checkStuck ();
+
+	bool willCollide ( edict_t *pEntity, bool *bCanJump, float *fTime );
+
 	edict_t *getFailedObject () { return m_FailedPhysObj; }
 private:
 	// blah blah
@@ -101,7 +105,7 @@ private:
 	int m_iClip2;
 
 	eBotAction m_CurrentUtil;
-	bool m_bCarryingObject; // using grav gun
+	edict_t *m_pCarryingObject; // using grav gun
 };
 
 #endif

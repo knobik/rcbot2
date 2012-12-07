@@ -348,6 +348,106 @@ void CWaypointLocations :: FindNearestCoverWaypointInBucket ( int i, int j, int 
 		}
 	}
 }
+////////////////////////////////////////////////
+/////////////////////////////
+// get the nearest waypoint INDEX from an origin
+int CWaypointLocations :: NearestBlastWaypoint ( const Vector &vOrigin, const Vector &vSrc, float fNearestDist, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, bool bNearestAimingOnly, int iTeam, bool bCheckArea )
+{
+	int iNearestIndex = -1;
+
+	int iLoc = READ_LOC(vOrigin.x);
+	int jLoc = READ_LOC(vOrigin.y);
+	int kLoc = READ_LOC(vOrigin.z);
+
+	int i,j,k;
+
+	int iMinLoci,iMaxLoci,iMinLocj,iMaxLocj,iMinLock,iMaxLock;
+
+	getMinMaxs(iLoc,jLoc,kLoc,&iMinLoci,&iMinLocj,&iMinLock,&iMaxLoci,&iMaxLocj,&iMaxLock);
+
+	for ( i = iMinLoci; i <= iMaxLoci; i++ )
+	{
+		for ( j = iMinLocj; j <= iMaxLocj; j++ )
+		{
+			for ( k = iMinLock; k <= iMaxLock; k++ )
+			{
+				FindNearestBlastInBucket(i,j,k,vOrigin,vSrc,&fNearestDist,&iNearestIndex,iIgnoreWpt,bGetVisible,bGetUnReachable,bIsBot,bNearestAimingOnly,iTeam,bCheckArea);
+			}
+		}
+	}
+
+	return iNearestIndex;
+}
+///////////////////////////////////////////////
+// find a waypoint I can fire a blast (e.g. rpg or grenade to)
+void CWaypointLocations :: FindNearestBlastInBucket ( int i, int j, int k, const Vector &vOrigin, const Vector &vSrc, float *pfMinDist, int *piIndex, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, bool bNearestAimingOnly, int iTeam, bool bCheckArea )
+// Search for the nearest waypoint : I.e.
+// Find the waypoint that is closest to vOrigin from the distance pfMinDist
+// And set the piIndex to the waypoint index if closer.
+{
+	//dataStack <int> tempStack = m_iLocations[i][j][k];
+
+	CWaypoint *curr_wpt;
+	int iSelectedIndex;
+	float fDist;
+//	int iWptFlags;
+
+	trace_t tr;
+	
+	bool bAdd;
+	
+	//while ( !tempStack.IsEmpty() )
+	for ( int l = 0; l < m_iLocations[i][j][k].Size(); l ++ )
+	{
+		//iSelectedIndex = tempStack.ChooseFromStack();
+		iSelectedIndex = m_iLocations[i][j][k][l];
+
+		if ( iSelectedIndex == iIgnoreWpt )
+			continue;
+
+		curr_wpt = CWaypoints::getWaypoint(iSelectedIndex);
+
+		if ( !bGetUnReachable && curr_wpt->hasFlag(CWaypointTypes::W_FL_UNREACHABLE) )
+			continue;
+
+		if ( !curr_wpt->isUsed() )
+			continue;
+
+		if ( !curr_wpt->forTeam(iTeam) )
+			continue;
+
+		if ( bCheckArea && !CPoints::isValidArea(curr_wpt->getArea()) )
+			continue;
+
+		if ( bIsBot )
+		{
+			if ( curr_wpt->getFlags() & (CWaypointTypes::W_FL_DOUBLEJUMP | CWaypointTypes::W_FL_ROCKET_JUMP | CWaypointTypes::W_FL_JUMP) ) // fix : BIT OR
+				continue;
+		}
+
+		if ( curr_wpt->distanceFrom(vOrigin) < BLAST_RADIUS )
+		{
+			if ( (fDist = curr_wpt->distanceFrom(vSrc)) < *pfMinDist )
+			{
+				bAdd = false;
+				
+				if ( bGetVisible == false )
+					bAdd = true;
+				else
+				{
+					bAdd = CBotGlobals::isVisible(vSrc,curr_wpt->getOrigin()) && CBotGlobals::isVisible(vOrigin,curr_wpt->getOrigin());
+				}
+				
+				if ( bAdd )
+				{
+					*piIndex = iSelectedIndex;
+					*pfMinDist = fDist;
+				}
+			}
+		}
+	}
+}
+
 ///////////////////////////////////////////////
 //
 
@@ -397,7 +497,7 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 
 		if ( bIsBot )
 		{
-			if ( curr_wpt->getFlags() & (CWaypointTypes::W_FL_ROCKET_JUMP || CWaypointTypes::W_FL_JUMP) )
+			if ( curr_wpt->getFlags() & (CWaypointTypes::W_FL_DOUBLEJUMP | CWaypointTypes::W_FL_ROCKET_JUMP | CWaypointTypes::W_FL_JUMP) ) // fix : bit OR
 				continue;
 		}
 

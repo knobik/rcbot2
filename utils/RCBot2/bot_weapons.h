@@ -491,6 +491,8 @@ public:
 
 	void clearWeapons ();
 
+	bool hasWeapon ( int id );
+
 private:
 	// bot that has these weapons
 	CBot *m_pBot;

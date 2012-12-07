@@ -383,6 +383,13 @@ void CBotTF2AttackPoint :: debugString ( char *string )
 	sprintf(string,"CBotTF2AttackPoint (%d,%0.1f,%0.1f,%0.1f,%d)",m_iArea,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z,m_iRadius);
 }
 
+////////////////////////
+void CPrimaryAttack:: execute ( CBot *pBot, CBotSchedule *pSchedule )
+{
+	pBot->primaryAttack();
+	complete();
+}
+
 ////////////////////////////
 
 CBotTF2PushPayloadBombTask :: CBotTF2PushPayloadBombTask (edict_t * pPayloadBomb)
@@ -619,6 +626,11 @@ void CBotHL2DMUseCharger :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime < engine->Time() )
 		complete();
 
+	if ( ( m_iType == CHARGER_HEALTH ) && ( pBot->getHealthPercent() >= 0.99f ) )
+		complete();
+	else if ( ( m_iType == CHARGER_ARMOR ) && ( ((CHLDMBot*)pBot)->getArmorPercent() >= 0.99f ) )
+		complete();
+
 	pBot->setLookVector(vOrigin);
 	pBot->setLookAtTask(LOOK_VECTOR);
 
@@ -656,7 +668,7 @@ void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-	if ( !CBotGlobals::entityIsValid(m_Prop) )
+	if ( !CBotGlobals::entityIsValid(m_Prop) || !pBot->isVisible(m_Prop) )
 	{
 		((CHLDMBot*)pBot)->setFailedObject(m_Prop);
 		fail();
@@ -683,6 +695,8 @@ void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
 		pBot->setMoveTo(vBotOrigin + (vBotOrigin-vOrigin)*100);
 	else
 		pBot->stopMoving();
+
+	m_Weapon = INDEXENT(pWeapon->getWeaponIndex());
 
 	pBot->setMoveLookPriority(MOVELOOK_OVERRIDE);
 	pBot->setLookVector(vOrigin);
@@ -1890,6 +1904,69 @@ void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		fail();
 }
 
+///
+CThrowGrenadeTask :: CThrowGrenadeTask (int ammo, Vector vLoc )
+{
+	m_fTime = 0;
+	m_vLoc = vLoc + Vector(0,0,48);
+	m_fHoldAttackTime = 0;
+	m_iAmmo = ammo;
+}
+
+void CThrowGrenadeTask ::init()
+{
+	m_fTime = 0;
+}
+
+void CThrowGrenadeTask::debugString(char *string)
+{
+	sprintf(string,"CThrowGrenadeTask (%0.4f,%0.4f,%0.4f) fTime = %0.4f",m_vLoc.x,m_vLoc.y,m_vLoc.z,m_fTime);	
+}
+void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fTime == 0 )
+		m_fTime = engine->Time() + 2.0f;
+
+	if ( m_fTime < engine->Time() )
+		fail();
+
+	CBotWeapon *pWeapon;
+
+	pWeapon = pBot->getCurrentWeapon();
+	pBot->wantToChangeWeapon(false);
+
+	if ( pWeapon && (pWeapon->getID() == HL2DM_WEAPON_PHYSCANNON) && CClassInterface::gravityGunObject(INDEXENT(pWeapon->getWeaponIndex())) )
+	{
+		// drop it
+		if ( randomInt(0,1) )
+			pBot->primaryAttack();	
+		else
+			pBot->secondaryAttack();
+	}
+	else if ( !pWeapon || (pWeapon->getID() != HL2DM_WEAPON_FRAG) )
+	{
+		pBot->select_CWeapon(CWeapons::getWeapon(HL2DM_WEAPON_FRAG));
+	}
+	else
+	{
+		pBot->setLookVector(m_vLoc);
+		pBot->setLookAtTask(LOOK_VECTOR);
+
+		if ( pBot->DotProductFromOrigin(m_vLoc) > 0.98 )
+		{
+			if ( randomInt(0,1) )
+				pBot->primaryAttack();
+
+			if ( pWeapon->getAmmo(pBot) < m_iAmmo )
+				complete();
+		}
+		else if ( pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+		{
+			pBot->primaryAttack();
+			fail();
+		}
+	}
+}
 ///
 
 void CAutoBuy :: init () 

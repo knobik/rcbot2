@@ -43,6 +43,7 @@
 #include "bot_waypoint.h"
 #include "bot_weapons.h"
 #include "bot_mtrand.h"
+#include "bot_waypoint_locations.h"
 //#include "vstdlib/random.h" // for random functions
 extern ConVar rcbot_jump_obst_dist;
 extern ConVar rcbot_jump_obst_speed;
@@ -182,7 +183,7 @@ bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	// not a player - false
 	if ( !entity_index || (entity_index > CBotGlobals::maxClients()) )
 	{
-		if ( !m_bCarryingObject && pEdict->GetUnknown() && (pEdict == m_NearestBreakable) && (CClassInterface::getPlayerHealth(pEdict)>0) )
+		if ( !m_pCarryingObject && pEdict->GetUnknown() && (pEdict == m_NearestBreakable) && (CClassInterface::getPlayerHealth(pEdict)>0) )
 		{
 			if ( distanceFrom(CBotGlobals::entityOrigin(pEdict)) < rcbot_jump_obst_dist.GetFloat() )
 			{
@@ -229,7 +230,7 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 			CBotSchedule *pSched = new CBotSchedule();
 			
 			pSched->addTask(new CFindPathTask(m_pHealthCharger));
-			pSched->addTask(new CBotHL2DMUseCharger(m_pHealthCharger));
+			pSched->addTask(new CBotHL2DMUseCharger(m_pHealthCharger,CHARGER_HEALTH));
 
 			m_pSchedules->add(pSched);
 
@@ -241,7 +242,7 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 			CBotSchedule *pSched = new CBotSchedule();
 			
 			pSched->addTask(new CFindPathTask(m_pCharger));
-			pSched->addTask(new CBotHL2DMUseCharger(m_pCharger));
+			pSched->addTask(new CBotHL2DMUseCharger(m_pCharger,CHARGER_ARMOR));
 
 			m_pSchedules->add(pSched);
 
@@ -251,6 +252,7 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 	case BOT_UTIL_HL2DM_GRAVIGUN_PICKUP:
 		{
 			CBotSchedule *pSched = new CBotSchedule(new CBotGravGunPickup(m_pCurrentWeapon,m_NearestPhysObj));
+			pSched->setID(SCHED_GRAVGUN_PICKUP);
 			m_pSchedules->add(pSched);
 			return true;
 		}
@@ -276,6 +278,21 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 			m_bLookedForEnemyLast = true;
 
 			return true;
+		}
+	case BOT_UTIL_THROW_GRENADE:
+		{
+		// find hide waypoint
+			CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::GetCoverWaypoint(getOrigin(),m_vLastSeeEnemy,NULL));
+
+			if ( pWaypoint )
+			{
+				CBotSchedule *pSched = new CBotSchedule();
+				pSched->addTask(new CThrowGrenadeTask(getAmmo(CWeapons::getWeapon(HL2DM_WEAPON_FRAG)->getAmmoIndex1()),m_vLastSeeEnemyBlastWaypoint)); // first - throw
+				pSched->addTask(new CFindPathTask(pWaypoint->getOrigin())); // 2nd -- hide
+				m_pSchedules->add(pSched);
+				return true;
+			}
+
 		}
 	case BOT_UTIL_ROAM:
 		// roam
@@ -308,7 +325,7 @@ bool CHLDMBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		clearFailedWeaponSelect();
 
 		if ( pWeapon->isMelee() )
-			setMoveTo(CBotGlobals::entityOrigin(m_pEdict));
+			setMoveTo(CBotGlobals::entityOrigin(pEnemy));
 
 		if ( (pWeapon->getID() == HL2DM_WEAPON_PHYSCANNON) && (DotProductFromOrigin(m_vAimVector) < rcbot_enemyshoot_gravgun_fov.GetFloat()) ) 
 			return true; // keep enemy / don't shoot : until angle between enemy is less than 20 degrees
@@ -362,7 +379,7 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 
 		if ( CBotGlobals::entityIsValid(pent) )
 		{
-			ADD_UTILITY(BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,(!m_pEnemy||(m_pCurrentWeapon&&(strcmp("weapon_physcannon",m_pCurrentWeapon->GetClassName())))) && gravgun && gravgun->hasWeapon() && (m_NearestPhysObj.get()!=NULL) && (gravgun->getWeaponIndex() > 0) && (CClassInterface::gravityGunObject(INDEXENT(gravgun->getWeaponIndex()))==NULL),1.0f);
+			ADD_UTILITY(BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,(!m_pEnemy||(m_pCurrentWeapon&&(strcmp("weapon_physcannon",m_pCurrentWeapon->GetClassName())))) && gravgun && gravgun->hasWeapon() && (m_NearestPhysObj.get()!=NULL) && (gravgun->getWeaponIndex() > 0) && (CClassInterface::gravityGunObject(INDEXENT(gravgun->getWeaponIndex()))==NULL),0.9f);
 		}
 	}
 
@@ -378,12 +395,22 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (getAmmo(0)<5),0.01f*(100-getAmmo(0)));
 
 	// always able to roam around
-	ADD_UTILITY(BOT_UTIL_ROAM,true,0.1f);
+	ADD_UTILITY(BOT_UTIL_ROAM,true,0.01f);
 
 	// I have an enemy 
 	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy,getHealthPercent()*(getArmorPercent()+0.1));
 
+	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && m_pWeapons->hasWeapon(HL2DM_WEAPON_FRAG) )
+	{
+		CWeapon *pWeapon = CWeapons::getWeapon(HL2DM_WEAPON_FRAG);
+		CBotWeapon *pBotWeapon = m_pWeapons->getWeapon(pWeapon);
+
+		ADD_UTILITY(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,1.0f-(getHealthPercent()*0.2));
+
+	}
+
 	utils.execute();
+
 
 	while ( (next = utils.nextBest()) != NULL )
 	{
@@ -410,6 +437,8 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 
 void CHLDMBot :: modThink ()
 {
+	m_fIdealMoveSpeed = CClassInterface::getMaxSpeed(m_pEdict);
+
 	if ( !CBotGlobals::entityIsValid(m_NearestPhysObj) )
 		m_NearestPhysObj = NULL;
 
@@ -456,31 +485,104 @@ void CHLDMBot :: modThink ()
 
 		if ( m_pCurrentWeapon && !strcmp("weapon_physcannon",m_pCurrentWeapon->GetClassName()) )
 		{
-			m_bCarryingObject = CClassInterface::gravityGunObject(m_pCurrentWeapon)!=NULL;
+			m_pCarryingObject = CClassInterface::gravityGunObject(m_pCurrentWeapon);
 			bCarry = (CClassInterface::gravityGunObject(m_pCurrentWeapon) == m_NearestPhysObj.get());
 		}
 
 		if ( !bCarry && (distanceFrom(pEntity) < rcbot_jump_obst_dist.GetFloat()) )
 		{
-			Vector vel;
+			bool bCanJump = false;
+			float fTime = 0;
 
-			if ( CClassInterface::getVelocity(m_pEdict,&vel) )
+			if ( willCollide(pEntity,&bCanJump,&fTime) )
 			{
-				Vector v_size = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
-
-				if ( v_size.z <= 48 ) // jump height
+				if ( bCanJump && (fTime < 1.5f) ) // one second to jump
 				{
-					if ( (vel.Length() > rcbot_jump_obst_speed.GetFloat()) && 
-						
-						(CBotGlobals::entityOrigin(pEntity)-(CBotGlobals::entityOrigin(m_pEdict)+Vector(0,0,16)+((vel/vel.Length())*distanceFrom(pEntity)))).Length() <= (v_size.Length()/2) )
-					{
-						if ( randomInt(0,1) )
-							jump();
-					}
+					if ( randomInt(0,1) )
+						jump();
 				}
 			}
 		}
 	}
+}
+
+bool CHLDMBot::checkStuck()
+{
+	static bool bStuck;
+
+	if ( (bStuck = CBot::checkStuck()) == true )
+	{
+		if ( m_pWeapons->hasWeapon(HL2DM_WEAPON_PHYSCANNON) )
+		{// check stuck on object
+
+			CBotWeapon *currentWeapon = getCurrentWeapon();
+
+			if ( ( currentWeapon->getID() == HL2DM_WEAPON_PHYSCANNON ) && ( m_pCarryingObject ) )
+			{
+				primaryAttack();
+			}
+			else if ( m_NearestPhysObj && (distanceFrom(m_NearestPhysObj)<100) )
+			{
+				if ( !m_pSchedules->hasSchedule(SCHED_GRAVGUN_PICKUP) )
+				{
+					m_pSchedules->freeMemory();
+					CBotSchedule *pSched = new CBotSchedule(new CBotGravGunPickup(m_pCurrentWeapon,m_NearestPhysObj));
+					pSched->setID(SCHED_GRAVGUN_PICKUP);
+					m_pSchedules->add(pSched);
+				}
+			}
+		}
+	}
+
+	return bStuck;
+}
+
+bool CHLDMBot :: willCollide ( edict_t *pEntity, bool *bCanJump, float *fTime )
+{
+	static Vector vel;
+	static Vector v_size;
+	static float fDistance;
+	static Vector vOrigin;
+	static float fSpeed;
+	static Vector v_dest;
+	static Vector v_min,v_max;
+
+	if ( CClassInterface::getVelocity(m_pEdict,&vel) )
+	{
+		v_min = pEntity->GetCollideable()->OBBMins();
+		v_max = pEntity->GetCollideable()->OBBMaxs();
+		v_size = v_max - v_min;
+
+		fDistance = distanceFrom(pEntity);
+		vOrigin = CBotGlobals::entityOrigin(pEntity);
+		fSpeed = vel.Length();
+
+		// speed = dist/time  --- time = dist/speed
+		if ( fSpeed > 0 )
+		{
+			*fTime = fDistance / fSpeed;
+
+			vel = vel / fSpeed; // normalize
+			v_dest = getOrigin() + (vel*fDistance);
+
+			if ( v_size.z <= 48 ) // jump height
+				*bCanJump = true;
+
+			return (vOrigin - v_dest).Length() < (v_size.Length()/2);
+
+			/*v_min = vOrigin + v_min;
+			v_max = vOrigin + v_max;
+
+			return ( ( v_dest.x >= v_min.x ) &&
+				 ( v_dest.y >= v_min.y ) &&
+				 ( v_dest.z >= v_min.z ) &&
+				 (v_dest.x <= v_max.x ) &&
+				 (v_dest.y <= v_max.y ) &&
+				 (v_dest.z <= v_max.z ) );*/
+		}
+	}
+
+	return false;
 }
 
 

@@ -81,6 +81,8 @@
 #include "bot_ga_nn_const.h"
 #include "bot_weapons.h"
 #include "bot_profile.h"
+#include "bot_waypoint_locations.h"
+#include "bot_waypoint.h"
 
 #include "bot_mtrand.h"
 //#include "vstdlib/random.h" // for random functions
@@ -404,8 +406,11 @@ bool CBot :: checkStuck ()
 				
 			}
 
+
 			m_fCheckStuckTime = engine->Time() + 2.04f;
 		}
+		else
+			m_bThinkStuck = false;
 	}
 
 	return m_bThinkStuck;
@@ -648,14 +653,16 @@ void CBot :: think ()
 
 	updateConditions();
 
-
-	if ( m_fUpdateOriginTime < fTime )
+	if ( !CClassInterface::getVelocity(m_pEdict,&m_vVelocity) )
 	{
-		Vector vOrigin = getOrigin();
+		if ( m_fUpdateOriginTime < fTime )
+		{
+			Vector vOrigin = getOrigin();
 
-		m_vVelocity = m_vLastOrigin-vOrigin;
-		m_vLastOrigin = vOrigin;
-		m_fUpdateOriginTime = fTime+1.0f;
+			m_vVelocity = m_vLastOrigin-vOrigin;
+			m_vLastOrigin = vOrigin;
+			m_fUpdateOriginTime = fTime+1.0f;
+		}
 	}
 
 	setMoveLookPriority(MOVELOOK_MODTHINK);
@@ -749,6 +756,7 @@ edict_t *CBot :: getEdict ()
 
 void CBot :: updateConditions ()
 {
+
 	if ( m_pEnemy )
 	{
 		if ( !CBotGlobals::entityIsAlive(m_pEnemy) )
@@ -768,12 +776,21 @@ void CBot :: updateConditions ()
 			}
 			else 
 			{
+				CWaypoint *pWpt;
+
 				if ( !m_pLastEnemy || (m_pLastEnemy != m_pEnemy ))
 					enemyLost();
 
 				m_fLastSeeEnemy = engine->Time();
 				m_pLastEnemy = m_pEnemy;
+				m_fLastUpdateLastSeeEnemy = 0;
 				m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
+				m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
+
+				pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),1024.0,-1,true,true,false,false,0,false));
+				
+				if ( pWpt )
+					m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
 
 				removeCondition(CONDITION_SEE_CUR_ENEMY);
 				updateCondition(CONDITION_ENEMY_OBSCURED);
@@ -785,6 +802,22 @@ void CBot :: updateConditions ()
 		removeCondition(CONDITION_SEE_CUR_ENEMY);
 		removeCondition(CONDITION_ENEMY_OBSCURED);
 		removeCondition(CONDITION_ENEMY_DEAD);
+	}
+
+	if ( m_pLastEnemy )
+	{
+		if ( m_fLastSeeEnemy )
+		{
+			if ( m_fLastUpdateLastSeeEnemy < engine->Time() )
+			{
+				m_fLastUpdateLastSeeEnemy = engine->Time() + 0.5f;
+
+				if ( FVisible(m_vLastSeeEnemyBlastWaypoint) )
+					updateCondition(CONDITION_SEE_LAST_ENEMY_POS);
+				else
+					removeCondition(CONDITION_SEE_LAST_ENEMY_POS);
+			}
+		}
 	}
 
 	if ( FVisible(m_vLookVector) )
@@ -824,7 +857,7 @@ bool CBot::handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		clearFailedWeaponSelect();
 
 		if ( pWeapon->isMelee() )
-			setMoveTo(CBotGlobals::entityOrigin(m_pEdict));
+			setMoveTo(CBotGlobals::entityOrigin(pEnemy));
 
 		if ( pWeapon->mustHoldAttack() )
 			primaryAttack(true);
@@ -860,6 +893,8 @@ edict_t *CBot :: getVisibleSpecial ()
 void CBot :: spawnInit ()
 {
 	resetTouchDistance(48.0f);
+
+	m_fLastUpdateLastSeeEnemy = 0;
 
 	for ( int i = 0; i < BOT_UTIL_MAX; i ++ )
 		m_fUtilTimes[i] = 0;
@@ -1907,7 +1942,7 @@ void CBot :: secondaryAttack ( bool bHold )
 	}
 }
 
-void CBot :: primaryAttack ( bool bHold )
+void CBot :: primaryAttack ( bool bHold, float fTime )
 {
 	float fLetGoTime = 0.15f;
 	float fHoldTime = 0.12f;
@@ -1915,7 +1950,11 @@ void CBot :: primaryAttack ( bool bHold )
 	if ( bHold )
 	{
 		fLetGoTime = 0.0f;
-		fHoldTime = 2.0f;
+
+		if ( fTime )
+			fHoldTime = fTime;
+		else
+			fHoldTime = 2.0f;
 	}
 
 	// not currently in "letting go" stage?

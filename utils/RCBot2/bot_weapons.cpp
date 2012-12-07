@@ -167,19 +167,30 @@ bool CBotWeapon :: needToReload (CBot *pBot)
 // static init (all weapons in game)
 vector<CWeapon*> CWeapons :: m_theWeapons;
 
-
 int CBotWeapon :: getAmmo (CBot *pBot, int type )
 {
-	if ( ( type == AMMO_PRIM ) && canAttack() )
+	if ( type == AMMO_PRIM )
 		return pBot->getAmmo(m_pWeaponInfo->getAmmoIndex1());
 
-	if ( ( type == AMMO_SEC ) && canUseSecondary() )
+	if ( type == AMMO_SEC )
 		return pBot->getAmmo(m_pWeaponInfo->getAmmoIndex2());
 
 
 	return 0;
 }
 
+bool CBotWeapons::hasWeapon(int id)
+{
+	for ( int i = 0; i < MAX_WEAPONS; i ++ )
+	{
+		// find weapon info from weapon id
+		if ( m_theWeapons[i].getID() == id )
+		{
+			return m_theWeapons[i].hasWeapon();
+		}
+	}
+	return false;
+}
 // Bot Weapons
 CBotWeapons :: CBotWeapons ( CBot *pBot ) 
 {
