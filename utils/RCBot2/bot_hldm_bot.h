@@ -94,6 +94,7 @@ private:
 	MyEHandle m_pAmmoKit; // nearest healthkit
 	MyEHandle m_pBattery; // nearest battery
 	MyEHandle m_pCharger; // nearest charger
+	MyEHandle m_pNearbyWeapon;
 	edict_t *m_pCurrentWeapon;
 
 	CBaseHandle *m_Weapons;

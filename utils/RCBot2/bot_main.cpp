@@ -553,8 +553,8 @@ void CRCBotPlugin::GameFrame( bool simulating )
 {
 	if ( simulating && CBotGlobals::IsMapRunning() )
 	{
-		CBots::botThink();
 		gameclients->PostClientMessagesSent();
+		CBots::botThink();
 		CBots::handleAutomaticControl();
 		CClients::clientThink();
 

@@ -125,17 +125,7 @@ void CBotConfigFile :: doNextCommand ()
 	if ( (m_fNextCommandTime < engine->Time()) && (m_iCmd < m_Commands.size()) )
 	{
 		engine->ServerCommand(m_Commands[m_iCmd]);
-		//ConCommandBase::
-		/*
-		if ( m_Commands[m_iCmd][0] == '@' )
-		{
-			CBotGlobals::m_pCommands
-		}
-		else if (m_Commands[m_iCmd][0] == '$' )
-		{
 
-		}
-*/
 		CBotGlobals::botMessage(NULL,0,"Bot Command '%s' executed",m_Commands[m_iCmd]);
 		m_iCmd ++;
 		m_fNextCommandTime = engine->Time() + 0.1f;

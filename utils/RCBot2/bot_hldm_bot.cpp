@@ -108,6 +108,7 @@ void CHLDMBot :: spawnInit ()
 
 	m_CurrentUtil = BOT_UTIL_MAX;
 	// reset objects
+	m_pNearbyWeapon = NULL;
 	m_FailedPhysObj = NULL;
 	m_flSprintTime = 0;
 	m_NearestPhysObj = NULL;
@@ -215,6 +216,9 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 {
 	switch ( iAction )
 	{
+	case BOT_UTIL_PICKUP_WEAPON:
+		m_pSchedules->add(new CBotPickupSched(m_pNearbyWeapon.get()));
+		return true;
 	case BOT_UTIL_FIND_NEAREST_HEALTH:
 		m_pSchedules->add(new CBotPickupSched(m_pHealthKit.get()));
 		return true;
@@ -263,9 +267,14 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 			CBotSchedule *pSchedule = new CBotSchedule();
 			
 			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);	
+
+			pFindPath->setCompleteInterrupt(CONDITION_SEE_CUR_ENEMY);
 			
-			if ( pClient )
-				vVelocity = pClient->getVelocity();
+			if ( !CClassInterface::getVelocity(m_pLastEnemy,&vVelocity) )
+			{
+				if ( pClient )
+					vVelocity = pClient->getVelocity();
+			}
 
 			pSchedule->addTask(pFindPath);
 			pSchedule->addTask(new CFindLastEnemy(m_vLastSeeEnemy,vVelocity));
@@ -364,6 +373,7 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	static CBotUtilities utils;
 	static CBotUtility *next;
 	static CBotWeapon *gravgun;
+	static CWeapon *pWeapon;
 
 	if ( !hasSomeConditions(CONDITION_CHANGED) && !m_pSchedules->isEmpty() )
 		return;
@@ -398,7 +408,7 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.01f);
 
 	// I have an enemy 
-	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy,getHealthPercent()*(getArmorPercent()+0.1));
+	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*(getArmorPercent()+0.1));
 
 	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && m_pWeapons->hasWeapon(HL2DM_WEAPON_FRAG) )
 	{
@@ -408,6 +418,17 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 		ADD_UTILITY(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,1.0f-(getHealthPercent()*0.2));
 
 	}
+
+	if ( m_pNearbyWeapon.get() )
+	{
+		pWeapon = CWeapons::getWeapon(m_pNearbyWeapon.get()->GetClassName());
+
+		if ( pWeapon && !m_pWeapons->hasWeapon(pWeapon->getID()) )
+		{
+			ADD_UTILITY(BOT_UTIL_PICKUP_WEAPON, true , 0.6f + pWeapon->getPreference()*0.1f);
+		}
+	}
+
 
 	utils.execute();
 
@@ -628,7 +649,8 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 
 	fDist = distanceFrom(pEntity);
 
-	if ( bVisible )
+	// if no draw effect it is invisible
+	if ( bVisible && !(CClassInterface::getEffects(pEntity)&EF_NODRAW) ) 
 	{
 		if ( ( strncmp(pEntity->GetClassName(),"item_ammo",9)==0 ) && 
 			( !m_pAmmoKit.get() || (fDist<distanceFrom(m_pAmmoKit.get())) ))
@@ -673,9 +695,21 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			( !m_pHealthCharger.get() || (fDist<distanceFrom(m_pHealthCharger.get())) ))
 		{
 			if ( getHealthPercent() < 1.0f )
-				updateCondition(CONDITION_CHANGED);
+				updateCondition(CONDITION_CHANGED); // update tasks
 
 			m_pHealthCharger = pEntity;
+		}
+		else if ( ( strncmp(pEntity->GetClassName(),"weapon_",7)==0 ) && 
+			( !m_pNearbyWeapon.get() || (fDist<distanceFrom(m_pNearbyWeapon.get())) ))
+		{
+			/*static CWeapon *pWeapon;
+
+			pWeapon = CWeapons::getWeapon(pEntity->GetClassName());
+
+			if ( pWeapon && !m_pWeapons->hasWeapon(pWeapon->getID()) )
+				updateCondition(CONDITION_CHANGED);*/
+
+			m_pNearbyWeapon = pEntity;
 		}
 	}
 	else
@@ -694,6 +728,8 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_pHealthCharger = NULL;
 		else if ( m_NearestBreakable == pEntity )
 			m_NearestBreakable = NULL;
+		else if ( m_pNearbyWeapon == pEntity )
+			m_pNearbyWeapon = NULL;
 	}
 
 }

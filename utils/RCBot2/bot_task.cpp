@@ -1992,6 +1992,7 @@ void CAutoBuy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 CFindLastEnemy::CFindLastEnemy (Vector vLast,Vector vVelocity)
 {
+	setCompleteInterrupt(CONDITION_SEE_CUR_ENEMY);
 	m_vLast = vLast+(vVelocity*10);
 	m_fTime = 0;
 }
@@ -2001,8 +2002,6 @@ void CFindLastEnemy::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	if ( m_fTime == 0 )
 		m_fTime = engine->Time() + randomFloat(2.0,4.0);
 
-	if ( pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
-		complete();
 	if ( !pBot->moveToIsValid() || pBot->moveFailed() )
 		fail();
 	if ( pBot->distanceFrom(m_vLast) > 80 )

@@ -130,7 +130,6 @@ void CBot :: runPlayerMove()
 	cmd.viewangles = m_vViewAngles;
 	cmd.weaponselect = m_iSelectWeapon;
 	cmd.tick_count = gpGlobals->tickcount;
-	//cmd.hasbeenpredicted = false;
 
 	if ( bot_attack.GetInt() == 1 )
 		cmd.buttons = IN_ATTACK;
@@ -153,7 +152,9 @@ void CBot :: runPlayerMove()
 	//gameclients->ProcessUsercmds(m_pEdict,buf,1,1,0,false,false);
 	m_pController->RunPlayerMove(&cmd);
 
-	//m_pController->PostClientMessagesSent();
+	//CBaseEntity *pEntity = m_pEdict->GetIServerEntity()->GetBaseEntity();
+
+	//pEntity->PostClientMessagesSent();
 
 	// IS THIS REQUIRED????
 	//float frametime = gpGlobals->frametime;

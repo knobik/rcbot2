@@ -126,6 +126,7 @@ enum
 #define WEAP_FL_KILLPIPEBOMBS	128
 #define WEAP_FL_DEFLECTROCKETS	256
 #define WEAP_FL_GRAVGUN			512
+#define WEAP_FL_EXPLOSIVE_SEC	1024
 
 
 extern TF2WeaponsData_t TF2Weaps[];
