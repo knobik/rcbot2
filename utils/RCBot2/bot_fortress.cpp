@@ -419,7 +419,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	}
 
 	// Check for nearest Dispenser for health/ammo & flag
-	if ( bVisible )
+	if ( bVisible && !(CClassInterface::getEffects(pEntity)&EF_NODRAW) ) // EF_NODRAW == invisible
 	{
 		if ( CTeamFortress2Mod::isFlag(pEntity,getTeam()) )
 			m_pFlag = pEntity;
@@ -438,7 +438,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 			if ( !m_pNearestTeleEntrance || ((pEntity != m_pNearestTeleEntrance) && (distanceFrom(pEntity) < distanceFrom(m_pNearestTeleEntrance))) )
 				m_pNearestTeleEntrance = pEntity;
 		}
-		else if ( !(CClassInterface::getEffects(pEntity)&EF_NODRAW) && CTeamFortress2Mod::isAmmo(pEntity) )
+		else if ( CTeamFortress2Mod::isAmmo(pEntity) )
 		{
 			static float fDistance;
 
@@ -451,7 +451,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 				m_pAmmo = pEntity;
 			
 		}
-		else if ( !(CClassInterface::getEffects(pEntity)&EF_NODRAW) &&CTeamFortress2Mod::isHealthKit(pEntity) )
+		else if ( CTeamFortress2Mod::isHealthKit(pEntity) )
 		{
 			static float fDistance;
 
@@ -2931,16 +2931,6 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	numplayersonteam_alive = CTeamFortress2Mod::numPlayersOnTeam(iTeam,true);
 
 
-	/*if ( ((m_iClass!=TF_CLASS_MEDIC)||(!m_pHeal)) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
-	{		
-		if ( randomFloat(0.0f,100.0f) > 50.0f )
-		{
-			m_pSchedules->addFront(new CGotoHideSpotSched(m_pEnemy));
-			return;
-		}
-
-	}*/
-
 	// UNUSED
 	// Shadow/Time must be Floating point
 	/*if(m_fBlockPushTime < engine->Time())
@@ -2950,7 +2940,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	}*/
 
 	// No Enemy now
-	if ( (m_iClass == TF_CLASS_SNIPER) && (!(m_pEnemy == NULL) || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) )
+	if ( (m_iClass == TF_CLASS_SNIPER) && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 		// un zoom
 	{
 		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
@@ -4517,12 +4507,13 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		{
 			stopMoving();
 
-			if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
-				secondaryAttack();
-
 			if ( m_fSnipeAttackTime < engine->Time() )
 			{
-				primaryAttack();
+				if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
+					primaryAttack(); // shoot
+				else
+					secondaryAttack(); // zoom
+
 				m_fSnipeAttackTime = engine->Time() + randomFloat(0.5f,3.0f);
 			}
 		}

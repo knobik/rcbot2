@@ -1620,6 +1620,8 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else if ( pBot->distanceFrom(m_vOrigin) > 200 )
 	{
+		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+			pBot->secondaryAttack();
 		// too far away
 		fail();
 	}

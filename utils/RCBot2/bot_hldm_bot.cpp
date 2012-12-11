@@ -412,11 +412,15 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 
 	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && m_pWeapons->hasWeapon(HL2DM_WEAPON_FRAG) )
 	{
-		CWeapon *pWeapon = CWeapons::getWeapon(HL2DM_WEAPON_FRAG);
-		CBotWeapon *pBotWeapon = m_pWeapons->getWeapon(pWeapon);
+		float fDistance = distanceFrom(m_vLastSeeEnemyBlastWaypoint);
 
-		ADD_UTILITY(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,1.0f-(getHealthPercent()*0.2));
+		if ( ( fDistance > BLAST_RADIUS ) && ( fDistance < 1500 ) )
+		{
+			CWeapon *pWeapon = CWeapons::getWeapon(HL2DM_WEAPON_FRAG);
+			CBotWeapon *pBotWeapon = m_pWeapons->getWeapon(pWeapon);
 
+			ADD_UTILITY(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,1.0f-(getHealthPercent()*0.2));
+		}
 	}
 
 	if ( m_pNearbyWeapon.get() )
@@ -644,6 +648,7 @@ void CHLDMBot :: handleWeapons ()
 void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 {
 	static float fDist;
+	const char *szClassname;
 
 	CBot::setVisible(pEntity,bVisible);
 
@@ -652,12 +657,14 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	// if no draw effect it is invisible
 	if ( bVisible && !(CClassInterface::getEffects(pEntity)&EF_NODRAW) ) 
 	{
-		if ( ( strncmp(pEntity->GetClassName(),"item_ammo",9)==0 ) && 
+		szClassname = pEntity->GetClassName();
+
+		if ( ( strncmp(szClassname,"item_ammo",9)==0 ) && 
 			( !m_pAmmoKit.get() || (fDist<distanceFrom(m_pAmmoKit.get())) ))
 		{
 			m_pAmmoKit = pEntity;
 		}
-		else if ( ( strncmp(pEntity->GetClassName(),"item_health",11)==0 ) && 
+		else if ( ( strncmp(szClassname,"item_health",11)==0 ) && 
 			( !m_pHealthKit.get() || (fDist<distanceFrom(m_pHealthKit.get())) ))
 		{
 			//if ( getHealthPercent() < 1.0f )
@@ -665,17 +672,17 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 
 			m_pHealthKit = pEntity;
 		}
-		else if ( ( strcmp(pEntity->GetClassName(),"item_battery")==0 ) && 
+		else if ( ( strcmp(szClassname,"item_battery")==0 ) && 
 			( !m_pBattery.get() || (fDist<distanceFrom(m_pBattery.get())) ))
 		{
 			m_pBattery = pEntity;
 		}
-		else if ( ( strncmp(pEntity->GetClassName(),"prop_physics",12)==0 ) && (CClassInterface::getPlayerHealth(pEntity)>0) &&
+		else if ( ( strncmp(szClassname,"prop_physics",12)==0 ) && (CClassInterface::getPlayerHealth(pEntity)>0) &&
 			( !m_NearestBreakable.get() || (fDist<distanceFrom(m_NearestBreakable.get())) ))
 		{
 			m_NearestBreakable = pEntity;
 		}
-		else if ( (pEntity != m_FailedPhysObj) && ( strncmp(pEntity->GetClassName(),"prop_physics",12)==0 ) && 
+		else if ( (pEntity != m_FailedPhysObj) && ( strncmp(szClassname,"prop_physics",12)==0 ) && 
 			( !m_NearestPhysObj.get() || (fDist<distanceFrom(m_NearestPhysObj.get())) ))
 		{
 			//if ( !m_bCarryingObject )
@@ -683,7 +690,7 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 
 			m_NearestPhysObj = pEntity;
 		}
-		else if ( ( strncmp(pEntity->GetClassName(),"item_suitcharger",16)==0 ) && 
+		else if ( ( strncmp(szClassname,"item_suitcharger",16)==0 ) && 
 			( !m_pCharger.get() || (fDist<distanceFrom(m_pCharger.get())) ))
 		{
 			if ( m_pPlayerInfo->GetArmorValue() < 50 )
@@ -691,7 +698,7 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 
 			m_pCharger = pEntity;
 		}
-		else if ( ( strncmp(pEntity->GetClassName(),"item_healthcharger",18)==0 ) && 
+		else if ( ( strncmp(szClassname,"item_healthcharger",18)==0 ) && 
 			( !m_pHealthCharger.get() || (fDist<distanceFrom(m_pHealthCharger.get())) ))
 		{
 			if ( getHealthPercent() < 1.0f )
@@ -699,7 +706,7 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 
 			m_pHealthCharger = pEntity;
 		}
-		else if ( ( strncmp(pEntity->GetClassName(),"weapon_",7)==0 ) && 
+		else if ( ( strncmp(szClassname,"weapon_",7)==0 ) && 
 			( !m_pNearbyWeapon.get() || (fDist<distanceFrom(m_pNearbyWeapon.get())) ))
 		{
 			/*static CWeapon *pWeapon;
