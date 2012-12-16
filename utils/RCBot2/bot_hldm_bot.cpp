@@ -44,6 +44,8 @@
 #include "bot_weapons.h"
 #include "bot_mtrand.h"
 #include "bot_waypoint_locations.h"
+#include "bot_getprop.h"
+
 //#include "vstdlib/random.h" // for random functions
 extern ConVar rcbot_jump_obst_dist;
 extern ConVar rcbot_jump_obst_speed;
@@ -499,8 +501,13 @@ void CHLDMBot :: modThink ()
 
 	if ( m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time()) )
 	{
-		m_fLastSeeEnemy = 0;
-		m_pButtons->tap(IN_RELOAD);
+		CBotWeapon *pWeapon = getCurrentWeapon();
+
+		if ( pWeapon && (pWeapon->getClip1(this)==0) && (pWeapon->getAmmo(this) > 0 ) )
+		{
+			m_fLastSeeEnemy = 0;
+			m_pButtons->tap(IN_RELOAD);
+		}
 	}
 
 	if ( m_NearestPhysObj.get() )

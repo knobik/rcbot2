@@ -424,6 +424,66 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CDODChangeClass : public CBotEvent
+{
+public:
+	CDODChangeClass()
+	{
+		setType("player_changeclass");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CDODRoundStart : public CBotEvent
+{
+public:
+	CDODRoundStart()
+	{
+		setType("dod_round_start");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CDODRoundActive : public CBotEvent
+{
+public:
+	CDODRoundActive()
+	{
+		setType("dod_round_active");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CDODRoundWin : public CBotEvent
+{
+public:
+	CDODRoundWin()
+	{
+		setType("dod_round_win");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CDODRoundOver : public CBotEvent
+{
+public:
+	CDODRoundOver()
+	{
+		setType("dod_game_over");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 typedef enum
 {
 	TYPE_KEYVALUES = 0,

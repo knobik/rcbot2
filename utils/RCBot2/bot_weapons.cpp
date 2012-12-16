@@ -35,6 +35,35 @@ using namespace std;
 #include "bot.h"
 #include "bot_globals.h"
 #include "bot_weapons.h"
+#include "bot_getprop.h"
+
+const char *g_szDODWeapons[] = 
+{
+	"weapon_amerknife", 
+	"weapon_spade", 
+	"weapon_colt", 
+	"weapon_p38", 
+	"weapon_m1carbine", 
+	"weapon_c96",
+    "weapon_garand", 
+	"weapon_k98", 
+	"weapon_thompson", 
+	"weapon_mp40", 
+	"weapon_bar", 
+	"weapon_mp44",
+    "weapon_spring",
+	"weapon_k98_scoped",
+	"weapon_30cal", 
+	"weapon_mg42", 
+	"weapon_bazooka", 
+	"weapon_pschreck",
+    "weapon_riflegren_us", 
+	"weapon_riflegren_ger", 
+	"weapon_frag_us", 
+	"weapon_frag_ger", 
+	"weapon_smoke_us", 
+	"weapon_smoke_ger"
+};
 
 const char *g_szHL2DMWeapons[] =
 {
@@ -52,9 +81,43 @@ const char *g_szHL2DMWeapons[] =
 	"weapon_physcannon"
 };
 
+  /*  0, 0, 1, 2, 6, 3,
+    4, 5, 8, 8, 9, 8,
+    7, 5, 10, 11, 12, 12,
+    21, 22, 13, 14, 17, 18*/
+
+WeaponsData_t DODWeaps[] =
+{
+/*
+	slot, id , weapon name, flags, min dist, max dist, ammo index, preference
+	*/
+	{1,DOD_WEAPON_AMERKNIFE, g_szDODWeapons[0],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,100,-1,1},
+	{1,DOD_WEAPON_SPADE, g_szDODWeapons[1],		WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,100,-1,1},
+	{2,DOD_WEAPON_COLT, g_szDODWeapons[2],		WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,1,2},
+	{2,DOD_WEAPON_P38, g_szDODWeapons[3],		WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,2,2},
+	{3,DOD_WEAPON_M1, g_szDODWeapons[4],		WEAP_FL_PRIM_ATTACK,0,1600,6,4},
+	{3,DOD_WEAPON_C96, g_szDODWeapons[5],		WEAP_FL_PRIM_ATTACK,0,1600,-1,4},
+	{3,DOD_WEAPON_GARAND, g_szDODWeapons[6],	WEAP_FL_PRIM_ATTACK,0,1600,-1,3},
+	{3,DOD_WEAPON_K98, g_szDODWeapons[7],		WEAP_FL_PRIM_ATTACK,0,1600,-1,3},
+	{3,DOD_WEAPON_THOMPSON, g_szDODWeapons[8],	WEAP_FL_PRIM_ATTACK,0,900,-1,3},
+	{3,DOD_WEAPON_MP40, g_szDODWeapons[9],		WEAP_FL_PRIM_ATTACK,0,1600,-1,4},
+	{3,DOD_WEAPON_BAR, g_szDODWeapons[10],		WEAP_FL_PRIM_ATTACK,0,1600,-1,3},
+	{3,DOD_WEAPON_MP44, g_szDODWeapons[11],		WEAP_FL_PRIM_ATTACK,0,1600,-1,3},
+	{3,DOD_WEAPON_SPRING, g_szDODWeapons[12],	WEAP_FL_PRIM_ATTACK,0,1600,-1,3},
+	{3,DOD_WEAPON_K98_SCOPED, g_szDODWeapons[13],	WEAP_FL_PRIM_ATTACK,0,2400,-1,4},
+	{3,DOD_WEAPON_20CAL, g_szDODWeapons[14],		WEAP_FL_PRIM_ATTACK,0,1600,-1,4},
+	{3,DOD_WEAPON_MG42, g_szDODWeapons[15],			WEAP_FL_PRIM_ATTACK,0,2000,-1,4},
+	{3,DOD_WEAPON_BAZOOKA, g_szDODWeapons[16],		WEAP_FL_PRIM_ATTACK,0,2400,-1,5},
+	{3,DOD_WEAPON_PSCHRECK, g_szDODWeapons[17],		WEAP_FL_PRIM_ATTACK,0,2400,-1,5},
+	{3,DOD_WEAPON_RIFLEGREN_US, g_szDODWeapons[18],	WEAP_FL_PRIM_ATTACK,0,1200,-1,3},
+	{3,DOD_WEAPON_FRAG_US, g_szDODWeapons[19],		WEAP_FL_NONE,0,1600,-1,1},
+	{3,DOD_WEAPON_FRAG_GER, g_szDODWeapons[20],		WEAP_FL_NONE,0,1600,-1,1},
+	{3,DOD_WEAPON_SMOKE_US, g_szDODWeapons[21],		WEAP_FL_NONE,0,1600,-1,1},
+	{3,DOD_WEAPON_SMOKE_GER, g_szDODWeapons[22],	WEAP_FL_NONE,0,1600,-1,1},
+};
 
 
-TF2WeaponsData_t HL2DMWeaps[] =
+WeaponsData_t HL2DMWeaps[] =
 {
 /*
 	slot, id , weapon name, flags, min dist, max dist, ammo index, preference
@@ -118,7 +181,7 @@ int m_TF2AmmoIndices[] =
 };
 
 
-TF2WeaponsData_t TF2Weaps[] =
+WeaponsData_t TF2Weaps[] =
 {
 /*
 	slot, id , weapon name, flags, min dist, max dist, ammo index, preference

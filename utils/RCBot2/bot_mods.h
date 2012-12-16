@@ -61,7 +61,9 @@ typedef enum
 	BOTTYPE_HL1DM,
 	BOTTYPE_FF,
 	BOTTYPE_COOP,
-	BOTTYPE_ZOMBIE
+	BOTTYPE_ZOMBIE,
+	BOTTYPE_DOD,
+	BOTTYPE_MAX
 }eBotType;
 
 class CBotMod
@@ -108,6 +110,37 @@ private:
 	char *m_szSteamFolder;
 	eModId m_iModId;
 	eBotType m_iBotType;
+};
+
+
+class CDODMod : public CBotMod
+{
+public:
+	CDODMod()
+	{
+		setup("dod","day of defeat source",MOD_DOD,BOTTYPE_DOD);
+	}
+protected:
+
+	virtual void initMod ();
+
+	virtual void mapInit ();
+
+	//virtual void entitySpawn ( edict_t *pEntity );
+
+	//virtual void clientCommand ( edict_t *pEntity, int argc,const char *pcmd, const char *arg1, const char *arg2 ) {};
+
+};
+
+class CDODModDedicated : public CDODMod
+{
+public:
+	CDODModDedicated()
+	{
+		setup("dod","source dedicated server",MOD_DOD,BOTTYPE_DOD);
+	}
+protected:
+
 };
 
 class CCounterStrikeSourceMod : public CBotMod

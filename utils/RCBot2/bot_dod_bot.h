@@ -28,20 +28,15 @@
  *    version.
  *
  */
-#ifndef __HLDM_RCBOT_H__
-#define __HLDM_RCBOT_H__
+#ifndef __DOD_RCBOT_H__
+#define __DOD_RCBOT_H__
 
-#include "bot_utility.h"
-
-// bot for HLDM
-class CHLDMBot : public CBot
+// bot for DOD
+class CDODBot : public CBot
 {
 public:
-	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 
-	void handleWeapons ();
-
-	bool isHLDM () { return true; }
+	bool isDOD () { return true; }
 
 	void modThink ();
 
@@ -57,55 +52,36 @@ public:
 
 	bool isEnemy ( edict_t *pEdict,bool bCheckWeapons = true );
 
-	void getTasks (unsigned int iIgnore=0);
-	bool executeAction ( eBotAction iAction );
-
 	float getArmorPercent () { return (0.01f * m_pPlayerInfo->GetArmorValue()); }
 
-	void setVisible ( edict_t *pEntity, bool bVisible );
-
-	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
+	void getTasks (unsigned int iIgnore);
 
 	void fixWeapons ();
 
-	void enemyLost ();
+	bool executeAction ( eBotAction iAction );
 
-	inline void setFailedObject ( edict_t *pent ) 
-	{ 
-		m_FailedPhysObj = pent; 
+	void selectedClass ( int iClass );
 
-		if ( m_NearestPhysObj == pent ) 
-			m_NearestPhysObj = NULL;
-	}
-
-	bool checkStuck ();
-
-	bool willCollide ( edict_t *pEntity, bool *bCanJump, float *fTime );
-
-	edict_t *getFailedObject () { return m_FailedPhysObj; }
+	void setVisible ( edict_t *pEntity, bool bVisible );
 private:
-	// blah blah
-	MyEHandle m_NearestPhysObj;
-	MyEHandle m_NearestBreakable;
-	edict_t *m_FailedPhysObj;
-	float m_flSprintTime;
-	MyEHandle m_pHealthCharger;
-	MyEHandle m_pHealthKit;
-	MyEHandle m_pAmmoKit; // nearest healthkit
-	MyEHandle m_pBattery; // nearest battery
-	MyEHandle m_pCharger; // nearest charger
-	MyEHandle m_pNearbyWeapon;
+
+	int m_iSelectedClass;
+
+	eBotAction m_CurrentUtil;
+
 	edict_t *m_pCurrentWeapon;
 
 	CBaseHandle *m_Weapons;
 
 	float m_fFixWeaponTime;
+	float m_flSprintTime;
+
+	float m_flStamina;
+	bool m_bProne;
 
 	int m_iClip1;
 	int m_iClip2;
-
-	eBotAction m_CurrentUtil;
-	edict_t *m_pCarryingObject; // using grav gun
+	// blah blah
 };
 
 #endif

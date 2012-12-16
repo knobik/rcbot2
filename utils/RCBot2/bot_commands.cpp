@@ -38,6 +38,8 @@
 #include "bot_waypoint.h" // for waypoint commands
 #include "bot_waypoint_locations.h" // for waypoint commands
 
+#include "bot_getprop.h"
+
 CBotCommandContainer *CBotGlobals :: m_pCommands = new CRCBotCommand();
 
 ///////////////////////////////////////////////////

@@ -37,6 +37,7 @@
 #include "bot_client.h"
 #include "bot_weapons.h"
 #include "bot_globals.h"
+#include "bot_getprop.h"
 ////////////////////////////////////
 
 const char *szSchedules[] = 

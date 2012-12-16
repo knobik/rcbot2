@@ -124,6 +124,10 @@ CBotMod *CBotGlobals :: getCurrentMod ()
 	return m_pCurrentMod;
 }
 
+bool CBotGlobals :: isCurrentMod ( eModId modid )
+{
+	return m_pCurrentMod->getModId() == modid;
+}
 // TO DO :: put in CClients ?
 edict_t *CBotGlobals :: findPlayerByTruncName ( const char *name )
 // find a player by a truncated name "name".

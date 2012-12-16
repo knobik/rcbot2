@@ -55,7 +55,7 @@ typedef struct
 	float maxPrimDist;
 	int m_iAmmoIndex;
 	int m_iPreference;
-}TF2WeaponsData_t;
+}WeaponsData_t;
 
 
 enum 
@@ -115,6 +115,35 @@ enum
 	HL2DM_WEAPON_MAX
 };
 
+enum
+{
+	DOD_WEAPON_AMERKNIFE = 0,
+	DOD_WEAPON_SPADE,
+	DOD_WEAPON_COLT,
+	DOD_WEAPON_P38,
+	DOD_WEAPON_M1,
+	DOD_WEAPON_C96,
+	DOD_WEAPON_GARAND,
+	DOD_WEAPON_K98,
+	DOD_WEAPON_THOMPSON,
+	DOD_WEAPON_MP40,
+	DOD_WEAPON_BAR,
+	DOD_WEAPON_MP44,
+	DOD_WEAPON_SPRING,
+	DOD_WEAPON_K98_SCOPED,
+	DOD_WEAPON_20CAL,
+	DOD_WEAPON_MG42,
+	DOD_WEAPON_BAZOOKA,
+	DOD_WEAPON_PSCHRECK,
+	DOD_WEAPON_RIFLEGREN_US,
+	DOD_WEAPON_FRAG_US,
+	DOD_WEAPON_FRAG_GER, 
+	DOD_WEAPON_SMOKE_US,
+	DOD_WEAPON_SMOKE_GER,
+	DOD_WEAPON_MAX
+};
+
+
 #define WEAP_FL_NONE			0
 #define WEAP_FL_PRIM_ATTACK		1
 #define WEAP_FL_SEC_ATTACK		2
@@ -129,12 +158,34 @@ enum
 #define WEAP_FL_EXPLOSIVE_SEC	1024
 
 
-extern TF2WeaponsData_t TF2Weaps[];
-extern TF2WeaponsData_t HL2DMWeaps[];
+extern WeaponsData_t TF2Weaps[];
+extern WeaponsData_t HL2DMWeaps[];
+extern WeaponsData_t DODWeaps[];
 
 class CWeapon
 {
 public:
+	CWeapon ( WeaponsData_t data )
+	{
+		m_iSlot = data.iSlot;
+		setID(data.iId);
+		setName(data.szWeaponName);
+
+		setFlags(data.m_iFlags);
+
+		// shoot distance (default)
+		m_fPrimMinWeaponShootDist = data.maxPrimDist;
+		m_fPrimMaxWeaponShootDist = data.maxPrimDist;
+
+		m_fSecMinWeaponShootDist = 0.0f;
+		m_fSecMaxWeaponShootDist = 512.0f;
+
+		m_iAmmoIndex1 = data.m_iAmmoIndex;
+		m_iAmmoIndex2 = -1;
+
+		m_iPreference = data.m_iPreference;
+	}
+
 	CWeapon( int iSlot, const char *szWeaponName, int iId, int iFlags = 0, int iAmmoIndex = -1, float minPrim =0.0f, float maxPrim = 4096.0f, int iPref = 0, int iAmmoIndex2 = -1 )
 	{
 		m_iSlot = iSlot;

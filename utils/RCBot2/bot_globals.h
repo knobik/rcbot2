@@ -167,6 +167,8 @@ public:
 
 	static edict_t *playerByUserId(int iUserId);
 
+	static bool isCurrentMod ( eModId modid );
+
 	////////
 	static CBotCommandContainer *m_pCommands;
 	

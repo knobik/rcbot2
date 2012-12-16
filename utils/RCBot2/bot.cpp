@@ -70,6 +70,7 @@
 #include "bot_css_bot.h"
 #include "bot_coop.h"
 #include "bot_zombie.h"
+#include "bot_dod_bot.h"
 #include "bot_hldm_bot.h"
 #include "bot_hl1dmsrc_bot.h"
 #include "bot_fortress.h"
@@ -87,7 +88,7 @@
 #include "bot_mtrand.h"
 //#include "vstdlib/random.h" // for random functions
 
-
+#include "bot_getprop.h"
 #include "bot_profiling.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -117,14 +118,24 @@ extern IVDebugOverlay *debugoverlay;
 ////////////////////////////////////////////////
 void CBot :: runPlayerMove()
 {
+	extern ConVar rcbot_move_forward;
 	extern ConVar bot_attack;
 
 	//////////////////////////////////
 	Q_memset( &cmd, 0, sizeof( cmd ) );
 	//////////////////////////////////
-	cmd.forwardmove = m_fForwardSpeed;
-	cmd.sidemove = m_fSideSpeed;
-	cmd.upmove = m_fUpSpeed;
+
+	if ( rcbot_move_forward.GetBool() )
+	{
+		cmd.forwardmove = m_fIdealMoveSpeed;
+	}
+	else
+	{
+		cmd.forwardmove = m_fForwardSpeed;
+		cmd.sidemove = m_fSideSpeed;
+		cmd.upmove = m_fUpSpeed;
+	}
+
 	cmd.buttons = m_iButtons;
 	cmd.impulse = m_iImpulse;
 	cmd.viewangles = m_vViewAngles;
@@ -2247,6 +2258,9 @@ void CBots :: init ()
 	{
 		switch ( CBotGlobals::getCurrentMod()->getBotType() )
 		{
+		case BOTTYPE_DOD:
+			m_Bots[i] = new CDODBot();
+			break;
 		case BOTTYPE_CSS:
 			m_Bots[i] = new CCSSBot();
 			break;

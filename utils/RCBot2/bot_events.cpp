@@ -35,6 +35,7 @@
 #include "bot_globals.h"
 #include "bot_fortress.h"
 #include "bot_script.h"
+#include "bot_dod_bot.h"
 
 vector<CBotEvent*> CBotEvents :: m_theEvents;
 ///////////////////////////////////////////////////////
@@ -112,12 +113,14 @@ void CPlayerSpawnEvent :: execute ( IBotEventInterface *pEvent )
 	if ( pBot )
 		pBot->spawnInit();
 
-	if ( pEvent->getInt("class") == TF_CLASS_MEDIC )
+	if ( CBotGlobals::isCurrentMod(MOD_TF2) )
 	{
-		// find medigun
-		CTeamFortress2Mod::findMediGun(m_pActivator);
+		if ( pEvent->getInt("class") == TF_CLASS_MEDIC )
+		{
+			// find medigun
+			CTeamFortress2Mod::findMediGun(m_pActivator);
+		}
 	}
-
 }
 
 void CBulletImpactEvent :: execute ( IBotEventInterface *pEvent )
@@ -538,7 +541,42 @@ void CFlagCaptured :: execute ( IBotEventInterface *pEvent )
 {
 
 }
+/////////////////////////////////////////////////
 
+void CDODRoundStart :: execute ( IBotEventInterface *pEvent )
+{
+
+}
+
+void CDODRoundActive :: execute ( IBotEventInterface *pEvent )
+{
+
+}
+
+void CDODRoundWin :: execute ( IBotEventInterface *pEvent )
+{
+
+}
+
+void CDODRoundOver :: execute ( IBotEventInterface *pEvent )
+{
+
+}
+
+void CDODChangeClass :: execute ( IBotEventInterface *pEvent )
+{
+	if ( m_pActivator )
+	{
+		CBot *pBot = CBots::getBotPointer(m_pActivator);
+
+		if ( pBot )
+		{
+			CDODBot *pDODBot = (CDODBot*)pBot;
+
+			pDODBot->selectedClass(pEvent->getInt("class"));
+		}
+	}
+}
 ///////////////////////////////////////////////////////
 
 void CBotEvent :: setType ( char *szType )
@@ -604,6 +642,10 @@ eyeball_boss_escaped */
 	addEvent(new CBossKilledEvent("eyeball_boss_killed"));
 	addEvent(new CBossKilledEvent("eyeball_boss_escaped"));
 	addEvent(new CTF2RoundActive());
+	addEvent(new CDODRoundStart());
+	addEvent(new CDODRoundActive());
+	addEvent(new CDODRoundWin());
+	addEvent(new CDODRoundOver());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

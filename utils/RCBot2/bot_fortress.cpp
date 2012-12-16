@@ -48,7 +48,7 @@
 #include "bot_utility.h"
 #include "bot_script.h"
 #include "bot_configfile.h"
-
+#include "bot_getprop.h"
 #include "bot_mtrand.h"
 
 extern ConVar bot_beliefmulti;

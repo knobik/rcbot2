@@ -37,6 +37,7 @@
 #include "bot_weapons.h"
 #include "bot_script.h"
 #include "bot_configfile.h"
+#include "bot_getprop.h"
 
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
@@ -517,83 +518,90 @@ void CBotMods :: parseFile ()
 
 			modtype = MOD_CUSTOM;
 
-			if ( !strcmp("CUSTOM",val) )
+			if ( !strcmpi("CUSTOM",val) )
 			{
 				modtype = MOD_CUSTOM;
 				curmod = new CBotMod();
 			}
-			else if ( !strcmp("CSS",val) )
+			else if ( !strcmpi("CSS",val) )
 			{
 				modtype = MOD_CSS;
 				curmod = new CCounterStrikeSourceMod();
 			}
-			else if ( !strcmp("HL1DM",val) )
+			else if ( !strcmpi("HL1DM",val) )
 			{
 				modtype = MOD_HL1DMSRC;
 				curmod = new CHLDMSourceMod();
 			}
-			else if ( !strcmp("HL2DM",val) )
+			else if ( !strcmpi("HL2DM",val) )
 			{
 				modtype = MOD_HLDM2;
 				curmod = new CHalfLifeDeathmatchMod();
 			}
-			else if ( !strcmp("FF",val) )
+			else if ( !strcmpi("FF",val) )
 			{
 				modtype = MOD_FF;
 				curmod = new CFortressForeverMod();
 			}
-			else if ( !strcmp("TF2",val) )
+			else if ( !strcmpi("TF2",val) )
 			{
 				modtype = MOD_TF2;
 				curmod = new CTeamFortress2Mod();
 			}
-			else if ( !strcmp("SVENCOOP2",val) )
+			else if ( !strcmpi("SVENCOOP2",val) )
 			{
 				modtype = MOD_SVENCOOP2;
 				curmod = new CBotMod();
 			}
-			else if ( !strcmp("TIMCOOP",val) )
+			else if ( !strcmpi("TIMCOOP",val) )
 			{
 				modtype = MOD_TIMCOOP;
 				curmod = new CBotMod();
 			}
-			else if ( !strcmp("NS2",val) )
+			else if ( !strcmpi("NS2",val) )
 			{
 				modtype = MOD_NS2;
 				curmod = new CBotMod();
 			}
-			else if ( !strcmp("SYNERGY",val) )
+			else if ( !strcmpi("SYNERGY",val) )
 			{
 				modtype = MOD_SYNERGY;
 				curmod = new CSynergyMod();
+			}
+			else if ( !strcmpi("DOD",val) )
+			{
+				modtype = MOD_DOD;
+				curmod = new CDODMod();
 			}
 			else
 				curmod = new CBotMod();
 		}
 		else if ( curmod && !strcmp(key,"bot") )
 		{
-			if ( !strcmp("GENERIC",val) )
+			if ( !strcmpi("GENERIC",val) )
 				bottype = BOTTYPE_GENERIC;
-			else if ( !strcmp("CSS",val) )
+			else if ( !strcmpi("CSS",val) )
 				bottype = BOTTYPE_CSS;
-			else if ( !strcmp("HL1DM",val) )
+			else if ( !strcmpi("HL1DM",val) )
 				bottype = BOTTYPE_HL1DM;
-			else if ( !strcmp("HL2DM",val) )
+			else if ( !strcmpi("HL2DM",val) )
 				bottype = BOTTYPE_HL2DM;
-			else if ( !strcmp("FF",val) )
+			else if ( !strcmpi("FF",val) )
 				bottype = BOTTYPE_FF;
-			else if ( !strcmp("TF2",val) )
+			else if ( !strcmpi("TF2",val) )
 				bottype = BOTTYPE_TF2;
-			else if ( !strcmp("COOP",val) )
+			else if ( !strcmpi("COOP",val) )
 				bottype = BOTTYPE_COOP;
-			else if ( !strcmp("ZOMBIE",val) )
+			else if ( !strcmpi("ZOMBIE",val) )
 				bottype = BOTTYPE_ZOMBIE;
+			else if ( !strcmpi("DOD",val) )
+				bottype = BOTTYPE_DOD;
 		}
-		else if ( curmod && !strcmp(key,"steamdir") )
+		else if ( curmod && !strcmpi(key,"steamdir") )
 		{
 			strncpy(steamfolder,val,255);
 		}
-		else if ( curmod && !strcmp(key,"gamedir") )
+		else if ( curmod && !strcmpi(key,"gamedir") )
 		{
 			strncpy(gamefolder,val,255);
 		}
@@ -682,7 +690,9 @@ void CBotMods :: createFile ()
 
 void CBotMods :: readMods()
 {
-	
+	m_Mods.push_back(new CDODMod());
+	m_Mods.push_back(new CDODModDedicated());
+
 	m_Mods.push_back(new CCounterStrikeSourceMod());
 	m_Mods.push_back(new CHalfLifeDeathmatchMod());
 
@@ -1153,3 +1163,22 @@ void CTeamFortress2Mod :: mapInit ()
 
 }
 
+///////////////////////////////////
+//
+//
+
+void CDODMod :: initMod ()
+{
+	unsigned int i;
+	// Setup Weapons
+
+	CBots::controlBotSetup(false);
+
+	for ( i = 0; i < DOD_WEAPON_MAX; i ++ )
+		CWeapons::addWeapon(new CWeapon(DODWeaps[i]));
+}
+
+void CDODMod :: mapInit ()
+{
+
+}
