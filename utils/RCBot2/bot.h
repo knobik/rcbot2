@@ -648,6 +648,7 @@ public:
 
 	inline float getTouchDistance () { return m_fWaypointTouchDistance; }
 
+	inline CBotCmd *getUserCMD () { return &cmd; }
 protected:
 
 	static void checkEntity ( edict_t **pEdict );

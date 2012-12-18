@@ -430,6 +430,10 @@
 				RelativePath="..\..\tier1\utlsymbol.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\public\vstdlib\vstdlib.h"
+				>
+			</File>
 			<Filter
 				Name="tier1"
 				>
@@ -797,10 +801,6 @@
 			</File>
 			<File
 				RelativePath="..\..\public\mathlib\vector.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\public\vstdlib\vstdlib.h"
 				>
 			</File>
 		</Filter>

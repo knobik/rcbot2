@@ -957,7 +957,7 @@ float CTeamFortress2Mod :: TF2_GetPlayerSpeed(edict_t *pPlayer, TF_Class iClass 
 { 
 	static float fSpeed;
 
-	fSpeed = CClassInterface::getMaxSpeed(pPlayer) * CClassInterface::getSpeedFactor(pPlayer);
+	fSpeed = CClassInterface::getMaxSpeed(pPlayer);// * CClassInterface::getSpeedFactor(pPlayer);
 
 	if ( fSpeed == 0 )
 	{
@@ -1172,7 +1172,7 @@ void CDODMod :: initMod ()
 	unsigned int i;
 	// Setup Weapons
 
-	CBots::controlBotSetup(false);
+	CBots::controlBotSetup(true);
 
 	for ( i = 0; i < DOD_WEAPON_MAX; i ++ )
 		CWeapons::addWeapon(new CWeapon(DODWeaps[i]));

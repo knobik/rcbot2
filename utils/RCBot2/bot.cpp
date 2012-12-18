@@ -90,8 +90,11 @@
 
 #include "bot_getprop.h"
 #include "bot_profiling.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+extern void HookPlayerRunCommand ( edict_t *edict );
 
 // instantiate bots -- make different for different mods
 CBot **CBots::m_Bots = NULL;
@@ -157,33 +160,10 @@ void CBot :: runPlayerMove()
 			CClients::clientDebugMsg(BOT_DEBUG_BUTTONS,dbg,this);
 	}
 
-	//bf_write *buf = new bf_write[sizeof(CBotCmd)];
-	//WriteUsercmd(buf,&cmd)
-
-	//gameclients->ProcessUsercmds(m_pEdict,buf,1,1,0,false,false);
-	m_pController->RunPlayerMove(&cmd);
-
-	//CBaseEntity *pEntity = m_pEdict->GetIServerEntity()->GetBaseEntity();
-
-	//pEntity->PostClientMessagesSent();
-
-	// IS THIS REQUIRED????
-	//float frametime = gpGlobals->frametime;
-	// Store off the globals.. they're gonna get whacked
-	//float flOldFrametime = gpGlobals->frametime;
-	//float flOldCurtime = gpGlobals->curtime;
-//
-	//float flTimeBase = gpGlobals->curtime + gpGlobals->frametime - frametime;
-
-	//CClassInterface::setTickBase(m_pEdict,TIME_TO_TICKS(flTimeBase));
-	
-	//m_pController->PostClientMessagesSent();
-	//cmd.hasbeenpredicted = true;
-
-	// Restore the globals..
-	//gpGlobals->frametime = flOldFrametime;
-	//gpGlobals->curtime = flOldCurtime;
-
+	// Controlling will be done in the PlayerRunCommand hook if controlling puppet bots
+	// see bot_main.cpp
+	if ( !CBots::controlBots() )
+		m_pController->RunPlayerMove(&cmd);
 }
 
 bool CBot :: startGame ()
@@ -2210,6 +2190,7 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 	{
 		char cmd[64];
 
+		//if ( pBotProfile->getTeam() >= 1 )
 		// fix : dedicated server  - The_Shadow
 		sprintf(cmd,"bot -name \"%s\"\n",szOVName);
 		// control next bot that joins server
@@ -2596,11 +2577,19 @@ void CBots :: handleAutomaticControl ()
 
 		if ( p )
 		{
-			m_ControlQueue.pop();
+			// until it has an 'unknown' remove from queue and create bot
+			if ( pEdict->GetUnknown() )
+			{
+				//extern ConVar rcbot_runplayercmd;
 
-			//engine->SetFakeClientConVarValue( pEdict, "name",m_pNextProfile->getName() );
+				m_ControlQueue.pop();
 
-			m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,m_pNextProfile);
+				HookPlayerRunCommand(pEdict);
+
+				//engine->SetFakeClientConVarValue( pEdict, "name",m_pNextProfile->getName() );
+
+				m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,m_pNextProfile);
+			}
 		}
 		
 	}

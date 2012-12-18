@@ -54,6 +54,29 @@ void CDODBot :: setup ()
 	CBot::setup();
 }
 
+bool CDODBot::canGotoWaypoint(Vector vPrevWaypoint, CWaypoint *pWaypoint)
+{
+	static int iTeam;
+	
+	iTeam = getTeam();
+
+	if ( CBot::canGotoWaypoint(vPrevWaypoint,pWaypoint) )
+	{
+		if ( (iTeam == TEAM_ALLIES) && pWaypoint->hasFlag(CWaypointTypes::W_FL_NOALLIES) )
+		{
+			return false;
+		}
+		else if ( (iTeam == TEAM_AXIS) && pWaypoint->hasFlag(CWaypointTypes::W_FL_NOAXIS) )
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 {
 	//static float fDist;
@@ -323,4 +346,36 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	}
 
 	utils.freeMemory();
+}
+
+bool CDODBot :: select_CWeapon ( CWeapon *pWeapon )
+{
+	char cmd[128];
+
+	sprintf(cmd,"use %s",pWeapon->getWeaponName());
+
+	helpers->ClientCommand(m_pEdict,cmd);
+
+	return true;
+}
+
+bool CDODBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
+{
+	CWeapon *pSelect = pBotWeapon->getWeaponInfo();
+
+	if ( pSelect )
+	{
+		//int id = pSelect->getWeaponIndex();
+		char cmd[128];
+
+		sprintf(cmd,"use %s",pSelect->getWeaponName());
+
+		helpers->ClientCommand(m_pEdict,cmd);
+
+		return true;
+	}
+	else
+		failWeaponSelect();
+
+	return false;
 }

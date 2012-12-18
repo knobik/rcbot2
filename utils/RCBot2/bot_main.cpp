@@ -77,6 +77,12 @@
 
 #include "bot_getprop.h"
 
+#ifdef WIN32
+#include <Windows.h>
+#else
+#include <sys/mman.h>
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -134,7 +140,8 @@ ConVar rcbot_jump_obst_speed("rcbot_jump_obst_speed","100",0,"the speed of the b
 ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee weapons");
 
 ConVar rcbot_move_forward("rcbot_forward","0",0,"if 1 , bots will all move forward");
-
+ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","415",0,"offset of the PlayerRunCommand function");
+//ConVar rcbot_override("rcbot_override","1",0,"if 1 the plugin will override other bots runplayer functions");
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");
 ConVar *mp_teamplay = NULL;
@@ -160,6 +167,101 @@ IServerGameDLL *servergamedll = NULL;
 //
 CRCBotPlugin g_RCBOTServerPlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CRCBotPlugin, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_RCBOTServerPlugin );
+
+// Needed to hook virtual tables and member functions
+DWORD VirtualTableHook( DWORD* pdwNewInterface, int vtable, DWORD newInterface )
+{
+    DWORD dwOld, dwStor = 0x0;
+#ifndef __linux
+    VirtualProtect( &pdwNewInterface[vtable], 4, PAGE_EXECUTE_READWRITE, &dwOld );
+#else
+	mprotect(&pdwNewInterface[vtable], 4, PROT_EXEC|PROT_READ|PROT_WRITE);
+#endif
+    dwStor = pdwNewInterface[vtable];
+    *(DWORD*)&pdwNewInterface[vtable] = newInterface;
+#ifndef __linux
+    VirtualProtect(&pdwNewInterface[vtable], 4, dwOld, &dwOld);
+#else
+	mprotect(&pdwNewInterface[vtable], 4, PROT_EXEC|PROT_READ);
+#endif
+
+    return dwStor;
+}
+// needed to call the original playerruncommand function
+void (CBaseEntity::*pPlayerRunCommand)(CUserCmd*, IMoveHelper*) = 0x0;
+DWORD* pdwNewInterface = 0;
+
+// PlayerRunCommmand Hook 
+// Some Mods have their own puppet bots that run around and override RCBOT if this is not here
+// this function overrides the puppet bots movements
+void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
+{
+	edict_t *pEdict = servergameents->BaseEntityToEdict(_this);
+
+	static CBot *pBot;
+
+	pBot = CBots::getBotPointer(pEdict);
+	
+	if ( pBot )
+	{
+		static CBotCmd *cmd;
+		
+		cmd = pBot->getUserCMD();
+
+		// put the bot's commands into this move frame
+		pCmd->buttons = cmd->buttons;
+		pCmd->forwardmove = cmd->forwardmove;
+		pCmd->impulse = cmd->impulse;
+		pCmd->sidemove = cmd->sidemove;
+		pCmd->upmove = cmd->upmove;
+		pCmd->viewangles = cmd->viewangles;
+		pCmd->weaponselect = cmd->weaponselect;
+		pCmd->weaponsubtype = cmd->weaponsubtype;
+		pCmd->tick_count = cmd->tick_count;
+	}
+
+    (*_this.*pPlayerRunCommand)(pCmd, pMoveHelper);
+}
+
+// begin hook
+void HookPlayerRunCommand ( edict_t *edict )
+{
+	if ( CBots::controlBots() ) //rcbot_override.GetBool() )
+	{
+		CBaseEntity *BasePlayer = (CBaseEntity *)(edict->GetUnknown()->GetBaseEntity());
+
+		if(BasePlayer)
+		{
+			int vtable = rcbot_runplayercmd.GetInt();
+	#ifndef WIN32
+			++vtable;
+	#endif
+	       // hook it
+			if ( pPlayerRunCommand == 0x0 )
+			{
+				pdwNewInterface = ( DWORD* )*( DWORD* )BasePlayer;
+				*(DWORD*)&pPlayerRunCommand = VirtualTableHook( pdwNewInterface, vtable, ( DWORD )nPlayerRunCommand );
+			}
+		}
+	}
+}
+
+// end hook
+void UnhookPlayerRunCommand ()
+{
+	if ( pPlayerRunCommand && pdwNewInterface )
+	{
+		int vtable = rcbot_runplayercmd.GetInt();
+	#ifndef WIN32
+		++vtable;
+	#endif
+	       
+		VirtualTableHook( pdwNewInterface, vtable, *(DWORD*)&pPlayerRunCommand );
+		pdwNewInterface = NULL;
+		pPlayerRunCommand = NULL;
+	}
+}
+
 
 //---------------------------------------------------------------------------------
 // Purpose: constructor/destructor
@@ -419,7 +521,7 @@ void CRCBotPlugin::ShowLicense ( void )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::Unload( void )
 {
-	//unloadUserCmdHook(gameclients);
+	UnhookPlayerRunCommand();
 
 	CBots::freeAllMemory();
 	CStrings::freeAllMemory();
@@ -596,6 +698,7 @@ void CRCBotPlugin::ClientActive( edict_t *pEntity )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::ClientDisconnect( edict_t *pEntity )
 {
+
 	CClients::clientDisconnected(pEntity);
 }
 

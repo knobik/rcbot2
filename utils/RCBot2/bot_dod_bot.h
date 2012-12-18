@@ -31,6 +31,9 @@
 #ifndef __DOD_RCBOT_H__
 #define __DOD_RCBOT_H__
 
+#define TEAM_ALLIES 2
+#define TEAM_AXIS 3
+
 // bot for DOD
 class CDODBot : public CBot
 {
@@ -63,6 +66,13 @@ public:
 	void selectedClass ( int iClass );
 
 	void setVisible ( edict_t *pEntity, bool bVisible );
+
+	bool select_CWeapon ( CWeapon *pWeapon );
+
+	bool selectBotWeapon ( CBotWeapon *pBotWeapon );
+
+	bool canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint);
+
 private:
 
 	int m_iSelectedClass;

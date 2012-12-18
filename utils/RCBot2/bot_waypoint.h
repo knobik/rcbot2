@@ -110,7 +110,9 @@ public:
 	static const int W_FL_FLAG = 16;
 	static const int W_FL_CAPPOINT = 32;
 	static const int W_FL_NOBLU = 64;
+	static const int W_FL_NOALLIES = 64;
 	static const int W_FL_NORED = 128;
+	static const int W_FL_NOAXIS = 128;
 	static const int W_FL_HEALTH = 256;
 	static const int W_FL_OPENS_LATER = 512;
 	static const int W_FL_ROCKET_JUMP = 1024;
