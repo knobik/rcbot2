@@ -105,6 +105,7 @@ public:
 
 	virtual void clientCommand ( edict_t *pEntity, int argc,const char *pcmd, const char *arg1, const char *arg2 ) {};
 
+	virtual void modFrame () { };
 private:
 	char *m_szModFolder;
 	char *m_szSteamFolder;
@@ -112,6 +113,82 @@ private:
 	eBotType m_iBotType;
 };
 
+///////////////////
+
+class CDODFlag
+{
+public:
+	CDODFlag()
+	{
+		m_pEdict = NULL;
+		m_iNumAxis = 0;
+		m_iNumAllies = 0;
+		m_iOccupiedTeam = 0;
+		m_iId = 0;
+	}
+
+	CDODFlag(edict_t *pEdict)
+	{
+		m_pEdict = pEdict;
+		m_iNumAxis = 0;
+		m_iNumAllies = 0;
+		m_iOccupiedTeam = 0;
+		m_iId = 0;
+	}
+
+	inline bool isFlag ( edict_t *pEdict ) { return m_pEdict == pEdict; }
+
+	void update ();
+private:
+	int m_iNumAxis;
+	int m_iNumAllies;
+	int m_iOccupiedTeam;
+	int m_iId;
+	edict_t *m_pEdict;
+};
+
+#define MAX_DOD_FLAGS 8
+
+class CDODFlags
+{
+public:
+	CDODFlags()
+	{
+		m_iNumFlags = 0;
+	}
+
+	void updateAll ()
+	{
+		for ( int i = 0; i < m_iNumFlags; i ++ )
+			m_Flags[i].update();
+	}
+
+	void addFlag ( edict_t *pEdict )
+	{
+		if ( m_iNumFlags < MAX_DOD_FLAGS )
+			m_Flags[m_iNumFlags++] = CDODFlag(pEdict);
+	}
+
+	void clear ()
+	{
+		m_iNumFlags = 0;
+	}
+
+	CDODFlag *findFlag ( edict_t *pEdict )
+	{
+		for ( int i = 0; i < m_iNumFlags; i ++ )
+		{
+			if ( m_Flags[i].isFlag(pEdict) )
+				return &(m_Flags[i]);
+		}
+
+		return NULL;
+	}
+
+private:
+	CDODFlag m_Flags[MAX_DOD_FLAGS];
+	int m_iNumFlags;
+};
 
 class CDODMod : public CBotMod
 {
@@ -120,11 +197,19 @@ public:
 	{
 		setup("dod","day of defeat source",MOD_DOD,BOTTYPE_DOD);
 	}
+
+	static CDODFlags m_Flags;
+
 protected:
 
-	virtual void initMod ();
+	void initMod ();
 
-	virtual void mapInit ();
+	void mapInit ();
+
+	void modFrame ();
+
+	static edict_t *m_pResourceEntity;
+
 
 	//virtual void entitySpawn ( edict_t *pEntity );
 

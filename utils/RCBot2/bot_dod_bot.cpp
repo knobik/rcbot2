@@ -40,6 +40,7 @@
 #include "bot_schedule.h"
 #include "bot_weapons.h"
 #include "bot_waypoint.h"
+#include "bot_waypoint_locations.h"
 //#include "vstdlib/random.h" // for random functions
 
 void CDODBot :: init ()
@@ -84,6 +85,19 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 
 	CBot::setVisible(pEntity,bVisible);
 
+	if ( bVisible && !(CClassInterface::getEffects(pEntity) & EF_NODRAW) )
+	{
+		if ( strcmp(pEntity->GetClassName(),"dod_control_point") && 
+			(!m_pNearestFlag || (distanceFrom(pEntity)<distanceFrom(m_pNearestFlag)) ) )
+		{
+			m_pNearestFlag = pEntity;
+		}
+	}
+	else
+	{
+		if ( pEntity == m_pNearestFlag )
+			m_pNearestFlag = NULL;
+	}
 }
 
 void CDODBot :: selectedClass ( int iClass )
@@ -158,6 +172,9 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	if ( !pEdict )
 		return false;
 
+	if ( !pEdict->GetUnknown() )
+		return false; // left the server
+
 	if ( pEdict == m_pEdict )
 		return false;
 
@@ -197,6 +214,11 @@ void CDODBot :: modThink ()
 	{
 		m_fLastSeeEnemy = 0;
 		m_pButtons->tap(IN_RELOAD);
+	}
+
+	if ( m_pNearestFlag )
+	{
+
 	}
 }
 
@@ -239,10 +261,46 @@ void CDODBot :: fixWeapons ()
 	}
 }
 
+void CDODBot ::defending()
+{
+	// check to go prone or not
+}
+
 bool CDODBot :: executeAction ( eBotAction iAction )
 {
 	switch ( iAction )
 	{
+	case BOT_UTIL_DEFEND_POINT:
+		{
+			CWaypoint *pGoal = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam(),0,0,this);
+			
+			CWaypoint *pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),pGoal->getOrigin());
+
+			if ( pWaypoint )
+			{
+				CBotSchedule *defend = new CBotSchedule();
+
+				defend->addTask(new CFindPathTask(pWaypoint->getOrigin()));
+				defend->addTask(new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(15.0f,20.0f),0,true,pGoal->getOrigin()));
+				// add defend task
+				m_pSchedules->add(defend);
+				
+				return true;
+			}
+		}
+		break;
+	case BOT_UTIL_ATTACK_POINT:
+		{
+			CWaypoint *pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,getTeam(),0,0,this);
+
+			if ( pWaypoint )
+			{
+				// add capture point task
+				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				return true;
+			}
+		}
+		break;
 	case BOT_UTIL_ROAM:
 		{
 		// roam
@@ -266,14 +324,14 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 {
 
 	//CBotUtilities util;
-	CBot::getTasks(iIgnore);
+	//CBot::getTasks(iIgnore);
 
 	//ADD_UTILITY(BOT_UTIL_CAPTURE_POINT,,(numFriendlies/numEnemies)/numPlayersOnTeam);
 	//ADD_UTILITY();
 
 	static CBotUtilities utils;
 	static CBotUtility *next;
-	static CBotWeapon *gravgun;
+	static CBotWeapon *grenade;
 	static CWeapon *pWeapon;
 
 	// if condition has changed or no tasks
@@ -299,9 +357,10 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	// I have an enemy 
 	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*(getArmorPercent()+0.1));
 
-	//ADD_UTILITY(BOT_UTIL_CAPTURE_POINT,);
+	ADD_UTILITY(BOT_UTIL_ATTACK_POINT,true,randomFloat(0.4,0.6f));
+	ADD_UTILITY(BOT_UTIL_DEFEND_POINT,true,randomFloat(0.4,0.6f));
 
-	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && m_pWeapons->hasWeapon(HL2DM_WEAPON_FRAG) )
+	/*if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && m_pWeapons->hasWeapon(HL2DM_WEAPON_FRAG) )
 	{
 		float fDistance = distanceFrom(m_vLastSeeEnemyBlastWaypoint);
 
@@ -312,7 +371,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 			ADD_UTILITY(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,1.0f-(getHealthPercent()*0.2));
 		}
-	}
+	}*/
 
 	/*if ( m_pNearbyWeapon.get() )
 	{

@@ -49,6 +49,9 @@ typedef enum
 	GETPROP_DOD_DES_PLAYERCLASS,
 	GETPROP_DOD_STAMINA,
 	GETPROP_DOD_PRONE,
+	GETPROP_SEQUENCE,
+	GETPROP_CYCLE,
+	GETPROP_ENTITYFLAGS,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -243,9 +246,22 @@ public:
 	inline static int getPlayerClassDOD(edict_t *player) { return g_GetProps[GETPROP_DOD_PLAYERCLASS].getInt(player,0); }
 	inline static void getPlayerInfoDOD(edict_t *player, bool *m_bProne, float *m_flStamina)
 	{
-		*m_bProne = g_GetProps[GETPROP_DOD_STAMINA].getBool(player,false);
-		*m_flStamina = g_GetProps[GETPROP_DOD_PRONE].getFloat(player,0);
+		*m_bProne = g_GetProps[GETPROP_DOD_PRONE].getBool(player,false);
+		*m_flStamina = g_GetProps[GETPROP_DOD_STAMINA].getFloat(player,0);
 	}
+
+	inline static float getAnimCycle ( edict_t *edict) 
+	{	
+		return g_GetProps[GETPROP_CYCLE].getFloat(edict,0);
+	}
+
+	inline static void getAnimatingInfo ( edict_t *edict, float *flCycle, int *iSequence ) 
+	{	
+		*flCycle = g_GetProps[GETPROP_CYCLE].getFloat(edict,0);
+		*iSequence = g_GetProps[GETPROP_SEQUENCE].getInt(edict,false);
+	}
+
+	inline static int getPlayerFlags (edict_t *player) { return g_GetProps[GETPROP_ENTITYFLAGS].getInt(player,0);}
 
 	inline static int getDesPlayerClassDOD(edict_t *player) { return g_GetProps[GETPROP_DOD_DES_PLAYERCLASS].getInt(player,0); }
 	// HL2DM

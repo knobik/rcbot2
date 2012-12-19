@@ -456,12 +456,6 @@ public:
 	inline bool hasEnemy () { return m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY); }
 	edict_t *getEnemy () { return m_pEnemy; }
 
-	inline void setLookAt ( Vector vNew )
-	{
-		m_vLookAt = vNew;
-		m_bLookAtIsValid = true;
-	}
-
 
 	inline void setMoveTo ( Vector vNew )
 	{
@@ -649,7 +643,16 @@ public:
 	inline float getTouchDistance () { return m_fWaypointTouchDistance; }
 
 	inline CBotCmd *getUserCMD () { return &cmd; }
+
+	// bot is defending -- mod specific stuff
+	virtual void defending () {}
 protected:
+
+	inline void setLookAt ( Vector vNew )
+	{
+		m_vLookAt = vNew;
+		m_bLookAtIsValid = true;
+	}
 
 	static void checkEntity ( edict_t **pEdict );
 	/////////////////////////

@@ -396,12 +396,12 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	}
 
 	// low on health? Pick some up if there's any near by
-	ADD_UTILITY(BOT_UTIL_HL2DM_USE_HEALTH_CHARGER,(m_pHealthCharger.get() != NULL) && (getHealthPercent()<1.0f),(1.0f-getHealthPercent()));
+	ADD_UTILITY(BOT_UTIL_HL2DM_USE_HEALTH_CHARGER,(m_pHealthCharger.get() != NULL) && (CClassInterface::getAnimCycle(m_pHealthCharger)<1.0f) && (getHealthPercent()<1.0f),(1.0f-getHealthPercent()));
 	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,(m_pHealthKit.get()!=NULL) && (getHealthPercent()<1.0f),1.0f-getHealthPercent());
 
 	// low on armor?
 	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,(m_pBattery.get() !=NULL) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
-	ADD_UTILITY(BOT_UTIL_HL2DM_USE_CHARGER,(m_pCharger.get() !=NULL) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
+	ADD_UTILITY(BOT_UTIL_HL2DM_USE_CHARGER,(m_pCharger.get() !=NULL) && (CClassInterface::getAnimCycle(m_pCharger)<1.0f) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
 	
 	// low on ammo? ammo nearby?
 	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (getAmmo(0)<5),0.01f*(100-getAmmo(0)));
@@ -700,6 +700,15 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		else if ( ( strncmp(szClassname,"item_suitcharger",16)==0 ) && 
 			( !m_pCharger.get() || (fDist<distanceFrom(m_pCharger.get())) ))
 		{
+			if ( m_pCharger.get() )
+			{
+				// less juice than the current one I see
+				if ( CClassInterface::getAnimCycle(m_pCharger) < CClassInterface::getAnimCycle(pEntity) )
+				{
+					return;
+				}
+			}
+
 			if ( m_pPlayerInfo->GetArmorValue() < 50 )
 				updateCondition(CONDITION_CHANGED);
 
@@ -708,6 +717,15 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		else if ( ( strncmp(szClassname,"item_healthcharger",18)==0 ) && 
 			( !m_pHealthCharger.get() || (fDist<distanceFrom(m_pHealthCharger.get())) ))
 		{
+			if ( m_pHealthCharger.get() )
+			{
+				// less juice than the current one I see - forget it
+				if ( CClassInterface::getAnimCycle(m_pHealthCharger) < CClassInterface::getAnimCycle(pEntity) )
+				{
+					return;
+				}
+			}
+
 			if ( getHealthPercent() < 1.0f )
 				updateCondition(CONDITION_CHANGED); // update tasks
 

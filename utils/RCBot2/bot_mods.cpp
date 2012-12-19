@@ -38,6 +38,7 @@
 #include "bot_script.h"
 #include "bot_configfile.h"
 #include "bot_getprop.h"
+#include "bot_dod_bot.h"
 
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
@@ -59,6 +60,8 @@ int CTeamFortress2Mod::m_iFlagCarrierTeam = 0;
 MyEHandle CTeamFortress2Mod::m_pBoss = MyEHandle(NULL);
 bool CTeamFortress2Mod::m_bBossSummoned = false;
 MyEHandle CTeamFortress2Mod::pMediGuns[MAX_PLAYERS];
+edict_t *CDODMod::m_pResourceEntity = NULL;
+CDODFlags CDODMod::m_Flags;
 
 extern ConVar bot_use_disp_dist;
 
@@ -1176,9 +1179,48 @@ void CDODMod :: initMod ()
 
 	for ( i = 0; i < DOD_WEAPON_MAX; i ++ )
 		CWeapons::addWeapon(new CWeapon(DODWeaps[i]));
+
+	m_pResourceEntity = NULL;
 }
 
 void CDODMod :: mapInit ()
 {
+	// find m_pResourceEntity
 
+	m_pResourceEntity = FindEntityByNetClass(-1,"dod_objective_resource");
+}
+
+void CDODFlag::update()
+{
+	static int i;
+	static Vector vOrigin;
+
+	vOrigin = CBotGlobals::entityOrigin(m_pEdict);
+
+	m_iNumAllies = 0;
+	m_iNumAxis = 0;
+
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		edict_t *pPlayer = INDEXENT(i);
+
+		if ( !pPlayer || pPlayer->IsFree() || !pPlayer->GetUnknown() )
+			continue; // invalid
+
+		if ( !CBotGlobals::isAlivePlayer(pPlayer) )
+			continue;
+
+		if ( (CBotGlobals::entityOrigin(pPlayer) - vOrigin).Length() < 200 )
+		{
+			if ( CClassInterface::getTeam(pPlayer) == TEAM_ALLIES )
+				m_iNumAllies++;
+			else if ( CClassInterface::getTeam(pPlayer) == TEAM_ALLIES )
+				m_iNumAxis++;
+		}
+	}
+}
+
+void CDODMod ::modFrame()
+{
+	m_Flags.updateAll();
 }

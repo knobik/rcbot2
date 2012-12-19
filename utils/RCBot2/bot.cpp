@@ -216,6 +216,12 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 	engine->SetFakeClientConVarValue(pEdict,"cl_autowepswitch","1");	
 	engine->SetFakeClientConVarValue(pEdict,"tf_medigun_autoheal","1");	
 
+	if (strcmp(m_szBotName,pProfile->getName()) )
+	{
+		engine->SetFakeClientConVarValue(pEdict,"name",pProfile->getName());
+		strcpy(m_szBotName,pProfile->getName());
+	}
+
 	if ( m_pPlayerInfo && (pProfile->getTeam() != -1) )
 		m_pPlayerInfo->ChangeTeam(pProfile->getTeam());
 
@@ -2559,7 +2565,7 @@ void CBots :: kickRandomBotOnTeam ( int team )
 
 void CBots :: handlePlayerJoin ( edict_t *pEdict, const char *name )
 {
-	if ( m_bControlNext && (strcmp(&name[strlen(name)-strlen(m_szNextName)],m_szNextName) == 0) )
+	if ( m_bControlNext && ((strcmp(&name[strlen(name)-strlen(m_szNextName)],m_szNextName) == 0) || (strncmp(name,"Bot",3) == 0)) )
 	{
 		m_ControlQueue.push(pEdict);
 		m_bControlNext = false;

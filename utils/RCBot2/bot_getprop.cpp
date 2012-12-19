@@ -341,6 +341,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_MAXSPEED,"CBasePlayer","m_flMaxspeed",0);
 		DEFINE_GETPROP(GETPROP_CONSTRAINT_SPEED,"CTFPlayer","m_flConstraintSpeedFactor",0);
 		DEFINE_GETPROP(GETPROP_TF2OBJECTBUILDING,"CObjectDispenser","m_bBuilding",0);
+		DEFINE_GETPROP(GETPROP_ENTITYFLAGS,"CBasePlayer","m_fFlags",0);
 
 		// hl2dm
 		DEFINE_GETPROP(GETPROP_HL2DM_PHYSCANNON_ATTACHED,"CWeaponPhysCannon","m_hAttachedObject",0);
@@ -362,6 +363,8 @@ void CClassInterface:: init ()
 
 		DEFINE_GETPROP(GETPROP_DOD_STAMINA,"CDODPlayer","m_flStamina",0);
 		DEFINE_GETPROP(GETPROP_DOD_PRONE,"CDODPlayer","m_bProne",0);
+		DEFINE_GETPROP(GETPROP_SEQUENCE,"CBaseAnimating","m_nSequence",0);
+		DEFINE_GETPROP(GETPROP_CYCLE,"CBaseAnimating","m_flCycle",0);
 
 	
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )

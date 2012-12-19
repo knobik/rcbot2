@@ -4685,6 +4685,9 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	bValid = false;
 	bIsBoss = false;
 
+	if ( !pEdict || !pEdict->GetUnknown() )
+		return false;
+
 	if ( !CBotGlobals::entityIsAlive(pEdict) )
 		return false;
 

@@ -1822,29 +1822,31 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_JUMP,"jump","bot will jump here",WptColor(255,255,255)));
 	addType(new CWaypointType(W_FL_CROUCH,"crouch","bot will duck here",WptColor(200,100,0)));
 	addType(new CWaypointType(W_FL_UNREACHABLE,"unreachable","bot can't go here (used for visibility purposes only)",WptColor(200,200,200)));
-	addType(new CWaypointType(W_FL_LADDER,"ladder","bot will climb a ladder",WptColor(255,255,0)));
+	addType(new CWaypointType(W_FL_LADDER,"ladder","bot will climb a ladder here",WptColor(255,255,0)));
 	addType(new CWaypointType(W_FL_FLAG,"flag","bot will find a flag here",WptColor(255,255,0)));
-	addType(new CWaypointType(W_FL_CAPPOINT,"capture","bot will find a capture point here",WptColor(255,255,0)));
-	addType(new CWaypointType(W_FL_NOBLU,"noblueteam","blue team can't use this waypoint",WptColor(255,0,0)));
-	addType(new CWaypointType(W_FL_NORED,"noredteam","red team can't use this waypoint",WptColor(0,0,128)));
+	addType(new CWaypointType(W_FL_CAPPOINT,"capture","TF2/DOD bot will find a capture point here",WptColor(255,255,0)));
+	addType(new CWaypointType(W_FL_NOBLU,"noblueteam","TF2 blue team can't use this waypoint",WptColor(255,0,0)));
+	addType(new CWaypointType(W_FL_NOALLIES,"noallies","DOD allies team can't use this waypoint",WptColor(255,0,0)));
+	addType(new CWaypointType(W_FL_NORED,"noredteam","TF2 red team can't use this waypoint",WptColor(0,0,128)));
+	addType(new CWaypointType(W_FL_NOAXIS,"noaxis","DOD axis team can't use this waypoint",WptColor(255,0,0)));
 	addType(new CWaypointType(W_FL_HEALTH,"health","bot can sometimes get health here",WptColor(255,255,255)));
 	addType(new CWaypointType(W_FL_OPENS_LATER,"openslater","this waypoint is available when a door is open only",WptColor(100,100,200)));
 	addType(new CWaypointType(W_FL_SNIPER,"sniper","a bot can snipe here",WptColor(0,255,0)));
-	addType(new CWaypointType(W_FL_ROCKET_JUMP,"rocketjump","a bot can rocket jump here",WptColor(10,100,0)));
+	addType(new CWaypointType(W_FL_ROCKET_JUMP,"rocketjump","TF2 a bot can rocket jump here",WptColor(10,100,0)));
 	addType(new CWaypointType(W_FL_AMMO,"ammo","bot can sometimes get ammo here",WptColor(50,100,10)));
-	addType(new CWaypointType(W_FL_RESUPPLY,"resupply","bot can always get ammo and health here",WptColor(255,100,255)));
-	addType(new CWaypointType(W_FL_SENTRY,"sentry","engineer bot can build here",WptColor(255,0,0)));
-	addType(new CWaypointType(W_FL_DOUBLEJUMP,"doublejump","scout can double jump here",WptColor(10,10,100)));
+	addType(new CWaypointType(W_FL_RESUPPLY,"resupply","TF2 bot can always get ammo and health here",WptColor(255,100,255)));
+	addType(new CWaypointType(W_FL_SENTRY,"sentry","TF2 engineer bot can build here",WptColor(255,0,0)));
+	addType(new CWaypointType(W_FL_DOUBLEJUMP,"doublejump","TF2 scout can double jump here",WptColor(10,10,100)));
 
-	addType(new CWaypointType(W_FL_TELE_ENTRANCE,"teleentrance","engineer bot can build tele entrance here",WptColor(50,50,150)));
-	addType(new CWaypointType(W_FL_TELE_EXIT,"teleexit","engineer bot can build tele exit here",WptColor(100,100,255)));
+	addType(new CWaypointType(W_FL_TELE_ENTRANCE,"teleentrance","TF2 engineer bot can build tele entrance here",WptColor(50,50,150)));
+	addType(new CWaypointType(W_FL_TELE_EXIT,"teleexit","TF2 engineer bot can build tele exit here",WptColor(100,100,255)));
 	addType(new CWaypointType(W_FL_DEFEND,"defend","bot will defend at this position",WptColor(160,50,50)));
 	addType(new CWaypointType(W_FL_AREAONLY,"areaonly","bot will only use this waypoint at certain areas of map",WptColor(150,200,150)));
 	addType(new CWaypointType(W_FL_ROUTE,"route","bot will attempt to go through one of these",WptColor(100,100,100)));
 	addType(new CWaypointType(W_FL_WAIT_OPEN,"waitopen","bot will wait until arena point is open to use this waypoint",WptColor(150,150,100)));
-	addType(new CWaypointType(W_FL_NO_FLAG,"noflag","bot will lose flag if he goes thorugh here",WptColor(200,100,50)));
+	addType(new CWaypointType(W_FL_NO_FLAG,"noflag","TF2 bot will lose flag if he goes thorugh here",WptColor(200,100,50)));
 	addType(new CWaypointType(W_FL_LIFT,"lift","bot needs to wait on a lift here",WptColor(50,80,180)));
-	addType(new CWaypointType(W_FL_FLAGONLY,"flagonly","bot needs the flag to go through here",WptColor(180,50,80)));
+	addType(new CWaypointType(W_FL_FLAGONLY,"TF2 flagonly","bot needs the flag to go through here",WptColor(180,50,80)));
 }
 
 void CWaypointTypes :: freeMemory ()

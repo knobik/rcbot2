@@ -627,6 +627,9 @@ void CBotHL2DMUseCharger :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime < engine->Time() )
 		complete();
 
+	if ( CClassInterface::getAnimCycle(m_pCharger) == 1.0f )
+		complete();
+
 	if ( ( m_iType == CHARGER_HEALTH ) && ( pBot->getHealthPercent() >= 0.99f ) )
 		complete();
 	else if ( ( m_iType == CHARGER_ARMOR ) && ( ((CHLDMBot*)pBot)->getArmorPercent() >= 0.99f ) )
@@ -1051,9 +1054,18 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		else
 			m_fTime = engine->Time() + randomFloat(20.0f,90.0f);
 	}
+
+	pBot->defending();
 	
 	pBot->stopMoving();
-	pBot->setLookAtTask(LOOK_SNIPE);
+
+	if ( m_bDefendOrigin )
+	{
+		pBot->setLookVector(m_vDefendOrigin);
+		pBot->setLookAtTask(LOOK_VECTOR);
+	}
+	else
+		pBot->setLookAtTask(LOOK_SNIPE);
 
 	if ( m_fTime < engine->Time() )
 		complete();

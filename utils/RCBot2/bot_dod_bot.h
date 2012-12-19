@@ -73,6 +73,8 @@ public:
 
 	bool canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint);
 
+	void defending ();
+
 private:
 
 	int m_iSelectedClass;
@@ -91,6 +93,12 @@ private:
 
 	int m_iClip1;
 	int m_iClip2;
+
+	edict_t *m_pNearestFlag;
+	int m_iNumEnemiesAtNearestFlag;
+
+	edict_t *m_pGoalFlag;
+
 	// blah blah
 };
 

@@ -272,7 +272,15 @@ private:
 class CBotDefendTask : public CBotTask
 {
 public:
-	CBotDefendTask ( Vector vOrigin, float fMaxTime = 0 ) { m_fMaxTime = fMaxTime; m_vOrigin = vOrigin; m_fTime = 0; setCompleteInterrupt(CONDITION_SEE_CUR_ENEMY); }
+	CBotDefendTask ( Vector vOrigin, float fMaxTime = 0, int iInterrupt = CONDITION_SEE_CUR_ENEMY, bool bDefendOrigin = false, Vector vDefendOrigin = Vector(0,0,0) ) 
+	{ 
+		m_fMaxTime = fMaxTime; 
+		m_vOrigin = vOrigin; 
+		m_fTime = 0; 
+		setCompleteInterrupt(iInterrupt); 
+		m_bDefendOrigin = bDefendOrigin;
+		m_vDefendOrigin = vDefendOrigin;
+	}
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -284,6 +292,8 @@ private:
 	float m_fTime;
 	float m_fMaxTime;
 	Vector m_vOrigin;
+	bool m_bDefendOrigin;
+	Vector m_vDefendOrigin;
 };
 
 class CBotTF2EngiLookAfter : public CBotTask
