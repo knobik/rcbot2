@@ -186,6 +186,19 @@ public:
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 
+//bot goto
+class CBotGoto : public CBotCommand
+{
+public:
+	CBotGoto()
+	{
+		setName("bot_goto");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+		setHelp("set a debug bot first and then stand near a waypoint to force your bot to go there");
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
 ///////////////////////
 // command
 class CGetProp : public CBotCommand

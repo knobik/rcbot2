@@ -308,6 +308,76 @@ void CBotTF2WaitFlagTask :: debugString ( char *string )
 }
 //////////
 
+CBotDODAttackPoint :: CBotDODAttackPoint ( int iFlagID, Vector vOrigin, float fRadius )
+{
+	m_vOrigin = vOrigin;
+	m_fAttackTime = 0;
+	m_fTime = 0;
+	m_iFlagID = iFlagID;
+	m_fRadius = fRadius;
+}
+
+void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	static int iTeam;
+
+	iTeam = pBot->getTeam();
+
+	if ( CDODMod::m_Flags.ownsFlag(m_iFlagID,iTeam) )
+		complete();
+	else if ( m_fAttackTime == 0 )
+		m_fAttackTime = engine->Time() + randomFloat(30.0,60.0);
+	else if ( m_fAttackTime < engine->Time() )
+		complete();
+	else
+	{
+		if ( m_fTime == 0 )
+		{
+			
+
+			m_fTime = engine->Time() + randomFloat(2.0,4.0);
+			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_fRadius,m_fRadius),randomFloat(-m_fRadius,m_fRadius),0);
+			m_bProne = (randomFloat(0,1) * (1.0f-pBot->getHealthPercent())) > 0.75f;
+		}
+		else if ( m_fTime < engine->Time() )
+		{
+			m_fTime = 0;
+		}
+		else
+		{
+			static float fdist;
+
+			fdist = pBot->distanceFrom(m_vMoveTo);
+
+			if ( m_bProne )
+				pBot->duck();
+
+			if ( fdist < m_fRadius )
+			{
+				pBot->stopMoving();
+			}
+			else if ( fdist > 400 )
+				fail();
+			else
+			{				
+				pBot->setMoveTo(m_vMoveTo);
+			}
+
+			pBot->setLookAtTask((LOOK_AROUND));
+
+			if ( ((CBotTF2*)pBot)->checkAttackPoint() )
+				complete();
+		}
+	}
+}
+
+void CBotDODAttackPoint :: debugString ( char *string )
+{
+	sprintf(string,"CBotDODAttackPoint (%d,%0.1f,%0.1f,%0.1f,%0.1f)",m_iFlagID,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z,m_fRadius);
+}
+
+///////////
+
 CBotTF2AttackPoint :: CBotTF2AttackPoint ( int iArea, Vector vOrigin, int iRadius )
 {
 	m_vOrigin = vOrigin;
@@ -343,10 +413,18 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( m_fTime == 0 )
 		{
-			float fdist;
-
+			
 			m_fTime = engine->Time() + randomFloat(5.0,10.0);
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_iRadius,m_iRadius),randomFloat(-m_iRadius,m_iRadius),0);
+		}
+		else if ( m_fTime < engine->Time() )
+		{
+			m_fTime = 0;
+		}
+		else
+		{
+			static float fdist;
+
 			fdist = pBot->distanceFrom(m_vMoveTo);
 
 			if ( (((CBotTF2*)pBot)->getClass() == TF_CLASS_SPY) && (((CBotTF2*)pBot)->isDisguised()))
@@ -371,10 +449,6 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			if ( ((CBotTF2*)pBot)->checkAttackPoint() )
 				complete();
-		}
-		else if ( m_fTime < engine->Time() )
-		{
-			m_fTime = 0;
 		}
 	}
 }
@@ -1263,7 +1337,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 	if ( (m_iInt == 0) || (m_iInt == 1) )
 	{
-		pBot->m_fWaypointStuckTime = engine->Time() + randomFloat(7.0f,12.0f);
+		pBot->m_fWaypointStuckTime = 0;
 
 #ifdef _DEBUG
 		CProfileTimer *timer = CProfileTimers::getTimer(BOT_ROUTE_TIMER);
@@ -1275,7 +1349,10 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 #endif
 
 		if ( pBot->getNavigator()->workRoute(pBot->getOrigin(),m_vVector,&bFail,(m_iInt==0),m_bNoInterruptions) )
+		{
+			pBot->m_fWaypointStuckTime = engine->Time() + randomFloat(10.0f,15.0f);
 			m_iInt = 2;
+		}
 		else
 			m_iInt = 1;
 
@@ -2348,9 +2425,9 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else
 	{
-		if ( ( pCurrentWeapon->getID() == DOD_WEAPON_K98_SCOPED ) || ( pCurrentWeapon->getID() == DOD_WEAPON_SPRING ) )
+		if ( pCurrentWeapon->isZoomable() )
 			bDeployedOrZoomed = CClassInterface::isSniperWeaponZoomed(pCurrentWeapon->getWeaponEntity());
-		else if ( ( pCurrentWeapon->getID() == DOD_WEAPON_20CAL ) || ( pCurrentWeapon->getID() == DOD_WEAPON_MG42 ) )
+		else if ( pCurrentWeapon->isDeployable() )
 			bDeployedOrZoomed = CClassInterface::isMachineGunDeployed(pCurrentWeapon->getWeaponEntity());
 
 		if ( m_fScopeTime < engine->Time() )

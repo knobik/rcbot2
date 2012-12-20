@@ -644,6 +644,8 @@ public:
 
 	inline CBotCmd *getUserCMD () { return &cmd; }
 
+	void forceGotoWaypoint ( int wpt );
+
 	// bot is defending -- mod specific stuff
 	virtual void defending () {}
 protected:
@@ -800,6 +802,7 @@ protected:
 	// bots profile data
 	CBotProfile *m_pProfile;
 
+	float m_fPercentMoved;
 
 	/////////////////////////////////
 

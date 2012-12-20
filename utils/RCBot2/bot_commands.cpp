@@ -540,6 +540,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CDebugVisCommand());
 	add(new CDebugThinkCommand());
 	add(new CDebugLookCommand());
+	add(new CBotGoto());
 	add(new CDebugTaskCommand());
 	add(new CDebugButtonsCommand());
 	add(new CDebugSpeedCommand());
@@ -772,6 +773,21 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 	}
 	else
 		CBotGlobals::botMessage(pEntity,0,"error: sv_cheats must be 1 to add bots");
+
+	return COMMAND_ACCESSED;
+}
+///////////////////////
+eBotCommandResult CBotGoto :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient && pClient->getDebugBot()!=NULL )
+	{
+		CBot *pBot = pClient->getDebugBot();
+
+		if ( pBot->inUse() )
+		{
+			pBot->forceGotoWaypoint(pClient->currentWaypoint());
+		}
+	}
 
 	return COMMAND_ACCESSED;
 }

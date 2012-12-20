@@ -93,6 +93,14 @@ void CWaypointNavigator :: init ()
 	m_iFailedGoals.Destroy();//.clear();//Destroy();
 }
 
+bool CWaypointNavigator :: nextPointIsOnLadder ()
+{
+	if ( m_iCurrentWaypoint != -1 )
+		return CWaypoints::getWaypoint(m_iCurrentWaypoint)->hasFlag(CWaypointTypes::W_FL_LADDER);
+
+	return false;
+}
+
 CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals )
 {
 	int i;
@@ -683,12 +691,13 @@ void CWaypointNavigator :: updatePosition ()
 
 	if ( !m_bWorkingRoute )
 	{
+		bool movetype_ok = CClassInterface::isMoveType(m_pBot->getEdict(),MOVETYPE_LADDER)||CClassInterface::isMoveType(m_pBot->getEdict(),MOVETYPE_FLYGRAVITY);
 		bTouched = false;
 
 		bTouched = pWaypoint->touched(m_pBot->getOrigin(),m_vOffset,m_pBot->getTouchDistance());
 
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_LADDER) )
-			bTouched = bTouched && CClassInterface::isMoveType(m_pBot->getEdict(),MOVETYPE_LADDER);
+			bTouched = bTouched && movetype_ok;
 
 		if ( bTouched )
 		{
@@ -837,7 +846,7 @@ bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset, float fTouchDist )
 	if ( (vOrigin-(m_vOrigin+vOffset)).Length2D() <= fTouchDist )
 	{
 		if ( hasFlag(CWaypointTypes::W_FL_LADDER) )
-			return (vOrigin.z > (m_vOrigin.z + fTouchDist));
+			return ((vOrigin.z+32) > m_vOrigin.z);
 
 		return fabs(vOrigin.z-m_vOrigin.z) <= fTouchDist;
 	}

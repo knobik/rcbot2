@@ -316,7 +316,7 @@ bool CBot :: checkStuck ()
 	if ( m_fWaypointStuckTime && (m_fWaypointStuckTime < engine->Time()) )
 	{
 		m_bFailNextMove = true;
-		m_fWaypointStuckTime = engine->Time() + randomFloat(7.0f,11.0f);
+		m_fWaypointStuckTime = engine->Time() + randomFloat(15.0f,20.0f);
 	}
 
 	if ( m_fCheckStuckTime > fTime )
@@ -335,14 +335,19 @@ bool CBot :: checkStuck ()
 		fIdealSpeed /= 2;
 
 	if ( fIdealSpeed == 0 )
+	{
 		m_bThinkStuck = false; // not stuck
+		m_fPercentMoved = 1.0f;
+	}
 	else
 	{
-		float fPercentMoved = fSpeed/fIdealSpeed;
+		// alpha percentage check
+		m_fPercentMoved = (m_fPercentMoved/2) + ((fSpeed/fIdealSpeed)/2);
 
-		if ( fPercentMoved < 0.1 )
+		if ( m_fPercentMoved < 0.1f )
 		{
 			m_bThinkStuck = true;
+			m_fPercentMoved = 0.1f;
 
 			m_pButtons->jump();
 			m_pButtons->duck(0.25f,randomFloat(0.2f,0.4f));
@@ -672,6 +677,7 @@ void CBot :: think ()
 	}
 	else
 	{
+		m_fWaypointStuckTime = 0.0f;
 		stopMoving();
 		setLookAtTask((LOOK_AROUND));
 	}
@@ -941,6 +947,7 @@ void CBot :: spawnInit ()
 	resetTouchDistance(48.0f);
 
 	m_fLastUpdateLastSeeEnemy = 0;
+	m_fPercentMoved = 1.0f;
 
 	for ( int i = 0; i < BOT_UTIL_MAX; i ++ )
 		m_fUtilTimes[i] = 0;
@@ -1053,7 +1060,7 @@ void CBot :: touchedWpt ( CWaypoint *pWaypoint )
 {
 	resetTouchDistance(48.0f);
 
-	m_fWaypointStuckTime = engine->Time() + randomFloat(7.0f,11.0f);
+	m_fWaypointStuckTime = engine->Time() + randomFloat(7.5f,12.5f);
 
 	if ( pWaypoint->getFlags() & CWaypointTypes::W_FL_JUMP )
 		jump();
@@ -1409,6 +1416,17 @@ void CBot :: freeAllMemory ()
 	return;
 }
 
+void CBot :: forceGotoWaypoint ( int wpt )
+{
+	if ( wpt != -1 )
+	{
+		CWaypoint *pWaypoint = CWaypoints::getWaypoint(wpt);
+
+		m_pSchedules->freeMemory();
+		m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+	}
+}
+
 Vector CBot :: getOrigin ()
 {	
 	return m_pController->GetLocalOrigin();
@@ -1703,8 +1721,10 @@ void CBot :: getLookAtVector ()
 	case LOOK_WAYPOINT:
 		{
 			Vector vLook;
-			
-			if ( m_pNavigator->getNextRoutePoint(&vLook) )
+
+			if ( m_pNavigator->nextPointIsOnLadder() )
+				setLookAt(m_pNavigator->getNextPoint()+Vector(0,0,64));
+			else if ( m_pNavigator->getNextRoutePoint(&vLook) )
 				setLookAt(Vector(vLook.x,vLook.y,vLook.z + 36.0f));				
 			else
 			{

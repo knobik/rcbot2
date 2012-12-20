@@ -96,6 +96,8 @@ public:
 
 	inline Vector getGoalOrigin () { return m_vGoal; }
 
+	virtual bool nextPointIsOnLadder () { return false; }
+
 	virtual void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType ) = 0;
 
 	// nearest cover position to vOrigin only
@@ -353,6 +355,8 @@ public:
 	bool routeFound ();
 
 	void rollBackPosition ();
+
+	bool nextPointIsOnLadder ();
 
 	void open ( AStarNode *pNode );
 

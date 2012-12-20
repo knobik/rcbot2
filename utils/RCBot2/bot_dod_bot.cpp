@@ -254,6 +254,8 @@ void CDODBot :: touchedWpt ( CWaypoint *pWaypoint )
 {
 	static int wptindex;
 
+	CBot::touchedWpt(pWaypoint);
+
 	wptindex = CWaypoints::getWaypointIndex(pWaypoint);
 
 	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) ) 
@@ -503,8 +505,9 @@ bool CDODBot :: executeAction ( eBotAction iAction, CBotWeapon *pWeaponChoice )
 	case BOT_UTIL_ATTACK_POINT:
 		{
 			Vector vGoal;
+			int iFlagID;
 
-			if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(&vGoal,getTeam()) )
+			if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(&vGoal,getTeam(),&iFlagID) )
 			{
 				CWaypoint *pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),vGoal);
 
@@ -514,9 +517,9 @@ bool CDODBot :: executeAction ( eBotAction iAction, CBotWeapon *pWeaponChoice )
 
 					attack->setID(SCHED_ATTACKPOINT);
 					attack->addTask(new CFindPathTask(pWaypoint->getOrigin()));
-					attack->addTask(new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(3.0f,10.0f),0,true,vGoal));
+					attack->addTask(new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(1.0f,3.0f),0,true,vGoal));
 					attack->addTask(new CFindPathTask(vGoal));
-					attack->addTask(new CBotDefendTask(vGoal,randomFloat(5.0f,10.0f),0));
+					attack->addTask(new CBotDODAttackPoint(iFlagID,vGoal,150.0f));
 					// add defend task
 					m_pSchedules->add(attack);
 					
