@@ -1165,11 +1165,7 @@ void CTeamFortress2Mod :: mapInit ()
 	CPoints::loadMapScript();
 
 }
-
-///////////////////////////////////
-//
-//
-
+////////////////////////////////////////////////
 void CDODMod :: initMod ()
 {
 	unsigned int i;
@@ -1185,42 +1181,140 @@ void CDODMod :: initMod ()
 
 void CDODMod :: mapInit ()
 {
-	// find m_pResourceEntity
-
-	m_pResourceEntity = FindEntityByNetClass(-1,"dod_objective_resource");
+	m_pResourceEntity = NULL;
+	m_Flags.init();
 }
 
-void CDODFlag::update()
+bool CDODFlags :: isFlag ( edict_t *pent )
 {
-	static int i;
-	static Vector vOrigin;
+	return getFlagID(pent) != -1;
+}
 
-	vOrigin = CBotGlobals::entityOrigin(m_pEdict);
+bool CDODFlags::getRandomEnemyControlledFlag ( Vector *position, int iTeam, int *id )
+{
+	vector<int> iPossible;
+	short int j;
+	int selection;
 
-	m_iNumAllies = 0;
-	m_iNumAxis = 0;
+	if ( id )
+		*id = -1;
 
-	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	for ( short i = 0; i < m_iNumControlPoints; i ++ )
 	{
-		edict_t *pPlayer = INDEXENT(i);
-
-		if ( !pPlayer || pPlayer->IsFree() || !pPlayer->GetUnknown() )
-			continue; // invalid
-
-		if ( !CBotGlobals::isAlivePlayer(pPlayer) )
-			continue;
-
-		if ( (CBotGlobals::entityOrigin(pPlayer) - vOrigin).Length() < 200 )
+		if ( m_iOwner[i] != iTeam )
 		{
-			if ( CClassInterface::getTeam(pPlayer) == TEAM_ALLIES )
-				m_iNumAllies++;
-			else if ( CClassInterface::getTeam(pPlayer) == TEAM_ALLIES )
-				m_iNumAxis++;
+			if ( iTeam == TEAM_ALLIES )
+				for ( j = 0; j < (m_iNumAxis[i]+1); j ++ ) { iPossible.push_back(i); }
+			else if ( iTeam == TEAM_AXIS )
+				for ( j = 0; j < (m_iNumAllies[i]+1); j ++ ) { iPossible.push_back(i); }
+		}
+	}
+
+	if ( iPossible.size() > 0 )
+	{
+		selection = iPossible[randomInt(0,iPossible.size()-1)];
+
+		*position = m_vCPPositions[selection];
+
+		if ( id ) // area of the capture point
+			*id = selection;
+	}
+
+	return (iPossible.size()>0);
+}
+
+bool CDODFlags::getRandomTeamControlledFlag ( Vector *position, int iTeam, int *id )
+{
+	short int j;
+	int selection;
+
+	vector<int> iPossible;
+
+	if ( id )
+		*id = -1;
+
+	for ( short i = 0; i < m_iNumControlPoints; i ++ )
+	{
+		if ( m_iOwner[i] == iTeam )
+		{
+			if ( iTeam == TEAM_ALLIES )
+				for ( j = 0; j < (m_iNumAllies[i]+1); j ++ ) { iPossible.push_back(i); }
+			else if ( iTeam == TEAM_AXIS )
+				for ( j = 0; j < (m_iNumAxis[i]+1); j ++ ) { iPossible.push_back(i); }
+		}
+	}
+
+	if ( iPossible.size() > 0 )
+	{
+		selection = iPossible[randomInt(0,iPossible.size()-1)];
+
+		*position = m_vCPPositions[selection];
+
+		if ( id ) // area of the capture point
+			*id = selection;
+	}
+
+	return (iPossible.size()>0);
+}
+
+void CDODFlags::setup(edict_t *pResourceEntity)
+{
+	m_iNumControlPoints = 0;
+
+	if ( pResourceEntity )
+	{
+		// get the arrays from the resource entity
+		CClassInterface::getDODFlagInfo(pResourceEntity,&m_iNumAxis,&m_iNumAllies,&m_iOwner,&m_iAlliesReqCappers,&m_iAxisReqCappers);
+		m_iNumControlPoints = CClassInterface::getDODNumControlPoints(pResourceEntity);
+		// get the Capture point positions
+		m_vCPPositions = CClassInterface::getDODCP_Positions(pResourceEntity);
+	}
+
+	// find the edicts of the flags using the origin and classname
+	if ( m_iNumControlPoints > 0 )
+	{
+		int i;
+		int j;
+
+		edict_t *pent;
+
+		Vector vOrigin;
+
+		for ( i = gpGlobals->maxClients+1; i < gpGlobals->maxEntities; i ++ )
+		{
+			pent = INDEXENT(i);
+
+			if ( !pent || pent->IsFree() )
+				continue;
+
+			if ( strcmp(pent->GetClassName(),DOD_CLASSNAME_CONTROLPOINT) == 0 )
+			{
+				vOrigin = CBotGlobals::entityOrigin(pent);
+
+				for ( j = 0; j < m_iNumControlPoints; j ++ )
+				{
+					if ( vOrigin == m_vCPPositions[j] )
+					{
+						m_pFlags[j] = pent;
+						break;
+					}
+				}
+			}
 		}
 	}
 }
 
-void CDODMod ::modFrame()
+
+void CDODMod ::roundStart()
 {
-	m_Flags.updateAll();
+	if ( !m_pResourceEntity )
+		m_pResourceEntity = FindEntityByNetClass(gpGlobals->maxClients+1, "CDODObjectiveResource");
+
+	m_Flags.setup(m_pResourceEntity);
+	//m_Flags.updateAll();
+}
+
+void CDODMod :: modFrame()
+{
+
 }

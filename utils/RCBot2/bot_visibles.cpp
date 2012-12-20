@@ -178,6 +178,9 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 			// from Valve developer community wiki
 			// http://developer.valvesoftware.com/wiki/Transforming_the_Multiplayer_SDK_into_Coop
 
+			// update tick -- counts the number of PVS done (cpu intensive)
+			*iTicks = *iTicks + 1;
+
 			clusterIndex = engine->GetClusterForOrigin( m_pBot->getOrigin() );
 			engine->GetPVSForCluster( clusterIndex, sizeof(m_bPvs), m_bPvs );
 			
@@ -190,8 +193,6 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 
 			if ( playerInPVS )
 			{
-				// update tick -- counts the number of tracelines done (cpu intensive)
-				*iTicks = *iTicks + 1;
 
 				*bVisible = m_pBot->FVisible(pEntity);
 

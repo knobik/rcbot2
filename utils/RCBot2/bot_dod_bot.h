@@ -34,6 +34,18 @@
 #define TEAM_ALLIES 2
 #define TEAM_AXIS 3
 
+typedef enum
+{
+ DOD_CLASS_RIFLEMAN = 0,
+ DOD_CLASS_ASSAULT,
+ DOD_CLASS_SUPPORT,
+ DOD_CLASS_SNIPER,
+ DOD_CLASS_MACHINEGUNNER,
+ DOD_CLASS_ROCKET
+}DOD_Class;
+
+#define DOD_CLASSNAME_CONTROLPOINT "dod_control_point"
+
 // bot for DOD
 class CDODBot : public CBot
 {
@@ -61,7 +73,7 @@ public:
 
 	void fixWeapons ();
 
-	bool executeAction ( eBotAction iAction );
+	bool executeAction ( eBotAction iAction, CBotWeapon *pWeaponChoice );
 
 	void selectedClass ( int iClass );
 
@@ -74,6 +86,16 @@ public:
 	bool canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint);
 
 	void defending ();
+
+	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
+
+	void handleWeapons ();
+
+	void reachedCoverSpot ();
+
+	void touchedWpt ( CWaypoint *pWaypoint );
+
+	bool checkStuck ();
 
 private:
 
@@ -94,10 +116,16 @@ private:
 	int m_iClip1;
 	int m_iClip2;
 
-	edict_t *m_pNearestFlag;
-	int m_iNumEnemiesAtNearestFlag;
+	int m_iTeam;
 
+	edict_t *m_pNearestFlag;
 	edict_t *m_pGoalFlag;
+
+	DOD_Class m_iClass;
+	float m_fShootTime;
+	float m_fZoomOrDeployTime;
+
+	float m_fProneTime;
 
 	// blah blah
 };

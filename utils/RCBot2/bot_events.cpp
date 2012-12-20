@@ -545,7 +545,7 @@ void CFlagCaptured :: execute ( IBotEventInterface *pEvent )
 
 void CDODRoundStart :: execute ( IBotEventInterface *pEvent )
 {
-
+	CDODMod::roundStart();
 }
 
 void CDODRoundActive :: execute ( IBotEventInterface *pEvent )
@@ -622,6 +622,8 @@ void CBotEvents :: setupEvents ()
 	addEvent(new COverTimeBegin());
 	addEvent(new CPlayerHealed());
 	addEvent(new CPlayerTeleported());
+	addEvent(new CDODChangeClass());
+	
 /*
 pumpkin_lord_summoned 
 merasmus_summoned 

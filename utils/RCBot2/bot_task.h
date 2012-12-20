@@ -321,12 +321,26 @@ public:
 
 	void debugString ( char *string )
 	{
-		sprintf(string,"CBotTF2Snipe");
+		sprintf(string,"CBotSnipe");
 	}
 private:
 	float m_fTime;
 	Vector m_vAim;
 	Vector m_vOrigin;
+};
+
+class CBotDODSnipe : public CBotTask
+{
+public:
+	CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule); 
+private:
+	float m_fTime;
+	float m_fScopeTime;
+	Vector m_vAim;
+	Vector m_vOrigin;
+	CBotWeapon *m_pWeaponToUse;
 };
 
 class CBotTF2SpyDisguise : public CBotTask
@@ -580,12 +594,13 @@ private:
 class CThrowGrenadeTask : public CBotTask
 {
 public:
-	CThrowGrenadeTask ( int ammo, Vector vLoc );
+	CThrowGrenadeTask ( CBotWeapon *pWeapon, int ammo, Vector vLoc );
 	void init ();
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 	virtual void debugString ( char *string );
 private:
 	Vector m_vLoc;
+	CBotWeapon *m_pWeapon;
 	float m_fTime;
 	float m_fHoldAttackTime;
 	int m_iAmmo;

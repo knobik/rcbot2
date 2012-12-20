@@ -298,7 +298,7 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 			if ( pWaypoint )
 			{
 				CBotSchedule *pSched = new CBotSchedule();
-				pSched->addTask(new CThrowGrenadeTask(getAmmo(CWeapons::getWeapon(HL2DM_WEAPON_FRAG)->getAmmoIndex1()),m_vLastSeeEnemyBlastWaypoint)); // first - throw
+				pSched->addTask(new CThrowGrenadeTask(m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_FRAG)),getAmmo(CWeapons::getWeapon(HL2DM_WEAPON_FRAG)->getAmmoIndex1()),m_vLastSeeEnemyBlastWaypoint)); // first - throw
 				pSched->addTask(new CFindPathTask(pWaypoint->getOrigin())); // 2nd -- hide
 				m_pSchedules->add(pSched);
 				return true;

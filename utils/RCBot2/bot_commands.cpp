@@ -226,6 +226,7 @@ eBotCommandResult CGetProp :: execute ( CClient *pClient, const char *pcmd, cons
 					{
 						static IServerUnknown *pUnknown;
 						static CBaseEntity *pEntity;
+						Vector vdata;
 
 						pUnknown = (IServerUnknown *)pNearest->GetUnknown();
 					 
@@ -240,20 +241,27 @@ eBotCommandResult CGetProp :: execute ( CClient *pClient, const char *pcmd, cons
 
 						data = (void *)((char *)pEntity + m_offset + preoffs);
 
-						CBotGlobals::botMessage(pPlayer,0,"\n%d,%f",*(int*)data,*(float*)data);
+						if ( data )
+						{
+							vdata = *(Vector*)data;
+	
+							CBotGlobals::botMessage(pPlayer,0,"int = %d, float = %f, bool = %s, Vector = (%0.4f,%0.4f,%0.4f)",*(int*)data,*(float*)data,*(bool*)data ? ("true"):("false"),vdata.x,vdata.y,vdata.z );
+						}
+						else
+							CBotGlobals::botMessage(pPlayer,0,"NULL");
 					}
 					else
-						CBotGlobals::botMessage(NULL,0,"OFFSET NOT FOUND\n");
+						CBotGlobals::botMessage(NULL,0,"OFFSET NOT FOUND");
 				}
 				else
-					CBotGlobals::botMessage(NULL,0,"CLASS NOT FOUND\n");
+					CBotGlobals::botMessage(NULL,0,"CLASS NOT FOUND");
 
 			}
 			else
-				CBotGlobals::botMessage(NULL,0,"EDICT NOT FOUND\n");
+				CBotGlobals::botMessage(NULL,0,"EDICT NOT FOUND");
 		}
 		else
-			CBotGlobals::botMessage(NULL,0,"Usage: getprop CLASS CLASSNAME KEY\n");
+			CBotGlobals::botMessage(NULL,0,"Usage: getprop CLASS CLASSNAME KEY");
 
 		return COMMAND_ACCESSED;
 	}
@@ -750,7 +758,7 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 
 	extern ConVar *sv_cheats;
 
-	if ( !CBotGlobals::isMod(MOD_TF2) || (!sv_cheats || sv_cheats->GetBool()) )
+	if ( !CBots::controlBots() || (!sv_cheats || sv_cheats->GetBool()) )
 	{
 		//if ( !pcmd || !*pcmd )
 		//	bOkay = CBots::createBot();
@@ -763,7 +771,7 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 			CBotGlobals::botMessage(pEntity,0,"error: couldn't create bot! (Check maxplayers)");
 	}
 	else
-		CBotGlobals::botMessage(pEntity,0,"error: sv_cheats must be 1 to add rcbots");
+		CBotGlobals::botMessage(pEntity,0,"error: sv_cheats must be 1 to add bots");
 
 	return COMMAND_ACCESSED;
 }

@@ -837,6 +837,12 @@ void CBotTaskEngiPickupBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime == 0.0f )
 		m_fTime = engine->Time() + 6.0f;
 
+	if ( !m_pBuilding.get() )
+	{
+		fail();
+		return;
+	}
+
 	pBot->wantToShoot(false);
 	pBot->lookAtEdict(m_pBuilding.get());
 	pBot->setLookAtTask((LOOK_EDICT));
@@ -1047,6 +1053,8 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 
 void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	static float fDist;
+
 	if ( m_fTime == 0 )
 	{
 		if ( m_fMaxTime > 0 )
@@ -1055,17 +1063,26 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			m_fTime = engine->Time() + randomFloat(20.0f,90.0f);
 	}
 
-	pBot->defending();
-	
-	pBot->stopMoving();
+	fDist = pBot->distanceFrom(m_vOrigin);
 
-	if ( m_bDefendOrigin )
-	{
-		pBot->setLookVector(m_vDefendOrigin);
-		pBot->setLookAtTask(LOOK_VECTOR);
-	}
+	if ( fDist > 200 )
+		fail(); // too far -- bug
+	else if ( fDist > 100 )
+		pBot->setMoveTo(m_vOrigin);
 	else
-		pBot->setLookAtTask(LOOK_SNIPE);
+	{
+		pBot->defending();
+		
+		pBot->stopMoving();
+
+		if ( m_bDefendOrigin )
+		{
+			pBot->setLookVector(m_vDefendOrigin);
+			pBot->setLookAtTask(LOOK_VECTOR);
+		}
+		else
+			pBot->setLookAtTask(LOOK_SNIPE);
+	}
 
 	if ( m_fTime < engine->Time() )
 		complete();
@@ -1920,8 +1937,9 @@ void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 }
 
 ///
-CThrowGrenadeTask :: CThrowGrenadeTask (int ammo, Vector vLoc )
+CThrowGrenadeTask :: CThrowGrenadeTask (CBotWeapon *pWeapon, int ammo, Vector vLoc )
 {
+	m_pWeapon = pWeapon;
 	m_fTime = 0;
 	m_vLoc = vLoc + Vector(0,0,48);
 	m_fHoldAttackTime = 0;
@@ -1945,12 +1963,18 @@ void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime < engine->Time() )
 		fail();
 
+	if ( !m_pWeapon )
+	{
+		fail();
+		return;
+	}
+
 	CBotWeapon *pWeapon;
 
 	pWeapon = pBot->getCurrentWeapon();
 	pBot->wantToChangeWeapon(false);
 
-	if ( pWeapon && (pWeapon->getID() == HL2DM_WEAPON_PHYSCANNON) && CClassInterface::gravityGunObject(INDEXENT(pWeapon->getWeaponIndex())) )
+	if ( pWeapon && pWeapon->isGravGun() && CClassInterface::gravityGunObject(INDEXENT(pWeapon->getWeaponIndex())) )
 	{
 		// drop it
 		if ( randomInt(0,1) )
@@ -1958,9 +1982,9 @@ void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 		else
 			pBot->secondaryAttack();
 	}
-	else if ( !pWeapon || (pWeapon->getID() != HL2DM_WEAPON_FRAG) )
+	else if ( pWeapon != m_pWeapon )
 	{
-		pBot->select_CWeapon(CWeapons::getWeapon(HL2DM_WEAPON_FRAG));
+		pBot->selectBotWeapon(m_pWeapon);
 	}
 	else
 	{
@@ -2268,6 +2292,120 @@ CBotNest::CBotNest()
 	m_fTime = 0.0f;
 	m_pEnemy = NULL;
 }
+////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////
+
+CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw )
+{
+	QAngle angle;
+	m_fTime = 0.0f;
+	angle = QAngle(0,fYaw,0);
+	AngleVectors(angle,&m_vAim);
+	m_vAim = vOrigin + (m_vAim*1024);
+	m_vOrigin = vOrigin;
+	m_pWeaponToUse = pWeaponToUse;
+	m_fScopeTime = 0;
+}
+	
+void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	CBotWeapon *pCurrentWeapon;
+	CWeapon *pWeapon;
+
+	bool bDeployedOrZoomed = false;
+
+	pBot->wantToShoot(false);
+	pBot->wantToListen(false);
+
+	if ( m_fTime == 0.0f )
+	{
+		m_fTime = engine->Time() + randomFloat(20.0f,40.0f);
+		pBot->secondaryAttack();
+	}
+
+	pCurrentWeapon = pBot->getCurrentWeapon();
+
+	if ( !pCurrentWeapon )
+	{
+		fail();
+		return;
+	}
+
+	pWeapon = pCurrentWeapon->getWeaponInfo();
+
+	if (pWeapon == NULL)
+	{
+		fail();
+		return;
+	}
+
+	if ( pCurrentWeapon != m_pWeaponToUse )
+	{
+		if ( !pBot->select_CWeapon(CWeapons::getWeapon(m_pWeaponToUse->getID())) )
+			fail();
+	}
+	else
+	{
+		if ( ( pCurrentWeapon->getID() == DOD_WEAPON_K98_SCOPED ) || ( pCurrentWeapon->getID() == DOD_WEAPON_SPRING ) )
+			bDeployedOrZoomed = CClassInterface::isSniperWeaponZoomed(pCurrentWeapon->getWeaponEntity());
+		else if ( ( pCurrentWeapon->getID() == DOD_WEAPON_20CAL ) || ( pCurrentWeapon->getID() == DOD_WEAPON_MG42 ) )
+			bDeployedOrZoomed = CClassInterface::isMachineGunDeployed(pCurrentWeapon->getWeaponEntity());
+
+		if ( m_fScopeTime < engine->Time() )
+		{
+			if ( !bDeployedOrZoomed )
+				pBot->secondaryAttack();
+
+			m_fScopeTime = engine->Time() + randomFloat(0.5f,1.0f);
+		}
+	}
+
+	if ( pCurrentWeapon->getAmmo(pBot) < 1 )
+	{
+		if ( bDeployedOrZoomed )
+			pBot->secondaryAttack();
+
+		complete();
+	}
+	else if ( pBot->distanceFrom(m_vOrigin) > 200 ) // too far from sniper point
+	{
+		if ( bDeployedOrZoomed )
+			pBot->secondaryAttack();
+		// too far away
+		fail();
+	}
+	else if ( pBot->distanceFrom(m_vOrigin) > 100 )
+	{
+		pBot->setMoveTo(m_vOrigin);
+	}
+	else
+	{
+		pBot->stopMoving();
+
+		if ( pBot->hasEnemy() )
+		{
+			pBot->setLookAtTask(LOOK_ENEMY);
+
+			pBot->handleAttack(pCurrentWeapon,pBot->getEnemy());
+		}
+		else
+		{
+			pBot->setLookAtTask(LOOK_SNIPE);
+			pBot->setAiming(m_vAim);
+
+			if (m_fTime<engine->Time() )
+			{
+				if ( bDeployedOrZoomed )
+					pBot->secondaryAttack();
+
+				complete();
+			}
+		}
+	}
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Base Task

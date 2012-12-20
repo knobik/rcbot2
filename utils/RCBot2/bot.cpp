@@ -537,6 +537,7 @@ void CBot :: debugMsg ( int iLev, const char *szMsg )
 void CBot :: think ()
 {
 	static float fTime;
+	extern ConVar rcbot_debug_iglev;
 	//static bool debug;
 	//static bool battack;
 
@@ -551,6 +552,8 @@ void CBot :: think ()
 	m_iLookPriority = 0;
 	m_iMovePriority = 0;
 
+	if ( rcbot_debug_iglev.GetInt() != 1 )
+	{
 	//
 	// if bot is not in game, start it!!!
 	if ( !startGame() )
@@ -560,6 +563,8 @@ void CBot :: think ()
 	}
 
 	doButtons();
+
+	}
 
 	if ( !isAlive() )
 	{/*
@@ -574,12 +579,17 @@ void CBot :: think ()
 		return;
 	}
 
+	if ( rcbot_debug_iglev.GetInt() != 2 )
+	{
+
 	checkDependantEntities();
 
 	//m_bNeedToInit = true;
 
 	doMove();
 	doLook();
+
+	}
 
 	if ( m_fNextThink > fTime )
 		return;
@@ -602,18 +612,34 @@ void CBot :: think ()
 
 	//m_pCurrentWeapon = m_pBaseCombatChar->GetActiveWeapon (); 
 
+	if ( rcbot_debug_iglev.GetInt() != 3 )
+	{
+
 	m_pVisibles->updateVisibles();
-	
+
+	}
+
+	if ( rcbot_debug_iglev.GetInt() != 4 )
+	{
+
 	checkStuck();
 
+	}
 	// 
 	m_bOpenFire = true;
 	m_bWantToListen = true;
 	m_bWantToChangeWeapon = true;
 	//
 
+	if ( rcbot_debug_iglev.GetInt() != 5 )
+	{
+
 	getTasks();	
 
+	}
+
+	if ( rcbot_debug_iglev.GetInt() != 6 )
+	{
 
 	if ( m_bWantToListen && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 		listenForPlayers();
@@ -624,9 +650,19 @@ void CBot :: think ()
 		m_fListenTime = 0.0f;
 	}
 
+	}
+
+	if ( rcbot_debug_iglev.GetInt() != 7 )
+	{
+
 	setMoveLookPriority(MOVELOOK_TASK);
 	m_pSchedules->execute(this);
 	setMoveLookPriority(MOVELOOK_THINK);
+
+	}
+
+	if ( rcbot_debug_iglev.GetInt() != 8 )
+	{
 
 	m_vGoal = m_pNavigator->getGoalOrigin();
 
@@ -640,6 +676,10 @@ void CBot :: think ()
 		setLookAtTask((LOOK_AROUND));
 	}
 
+	}
+
+	if ( rcbot_debug_iglev.GetInt() != 9 )
+	{
 	// update m_pEnemy with findEnemy()
 	m_pOldEnemy = m_pEnemy;
 	m_pEnemy = NULL;
@@ -648,8 +688,10 @@ void CBot :: think ()
 		findEnemy(m_pOldEnemy); // any better enemies than this one?
 	else
 		findEnemy();
+	}
 
 	updateConditions();
+
 
 	if ( !CClassInterface::getVelocity(m_pEdict,&m_vVelocity) )
 	{
@@ -664,7 +706,13 @@ void CBot :: think ()
 	}
 
 	setMoveLookPriority(MOVELOOK_MODTHINK);
+
+	if ( rcbot_debug_iglev.GetInt() != 10 )
+	{
+
 	modThink();
+
+	}
 
 	handleWeapons();
 
@@ -2194,11 +2242,26 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 
 	if ( CBots::controlBots() )
 	{
-		char cmd[64];
+		char cmd[128];
 
 		//if ( pBotProfile->getTeam() >= 1 )
 		// fix : dedicated server  - The_Shadow
-		sprintf(cmd,"bot -name \"%s\"\n",szOVName);
+		sprintf(cmd,"bot -name \"%s\"",szOVName);
+
+		if ( szTeam && *szTeam )
+		{
+			strcat(cmd," -team ");
+			strcat(cmd,szTeam);
+		}
+
+		if ( szClass && *szClass )
+		{
+			strcat(cmd," -class ");
+			strcat(cmd,szClass);
+		}
+
+		strcat(cmd,"\n");
+
 		// control next bot that joins server
 		m_bControlNext = true;
 

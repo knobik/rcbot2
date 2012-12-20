@@ -366,7 +366,19 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_SEQUENCE,"CBaseAnimating","m_nSequence",0);
 		DEFINE_GETPROP(GETPROP_CYCLE,"CBaseAnimating","m_flCycle",0);
 
-	
+		DEFINE_GETPROP(GETPROP_DOD_CP_NUMCAPS,"CDODObjectiveResource","m_iNumControlPoints",0);
+		DEFINE_GETPROP(GETPROP_DOD_CP_POSITIONS,"CDODObjectiveResource","m_vCPPositions",0);
+		DEFINE_GETPROP(GETPROP_DOD_CP_ALLIES_REQ_CAP,"CDODObjectiveResource","m_iAlliesReqCappers",0);
+		DEFINE_GETPROP(GETPROP_DOD_CP_AXIS_REQ_CAP,"CDODObjectiveResource","m_iAxisReqCappers",0);
+		DEFINE_GETPROP(GETPROP_DOD_CP_NUM_AXIS,"CDODObjectiveResource","m_iNumAxis",0);
+		DEFINE_GETPROP(GETPROP_DOD_CP_NUM_ALLIES,"CDODObjectiveResource","m_iNumAllies",0);
+		DEFINE_GETPROP(GETPROP_DOD_CP_OWNER,"CDODObjectiveResource","m_iOwner",0);
+		DEFINE_GETPROP(GETPROP_DOD_SNIPER_ZOOMED,"CDODSniperWeapon","m_bZoomed",0);
+		DEFINE_GETPROP(GETPROP_DOD_MACHINEGUN_DEPLOYED,"CDODBipodWeapon","m_bDeployed",0);
+		DEFINE_GETPROP(GETPROP_DOD_ROCKET_DEPLOYED,"CDODBaseRocketWeapon","m_bDeployed",0);
+		DEFINE_GETPROP(GETPROP_DOD_SEMI_AUTO,"CDODFireSelectWeapon","m_bSemiAuto",0);
+		DEFINE_GETPROP(GETPROP_MOVETYPE,"CBaseEntity","movetype",0);
+
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
 			//if ( g_GetProps[i]

@@ -52,6 +52,18 @@ typedef enum
 	GETPROP_SEQUENCE,
 	GETPROP_CYCLE,
 	GETPROP_ENTITYFLAGS,
+	GETPROP_DOD_CP_NUMCAPS,
+	GETPROP_DOD_CP_POSITIONS,
+	GETPROP_DOD_CP_ALLIES_REQ_CAP,
+	GETPROP_DOD_CP_AXIS_REQ_CAP,
+	GETPROP_DOD_CP_NUM_AXIS,
+	GETPROP_DOD_CP_NUM_ALLIES,
+	GETPROP_DOD_CP_OWNER,
+	GETPROP_DOD_SNIPER_ZOOMED,
+	GETPROP_DOD_MACHINEGUN_DEPLOYED,
+	GETPROP_DOD_ROCKET_DEPLOYED,
+	GETPROP_DOD_SEMI_AUTO,
+	GETPROP_MOVETYPE,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -120,6 +132,18 @@ public:
 		getData(edict); 
 
 		return (char*)m_data; 
+	}
+
+	inline Vector *getVectorPointer ( edict_t *edict )
+	{
+		getData(edict);
+
+		if ( m_data )
+		{
+			return (Vector*)m_data;
+		}
+
+		return NULL;
 	}
 
 	inline bool getVector ( edict_t *edict, Vector *v )
@@ -263,7 +287,35 @@ public:
 
 	inline static int getPlayerFlags (edict_t *player) { return g_GetProps[GETPROP_ENTITYFLAGS].getInt(player,0);}
 
+	inline static int getDODNumControlPoints ( edict_t *pResource )
+	{
+		return g_GetProps[GETPROP_DOD_CP_NUMCAPS].getInt(pResource,0);
+	}
+
+	inline static Vector *getDODCP_Positions ( edict_t *pResource )
+	{
+		return g_GetProps[GETPROP_DOD_CP_POSITIONS].getVectorPointer(pResource);
+	}
+
+	inline static void getDODFlagInfo (edict_t *pResource, int **m_iNumAxis, int **m_iNumAllies, int **m_iOwner, int **m_iNumAlliesReq, int **m_iNumAxisReq )
+	{
+		*m_iNumAxis = g_GetProps[GETPROP_DOD_CP_NUM_AXIS].getIntPointer(pResource);
+		*m_iNumAllies = g_GetProps[GETPROP_DOD_CP_NUM_ALLIES].getIntPointer(pResource);
+		*m_iOwner = g_GetProps[GETPROP_DOD_CP_OWNER].getIntPointer(pResource);
+		*m_iNumAlliesReq = g_GetProps[GETPROP_DOD_CP_ALLIES_REQ_CAP].getIntPointer(pResource);
+		*m_iNumAxisReq = g_GetProps[GETPROP_DOD_CP_AXIS_REQ_CAP].getIntPointer(pResource);
+	}
+
 	inline static int getDesPlayerClassDOD(edict_t *player) { return g_GetProps[GETPROP_DOD_DES_PLAYERCLASS].getInt(player,0); }
+
+	inline static bool isSniperWeaponZoomed (edict_t *weapon) { return g_GetProps[GETPROP_DOD_SNIPER_ZOOMED].getBool(weapon,false); }
+	inline static bool isMachineGunDeployed (edict_t *weapon) { return g_GetProps[GETPROP_DOD_MACHINEGUN_DEPLOYED].getBool(weapon,false); }
+	inline static bool isRocketDeployed ( edict_t *weapon ) { return g_GetProps[GETPROP_DOD_ROCKET_DEPLOYED].getBool(weapon,false); }
+
+	inline static bool isMoveType ( edict_t *pent, int movetype )
+	{
+		return ((g_GetProps[GETPROP_MOVETYPE].getInt(pent,0) & 15) == movetype);
+	}
 	// HL2DM
 	//static void 
 

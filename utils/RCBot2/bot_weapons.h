@@ -147,15 +147,20 @@ enum
 #define WEAP_FL_NONE			0
 #define WEAP_FL_PRIM_ATTACK		1
 #define WEAP_FL_SEC_ATTACK		2
-#define WEAP_FL_EXPLOSIVE		4
-#define WEAP_FL_MELEE			8
-#define WEAP_FL_UNDERWATER		16
-#define WEAP_FL_HOLDATTACK		32
-#define WEAP_FL_SPECIAL			64
-#define WEAP_FL_KILLPIPEBOMBS	128
-#define WEAP_FL_DEFLECTROCKETS	256
-#define WEAP_FL_GRAVGUN			512
-#define WEAP_FL_EXPLOSIVE_SEC	1024
+#define WEAP_FL_EXPLOSIVE		4 // weapon is an explosive weapon eg. rpg
+#define WEAP_FL_MELEE			8 //
+#define WEAP_FL_UNDERWATER		16 // weapon can be used under water
+#define WEAP_FL_HOLDATTACK		32 // weapon must hold attack (e.g. minigun)
+#define WEAP_FL_SPECIAL			64 //
+#define WEAP_FL_KILLPIPEBOMBS	128 // weapon can destroy pipe bombs (tf2)
+#define WEAP_FL_DEFLECTROCKETS	256 // weapon can deflect rocekts (tf2)
+#define WEAP_FL_GRAVGUN			512 // weapon is a grav gun
+#define WEAP_FL_EXPLOSIVE_SEC	1024 // weapon has an explosive secondary attack
+#define WEAP_FL_ZOOMABLE		2048 // weapon can be zoomed
+#define WEAP_FL_DEPLOYABLE		4096 // weapon can be deployed
+#define WEAP_FL_MELEE_SEC_ATT	8192 // weapon has a melee secondary attack
+#define WEAP_FL_FIRE_SELECT		16384 // weapon can choose fire mode
+#define WEAP_FL_CANTFIRE_NORM	32768 // weapon can't be fired normally, needs to be zoomed/deployed
 
 
 extern WeaponsData_t TF2Weaps[];
@@ -174,7 +179,7 @@ public:
 		setFlags(data.m_iFlags);
 
 		// shoot distance (default)
-		m_fPrimMinWeaponShootDist = data.maxPrimDist;
+		m_fPrimMinWeaponShootDist = data.minPrimDist;
 		m_fPrimMaxWeaponShootDist = data.maxPrimDist;
 
 		m_fSecMinWeaponShootDist = 0.0f;
@@ -241,6 +246,21 @@ public:
 		return (fDistance>m_fPrimMinWeaponShootDist)&&(fDistance<m_fPrimMaxWeaponShootDist);
 	}
 
+	inline bool isZoomable ()
+	{
+		return hasAllFlags(WEAP_FL_ZOOMABLE);
+	}
+
+	inline bool isExplosive ()
+	{
+		return hasAllFlags(WEAP_FL_EXPLOSIVE);
+	}
+
+	inline bool isDeployable ()
+	{
+		return hasAllFlags(WEAP_FL_DEPLOYABLE);
+	}
+
 	inline bool canUseUnderWater ()
 	{
 		return hasAllFlags(WEAP_FL_UNDERWATER);
@@ -259,6 +279,11 @@ public:
 	inline bool isMelee ()
 	{
 		return hasAllFlags(WEAP_FL_MELEE);
+	}
+
+	inline bool needsDeployedOrZoomed ()
+	{
+		return hasAllFlags(WEAP_FL_CANTFIRE_NORM);
 	}
 
 	inline bool canAttack()
@@ -410,6 +435,27 @@ public:
 		return m_pWeaponInfo->primaryInRange(fDistance);
 	}
 
+	inline bool needsDeployedOrZoomed ()
+	{
+		return m_pWeaponInfo->needsDeployedOrZoomed();
+	}
+
+	inline bool isGravGun ()
+	{
+		return m_pWeaponInfo->isGravGun();
+	}
+
+
+	inline bool isExplosive ()
+	{
+		return m_pWeaponInfo->isExplosive();
+	}
+
+	inline bool isZoomable () 
+	{
+		return m_pWeaponInfo->isZoomable();
+	}
+
 	inline bool canUseUnderWater ()
 	{
 		return m_pWeaponInfo->canUseUnderWater();
@@ -423,6 +469,11 @@ public:
 	inline bool isSpecial ()
 	{
 		return m_pWeaponInfo->isSpecial();
+	}
+
+	inline bool isDeployable ()
+	{
+		return m_pWeaponInfo->isDeployable();
 	}
 
 	inline bool mustHoldAttack ()
@@ -504,6 +555,8 @@ public:
 	inline void setWeaponIndex (int iIndex) { m_iWeaponIndex = iIndex; } // Entity Index
 
 	void setWeaponEntity (edict_t *pent);
+
+	inline edict_t *getWeaponEntity () { return m_pEnt; }
 
 
 private:

@@ -566,7 +566,7 @@ public:
 
 	inline CBotSchedules *getSchedule () { return m_pSchedules; }
 
-	void reachedCoverSpot ();
+	virtual void reachedCoverSpot ();
 
 	virtual bool wantToFollowEnemy ();
 
@@ -636,7 +636,7 @@ public:
 
 	inline void updateDanger ( float fBelief ) { m_fCurrentDanger = (m_fCurrentDanger/2) + (fBelief/2); }
 
-	inline void reduceTouchDistance ( ) { if ( m_fWaypointTouchDistance > 32 ) m_fWaypointTouchDistance *= 0.9; }
+	inline void reduceTouchDistance ( ) { if ( m_fWaypointTouchDistance > 40 ) m_fWaypointTouchDistance *= 0.9; }
 
 	inline void resetTouchDistance ( float fDist ) { m_fWaypointTouchDistance = fDist; }
 

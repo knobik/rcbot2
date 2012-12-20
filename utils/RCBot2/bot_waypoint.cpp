@@ -50,6 +50,7 @@
 #include "bot_schedule.h"
 #include "bot_fortress.h"
 #include "bot_script.h"
+#include "bot_getprop.h"
 
 #include "bot_wpt_dist.h"
 
@@ -653,6 +654,8 @@ void CWaypointNavigator :: updatePosition ()
 	static QAngle aim;
 	static Vector vaim;
 
+	static bool bTouched;
+
 	fPrevBelief = 0;
 	fBelief = 0;
 
@@ -680,7 +683,14 @@ void CWaypointNavigator :: updatePosition ()
 
 	if ( !m_bWorkingRoute )
 	{
-		if ( pWaypoint->touched(m_pBot->getOrigin(),m_vOffset,m_pBot->getTouchDistance()) )
+		bTouched = false;
+
+		bTouched = pWaypoint->touched(m_pBot->getOrigin(),m_vOffset,m_pBot->getTouchDistance());
+
+		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_LADDER) )
+			bTouched = bTouched && CClassInterface::isMoveType(m_pBot->getEdict(),MOVETYPE_LADDER);
+
+		if ( bTouched )
 		{
 			m_pBot->touchedWpt(pWaypoint);
 
@@ -826,6 +836,9 @@ bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset, float fTouchDist )
 {
 	if ( (vOrigin-(m_vOrigin+vOffset)).Length2D() <= fTouchDist )
 	{
+		if ( hasFlag(CWaypointTypes::W_FL_LADDER) )
+			return (vOrigin.z > (m_vOrigin.z + fTouchDist));
+
 		return fabs(vOrigin.z-m_vOrigin.z) <= fTouchDist;
 	}
 
@@ -1836,6 +1849,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_AMMO,"ammo","bot can sometimes get ammo here",WptColor(50,100,10)));
 	addType(new CWaypointType(W_FL_RESUPPLY,"resupply","TF2 bot can always get ammo and health here",WptColor(255,100,255)));
 	addType(new CWaypointType(W_FL_SENTRY,"sentry","TF2 engineer bot can build here",WptColor(255,0,0)));
+	addType(new CWaypointType(W_FL_MACHINEGUN,"machinegun","DOD machine gunner will deploy gun here",WptColor(255,0,0)));
 	addType(new CWaypointType(W_FL_DOUBLEJUMP,"doublejump","TF2 scout can double jump here",WptColor(10,10,100)));
 
 	addType(new CWaypointType(W_FL_TELE_ENTRANCE,"teleentrance","TF2 engineer bot can build tele entrance here",WptColor(50,50,150)));

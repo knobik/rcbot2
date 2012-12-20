@@ -36,6 +36,7 @@
 #include "bot_const.h"
 #include "bot_strings.h"
 #include "bot_fortress.h"
+#include "bot_dod_bot.h"
 
 #define MAX_CAP_POINTS 32
 
@@ -114,39 +115,31 @@ private:
 };
 
 ///////////////////
-
+/*
 class CDODFlag
 {
 public:
 	CDODFlag()
 	{
 		m_pEdict = NULL;
-		m_iNumAxis = 0;
-		m_iNumAllies = 0;
-		m_iOccupiedTeam = 0;
-		m_iId = 0;
+		m_iId = -1;
 	}
 
-	CDODFlag(edict_t *pEdict)
+	void setup (edict_t *pEdict, int id)
 	{
 		m_pEdict = pEdict;
-		m_iNumAxis = 0;
-		m_iNumAllies = 0;
-		m_iOccupiedTeam = 0;
-		m_iId = 0;
+		m_iId = id;
 	}
 
 	inline bool isFlag ( edict_t *pEdict ) { return m_pEdict == pEdict; }
 
 	void update ();
-private:
-	int m_iNumAxis;
-	int m_iNumAllies;
-	int m_iOccupiedTeam;
-	int m_iId;
-	edict_t *m_pEdict;
-};
 
+private:
+	edict_t *m_pEdict;
+	int m_iId;
+};
+*/
 #define MAX_DOD_FLAGS 8
 
 class CDODFlags
@@ -154,40 +147,103 @@ class CDODFlags
 public:
 	CDODFlags()
 	{
-		m_iNumFlags = 0;
+		init();
 	}
 
-	void updateAll ()
+	void init ()
 	{
-		for ( int i = 0; i < m_iNumFlags; i ++ )
-			m_Flags[i].update();
+		m_iNumControlPoints = 0;
+		m_vCPPositions = NULL;
+
+		m_iAlliesReqCappers = NULL;
+		m_iAxisReqCappers = NULL;
+		m_iNumAllies = NULL;
+		m_iNumAxis = NULL;
+		m_iOwner = NULL;
+		memset(m_pFlags,0,sizeof(edict_t*)*MAX_DOD_FLAGS);
 	}
 
-	void addFlag ( edict_t *pEdict )
+	int getNumFlags () { return m_iNumControlPoints; }
+	int getNumFlagsOwned (int iTeam)
 	{
-		if ( m_iNumFlags < MAX_DOD_FLAGS )
-			m_Flags[m_iNumFlags++] = CDODFlag(pEdict);
-	}
+		int count = 0;
 
-	void clear ()
-	{
-		m_iNumFlags = 0;
-	}
-
-	CDODFlag *findFlag ( edict_t *pEdict )
-	{
-		for ( int i = 0; i < m_iNumFlags; i ++ )
+		for ( short i = 0; i < m_iNumControlPoints; i ++ )
 		{
-			if ( m_Flags[i].isFlag(pEdict) )
-				return &(m_Flags[i]);
+			if ( m_iOwner[i] == iTeam )
+				count++;
 		}
 
-		return NULL;
+		return count;
 	}
 
+	void setup (edict_t *pResourceEntity);
+
+	bool getRandomEnemyControlledFlag ( Vector *position, int iTeam, int *id = NULL );
+	bool getRandomTeamControlledFlag ( Vector *position, int iTeam, int *id = NULL );
+
+	inline bool ownsFlag ( edict_t *pFlag, int iTeam ) { return ownsFlag(getFlagID(pFlag),iTeam); }
+	inline bool ownsFlag ( int iFlag, int iTeam )
+	{
+		if ( iFlag == -1 )
+			return false;
+
+		return m_iOwner[iFlag] == iTeam;
+	}
+
+	inline int numCappersRequired ( edict_t *pFlag, int iTeam ) { return numCappersRequired(getFlagID(pFlag),iTeam); }
+	inline int numCappersRequired ( int iFlag, int iTeam )
+	{
+		if ( iFlag == -1 )
+			return 0;
+
+		return (iTeam == TEAM_ALLIES) ? (m_iAlliesReqCappers[iFlag]) : (m_iAxisReqCappers[iFlag]);
+	}
+
+	inline int numEnemiesAtCap ( edict_t *pFlag, int iTeam ) { return numEnemiesAtCap(getFlagID(pFlag),iTeam); }
+
+	inline int numFriendliesAtCap ( edict_t *pFlag, int iTeam ) { return numFriendliesAtCap(getFlagID(pFlag),iTeam); }
+
+	inline int numFriendliesAtCap ( int iFlag, int iTeam )
+	{
+		if ( iFlag == -1 )
+			return 0;
+
+		return (iTeam == TEAM_ALLIES) ? (m_iNumAllies[iFlag]) : (m_iNumAxis[iFlag]);
+	}
+
+	inline int numEnemiesAtCap ( int iFlag, int iTeam )
+	{
+		if ( iFlag == -1 )
+			return 0;
+
+		return (iTeam == TEAM_ALLIES) ? (m_iNumAxis[iFlag]) : (m_iNumAllies[iFlag]);
+	}
+
+	inline int getFlagID ( edict_t *pent )
+	{
+		for ( short i = 0; i < m_iNumControlPoints; i ++ )
+		{
+			if ( m_pFlags[i] == pent )
+				return i;
+		}
+
+		return -1;
+	}
+
+	bool isFlag ( edict_t *pent );
+
 private:
-	CDODFlag m_Flags[MAX_DOD_FLAGS];
-	int m_iNumFlags;
+	edict_t *m_pFlags[MAX_DOD_FLAGS];
+
+	int m_iNumControlPoints;
+	Vector *m_vCPPositions;
+
+	int *m_iAlliesReqCappers;
+	int *m_iAxisReqCappers;
+	int *m_iNumAllies;
+	int *m_iNumAxis;
+	int *m_iOwner;
 };
 
 class CDODMod : public CBotMod
@@ -199,6 +255,8 @@ public:
 	}
 
 	static CDODFlags m_Flags;
+
+	static void roundStart ();
 
 protected:
 

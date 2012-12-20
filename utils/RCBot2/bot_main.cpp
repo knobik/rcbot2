@@ -138,7 +138,7 @@ ConVar rcbot_jump_obst_dist("rcbot_jump_obst_dist","80",0,"the distance from an 
 ConVar rcbot_jump_obst_speed("rcbot_jump_obst_speed","100",0,"the speed of the bot for the bot to jump an obstacle");
 
 ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee weapons");
-
+ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions to test cpu speed");
 ConVar rcbot_move_forward("rcbot_forward","0",0,"if 1 , bots will all move forward");
 ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","415",0,"offset of the PlayerRunCommand function");
 //ConVar rcbot_override("rcbot_override","1",0,"if 1 the plugin will override other bots runplayer functions");
@@ -641,10 +641,13 @@ void CRCBotPlugin::PreClientUpdate(bool simulating)
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::GameFrame( bool simulating )
 {
+	static CBotMod *currentmod;
+
 	if ( simulating && CBotGlobals::IsMapRunning() )
 	{
 		CBots::botThink();
-		gameclients->PostClientMessagesSent();
+		if ( !CBots::controlBots() )
+			gameclients->PostClientMessagesSent();
 		CBots::handleAutomaticControl();
 		CClients::clientThink();
 
@@ -663,6 +666,9 @@ void CRCBotPlugin::GameFrame( bool simulating )
 
 		// Config Commands
 		CBotConfigFile::doNextCommand();
+		currentmod = CBotGlobals::getCurrentMod();
+
+		currentmod->modFrame();
 	}
 }
 
