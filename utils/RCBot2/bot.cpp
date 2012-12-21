@@ -2296,8 +2296,8 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 
 		//if ( pBotProfile->getTeam() >= 1 )
 		// fix : dedicated server  - The_Shadow
-		sprintf(cmd,"bot -name \"%s\"",szOVName);
-
+		sprintf(cmd,"bot -name \"%s\"\n",szOVName);
+/*
 		if ( szTeam && *szTeam )
 		{
 			strcat(cmd," -team ");
@@ -2308,9 +2308,9 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 		{
 			strcat(cmd," -class ");
 			strcat(cmd,szClass);
-		}
+		}*/
 
-		strcat(cmd,"\n");
+		//strcat(cmd,"\n");
 
 		// control next bot that joins server
 		m_bControlNext = true;

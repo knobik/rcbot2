@@ -64,6 +64,11 @@ typedef enum
 	GETPROP_DOD_ROCKET_DEPLOYED,
 	GETPROP_DOD_SEMI_AUTO,
 	GETPROP_MOVETYPE,
+	GETPROP_DOD_GREN_THROWER,
+	GETPROP_DOD_SCORE,
+	GETPROP_DOD_OBJSCORE,
+	GETPROP_DOD_DEATHS,
+	GETPROP_DOD_SMOKESPAWN_TIME,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -315,6 +320,31 @@ public:
 	inline static bool isMoveType ( edict_t *pent, int movetype )
 	{
 		return ((g_GetProps[GETPROP_MOVETYPE].getInt(pent,0) & 15) == movetype);
+	}
+
+	inline static edict_t *getGrenadeThrower ( edict_t *gren )
+	{
+		return g_GetProps[GETPROP_DOD_GREN_THROWER].getEntity(gren);
+	}
+
+	inline static int getPlayerScoreDOD ( edict_t *resource )
+	{
+		return g_GetProps[GETPROP_DOD_SCORE].getInt(resource,0);
+	}
+
+	inline static int getPlayerObjectiveScoreDOD ( edict_t *resource )
+	{
+		return g_GetProps[GETPROP_DOD_OBJSCORE].getInt(resource,0);
+	}
+
+	inline static int getPlayerDeathsDOD ( edict_t *resource )
+	{
+		return g_GetProps[GETPROP_DOD_DEATHS].getInt(resource,0);
+	}
+
+	inline static float getSmokeSpawnTime ( edict_t *pSmoke )
+	{
+		return g_GetProps[GETPROP_DOD_SMOKESPAWN_TIME].getFloat(pSmoke,0);
 	}
 	// HL2DM
 	//static void 

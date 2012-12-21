@@ -45,14 +45,23 @@
 //#include "vstdlib/random.h" // for random functions
 
 extern ConVar bot_beliefmulti;
+extern ConVar bot_use_vc_commands;
+extern ConVar bot_max_cc_time;
+extern ConVar bot_min_cc_time;
+extern ConVar bot_change_class;
+extern ConVar rcbot_enemyshootfov;
+extern ConVar bot_defrate;
 
-
+const char *g_DODClassCmd[2][6] = 
+{ {"cls_garand","cls_tommy","cls_bar","cls_spring","cls_30cal","cls_bazooka"},
+{"cls_k98","cls_mp40","cls_mp44","cls_k98s","cls_mg42","cls_pschreck"} };
 
 void CDODBot :: init ()
 {
 	CBot::init();
 
 	m_iSelectedClass = -1;
+	m_bCheckClass = false;
 }
 
 void CDODBot :: setup ()
@@ -102,6 +111,30 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			else if ( (pEntity!=m_pEnemyRocket) && (strncmp(szClassname,"rocket",6) == 0 ) && (!m_pEnemyRocket || (distanceFrom(pEntity)<distanceFrom(m_pEnemyRocket))))
 				m_pEnemyRocket = pEntity;
 		}
+		
+		if ( (pEntity != m_pNearestSmokeToEnemy) && (strncmp(szClassname,"grenade_smoke",13) == 0) )
+		{
+			if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			{
+				// math time - good lord!
+				// choose the best smoke that is worthwhile for checking enemy
+				if ( m_pNearestSmokeToEnemy && (fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(pEntity))-
+						  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy))) <
+					 fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(m_pNearestSmokeToEnemy))-
+						  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy)))) )
+				{
+					if ( distanceFrom(m_pNearestSmokeToEnemy) > SMOKE_RADIUS )
+						m_pNearestSmokeToEnemy = pEntity;
+				}
+				else
+					m_pNearestSmokeToEnemy = pEntity;
+			}
+			else if ( !m_pNearestSmokeToEnemy )
+			{
+				m_pNearestSmokeToEnemy = pEntity;
+			}
+
+		}
 	}
 	else
 	{
@@ -111,6 +144,8 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_pEnemyGrenade = NULL;
 		else if ( pEntity == m_pEnemyRocket )
 			m_pEnemyRocket = NULL;
+		else if ( (pEntity == m_pNearestSmokeToEnemy) && (distanceFrom(m_pNearestSmokeToEnemy) > SMOKE_RADIUS) )
+			m_pNearestSmokeToEnemy = NULL;
 	}
 }
 
@@ -121,18 +156,38 @@ void CDODBot :: selectedClass ( int iClass )
 
 bool CDODBot :: startGame ()
 {
-	if ( m_pPlayerInfo->GetTeamIndex() <= 1 )
+	static int iTeam;
+
+	iTeam = m_pPlayerInfo->GetTeamIndex();
+
+	// not joined a team?
+	if ( (iTeam != 2) && (iTeam != 3) )
 	{
 		if ( (m_iDesiredTeam == 2) || (m_iDesiredTeam == 3) )
 			m_pPlayerInfo->ChangeTeam(m_iDesiredTeam);
 		else
-			m_pPlayerInfo->ChangeTeam(randomInt(2,3));
+		{
+			// manual -- auto team
+			if ( CBotGlobals::numPlayersOnTeam(TEAM_ALLIES,false) <= CBotGlobals::numPlayersOnTeam(TEAM_AXIS,false) )
+				m_pPlayerInfo->ChangeTeam(TEAM_ALLIES);
+			else
+				m_pPlayerInfo->ChangeTeam(TEAM_AXIS);
+		}
 
 		return false;
-
 	}
 
-	//if ( (m_iDesiredClass >= 0) && (m_iDesiredClass <= 5) && (m_iDesiredClass != CClassInterface::getPlayerClassDOD(m_pEdict)) )
+	// not the correct class?
+	if ( (m_iDesiredClass >= 0) && (m_iDesiredClass <= 5) && (m_iDesiredClass != CClassInterface::getPlayerClassDOD(m_pEdict)) )
+	{
+		int iTeam = m_pPlayerInfo->GetTeamIndex();
+
+		helpers->ClientCommand(m_pEdict,g_DODClassCmd[iTeam-2][m_iDesiredClass]);
+
+		m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
+
+		return false;
+	}
 	//	engine->ClientCommand(m_pEdict,"joinclass %d\n",m_iDesiredClass); 
 
 	/*if ( CClassInterface::getDesPlayerClassDOD(m_pEdict) == -1 )
@@ -172,6 +227,9 @@ void CDODBot :: killed ( edict_t *pVictim )
 void CDODBot :: died ( edict_t *pKiller )
 {
 	spawnInit();
+
+	// check if I want to change class
+	m_bCheckClass = true;
 
 	if ( randomInt(0,1) )
 		m_pButtons->attack();
@@ -237,8 +295,8 @@ void CDODBot :: spawnInit ()
 	m_fProneTime = 0;
 	m_fZoomOrDeployTime = 0;
 
-	//if ( m_pWeapons )
-	//	m_pWeapons->clearWeapons();
+	if ( m_pWeapons )
+		m_pWeapons->clearWeapons();
 
 	m_CurrentUtil = BOT_UTIL_MAX;
 	// reset objects
@@ -274,6 +332,11 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 	if ( CBotGlobals::getTeam(pEdict) == getTeam() )
 		return false;
+
+	if ( m_pNearestSmokeToEnemy )
+	{
+		return isVisibleThroughSmoke(m_pNearestSmokeToEnemy,pEdict);
+	}
 
 	return true;	
 }
@@ -329,6 +392,77 @@ void CDODBot :: touchedWpt ( CWaypoint *pWaypoint )
 void CDODBot :: modThink ()
 {
 	static float fMaxSpeed;
+
+	// when respawned -- check if I should change class
+	if ( m_bCheckClass && !m_pPlayerInfo->IsDead())
+	{
+		m_bCheckClass = false;
+
+		if ( bot_change_class.GetBool() && (m_fChangeClassTime < engine->Time()) )
+		{
+				// get score for this class
+				float scoreValue = CDODMod::getScore(m_pEdict);
+
+				// if I think I could do better
+				if ( randomFloat(0.0f,1.0f) > (scoreValue / CDODMod::getHighestScore()) )
+				{
+					float fClassFitness[6]; // 6 classes
+					float fTotalFitness = 0;
+					float fRandom;
+
+					int i = 0;
+					int iTeam = getTeam();
+					int iClass;
+					edict_t *pPlayer;
+
+					for ( i = 1; i < 6; i ++ )
+						fClassFitness[i] = 1.0f;
+
+					if ( (m_iClass >= 0) && (m_iClass < 6) )
+						fClassFitness[m_iClass] = 0.1f;
+
+					for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+					{
+						pPlayer = INDEXENT(i);
+						
+						if ( CBotGlobals::entityIsValid(pPlayer) && (CTeamFortress2Mod::getTeam(pPlayer) == iTeam))
+						{
+							iClass = CClassInterface::getPlayerClassDOD(pPlayer);
+
+							if ( (iClass >= 0) && (iClass < 6) )
+								fClassFitness [iClass] *= 0.6f; 
+						}
+					}
+
+					for ( int i = 1; i < 6; i ++ )
+						fTotalFitness += fClassFitness[i];
+
+					fRandom = randomFloat(0,fTotalFitness);
+
+					fTotalFitness = 0;
+
+					m_iDesiredClass = 0;
+
+					for ( int i = 1; i < 6; i ++ )
+					{
+						fTotalFitness += fClassFitness[i];
+
+						if ( fRandom <= fTotalFitness )
+						{
+							m_iDesiredClass = i;
+							break;
+						}
+					}
+					
+					// change class
+					//selectClass();
+					helpers->ClientCommand(m_pEdict,g_DODClassCmd[iTeam-2][m_iDesiredClass]);
+
+					m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
+				
+				}
+		}
+	}
 
 	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict);
 
@@ -486,7 +620,6 @@ void CDODBot ::defending()
 void CDODBot ::voiceCommand ( eDODVoiceCMD cmd )
 {
 	// find voice command
-	extern ConVar bot_use_vc_commands;
 	extern eDODVoiceCommand_t g_DODVoiceCommands[DOD_VC_INVALID];
 
 	if ( bot_use_vc_commands.GetBool() && (m_fLastVoiceCommand < engine->Time() ))
@@ -513,6 +646,11 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 		break;
 	case DOD_VC_HOLD:
 		removeCondition(CONDITION_PUSH);
+		break;
+	case DOD_VC_SNIPER:
+	case DOD_VC_MGAHEAD:
+		if ( !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && isVisible(pPlayer) )
+			m_fCurrentDanger += 50.0f;
 		break;
 	case DOD_VC_GRENADE2:
 	case DOD_VC_BAZOOKA:
@@ -774,7 +912,6 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 {
 	static bool bAttack;
 	static float fDelay; // delay to reduce recoil
-	extern ConVar rcbot_enemyshootfov;
 
 	if ( DotProductFromOrigin(m_vAimVector) < rcbot_enemyshootfov.GetFloat() ) 
 		return true; // keep enemy / don't shoot : until angle between enemy is less than 45 degrees
@@ -856,6 +993,19 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 						fDelay = randomFloat(0.7f,1.2f);
 					}
 
+				} 
+				else if ( pWeapon->isDeployable() )
+				{
+					if ( !CClassInterface::isMachineGunDeployed(pWeaponEdict) )
+					{
+						if ( m_fZoomOrDeployTime < engine->Time() )
+						{
+							secondaryAttack(); // deploy / zoom
+							m_fZoomOrDeployTime = engine->Time() + randomFloat(0.5f,1.0f);
+						}
+
+						fDelay = randomFloat(0.7f,1.2f);
+					}
 				}
 			}
 		}
@@ -889,8 +1039,6 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	static float fDefRate;
 	static int numPlayersOnTeam;
 	static int numClassOnTeam;
-
-	extern ConVar bot_defrate;
 
 	// if condition has changed or no tasks
 	if ( !hasSomeConditions(CONDITION_CHANGED) && !m_pSchedules->isEmpty() )
@@ -1042,4 +1190,48 @@ bool CDODBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
 		failWeaponSelect();
 
 	return false;
+}
+
+bool CDODBot :: isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck )
+{
+	//if ( isVisible(pCheck) )
+	//{
+		static Vector a,b;
+		static float fDist;
+
+		fDist = distanceFrom(pSmoke);
+
+		if ( fDist > SMOKE_RADIUS )
+		{
+			a = CBotGlobals::entityOrigin(pCheck);
+			b = getOrigin();
+
+			a = (a-b);
+			a = a / a.Length();
+
+			if ( (( getOrigin() + (a * distanceFrom(pSmoke)) ) -
+				CBotGlobals::entityOrigin(pSmoke)).Length() < SMOKE_RADIUS )
+			{
+				float fTime = engine->Time() - CDODMod::getMapStartTime() - CClassInterface::getSmokeSpawnTime(pSmoke);
+
+				if ( fTime < 10.0f )
+				{
+					if ( fTime > 5.0f )
+						fTime = 10.0f - fTime;
+
+					// 5 seconds is blind
+					float fProb = fTime / 5;
+
+					// 5 seconds probability = 0, 4 seconds 20%, 6 seconds = 20%
+					return randomFloat(0.0f,1.0f) > fProb;
+				}
+			}
+		}
+		else
+			return randomFloat(0.0f,1.0f) < (fDist/SMOKE_RADIUS);
+
+		return true;
+	//}
+
+	//return false;
 }

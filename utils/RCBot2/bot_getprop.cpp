@@ -378,6 +378,11 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_ROCKET_DEPLOYED,"CDODBaseRocketWeapon","m_bDeployed",0);
 		DEFINE_GETPROP(GETPROP_DOD_SEMI_AUTO,"CDODFireSelectWeapon","m_bSemiAuto",0);
 		DEFINE_GETPROP(GETPROP_MOVETYPE,"CBaseEntity","movetype",0);
+		DEFINE_GETPROP(GETPROP_DOD_GREN_THROWER,"CDODBaseGrenade","m_hThrower",0);
+		DEFINE_GETPROP(GETPROP_DOD_SCORE,"CDODPlayerResource","m_iScore",0);
+		DEFINE_GETPROP(GETPROP_DOD_OBJSCORE,"CDODPlayerResource","m_iObjScore",0);
+		DEFINE_GETPROP(GETPROP_DOD_DEATHS,"CDODPlayerResource","m_iDeaths",0);
+		DEFINE_GETPROP(GETPROP_DOD_SMOKESPAWN_TIME,"CDODSmokeGrenade","m_flSmokeSpawnTime",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

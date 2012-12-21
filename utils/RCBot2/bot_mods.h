@@ -191,6 +191,19 @@ public:
 		return m_iOwner[iFlag] == iTeam;
 	}
 
+	inline int numFlagsOwned (int iTeam)
+	{
+		int count = 0;
+
+		for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+		{
+			if ( m_iOwner[i] == iTeam )
+				count++;
+		}
+
+		return count;
+	}
+
 	inline int numCappersRequired ( edict_t *pFlag, int iTeam ) { return numCappersRequired(getFlagID(pFlag),iTeam); }
 	inline int numCappersRequired ( int iFlag, int iTeam )
 	{
@@ -260,7 +273,13 @@ public:
 	
 	static int numClassOnTeam( int iTeam, int iClass );
 
+	static int getScore(edict_t *pPlayer);
+
+	static int getHighestScore ();
+
 	void clientCommand ( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 );
+
+	inline static float getMapStartTime () { return m_fMapStartTime; }
 
 protected:
 
@@ -271,7 +290,8 @@ protected:
 	void modFrame ();
 
 	static edict_t *m_pResourceEntity;
-
+	static edict_t *m_pPlayerResourceEntity;
+	static float m_fMapStartTime;
 
 	//virtual void entitySpawn ( edict_t *pEntity );
 

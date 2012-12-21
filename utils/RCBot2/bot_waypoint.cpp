@@ -1792,7 +1792,7 @@ bool CWaypoint ::isAiming()
 	return (m_iFlags & (CWaypointTypes::W_FL_DEFEND | 
 		CWaypointTypes::W_FL_ROCKET_JUMP | 
 		CWaypointTypes::W_FL_DOUBLEJUMP | 
-		CWaypointTypes::W_FL_SENTRY | 
+		CWaypointTypes::W_FL_SENTRY | // or machine gun (DOD)
 		CWaypointTypes::W_FL_SNIPER | 
 		CWaypointTypes::W_FL_TELE_EXIT | 
 		CWaypointTypes::W_FL_TELE_ENTRANCE )) > 0;

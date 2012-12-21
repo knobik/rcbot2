@@ -34,6 +34,8 @@
 #define TEAM_ALLIES 2
 #define TEAM_AXIS 3
 
+#define SMOKE_RADIUS 128
+
 typedef enum
 {
    DOD_VC_GOGOGO = 0,
@@ -143,6 +145,8 @@ public:
 
 	void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pKillerWeapon );
 
+	bool isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck );
+
 private:
 
 	int m_iSelectedClass;
@@ -179,6 +183,11 @@ private:
 	float m_fShoutRocket;
 	MyEHandle m_pEnemyGrenade;
 	float m_fShoutGrenade;
+	MyEHandle m_pOwnGrenade;
+	MyEHandle m_pNearestSmokeToEnemy;
+
+	float m_fChangeClassTime;
+	bool m_bCheckClass;
 	// blah blah
 };
 
