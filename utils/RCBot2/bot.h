@@ -88,41 +88,38 @@ extern CGlobalVars *gpGlobals;
 
 #define T_OFFSETMAX  3
 
+/////////// Voice commands
 
-	/*
-	/
-class CClassInterface
+class IBotFunction
 {
 public:
-
-	// TF2
-	static int getScore ( edict_t *edict );
-    static int getFlags ( edict_t *edict );
-	static int getTeam ( edict_t *edict );
-	static float getHealth ( edict_t *edict );
-	static int getEffects ( edict_t *edict );
-	static int *getAmmoList ( edict_t *edict );
-	static unsigned int findOffset(const char *szType,const char *szClass);
-	static int getTF2NumHealers ( edict_t *edict );
-	static int getTF2Conditions ( edict_t *edict );
-	static Vector *getVelocity ( edict_t *edict );
-	static int getTF2Class ( edict_t *edict );
-	static float getTF2SpyCloakMeter ( edict_t *edict );
-	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health );
-	static bool getMedigunHealing ( edict_t *edict );
-	static CBaseEntity *getMedigunTarget ( edict_t *edict );
-	static bool isMedigunTargetting ( edict_t *pgun, edict_t *ptarget);
-	static void setTickBase ( edict_t *edict, int tickbase );
-	static int isTeleporterMode (edict_t *edict, eTeleMode mode );
-	static edict_t *getCurrentWeapon (edict_t *player);
-	static int getUberChargeLevel (edict_t *pWeapon);
-	static void test ();
-
-	// HL2DM
-	//static void 
-
+	virtual void execute ( CBot *pBot ) = 0;
 };
-	*/
+
+class CBroadcastVoiceCommand : public IBotFunction
+{
+public:
+	CBroadcastVoiceCommand (edict_t *pPlayer, byte voicecmd) { m_pPlayer = pPlayer; m_VoiceCmd = voicecmd; };
+	void execute ( CBot *pBot );
+
+private:
+	edict_t *m_pPlayer;
+	byte m_VoiceCmd;
+};
+
+typedef union
+{
+	 struct
+	 {
+		  unsigned v1:2; // menu
+		  unsigned v2:3; // extra info
+		  unsigned unused:3;
+	 }b1;
+
+	 byte voicecmd;
+}u_VOICECMD;
+
+////// entity handling in network
 class MyEHandle 
 {
 public:
@@ -190,7 +187,7 @@ private:
 	int m_iSerialNumber;
 	edict_t *m_pEnt;
 };
-
+// events
 class CRCBotEventListener : public IGameEventListener2
 {
 	void FireGameEvent( IGameEvent *event );
@@ -570,6 +567,8 @@ public:
 
 	virtual bool wantToFollowEnemy ();
 
+	virtual void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pKillerWeapon ) { };
+
 	inline void selectWeapon ( int iWeaponId ) { m_iSelectWeapon = iWeaponId; }
 
 	void selectWeaponName ( const char *szWeaponName );
@@ -648,6 +647,9 @@ public:
 
 	// bot is defending -- mod specific stuff
 	virtual void defending () {}
+
+	virtual void hearVoiceCommand ( edict_t *pPlayer, byte cmd ) {};
+
 protected:
 
 	inline void setLookAt ( Vector vNew )
@@ -671,6 +673,7 @@ protected:
 
 	// look for new tasks
 	virtual void getTasks (unsigned int iIgnore=0);
+
 
 	// really only need 249 bits (32 bytes) + WEAPON_SUBTYPE_BITS (whatever that is)
 	static const int CMD_BUFFER_SIZE = 64; 
@@ -830,14 +833,10 @@ protected:
 	float m_fUtilTimes[BOT_UTIL_MAX];
 
 	float m_fWaypointTouchDistance;
+
+	float m_fLastVoiceCommand;
 	//CBotNeuralNet *stucknet;
 	//CTrainingSet *stucknet_tset;
-};
-
-class IBotFunction
-{
-public:
-	virtual void execute ( CBot *pBot ) = 0;
 };
 
 class CBots

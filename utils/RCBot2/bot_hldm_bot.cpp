@@ -156,6 +156,9 @@ void CHLDMBot :: fixWeapons ()
 					// if the bot doesn't have it or the state has changed, update
 					if ( !pHasWeapon || !pHasWeapon->hasWeapon() )
 						m_pWeapons->addWeapon(pBotWeapon->getID(),pWeapon);
+					// update weapon entity
+					else if ( pHasWeapon && (pHasWeapon->getWeaponEntity() != pWeapon) )
+						pHasWeapon->setWeaponEntity(pWeapon);
 				}
 			}
 			//else

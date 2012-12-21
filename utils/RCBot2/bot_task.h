@@ -332,7 +332,7 @@ private:
 class CBotDODSnipe : public CBotTask
 {
 public:
-	CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw );
+	CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw, bool bUseZ = false, float z = 0 );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule); 
 private:
@@ -341,6 +341,8 @@ private:
 	Vector m_vAim;
 	Vector m_vOrigin;
 	CBotWeapon *m_pWeaponToUse;
+	bool m_bUseZ;
+	float m_z; // z = ground level
 };
 
 class CBotTF2SpyDisguise : public CBotTask

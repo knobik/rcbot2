@@ -119,26 +119,9 @@ void CBotTF2FunctionEnemyAtIntel :: execute (CBot *pBot)
 		((CBotTF2*)pBot)->teamFlagPickup();
 }
 
-void CBroadcastVoiceCommand :: execute ( CBot *pBot )
+void CBotTF2 :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 {
-	CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
-
-	if ( !m_pPlayer )
-		return;
-
-	if ( m_pPlayer == pBot->getEdict() )
-		return;
-
-	if ( pBot->isEnemy(m_pPlayer,false) )
-		return;
-
-	pBotTF2->hearVoiceCommand(m_pPlayer,m_VoiceCmd);
-}
-
-void CBotTF2 :: hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd )
-{
-
-	switch ( eVoiceCmd )
+	switch ( cmd )
 	{
 	// somebody shouted "MEDIC!"
 	case TF_VC_MEDIC:
@@ -421,24 +404,24 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	// Check for nearest Dispenser for health/ammo & flag
 	if ( bVisible && !(CClassInterface::getEffects(pEntity)&EF_NODRAW) ) // EF_NODRAW == invisible
 	{
-		if ( CTeamFortress2Mod::isFlag(pEntity,getTeam()) )
+		if ( (m_pFlag!=pEntity) && CTeamFortress2Mod::isFlag(pEntity,getTeam()) )
 			m_pFlag = pEntity;
-		else if ( CTeamFortress2Mod::isSentry(pEntity,getTeam()) )
+		else if ( (m_pNearestAllySentry != pEntity) && CTeamFortress2Mod::isSentry(pEntity,getTeam()) )
 		{
-			if ( !m_pNearestAllySentry || ((pEntity != m_pNearestAllySentry) && (distanceFrom(pEntity) < distanceFrom(m_pNearestAllySentry))) )
+			if ( !m_pNearestAllySentry || (distanceFrom(pEntity) < distanceFrom(m_pNearestAllySentry))) 
 				m_pNearestAllySentry = pEntity;
 		}
-		else if ( CTeamFortress2Mod::isDispenser(pEntity,getTeam()) )
+		else if ( (m_pNearestDisp != pEntity) && CTeamFortress2Mod::isDispenser(pEntity,getTeam()) )
 		{
-			if ( !m_pNearestDisp || ((pEntity != m_pNearestDisp) && (distanceFrom(pEntity) < distanceFrom(m_pNearestDisp))) )
+			if ( !m_pNearestDisp || (distanceFrom(pEntity) < distanceFrom(m_pNearestDisp)) )
 				m_pNearestDisp = pEntity;
 		}
-		else if ( CTeamFortress2Mod::isTeleporterEntrance(pEntity,getTeam()) )
+		else if ( (pEntity != m_pNearestTeleEntrance) && CTeamFortress2Mod::isTeleporterEntrance(pEntity,getTeam()) )
 		{
-			if ( !m_pNearestTeleEntrance || ((pEntity != m_pNearestTeleEntrance) && (distanceFrom(pEntity) < distanceFrom(m_pNearestTeleEntrance))) )
+			if ( !m_pNearestTeleEntrance || (distanceFrom(pEntity) < distanceFrom(m_pNearestTeleEntrance))) 
 				m_pNearestTeleEntrance = pEntity;
 		}
-		else if ( CTeamFortress2Mod::isAmmo(pEntity) )
+		else if ( (pEntity != m_pAmmo) && CTeamFortress2Mod::isAmmo(pEntity) )
 		{
 			static float fDistance;
 
@@ -447,11 +430,11 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 			if ( fDistance > 200 )
 				return;
 
-			if ( !m_pAmmo || ((pEntity != m_pAmmo) && (fDistance < distanceFrom(m_pAmmo))) )
+			if ( !m_pAmmo || (fDistance < distanceFrom(m_pAmmo))) 
 				m_pAmmo = pEntity;
 			
 		}
-		else if ( CTeamFortress2Mod::isHealthKit(pEntity) )
+		else if ( (pEntity != m_pHealthkit) && CTeamFortress2Mod::isHealthKit(pEntity) )
 		{
 			static float fDistance;
 
@@ -460,7 +443,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 			if ( fDistance > 200 )
 				return;
 
-			if ( !m_pHealthkit || ((pEntity != m_pHealthkit) && (fDistance < distanceFrom(m_pHealthkit))) )
+			if ( !m_pHealthkit || (fDistance < distanceFrom(m_pHealthkit)))
 				m_pHealthkit = pEntity;
 		}
 	}
@@ -2482,7 +2465,7 @@ bool CBotFortress :: wantToFollowEnemy ()
     return CBot::wantToFollowEnemy();
 }
 
-void CBotTF2 ::voiceCommand ( eVoiceCMD cmd )
+void CBotTF2 ::voiceCommand ( eTFVoiceCMD cmd )
 {
 	if ( bot_use_vc_commands.GetBool() )
 	{
@@ -2927,8 +2910,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	bHasFlag = hasFlag();
 	failedlist = NULL;
 
-	numplayersonteam = CTeamFortress2Mod::numPlayersOnTeam(iTeam);
-	numplayersonteam_alive = CTeamFortress2Mod::numPlayersOnTeam(iTeam,true);
+	numplayersonteam = CBotGlobals::numPlayersOnTeam(iTeam,false);
+	numplayersonteam_alive = CBotGlobals::numPlayersOnTeam(iTeam,true);
 
 
 	// UNUSED
@@ -4958,22 +4941,4 @@ void CBotTF2 ::init(bool bVarInit)
 	CBotFortress::init(bVarInit);
 }
 
-CBotUtility :: CBotUtility ( CBot *pBot, eBotAction id, bool bCanDo, float fUtil )
-{
 
-	m_fUtility = fUtil;
-	m_id = id;
-	m_bCanDo = bCanDo;
-	m_pBot = pBot;
-
-
-	if ( m_pBot && CBotGlobals::isMod(MOD_TF2) )
-	{
-		int iClass = CClassInterface::getTF2Class(pBot->getEdict());
-
-		if ( CTeamFortress2Mod::isAttackDefendMap() && (m_pBot->getTeam() == TF2_TEAM_BLUE) )
-			m_fUtility += randomFloat(CRCBotTF2UtilFile::m_fUtils[BOT_ATT_UTIL][id][iClass].min,CRCBotTF2UtilFile::m_fUtils[BOT_ATT_UTIL][id][iClass].max);
-		else
-			m_fUtility += randomFloat(CRCBotTF2UtilFile::m_fUtils[BOT_NORM_UTIL][id][iClass].min,CRCBotTF2UtilFile::m_fUtils[BOT_NORM_UTIL][id][iClass].max);
-	}
-}

@@ -140,7 +140,7 @@ ConVar rcbot_jump_obst_speed("rcbot_jump_obst_speed","100",0,"the speed of the b
 ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee weapons");
 ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions to test cpu speed");
 ConVar rcbot_move_forward("rcbot_forward","0",0,"if 1 , bots will all move forward");
-ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","415",0,"offset of the PlayerRunCommand function");
+ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","416",0,"offset of the PlayerRunCommand function");
 //ConVar rcbot_override("rcbot_override","1",0,"if 1 the plugin will override other bots runplayer functions");
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");

@@ -512,6 +512,30 @@ private:
 	CWeapon *m_pFound;
 };
 
+class CGetWeapShortName : public IWeaponFunc
+{
+public:
+	CGetWeapShortName ( const char *szWeapon )
+	{
+		m_pFound = NULL;
+        m_szWeapon = szWeapon;
+	}
+
+	void execute ( CWeapon *pWeapon )
+	{
+		if ( pWeapon->isShortWeaponName(m_szWeapon) )
+			m_pFound = pWeapon;
+	}
+
+	CWeapon *get ()
+	{
+		return m_pFound;
+	}
+private:
+	const char *m_szWeapon;
+	CWeapon *m_pFound;
+};
+
 CWeapon *CWeapons :: getWeapon ( const int iId )
 {
 	CGetWeapID pFunc = CGetWeapID(iId);
@@ -522,6 +546,13 @@ CWeapon *CWeapons :: getWeapon ( const int iId )
 CWeapon *CWeapons :: getWeapon ( const char *szWeapon )
 {
 	CGetWeapCName pFunc = CGetWeapCName(szWeapon);
+	eachWeapon(&pFunc);
+	return pFunc.get();
+}
+
+CWeapon *CWeapons :: getWeaponByShortName ( const char *szWeapon )
+{
+	CGetWeapShortName pFunc = CGetWeapShortName(szWeapon);
 	eachWeapon(&pFunc);
 	return pFunc.get();
 }

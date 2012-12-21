@@ -1548,13 +1548,15 @@ int CWaypoints :: numWaypoints ()
 
 int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist, int iTeam )
 {
-	int i = 0;
-	int size = numWaypoints();
+	register short int i;
+	static int size;
 
 	float distance;
 	int iwpt = -1;
 
 	CWaypoint *pWpt;
+
+	size = numWaypoints();
 
 	for ( i = 0; i < size; i ++ )
 	{
@@ -1581,10 +1583,14 @@ int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist,
 
 CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vector vGoal, int iTeam, int iArea )
 {
-	register int i = 0;
-	int size = numWaypoints();
-	CWaypoint *pWpt;
-	IBotNavigator *pNav = pBot->getNavigator();
+	register short int i;
+	static short int size;
+	static CWaypoint *pWpt;
+	static IBotNavigator *pNav;
+	
+	pNav = pBot->getNavigator();
+
+	size = numWaypoints();
 
 	dataUnconstArray<CWaypoint*> goals;
 
@@ -1665,10 +1671,11 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vecto
 
 CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot )
 {
-	register int i = 0;
-	int size = numWaypoints();
+	register short int i;
+	static short int size; 
 	CWaypoint *pWpt;
 
+	size = numWaypoints();
 
 	dataUnconstArray<CWaypoint*> goals;
 
@@ -1869,7 +1876,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_WAIT_OPEN,"waitopen","bot will wait until arena point is open to use this waypoint",WptColor(150,150,100)));
 	addType(new CWaypointType(W_FL_NO_FLAG,"noflag","TF2 bot will lose flag if he goes thorugh here",WptColor(200,100,50)));
 	addType(new CWaypointType(W_FL_LIFT,"lift","bot needs to wait on a lift here",WptColor(50,80,180)));
-	addType(new CWaypointType(W_FL_FLAGONLY,"TF2 flagonly","bot needs the flag to go through here",WptColor(180,50,80)));
+	addType(new CWaypointType(W_FL_FLAGONLY,"flagonly","TF2 bot needs the flag to go through here",WptColor(180,50,80)));
 }
 
 void CWaypointTypes :: freeMemory ()

@@ -333,11 +333,17 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( m_fTime == 0 )
 		{
-			
-
 			m_fTime = engine->Time() + randomFloat(2.0,4.0);
 			m_vMoveTo = m_vOrigin + Vector(randomFloat(-m_fRadius,m_fRadius),randomFloat(-m_fRadius,m_fRadius),0);
 			m_bProne = (randomFloat(0,1) * (1.0f-pBot->getHealthPercent())) > 0.75f;
+
+			if (  CDODMod::m_Flags.numFriendliesAtCap(m_iFlagID,iTeam) < CDODMod::m_Flags.numCappersRequired(m_iFlagID,iTeam) )
+			{
+				// count players I see
+				CDODBot *pDODBot = (CDODBot*)pBot;
+
+				pDODBot->voiceCommand(DOD_VC_NEED_BACKUP);
+			}
 		}
 		else if ( m_fTime < engine->Time() )
 		{
@@ -1151,11 +1157,10 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( m_bDefendOrigin )
 		{
-			pBot->setLookVector(m_vDefendOrigin);
-			pBot->setLookAtTask(LOOK_VECTOR);
+			pBot->setAiming(m_vDefendOrigin);
 		}
-		else
-			pBot->setLookAtTask(LOOK_SNIPE);
+		
+		pBot->setLookAtTask(LOOK_SNIPE);
 	}
 
 	if ( m_fTime < engine->Time() )
@@ -1351,6 +1356,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( pBot->getNavigator()->workRoute(pBot->getOrigin(),m_vVector,&bFail,(m_iInt==0),m_bNoInterruptions) )
 		{
 			pBot->m_fWaypointStuckTime = engine->Time() + randomFloat(10.0f,15.0f);
+			pBot->moveFailed(); // reset
 			m_iInt = 2;
 		}
 		else
@@ -1373,6 +1379,9 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	}
 	else if ( m_iInt == 2 )
 	{
+		if ( pBot->m_fWaypointStuckTime == 0 )
+			pBot->m_fWaypointStuckTime = engine->Time() + randomFloat(5.0f,10.0f);
+
 		if ( m_bNoInterruptions )
 		{
 			pBot->debugMsg(BOT_DEBUG_NAV,"Found route");
@@ -2285,7 +2294,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	case 2:
 	{
 		if ( !m_fTime )
-			pBotTF2->voiceCommand((eVoiceCMD)randomInt(0,31));
+			pBotTF2->voiceCommand((eTFVoiceCMD)randomInt(0,31));
 
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);
@@ -2374,7 +2383,7 @@ CBotNest::CBotNest()
 
 ////////////////////////////////////////////////////
 
-CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw )
+CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw, bool bUseZ, float z )
 {
 	QAngle angle;
 	m_fTime = 0.0f;
@@ -2384,6 +2393,8 @@ CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float f
 	m_vOrigin = vOrigin;
 	m_pWeaponToUse = pWeaponToUse;
 	m_fScopeTime = 0;
+	m_bUseZ = bUseZ;
+	m_z = z; // z = ground level
 }
 	
 void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -2399,7 +2410,6 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime == 0.0f )
 	{
 		m_fTime = engine->Time() + randomFloat(20.0f,40.0f);
-		pBot->secondaryAttack();
 	}
 
 	pCurrentWeapon = pBot->getCurrentWeapon();
@@ -2421,7 +2431,10 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( pCurrentWeapon != m_pWeaponToUse )
 	{
 		if ( !pBot->select_CWeapon(CWeapons::getWeapon(m_pWeaponToUse->getID())) )
+		{
 			fail();
+			return;
+		}
 	}
 	else
 	{
@@ -2453,7 +2466,7 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		// too far away
 		fail();
 	}
-	else if ( pBot->distanceFrom(m_vOrigin) > 100 )
+	else if ( pBot->distanceFrom(m_vOrigin) > 64 )
 	{
 		pBot->setMoveTo(m_vOrigin);
 	}
@@ -2467,18 +2480,23 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			pBot->handleAttack(pCurrentWeapon,pBot->getEnemy());
 		}
+		else if ( m_bUseZ )
+		{
+			pBot->setAiming(Vector(m_vAim.x,m_vAim.y,m_z));
+			pBot->setLookAtTask(LOOK_SNIPE);
+		}
 		else
 		{
 			pBot->setLookAtTask(LOOK_SNIPE);
 			pBot->setAiming(m_vAim);
+		}
 
-			if (m_fTime<engine->Time() )
-			{
-				if ( bDeployedOrZoomed )
-					pBot->secondaryAttack();
+		if (m_fTime<engine->Time() )
+		{
+			if ( bDeployedOrZoomed )
+				pBot->secondaryAttack();
 
-				complete();
-			}
+			complete();
 		}
 	}
 }

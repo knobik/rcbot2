@@ -36,6 +36,8 @@
 #include "bot_fortress.h"
 #include "bot_script.h"
 #include "bot_dod_bot.h"
+#include "bot_weapons.h"
+#include "bot_getprop.h"
 
 vector<CBotEvent*> CBotEvents :: m_theEvents;
 ///////////////////////////////////////////////////////
@@ -70,6 +72,32 @@ void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 	//CBots::botFunction()
 }
 
+class CBotSeeFriendlyDie : public IBotFunction
+{
+public:
+	CBotSeeFriendlyDie ( edict_t *pDied, edict_t *pKiller, const char *szKillerWeapon )
+	{
+		m_pDied = pDied;
+		m_pWeapon = CWeapons::getWeaponByShortName(szKillerWeapon);
+		m_pKiller = pKiller;
+	}
+	void execute ( CBot *pBot )
+	{
+		if ( CClassInterface::getTeam(m_pDied) != pBot->getTeam() )
+			return;
+
+		if ( pBot->getEdict() != m_pDied )
+		{
+			if ( pBot->isVisible(m_pDied) )
+				pBot->seeFriendlyDie(m_pDied,m_pKiller,m_pWeapon);
+		}
+	}
+private:
+	edict_t *m_pDied;
+	edict_t *m_pKiller;
+	CWeapon *m_pWeapon;
+};
+
 void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
@@ -88,6 +116,12 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 
 		pBot->enemyDown(m_pActivator);
 	}
+	
+	CBotSeeFriendlyDie *func = new CBotSeeFriendlyDie(m_pActivator,pAttacker,weapon);
+
+	CBots::botFunction(func);
+
+	delete func;
 }
 
 void CBombPickupEvent :: execute ( IBotEventInterface *pEvent )

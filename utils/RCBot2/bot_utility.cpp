@@ -31,8 +31,12 @@
  *
  */
 
+#include "bot.h"
 #include "bot_utility.h"
-
+#include "bot_getprop.h"
+#include "bot_configfile.h"
+#include "bot_mods.h"
+#include "bot_fortress.h"
 
 const char *g_szUtils[BOT_UTIL_MAX+1] =
 {
@@ -105,6 +109,27 @@ const char *g_szUtils[BOT_UTIL_MAX+1] =
 	 "BOT_UTIL_HL2DM_USE_HEALTH_CHARGER",
 	"BOT_UTIL_MAX"
 };
+
+CBotUtility :: CBotUtility ( CBot *pBot, eBotAction id, bool bCanDo, float fUtil, CBotWeapon *pWeapon, int iData, Vector vec )
+{
+	m_iData = iData;
+	m_fUtility = fUtil;
+	m_id = id;
+	m_bCanDo = bCanDo;
+	m_pBot = pBot;
+	m_pWeapon = pWeapon;
+	m_vVector = vec;
+
+	if ( m_pBot && m_pBot->isTF2() )
+	{
+		int iClass = CClassInterface::getTF2Class(pBot->getEdict());
+
+		if ( CTeamFortress2Mod::isAttackDefendMap() && (m_pBot->getTeam() == TF2_TEAM_BLUE) )
+			m_fUtility += randomFloat(CRCBotTF2UtilFile::m_fUtils[BOT_ATT_UTIL][id][iClass].min,CRCBotTF2UtilFile::m_fUtils[BOT_ATT_UTIL][id][iClass].max);
+		else
+			m_fUtility += randomFloat(CRCBotTF2UtilFile::m_fUtils[BOT_NORM_UTIL][id][iClass].min,CRCBotTF2UtilFile::m_fUtils[BOT_NORM_UTIL][id][iClass].max);
+	}
+}
 
 // Execute a list of possible actions and put them into order of available actions against utility
 void CBotUtilities :: execute ()

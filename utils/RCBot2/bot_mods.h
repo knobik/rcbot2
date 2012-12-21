@@ -257,6 +257,10 @@ public:
 	static CDODFlags m_Flags;
 
 	static void roundStart ();
+	
+	static int numClassOnTeam( int iTeam, int iClass );
+
+	void clientCommand ( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 );
 
 protected:
 

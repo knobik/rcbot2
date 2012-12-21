@@ -118,7 +118,24 @@ float  CBots :: m_flAddKickBotTime = 0;
 #define TIME_TO_TICKS( dt )		( (int)( 0.5f + (float)(dt) / TICK_INTERVAL ) )
 
 extern IVDebugOverlay *debugoverlay;
+
+///////////////////////////////////////
+// voice commands
 ////////////////////////////////////////////////
+void CBroadcastVoiceCommand :: execute ( CBot *pBot )
+{
+	if ( !m_pPlayer )
+		return;
+
+	if ( m_pPlayer == pBot->getEdict() )
+		return;
+
+	if ( pBot->isEnemy(m_pPlayer,false) )
+		return;
+
+	pBot->hearVoiceCommand(m_pPlayer,m_VoiceCmd);
+}
+///////////////////////////////////////
 void CBot :: runPlayerMove()
 {
 	extern ConVar rcbot_move_forward;
@@ -258,6 +275,9 @@ bool CBot :: FVisible ( Vector &vOrigin )
 bool CBot :: FVisible ( edict_t *pEdict )
 {
 	Vector eye = getEyePosition();
+
+	if ( ENTINDEX(pEdict) <= gpGlobals->maxClients )
+		return CBotGlobals::isVisible(m_pEdict,eye,pEdict->GetCollideable()->GetCollisionOrigin()+Vector(0,0,pEdict->GetCollideable()->OBBMaxs().z/2));
 
 	return CBotGlobals::isVisible(m_pEdict,eye,pEdict);//CBotGlobals::entityOrigin(pEdict)+Vector(0,0,50.0f));
 }
@@ -946,6 +966,8 @@ void CBot :: spawnInit ()
 {
 	resetTouchDistance(48.0f);
 
+	m_fLastVoiceCommand = 0;
+
 	m_fLastUpdateLastSeeEnemy = 0;
 	m_fPercentMoved = 1.0f;
 
@@ -1608,6 +1630,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	//static Vector v_max,v_min;
 	static Vector v_org;
 	static Vector v_size;
+	static Vector vel;
 
 	//return CBotGlobals::entityOrigin(pEntity);
 	
@@ -1639,6 +1662,13 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 
 	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
 		m_vAimVector = m_vAimVector + Vector(0,0,40.0f);
+
+	if ( CClassInterface::getVelocity(pEntity,&vel) )
+	{
+		vel = vel/300;
+
+		m_vAimVector = m_vAimVector + Vector(randomFloat(-32,32)*vel.x,randomFloat(-32,32)*vel.y,randomFloat(-32,32)*vel.z);
+	}
 
 	return m_vAimVector;///BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
 

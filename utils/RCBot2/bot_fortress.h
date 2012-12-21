@@ -91,19 +91,8 @@ typedef enum
     TF_VC_UBERREADY = 29,
     TF_VC_GOODJOB = 30,
 	TF_VC_INVALID = 31
-}eVoiceCMD;
+}eTFVoiceCMD;
 
-typedef union
-{
-	 struct
-	 {
-		  unsigned v1:2;
-		  unsigned v2:3;
-		  unsigned unused:4;
-	 }b1;
-
-	 byte voicecmd;
-}u_VOICECMD;
 
 typedef enum
 {
@@ -184,17 +173,6 @@ public:
 
 private:
 	edict_t *m_pSpy;
-};
-
-class CBroadcastVoiceCommand : public IBotFunction
-{
-public:
-	CBroadcastVoiceCommand (edict_t *pPlayer, byte voicecmd) { m_pPlayer = pPlayer; m_VoiceCmd = voicecmd; };
-	void execute ( CBot *pBot );
-
-private:
-	edict_t *m_pPlayer;
-	byte m_VoiceCmd;
 };
 
 class CBroadcastOvertime : public IBotFunction
@@ -633,7 +611,7 @@ public:
 
 	bool thinkSpyIsEnemy ( edict_t *pEdict );
 
-	void voiceCommand ( eVoiceCMD cmd );
+	void voiceCommand ( eTFVoiceCMD cmd );
 
 	void handleWeapons ( void ) ;
 
@@ -650,7 +628,7 @@ public:
 
 	bool canAvoid ( edict_t *pEntity );
 
-	void hearVoiceCommand ( edict_t *pPlayer, byte eVoiceCmd );
+	void hearVoiceCommand ( edict_t *pPlayer, byte cmd );
 		
 	void checkBeingHealed ( );
 
@@ -715,7 +693,7 @@ private:
 	 unsigned int m_iTeleEntranceArea;
 	 unsigned int m_iTeleExitArea;
 
-	 eVoiceCMD m_nextVoicecmd;
+	 eTFVoiceCMD m_nextVoicecmd;
 
 	bool m_bIsCarryingTeleExit;
 	bool m_bIsCarryingSentry;

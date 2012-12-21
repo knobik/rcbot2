@@ -33,6 +33,7 @@
 #include "bot_globals.h"
 #include "bot_strings.h"
 #include "bot_waypoint_locations.h"
+#include "bot_getprop.h"
 
 #include "ndebugoverlay.h"
 
@@ -128,6 +129,35 @@ bool CBotGlobals :: isCurrentMod ( eModId modid )
 {
 	return m_pCurrentMod->getModId() == modid;
 }
+
+int CBotGlobals ::numPlayersOnTeam(int iTeam, bool bAliveOnly)
+{
+	int i = 0;
+	int num = 0;
+	edict_t *pEdict;
+
+	for ( i = 1; i <= CBotGlobals::numClients(); i ++ )
+	{
+		pEdict = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pEdict) )
+		{
+			if ( CClassInterface::getTeam(pEdict) == iTeam )
+			{
+				if ( bAliveOnly )
+				{
+					if ( CBotGlobals::entityIsAlive(pEdict) )
+						num++;
+				}
+				else 
+					num++;
+			}
+		}
+	}
+	return num;
+}
+
+
 // TO DO :: put in CClients ?
 edict_t *CBotGlobals :: findPlayerByTruncName ( const char *name )
 // find a player by a truncated name "name".

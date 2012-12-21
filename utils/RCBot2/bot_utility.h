@@ -40,6 +40,7 @@
 using namespace std;
 
 class CBot;
+class CBotWeapon;
 
 typedef enum
 {
@@ -116,6 +117,7 @@ typedef enum
  BOT_UTIL_HL2DM_USE_HEALTH_CHARGER,
  BOT_UTIL_THROW_GRENADE,
  BOT_UTIL_PICKUP_WEAPON,
+ BOT_UTIL_ATTACK_NEAREST_POINT,
  BOT_UTIL_MAX
 }eBotAction;
 
@@ -124,7 +126,7 @@ extern const char *g_szUtils[BOT_UTIL_MAX+1];
 class CBotUtility
 {
 public:
-	CBotUtility ( CBot *pBot, eBotAction id, bool bCanDo, float fUtil );
+	CBotUtility ( CBot *pBot, eBotAction id, bool bCanDo, float fUtil, CBotWeapon *pWeapon = NULL, int iData = 0, Vector vec = Vector(0,0,0) );
 
 	inline float getUtility () { return m_fUtility; }
 
@@ -132,11 +134,20 @@ public:
 
 	inline bool canDo () { return m_bCanDo; }
 
+	inline CBotWeapon *getWeaponChoice () { return m_pWeapon; }
+
+	inline int getIntData () { return m_iData; }
+
+	inline Vector getVectorData () { return m_vVector; }
+
 private:
+	int m_iData;
 	float m_fUtility;
 	bool m_bCanDo;
 	eBotAction m_id;
 	CBot *m_pBot;
+	CBotWeapon *m_pWeapon;
+	Vector m_vVector;
 };
 
 
@@ -174,8 +185,10 @@ private:
 
 	util_list m_pBest;
 };
-
-
+#define ADD_UTILITY_DATA_VECTOR(utilname,condition,utility,data,vector) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility,NULL,data,vector)); } }
+#define ADD_UTILITY_WEAPON_DATA(utilname,condition,utility,weapon,data) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility,weapon,data)); } }
+#define ADD_UTILITY_DATA(utilname,condition,utility,data) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility,NULL,data)); } }
+#define ADD_UTILITY_WEAPON(utilname,condition,utility,weapon) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility,weapon)); } }
 #define ADD_UTILITY(utilname,condition,utility) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility)); } }
 
 

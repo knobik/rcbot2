@@ -36,6 +36,44 @@
 
 typedef enum
 {
+   DOD_VC_GOGOGO = 0,
+	DOD_VC_YES = 1,
+	DOD_VC_DROPWEAP = 2,
+    DOD_VC_HOLD = 3,
+	DOD_VC_NO = 4,
+	DOD_VC_DISPLACE = 5,
+    DOD_VC_GO_LEFT = 6,
+    DOD_VC_NEED_BACKUP = 7,
+	DOD_VC_MGAHEAD = 8,
+    DOD_VC_GO_RIGHT = 9,
+    DOD_VC_FIRE_IN_THE_HOLE =10,
+    DOD_VC_ENEMY_BEHIND = 11,
+    DOD_VC_STICK_TOGETHER = 12,
+	DOD_VC_USE_GRENADE = 13,
+	DOD_VC_ENEMY_DOWN = 14,
+    DOD_VC_COVERING_FIRE = 15,
+    DOD_VC_SNIPER = 16,
+    DOD_VC_NEED_MG = 17,
+    DOD_VC_SMOKE = 18,
+    DOD_VC_NICE_SHOT = 19,
+    DOD_VC_NEED_AMMO = 20,
+    DOD_VC_GRENADE2 = 21,
+    DOD_VC_THANKS = 22,
+    DOD_VC_USE_BAZOOKA = 23,
+	DOD_VC_CEASEFIRE = 24,
+	DOD_VC_AREA_CLEAR = 25,
+	DOD_VC_BAZOOKA = 26,
+	DOD_VC_INVALID = 27
+}eDODVoiceCMD;
+
+typedef struct
+{
+	eDODVoiceCMD id;
+	char *pcmd;
+}eDODVoiceCommand_t;
+
+typedef enum
+{
  DOD_CLASS_RIFLEMAN = 0,
  DOD_CLASS_ASSAULT,
  DOD_CLASS_SUPPORT,
@@ -73,7 +111,7 @@ public:
 
 	void fixWeapons ();
 
-	bool executeAction ( eBotAction iAction, CBotWeapon *pWeaponChoice );
+	bool executeAction ( CBotUtility *util );
 
 	void selectedClass ( int iClass );
 
@@ -89,6 +127,8 @@ public:
 
 	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 
+	void hearVoiceCommand ( edict_t *pPlayer, byte cmd );
+
 	void handleWeapons ();
 
 	void reachedCoverSpot ();
@@ -96,6 +136,12 @@ public:
 	void touchedWpt ( CWaypoint *pWaypoint );
 
 	bool checkStuck ();
+
+	void voiceCommand ( eDODVoiceCMD cmd );
+
+	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
+
+	void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pKillerWeapon );
 
 private:
 
@@ -116,7 +162,8 @@ private:
 	int m_iClip1;
 	int m_iClip2;
 
-	int m_iTeam;
+	int m_iTeam; // either 2 / 3 TEAM_ALLIES/TEAM_AXIS
+	int m_iEnemyTeam; // is the opposite of m_iTeam to check for enemy things
 
 	edict_t *m_pNearestFlag;
 	edict_t *m_pGoalFlag;
@@ -127,6 +174,11 @@ private:
 
 	float m_fProneTime;
 
+	// EHandles cos they will be destroyed soon
+	MyEHandle m_pEnemyRocket;
+	float m_fShoutRocket;
+	MyEHandle m_pEnemyGrenade;
+	float m_fShoutGrenade;
 	// blah blah
 };
 

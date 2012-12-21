@@ -222,6 +222,18 @@ public:
 		return !strcmp(szWeaponName,getWeaponName());
 	}
 
+	inline bool isShortWeaponName ( const char *szWeaponName )
+	{
+		static int start;
+		
+		start = strlen(m_szWeaponName) - strlen(szWeaponName);
+		
+		if ( start < 0 )
+			return false;
+
+		return !strcmp(&m_szWeaponName[start],szWeaponName);
+	}
+
 	inline bool canDestroyPipeBombs()
 	{
 		return hasAllFlags(WEAP_FL_KILLPIPEBOMBS);
@@ -399,6 +411,8 @@ public:
 	static CWeapon *getWeapon ( const int iId );
 
 	static CWeapon *getWeapon ( const char *szWeapon );
+
+	static CWeapon *getWeaponByShortName ( const char *szWeapon );
 
 	static void eachWeapon ( IWeaponFunc *pFunc );
 

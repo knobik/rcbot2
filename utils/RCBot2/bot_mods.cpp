@@ -65,6 +65,38 @@ CDODFlags CDODMod::m_Flags;
 
 extern ConVar bot_use_disp_dist;
 
+eDODVoiceCommand_t g_DODVoiceCommands[DOD_VC_INVALID] = 
+{
+	{DOD_VC_GOGOGO,"attack"},
+	{DOD_VC_YES,"yes"},
+	{DOD_VC_DROPWEAP,"dropweapons"},
+	{DOD_VC_HOLD,"hold"},
+	{DOD_VC_NO,"no"},
+	{DOD_VC_DISPLACE,"displace"},
+	{DOD_VC_GO_LEFT,"flankleft"},
+	{DOD_VC_NEED_BACKUP,"backup"},
+	{DOD_VC_MGAHEAD,"mgahead"},
+	{DOD_VC_GO_RIGHT,"flankright"},
+	{DOD_VC_FIRE_IN_THE_HOLE,"fireinhole"},
+	{DOD_VC_ENEMY_BEHIND,"enemybehind"},
+	{DOD_VC_STICK_TOGETHER,"sticktogether"},
+	{DOD_VC_USE_GRENADE,"usegrens"},
+	{DOD_VC_ENEMY_DOWN,"wegothim"},
+	{DOD_VC_COVERING_FIRE,"cover"},
+	{DOD_VC_SNIPER,"sniper"},
+	{DOD_VC_NEED_MG,"moveupmg"},
+	{DOD_VC_SMOKE,"smoke"},
+	{DOD_VC_NICE_SHOT,"niceshot"},
+	{DOD_VC_NEED_AMMO,"needammo"},
+	{DOD_VC_GRENADE2,"grenade"},
+	{DOD_VC_THANKS,"thanks"},
+	{DOD_VC_USE_BAZOOKA,"usebazooka"},
+	{DOD_VC_CEASEFIRE,"ceasefire"},
+	{DOD_VC_AREA_CLEAR,"areaclear"},
+	{DOD_VC_BAZOOKA,"bazookaspotted"}
+};
+
+
 edict_t *CTeamFortress2Mod:: getMediGun ( edict_t *pPlayer )
 {
 	if ( CClassInterface::getTF2Class(pPlayer) == TF_CLASS_MEDIC )
@@ -200,6 +232,8 @@ bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity, int iTeam )
 {
 	return ((strncmp(pEntity->GetClassName(),"mapobj_cart_dispenser",21)==0) && (CClassInterface::getTeam(pEntity)==iTeam));
 }
+
+
 // check voice commands
 void CTeamFortress2Mod:: clientCommand ( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 )
 {
@@ -871,33 +905,6 @@ int CTeamFortress2Mod ::numClassOnTeam( int iTeam, int iClass )
 	return num;
 }
 
-int CTeamFortress2Mod ::numPlayersOnTeam(int iTeam, bool bAliveOnly)
-{
-	int i = 0;
-	int num = 0;
-	edict_t *pEdict;
-
-	for ( i = 1; i <= CBotGlobals::numClients(); i ++ )
-	{
-		pEdict = INDEXENT(i);
-
-		if ( CBotGlobals::entityIsValid(pEdict) )
-		{
-			if ( CTeamFortress2Mod::getTeam(pEdict) == iTeam )
-			{
-				if ( bAliveOnly )
-				{
-					if ( CBotGlobals::entityIsAlive(pEdict) )
-						num++;
-				}
-				else 
-					num++;
-			}
-		}
-	}
-	return num;
-}
-
 // http://svn.alliedmods.net/viewvc.cgi/trunk/extensions/tf2/extension.cpp?revision=2183&root=sourcemod&pathrev=2183
 edict_t *FindEntityByNetClass(int start, const char *classname)
 {
@@ -1317,4 +1324,55 @@ void CDODMod ::roundStart()
 void CDODMod :: modFrame()
 {
 
+}
+
+
+int CDODMod ::numClassOnTeam( int iTeam, int iClass )
+{
+	int i = 0;
+	int num = 0;
+	edict_t *pEdict;
+
+	for ( i = 1; i <= CBotGlobals::numClients(); i ++ )
+	{
+		pEdict = INDEXENT(i);
+
+		if ( CBotGlobals::entityIsValid(pEdict) )
+		{
+			if ( CClassInterface::getTeam(pEdict) == iTeam )
+			{
+				if ( CClassInterface::getPlayerClassDOD(pEdict) == iClass )
+					num++;
+			}
+		}
+	}
+
+	return num;
+}
+
+void CDODMod ::clientCommand( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 )
+{
+	if ( argc == 1 )
+	{
+		if ( strncmp(pcmd,"voice_",6) == 0 )
+		{
+			short int i;
+			// somebody said a voice command
+			u_VOICECMD vcmd;
+
+			for ( i = 0; i < DOD_VC_INVALID; i ++ )
+			{
+				if ( strcmp(&pcmd[6],g_DODVoiceCommands[i].pcmd) == 0 )
+				{
+					vcmd.voicecmd = i;
+
+					CBroadcastVoiceCommand voicecmd = CBroadcastVoiceCommand(pEntity,vcmd.voicecmd); 
+
+					CBots::botFunction(&voicecmd);
+
+					break;
+				}
+			}
+		}
+	}
 }

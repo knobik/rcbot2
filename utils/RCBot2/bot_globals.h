@@ -75,6 +75,7 @@ public:
 	
 	static void fixFloatAngle ( float *fAngle );
 
+	static int numPlayersOnTeam(int iTeam, bool bAliveOnly);
 	static void setMapName ( const char *szMapName );
 	static char *getMapName (); 
 
