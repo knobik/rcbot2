@@ -64,6 +64,7 @@ edict_t *CDODMod::m_pResourceEntity = NULL;
 CDODFlags CDODMod::m_Flags;
 edict_t * CDODMod::m_pPlayerResourceEntity = NULL;
 float CDODMod::m_fMapStartTime = 0.0f;
+edict_t * CDODMod::m_pGameRules = NULL;
 
 extern ConVar bot_use_disp_dist;
 
@@ -1191,9 +1192,19 @@ void CDODMod :: initMod ()
 void CDODMod :: mapInit ()
 {
 	m_pResourceEntity = NULL;
+	m_pGameRules = NULL;
 	m_pPlayerResourceEntity = NULL;
 	m_Flags.init();
 	m_fMapStartTime = engine->Time();
+}
+
+
+float CDODMod::getMapStartTime () 
+{ 
+	//if ( !m_pGameRules ) 
+	//	return 0; 
+	return m_fMapStartTime;
+	//return CClassInterface::getRoundTime(m_pGameRules); 
 }
 
 int CDODMod::getHighestScore ()
@@ -1206,7 +1217,7 @@ int CDODMod::getHighestScore ()
 	short int i = 0;
 	edict_t *edict;
 
-	for ( i = 0; i < gpGlobals->maxClients; i ++ )
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
 	{
 		edict = INDEXENT(i);
 
@@ -1347,7 +1358,9 @@ void CDODFlags::setup(edict_t *pResourceEntity)
 int CDODMod ::getScore(edict_t *pPlayer)
 {
 	if ( m_pPlayerResourceEntity )
-		return CClassInterface::getPlayerScoreDOD(m_pPlayerResourceEntity) + CClassInterface::getPlayerObjectiveScoreDOD(m_pPlayerResourceEntity) - CClassInterface::getPlayerDeathsDOD(m_pPlayerResourceEntity);
+		return CClassInterface::getPlayerScoreDOD(m_pPlayerResourceEntity,pPlayer) + 
+		CClassInterface::getPlayerObjectiveScoreDOD(m_pPlayerResourceEntity,pPlayer) - 
+		CClassInterface::getPlayerDeathsDOD(pPlayer,m_pPlayerResourceEntity);
 
 	return 0;
 }
@@ -1358,6 +1371,8 @@ void CDODMod ::roundStart()
 		m_pResourceEntity = FindEntityByNetClass(gpGlobals->maxClients+1, "CDODObjectiveResource");
 	if ( !m_pPlayerResourceEntity )
 		m_pPlayerResourceEntity = FindEntityByNetClass(gpGlobals->maxClients+1, "CDODPlayerResource");
+	if ( !m_pGameRules )
+		m_pGameRules = FindEntityByNetClass(gpGlobals->maxClients+1, "CDODGameRulesProxy");
 
 	m_Flags.setup(m_pResourceEntity);
 	//m_Flags.updateAll();

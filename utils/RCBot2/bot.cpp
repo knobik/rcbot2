@@ -1661,7 +1661,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	m_vAimVector = m_vAimVector + (fDistFactor*Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16)));
 
 	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
-		m_vAimVector = m_vAimVector + Vector(0,0,40.0f);
+		m_vAimVector = m_vAimVector + Vector(0,0,v_size.z);
 
 	if ( CClassInterface::getVelocity(pEntity,&vel) )
 	{

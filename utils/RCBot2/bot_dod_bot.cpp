@@ -62,6 +62,7 @@ void CDODBot :: init ()
 
 	m_iSelectedClass = -1;
 	m_bCheckClass = false;
+
 }
 
 void CDODBot :: setup ()
@@ -92,13 +93,16 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 {
 	//static float fDist;
 	static const char *szClassname;
+	static bool bNoDraw;
 
 	CBot::setVisible(pEntity,bVisible);
 
-	if ( bVisible && !(CClassInterface::getEffects(pEntity) & EF_NODRAW) )
-	{
-		szClassname = pEntity->GetClassName();
+	szClassname = pEntity->GetClassName();
 
+	bNoDraw = ((CClassInterface::getEffects(pEntity) & EF_NODRAW) == EF_NODRAW);
+
+	if ( bVisible && !bNoDraw )
+	{
 		if ( (m_pNearestFlag != pEntity) && CDODMod::m_Flags.isFlag(pEntity) && 
 			(!m_pNearestFlag || (distanceFrom(pEntity)<distanceFrom(m_pNearestFlag)) ) )
 		{
@@ -111,30 +115,6 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			else if ( (pEntity!=m_pEnemyRocket) && (strncmp(szClassname,"rocket",6) == 0 ) && (!m_pEnemyRocket || (distanceFrom(pEntity)<distanceFrom(m_pEnemyRocket))))
 				m_pEnemyRocket = pEntity;
 		}
-		
-		if ( (pEntity != m_pNearestSmokeToEnemy) && (strncmp(szClassname,"grenade_smoke",13) == 0) )
-		{
-			if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
-			{
-				// math time - good lord!
-				// choose the best smoke that is worthwhile for checking enemy
-				if ( m_pNearestSmokeToEnemy && (fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(pEntity))-
-						  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy))) <
-					 fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(m_pNearestSmokeToEnemy))-
-						  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy)))) )
-				{
-					if ( distanceFrom(m_pNearestSmokeToEnemy) > SMOKE_RADIUS )
-						m_pNearestSmokeToEnemy = pEntity;
-				}
-				else
-					m_pNearestSmokeToEnemy = pEntity;
-			}
-			else if ( !m_pNearestSmokeToEnemy )
-			{
-				m_pNearestSmokeToEnemy = pEntity;
-			}
-
-		}
 	}
 	else
 	{
@@ -144,9 +124,33 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_pEnemyGrenade = NULL;
 		else if ( pEntity == m_pEnemyRocket )
 			m_pEnemyRocket = NULL;
-		else if ( (pEntity == m_pNearestSmokeToEnemy) && (distanceFrom(m_pNearestSmokeToEnemy) > SMOKE_RADIUS) )
-			m_pNearestSmokeToEnemy = NULL;
 	}
+
+	if ( !bNoDraw && (pEntity != m_pNearestSmokeToEnemy) && (strncmp(szClassname,"grenade_smoke",13) == 0) )
+	{
+		if ( !m_pNearestSmokeToEnemy )
+		{
+			m_pNearestSmokeToEnemy = pEntity;
+		}
+		else if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+		{
+			if ( (distanceFrom(pEntity) < distanceFrom(m_pNearestSmokeToEnemy)) || 
+				(distanceFrom(pEntity) < (distanceFrom(m_pEnemy)+SMOKE_RADIUS)) )
+			{
+				// math time - good lord!
+				// choose the best smoke that is worthwhile for checking enemy
+				if ( m_pNearestSmokeToEnemy && (fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(pEntity))-
+						  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy))) <=
+					 fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(m_pNearestSmokeToEnemy))-
+						  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy)))) )
+				{
+					m_pNearestSmokeToEnemy = pEntity;
+				}
+			}
+		}
+	}
+	else if ( bNoDraw && (pEntity == m_pNearestSmokeToEnemy) )
+		m_pNearestSmokeToEnemy = NULL;
 }
 
 void CDODBot :: selectedClass ( int iClass )
@@ -173,6 +177,8 @@ bool CDODBot :: startGame ()
 			else
 				m_pPlayerInfo->ChangeTeam(TEAM_AXIS);
 		}
+			
+		m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
 
 		return false;
 	}
@@ -253,11 +259,13 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 			if ( (pclass == DOD_CLASS_SNIPER) && pWeapon->isZoomable() )
 			{
 				voiceCommand(DOD_VC_SNIPER);
+				updateCondition(CONDITION_COVERT);
 				m_fCurrentDanger += 100.0f;
 			}
 			else if ( (pclass == DOD_CLASS_MACHINEGUNNER) && pWeapon->isDeployable() )
 			{
 				voiceCommand(DOD_VC_MGAHEAD);
+				updateCondition(CONDITION_COVERT);
 				m_fCurrentDanger += 100.0f;
 			}
 			else
@@ -283,6 +291,8 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 void CDODBot :: spawnInit ()
 {
 	CBot::spawnInit();
+
+	memset(m_CheckSmoke,0,sizeof(smoke_t)*MAX_PLAYERS);
 
 	m_pNearestFlag = NULL;
 
@@ -499,7 +509,22 @@ void CDODBot :: modThink ()
 
 	if ( m_fCurrentDanger >= 50.0f )
 	{
-		if ( !m_bProne && ( m_fProneTime < engine->Time() ))
+
+		//if ( m_fCurrentDanger >= 80.0f )
+
+		CBotWeapon *pWeapon = getCurrentWeapon();
+
+		// not sniper rifle or machine gun but can look down the sights
+		if ( pWeapon && pWeapon->isZoomable() && !pWeapon->needsDeployedOrZoomed() && !CClassInterface::isSniperWeaponZoomed(pWeapon->getWeaponEntity()) )
+		{
+			if ( m_fZoomOrDeployTime < engine->Time() )
+			{
+				secondaryAttack(); // deploy / zoom
+				m_fZoomOrDeployTime = engine->Time() + randomFloat(0.1f,0.2f);
+			}
+		}
+		
+		if ( (m_fCurrentDanger >= 80.0f) && !m_bProne && ( m_fProneTime < engine->Time() ))
 		{
 			m_pButtons->tap(IN_ALT1);
 			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
@@ -507,7 +532,7 @@ void CDODBot :: modThink ()
 
 		m_fIdealMoveSpeed = fMaxSpeed/4;
 	}
-	else if ( (m_fCurrentDanger >= 20.0f) && (m_flStamina > 90.f ) && (m_flSprintTime < engine->Time()))
+	else if ( (m_fCurrentDanger >= 20.0f) && (m_flStamina > 90.0f ) && (m_flSprintTime < engine->Time()))
 	{
 		if ( m_bProne && ( m_fProneTime < engine->Time() ))
 		{
@@ -647,20 +672,29 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 	case DOD_VC_HOLD:
 		removeCondition(CONDITION_PUSH);
 		break;
+	case DOD_VC_SMOKE:
+		updateCondition(CONDITION_COVERT);
+		break;
 	case DOD_VC_SNIPER:
 	case DOD_VC_MGAHEAD:
 		if ( !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && isVisible(pPlayer) )
+		{
+			updateCondition(CONDITION_COVERT);
 			m_fCurrentDanger += 50.0f;
+		}
 		break;
 	case DOD_VC_GRENADE2:
 	case DOD_VC_BAZOOKA:
 		// if I don't see anythign but I see the player calling this, hide!
 		if ( !m_pEnemyGrenade && !m_pEnemyRocket && isVisible(pPlayer) && !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
 		{
+			updateCondition(CONDITION_COVERT);
+
 			// don't interrupt current shedule, just add to front
 			m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
 			m_pSchedules->addFront(new CGotoHideSpotSched(pPlayer));
 		}
+
 		break;
 	case DOD_VC_NEED_BACKUP:
 		if ( m_pNearestFlag && isVisible(pPlayer) )
@@ -748,10 +782,15 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			if ( pWaypoint )
 			{
 				CBotSchedule *snipe = new CBotSchedule();
+				CBotTask *findpath = new CFindPathTask(pWaypoint->getOrigin());
+				CBotTask *snipetask = new CBotDODSnipe(util->getWeaponChoice(),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),iFlagID!=-1,vGoal.z+48);
+
+				findpath->setCompleteInterrupt(CONDITION_PUSH);
+				snipetask->setCompleteInterrupt(CONDITION_PUSH);
 
 				snipe->setID(SCHED_DEFENDPOINT);
-				snipe->addTask(new CFindPathTask(pWaypoint->getOrigin()));
-				snipe->addTask(new CBotDODSnipe(util->getWeaponChoice(),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),iFlagID!=-1,vGoal.z+48));
+				snipe->addTask(findpath);
+				snipe->addTask(snipetask);
 				
 				m_pSchedules->add(snipe);
 
@@ -770,10 +809,15 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				if ( pWaypoint )
 				{
 					CBotSchedule *defend = new CBotSchedule();
+					CBotTask *findpath = new CFindPathTask(pWaypoint->getOrigin());
+					CBotTask *deftask = new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(7.5f,12.5f),0,true,vGoal);
+
+					findpath->setCompleteInterrupt(CONDITION_PUSH);
+					deftask->setCompleteInterrupt(CONDITION_PUSH);
 
 					defend->setID(SCHED_DEFENDPOINT);
-					defend->addTask(new CFindPathTask(pWaypoint->getOrigin()));
-					defend->addTask(new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(7.5f,12.5f),0,true,vGoal));
+					defend->addTask(findpath);
+					defend->addTask(deftask);
 					// add defend task
 					m_pSchedules->add(defend);
 					
@@ -827,6 +871,9 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				pSched->addTask(new CThrowGrenadeTask(pWeapon,getAmmo(pWeapon->getWeaponInfo()->getAmmoIndex1()),m_vLastSeeEnemyBlastWaypoint)); // first - throw
 
 				m_pSchedules->add(pSched);
+
+				removeCondition(CONDITION_COVERT);
+
 				return true;
 			}
 
@@ -1007,6 +1054,17 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 						fDelay = randomFloat(0.7f,1.2f);
 					}
 				}
+				else if ( pWeapon->isZoomable() && ( distanceFrom(pEnemy) > 1000 ))
+				{
+					if ( !CClassInterface::isSniperWeaponZoomed(pWeaponEdict) )
+					{
+						if ( m_fZoomOrDeployTime < engine->Time() )
+						{
+							secondaryAttack(); // deploy / zoom
+							m_fZoomOrDeployTime = engine->Time() + randomFloat(0.1f,0.2f);
+						}
+					}
+				}
 			}
 		}
 
@@ -1109,15 +1167,19 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		break;
 	}
 
-	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && (m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) || m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER)) )
+	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && 
+		(m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) || m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) || m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) || m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_GER)) )
 	{
 		float fDistance = distanceFrom(m_vLastSeeEnemyBlastWaypoint);
 
 		if ( ( fDistance > BLAST_RADIUS ) && ( fDistance < 1500 ) )
 		{
 			CBotWeapon *pBotWeapon = NULL;
+			CBotWeapon *pBotSmokeGren = m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) ? m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_US)) : m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_GER));
 
-			if ( m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) )
+			if ( hasSomeConditions(CONDITION_COVERT) && pBotSmokeGren && (m_fCurrentDanger > 10.0f) )
+				pBotWeapon = pBotSmokeGren;
+			else if ( m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) )
 				pBotWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_FRAG_US));
 			else if ( m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) )
 				pBotWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_FRAG_GER));
@@ -1192,46 +1254,124 @@ bool CDODBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
 	return false;
 }
 
+Vector CDODBot :: getAimVector ( edict_t *pEntity )
+{
+	static Vector vAim;
+	static short int iSlot;
+	static smoke_t *smokeinfo;
+	static bool bProne;
+	static float fStamina;
+
+	vAim = CBot::getAimVector(pEntity);
+
+	// for some reason, prone does not change collidable size
+	CClassInterface::getPlayerInfoDOD(pEntity,&bProne,&fStamina);
+
+	if ( bProne )
+	{
+		vAim.z = vAim.z - 32.0f;
+	}
+
+	if ( m_pNearestSmokeToEnemy )
+	{
+		iSlot = ENTINDEX(pEntity)-1;
+
+		if (( iSlot >= 0 ) && ( iSlot < MAX_PLAYERS ))
+		{
+			smokeinfo = &(m_CheckSmoke[iSlot]);
+
+			if ( smokeinfo->bInSmoke ) 
+			{
+				return vAim = vAim + Vector(randomFloat(-SMOKE_RADIUS,SMOKE_RADIUS)*smokeinfo->fProb,randomFloat(-SMOKE_RADIUS,SMOKE_RADIUS)*smokeinfo->fProb,randomFloat(-SMOKE_RADIUS,SMOKE_RADIUS)*smokeinfo->fProb);
+			}
+		}
+	}
+
+	return vAim;
+}
+
 bool CDODBot :: isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck )
 {
 	//if ( isVisible(pCheck) )
-	//{
-		static Vector a,b;
-		static float fDist;
+//{
+	static Vector a,b;
+	static float fDist;
+	static smoke_t *smokeinfo;
+	static float fTime, fProb;
 
-		fDist = distanceFrom(pSmoke);
+	static short int iSlot;
 
-		if ( fDist > SMOKE_RADIUS )
+	iSlot = ENTINDEX(pCheck)-1;
+
+	if (( iSlot >= 0 ) && ( iSlot < MAX_PLAYERS ))
+	{
+		smokeinfo = &(m_CheckSmoke[iSlot]);
+
+		if ( smokeinfo->fLastTime < engine->Time() )
 		{
-			a = CBotGlobals::entityOrigin(pCheck);
-			b = getOrigin();
+			fDist = distanceFrom(pSmoke);
 
-			a = (a-b);
-			a = a / a.Length();
-
-			if ( (( getOrigin() + (a * distanceFrom(pSmoke)) ) -
-				CBotGlobals::entityOrigin(pSmoke)).Length() < SMOKE_RADIUS )
+			if ( fDist > SMOKE_RADIUS )
 			{
-				float fTime = engine->Time() - CDODMod::getMapStartTime() - CClassInterface::getSmokeSpawnTime(pSmoke);
+				a = CBotGlobals::entityOrigin(pCheck);
+				b = getOrigin();
 
-				if ( fTime < 10.0f )
+				a = (a-b);
+				a = a / a.Length();
+
+				if ( (( getOrigin() + (a * distanceFrom(pSmoke)) ) -
+					CBotGlobals::entityOrigin(pSmoke)).Length() < SMOKE_RADIUS )
 				{
-					if ( fTime > 5.0f )
-						fTime = 10.0f - fTime;
+					fTime = gpGlobals->curtime - CClassInterface::getSmokeSpawnTime(pSmoke);
 
-					// 5 seconds is blind
-					float fProb = fTime / 5;
+					if ( (fTime > 1.0f) && (fTime < 10.0f) )
+					{
+						if ( fTime > 5.0f )
+							fTime = 10.0f - fTime;
 
-					// 5 seconds probability = 0, 4 seconds 20%, 6 seconds = 20%
-					return randomFloat(0.0f,1.0f) > fProb;
+						// 5 seconds is blind
+						fProb = fTime / 5;
+						
+						smokeinfo->bLastResult = (randomFloat(0.0f,0.2f) > fProb);
+						smokeinfo->fProb = fProb;
+						smokeinfo->bInSmoke = true;
+					}
+					else // diminished
+						smokeinfo->bInSmoke = false;
 				}
+				else
+					smokeinfo->bInSmoke = false; // outside smoke radius
+			}
+			else
+			{
+				fTime = gpGlobals->curtime - CClassInterface::getSmokeSpawnTime(pSmoke);
+
+				if ( (fTime > 1.0f) && (fTime < 10.0f) )
+				{
+					smokeinfo->fProb = 1.0f-(fDist/SMOKE_RADIUS);
+					smokeinfo->bLastResult = (randomFloat(0.0f,0.5f) > smokeinfo->fProb );
+					smokeinfo->bInSmoke = true;
+				}
+				else
+					smokeinfo->bInSmoke = false;
 			}
 		}
-		else
-			return randomFloat(0.0f,1.0f) < (fDist/SMOKE_RADIUS);
 
-		return true;
-	//}
+		if ( smokeinfo->bInSmoke == false )
+			smokeinfo->bLastResult = true;
+
+		// check again soon (not every frame)
+		if ( smokeinfo->bLastResult )
+			smokeinfo->fLastTime = engine->Time() + randomFloat(0.0f,0.1f);
+		else
+			smokeinfo->fLastTime = engine->Time() + randomFloat(0.1f,0.2f);
+
+		return smokeinfo->bLastResult;
+
+	}
+
+	return false;
+//}
 
 	//return false;
 }

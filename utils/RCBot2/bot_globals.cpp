@@ -120,11 +120,6 @@ char *CBotGlobals :: getMapName ()
 	return m_szMapName; 
 }
 
-CBotMod *CBotGlobals :: getCurrentMod ()
-{
-	return m_pCurrentMod;
-}
-
 bool CBotGlobals :: isCurrentMod ( eModId modid )
 {
 	return m_pCurrentMod->getModId() == modid;

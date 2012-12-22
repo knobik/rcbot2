@@ -153,6 +153,8 @@ typedef enum
 #define CONDITION_SEE_HEAL				4096
 #define CONDITION_SEE_LAST_ENEMY_POS	8192
 #define CONDITION_CHANGED				16384
+#define CONDITION_COVERT				32768
+
 ////////////////////////
 #define BLAST_RADIUS 200
 ///////////////////////

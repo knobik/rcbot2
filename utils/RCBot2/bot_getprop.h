@@ -69,6 +69,7 @@ typedef enum
 	GETPROP_DOD_OBJSCORE,
 	GETPROP_DOD_DEATHS,
 	GETPROP_DOD_SMOKESPAWN_TIME,
+	GETPROP_DOD_ROUNDTIME,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -327,24 +328,35 @@ public:
 		return g_GetProps[GETPROP_DOD_GREN_THROWER].getEntity(gren);
 	}
 
-	inline static int getPlayerScoreDOD ( edict_t *resource )
+	inline static int getPlayerScoreDOD ( edict_t *resource, edict_t *pPlayer )
 	{
-		return g_GetProps[GETPROP_DOD_SCORE].getInt(resource,0);
+		int *score_array = g_GetProps[GETPROP_DOD_SCORE].getIntPointer(resource);
+
+		return (score_array!=NULL) ? score_array[ENTINDEX(pPlayer)] : 0;
 	}
 
-	inline static int getPlayerObjectiveScoreDOD ( edict_t *resource )
+	inline static int getPlayerObjectiveScoreDOD ( edict_t *resource, edict_t *pPlayer )
 	{
-		return g_GetProps[GETPROP_DOD_OBJSCORE].getInt(resource,0);
+		int *score_array = g_GetProps[GETPROP_DOD_OBJSCORE].getIntPointer(resource);
+
+		return (score_array!=NULL) ? score_array[ENTINDEX(pPlayer)] : 0;
 	}
 
-	inline static int getPlayerDeathsDOD ( edict_t *resource )
+	inline static int getPlayerDeathsDOD ( edict_t *resource, edict_t *pPlayer )
 	{
-		return g_GetProps[GETPROP_DOD_DEATHS].getInt(resource,0);
+		int *score_array = g_GetProps[GETPROP_DOD_DEATHS].getIntPointer(resource);
+
+		return (score_array!=NULL) ? score_array[ENTINDEX(pPlayer)] : 0;
 	}
 
 	inline static float getSmokeSpawnTime ( edict_t *pSmoke )
 	{
 		return g_GetProps[GETPROP_DOD_SMOKESPAWN_TIME].getFloat(pSmoke,0);
+	}
+	
+	inline static float getRoundTime ( edict_t *pGamerules )
+	{
+		return g_GetProps[GETPROP_DOD_ROUNDTIME].getFloat(pGamerules,0);
 	}
 	// HL2DM
 	//static void 

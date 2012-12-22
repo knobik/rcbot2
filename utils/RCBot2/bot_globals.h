@@ -98,7 +98,10 @@ public:
 
 	static edict_t *findPlayerByTruncName ( const char *name );
 
-	static CBotMod *getCurrentMod ();
+	inline static CBotMod *CBotGlobals :: getCurrentMod ()
+	{
+		return m_pCurrentMod;
+	}
 
 	////////////////////////////////////////////////////////////////////////
 	// useful functions
@@ -170,6 +173,8 @@ public:
 
 	static bool isCurrentMod ( eModId modid );
 
+	inline static bool setupMapTime ( ) { return m_fMapStartTime == 0; } 
+
 	////////
 	static CBotCommandContainer *m_pCommands;
 	
@@ -186,6 +191,7 @@ private:
 	static int m_iEventVersion;
 	static int m_iWaypointDisplayType;
 	static bool m_bTeamplay;
+	static float m_fMapStartTime;
 
 	/*static Vector m_vForward;
 	static Vector m_vRight;

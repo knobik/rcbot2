@@ -279,8 +279,7 @@ public:
 
 	void clientCommand ( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 );
 
-	inline static float getMapStartTime () { return m_fMapStartTime; }
-
+	static float getMapStartTime ();
 protected:
 
 	void initMod ();
@@ -291,6 +290,7 @@ protected:
 
 	static edict_t *m_pResourceEntity;
 	static edict_t *m_pPlayerResourceEntity;
+	static edict_t *m_pGameRules;
 	static float m_fMapStartTime;
 
 	//virtual void entitySpawn ( edict_t *pEntity );

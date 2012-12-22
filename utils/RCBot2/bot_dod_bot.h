@@ -86,6 +86,14 @@ typedef enum
 
 #define DOD_CLASSNAME_CONTROLPOINT "dod_control_point"
 
+typedef struct
+{
+	float fLastTime;
+	float fProb;
+	bool bLastResult;
+	bool bInSmoke;
+}smoke_t;
+
 // bot for DOD
 class CDODBot : public CBot
 {
@@ -97,6 +105,8 @@ public:
 
 	void init ();
 	void setup ();
+
+	Vector getAimVector ( edict_t *pEntity );
 
 	bool startGame ();
 
@@ -188,6 +198,8 @@ private:
 
 	float m_fChangeClassTime;
 	bool m_bCheckClass;
+
+	smoke_t m_CheckSmoke[MAX_PLAYERS];
 	// blah blah
 };
 

@@ -141,6 +141,19 @@ ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee 
 ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions to test cpu speed");
 ConVar rcbot_move_forward("rcbot_forward","0",0,"if 1 , bots will all move forward");
 ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","416",0,"offset of the PlayerRunCommand function");
+
+CON_COMMAND( enginetime, "get engine time" )
+{
+	Msg("%f\n",engine->Time());
+}
+CON_COMMAND( maptime, "get map time" )
+{
+	Msg("CDODMod::getMapStartTime() = %f\n",CDODMod::getMapStartTime());
+	Msg("engine->Time() = %f\n",engine->Time());
+	Msg("diff = %f\n",engine->Time() - CDODMod::getMapStartTime());
+	Msg("gpGlobals->realtime = %f\n",gpGlobals->realtime);
+	Msg("gpGlobals->curtime = %f\n",gpGlobals->curtime);
+}
 //ConVar rcbot_override("rcbot_override","1",0,"if 1 the plugin will override other bots runplayer functions");
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");

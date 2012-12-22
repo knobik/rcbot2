@@ -383,6 +383,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_OBJSCORE,"CDODPlayerResource","m_iObjScore",0);
 		DEFINE_GETPROP(GETPROP_DOD_DEATHS,"CDODPlayerResource","m_iDeaths",0);
 		DEFINE_GETPROP(GETPROP_DOD_SMOKESPAWN_TIME,"CDODSmokeGrenade","m_flSmokeSpawnTime",0);
+		DEFINE_GETPROP(GETPROP_DOD_ROUNDTIME,"CDODGameRulesProxy","m_flRestartRoundTime",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
