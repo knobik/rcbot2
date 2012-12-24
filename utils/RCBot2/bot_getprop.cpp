@@ -384,6 +384,9 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_DEATHS,"CDODPlayerResource","m_iDeaths",0);
 		DEFINE_GETPROP(GETPROP_DOD_SMOKESPAWN_TIME,"CDODSmokeGrenade","m_flSmokeSpawnTime",0);
 		DEFINE_GETPROP(GETPROP_DOD_ROUNDTIME,"CDODGameRulesProxy","m_flRestartRoundTime",0);
+		DEFINE_GETPROP(GETPROP_DOD_K98ZOOM,"CWeaponK98","m_bZoomed",0);
+		DEFINE_GETPROP(GETPROP_DOD_GARANDZOOM,"CWeaponGarand","m_bZoomed",0);
+
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

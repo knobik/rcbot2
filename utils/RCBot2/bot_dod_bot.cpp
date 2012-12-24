@@ -444,7 +444,7 @@ void CDODBot :: modThink ()
 						}
 					}
 
-					for ( int i = 1; i < 6; i ++ )
+					for ( int i = 0; i < 6; i ++ )
 						fTotalFitness += fClassFitness[i];
 
 					fRandom = randomFloat(0,fTotalFitness);
@@ -453,7 +453,7 @@ void CDODBot :: modThink ()
 
 					m_iDesiredClass = 0;
 
-					for ( int i = 1; i < 6; i ++ )
+					for ( int i = 0; i < 6; i ++ )
 					{
 						fTotalFitness += fClassFitness[i];
 
@@ -476,7 +476,7 @@ void CDODBot :: modThink ()
 
 	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict);
 
-	m_fIdealMoveSpeed = fMaxSpeed/2;
+	setMoveSpeed(fMaxSpeed/2);
 	
 	m_iClass = (DOD_Class)CClassInterface::getPlayerClassDOD(m_pEdict);	
 	m_iTeam = getTeam();
@@ -509,28 +509,34 @@ void CDODBot :: modThink ()
 
 	if ( m_fCurrentDanger >= 50.0f )
 	{
-
-		//if ( m_fCurrentDanger >= 80.0f )
-
 		CBotWeapon *pWeapon = getCurrentWeapon();
 
 		// not sniper rifle or machine gun but can look down the sights
-		if ( pWeapon && pWeapon->isZoomable() && !pWeapon->needsDeployedOrZoomed() && !CClassInterface::isSniperWeaponZoomed(pWeapon->getWeaponEntity()) )
+		if ( hasSomeConditions(CONDITION_COVERT) && pWeapon && (( pWeapon->getID() == DOD_WEAPON_K98 ) || (pWeapon->getID() == DOD_WEAPON_GARAND) ))
 		{
-			if ( m_fZoomOrDeployTime < engine->Time() )
+			bool bZoomed = false;
+
+			if ( pWeapon->getID() == DOD_WEAPON_K98 )
+				bZoomed = CClassInterface::isK98Zoomed(pWeapon->getWeaponEntity());
+			else
+				bZoomed = CClassInterface::isGarandZoomed(pWeapon->getWeaponEntity());
+
+			if ( !bZoomed && (m_fZoomOrDeployTime < engine->Time()) )
 			{
 				secondaryAttack(); // deploy / zoom
 				m_fZoomOrDeployTime = engine->Time() + randomFloat(0.1f,0.2f);
 			}
 		}
 		
-		if ( (m_fCurrentDanger >= 80.0f) && !m_bProne && ( m_fProneTime < engine->Time() ))
+		if ( !hasSomeConditions(CONDITION_RUN) && (m_fCurrentDanger >= 80.0f) && !m_bProne && ( m_fProneTime < engine->Time() ))
 		{
 			m_pButtons->tap(IN_ALT1);
 			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
 		}
 
-		m_fIdealMoveSpeed = fMaxSpeed/4;
+		setMoveSpeed(fMaxSpeed/4);
+
+		// slow down - be careful
 	}
 	else if ( (m_fCurrentDanger >= 20.0f) && (m_flStamina > 90.0f ) && (m_flSprintTime < engine->Time()))
 	{
@@ -540,7 +546,7 @@ void CDODBot :: modThink ()
 			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
 		}
 
-		m_fIdealMoveSpeed = fMaxSpeed;
+		setMoveSpeed(fMaxSpeed);
 		m_pButtons->holdButton(IN_SPEED,0,1,0);
 	}
 	else if (( m_fCurrentDanger < 1 ) || (m_flStamina < 5.0f ))
@@ -548,15 +554,16 @@ void CDODBot :: modThink ()
 		m_flSprintTime = engine->Time() + randomFloat(5.0f,20.0f);
 	}
 
+	if ( hasSomeConditions(CONDITION_RUN) && m_bProne && ( m_fProneTime < engine->Time() ))
+	{
+		m_pButtons->tap(IN_ALT1);
+		m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
+	}
+
 	if ( m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time()) )
 	{
 		m_fLastSeeEnemy = 0;
 		m_pButtons->tap(IN_RELOAD);
-	}
-
-	if ( m_pNearestFlag )
-	{
-
 	}
 
 	if ( m_pEnemyRocket )
@@ -566,6 +573,9 @@ void CDODBot :: modThink ()
 		if ( m_fShoutRocket > 0.95f ) 
 		{
 			voiceCommand(DOD_VC_BAZOOKA);
+
+			updateCondition(CONDITION_RUN);
+
 			m_fShoutRocket = 0.0f;
 
 			if ( !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
@@ -584,13 +594,17 @@ void CDODBot :: modThink ()
 		if ( m_fShoutGrenade > 0.95f ) 
 		{
 			voiceCommand(DOD_VC_GRENADE2);
+			updateCondition(CONDITION_RUN);
 			m_fShoutGrenade = 0.0f;
 
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
+			if ( distanceFrom(m_pEnemyGrenade) < (BLAST_RADIUS*2) )
 			{
-				// don't interrupt current shedule, just add to front
-				m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-				m_pSchedules->addFront(new CGotoHideSpotSched(m_pEnemyGrenade));
+				if ( !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
+				{
+					// don't interrupt current shedule, just add to front
+					m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
+					m_pSchedules->addFront(new CGotoHideSpotSched(m_pEnemyGrenade));
+				}
 			}
 		}
 	}
@@ -668,9 +682,11 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 	{
 	case DOD_VC_GOGOGO:
 		updateCondition(CONDITION_PUSH);
+		updateCondition(CONDITION_RUN);
 		break;
 	case DOD_VC_HOLD:
 		removeCondition(CONDITION_PUSH);
+		removeCondition(CONDITION_RUN);
 		break;
 	case DOD_VC_SMOKE:
 		updateCondition(CONDITION_COVERT);
@@ -689,6 +705,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 		if ( !m_pEnemyGrenade && !m_pEnemyRocket && isVisible(pPlayer) && !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
 		{
 			updateCondition(CONDITION_COVERT);
+			updateCondition(CONDITION_RUN);
 
 			// don't interrupt current shedule, just add to front
 			m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
@@ -704,6 +721,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 			{
 					CBotSchedule *attack = new CBotSchedule();
 
+					updateCondition(CONDITION_RUN);
 					attack->setID(SCHED_ATTACKPOINT);
 					attack->addTask(new CFindPathTask(vPoint));
 					attack->addTask(new CBotDODAttackPoint(CDODMod::m_Flags.getFlagID(m_pNearestFlag),vPoint,150.0f));
@@ -732,7 +750,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			CBotSchedule *attack = new CBotSchedule();
 
 			attack->setID(SCHED_ATTACKPOINT);
-			attack->addTask(new CFindPathTask(vGoal));
+			attack->addTask(new CFindPathTask(vGoal));//,LOOK_AROUND));
 			attack->addTask(new CBotDODAttackPoint(iFlagID,vGoal,150.0f));
 			// add defend task
 			m_pSchedules->add(attack);
@@ -804,12 +822,17 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 			if ( CDODMod::m_Flags.getRandomTeamControlledFlag(&vGoal,getTeam()) )
 			{
-				CWaypoint *pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),vGoal);
+				CWaypoint *pWaypoint;
+				
+				if ( distanceFrom(vGoal) > 1024 ) // outside waypoint bucket of goal
+					pWaypoint = CWaypoints::getPinchPointFromWaypoint(vGoal,vGoal);
+				else
+					pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),vGoal);
 
 				if ( pWaypoint )
 				{
 					CBotSchedule *defend = new CBotSchedule();
-					CBotTask *findpath = new CFindPathTask(pWaypoint->getOrigin());
+					CBotTask *findpath = new CFindPathTask(pWaypoint->getOrigin());//,LOOK_AROUND);
 					CBotTask *deftask = new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(7.5f,12.5f),0,true,vGoal);
 
 					findpath->setCompleteInterrupt(CONDITION_PUSH);
@@ -832,7 +855,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			CClient *pClient = CClients::get(m_pLastEnemy);
 			CBotSchedule *pSchedule = new CBotSchedule();
 			
-			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy);	
+			CFindPathTask *pFindPath = new CFindPathTask(m_vLastSeeEnemy,LOOK_LAST_ENEMY);	
 
 			pFindPath->setCompleteInterrupt(CONDITION_SEE_CUR_ENEMY);
 			
@@ -867,8 +890,8 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 				pathtask->setNoInterruptions();
 
-				pSched->addTask(pathtask); // 2nd -- hide
 				pSched->addTask(new CThrowGrenadeTask(pWeapon,getAmmo(pWeapon->getWeaponInfo()->getAmmoIndex1()),m_vLastSeeEnemyBlastWaypoint)); // first - throw
+				pSched->addTask(pathtask); // 2nd -- hide
 
 				m_pSchedules->add(pSched);
 
@@ -887,15 +910,20 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 			if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(&vGoal,getTeam(),&iFlagID) )
 			{
-				CWaypoint *pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),vGoal);
+				CWaypoint *pWaypoint;
+
+				if ( distanceFrom(vGoal) > 1024 ) // outside waypoint bucket of goal
+					pWaypoint = CWaypoints::getPinchPointFromWaypoint(vGoal,vGoal);
+				else
+					pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),vGoal);
 
 				if ( pWaypoint )
 				{
 					CBotSchedule *attack = new CBotSchedule();
 
 					attack->setID(SCHED_ATTACKPOINT);
-					attack->addTask(new CFindPathTask(pWaypoint->getOrigin()));
-					attack->addTask(new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(1.0f,3.0f),0,true,vGoal));
+					attack->addTask(new CFindPathTask(pWaypoint->getOrigin()));//,LOOK_AROUND));
+					attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),200,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
 					attack->addTask(new CFindPathTask(vGoal));
 					attack->addTask(new CBotDODAttackPoint(iFlagID,vGoal,150.0f));
 					// add defend task
@@ -929,6 +957,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 void CDODBot :: reachedCoverSpot ()
 {
+	removeCondition(CONDITION_RUN);
 	m_pButtons->tap(IN_RELOAD);
 }
 
@@ -1007,17 +1036,20 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 			}
 			else
 			{
-				stopMoving();
+				fDelay = randomFloat(0.05f,0.2f);
 
-				fDelay = randomFloat(0.1f,0.3f);
+				stopMoving();
 
 				if ( pWeapon->needsDeployedOrZoomed() ) // && pWeapon->getID() ==...
 				{
 					//stopMoving();
 
-					if ( pWeapon->isZoomable() && !CClassInterface::isSniperWeaponZoomed(pWeaponEdict) )
+					if ( pWeapon->isZoomable() ) 
 					{
-						bAttack = false;
+						if ( !CClassInterface::isSniperWeaponZoomed(pWeaponEdict) )
+							bAttack = false;
+						else
+							fDelay = randomFloat(0.5f,1.0f);
 					}
 					else if ( pWeapon->isDeployable() ) 
 					{
@@ -1025,21 +1057,18 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 							bAttack = CClassInterface::isRocketDeployed(pWeaponEdict);
 						else
 							bAttack = CClassInterface::isMachineGunDeployed(pWeaponEdict);
+
+						if ( !bAttack )
+							fDelay = randomFloat(0.7f,1.2f);
+						//else
+						//	fDelay = 0;
 					}
 
-					if ( bAttack )
-						fDelay = randomFloat(0.5f,1.0f);
-					else
+					if ( !bAttack && (m_fZoomOrDeployTime < engine->Time()) )
 					{
-						if ( m_fZoomOrDeployTime < engine->Time() )
-						{
-							secondaryAttack(); // deploy / zoom
-							m_fZoomOrDeployTime = engine->Time() + randomFloat(0.5f,1.0f);
-						}
-
-						fDelay = randomFloat(0.7f,1.2f);
+						secondaryAttack(); // deploy / zoom
+						m_fZoomOrDeployTime = engine->Time() + randomFloat(0.5f,1.0f);
 					}
-
 				} 
 				else if ( pWeapon->isDeployable() )
 				{
@@ -1116,7 +1145,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.01f);
 
 	// I have an enemy 
-	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*(getArmorPercent()+0.1));
+	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.8f);
 
 	if ( CDODMod::m_Flags.getNumFlags() > 0 )
 	{
@@ -1143,7 +1172,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		{
 			ADD_UTILITY_DATA_VECTOR(BOT_UTIL_ATTACK_NEAREST_POINT,
 				(CDODMod::m_Flags.numCappersRequired(iFlagID,m_iTeam)-
-				CDODMod::m_Flags.numFriendliesAtCap(iFlagID,m_iTeam))<=1,1.0f,iFlagID,CBotGlobals::entityOrigin(m_pNearestFlag));
+				CDODMod::m_Flags.numFriendliesAtCap(iFlagID,m_iTeam))<=1,0.75f,iFlagID,CBotGlobals::entityOrigin(m_pNearestFlag));
 		}
 	}
 
@@ -1172,18 +1201,19 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	{
 		float fDistance = distanceFrom(m_vLastSeeEnemyBlastWaypoint);
 
-		if ( ( fDistance > BLAST_RADIUS ) && ( fDistance < 1500 ) )
+		CBotWeapon *pBotWeapon = NULL;
+		CBotWeapon *pBotSmokeGren = m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) ? m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_US)) : m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_GER));
+
+		if ( (hasSomeConditions(CONDITION_COVERT)||(m_fCurrentDanger >= 50.0f)) && pBotSmokeGren && pBotSmokeGren->hasWeapon() )
+			pBotWeapon = pBotSmokeGren;
+		else if ( m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) )
+			pBotWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_FRAG_US));
+		else if ( m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) )
+			pBotWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_FRAG_GER));
+				
+		// if within throw distance and outside balst radius, I can throw it
+		if ( (!pBotWeapon->isExplosive() || (fDistance > BLAST_RADIUS)) && ( fDistance < 1500 ) )
 		{
-			CBotWeapon *pBotWeapon = NULL;
-			CBotWeapon *pBotSmokeGren = m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) ? m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_US)) : m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_GER));
-
-			if ( hasSomeConditions(CONDITION_COVERT) && pBotSmokeGren && (m_fCurrentDanger > 10.0f) )
-				pBotWeapon = pBotSmokeGren;
-			else if ( m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) )
-				pBotWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_FRAG_US));
-			else if ( m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) )
-				pBotWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_FRAG_GER));
-
 			ADD_UTILITY_WEAPON(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,1.0f-(getHealthPercent()*0.2),pBotWeapon);
 		}
 	}
@@ -1226,7 +1256,7 @@ bool CDODBot :: select_CWeapon ( CWeapon *pWeapon )
 {
 	char cmd[128];
 
-	sprintf(cmd,"use %s",pWeapon->getWeaponName());
+	sprintf(cmd,"use %s\n",pWeapon->getWeaponName());
 
 	helpers->ClientCommand(m_pEdict,cmd);
 
@@ -1242,7 +1272,7 @@ bool CDODBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
 		//int id = pSelect->getWeaponIndex();
 		char cmd[128];
 
-		sprintf(cmd,"use %s",pSelect->getWeaponName());
+		sprintf(cmd,"use %s\n",pSelect->getWeaponName());
 
 		helpers->ClientCommand(m_pEdict,cmd);
 
@@ -1266,10 +1296,10 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 
 	// for some reason, prone does not change collidable size
 	CClassInterface::getPlayerInfoDOD(pEntity,&bProne,&fStamina);
-
+	// .. so update 
 	if ( bProne )
 	{
-		vAim.z = vAim.z - 32.0f;
+		vAim.z = vAim.z - 16.0f;
 	}
 
 	if ( m_pNearestSmokeToEnemy )
@@ -1370,7 +1400,7 @@ bool CDODBot :: isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck )
 
 	}
 
-	return false;
+	return true;
 //}
 
 	//return false;

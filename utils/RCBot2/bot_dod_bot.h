@@ -157,6 +157,8 @@ public:
 
 	bool isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck );
 
+	void grenadeThrown () { voiceCommand(DOD_VC_FIRE_IN_THE_HOLE); }
+
 private:
 
 	int m_iSelectedClass;

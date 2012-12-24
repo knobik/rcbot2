@@ -93,6 +93,59 @@ void CWaypointNavigator :: init ()
 	m_iFailedGoals.Destroy();//.clear();//Destroy();
 }
 
+int CWaypointNavigator :: numPaths ( )
+{
+	if ( m_iCurrentWaypoint != -1 )
+		return CWaypoints::getWaypoint(m_iCurrentWaypoint)->numPaths();
+
+	return 0;
+}
+
+bool CWaypointNavigator :: randomDangerPath (Vector *vec)
+{
+	float fTotal;
+	float fRand;
+	short int i;
+	CWaypoint *pWpt;
+	CWaypoint *pNext;
+
+	if ( m_iCurrentWaypoint == -1 )
+		return false;
+
+	pWpt = CWaypoints::getWaypoint(m_iCurrentWaypoint);
+	fTotal = 0;
+
+	for ( i = 0; i < pWpt->numPaths(); i ++ )
+	{
+		pNext = CWaypoints::getWaypoint(pWpt->getPath(i));
+
+		fTotal += getBelief(CWaypoints::getWaypointIndex(pNext));
+	}
+
+	fRand = randomFloat(0,fTotal);
+
+	for ( i = 0; i < pWpt->numPaths(); i ++ )
+	{
+		pNext = CWaypoints::getWaypoint(pWpt->getPath(i));
+
+		fTotal += getBelief(CWaypoints::getWaypointIndex(pNext));
+
+		if ( fRand < fTotal )
+		{
+			*vec = pNext->getOrigin();
+			return true;
+		}
+	}
+
+	return false;
+
+}
+
+Vector CWaypointNavigator :: getPath ( int pathid )
+{
+	 return CWaypoints::getWaypoint(CWaypoints::getWaypoint(m_iCurrentWaypoint)->getPath(pathid))->getOrigin();
+}
+
 bool CWaypointNavigator :: nextPointIsOnLadder ()
 {
 	if ( m_iCurrentWaypoint != -1 )
@@ -712,7 +765,8 @@ void CWaypointNavigator :: updatePosition ()
 				m_vPreviousPoint = m_pBot->getOrigin();
 				m_iCurrentWaypoint = -1;
 
-				if ( m_pBot->getSchedule()->hasSchedule(SCHED_RUN_FOR_COVER) )
+				if ( m_pBot->getSchedule()->isCurrentSchedule(SCHED_RUN_FOR_COVER) ||
+					m_pBot->getSchedule()->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT))
 					m_pBot->reachedCoverSpot();
 			}
 			else

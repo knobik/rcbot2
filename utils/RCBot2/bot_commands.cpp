@@ -34,7 +34,7 @@
 #include "bot_commands.h"
 #include "bot_globals.h"
 #include "bot_accessclient.h"
-
+#include "bot_schedule.h"
 #include "bot_waypoint.h" // for waypoint commands
 #include "bot_waypoint_locations.h" // for waypoint commands
 
@@ -541,6 +541,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CDebugThinkCommand());
 	add(new CDebugLookCommand());
 	add(new CBotGoto());
+	add(new CBotFlush());
 	add(new CDebugTaskCommand());
 	add(new CDebugButtonsCommand());
 	add(new CDebugSpeedCommand());
@@ -773,6 +774,22 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 	}
 	else
 		CBotGlobals::botMessage(pEntity,0,"error: sv_cheats must be 1 to add bots");
+
+	return COMMAND_ACCESSED;
+}
+//////////////////////
+eBotCommandResult CBotFlush :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient && pClient->getDebugBot()!=NULL )
+	{
+		CBot *pBot = pClient->getDebugBot();
+
+		if ( pBot->inUse() )
+		{
+			CBotSchedules *pSched = pBot->getSchedule();
+			pSched->freeMemory();
+		}
+	}
 
 	return COMMAND_ACCESSED;
 }

@@ -70,6 +70,8 @@ typedef enum
 	GETPROP_DOD_DEATHS,
 	GETPROP_DOD_SMOKESPAWN_TIME,
 	GETPROP_DOD_ROUNDTIME,
+	GETPROP_DOD_K98ZOOM,
+	GETPROP_DOD_GARANDZOOM,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -357,6 +359,16 @@ public:
 	inline static float getRoundTime ( edict_t *pGamerules )
 	{
 		return g_GetProps[GETPROP_DOD_ROUNDTIME].getFloat(pGamerules,0);
+	}
+
+	inline static bool isGarandZoomed ( edict_t *pGarand )
+	{
+		return g_GetProps[GETPROP_DOD_GARANDZOOM].getBool(pGarand,false);
+	}
+
+	inline static bool isK98Zoomed( edict_t *pK98 )
+	{
+		return g_GetProps[GETPROP_DOD_K98ZOOM].getBool(pK98,false);
 	}
 	// HL2DM
 	//static void 

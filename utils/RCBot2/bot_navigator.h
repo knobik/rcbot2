@@ -111,6 +111,12 @@ public:
 
 	virtual void beliefOne ( int iWptIndex, BotBelief iBeliefType, float fDist ) { return; }
 
+	virtual int numPaths ( ) { return 0; }
+
+	virtual Vector getPath ( int pathid ) { return Vector(0,0,0); }
+
+	virtual bool randomDangerPath (Vector *vec) { return false; }
+
 	static const int MAX_PATH_TICKS = 200;
 
 protected:
@@ -383,7 +389,14 @@ public:
 	// nearest cover postion to both vectors
 	bool getHideSpotPosition ( Vector vCoverOrigin, Vector *vCover );
 
-	virtual void getFailedGoals ( dataUnconstArray <int> **goals) { *goals = &m_iFailedGoals; }
+	void getFailedGoals ( dataUnconstArray <int> **goals) { *goals = &m_iFailedGoals; }
+
+	int numPaths ( );
+
+	Vector getPath ( int pathid );
+
+	bool randomDangerPath (Vector *vec);
+
 private:
 	CBot *m_pBot;
 

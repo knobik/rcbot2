@@ -464,6 +464,16 @@ public:
 		}
 	}
 
+	// this allows move speed to be changed in tasks
+	inline void setMoveSpeed ( float fNewSpeed )
+	{
+		if ( m_iMoveLookPriority >= m_iMoveSpeedPriority )
+		{
+			m_fIdealMoveSpeed = fNewSpeed;
+			m_iMoveSpeedPriority = m_iMoveLookPriority;
+		}
+	}
+
 	void findEnemy ( edict_t *pOldEnemy = NULL );
 	virtual void enemyFound ( edict_t *pEnemy );
 
@@ -650,6 +660,8 @@ public:
 
 	virtual void hearVoiceCommand ( edict_t *pPlayer, byte cmd ) {};
 
+	virtual void grenadeThrown ();
+
 protected:
 
 	inline void setLookAt ( Vector vNew )
@@ -695,6 +707,7 @@ protected:
 
 	int m_iMovePriority;
 	int m_iLookPriority;
+	int m_iMoveSpeedPriority;
 
 	int m_iMoveLookPriority;
 

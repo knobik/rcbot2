@@ -186,6 +186,19 @@ public:
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 
+//clear bots schedules
+class CBotFlush : public CBotCommand
+{
+public:
+	CBotFlush()
+	{
+		setName("bot_flush");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+		setHelp("flush bot tasks");
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
 //bot goto
 class CBotGoto : public CBotCommand
 {

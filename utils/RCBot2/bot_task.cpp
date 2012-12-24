@@ -1056,7 +1056,6 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-
 	if ( !CBotGlobals::isAlivePlayer(pEnemy) )
 		fail();
 
@@ -1128,8 +1127,54 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 }
 
+void CBotInvestigateTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fTime == 0 )
+	{
+		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vOrigin,m_fRadius,-1));
 
-////////////////////////////
+		if ( pWaypoint->numPaths() > 0 )
+		{
+			for ( int i = 0; i < pWaypoint->numPaths(); i ++ )
+				m_InvPoints.push_back(CWaypoints::getWaypoint(pWaypoint->getPath(i))->getOrigin());	
+
+			m_iCurPath = randomInt(0,pWaypoint->numPaths()-1);
+		}
+
+		m_fTime = engine->Time() + m_fMaxTime;
+	}
+
+	if ( m_fTime < engine->Time() )
+		complete();
+
+	if ( m_InvPoints.size() > 0 )
+	{
+		Vector vPoint;
+
+		if ( m_iState == 0 ) // goto inv point
+			vPoint = m_InvPoints[m_iCurPath];
+		else if ( m_iState == 1 ) // goto origin
+			vPoint = m_vOrigin;
+
+		if ( (pBot->distanceFrom(vPoint) < 80) || ((m_iState==0)&&(pBot->distanceFrom(m_vOrigin)>m_fRadius)) )
+		{
+			m_iState = (!m_iState) ? 1 : 0;
+
+			if ( m_iState == 0 )
+				m_iCurPath = randomInt(0,m_InvPoints.size()-1);
+		}
+		else
+			pBot->setMoveTo(vPoint);
+	}
+	else
+		pBot->stopMoving();
+	// walk
+	pBot->setMoveSpeed(CClassInterface::getMaxSpeed(pBot->getEdict())/8);
+	//pBot->setLookVector();
+	pBot->setLookAtTask(LOOK_AROUND);
+
+}
+///////////////////
 
 void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
@@ -1419,7 +1464,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 			//// running path
 			//if ( !pBot->hasEnemy() && !pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 			
-			pBot->setLookAtTask(LOOK_WAYPOINT);
+			pBot->setLookAtTask(m_LookTask);
 		}
 	}
 }
@@ -2049,6 +2094,13 @@ void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime < engine->Time() )
 		fail();
 
+	if ( m_pWeapon->getAmmo(pBot) < m_iAmmo )
+	{
+		pBot->grenadeThrown();
+		complete();
+		return;
+	}
+
 	if ( !m_pWeapon )
 	{
 		fail();
@@ -2081,9 +2133,6 @@ void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 		{
 			if ( randomInt(0,1) )
 				pBot->primaryAttack();
-
-			if ( pWeapon->getAmmo(pBot) < m_iAmmo )
-				complete();
 		}
 		else if ( pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 		{
@@ -2399,10 +2448,13 @@ CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float f
 	
 void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
-	CBotWeapon *pCurrentWeapon;
-	CWeapon *pWeapon;
+	static CBotWeapon *pCurrentWeapon;
+	static CWeapon *pWeapon;
 
-	bool bDeployedOrZoomed = false;
+	static bool bDeployedOrZoomed;
+	static float fDist;
+
+	bDeployedOrZoomed = false;
 
 	pBot->wantToShoot(false);
 	pBot->wantToListen(false);
@@ -2446,7 +2498,9 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( m_fScopeTime < engine->Time() )
 		{
 			if ( !bDeployedOrZoomed )
+			{
 				pBot->secondaryAttack();
+			}
 
 			m_fScopeTime = engine->Time() + randomFloat(0.5f,1.0f);
 		}
@@ -2466,9 +2520,24 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		// too far away
 		fail();
 	}
-	else if ( pBot->distanceFrom(m_vOrigin) > 64 )
+
+	if ( m_bUseZ )
+	{
+		pBot->setAiming(Vector(m_vAim.x,m_vAim.y,m_z));
+		pBot->setLookAtTask(LOOK_SNIPE);
+	}
+	else
+	{
+		pBot->setLookAtTask(LOOK_SNIPE);
+		pBot->setAiming(m_vAim);
+	}
+
+	fDist = pBot->distanceFrom(m_vOrigin);
+
+	if ( (fDist > 64) || (!bDeployedOrZoomed && (fDist > 40)) )
 	{
 		pBot->setMoveTo(m_vOrigin);
+		pBot->setMoveSpeed(CClassInterface::getMaxSpeed(pBot->getEdict())/8);
 	}
 	else
 	{
@@ -2479,16 +2548,6 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			pBot->setLookAtTask(LOOK_ENEMY);
 
 			pBot->handleAttack(pCurrentWeapon,pBot->getEnemy());
-		}
-		else if ( m_bUseZ )
-		{
-			pBot->setAiming(Vector(m_vAim.x,m_vAim.y,m_z));
-			pBot->setLookAtTask(LOOK_SNIPE);
-		}
-		else
-		{
-			pBot->setLookAtTask(LOOK_SNIPE);
-			pBot->setAiming(m_vAim);
 		}
 
 		if (m_fTime<engine->Time() )

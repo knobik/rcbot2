@@ -576,6 +576,7 @@ void CBot :: think ()
 	//
 	m_iLookPriority = 0;
 	m_iMovePriority = 0;
+	m_iMoveSpeedPriority = 0;
 
 	if ( rcbot_debug_iglev.GetInt() != 1 )
 	{
@@ -1674,7 +1675,10 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 
 }
 
+void CBot :: grenadeThrown ()
+{
 
+}
 
 
 void CBot :: checkCanPickup ( edict_t *pPickup )
@@ -1852,15 +1856,19 @@ void CBot :: getLookAtVector ()
 		{
 			if ( m_fLookAroundTime < engine->Time() )
 			{
-				m_vLookAroundOffset = Vector(randomFloat(-128,128),randomFloat(-128,128),randomFloat(0,32));
-				
-				m_fLookAroundTime = engine->Time() + randomFloat(2.0f,8.0f);
-
+				if ( (m_fCurrentDanger < 10.0f) || ((m_pNavigator->numPaths() == 0) || !m_pNavigator->randomDangerPath(&m_vLookAroundOffset))  )
+				{
+					// random
+					m_vLookAroundOffset = getEyePosition();
+				}
+					
+				m_fLookAroundTime = engine->Time() + randomFloat(2.0f,3.0f);
+				m_vLookAroundOffset = m_vLookAroundOffset + Vector(randomFloat(-128,128),randomFloat(-128,128),randomFloat(-16,16));
 			//setLookAt();
 			//setLookAt(...);
 			}
 
-			setLookAt(getEyePosition()+m_vLookAroundOffset);
+			setLookAt(m_vLookAroundOffset);
 
 		if ( bDebug )
 				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_AROUND",this);

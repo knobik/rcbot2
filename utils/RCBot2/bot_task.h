@@ -96,12 +96,14 @@ public:
 	{
 		m_bGetPassedVector = false;
 		m_pEdict = NULL;
+		m_LookTask = LOOK_WAYPOINT;
 	}
 
-	CFindPathTask ( Vector vOrigin )
+	CFindPathTask ( Vector vOrigin, eLookTask looktask = LOOK_WAYPOINT )
 	{
 		m_vVector = vOrigin;
 		m_pEdict = NULL; // no edict
+		m_LookTask = looktask;
 	}
 
 	CFindPathTask ( edict_t *pEdict );
@@ -122,6 +124,7 @@ private:
 	bool m_bDontLookAtWaypoints;
 	Vector m_vVector;
 	MyEHandle m_pEdict;
+	eLookTask m_LookTask;
 	int m_iInt;
 };
 
@@ -294,6 +297,35 @@ private:
 	Vector m_vOrigin;
 	bool m_bDefendOrigin;
 	Vector m_vDefendOrigin;
+};
+
+class CBotInvestigateTask : public CBotTask
+{
+public:
+	CBotInvestigateTask ( Vector vOrigin, float fRadius, float fMaxTime = 0, int iInterrupt = CONDITION_SEE_CUR_ENEMY ) 
+	{ 
+		m_fMaxTime = fMaxTime; 
+		m_vOrigin = vOrigin; 
+		m_fRadius = fRadius;
+		m_fTime = 0; 
+		setCompleteInterrupt(iInterrupt); 
+		m_iState = 0;
+	}
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotInvestigateTask");
+	}
+private:
+	int m_iState;
+	float m_fTime;
+	float m_fMaxTime;
+	Vector m_vOrigin;
+	float m_fRadius;
+	int m_iCurPath;
+	vector<Vector> m_InvPoints; // investigation points (waypoint paths)
 };
 
 class CBotTF2EngiLookAfter : public CBotTask
