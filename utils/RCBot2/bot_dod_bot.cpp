@@ -108,12 +108,18 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		{
 			m_pNearestFlag = pEntity;
 		}
-		else if (CClassInterface::getTeam(pEntity) == m_iEnemyTeam) 
+		else if ( (pEntity!=m_pEnemyGrenade) && (strncmp(szClassname,"grenade",7) == 0 ) && 
+			((CClassInterface::getGrenadeThrower(pEntity) == m_pEdict) || 
+			 (CClassInterface::getTeam(pEntity) == m_iEnemyTeam)) && 
+			 (!m_pEnemyGrenade || (distanceFrom(pEntity)<distanceFrom(m_pEnemyGrenade))))
 		{
-			if ( (pEntity!=m_pEnemyGrenade) && (strncmp(szClassname,"grenade",7) == 0 ) && (!m_pEnemyGrenade || (distanceFrom(pEntity)<distanceFrom(m_pEnemyGrenade))))
-				m_pEnemyGrenade = pEntity;
-			else if ( (pEntity!=m_pEnemyRocket) && (strncmp(szClassname,"rocket",6) == 0 ) && (!m_pEnemyRocket || (distanceFrom(pEntity)<distanceFrom(m_pEnemyRocket))))
-				m_pEnemyRocket = pEntity;
+			m_pEnemyGrenade = pEntity;
+		}
+		else if ( (pEntity!=m_pEnemyRocket) && (strncmp(szClassname,"rocket",6) == 0 ) && 
+			(CClassInterface::getTeam(pEntity) == m_iEnemyTeam) && 
+			(!m_pEnemyRocket || (distanceFrom(pEntity)<distanceFrom(m_pEnemyRocket))))
+		{
+			m_pEnemyRocket = pEntity;
 		}
 	}
 	else
@@ -294,6 +300,7 @@ void CDODBot :: spawnInit ()
 
 	memset(m_CheckSmoke,0,sizeof(smoke_t)*MAX_PLAYERS);
 
+	m_fDeployMachineGunTime = 0;
 	m_pNearestFlag = NULL;
 
 	m_fShoutRocket = 0;
@@ -402,6 +409,9 @@ void CDODBot :: touchedWpt ( CWaypoint *pWaypoint )
 void CDODBot :: modThink ()
 {
 	static float fMaxSpeed;
+	static CBotWeapon *pWeapon;
+	
+	pWeapon = getCurrentWeapon();
 
 	// when respawned -- check if I should change class
 	if ( m_bCheckClass && !m_pPlayerInfo->IsDead())
@@ -509,8 +519,6 @@ void CDODBot :: modThink ()
 
 	if ( m_fCurrentDanger >= 50.0f )
 	{
-		CBotWeapon *pWeapon = getCurrentWeapon();
-
 		// not sniper rifle or machine gun but can look down the sights
 		if ( hasSomeConditions(CONDITION_COVERT) && pWeapon && (( pWeapon->getID() == DOD_WEAPON_K98 ) || (pWeapon->getID() == DOD_WEAPON_GARAND) ))
 		{
@@ -560,6 +568,9 @@ void CDODBot :: modThink ()
 		m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
 	}
 
+	if ( pWeapon && pWeapon->isDeployable() && CClassInterface::isMachineGunDeployed(pWeapon->getWeaponEntity()) )
+		m_fDeployMachineGunTime = engine->Time();
+
 	if ( m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time()) )
 	{
 		m_fLastSeeEnemy = 0;
@@ -593,7 +604,9 @@ void CDODBot :: modThink ()
 
 		if ( m_fShoutGrenade > 0.95f ) 
 		{
-			voiceCommand(DOD_VC_GRENADE2);
+			if ( CClassInterface::getGrenadeThrower(m_pEnemyGrenade) != m_pEdict )
+				voiceCommand(DOD_VC_GRENADE2);
+
 			updateCondition(CONDITION_RUN);
 			m_fShoutGrenade = 0.0f;
 
@@ -957,8 +970,12 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 void CDODBot :: reachedCoverSpot ()
 {
+	// reached cover
+	// dont need to run there any more
 	removeCondition(CONDITION_RUN);
-	m_pButtons->tap(IN_RELOAD);
+
+	if ( !m_pEnemy.get() && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+		m_pButtons->tap(IN_RELOAD);
 }
 
 bool CDODBot:: checkStuck ()
@@ -1056,7 +1073,9 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 						if ( pWeapon->isExplosive() )
 							bAttack = CClassInterface::isRocketDeployed(pWeaponEdict);
 						else
+						{
 							bAttack = CClassInterface::isMachineGunDeployed(pWeaponEdict);
+						}
 
 						if ( !bAttack )
 							fDelay = randomFloat(0.7f,1.2f);
@@ -1079,6 +1098,10 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 							secondaryAttack(); // deploy / zoom
 							m_fZoomOrDeployTime = engine->Time() + randomFloat(0.5f,1.0f);
 						}
+
+						// not deployed for a while -- go prone to deploy
+						if ( (m_fDeployMachineGunTime + 1.0f) < engine->Time() )
+							m_pButtons->holdButton(IN_ALT1,0,1.0f,0);
 
 						fDelay = randomFloat(0.7f,1.2f);
 					}
@@ -1145,7 +1168,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.01f);
 
 	// I have an enemy 
-	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.8f);
+	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.75f);
 
 	if ( CDODMod::m_Flags.getNumFlags() > 0 )
 	{
@@ -1204,7 +1227,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		CBotWeapon *pBotWeapon = NULL;
 		CBotWeapon *pBotSmokeGren = m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) ? m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_US)) : m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_GER));
 
-		if ( (hasSomeConditions(CONDITION_COVERT)||(m_fCurrentDanger >= 50.0f)) && pBotSmokeGren && pBotSmokeGren->hasWeapon() )
+		if ( (hasSomeConditions(CONDITION_COVERT)||(m_fCurrentDanger >= 25.0f)) && pBotSmokeGren && pBotSmokeGren->hasWeapon() )
 			pBotWeapon = pBotSmokeGren;
 		else if ( m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) )
 			pBotWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_FRAG_US));

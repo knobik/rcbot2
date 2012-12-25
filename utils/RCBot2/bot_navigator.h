@@ -98,6 +98,10 @@ public:
 
 	virtual bool nextPointIsOnLadder () { return false; }
 
+	virtual void beliefLoad ( ) {};
+
+	virtual void beliefSave ( short int *iSaveBelief ) {};
+
 	virtual void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType ) = 0;
 
 	// nearest cover position to vOrigin only
@@ -117,11 +121,15 @@ public:
 
 	virtual bool randomDangerPath (Vector *vec) { return false; }
 
+	bool getDangerPoint ( Vector *vec ) { *vec = m_bDangerPoint ? m_vDangerPoint : Vector(0,0,0); return m_bDangerPoint; }
+
 	static const int MAX_PATH_TICKS = 200;
 
 protected:
 	Vector m_vGoal;
 	Vector m_vPreviousPoint;
+	Vector m_vDangerPoint;
+	bool m_bDangerPoint;
 };
 
 #define FL_ASTAR_CLOSED		1

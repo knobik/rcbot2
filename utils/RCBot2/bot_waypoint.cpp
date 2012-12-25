@@ -103,7 +103,9 @@ int CWaypointNavigator :: numPaths ( )
 
 bool CWaypointNavigator :: randomDangerPath (Vector *vec)
 {
+	float fMaxDanger = 0;
 	float fTotal;
+	float fBelief;
 	float fRand;
 	short int i;
 	CWaypoint *pWpt;
@@ -118,9 +120,16 @@ bool CWaypointNavigator :: randomDangerPath (Vector *vec)
 	for ( i = 0; i < pWpt->numPaths(); i ++ )
 	{
 		pNext = CWaypoints::getWaypoint(pWpt->getPath(i));
+		fBelief = getBelief(CWaypoints::getWaypointIndex(pNext));
 
-		fTotal += getBelief(CWaypoints::getWaypointIndex(pNext));
+		if ( fBelief > fMaxDanger )
+			fMaxDanger = fBelief;
+
+		fTotal += fBelief;
 	}
+
+	if ( fMaxDanger < 10 )
+		return false; // not useful enough
 
 	fRand = randomFloat(0,fTotal);
 
@@ -760,6 +769,8 @@ void CWaypointNavigator :: updatePosition ()
 
 			m_bOffsetApplied = false;
 
+			m_bDangerPoint = false;
+
 			if ( m_currentRoute.IsEmpty() ) // reached goal!!
 			{
 				m_vPreviousPoint = m_pBot->getOrigin();
@@ -775,8 +786,30 @@ void CWaypointNavigator :: updatePosition ()
 				m_iCurrentWaypoint = m_currentRoute.Pop();
 
 				if ( m_iCurrentWaypoint != -1 )
-				{
-					vWptOrigin = CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
+				{ // random point, but more chance of choosing the most dangerous point
+					m_bDangerPoint = randomDangerPath(&m_vDangerPoint);
+					/*
+					//getDangerPoint(
+					int maxDangerPoint = -1;
+					float fMaxDanger = 10.0f;
+					float fBelief;
+					CWaypoint *pWpt =  CWaypoints::getWaypoint(m_iCurrentWaypoint);
+					vWptOrigin = pWpt->getOrigin();
+
+					for ( int i = 0; i < pWpt->numPaths(); i ++ )
+					{
+						if ( (fBelief=getBelief(pWpt->getPath(i))) > fMaxDanger )
+						{
+							fMaxDanger = fBelief;
+							maxDangerPoint = i;
+						}
+					}
+
+					if ( maxDangerPoint != -1 )
+					{
+						m_bDangerPoint = true;
+						m_vDangerPoint = CWaypoints::getWaypoint(maxDangerPoint)->getOrigin();
+					}*/
 				}
 
 				fBelief = getBelief(m_iCurrentWaypoint);
@@ -822,13 +855,13 @@ void CWaypointNavigator :: updatePosition ()
 	if ( pWaypoint->isAiming() )
 		m_pBot->setAiming(vWptOrigin+(vaim*1024));
 	
-	if ( !m_pBot->hasEnemy() && (fBelief >= (fPrevBelief+10.0f)) ) 
+	/*if ( !m_pBot->hasEnemy() && (fBelief >= (fPrevBelief+10.0f)) ) 
 		m_pBot->setLookAtTask(LOOK_LAST_ENEMY);
 	else if ( !m_pBot->hasEnemy() && (fPrevBelief > (fBelief+10.0f)) )
 	{
 		m_pBot->setLookVector(pWaypoint->getOrigin() + pWaypoint->applyRadius());
 		m_pBot->setLookAtTask(LOOK_VECTOR,randomFloat(1.0f,2.0f));
-	}
+	}*/
 }
 
 // free up memory

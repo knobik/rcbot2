@@ -202,6 +202,8 @@ private:
 	bool m_bCheckClass;
 
 	smoke_t m_CheckSmoke[MAX_PLAYERS];
+
+	float m_fDeployMachineGunTime;
 	// blah blah
 };
 

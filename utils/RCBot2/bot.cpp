@@ -1758,6 +1758,8 @@ void CBot :: getLookAtVector ()
 
 			if ( m_pNavigator->nextPointIsOnLadder() )
 				setLookAt(m_pNavigator->getNextPoint()+Vector(0,0,64));
+			else if ( m_pNavigator->getDangerPoint(&vLook) )
+				setLookAt(vLook + Vector(0,0,36.0f));
 			else if ( m_pNavigator->getNextRoutePoint(&vLook) )
 				setLookAt(Vector(vLook.x,vLook.y,vLook.z + 36.0f));				
 			else
