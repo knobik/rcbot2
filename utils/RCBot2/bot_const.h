@@ -114,6 +114,8 @@ typedef enum
 
 #define BOT_JUMP_HEIGHT 45
 
+#define MIN_COVER_MOVE_DIST 128
+
 #undef INDEXENT
 #define INDEXENT(iEdictNum) engine->PEntityOfEntIndex(iEdictNum)
 

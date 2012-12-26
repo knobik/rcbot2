@@ -1675,13 +1675,13 @@ void CBotTF2 :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 
 			if ( CTeamFortress2Mod::isSentryGun(pKiller) )
 			{
-				voiceCommand(TF_VC_SENTRYAHEAD);
+				addVoiceCommand(TF_VC_SENTRYAHEAD);
 				updateCondition(CONDITION_COVERT);
 				m_fCurrentDanger += 100.0f;
 			}
 			else 
 			{
-				voiceCommand(TF_VC_INCOMING);
+				addVoiceCommand(TF_VC_INCOMING);
 				updateCondition(CONDITION_COVERT);
 				m_fCurrentDanger += 50.0f;
 			}
@@ -1822,7 +1822,7 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 
 void CBotTF2 :: callMedic ()
 {
-	voiceCommand(TF_VC_MEDIC);
+	addVoiceCommand(TF_VC_MEDIC);
 }
 
 void CBotFortress ::waitCloak()
@@ -2270,15 +2270,6 @@ void CBotTF2 :: modThink ()
 		}
 	}
 
-	// deal with voice commands bot wants to say,
-	// incase that he wants to use it in between frames (e.g. during an event call)
-	// deal with it here
-	if ( m_nextVoicecmd != TF_VC_INVALID )
-	{
-		voiceCommand(m_nextVoicecmd);
-		m_nextVoicecmd = TF_VC_INVALID;
-	}
-
 	setMoveLookPriority(MOVELOOK_MODTHINK);
 	
 }
@@ -2504,19 +2495,16 @@ bool CBotFortress :: wantToFollowEnemy ()
     return CBot::wantToFollowEnemy();
 }
 
-void CBotTF2 ::voiceCommand ( eTFVoiceCMD cmd )
+void CBotTF2 ::voiceCommand ( int cmd )
 {
-	if ( bot_use_vc_commands.GetBool() )
-	{
-		char scmd[64];
-		u_VOICECMD vcmd;
+	char scmd[64];
+	u_VOICECMD vcmd;
 
-		vcmd.voicecmd = cmd;
-		
-		sprintf(scmd,"voicemenu %d %d",vcmd.b1.v1,vcmd.b1.v2);
+	vcmd.voicecmd = cmd;
+	
+	sprintf(scmd,"voicemenu %d %d",vcmd.b1.v1,vcmd.b1.v2);
 
-		helpers->ClientCommand(m_pEdict,scmd);
-	}
+	helpers->ClientCommand(m_pEdict,scmd);
 }
 
 bool CBotTF2 ::checkStuck(void)
@@ -2539,7 +2527,7 @@ void CBotTF2 :: foundSpy (edict_t *pEdict)
 
 	if ( m_fLastSaySpy < engine->Time() )
 	{
-		voiceCommand(TF_VC_SPY);
+		addVoiceCommand(TF_VC_SPY);
 
 		m_fLastSaySpy = engine->Time() + randomFloat(10.0f,40.0f);
 	}
@@ -4660,7 +4648,7 @@ void CBotTF2::roundReset(bool bFullReset)
 	flagReset();
 	teamFlagReset();
 
-	m_pNavigator->freeMapMemory();
+	m_pNavigator->clear();
 
 	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
@@ -4686,7 +4674,7 @@ void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 	m_pRedPayloadBomb = NULL;
 	m_pBluePayloadBomb = NULL;
 
-	m_pNavigator->freeMapMemory();
+	m_pNavigator->clear();
 
 	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 }

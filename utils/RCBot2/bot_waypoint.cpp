@@ -145,7 +145,7 @@ bool CWaypointNavigator :: beliefLoad ( )
    // quick loop
    for ( i = 0; i < num; i ++ )
    {
-	   m_fBelief[i] = (((float)filebelief[i])/32768) * MAX_BELIEF;
+	   m_fBelief[i] = (((float)filebelief[i])/32767) * MAX_BELIEF;
    }
 
    fclose(bfp);
@@ -216,7 +216,7 @@ bool CWaypointNavigator :: beliefSave ( bool bOverride )
    // quick loop
    for ( i = 0; i < num; i ++ )
    {
-	   filebelief[i] = (filebelief[i]/2) + ((unsigned short int)((m_fBelief[i]/MAX_BELIEF) * 16384)); 
+	   filebelief[i] = (filebelief[i]/2) + ((unsigned short int)((m_fBelief[i]/MAX_BELIEF) * 16383)); 
    }
 
    fseek (bfp, 0, SEEK_SET); // seek at start
@@ -1018,12 +1018,16 @@ void CWaypointNavigator :: updatePosition ()
 	}*/
 }
 
+void CWaypointNavigator :: clear()
+{
+	m_currentRoute.Destroy();
+	m_iFailedGoals.Destroy();//.clear();//Destroy();
+}
 // free up memory
 void CWaypointNavigator :: freeMapMemory ()
 {
 	beliefSave(true);
-	m_currentRoute.Destroy();
-	m_iFailedGoals.Destroy();//.clear();//Destroy();
+	clear();
 }
 
 void CWaypointNavigator :: freeAllMemory ()

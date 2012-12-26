@@ -118,7 +118,7 @@ float  CBots :: m_flAddKickBotTime = 0;
 #define TIME_TO_TICKS( dt )		( (int)( 0.5f + (float)(dt) / TICK_INTERVAL ) )
 
 extern IVDebugOverlay *debugoverlay;
-
+extern ConVar bot_use_vc_commands;
 ///////////////////////////////////////
 // voice commands
 ////////////////////////////////////////////////
@@ -582,9 +582,10 @@ void CBot :: think ()
 	m_iLookPriority = 0;
 	m_iMovePriority = 0;
 	m_iMoveSpeedPriority = 0;
-
+#ifdef _DEBUG
 	if ( rcbot_debug_iglev.GetInt() != 1 )
 	{
+#endif
 	//
 	// if bot is not in game, start it!!!
 	if ( !startGame() )
@@ -594,9 +595,9 @@ void CBot :: think ()
 	}
 
 	doButtons();
-
+#ifdef _DEBUG
 	}
-
+#endif
 	if ( !isAlive() )
 	{/*
 	 // Dont need this anymore!! events does it, woohoo!
@@ -609,19 +610,19 @@ void CBot :: think ()
 
 		return;
 	}
-
+#ifdef _DEBUG
 	if ( rcbot_debug_iglev.GetInt() != 2 )
 	{
-
+#endif
 	checkDependantEntities();
 
 	//m_bNeedToInit = true;
 
 	doMove();
 	doLook();
-
+#ifdef _DEBUG
 	}
-
+#endif
 	if ( m_fNextThink > fTime )
 		return;
 
@@ -642,36 +643,37 @@ void CBot :: think ()
 	//////////////////////////////
 
 	//m_pCurrentWeapon = m_pBaseCombatChar->GetActiveWeapon (); 
-
+#ifdef _DEBUG
 	if ( rcbot_debug_iglev.GetInt() != 3 )
 	{
-
+#endif
 	m_pVisibles->updateVisibles();
-
+#ifdef _DEBUG
 	}
 
 	if ( rcbot_debug_iglev.GetInt() != 4 )
 	{
-
+#endif
 	checkStuck();
-
+#ifdef _DEBUG
 	}
+#endif
 	// 
 	m_bOpenFire = true;
 	m_bWantToListen = true;
 	m_bWantToChangeWeapon = true;
 	//
-
+#ifdef _DEBUG
 	if ( rcbot_debug_iglev.GetInt() != 5 )
 	{
-
+#endif
 	getTasks();	
-
+#ifdef _DEBUG
 	}
 
 	if ( rcbot_debug_iglev.GetInt() != 6 )
 	{
-
+#endif
 	if ( m_bWantToListen && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 		listenForPlayers();
 	else if ( m_fListenTime > engine->Time() )
@@ -680,21 +682,21 @@ void CBot :: think ()
 		m_fLookSetTime = 0.0f;
 		m_fListenTime = 0.0f;
 	}
-
+#ifdef _DEBUG
 	}
 
 	if ( rcbot_debug_iglev.GetInt() != 7 )
 	{
-
+#endif
 	setMoveLookPriority(MOVELOOK_TASK);
 	m_pSchedules->execute(this);
 	setMoveLookPriority(MOVELOOK_THINK);
-
+#ifdef _DEBUG
 	}
 
 	if ( rcbot_debug_iglev.GetInt() != 8 )
 	{
-
+#endif
 	m_vGoal = m_pNavigator->getGoalOrigin();
 
 	if ( m_pNavigator->hasNextPoint() )
@@ -707,11 +709,12 @@ void CBot :: think ()
 		stopMoving();
 		setLookAtTask((LOOK_AROUND));
 	}
-
+#ifdef _DEBUG
 	}
 
 	if ( rcbot_debug_iglev.GetInt() != 9 )
 	{
+#endif
 	// update m_pEnemy with findEnemy()
 	m_pOldEnemy = m_pEnemy;
 	m_pEnemy = NULL;
@@ -720,13 +723,15 @@ void CBot :: think ()
 		findEnemy(m_pOldEnemy); // any better enemies than this one?
 	else
 		findEnemy();
+#ifdef _DEBUG
 	}
-
+#endif
 	updateConditions();
 
-
+#ifdef _DEBUG
 	if ( !CClassInterface::getVelocity(m_pEdict,&m_vVelocity) )
 	{
+#endif
 		if ( m_fUpdateOriginTime < fTime )
 		{
 			Vector vOrigin = getOrigin();
@@ -735,23 +740,44 @@ void CBot :: think ()
 			m_vLastOrigin = vOrigin;
 			m_fUpdateOriginTime = fTime+1.0f;
 		}
+#ifdef _DEBUG
 	}
+#endif
 
 	setMoveLookPriority(MOVELOOK_MODTHINK);
-
+#ifdef _DEBUG
 	if ( rcbot_debug_iglev.GetInt() != 10 )
 	{
-
+#endif
 	modThink();
-
+#ifdef _DEBUG
 	}
-
+#endif
 	handleWeapons();
 
+	// deal with voice commands bot wants to say,
+	// incase that he wants to use it in between frames (e.g. during an event call)
+	// deal with it here
+	if ( (m_fNextVoiceCommand < engine->Time()) && !m_nextVoicecmd.empty() )
+	{
+		m_fNextVoiceCommand = engine->Time() + randomFloat(0.4f,1.2f);
+		voiceCommand(m_nextVoicecmd.front());
+		m_nextVoicecmd.pop();
+	}
 
 	m_iPrevHealth = m_pPlayerInfo->GetHealth();
 
 	m_bInitAlive = false;
+}
+
+void CBot :: addVoiceCommand ( int cmd ) 
+{
+	if ( bot_use_vc_commands.GetBool() && (m_fLastVoiceCommand[cmd] < engine->Time()) )
+	{
+		m_nextVoicecmd.push(cmd); 
+		m_fNextVoiceCommand = engine->Time() + randomFloat(0.2f,1.0f);
+		m_fLastVoiceCommand[cmd] = engine->Time() + randomFloat(8.0f,16.0f);
+	}
 }
 
 
@@ -971,12 +997,12 @@ void CBot :: spawnInit ()
 {
 	resetTouchDistance(48.0f);
 
-	m_fLastVoiceCommand = 0;
+	memset(m_fLastVoiceCommand,0,sizeof(float)*MAX_VOICE_CMDS);
 
 	m_fLastUpdateLastSeeEnemy = 0;
 	m_fPercentMoved = 1.0f;
 
-	for ( int i = 0; i < BOT_UTIL_MAX; i ++ )
+	for ( register short int i = 0; i < BOT_UTIL_MAX; i ++ )
 		m_fUtilTimes[i] = 0;
 
 	if ( m_pSchedules != NULL )
@@ -1245,10 +1271,11 @@ int CBot :: getTeam ()
 int CBot :: nearbyFriendlies (float fDistance)
 {
 	int num = 0;
-	int i = 0;
+	register short int i = 0;
+	register short int maxclients = (short int)CBotGlobals::maxClients();
 	edict_t *pEdict;
 
-	for ( i = 0; i <= CBotGlobals::maxClients(); i ++ )
+	for ( i = 0; i <= maxclients; i ++ )
 	{
 		pEdict = INDEXENT(i);
 
@@ -1273,25 +1300,7 @@ int CBot :: nearbyFriendlies (float fDistance)
 void CBot :: freeMapMemory ()
 {
 	// we can save things here
-	// values
-	/*if ( m_pGAvStuck != NULL )
-	{
-		m_pGAvStuck->freeMemory();
-		delete m_pGAvStuck;
-		m_pGAvStuck = NULL;
-	}
-	// my Ga
-	if ( m_pGAStuck != NULL )
-	{
-		m_pGAStuck->freeGlobalMemory();
-		delete m_pGAStuck;
-		m_pGAStuck = NULL;
-	}
-	if ( m_pThinkStuck != NULL )
-	{
-		delete m_pThinkStuck;
-		m_pThinkStuck = NULL;
-	}*/
+	// 
 	/////////////////////////////////
 	if ( m_pButtons != NULL )
 	{
@@ -1334,16 +1343,6 @@ void CBot :: freeMapMemory ()
 		m_pWeapons = NULL;
 	}
 
-	/*if ( stucknet != NULL )
-		delete stucknet;
-	
-	stucknet = NULL;
-	
-	if ( stucknet_tset != NULL )
-		delete stucknet_tset;
-
-	stucknet_tset = NULL;
-*/
 	m_iAmmo = NULL;
 	/////////////////////////////////
 	init();
@@ -1354,6 +1353,10 @@ void CBot :: listenForPlayers ()
 	//m_fNextListenTime = engine->Time() + randomFloat(0.5f,2.0f);
 
 	edict_t *pListenNearest = NULL;
+	CClient *pClient;
+	edict_t *pPlayer;
+	CBotCmd cmd;
+	IPlayerInfo *p;
 
 	float fMinDist = 1024.0f;
 	float fDist;
@@ -1366,72 +1369,70 @@ void CBot :: listenForPlayers ()
 
 	if ( m_fListenTime > engine->Time() ) // already listening to something ?
 	{
-		setLookAtTask((LOOK_NOISE));
+		setLookAtTask(LOOK_NOISE);
 		return;
 	}
 
 	m_bListenPositionValid = false;
 
-	for ( int i = 0; i < MAX_PLAYERS; i ++ )
+	for ( register short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		CClient *pClient = CClients::get(i);
-		
-		if ( pClient->isUsed() )
+		pClient = CClients::get(i);
+
+		if ( !pClient->isUsed() )
+			continue;
+
+		pPlayer = pClient->getPlayer();
+
+		if ( pPlayer == m_pEdict )
+			continue; // don't listen to self
+
+		p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+		// 05/07/09 fix crash bug
+		if ( !p || p->IsConnected() || p->IsDead() || p->IsObserver() || !p->IsPlayer() )
+			continue;
+
+		cmd = p->GetLastUserCommand();
+
+		if ( !(cmd.buttons & IN_ATTACK) )
+			continue; //not holding attack
+
+		if ( !wantToListenToPlayer(pPlayer) )
+			continue;
+
+		fDist = distanceFrom(pPlayer);
+
+		if ( fDist < fMinDist )
 		{
-			edict_t *pPlayer = pClient->getPlayer();
-			
-			if ( pPlayer != m_pEdict )
+			fMinDist = fDist;
+			pListenNearest = pPlayer;
+
+			// look at enemy
+			if ( !isVisible(pPlayer) || isEnemy(pPlayer) )
 			{
-				IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+				m_vListenPosition = p->GetAbsOrigin();
 
-				// 05/07/09 fix crash bug
-				if ( p && p->IsConnected() && !p->IsDead() && !p->IsObserver() && p->IsPlayer() )
-				{
-
-					CBotCmd cmd = p->GetLastUserCommand();
-
-					if ( cmd.buttons & IN_ATTACK )
-					{
-						if ( wantToListenToPlayer(pPlayer) )
-						{
-							fDist = distanceFrom(pPlayer);
-
-							if ( fDist < fMinDist )
-							{
-								fMinDist = fDist;
-								pListenNearest = pPlayer;
-
-								// look at enemy
-								if ( !isVisible(pPlayer) || isEnemy(pPlayer) )
-								{
-									m_vListenPosition = p->GetAbsOrigin();
-
-									//if ( !isEnemy(pPlayer) )
-									//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
-								}
-								else
-								{
-									QAngle angle = p->GetAbsAngles();
-									Vector forward;
-
-									AngleVectors( angle, &forward );
-
-									// look where team mate is shooting
-									m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);
-								}
-
-								m_bListenPositionValid = true;
-								m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
-								setLookAtTask(LOOK_NOISE);
-								m_fLookSetTime = m_fListenTime;
-							}
-						}
-					}
-				}
+				//if ( !isEnemy(pPlayer) )
+				//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
 			}
+			else
+			{
+				QAngle angle = p->GetAbsAngles();
+				Vector forward;
+
+				AngleVectors( angle, &forward );
+
+				// look where team mate is shooting
+				m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);
+			}
+
+			m_bListenPositionValid = true;
+			m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
+			setLookAtTask(LOOK_NOISE);
+			m_fLookSetTime = m_fListenTime;
 		}
 	}
-
 }
 
 bool CBot :: onLadder ()
@@ -1764,7 +1765,9 @@ void CBot :: getLookAtVector ()
 
 			if ( m_pNavigator->nextPointIsOnLadder() )
 				setLookAt(m_pNavigator->getNextPoint()+Vector(0,0,64));
-			else if ( m_pNavigator->getDangerPoint(&vLook) )
+			else if ( m_pLastEnemy && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && (m_fLastSeeEnemy>0) )
+				setLookAt(m_vLastSeeEnemyBlastWaypoint);
+			else if ( (m_fCurrentDanger > 15.0f) && m_pNavigator->getDangerPoint(&vLook) )
 				setLookAt(vLook + Vector(0,0,36.0f));
 			else if ( m_pNavigator->getNextRoutePoint(&vLook) )
 				setLookAt(Vector(vLook.x,vLook.y,vLook.z + 36.0f));				

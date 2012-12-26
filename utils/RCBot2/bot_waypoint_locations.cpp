@@ -361,9 +361,11 @@ void CWaypointLocations :: FindNearestCoverWaypointInBucket ( int i, int j, int 
 		(fDist = curr_wpt->distanceFrom(vOrigin));
 
 		if ( vGoalOrigin != NULL )
+		{
 			fDist += curr_wpt->distanceFrom(*vGoalOrigin);
+		}
 
-		if ( fDist < *pfMinDist )
+		if ( (fDist > MIN_COVER_MOVE_DIST) && (fDist < *pfMinDist) )
 		{
 			*piIndex = iSelectedIndex;
 			*pfMinDist = fDist;			

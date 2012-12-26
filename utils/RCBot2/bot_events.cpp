@@ -40,6 +40,7 @@
 #include "bot_getprop.h"
 
 vector<CBotEvent*> CBotEvents :: m_theEvents;
+extern ConVar bot_use_vc_commands;
 ///////////////////////////////////////////////////////
 
 void CRoundStartEvent :: execute ( IBotEventInterface *pEvent )
@@ -255,7 +256,7 @@ void CPlayerHealed ::execute(IBotEventInterface *pEvent)
 				CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
 
 				if ( pBotTF2 && randomInt(0,1) )
-					pBotTF2->voiceCommand(TF_VC_THANKS);
+					pBotTF2->addVoiceCommand(TF_VC_THANKS);
 			}
 		}
 
@@ -319,8 +320,6 @@ bool 	isbuilder
 */
 void CTF2UpgradeObjectEvent :: execute ( IBotEventInterface *pEvent )
 {
-	extern ConVar bot_use_vc_commands;
-
 	if ( bot_use_vc_commands.GetBool() && randomInt(0,1) )
 	{
 		eEngiBuild object = (eEngiBuild)pEvent->getInt("object",0);
@@ -335,7 +334,7 @@ void CTF2UpgradeObjectEvent :: execute ( IBotEventInterface *pEvent )
 
 			if ( (pBot = (CBotTF2*)CBots::getBotPointer(pOwner)) != NULL )
 			{
-				pBot->voiceCommand(TF_VC_THANKS);
+				pBot->addVoiceCommand(TF_VC_THANKS);
 			}
 		}
 	}

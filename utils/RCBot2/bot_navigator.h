@@ -92,6 +92,8 @@ public:
 
 	virtual bool routeFound () = 0;
 
+	virtual void clear () = 0;
+
 	virtual void getFailedGoals (dataUnconstArray <int> **goals) = 0;
 
 	inline Vector getGoalOrigin () { return m_vGoal; }
@@ -354,11 +356,13 @@ public:
 
 	void init ();
 
-	CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals );
+	CWaypoint *chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals );
 
 	bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false  );
 
 	bool getNextRoutePoint ( Vector *vPoint );
+
+	void clear ();
 
 	Vector getNextPoint ();
 

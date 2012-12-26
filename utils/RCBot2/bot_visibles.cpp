@@ -154,8 +154,9 @@ void CBotVisibles :: debugString ( char *string )
 @param	pEntity		entity to check
 @param	iTicks		the pointer to the bot's traceline ticker
 @param	bVisible	returns if the entity is visible or not
+@param  iIndex      saves recalling INDEXENT
 */
-void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisible )
+void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisible, int &iIndex )
 {
 	// make these static, calling a function with data many times	
 	//static Vector vectorSurroundMins, vectorSurroundMaxs;
@@ -186,7 +187,8 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 			
 			vEntityOrigin = CBotGlobals::entityOrigin(pEntity);
 
-			if ( ENTINDEX(pEntity) <= gpGlobals->maxClients )
+			// for some reason the origin is their feet. add body height
+			if ( iIndex <= gpGlobals->maxClients )
 				vEntityOrigin + Vector(0,0,32);
 
 			playerInPVS = engine->CheckOriginInPVS(vEntityOrigin,m_bPvs,sizeof(m_bPvs));//engine->CheckBoxInPVS( vectorSurroundMins, vectorSurroundMaxs, m_bPvs, sizeof( m_bPvs ) );
@@ -227,6 +229,7 @@ void CBotVisibles :: updateVisibles ()
 	static int iStartIndex;
 	static int iMaxClientTicks; 
 	static int iStartPlayerIndex;
+	static int iSpecialIndex;
 
 	iTicks = 0;
 	iMaxTicks = bot_visrevs.GetInt();
@@ -264,7 +267,7 @@ void CBotVisibles :: updateVisibles ()
 
 		if ( CBotGlobals::entityIsValid(pEntity) && (pEntity != m_pBot->getEdict()) )
 		{
-			checkVisible(pEntity,&iTicks,&bVisible);
+			checkVisible(pEntity,&iTicks,&bVisible,m_iCurPlayer);
 			setVisible(pEntity,bVisible);
 			m_pBot->setVisible(pEntity,bVisible);
 		}
@@ -284,13 +287,16 @@ void CBotVisibles :: updateVisibles ()
 	if ( m_iCurPlayer >= m_iCurrentIndex )
 		return;
 
+	// get entities belonging to players too
+	// we've captured them elsewhere in another data structure which is quicker to find 
 	pEntity = m_pBot->getVisibleSpecial();
 
 	if ( pEntity )
 	{
 		if ( CBotGlobals::entityIsValid(pEntity) )
 		{		
-			checkVisible(pEntity,&iTicks,&bVisible);
+			iSpecialIndex = ENTINDEX(pEntity);
+			checkVisible(pEntity,&iTicks,&bVisible,iSpecialIndex);
 
 			setVisible(pEntity,bVisible);
 			m_pBot->setVisible(pEntity,bVisible);
@@ -305,7 +311,7 @@ void CBotVisibles :: updateVisibles ()
 
 		if ( CBotGlobals::entityIsValid(pEntity) )
 		{		
-			checkVisible(pEntity,&iTicks,&bVisible);
+			checkVisible(pEntity,&iTicks,&bVisible,m_iCurrentIndex);
 
 			setVisible(pEntity,bVisible);
 			m_pBot->setVisible(pEntity,bVisible);

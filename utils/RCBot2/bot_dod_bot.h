@@ -152,7 +152,7 @@ public:
 
 	bool checkStuck ();
 
-	void voiceCommand ( eDODVoiceCMD cmd );
+	void voiceCommand ( int cmd );
 
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 

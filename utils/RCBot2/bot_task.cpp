@@ -44,6 +44,7 @@
 #include "bot_profiling.h"
 #include "bot_getprop.h"
 
+extern ConVar *sv_gravity;
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Tasks
 
@@ -342,7 +343,7 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 				// count players I see
 				CDODBot *pDODBot = (CDODBot*)pBot;
 
-				pDODBot->voiceCommand(DOD_VC_NEED_BACKUP);
+				pDODBot->addVoiceCommand(DOD_VC_NEED_BACKUP);
 			}
 		}
 		else if ( m_fTime < engine->Time() )
@@ -2073,7 +2074,8 @@ CThrowGrenadeTask :: CThrowGrenadeTask (CBotWeapon *pWeapon, int ammo, Vector vL
 {
 	m_pWeapon = pWeapon;
 	m_fTime = 0;
-	m_vLoc = vLoc + Vector(0,0,48);
+	m_vLoc = vLoc;
+
 	m_fHoldAttackTime = 0;
 	m_iAmmo = ammo;
 }
@@ -2090,7 +2092,17 @@ void CThrowGrenadeTask::debugString(char *string)
 void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( m_fTime == 0 )
-		m_fTime = engine->Time() + 2.0f;
+	{
+		m_fTime = engine->Time() + 2.5f;
+
+		if ( sv_gravity )
+		{
+			float fMaxDist = 2048.0f;
+			float fFraction = pBot->distanceFrom(m_vLoc)/fMaxDist;
+
+			m_vLoc.z = m_vLoc.z + (sv_gravity->GetFloat() * randomFloat(1.5f,2.5f) * fFraction);
+		}
+	}
 
 	if ( m_fTime < engine->Time() )
 		fail();
@@ -2344,7 +2356,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	case 2:
 	{
 		if ( !m_fTime )
-			pBotTF2->voiceCommand((eTFVoiceCMD)randomInt(0,31));
+			pBotTF2->addVoiceCommand((eTFVoiceCMD)randomInt(0,31));
 
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);
@@ -2388,14 +2400,14 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 	if ( !pBotTF2->wantToNest() )
 	{
 			complete();
-			pBotTF2->voiceCommand(TF_VC_GOGOGO);
+			pBotTF2->addVoiceCommand(TF_VC_GOGOGO);
 			return;
 	}
 	else if ( pBot->hasSomeConditions(CONDITION_PUSH) )
 	{
 		complete();
 		pBot->removeCondition(CONDITION_PUSH);
-		pBotTF2->voiceCommand(TF_VC_GOGOGO);
+		pBotTF2->addVoiceCommand(TF_VC_GOGOGO);
 		return;
 	}
 
@@ -2404,12 +2416,12 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 		m_fTime = engine->Time() + randomFloat(5.0,10.0);
 
 		if ( randomInt(0,1) )
-			pBotTF2->voiceCommand(TF_VC_HELP);
+			pBotTF2->addVoiceCommand(TF_VC_HELP);
 	}
 	else if ( m_fTime < engine->Time() )
 	{
 		complete();
-		pBotTF2->voiceCommand(TF_VC_GOGOGO);
+		pBotTF2->addVoiceCommand(TF_VC_GOGOGO);
 	}
 
 	// wait around

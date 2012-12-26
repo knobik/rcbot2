@@ -66,6 +66,7 @@
 using namespace std;
 
 #define MAX_AMMO_TYPES 32
+#define MAX_VOICE_CMDS 32
 
 // Interfaces from the engine
 //using namespace VEngineServerV21;
@@ -662,6 +663,10 @@ public:
 
 	virtual void grenadeThrown ();
 
+	virtual void voiceCommand ( int cmd ) { };
+
+	void addVoiceCommand ( int cmd );
+
 protected:
 
 	inline void setLookAt ( Vector vNew )
@@ -847,10 +852,13 @@ protected:
 
 	float m_fWaypointTouchDistance;
 
-	float m_fLastVoiceCommand;
 	eBotAction m_CurrentUtil;
 	//CBotNeuralNet *stucknet;
 	//CTrainingSet *stucknet_tset;
+
+	queue<int> m_nextVoicecmd;
+	float m_fNextVoiceCommand;
+	float m_fLastVoiceCommand[MAX_VOICE_CMDS];
 };
 
 class CBots

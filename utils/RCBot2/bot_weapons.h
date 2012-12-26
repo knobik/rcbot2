@@ -589,11 +589,6 @@ private:
 	int *m_iClip2;
 };
 
-class CBotWeaponGravGun : public CBotWeapon
-{
-	bool outOfAmmo (CBot *pBot);
-};
-
 // Weapons that
 class CBotWeapons 
 {
@@ -613,6 +608,8 @@ public:
 
 	bool hasWeapon ( int id );
 
+	void update ( ); // update from sendprop
+
 private:
 	// bot that has these weapons
 	CBot *m_pBot;
@@ -620,6 +617,8 @@ private:
 	// weapons local to the bot only 
 	// (holds ammo/preference etc and link to actual weapon)
 	CBotWeapon m_theWeapons[MAX_WEAPONS];//[MAX_WEAPONS];
+
+	float m_fUpdateWeaponsTime;
 };
 
 #endif

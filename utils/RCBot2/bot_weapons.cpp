@@ -260,6 +260,7 @@ bool CBotWeapons::hasWeapon(int id)
 	}
 	return false;
 }
+
 // Bot Weapons
 CBotWeapons :: CBotWeapons ( CBot *pBot ) 
 {
@@ -269,6 +270,67 @@ CBotWeapons :: CBotWeapons ( CBot *pBot )
 	{
 		// find weapon info from weapon id
 		m_theWeapons[i].setWeapon(CWeapons::getWeapon(i));
+	}
+
+	m_fUpdateWeaponsTime = 0;
+}
+
+void CBotWeapons ::update ( )
+{
+	if ( m_fUpdateWeaponsTime < engine->Time() )
+	{
+		edict_t *pWeapon;
+		int iWeaponState;
+		register unsigned short int i,j;
+		bool bFound;
+
+		CBaseHandle *m_Weapons = CClassInterface::getWeaponList(m_pBot->getEdict());
+		CBaseHandle *m_Weapon_iter;
+		CBotWeapon *m_BotWeapon_iter = m_theWeapons;
+
+		// loop through the weapons array and see if it is in the CBaseCombatCharacter
+		for ( i = 0; i < MAX_WEAPONS; i ++ )
+		{
+			m_Weapon_iter = m_Weapons;
+			iWeaponState = 0;
+			bFound = false;
+			pWeapon = NULL;
+
+			if ( m_BotWeapon_iter->getWeaponInfo() )
+			{
+				for ( j = 0; j < MAX_WEAPONS; j ++ )
+				{
+					pWeapon = INDEXENT(m_Weapon_iter->GetEntryIndex());
+
+					if ( pWeapon && CBotGlobals::entityIsValid(pWeapon) && strcmp(pWeapon->GetClassName(),m_BotWeapon_iter->getWeaponInfo()->getWeaponName())==0 )
+					{
+						iWeaponState = CClassInterface::getWeaponState(pWeapon);
+						// found it
+						bFound = true;
+						break;
+					}
+
+					m_Weapon_iter++;
+				}
+
+				if ( bFound && pWeapon && (iWeaponState != WEAPON_NOT_CARRIED) )
+				{
+					if ( !m_BotWeapon_iter->hasWeapon() )
+						addWeapon(m_BotWeapon_iter->getID(),pWeapon);
+					else if ( m_BotWeapon_iter->getWeaponEntity() != pWeapon )
+						m_BotWeapon_iter->setWeaponEntity(pWeapon);
+				}
+				else
+				{
+					if ( m_BotWeapon_iter->hasWeapon() )
+						m_BotWeapon_iter->setHasWeapon(false);
+				}
+			}
+
+			m_BotWeapon_iter++;
+		}
+
+		m_fUpdateWeaponsTime = engine->Time() + 1.0f;
 	}
 }
 

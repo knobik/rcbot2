@@ -394,6 +394,8 @@ public:
 
 	virtual void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon ) { CBot::seeFriendlyDie(pDied,pKiller,pWeapon); }
 
+	virtual void voiceCommand ( int cmd ) { };
+
 protected:
 	virtual void selectTeam ();
 
@@ -614,7 +616,7 @@ public:
 
 	void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon );
 
-	void voiceCommand ( eTFVoiceCMD cmd );
+	void voiceCommand ( int cmd );
 
 	void handleWeapons ( void ) ;
 
