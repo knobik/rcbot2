@@ -386,7 +386,11 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_ROUNDTIME,"CDODGameRulesProxy","m_flRestartRoundTime",0);
 		DEFINE_GETPROP(GETPROP_DOD_K98ZOOM,"CWeaponK98","m_bZoomed",0);
 		DEFINE_GETPROP(GETPROP_DOD_GARANDZOOM,"CWeaponGarand","m_bZoomed",0);
-
+		DEFINE_GETPROP(GETPROP_DOD_ALLIESBOMBING,"CDODGameRulesProxy","m_bAlliesAreBombing",0);
+		DEFINE_GETPROP(GETPROP_DOD_AXISBOMBING,"CDODGameRulesProxy","m_bAxisAreBombing",0);
+		DEFINE_GETPROP(GETPROP_DOD_BOMBSPLANTED,"CDODObjectiveResource","m_bBombPlanted",0);
+		DEFINE_GETPROP(GETPROP_DOD_BOMBSREQ,"CDODObjectiveResource","m_iBombsRequired",0);
+		DEFINE_GETPROP(GETPROP_DOD_BOMBSDEFUSED,"CDODObjectiveResource","m_bBombBeingDefused",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

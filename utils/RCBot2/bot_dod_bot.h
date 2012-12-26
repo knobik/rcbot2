@@ -31,6 +31,9 @@
 #ifndef __DOD_RCBOT_H__
 #define __DOD_RCBOT_H__
 
+#define DOD_MAPTYPE_FLAG 0
+#define DOD_MAPTYPE_BOMB 1
+
 #define TEAM_ALLIES 2
 #define TEAM_AXIS 3
 
@@ -162,8 +165,6 @@ public:
 private:
 
 	int m_iSelectedClass;
-
-	eBotAction m_CurrentUtil;
 
 	edict_t *m_pCurrentWeapon;
 

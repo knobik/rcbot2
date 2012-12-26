@@ -469,7 +469,7 @@ CBotFollowLastEnemy ::	CBotFollowLastEnemy ( CBot *pBot, edict_t *pEnemy, Vector
 	Vector vVelocity = Vector(0,0,0);
 	CClient *pClient = CClients::get(pEnemy);
 
-	CFindPathTask *pFindPath = new CFindPathTask(vLastSee);	
+	CFindPathTask *pFindPath = new CFindPathTask(vLastSee,LOOK_LAST_ENEMY);	
 
 	if ( CClassInterface :: getVelocity(pEnemy,&vVelocity) )
 	{

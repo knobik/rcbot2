@@ -42,10 +42,11 @@ int CWaypointVisibilityTable :: iCurTo = 0;*/
 void CWaypointVisibilityTable :: workVisibility ()
 {		
 	int iTicks = 0;
+	register unsigned short int iSize = (unsigned short int) CWaypoints::numWaypoints();
 
-	for ( iCurFrom = iCurFrom; iCurFrom < CWaypoints::numWaypoints(); iCurFrom ++ )
+	for ( iCurFrom = iCurFrom; iCurFrom < iSize; iCurFrom ++ )
 	{
-		for ( iCurTo = iCurTo; iCurTo < CWaypoints::numWaypoints(); iCurTo ++ )
+		for ( iCurTo = iCurTo; iCurTo < iSize; iCurTo ++ )
 		{
 			CWaypoint *pWaypoint1 = CWaypoints::getWaypoint(iCurFrom);
 			CWaypoint *pWaypoint2 = CWaypoints::getWaypoint(iCurTo);
@@ -63,7 +64,7 @@ void CWaypointVisibilityTable :: workVisibility ()
 		iCurTo = 0;
 	}
 
-	if ( iCurFrom == CWaypoints::numWaypoints() )
+	if ( iCurFrom == iSize )
 	{
 		// finished
 		Msg(" *** finished working out visibility ***\n");

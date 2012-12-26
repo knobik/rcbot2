@@ -1202,10 +1202,11 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( m_bDefendOrigin )
 		{
-			pBot->setAiming(m_vDefendOrigin);
+			pBot->setLookAtTask(LOOK_AROUND);
+			//pBot->setAiming(m_vDefendOrigin);
 		}
-		
-		pBot->setLookAtTask(LOOK_SNIPE);
+		else
+			pBot->setLookAtTask(LOOK_SNIPE);
 	}
 
 	if ( m_fTime < engine->Time() )

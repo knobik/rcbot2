@@ -93,6 +93,152 @@ void CWaypointNavigator :: init ()
 	m_iFailedGoals.Destroy();//.clear();//Destroy();
 }
 
+bool CWaypointNavigator :: beliefLoad ( ) 
+{
+   int iSize;
+   int iDesiredSize;
+   register unsigned short int i;
+   register unsigned short int num;
+   unsigned short int filebelief [ CWaypoints::MAX_WAYPOINTS ];
+
+    char filename[1024];
+
+	char mapname[512];
+
+	m_bLoadBelief = false;
+	m_iBeliefTeam = m_pBot->getTeam();
+	
+	sprintf(mapname,"%s%d",CBotGlobals::getMapName(),m_iBeliefTeam);
+
+	CBotGlobals::buildFileName(filename,mapname,BOT_WAYPOINT_FOLDER,"rcb",true);
+
+   FILE *bfp =  CBotGlobals::openFile(filename,"rb");
+
+   if ( bfp == NULL )
+   {
+	   Msg(" *** Can't open Waypoint belief array for reading!\n");
+	   return false;
+   }
+
+   fseek (bfp, 0, SEEK_END); // seek at end
+
+   iSize = ftell(bfp); // get file size
+   iDesiredSize = CWaypoints::numWaypoints()*sizeof(unsigned short int);
+
+   // size not right, return false to re workout table
+   if ( iSize != iDesiredSize )
+   {
+	   fclose(bfp);
+	   return false;
+   }
+
+   fseek (bfp, 0, SEEK_SET); // seek at start
+
+   memset(filebelief,0,sizeof(unsigned short int)*CWaypoints::MAX_WAYPOINTS);
+
+   fread(filebelief,sizeof(unsigned short int),CWaypoints::numWaypoints(),bfp);
+
+   // convert from short int to float
+   
+   num = (unsigned short int)CWaypoints::numWaypoints();
+
+   // quick loop
+   for ( i = 0; i < num; i ++ )
+   {
+	   m_fBelief[i] = (((float)filebelief[i])/32768) * MAX_BELIEF;
+   }
+
+   fclose(bfp);
+
+   return true;
+}
+// update belief array with averaged belief for this team
+bool CWaypointNavigator :: beliefSave ( bool bOverride ) 
+{
+   int iSize;
+   int iDesiredSize;
+   register unsigned short int i;
+   register unsigned short int num;
+   unsigned short int filebelief [ CWaypoints::MAX_WAYPOINTS ];
+   char filename[1024];
+   char mapname[512];
+
+   if ( (m_pBot->getTeam() == m_iBeliefTeam) && !bOverride )
+	   return false;
+
+   memset(filebelief,0,sizeof(unsigned short int)*CWaypoints::MAX_WAYPOINTS);
+
+   // m_iBeliefTeam is the team we've been using -- we might have changed team now
+   // so would need to change files if a different team
+   // stick to the current team we've been using
+   sprintf(mapname,"%s%d",CBotGlobals::getMapName(),m_iBeliefTeam);
+   CBotGlobals::buildFileName(filename,mapname,BOT_WAYPOINT_FOLDER,"rcb",true);
+
+   FILE *bfp = CBotGlobals::openFile(filename,"rb");
+
+   if ( bfp != NULL )
+   {
+	   fseek (bfp, 0, SEEK_END); // seek at end
+
+	   iSize = ftell(bfp); // get file size
+	   iDesiredSize = CWaypoints::numWaypoints()*sizeof(unsigned short int);
+	    
+	   // size not right, return false to re workout table
+	   if ( iSize != iDesiredSize )
+	   {
+		   fclose(bfp);
+	   }
+	   else
+	   {
+		   fseek (bfp, 0, SEEK_SET); // seek at start
+
+		   if ( bfp )
+				fread(filebelief,sizeof(unsigned short int),CWaypoints::numWaypoints(),bfp);
+
+		   fclose(bfp);
+	   }
+   }
+
+   bfp =  CBotGlobals::openFile(filename,"wb");
+
+   if ( bfp == NULL )
+   {
+	   m_bLoadBelief = true;
+	   m_iBeliefTeam = m_pBot->getTeam();
+	   Msg(" *** Can't open Waypoint Belief array for writing!\n");
+	   return false;
+   }
+
+   // convert from short int to float
+   
+   num = (unsigned short int)CWaypoints::numWaypoints();
+
+   // quick loop
+   for ( i = 0; i < num; i ++ )
+   {
+	   filebelief[i] = (filebelief[i]/2) + ((unsigned short int)((m_fBelief[i]/MAX_BELIEF) * 16384)); 
+   }
+
+   fseek (bfp, 0, SEEK_SET); // seek at start
+
+   fwrite(filebelief,sizeof(unsigned short int),num,bfp);
+
+   fclose(bfp);
+
+   // new team -- load belief 
+    m_iBeliefTeam = m_pBot->getTeam();
+	m_bLoadBelief = true;
+	m_bBeliefChanged = false; // saved
+
+    return true;
+}
+
+bool CWaypointNavigator :: wantToSaveBelief () 
+{ 
+	// playing on this map for more than a normal load time
+	return ( m_bBeliefChanged && (m_iBeliefTeam != m_pBot->getTeam()) ) ;
+}
+
 int CWaypointNavigator :: numPaths ( )
 {
 	if ( m_iCurrentWaypoint != -1 )
@@ -233,6 +379,7 @@ void CWaypointNavigator :: beliefOne ( int iWptIndex, BotBelief iBeliefType, flo
 				m_fBelief[iWptIndex] = MAX_BELIEF;
 	}
 
+	m_bBeliefChanged = true;
 }
 
 // get belief nearest to current origin using waypoints to store belief
@@ -300,6 +447,8 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 	}
 
 	m_iVisibles.Destroy();
+
+	m_bBeliefChanged = true;
 }
 
 float CWaypointNavigator :: getCurrentBelief ( )
@@ -404,6 +553,11 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 
 	if ( bRestart )
 	{
+		if ( wantToSaveBelief() )
+			beliefSave();
+		if ( wantToLoadBelief() )
+			beliefLoad();
+
 		*bFail = false;
 
 		m_bWorkingRoute = true;
@@ -867,6 +1021,7 @@ void CWaypointNavigator :: updatePosition ()
 // free up memory
 void CWaypointNavigator :: freeMapMemory ()
 {
+	beliefSave(true);
 	m_currentRoute.Destroy();
 	m_iFailedGoals.Destroy();//.clear();//Destroy();
 }

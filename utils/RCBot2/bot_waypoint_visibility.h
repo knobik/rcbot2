@@ -147,8 +147,8 @@ public:
 private:
 
 	bool bWorkVisibility;
-	int iCurFrom;
-	int iCurTo;
+	unsigned short int iCurFrom;
+	unsigned short int iCurTo;
 	static const int WAYPOINT_VIS_TICKS = 64;
 	unsigned char *m_VisTable;
 	// use a heap of 1 byte * size to keep things simple.

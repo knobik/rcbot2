@@ -1665,6 +1665,45 @@ void CBotTF2 :: setup ()
 	CBotFortress::setup();
 }
 
+void CBotTF2 :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon )
+{
+	if ( pKiller && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	{
+		//if ( pWeapon )
+		//{
+		//	DOD_Class pclass = (DOD_Class)CClassInterface::getPlayerClassDOD(pKiller);
+
+			if ( CTeamFortress2Mod::isSentryGun(pKiller) )
+			{
+				voiceCommand(TF_VC_SENTRYAHEAD);
+				updateCondition(CONDITION_COVERT);
+				m_fCurrentDanger += 100.0f;
+			}
+			else 
+			{
+				voiceCommand(TF_VC_INCOMING);
+				updateCondition(CONDITION_COVERT);
+				m_fCurrentDanger += 50.0f;
+			}
+
+		//}
+
+		// encourage bots to snoop out enemy or throw grenades
+		m_fLastSeeEnemy = engine->Time();
+		m_pLastEnemy = pKiller;
+		m_fLastUpdateLastSeeEnemy = 0;
+		m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
+		m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
+
+		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),1024.0,-1,true,true,false,false,0,false));
+			
+		if ( pWpt )
+			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
+
+		updateCondition(CONDITION_CHANGED);
+	}
+}
+
 
 void CBotTF2 :: engiBuildSuccess ( eEngiBuild iBuilding, int index )
 {
@@ -2893,8 +2932,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	wantToShoot(CTeamFortress2Mod::hasRoundStarted());
 	m_bWantToListen = CTeamFortress2Mod::hasRoundStarted();
 
-	if ( !m_pSchedules->isEmpty() )
-		return; // already got some tasks left
+	if ( !hasSomeConditions(CONDITION_CHANGED) && !m_pSchedules->isEmpty() )
+		return;
+	
+	removeCondition(CONDITION_CHANGED);
 
 	iMetal = 0;
 	vOrigin = getOrigin();
@@ -3365,8 +3406,13 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	while ( (util = utils.nextBest()) != NULL )
 	{
+		if ( !m_pSchedules->isEmpty() && (m_CurrentUtil != util->getId() ) )
+			m_pSchedules->freeMemory();
+
 		if ( executeAction(util->getId(),pWaypointResupply,pWaypointHealth,pWaypointAmmo) )
 		{
+			m_CurrentUtil = util->getId();
+
 			if ( CClients::clientsDebugging() )
 			{
 				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[util->getId()],this);

@@ -392,6 +392,7 @@ public:
 
 	virtual void handleWeapons () { CBot::handleWeapons(); }
 
+	virtual void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon ) { CBot::seeFriendlyDie(pDied,pKiller,pWeapon); }
 
 protected:
 	virtual void selectTeam ();
@@ -610,6 +611,8 @@ public:
 	bool canDeployStickies ();
 
 	bool thinkSpyIsEnemy ( edict_t *pEdict );
+
+	void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon );
 
 	void voiceCommand ( eTFVoiceCMD cmd );
 

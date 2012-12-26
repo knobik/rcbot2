@@ -104,7 +104,6 @@ private:
 	int m_iClip1;
 	int m_iClip2;
 
-	eBotAction m_CurrentUtil;
 	edict_t *m_pCarryingObject; // using grav gun
 };
 

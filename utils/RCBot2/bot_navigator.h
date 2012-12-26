@@ -98,9 +98,9 @@ public:
 
 	virtual bool nextPointIsOnLadder () { return false; }
 
-	virtual void beliefLoad ( ) {};
+	virtual bool beliefLoad ( ) { return false; };
 
-	virtual void beliefSave ( short int *iSaveBelief ) {};
+	virtual bool beliefSave ( bool bOverride = false ) { return false; };
 
 	virtual void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType ) = 0;
 
@@ -123,6 +123,9 @@ public:
 
 	bool getDangerPoint ( Vector *vec ) { *vec = m_bDangerPoint ? m_vDangerPoint : Vector(0,0,0); return m_bDangerPoint; }
 
+	bool wantToLoadBelief () { return m_bLoadBelief; }
+	virtual bool wantToSaveBelief () { return false; }
+
 	static const int MAX_PATH_TICKS = 200;
 
 protected:
@@ -130,6 +133,9 @@ protected:
 	Vector m_vPreviousPoint;
 	Vector m_vDangerPoint;
 	bool m_bDangerPoint;
+	short int m_iBeliefTeam;
+	bool m_bBeliefChanged;
+	bool m_bLoadBelief;
 };
 
 #define FL_ASTAR_CLOSED		1
@@ -340,6 +346,10 @@ public:
 		init();
 		m_pBot = pBot; 
 		m_fNextClearFailedGoals = 0;
+		m_bDangerPoint = false;
+		m_iBeliefTeam = -1;
+		m_bLoadBelief = true;
+		m_bBeliefChanged = false;
 	}
 
 	void init ();
@@ -404,6 +414,12 @@ public:
 	Vector getPath ( int pathid );
 
 	bool randomDangerPath (Vector *vec);
+
+	bool beliefLoad ( );
+
+	bool beliefSave ( bool bOverride = false );
+
+	bool wantToSaveBelief ();
 
 private:
 	CBot *m_pBot;

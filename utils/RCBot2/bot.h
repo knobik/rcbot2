@@ -848,6 +848,7 @@ protected:
 	float m_fWaypointTouchDistance;
 
 	float m_fLastVoiceCommand;
+	eBotAction m_CurrentUtil;
 	//CBotNeuralNet *stucknet;
 	//CTrainingSet *stucknet_tset;
 };

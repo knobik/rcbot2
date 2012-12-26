@@ -277,7 +277,12 @@ bool CBot :: FVisible ( edict_t *pEdict )
 	Vector eye = getEyePosition();
 
 	if ( ENTINDEX(pEdict) <= gpGlobals->maxClients )
-		return CBotGlobals::isVisible(m_pEdict,eye,pEdict->GetCollideable()->GetCollisionOrigin()+Vector(0,0,pEdict->GetCollideable()->OBBMaxs().z/2));
+	{
+		if ( CBotGlobals::isVisible(m_pEdict,eye,pEdict) )
+			return true;
+		
+		return CBotGlobals::isVisible(m_pEdict,eye,pEdict->GetCollideable()->GetCollisionOrigin()+Vector(0,0,pEdict->GetCollideable()->OBBMaxs().z));
+	}
 
 	return CBotGlobals::isVisible(m_pEdict,eye,pEdict);//CBotGlobals::entityOrigin(pEdict)+Vector(0,0,50.0f));
 }
@@ -829,7 +834,6 @@ edict_t *CBot :: getEdict ()
 
 void CBot :: updateConditions ()
 {
-
 	if ( m_pEnemy )
 	{
 		if ( !CBotGlobals::entityIsAlive(m_pEnemy) )
@@ -1101,7 +1105,7 @@ void CBot :: setup ()
 	/////////////////////////////////
 	m_pSchedules = new CBotSchedules();
 	/////////////////////////////////
-	m_pNavigator = new CWaypointNavigator(this);    
+	m_pNavigator = new CWaypointNavigator(this);   
 	/////////////////////////////////
 	m_pVisibles = new CBotVisibles(this);
 	/////////////////////////////////
@@ -1268,6 +1272,7 @@ int CBot :: nearbyFriendlies (float fDistance)
 
 void CBot :: freeMapMemory ()
 {
+	// we can save things here
 	// values
 	/*if ( m_pGAvStuck != NULL )
 	{
@@ -1304,6 +1309,7 @@ void CBot :: freeMapMemory ()
 	/////////////////////////////////
 	if ( m_pNavigator != NULL )
 	{
+		m_pNavigator->beliefSave(true);
 		m_pNavigator->freeMapMemory();
 		delete m_pNavigator;
 		m_pNavigator = NULL;

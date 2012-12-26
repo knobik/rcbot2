@@ -72,6 +72,11 @@ typedef enum
 	GETPROP_DOD_ROUNDTIME,
 	GETPROP_DOD_K98ZOOM,
 	GETPROP_DOD_GARANDZOOM,
+	GETPROP_DOD_ALLIESBOMBING,
+	GETPROP_DOD_AXISBOMBING,
+	GETPROP_DOD_BOMBSPLANTED,
+	GETPROP_DOD_BOMBSREQ,
+	GETPROP_DOD_BOMBSDEFUSED,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -372,6 +377,27 @@ public:
 	}
 	// HL2DM
 	//static void 
+
+	inline static bool areAlliesBombing (edict_t *pRes) 
+	{
+		return g_GetProps[GETPROP_DOD_ALLIESBOMBING].getBool(pRes,false);
+	}
+	inline static bool areAxisBombing (edict_t *pRes) 
+	{
+		return g_GetProps[GETPROP_DOD_AXISBOMBING].getBool(pRes,false);
+	}
+	inline static int *isBombPlantedList (edict_t *pRes) 
+	{
+		return g_GetProps[GETPROP_DOD_BOMBSPLANTED].getIntPointer(pRes);
+	}
+	inline static int *isBombRequiredList (edict_t *pRes) 
+	{
+		return g_GetProps[GETPROP_DOD_BOMBSREQ].getIntPointer(pRes);
+	}
+	inline static int *isBombDefusingList (edict_t *pRes) 
+	{
+		return g_GetProps[GETPROP_DOD_BOMBSDEFUSED].getIntPointer(pRes);
+	}
 
 private:
 	static CClassInterfaceValue g_GetProps[GET_PROPDATA_MAX];

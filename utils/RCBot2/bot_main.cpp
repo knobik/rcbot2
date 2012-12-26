@@ -717,6 +717,9 @@ void CRCBotPlugin::ClientActive( edict_t *pEntity )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::ClientDisconnect( edict_t *pEntity )
 {
+	// this is sorted in CClients::clientDisconnected()
+	//CBot *pBot = CBots::getBotPointer(pEntity);
+	//pBot->freeMapMemory();
 
 	CClients::clientDisconnected(pEntity);
 }
