@@ -2097,8 +2097,7 @@ void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( sv_gravity )
 		{
-			float fMaxDist = 2048.0f;
-			float fFraction = pBot->distanceFrom(m_vLoc)/fMaxDist;
+			float fFraction = pBot->distanceFrom(m_vLoc)/MAX_GREN_THROW_DIST;
 
 			m_vLoc.z = m_vLoc.z + (sv_gravity->GetFloat() * randomFloat(1.5f,2.5f) * fFraction);
 		}
@@ -2448,6 +2447,7 @@ CBotNest::CBotNest()
 CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw, bool bUseZ, float z )
 {
 	QAngle angle;
+	m_fEnemyTime = 0.0f;
 	m_fTime = 0.0f;
 	angle = QAngle(0,fYaw,0);
 	AngleVectors(angle,&m_vAim);
@@ -2474,7 +2474,8 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_fTime == 0.0f )
 	{
-		m_fTime = engine->Time() + randomFloat(20.0f,40.0f);
+		m_fEnemyTime = engine->Time();
+		m_fTime = m_fEnemyTime + randomFloat(20.0f,40.0f);
 	}
 
 	pCurrentWeapon = pBot->getCurrentWeapon();
@@ -2561,9 +2562,13 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			pBot->setLookAtTask(LOOK_ENEMY);
 
 			pBot->handleAttack(pCurrentWeapon,pBot->getEnemy());
+
+			// havin' fun
+			m_fEnemyTime = engine->Time();
 		}
 
-		if (m_fTime<engine->Time() )
+		// no enemy for a while
+		if ( (m_fEnemyTime + m_fTime) < engine->Time() )
 		{
 			if ( bDeployedOrZoomed )
 				pBot->secondaryAttack();

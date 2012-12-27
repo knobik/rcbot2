@@ -369,6 +369,7 @@ public:
 	void execute (CBot *pBot,CBotSchedule *pSchedule); 
 private:
 	float m_fTime;
+	float m_fEnemyTime;
 	float m_fScopeTime;
 	Vector m_vAim;
 	Vector m_vOrigin;

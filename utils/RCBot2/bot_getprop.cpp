@@ -391,6 +391,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_BOMBSPLANTED,"CDODObjectiveResource","m_bBombPlanted",0);
 		DEFINE_GETPROP(GETPROP_DOD_BOMBSREQ,"CDODObjectiveResource","m_iBombsRequired",0);
 		DEFINE_GETPROP(GETPROP_DOD_BOMBSDEFUSED,"CDODObjectiveResource","m_bBombBeingDefused",0);
+		DEFINE_GETPROP(GETPROP_DOD_BOMBSREMAINING,"CDODObjectiveResource","m_iBombsRemaining",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
@@ -423,6 +424,79 @@ void CClassInterfaceValue :: getData ( edict_t *edict )
 	pEntity = pUnknown->GetBaseEntity();
 
 	m_data = (void *)((char *)pEntity + m_offset);
+}
+
+
+edict_t *CClassInterface::FindEntityByNetClassNearest(Vector vstart, const char *classname)
+{
+	edict_t *current;
+	edict_t *pfound = NULL;
+	float fMindist = 8192.0f;
+	float fDist;
+
+	for (short int i = 0; i < gpGlobals->maxEntities; i++)
+	{
+		current = engine->PEntityOfEntIndex(i);
+		if (current == NULL)
+		{
+			continue;
+		}
+
+		IServerNetworkable *network = current->GetNetworkable();
+
+		if (network == NULL)
+		{
+			continue;
+		}
+
+		ServerClass *sClass = network->GetServerClass();
+		const char *name = sClass->GetName();
+		
+		if (strcmp(name, classname) == 0)
+		{
+			fDist = (vstart - CBotGlobals::entityOrigin(current)).Length();
+
+			if ( !pfound  || (fDist < fMindist))
+			{
+				fMindist = fDist;
+				pfound = current;
+			}
+		}
+	}
+
+	return pfound;
+}
+// http://svn.alliedmods.net/viewvc.cgi/trunk/extensions/tf2/extension.cpp?revision=2183&root=sourcemod&pathrev=2183
+edict_t *CClassInterface::FindEntityByNetClass(int start, const char *classname)
+{
+	edict_t *current;
+
+	for (int i = ((start != -1) ? start : 0); i < gpGlobals->maxEntities; i++)
+	{
+		current = engine->PEntityOfEntIndex(i);
+		if (current == NULL)
+		{
+			continue;
+		}
+
+		IServerNetworkable *network = current->GetNetworkable();
+
+		if (network == NULL)
+		{
+			continue;
+		}
+
+		ServerClass *sClass = network->GetServerClass();
+		const char *name = sClass->GetName();
+		
+
+		if (strcmp(name, classname) == 0)
+		{
+			return current;
+		}
+	}
+
+	return NULL;
 }
 
 

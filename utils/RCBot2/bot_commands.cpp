@@ -176,42 +176,21 @@ eBotCommandResult CGetProp :: execute ( CClient *pClient, const char *pcmd, cons
 {
 	if ( pClient )
 	{
-		if ( (pcmd && *pcmd) &&(arg1 && *arg1) && (arg2 && *arg2) )
+		if ( (pcmd && *pcmd) &&(arg1 && *arg1) )
 		{
-			int i = 0;
+			//int i = 0;
 
 			edict_t *pPlayer = pClient->getPlayer();
-			edict_t *pEdict;
+//			edict_t *pEdict;
 			edict_t *pNearest = NULL;
-			float fDistance;
-			float fNearest = 400.0f;
+//			float fDistance;
+//			float fNearest = 400.0f;
 
-			for ( i = 0; i < gpGlobals->maxEntities; i ++ )
-			{
-				pEdict = INDEXENT(i);
-
-				if ( pEdict )
-				{
-					if ( !pEdict->IsFree() )
-					{
-						if ( pEdict->m_pNetworkable && pEdict->GetIServerEntity() )
-						{				
-							if ( (fDistance=(CBotGlobals::entityOrigin(pEdict) - CBotGlobals::entityOrigin(pPlayer)).Length()) < fNearest )
-							{
-								if ( strcmp(pEdict->GetClassName(),arg1) == 0 )
-								{
-									fNearest = fDistance;
-									pNearest = pEdict;
-								}
-							}
-						}
-					}
-				}
-			}
+			pNearest = CClassInterface::FindEntityByNetClassNearest(pClient->getOrigin(),pcmd);
 
 			if ( pNearest )
 			{
-					void *data = NULL;
+				void *data = NULL;
 
 				extern bool g_PrintProps;
 				unsigned int m_offset = 0;
@@ -220,7 +199,7 @@ eBotCommandResult CGetProp :: execute ( CClient *pClient, const char *pcmd, cons
 
 				if ( sc )
 				{
-					UTIL_FindSendPropInfo(sc,arg2,&m_offset);
+					UTIL_FindSendPropInfo(sc,arg1,&m_offset);
 
 					if ( m_offset )
 					{
@@ -234,18 +213,18 @@ eBotCommandResult CGetProp :: execute ( CClient *pClient, const char *pcmd, cons
 
 						int preoffs = 0;
 
-						if ( (arg3 && *arg3) )
+						if ( (arg2 && *arg2) )
 						{
-							preoffs = atoi(arg3);	
+							preoffs = atoi(arg2);	
 						}
 
-						data = (void *)((char *)pEntity + m_offset + preoffs);
+						data = (void *)((char *)pEntity + m_offset);
 
 						if ( data )
 						{
-							vdata = *(Vector*)data;
+							vdata = *((Vector*)data+preoffs);
 	
-							CBotGlobals::botMessage(pPlayer,0,"int = %d, float = %f, bool = %s, Vector = (%0.4f,%0.4f,%0.4f)",*(int*)data,*(float*)data,*(bool*)data ? ("true"):("false"),vdata.x,vdata.y,vdata.z );
+							CBotGlobals::botMessage(pPlayer,0,"int = %d, float = %f, bool = %s, Vector = (%0.4f,%0.4f,%0.4f)",*((int*)data + preoffs),*((float*)data+preoffs),*((bool*)data+preoffs) ? ("true"):("false"),vdata.x,vdata.y,vdata.z );
 						}
 						else
 							CBotGlobals::botMessage(pPlayer,0,"NULL");
@@ -632,6 +611,13 @@ eBotCommandResult CWaypointGiveTypeCommand :: execute ( CClient *pClient, const 
 						else
 						{
 							pWaypoint->addFlag(pType->getBits());
+							
+							if ( pType->getBits() & CWaypointTypes::W_FL_UNREACHABLE )
+							{
+								CWaypoints::deletePathsTo(CWaypoints::getWaypointIndex(pWaypoint));
+								CWaypoints::deletePathsFrom(CWaypoints::getWaypointIndex(pWaypoint));
+							}
+
 							CBotGlobals::botMessage(pEntity,0,"type %s added to waypoint %d",type,CWaypoints::getWaypointIndex(pWaypoint));
 						}
 						

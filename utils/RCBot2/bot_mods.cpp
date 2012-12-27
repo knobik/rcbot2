@@ -71,10 +71,10 @@ extern ConVar bot_use_disp_dist;
 eDODVoiceCommand_t g_DODVoiceCommands[DOD_VC_INVALID] = 
 {
 	{DOD_VC_GOGOGO,"attack"},
-	{DOD_VC_YES,"yes"},
+	{DOD_VC_YES,"yessir"},
 	{DOD_VC_DROPWEAP,"dropweapons"},
 	{DOD_VC_HOLD,"hold"},
-	{DOD_VC_NO,"no"},
+	{DOD_VC_NO,"negative"},
 	{DOD_VC_DISPLACE,"displace"},
 	{DOD_VC_GO_LEFT,"flankleft"},
 	{DOD_VC_NEED_BACKUP,"backup"},
@@ -908,43 +908,11 @@ int CTeamFortress2Mod ::numClassOnTeam( int iTeam, int iClass )
 	return num;
 }
 
-// http://svn.alliedmods.net/viewvc.cgi/trunk/extensions/tf2/extension.cpp?revision=2183&root=sourcemod&pathrev=2183
-edict_t *FindEntityByNetClass(int start, const char *classname)
-{
-	edict_t *current;
-
-	for (int i = ((start != -1) ? start : 0); i < gpGlobals->maxEntities; i++)
-	{
-		current = engine->PEntityOfEntIndex(i);
-		if (current == NULL)
-		{
-			continue;
-		}
-
-		IServerNetworkable *network = current->GetNetworkable();
-
-		if (network == NULL)
-		{
-			continue;
-		}
-
-		ServerClass *sClass = network->GetServerClass();
-		const char *name = sClass->GetName();
-		
-
-		if (strcmp(name, classname) == 0)
-		{
-			return current;
-		}
-	}
-
-	return NULL;
-}
 
 edict_t *CTeamFortress2Mod :: findResourceEntity()
 {
 	if ( !m_pResourceEntity )
-		m_pResourceEntity = FindEntityByNetClass(-1, "CTFPlayerResource");
+		m_pResourceEntity = CClassInterface::FindEntityByNetClass(-1, "CTFPlayerResource");
 
 	return m_pResourceEntity;
 }
@@ -1368,11 +1336,11 @@ int CDODMod ::getScore(edict_t *pPlayer)
 void CDODMod ::roundStart()
 {
 	if ( !m_pResourceEntity )
-		m_pResourceEntity = FindEntityByNetClass(gpGlobals->maxClients+1, "CDODObjectiveResource");
+		m_pResourceEntity = CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1, "CDODObjectiveResource");
 	if ( !m_pPlayerResourceEntity )
-		m_pPlayerResourceEntity = FindEntityByNetClass(gpGlobals->maxClients+1, "CDODPlayerResource");
+		m_pPlayerResourceEntity = CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1, "CDODPlayerResource");
 	if ( !m_pGameRules )
-		m_pGameRules = FindEntityByNetClass(gpGlobals->maxClients+1, "CDODGameRulesProxy");
+		m_pGameRules = CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1, "CDODGameRulesProxy");
 
 	m_Flags.setup(m_pResourceEntity);
 	//m_Flags.updateAll();

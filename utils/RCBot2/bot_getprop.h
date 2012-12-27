@@ -77,6 +77,7 @@ typedef enum
 	GETPROP_DOD_BOMBSPLANTED,
 	GETPROP_DOD_BOMBSREQ,
 	GETPROP_DOD_BOMBSDEFUSED,
+	GETPROP_DOD_BOMBSREMAINING,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -226,6 +227,9 @@ class CClassInterface
 {
 public:
 	static void init ();
+
+	static edict_t *FindEntityByNetClass(int start, const char *classname);
+	static edict_t *FindEntityByNetClassNearest(Vector vstart, const char *classname);
 
 	// TF2
 	static int getTF2Score ( edict_t *edict );
@@ -390,13 +394,17 @@ public:
 	{
 		return g_GetProps[GETPROP_DOD_BOMBSPLANTED].getIntPointer(pRes);
 	}
-	inline static int *isBombRequiredList (edict_t *pRes) 
+	inline static int *getNumBombsRequiredList (edict_t *pRes) 
 	{
 		return g_GetProps[GETPROP_DOD_BOMBSREQ].getIntPointer(pRes);
 	}
 	inline static int *isBombDefusingList (edict_t *pRes) 
 	{
 		return g_GetProps[GETPROP_DOD_BOMBSDEFUSED].getIntPointer(pRes);
+	}
+	inline static int *getNumBombsRemaining ( edict_t *pRes )
+	{
+		return g_GetProps[GETPROP_DOD_BOMBSREMAINING].getIntPointer(pRes);
 	}
 
 private:

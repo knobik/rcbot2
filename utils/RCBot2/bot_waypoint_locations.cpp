@@ -469,7 +469,7 @@ void CWaypointLocations :: FindNearestBlastInBucket ( int i, int j, int k, const
 	dataUnconstArray<int> *arr = &(m_iLocations[i][j][k]);
 	short int size = (short int)arr->Size();
 	
-	for ( int l = 0; l < size; l ++ )
+	for ( register short int l = 0; l < size; l ++ )
 	//while ( !tempStack.IsEmpty() )
 	{
 		iSelectedIndex = arr->ReturnValueFromIndex(l);//tempStack.ChooseFromStack();
@@ -497,9 +497,9 @@ void CWaypointLocations :: FindNearestBlastInBucket ( int i, int j, int k, const
 				continue;
 		}
 
-		if ( curr_wpt->distanceFrom(vOrigin) < BLAST_RADIUS )
+		if ( curr_wpt->distanceFrom(vOrigin) < (BLAST_RADIUS*2) )
 		{
-			if ( (fDist = curr_wpt->distanceFrom(vSrc)) < *pfMinDist )
+			if ( (fDist = (curr_wpt->distanceFrom(vSrc)+curr_wpt->distanceFrom(vOrigin))) < *pfMinDist )
 			{
 				bAdd = false;
 				

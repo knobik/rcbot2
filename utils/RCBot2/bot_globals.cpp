@@ -195,6 +195,55 @@ edict_t *CBotGlobals :: findPlayerByTruncName ( const char *name )
 	return NULL;
 }
 
+class CTraceFilterHitAllExceptPlayers : public CTraceFilter
+{
+public:
+	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
+	{ 
+		return pServerEntity->GetRefEHandle().GetEntryIndex() <= gpGlobals->maxClients; 
+	}
+};
+
+//-----------------------------------------------------------------------------
+// traceline methods
+//-----------------------------------------------------------------------------
+class CTraceFilterSimple : public CTraceFilter
+{
+public:
+	
+	CTraceFilterSimple( const IHandleEntity *passentity, int collisionGroup )
+	{
+		m_pPassEnt = passentity;
+		m_collisionGroup = collisionGroup;
+	}
+	virtual bool ShouldHitEntity( IHandleEntity *pHandleEntity, int contentsMask )
+	{
+		if ( m_pPassEnt == pHandleEntity )
+			return false;
+		return true;
+	}
+	virtual void SetPassEntity( const IHandleEntity *pPassEntity ) { m_pPassEnt = pPassEntity; }
+	virtual void SetCollisionGroup( int iCollisionGroup ) { m_collisionGroup = iCollisionGroup; }
+
+	const IHandleEntity *GetPassEntity( void ){ return m_pPassEnt;}
+
+private:
+	const IHandleEntity *m_pPassEnt;
+	int m_collisionGroup;
+};
+
+
+bool CBotGlobals :: isVisibleHitAllExceptPlayer ( edict_t *pPlayer, Vector vSrc, Vector vDest)
+{
+	const IHandleEntity *ignore = pPlayer->GetIServerEntity();
+
+	CTraceFilterSimple traceFilter( ignore, MASK_ALL );
+
+	traceLine (vSrc,vDest,MASK_ALL,&traceFilter);
+
+	return (traceVisible(NULL));
+}
+
 bool CBotGlobals :: isVisible ( edict_t *pPlayer, Vector vSrc, Vector vDest)
 {
 	CTraceFilterWorldAndPropsOnly filter;

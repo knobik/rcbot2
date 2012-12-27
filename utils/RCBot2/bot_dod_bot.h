@@ -31,13 +31,12 @@
 #ifndef __DOD_RCBOT_H__
 #define __DOD_RCBOT_H__
 
-#define DOD_MAPTYPE_FLAG 0
-#define DOD_MAPTYPE_BOMB 1
-
 #define TEAM_ALLIES 2
 #define TEAM_AXIS 3
 
-#define SMOKE_RADIUS 128
+#define MAX_GREN_THROW_DIST 1024.0f
+
+#define SMOKE_RADIUS 150.0f
 
 typedef enum
 {
@@ -93,7 +92,7 @@ typedef struct
 {
 	float fLastTime;
 	float fProb;
-	bool bLastResult;
+	bool bVisible;
 	bool bInSmoke;
 }smoke_t;
 
@@ -160,7 +159,7 @@ public:
 
 	bool isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck );
 
-	void grenadeThrown () { voiceCommand(DOD_VC_FIRE_IN_THE_HOLE); }
+	void grenadeThrown () { addVoiceCommand(DOD_VC_FIRE_IN_THE_HOLE); }
 
 private:
 

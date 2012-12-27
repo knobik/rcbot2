@@ -94,6 +94,7 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	//static float fDist;
 	static const char *szClassname;
 	static bool bNoDraw;
+	static float fSmokeTime;
 
 	CBot::setVisible(pEntity,bVisible);
 
@@ -134,29 +135,39 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 
 	if ( !bNoDraw && (pEntity != m_pNearestSmokeToEnemy) && (strncmp(szClassname,"grenade_smoke",13) == 0) )
 	{
-		if ( !m_pNearestSmokeToEnemy )
+		fSmokeTime = gpGlobals->curtime - CClassInterface::getSmokeSpawnTime(pEntity);
+
+		if ( (fSmokeTime >= 1.0f) && (fSmokeTime <= 10.0f) )
 		{
-			m_pNearestSmokeToEnemy = pEntity;
-		}
-		else if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
-		{
-			if ( (distanceFrom(pEntity) < distanceFrom(m_pNearestSmokeToEnemy)) || 
-				(distanceFrom(pEntity) < (distanceFrom(m_pEnemy)+SMOKE_RADIUS)) )
+			if ( !m_pNearestSmokeToEnemy )
 			{
-				// math time - good lord!
-				// choose the best smoke that is worthwhile for checking enemy
-				if ( m_pNearestSmokeToEnemy && (fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(pEntity))-
-						  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy))) <=
-					 fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(m_pNearestSmokeToEnemy))-
-						  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy)))) )
+				m_pNearestSmokeToEnemy = pEntity;
+			}
+			else if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+			{
+				if ( (distanceFrom(pEntity) < distanceFrom(m_pNearestSmokeToEnemy)) || 
+					(distanceFrom(pEntity) < (distanceFrom(m_pEnemy)+SMOKE_RADIUS)) )
 				{
-					m_pNearestSmokeToEnemy = pEntity;
+					// math time - good lord!
+					// choose the best smoke that is worthwhile for checking enemy
+					if ( m_pNearestSmokeToEnemy && (fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(pEntity))-
+							  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy))) <=
+						 fabs(DotProductFromOrigin(CBotGlobals::entityOrigin(m_pNearestSmokeToEnemy))-
+							  DotProductFromOrigin(CBotGlobals::entityOrigin(m_pEnemy)))) )
+					{
+						m_pNearestSmokeToEnemy = pEntity;
+					}
 				}
 			}
 		}
 	}
-	else if ( bNoDraw && (pEntity == m_pNearestSmokeToEnemy) )
-		m_pNearestSmokeToEnemy = NULL;
+	else if ( pEntity == m_pNearestSmokeToEnemy )
+	{
+		fSmokeTime = gpGlobals->curtime - CClassInterface::getSmokeSpawnTime(pEntity);
+
+		if ( bNoDraw || ((fSmokeTime < 1.0f) || (fSmokeTime > 10.0f)) )
+			m_pNearestSmokeToEnemy = NULL;
+	}
 }
 
 void CDODBot :: selectedClass ( int iClass )
@@ -492,7 +503,7 @@ void CDODBot :: modThink ()
 
 	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict);
 
-	setMoveSpeed(fMaxSpeed/2);
+	setMoveSpeed(fMaxSpeed*0.75f);
 	
 	m_iClass = (DOD_Class)CClassInterface::getPlayerClassDOD(m_pEdict);	
 	m_iTeam = getTeam();
@@ -1213,7 +1224,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.01f);
 
 	// I have an enemy 
-	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.8f);
+	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.81f);
 
 	if ( CDODMod::m_Flags.getNumFlags() > 0 )
 	{
@@ -1289,7 +1300,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		// if within throw distance and outside balst radius, I can throw it
 		if ( (!pBotWeapon->isExplosive() || (fDistance > BLAST_RADIUS)) && ( fDistance < 1500 ) )
 		{
-			ADD_UTILITY_WEAPON(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,0.75f + ( (1.0f - getHealthPercent()) * 0.25f),pBotWeapon);
+			ADD_UTILITY_WEAPON(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,0.85f + ( (1.0f - getHealthPercent()) * 0.15f),pBotWeapon);
 		}
 	}
 
@@ -1399,10 +1410,11 @@ bool CDODBot :: isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck )
 {
 	//if ( isVisible(pCheck) )
 //{
-	static float fDist;
+	static float fSmokeDist,fDist;
 	static smoke_t *smokeinfo;
 	static float fTime, fProb;
 	static Vector vSmoke;
+	static Vector vCheckComp;
 
 	static short int iSlot;
 
@@ -1416,37 +1428,61 @@ bool CDODBot :: isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck )
 		// last time i checked was long enough ago
 		if ( smokeinfo->fLastTime < engine->Time() )
 		{
-			vSmoke = CBotGlobals::entityOrigin(pSmoke);
-			fDist = distanceFrom(vSmoke);
+			smokeinfo->bVisible = true;
+			smokeinfo->bInSmoke = false;
+			//fTime = gpGlobals->curtime - CClassInterface::getSmokeSpawnTime(pSmoke);
 
-			// I'm outside smoke -- but maybe the enemy is inside the smoke
-			if ( fDist > SMOKE_RADIUS )
-				fDist = (CBotGlobals::entityOrigin(pCheck) - vSmoke).Length();
-			
-			fTime = gpGlobals->curtime - CClassInterface::getSmokeSpawnTime(pSmoke);
+			//if ( (fTime > 1.0f) && (fTime < 10.0f) )
+			//{
+				vSmoke = CBotGlobals::entityOrigin(pSmoke);
+				fSmokeDist = distanceFrom(vSmoke);
 
-			if ( (fTime > 1.0f) && (fTime < 10.0f) ) 
-				// smoke gets heavy at 1.0 seconds and diminishes at 10 secs
-			{
-				smokeinfo->fProb = 1.0f-(fDist/SMOKE_RADIUS);
-				smokeinfo->bLastResult = (randomFloat(0.0f,0.5f) > smokeinfo->fProb ); 
-				// smoke gets pretty heavy half way into the smoke grenade
-				smokeinfo->bInSmoke = true;
-			}
-			else
-				smokeinfo->bInSmoke = false;
+				// I'm outside smoke -- but maybe the enemy is inside the smoke
+				if ( fSmokeDist > SMOKE_RADIUS )
+				{
+					fDist = (CBotGlobals::entityOrigin(pCheck) - vSmoke).Length();
+
+					// enemy outside the smoke radius
+					if ( fDist > SMOKE_RADIUS )
+					{
+						// check if enemy is behind the smoke from my perspective
+						vCheckComp = CBotGlobals::entityOrigin(pCheck) - getOrigin();
+						vCheckComp = (vCheckComp / vCheckComp.Length())*fSmokeDist;
+
+						fDist = (vSmoke - (getOrigin() + vCheckComp)).Length();
+
+						//if ( fDist > SMOKE_RADIUS )
+						// visible
+					}
+				}
+				else
+					fDist = fSmokeDist;
+
+				if ( fDist <= SMOKE_RADIUS ) 
+					// smoke gets heavy at 1.0 seconds and diminishes at 10 secs
+				{
+					smokeinfo->fProb = 1.0f-(fDist/SMOKE_RADIUS);
+					smokeinfo->bVisible = (randomFloat(0.0f,0.33f) > smokeinfo->fProb ); 
+					// smoke gets pretty heavy half way into the smoke grenade
+					smokeinfo->bInSmoke = true;
+				}
+				
+					
+			//}
+			//else
+			//	smokeinfo->bInSmoke = false;
+
+			#ifdef _DEBUG
+				if ( CClients::clientsDebugging(BOT_DEBUG_THINK) )
+					CClients::clientDebugMsg(this,BOT_DEBUG_THINK,"Smoke Test (%s to %s) = %s",m_szBotName,engine->GetPlayerNetworkIDString(pCheck),smokeinfo->bVisible ? "visible" : "invisible");
+			#endif
+
 		}
 
-		if ( smokeinfo->bInSmoke == false )
-			smokeinfo->bLastResult = true;
+		// check again soon (typical reaction time delay)
+		smokeinfo->fLastTime = engine->Time() + randomFloat(0.15f,0.3f);
 
-		// check again soon (not every frame)
-		if ( smokeinfo->bLastResult )
-			smokeinfo->fLastTime = engine->Time() + randomFloat(0.0f,0.1f);
-		else
-			smokeinfo->fLastTime = engine->Time() + randomFloat(0.1f,0.2f);
-
-		return smokeinfo->bLastResult;
+		return smokeinfo->bVisible;
 
 	}
 

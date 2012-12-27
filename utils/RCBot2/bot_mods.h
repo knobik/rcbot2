@@ -40,6 +40,10 @@
 
 #define MAX_CAP_POINTS 32
 
+#define DOD_MAPTYPE_FLAG 0
+#define DOD_MAPTYPE_BOMB 1
+
+
 #include <vector>
 using namespace std;
 
@@ -280,6 +284,11 @@ public:
 	void clientCommand ( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 );
 
 	static float getMapStartTime ();
+
+	static bool isBombMap () { return m_iMapType == DOD_MAPTYPE_BOMB; }
+	static bool isFlagMap () { return m_iMapType == DOD_MAPTYPE_FLAG; }
+
+
 protected:
 
 	void initMod ();
@@ -292,6 +301,7 @@ protected:
 	static edict_t *m_pPlayerResourceEntity;
 	static edict_t *m_pGameRules;
 	static float m_fMapStartTime;
+	static int m_iMapType;
 
 	//virtual void entitySpawn ( edict_t *pEntity );
 

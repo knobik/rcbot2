@@ -135,6 +135,7 @@ public:
 	static Vector upVec ();*/
 	////////
 	static trace_t *getTraceResult () { return &m_TraceResult; }
+	static bool isVisibleHitAllExceptPlayer ( edict_t *pPlayer, Vector vSrc, Vector vDest);
 	static bool isVisible ( edict_t *pPlayer, Vector vSrc, Vector vDest);
 	static bool isVisible ( edict_t *pPlayer, Vector vSrc, edict_t *pDest);
 	static bool isVisible ( Vector vSrc, Vector vDest);

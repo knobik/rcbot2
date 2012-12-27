@@ -890,7 +890,7 @@ void CBot :: updateConditions ()
 				m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
 				m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
 
-				pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),1024.0,-1,true,true,false,false,0,false));
+				pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),8192.0,-1,true,true,false,false,0,false));
 				
 				if ( pWpt )
 					m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
@@ -936,12 +936,15 @@ void CBot :: updateConditions ()
 // Called when working out route
 bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint )
 {
+	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_UNREACHABLE) ) 
+		return false;
+
 	if ( !pWaypoint->forTeam(getTeam()) )
 		return false;
 
 	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_OPENS_LATER) )
 	{
-		if ( !CBotGlobals::isVisible(m_pEdict,vPrevWaypoint,pWaypoint->getOrigin()) )
+		if ( !CBotGlobals::isVisibleHitAllExceptPlayer(m_pEdict,vPrevWaypoint,pWaypoint->getOrigin()) )
 			return false;
 	}
 
@@ -1245,8 +1248,23 @@ void CBot :: findEnemy ( edict_t *pOldEnemy )
 {
 	m_pFindEnemyFunc->init();
 
-	if ( pOldEnemy ) 
+	if ( isEnemy(pOldEnemy) ) 
 		m_pFindEnemyFunc->setOldEnemy(pOldEnemy);
+	/*else if ( CBotGlobals::entityIsAlive(pOldEnemy) ) /// lost enemy
+	{
+		CWaypoint *pWpt;
+
+		m_fLastSeeEnemy = engine->Time();
+		m_pLastEnemy = pOldEnemy;
+		m_fLastUpdateLastSeeEnemy = engine->Time() + 0.1f;
+		m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
+		m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
+
+		pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),8192.0,-1,true,true,false,false,0,false));
+		
+		if ( pWpt )
+			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
+	}*/
 
 	m_pVisibles->eachVisible(m_pFindEnemyFunc);
 
@@ -1766,7 +1784,7 @@ void CBot :: getLookAtVector ()
 			if ( m_pNavigator->nextPointIsOnLadder() )
 				setLookAt(m_pNavigator->getNextPoint()+Vector(0,0,64));
 			else if ( m_pLastEnemy && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && (m_fLastSeeEnemy>0) )
-				setLookAt(m_vLastSeeEnemyBlastWaypoint);
+				setLookAt(m_vLastSeeEnemy);
 			else if ( (m_fCurrentDanger > 15.0f) && m_pNavigator->getDangerPoint(&vLook) )
 				setLookAt(vLook + Vector(0,0,36.0f));
 			else if ( m_pNavigator->getNextRoutePoint(&vLook) )
