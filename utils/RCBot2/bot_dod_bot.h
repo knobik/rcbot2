@@ -38,6 +38,16 @@
 
 #define SMOKE_RADIUS 150.0f
 
+class CBroadcastBombPlanted : public IBotFunction
+{
+public:
+	CBroadcastBombPlanted ( int iCP, int iTeam ) { m_iCP = iCP; m_iTeam = iTeam; };
+	void execute (CBot *pBot);
+private:
+	int m_iCP;
+	int m_iTeam;
+};
+
 typedef enum
 {
    DOD_VC_GOGOGO = 0,
@@ -87,6 +97,7 @@ typedef enum
 }DOD_Class;
 
 #define DOD_CLASSNAME_CONTROLPOINT "dod_control_point"
+#define DOD_CLASSNAME_BOMBTARGET "dod_bomb_target"
 
 typedef struct
 {
@@ -102,6 +113,10 @@ class CDODBot : public CBot
 public:
 
 	bool isDOD () { return true; }
+
+	bool hasBomb () { return m_bHasBomb; }
+	void removeBomb () { m_bHasBomb = false; }
+	void bombPlanted ( int iCP, int iTeam );
 
 	void modThink ();
 
@@ -200,10 +215,12 @@ private:
 
 	float m_fChangeClassTime;
 	bool m_bCheckClass;
+	bool m_bHasBomb;
 
 	smoke_t m_CheckSmoke[MAX_PLAYERS];
 
 	float m_fDeployMachineGunTime;
+	edict_t *m_pNearestBomb;
 	// blah blah
 };
 

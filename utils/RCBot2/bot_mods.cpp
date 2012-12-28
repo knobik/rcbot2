@@ -65,6 +65,7 @@ CDODFlags CDODMod::m_Flags;
 edict_t * CDODMod::m_pPlayerResourceEntity = NULL;
 float CDODMod::m_fMapStartTime = 0.0f;
 edict_t * CDODMod::m_pGameRules = NULL;
+int CDODMod::m_iMapType = 0;
 
 extern ConVar bot_use_disp_dist;
 
@@ -288,7 +289,7 @@ int CTeamFortress2Mod ::getHighestScore ()
 	short int i = 0;
 	edict_t *edict;
 
-	for ( i = 0; i < gpGlobals->maxClients; i ++ )
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
 	{
 		edict = INDEXENT(i);
 
@@ -1164,6 +1165,7 @@ void CDODMod :: mapInit ()
 	m_pPlayerResourceEntity = NULL;
 	m_Flags.init();
 	m_fMapStartTime = engine->Time();
+	m_iMapType = DOD_MAPTYPE_UNKNOWN;
 }
 
 
@@ -1204,11 +1206,6 @@ int CDODMod::getHighestScore ()
 }
 
 
-bool CDODFlags :: isFlag ( edict_t *pent )
-{
-	return getFlagID(pent) != -1;
-}
-
 bool CDODFlags::getRandomEnemyControlledFlag ( Vector *position, int iTeam, int *id )
 {
 	vector<int> iPossible;
@@ -1241,6 +1238,97 @@ bool CDODFlags::getRandomEnemyControlledFlag ( Vector *position, int iTeam, int 
 
 	return (iPossible.size()>0);
 }
+
+bool CDODFlags::getRandomBombToDefuse  ( Vector *position, int iTeam, edict_t **pBombTarget, int *id )
+{
+	vector<int> iPossible;
+	short int j;
+	int selection;
+
+	if ( id )
+		*id = -1;
+
+	// more possibility to return bomb targets with no bomb already
+	for ( short i = 0; i < m_iNumControlPoints; i ++ )
+	{
+		if ( (m_iOwner[i] == iTeam) && isBombPlanted(i) && !isBombBeingDefused(i) && (m_pBombs[i] != NULL) )
+			for ( j = 0; j < getNumBombsRequired(i); j ++ ) { iPossible.push_back(i); }
+	}
+
+	if ( iPossible.size() > 0 )
+	{
+		selection = iPossible[randomInt(0,iPossible.size()-1)];
+
+		*position = CBotGlobals::entityOrigin(m_pBombs[selection]);
+		*pBombTarget = m_pBombs[selection];
+
+		if ( id ) // area of the capture point
+			*id = selection;
+	}
+
+	return (iPossible.size()>0);
+}
+
+bool CDODFlags:: getRandomBombToDefend ( Vector *position, int iTeam, edict_t **pBombTarget, int *id )
+{
+	vector<int> iPossible;
+	short int j;
+	int selection;
+
+	if ( id )
+		*id = -1;
+
+	// more possibility to return bomb targets with no bomb already
+	for ( short i = 0; i < m_iNumControlPoints; i ++ )
+	{
+		if ( (m_iOwner[i] != iTeam) && isBombPlanted(i) && (m_pBombs[i] != NULL) )
+			for ( j = 0; j < getNumBombsRequired(i); j ++ ) { iPossible.push_back(i); }
+	}
+
+	if ( iPossible.size() > 0 )
+	{
+		selection = iPossible[randomInt(0,iPossible.size()-1)];
+
+		*position = CBotGlobals::entityOrigin(m_pBombs[selection]);
+		*pBombTarget = m_pBombs[selection];
+
+		if ( id ) // area of the capture point
+			*id = selection;
+	}
+
+	return (iPossible.size()>0);
+}
+
+bool CDODFlags:: getRandomBombToPlant ( Vector *position, int iTeam, edict_t **pBombTarget, int *id )
+{
+	vector<int> iPossible;
+	short int j;
+	int selection;
+
+	if ( id )
+		*id = -1;
+
+	// more possibility to return bomb targets with no bomb already
+	for ( short i = 0; i < m_iNumControlPoints; i ++ )
+	{
+		if ( (m_iOwner[i] != iTeam) && !isBombPlanted(i) && (m_pBombs[i] != NULL) )
+			for ( j = 0; j < getNumBombsRequired(i); j ++ ) { iPossible.push_back(i); }
+	}
+
+	if ( iPossible.size() > 0 )
+	{
+		selection = iPossible[randomInt(0,iPossible.size()-1)];
+
+		*position = CBotGlobals::entityOrigin(m_pBombs[selection]);
+		*pBombTarget = m_pBombs[selection];
+
+		if ( id ) // area of the capture point
+			*id = selection;
+	}
+
+	return (iPossible.size()>0);
+}
+
 
 bool CDODFlags::getRandomTeamControlledFlag ( Vector *position, int iTeam, int *id )
 {
@@ -1276,30 +1364,36 @@ bool CDODFlags::getRandomTeamControlledFlag ( Vector *position, int iTeam, int *
 	return (iPossible.size()>0);
 }
 
-void CDODFlags::setup(edict_t *pResourceEntity)
+void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)
 {
 	m_iNumControlPoints = 0;
 
+	memset(m_bBombPlanted,0,sizeof(bool)*MAX_DOD_FLAGS); // all false
+
 	if ( pResourceEntity )
-	{
+	{  
 		// get the arrays from the resource entity
 		CClassInterface::getDODFlagInfo(pResourceEntity,&m_iNumAxis,&m_iNumAllies,&m_iOwner,&m_iAlliesReqCappers,&m_iAxisReqCappers);
+		CClassInterface::getDODBombInfo(pResourceEntity,&m_bBombPlanted_Unreliable,&m_iBombsRequired,&m_iBombsRemaining,&m_bBombBeingDefused);
 		m_iNumControlPoints = CClassInterface::getDODNumControlPoints(pResourceEntity);
 		// get the Capture point positions
 		m_vCPPositions = CClassInterface::getDODCP_Positions(pResourceEntity);
+
 	}
 
-	// find the edicts of the flags using the origin and classname
-	if ( m_iNumControlPoints > 0 )
-	{
-		int i;
-		int j;
+	short int i,j;
 
+	// find the edicts of the flags using the origin and classname
+
+	for ( j = 0; j < m_iNumControlPoints; j ++ )
+	{
 		edict_t *pent;
 
 		Vector vOrigin;
 
-		for ( i = gpGlobals->maxClients+1; i < gpGlobals->maxEntities; i ++ )
+		i = gpGlobals->maxClients;
+
+		while ( (++i < gpGlobals->maxEntities) && (( m_pFlags[j] == NULL ) || ((iMapType == DOD_MAPTYPE_BOMB)&&(m_pBombs[j]==NULL))) )
 		{
 			pent = INDEXENT(i);
 
@@ -1310,17 +1404,21 @@ void CDODFlags::setup(edict_t *pResourceEntity)
 			{
 				vOrigin = CBotGlobals::entityOrigin(pent);
 
-				for ( j = 0; j < m_iNumControlPoints; j ++ )
-				{
-					if ( vOrigin == m_vCPPositions[j] )
-					{
-						m_pFlags[j] = pent;
-						break;
-					}
-				}
+				if ( vOrigin == m_vCPPositions[j] )
+					m_pFlags[j] = pent;
+			}
+			else if ( ( iMapType == DOD_MAPTYPE_BOMB ) && ( strcmp(pent->GetClassName(),DOD_CLASSNAME_BOMBTARGET) == 0 ) )
+			{
+				vOrigin = CBotGlobals::entityOrigin(pent);
+
+				if ( (vOrigin - m_vCPPositions[j]).Length() < 128 )
+					m_pBombs[j] = pent;
 			}
 		}
 	}
+
+		m_iNumAxisBombsOnMap = getNumPlantableBombs(TEAM_AXIS);
+		m_iNumAlliesBombsOnMap = getNumPlantableBombs(TEAM_ALLIES);
 }
 
 int CDODMod ::getScore(edict_t *pPlayer)
@@ -1342,7 +1440,16 @@ void CDODMod ::roundStart()
 	if ( !m_pGameRules )
 		m_pGameRules = CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1, "CDODGameRulesProxy");
 
-	m_Flags.setup(m_pResourceEntity);
+	if ( m_iMapType == DOD_MAPTYPE_UNKNOWN )
+	{
+		if ( CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1,"CDODBombDispenserMapIcon") != NULL )
+			m_iMapType = DOD_MAPTYPE_BOMB;
+		else
+			m_iMapType = DOD_MAPTYPE_FLAG;
+	}
+
+	m_Flags.setup(m_pResourceEntity,m_iMapType);
+
 	//m_Flags.updateAll();
 }
 

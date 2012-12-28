@@ -40,8 +40,9 @@
 
 #define MAX_CAP_POINTS 32
 
-#define DOD_MAPTYPE_FLAG 0
-#define DOD_MAPTYPE_BOMB 1
+#define DOD_MAPTYPE_UNKNOWN 0 
+#define DOD_MAPTYPE_FLAG 1
+#define DOD_MAPTYPE_BOMB 2
 
 
 #include <vector>
@@ -164,7 +165,15 @@ public:
 		m_iNumAllies = NULL;
 		m_iNumAxis = NULL;
 		m_iOwner = NULL;
+		m_bBombPlanted_Unreliable = NULL;
+		m_iBombsRequired = NULL;
+		m_iBombsRemaining = NULL;
+		m_bBombBeingDefused = NULL;
+		m_iNumAxisBombsOnMap = 0;
+		m_iNumAlliesBombsOnMap = 0;
+		memset(m_bBombPlanted,0,sizeof(bool)*MAX_DOD_FLAGS);
 		memset(m_pFlags,0,sizeof(edict_t*)*MAX_DOD_FLAGS);
+		memset(m_pBombs,0,sizeof(edict_t*)*MAX_DOD_FLAGS);
 	}
 
 	int getNumFlags () { return m_iNumControlPoints; }
@@ -181,10 +190,71 @@ public:
 		return count;
 	}
 
-	void setup (edict_t *pResourceEntity);
+	void setup (edict_t *pResourceEntity, int iMapType);
 
 	bool getRandomEnemyControlledFlag ( Vector *position, int iTeam, int *id = NULL );
 	bool getRandomTeamControlledFlag ( Vector *position, int iTeam, int *id = NULL );
+
+	bool getRandomBombToDefuse ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
+	bool getRandomBombToPlant ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
+	bool getRandomBombToDefend ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
+
+	inline int getNumBombsToDefend ( int iTeam )
+	{
+		int count = 0;
+
+		for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+		{
+			if ( canDefendBomb(iTeam,i) )
+				count++;
+		}
+
+		return count;
+	}
+
+	inline int getNumBombsToDefuse ( int iTeam )
+	{
+		int count = 0;
+
+		for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+		{
+			if ( canDefuseBomb(iTeam,i) )
+				count++;
+		}
+
+		return count;
+	}
+
+	inline int getNumPlantableBombs (int iTeam)
+	{
+		int count = 0;
+
+		for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+		{
+			if ( canPlantBomb(iTeam,i) )
+				count += getNumBombsRequired(i);
+		}
+
+		return count;
+	}
+
+	inline void setBombPlanted ( int id, bool val )
+	{
+		m_bBombPlanted[id] = val;
+	}
+
+	inline int getNumBombsToPlant ( int iTeam)
+	{
+		int count = 0;
+
+		for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+		{
+			if ( canPlantBomb(iTeam,i) )
+				count += getNumBombsRemaining(i);
+		}
+
+		return count;
+	}
 
 	inline bool ownsFlag ( edict_t *pFlag, int iTeam ) { return ownsFlag(getFlagID(pFlag),iTeam); }
 	inline bool ownsFlag ( int iFlag, int iTeam )
@@ -217,6 +287,73 @@ public:
 		return (iTeam == TEAM_ALLIES) ? (m_iAlliesReqCappers[iFlag]) : (m_iAxisReqCappers[iFlag]);
 	}
 
+	inline bool isBombPlanted ( int iId )
+	{
+		if ( iId == -1 )
+			return false;
+
+		return m_bBombPlanted[iId];
+	}
+
+	inline bool isBombPlanted ( edict_t *pBomb )
+	{
+		return isBombPlanted(getBombID(pBomb));
+	}
+
+	inline bool canDefendBomb ( int iTeam, int iId )
+	{
+		return ((m_pBombs[iId]!=NULL)&&(m_iOwner[iId]!=iTeam) && isBombPlanted(iId));
+	}
+
+	inline bool canDefuseBomb ( int iTeam, int iId )
+	{
+		return ((m_pBombs[iId]!=NULL)&&(m_iOwner[iId]==iTeam) && isBombPlanted(iId));
+	}
+
+	inline bool canPlantBomb ( int iTeam, int iId )
+	{
+		return ((m_pBombs[iId]!=NULL)&&(m_iOwner[iId]!=iTeam) && !isBombPlanted(iId));
+	}
+
+	inline int getNumBombsRequired ( int iId )
+	{
+		if ( iId == -1 )
+			return false;
+
+		return m_iBombsRequired[iId];
+	}
+
+	inline int getNumBombsRequired ( edict_t *pBomb )
+	{
+		return getNumBombsRequired(getBombID(pBomb));
+	}
+
+	inline int getNumBombsRemaining ( int iId )
+	{
+		if ( iId == -1 )
+			return false;
+
+		return m_iBombsRemaining[iId];
+	}
+
+	inline int getNumBombsRemaining ( edict_t *pBomb )
+	{
+		return getNumBombsRemaining(getBombID(pBomb));
+	}
+
+	inline bool isBombBeingDefused ( int iId )
+	{
+		if ( iId == -1 )
+			return false;
+
+		return m_bBombBeingDefused[iId];
+	}
+
+	inline bool isBombBeingDefused ( edict_t *pBomb )
+	{
+		return isBombBeingDefused(getBombID(pBomb));
+	}
+
 	inline int numEnemiesAtCap ( edict_t *pFlag, int iTeam ) { return numEnemiesAtCap(getFlagID(pFlag),iTeam); }
 
 	inline int numFriendliesAtCap ( edict_t *pFlag, int iTeam ) { return numFriendliesAtCap(getFlagID(pFlag),iTeam); }
@@ -239,7 +376,7 @@ public:
 
 	inline int getFlagID ( edict_t *pent )
 	{
-		for ( short i = 0; i < m_iNumControlPoints; i ++ )
+		for ( short int i = 0; i < m_iNumControlPoints; i ++ )
 		{
 			if ( m_pFlags[i] == pent )
 				return i;
@@ -248,10 +385,37 @@ public:
 		return -1;
 	}
 
-	bool isFlag ( edict_t *pent );
+	inline int getBombID ( edict_t *pent )
+	{
+		for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+		{
+			if ( m_pBombs[i] == pent )
+				return i;
+		}
+
+		return -1;
+	}
+
+	inline bool isFlag ( edict_t *pent )
+	{
+		return getFlagID(pent) != -1;
+	}
+
+	inline bool isBomb ( edict_t *pent )
+	{
+		return getBombID(pent) != -1;
+	}
+
+	inline int getNumBombsOnMap ( int iTeam )
+	{
+		if ( iTeam == TEAM_ALLIES )
+			return m_iNumAlliesBombsOnMap;
+		return m_iNumAxisBombsOnMap;
+	}
 
 private:
 	edict_t *m_pFlags[MAX_DOD_FLAGS];
+	edict_t *m_pBombs[MAX_DOD_FLAGS];
 
 	int m_iNumControlPoints;
 	Vector *m_vCPPositions;
@@ -261,6 +425,15 @@ private:
 	int *m_iNumAllies;
 	int *m_iNumAxis;
 	int *m_iOwner;
+
+	// reply on this one
+	bool *m_bBombPlanted_Unreliable;
+    bool m_bBombPlanted[MAX_DOD_FLAGS];
+	int *m_iBombsRequired;
+	int *m_iBombsRemaining;
+	bool *m_bBombBeingDefused;
+	int m_iNumAlliesBombsOnMap;
+	int m_iNumAxisBombsOnMap;
 };
 
 class CDODMod : public CBotMod

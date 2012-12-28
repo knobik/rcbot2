@@ -424,6 +424,54 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CDODBombExploded : public CBotEvent
+{
+public:
+	CDODBombExploded()
+	{
+		setType("dod_bomb_exploded");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CDODBombPlanted : public CBotEvent
+{
+public:
+	CDODBombPlanted()
+	{
+		setType("dod_bomb_planted");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CDODBombDefused : public CBotEvent
+{
+public:
+	CDODBombDefused()
+	{
+		setType("dod_bomb_defused");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CDODPointCaptured : public CBotEvent
+{
+public:
+	CDODPointCaptured()
+	{
+		setType("dod_point_captured");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CDODChangeClass : public CBotEvent
 {
 public:

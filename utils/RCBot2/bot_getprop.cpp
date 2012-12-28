@@ -392,6 +392,8 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_BOMBSREQ,"CDODObjectiveResource","m_iBombsRequired",0);
 		DEFINE_GETPROP(GETPROP_DOD_BOMBSDEFUSED,"CDODObjectiveResource","m_bBombBeingDefused",0);
 		DEFINE_GETPROP(GETPROP_DOD_BOMBSREMAINING,"CDODObjectiveResource","m_iBombsRemaining",0);
+		DEFINE_GETPROP(GETPROP_DOD_PLANTINGBOMB,"CDODPlayer","m_bPlanting",0);
+		DEFINE_GETPROP(GETPROP_DOD_DEFUSINGBOMB,"CDODPlayer","m_bDefusing",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

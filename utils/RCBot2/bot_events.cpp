@@ -575,6 +575,43 @@ void CFlagCaptured :: execute ( IBotEventInterface *pEvent )
 
 }
 /////////////////////////////////////////////////
+void CDODBombExploded :: execute ( IBotEventInterface *pEvent )
+{
+	int cp = pEvent->getInt("cp");
+
+	CDODMod::m_Flags.setBombPlanted(cp,false);
+}
+
+void CDODBombDefused :: execute ( IBotEventInterface *pEvent )
+{
+	int cp = pEvent->getInt("cp");
+
+	CDODMod::m_Flags.setBombPlanted(cp,false);
+}
+
+void CDODBombPlanted :: execute ( IBotEventInterface *pEvent )
+{
+	int cp = pEvent->getInt("cp");
+	int team = pEvent->getInt("team");
+
+	CBroadcastBombPlanted func(cp,team);
+
+	if ( m_pActivator )
+	{
+		CBot *pBot;
+
+		if ( (pBot = CBots::getBotPointer(m_pActivator)) != NULL )
+		{
+			// hack
+			((CDODBot*)pBot)->removeBomb();
+		}
+	}
+
+	CBots::botFunction(&func);
+
+	CDODMod::m_Flags.setBombPlanted(cp,true);
+
+}
 
 void CDODRoundStart :: execute ( IBotEventInterface *pEvent )
 {
@@ -656,6 +693,9 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CPlayerHealed());
 	addEvent(new CPlayerTeleported());
 	addEvent(new CDODChangeClass());
+	addEvent(new CDODBombPlanted());
+	addEvent(new CDODBombExploded());
+	addEvent(new CDODBombDefused());
 	
 /*
 pumpkin_lord_summoned 
@@ -731,7 +771,7 @@ void CBotEvents :: executeEvent( void *pEvent, eBotEventType iType )
 		//if ( ( iType != TYPE_IGAMEEVENT ) && pFound->hasEventId() )
 		//	bFound = pFound->isEventId(iEventId);
 		//else
-		bFound = pFound->isType(pInterface->getName());
+		bFound = pFound->forCurrentMod() && pFound->isType(pInterface->getName());
 
 		if ( bFound )	
 		{

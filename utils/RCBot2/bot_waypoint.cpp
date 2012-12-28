@@ -256,9 +256,23 @@ bool CWaypointNavigator :: randomDangerPath (Vector *vec)
 	short int i;
 	CWaypoint *pWpt;
 	CWaypoint *pNext;
+	CWaypoint *pOnRouteTo = NULL;
 
 	if ( m_iCurrentWaypoint == -1 )
 		return false;
+
+	if ( !m_currentRoute.IsEmpty() )
+	{
+		static int *head;
+		static CWaypoint *pW;
+		
+		head = m_currentRoute.GetHeadInfoPointer();
+
+		if ( head && (*head!= -1))
+		{
+			pOnRouteTo = CWaypoints::getWaypoint(*head);
+		}
+	}
 
 	pWpt = CWaypoints::getWaypoint(m_iCurrentWaypoint);
 	fTotal = 0;
@@ -267,6 +281,9 @@ bool CWaypointNavigator :: randomDangerPath (Vector *vec)
 	{
 		pNext = CWaypoints::getWaypoint(pWpt->getPath(i));
 		fBelief = getBelief(CWaypoints::getWaypointIndex(pNext));
+
+		if ( pNext == pOnRouteTo )
+			fBelief *= pWpt->numPaths();
 
 		if ( fBelief > fMaxDanger )
 			fMaxDanger = fBelief;
@@ -282,8 +299,12 @@ bool CWaypointNavigator :: randomDangerPath (Vector *vec)
 	for ( i = 0; i < pWpt->numPaths(); i ++ )
 	{
 		pNext = CWaypoints::getWaypoint(pWpt->getPath(i));
+		fBelief = getBelief(CWaypoints::getWaypointIndex(pNext));
 
-		fTotal += getBelief(CWaypoints::getWaypointIndex(pNext));
+		if ( pNext == pOnRouteTo )
+			fBelief *= pWpt->numPaths();
+
+		fTotal += fBelief;
 
 		if ( fRand < fTotal )
 		{

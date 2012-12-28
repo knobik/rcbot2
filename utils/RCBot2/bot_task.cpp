@@ -308,6 +308,64 @@ void CBotTF2WaitFlagTask :: debugString ( char *string )
 	sprintf(string,"Wait Flag (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
 }
 //////////
+CBotDODBomb :: CBotDODBomb ( int iBombType, int iBombID, edict_t *pBomb, Vector vPosition, int iPrevOwner )
+{
+	m_iType = iBombType;
+	m_iBombID = iBombID; m_fTime = 0;
+
+	if ( m_iBombID == -1 )
+		m_iBombID = CDODMod::m_Flags.getBombID(pBomb);
+
+	m_pBombTarget = pBomb;
+	m_vOrigin = vPosition;
+	m_iPrevTeam = iPrevOwner;
+}
+
+void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	pBot->wantToShoot(false);
+
+	if ( m_fTime == 0 )
+		m_fTime = engine->Time() + randomFloat(8.0f,12.0f);
+	else if ( m_fTime < engine->Time() )
+	{
+		fail();
+	}
+
+	if ( m_iType == DOD_BOMB_PLANT) 
+	{
+		if ( CDODMod::m_Flags.isBombPlanted(m_iBombID) )
+		{
+			complete();
+		}
+		//else if ( !CClassInterface::isPlayerPlantingBomb_DOD(pBot->getEdict()) )// it is still planted
+		//	complete(); // bomb is being defused by someone else - give up
+	}
+	else if ( m_iType == DOD_BOMB_DEFUSE)
+	{
+		if ( !CDODMod::m_Flags.isBombPlanted(m_iBombID) )
+			complete();
+		else if ( CDODMod::m_Flags.isBombBeingDefused(m_iBombID) && !CClassInterface::isPlayerDefusingBomb_DOD(pBot->getEdict()) )// it is still planted
+			complete(); // bomb is being defused by someone else - give up
+	}
+	
+	pBot->setLookVector(m_vOrigin);
+	pBot->setLookAtTask(LOOK_VECTOR);
+	
+	if ( pBot->distanceFrom(m_vOrigin) > 90 )
+		pBot->setMoveTo(m_vOrigin);
+	else
+	{
+		pBot->use();
+	}
+}
+
+void CBotDODBomb :: debugString ( char *string )
+{
+	sprintf(string,"CBotDODBomb %d %d %f %d",m_iType, m_iBombID,m_fTime,m_iPrevTeam);
+}
+
+//////////
 
 CBotDODAttackPoint :: CBotDODAttackPoint ( int iFlagID, Vector vOrigin, float fRadius )
 {
@@ -2546,9 +2604,9 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		pBot->setAiming(m_vAim);
 	}
 
-	fDist = pBot->distanceFrom(m_vOrigin);
+	fDist = (m_vOrigin - pBot->getOrigin()).Length2D();
 
-	if ( (fDist > 64) || (!bDeployedOrZoomed && (fDist > 40)) )
+	if ( (fDist > 24) || !bDeployedOrZoomed )
 	{
 		pBot->setMoveTo(m_vOrigin);
 		pBot->setMoveSpeed(CClassInterface::getMaxSpeed(pBot->getEdict())/8);

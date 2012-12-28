@@ -78,6 +78,8 @@ typedef enum
 	GETPROP_DOD_BOMBSREQ,
 	GETPROP_DOD_BOMBSDEFUSED,
 	GETPROP_DOD_BOMBSREMAINING,
+	GETPROP_DOD_PLANTINGBOMB,
+	GETPROP_DOD_DEFUSINGBOMB,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -119,6 +121,16 @@ public:
 			return defaultvalue; 
 		
 		return *((bool*)m_data); 
+	}
+
+	inline bool *getBoolPointer ( edict_t *edict ) 
+	{ 
+		getData(edict);  
+				
+		if ( !m_data ) 
+			return NULL; 
+
+		return ((bool*)m_data); 
 	}
 
 	inline float getFloat ( edict_t *edict, float defaultvalue ) 
@@ -323,6 +335,14 @@ public:
 		*m_iNumAxisReq = g_GetProps[GETPROP_DOD_CP_AXIS_REQ_CAP].getIntPointer(pResource);
 	}
 
+	inline static void 	getDODBombInfo ( edict_t *pResource, bool **m_bBombPlanted, int **m_iBombsRequired, int **m_iBombsRemaining, bool **m_bBombBeingDefused)
+	{
+		*m_bBombPlanted = g_GetProps[GETPROP_DOD_BOMBSPLANTED].getBoolPointer(pResource);
+		*m_iBombsRequired = g_GetProps[GETPROP_DOD_BOMBSREQ].getIntPointer(pResource);
+		*m_iBombsRemaining = g_GetProps[GETPROP_DOD_BOMBSREMAINING].getIntPointer(pResource);
+		*m_bBombBeingDefused = g_GetProps[GETPROP_DOD_BOMBSDEFUSED].getBoolPointer(pResource);
+	}
+
 	inline static int getDesPlayerClassDOD(edict_t *player) { return g_GetProps[GETPROP_DOD_DES_PLAYERCLASS].getInt(player,0); }
 
 	inline static bool isSniperWeaponZoomed (edict_t *weapon) { return g_GetProps[GETPROP_DOD_SNIPER_ZOOMED].getBool(weapon,false); }
@@ -405,6 +425,16 @@ public:
 	inline static int *getNumBombsRemaining ( edict_t *pRes )
 	{
 		return g_GetProps[GETPROP_DOD_BOMBSREMAINING].getIntPointer(pRes);
+	}
+
+	inline static bool isPlayerDefusingBomb_DOD(edict_t *pPlayer)
+	{
+		return g_GetProps[GETPROP_DOD_DEFUSINGBOMB].getBool(pPlayer,false);
+	}
+
+	inline static bool isPlayerPlantingBomb_DOD(edict_t *pPlayer)
+	{
+		return g_GetProps[GETPROP_DOD_PLANTINGBOMB].getBool(pPlayer,false);
 	}
 
 private:
