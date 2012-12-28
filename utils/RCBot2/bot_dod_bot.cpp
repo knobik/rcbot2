@@ -289,6 +289,8 @@ void CDODBot :: died ( edict_t *pKiller )
 
 void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon )
 {
+	static CWaypoint *pWpt;
+
 	if ( pKiller && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
 		if ( pWeapon )
@@ -318,12 +320,13 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 		m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
 		m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
 
-		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),1024.0,-1,true,true,false,false,0,false));
+		pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),1500.0f,-1,true,true,false,false,0,false));
 			
 		if ( pWpt )
+		{
 			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
-
-		updateCondition(CONDITION_CHANGED);
+			updateCondition(CONDITION_CHANGED);
+		}
 	}
 }
 
@@ -1353,6 +1356,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	static float fDefRate;
 	static int numPlayersOnTeam;
 	static int numClassOnTeam;
+	static bool bCheckCurrent;
 		// same thing as above except with bombs
 		static int iFlagID;
 		static int iFlagsOwned;
@@ -1370,6 +1374,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	// if condition has changed or no tasks
 	if ( !hasSomeConditions(CONDITION_CHANGED) && !m_pSchedules->isEmpty() )
 		return;
+
+	bCheckCurrent = true;
 
 	fAttackUtil = 0.5f;
 	fDefendUtil = 0.4f;
@@ -1540,8 +1546,15 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 	while ( (next = utils.nextBest()) != NULL )
 	{
-		if ( !m_pSchedules->isEmpty() && (m_CurrentUtil != next->getId() ) )
-			m_pSchedules->freeMemory();
+		if ( !m_pSchedules->isEmpty() && bCheckCurrent )
+		{
+			if ( m_CurrentUtil != next->getId() )
+				m_pSchedules->freeMemory();
+			else
+				break;
+		} 
+
+		bCheckCurrent = false;
 
 		if ( executeAction(next) )
 		{

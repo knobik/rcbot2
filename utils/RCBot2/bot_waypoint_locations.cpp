@@ -424,12 +424,20 @@ void CWaypointLocations :: FindCoverWaypointInBucket ( int i, int j, int k, cons
 int CWaypointLocations :: NearestBlastWaypoint ( const Vector &vOrigin, const Vector &vSrc, float fNearestDist, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, bool bNearestAimingOnly, int iTeam, bool bCheckArea )
 {
 	int iNearestIndex = -1;
-
-	int iLoc = READ_LOC(vOrigin.x);
-	int jLoc = READ_LOC(vOrigin.y);
-	int kLoc = READ_LOC(vOrigin.z);
-
+	int iLoc;
+	int jLoc;
+	int kLoc;
 	int i,j,k;
+
+	Vector vMid = (vSrc - vOrigin);
+
+	vMid = (vMid / vMid.Length());
+	vMid = (vMid*((vSrc-vOrigin).Length()/2));
+	vMid = vOrigin + vMid;
+
+	iLoc = READ_LOC(vMid.x);
+	jLoc = READ_LOC(vMid.y);
+	kLoc = READ_LOC(vMid.z);
 
 	int iMinLoci,iMaxLoci,iMinLocj,iMaxLocj,iMinLock,iMaxLock;
 
