@@ -2612,7 +2612,7 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	fDist = (m_vOrigin - pBot->getOrigin()).Length2D();
 
-	if ( (fDist > 24) || !bDeployedOrZoomed )
+	if ( (fDist > 16) || !bDeployedOrZoomed )
 	{
 		pBot->setMoveTo(m_vOrigin);
 		pBot->setMoveSpeed(CClassInterface::getMaxSpeed(pBot->getEdict())/8);
