@@ -379,11 +379,14 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	static CBotUtility *next;
 	static CBotWeapon *gravgun;
 	static CWeapon *pWeapon;
+	static bool bCheckCurrent;
 
 	if ( !hasSomeConditions(CONDITION_CHANGED) && !m_pSchedules->isEmpty() )
 		return;
 
 	removeCondition(CONDITION_CHANGED);
+
+	bCheckCurrent = true; // important for checking current schedule
 
 	gravgun = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_PHYSCANNON));
 
@@ -441,11 +444,17 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 
 	utils.execute();
 
-
 	while ( (next = utils.nextBest()) != NULL )
 	{
-		if ( !m_pSchedules->isEmpty() && (m_CurrentUtil != next->getId() ) )
-			m_pSchedules->freeMemory();
+		if ( !m_pSchedules->isEmpty() && bCheckCurrent )
+		{
+			if ( m_CurrentUtil != next->getId() )
+				m_pSchedules->freeMemory();
+			else
+				break;
+		} 
+
+		bCheckCurrent = false;
 
 		if ( executeAction(next->getId()) )
 		{
@@ -631,8 +640,6 @@ void CHLDMBot :: handleWeapons ()
 		isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
 	{
 		CBotWeapon *pWeapon;
-
-		setMoveLookPriority(MOVELOOK_ATTACK);
 
 		pWeapon = getBestWeapon(m_pEnemy,true,true,(m_pEnemy==m_NearestBreakable)||rcbot_melee_only.GetBool());
 

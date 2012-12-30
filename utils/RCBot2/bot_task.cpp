@@ -1259,13 +1259,19 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		
 		pBot->stopMoving();
 
-		if ( m_bDefendOrigin )
+		pBot->setLookVector(m_vDefendOrigin);
+
+		pBot->setLookAtTask(m_LookTask);
+
+		//pBot->setAiming(m_vDefendOrigin);
+
+		/*if ( m_bDefendOrigin )
 		{
 			pBot->setLookAtTask(LOOK_AROUND);
 			//pBot->setAiming(m_vDefendOrigin);
 		}
 		else
-			pBot->setLookAtTask(LOOK_SNIPE);
+			pBot->setLookAtTask(LOOK_SNIPE);*/
 	}
 
 	if ( m_fTime < engine->Time() )

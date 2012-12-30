@@ -753,6 +753,10 @@ void CBot :: think ()
 #ifdef _DEBUG
 	}
 #endif
+
+	
+	setMoveLookPriority(MOVELOOK_ATTACK);
+
 	handleWeapons();
 
 	// deal with voice commands bot wants to say,
@@ -791,8 +795,6 @@ void CBot :: handleWeapons ()
 		isVisible(m_pEnemy) && isEnemy(m_pEnemy) )
 	{
 		CBotWeapon *pWeapon;
-
-		setMoveLookPriority(MOVELOOK_ATTACK);
 
 		pWeapon = getBestWeapon(m_pEnemy);
 
@@ -1248,7 +1250,7 @@ void CBot :: findEnemy ( edict_t *pOldEnemy )
 {
 	m_pFindEnemyFunc->init();
 
-	if ( isEnemy(pOldEnemy) ) 
+	if ( isEnemy(pOldEnemy,true) ) 
 		m_pFindEnemyFunc->setOldEnemy(pOldEnemy);
 	/*else if ( CBotGlobals::entityIsAlive(pOldEnemy) ) /// lost enemy
 	{

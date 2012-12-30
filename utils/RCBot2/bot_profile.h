@@ -17,7 +17,6 @@ public:
 	inline int getVisionTicks () { return m_iVisionTicks; }
 	inline int getPathTicks () { return m_iPathTicks; }
 	inline int getClass () { return m_iClass; }
-
 	inline void setTeam (int iTeam) { m_iTeam = iTeam; }
 	inline void setClass (int iClass) { m_iClass = iClass; }
 
@@ -26,11 +25,14 @@ private:
 	char *m_szName;
 	char *m_szModel;
 	// bot's team
-	int m_iTeam;
-	char *m_szWeapon;
-	int m_iVisionTicks;
-	int m_iPathTicks;
-	int m_iClass;
+	int m_iTeam;				// preferred player team
+	char *m_szWeapon;			// preferred weapon
+	int m_iVisionTicks;			// speed of finding non players (npcs/teleporters etc)
+	int m_iPathTicks;			// speed of finding a path
+	int m_iClass;				// preferred player class
+	int m_iVisionTicksClients;	// speed of finding other players and enemy players
+	float m_fSensitivity;		// sensitivity of bot's "mouse" (angle speed)
+	float m_fBraveness;			// sensitivity to danger (brave = less sensitive)
 };
 
 class CBotProfiles

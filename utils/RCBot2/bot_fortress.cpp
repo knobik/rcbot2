@@ -2286,8 +2286,6 @@ void CBotTF2::handleWeapons()
 	{
 		CBotWeapon *pWeapon;
 
-		setMoveLookPriority(MOVELOOK_ATTACK);
-
 		pWeapon = getBestWeapon(m_pEnemy,!hasFlag(),!hasFlag());
 
 		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
@@ -2895,7 +2893,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	static CWaypoint *pWaypointResupply;
 	static CWaypoint *pWaypointAmmo;
 	static CWaypoint *pWaypointHealth;
-	static CBotUtility *util;
+	static CBotUtility *next;
 	static float fResupplyDist;
 	static float fHealthDist;
 	static float fAmmoDist;
@@ -2906,9 +2904,47 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	static float fMetalPercent;
 	static Vector vOrigin;
 	static unsigned char *failedlist;
-	
+
+	extern ConVar rcbot_move_sentry_kpm;
+	extern ConVar rcbot_move_sentry_time;
+	extern ConVar rcbot_move_disp_time;
+	extern ConVar rcbot_move_disp_healamount;
+	extern ConVar rcbot_move_tele_time;
+	extern ConVar rcbot_move_tele_tpm;
+	extern ConVar rcbot_move_obj;
+
+	static bool bMoveObjs;
+
+	static int iSentryLevel;
+	static int iDispenserLevel;
+	static int iAllySentryLevel;
+	static int iAllyDispLevel;
+
+	static float fEntranceDist;
+	static float fExitDist;
+	static float fUseDispFactor;
+
+	static float fAllyDispenserHealthPercent;
+	static float fAllySentryHealthPercent;
+
+	static float fSentryHealthPercent;
+	static float fDispenserHealthPercent;
+	static float fTeleporterEntranceHealthPercent;
+	static float fTeleporterExitHealthPercent;
+
+	static float fSentryPlaceTime;
+	static float fDispenserPlaceTime;
+	static float fTeleporterEntPlaceTime;
+	static float fTeleporterExtPlaceTime;
+
+	static float fSentryUtil;
+	static int iMetalInDisp;
+
+
 	static int numplayersonteam;
 	static int numplayersonteam_alive;
+
+	static bool bCheckCurrent;
 	
 	extern ConVar bot_messaround;
 	extern ConVar bot_defrate;
@@ -2925,6 +2961,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	
 	removeCondition(CONDITION_CHANGED);
 
+	bCheckCurrent = true; // important for checking the current schedule if not empty
 	iMetal = 0;
 	vOrigin = getOrigin();
 	bNeedAmmo = false;
@@ -3010,41 +3047,6 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	if ( iClass == TF_CLASS_ENGINEER )
 	{
-		extern ConVar rcbot_move_sentry_kpm;
-		extern ConVar rcbot_move_sentry_time;
-		extern ConVar rcbot_move_disp_time;
-		extern ConVar rcbot_move_disp_healamount;
-		extern ConVar rcbot_move_tele_time;
-		extern ConVar rcbot_move_tele_tpm;
-		extern ConVar rcbot_move_obj;
-
-		static bool bMoveObjs;
-
-		static int iSentryLevel;
-		static int iDispenserLevel;
-		static int iAllySentryLevel;
-		static int iAllyDispLevel;
-
-		static float fEntranceDist;
-		static float fExitDist;
-		static float fUseDispFactor;
-
-		static float fAllyDispenserHealthPercent;
-		static float fAllySentryHealthPercent;
-
-		static float fSentryHealthPercent;
-		static float fDispenserHealthPercent;
-		static float fTeleporterEntranceHealthPercent;
-		static float fTeleporterExitHealthPercent;
-
-		static float fSentryPlaceTime;
-		static float fDispenserPlaceTime;
-		static float fTeleporterEntPlaceTime;
-		static float fTeleporterExtPlaceTime;
-
-		static float fSentryUtil;
-		static int iMetalInDisp;
-
 		bMoveObjs = rcbot_move_obj.GetBool();
 
 		iSentryLevel = 0;
@@ -3392,18 +3394,25 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	//////////////////////////////////////////////////////////
 	utils.execute();
 
-	while ( (util = utils.nextBest()) != NULL )
+	while ( (next = utils.nextBest()) != NULL )
 	{
-		if ( !m_pSchedules->isEmpty() && (m_CurrentUtil != util->getId() ) )
-			m_pSchedules->freeMemory();
-
-		if ( executeAction(util->getId(),pWaypointResupply,pWaypointHealth,pWaypointAmmo) )
+		if ( !m_pSchedules->isEmpty() && bCheckCurrent )
 		{
-			m_CurrentUtil = util->getId();
+			if ( m_CurrentUtil != next->getId() )
+				m_pSchedules->freeMemory();
+			else
+				break;
+		} 
+
+		bCheckCurrent = false;
+
+		if ( executeAction(next->getId(),pWaypointResupply,pWaypointHealth,pWaypointAmmo) )
+		{
+			m_CurrentUtil = next->getId();
 
 			if ( CClients::clientsDebugging() )
 			{
-				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[util->getId()],this);
+				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[next->getId()],this);
 			}
 
 			utils.freeMemory();
