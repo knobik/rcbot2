@@ -156,7 +156,8 @@ typedef enum
 #define CONDITION_SEE_LAST_ENEMY_POS	8192
 #define CONDITION_CHANGED				16384
 #define CONDITION_COVERT				32768
-#define CONDITION_RUN					65534
+#define CONDITION_RUN					65536
+#define CONDITION_GREN					131072
 
 ////////////////////////
 #define BLAST_RADIUS 200

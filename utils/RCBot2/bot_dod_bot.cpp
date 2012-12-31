@@ -571,7 +571,7 @@ void CDODBot :: modThink ()
 	if ( m_fCurrentDanger >= 50.0f )
 	{
 		// not sniper rifle or machine gun but can look down the sights
-		if ( hasSomeConditions(CONDITION_COVERT) && m_pCurrentWeapon && pWeapon && (( pWeapon->getID() == DOD_WEAPON_K98 ) || (pWeapon->getID() == DOD_WEAPON_GARAND) ))
+		if ( !hasSomeConditions(CONDITION_RUN) && hasSomeConditions(CONDITION_COVERT) && m_pCurrentWeapon && pWeapon && (( pWeapon->getID() == DOD_WEAPON_K98 ) || (pWeapon->getID() == DOD_WEAPON_GARAND) ))
 		{
 			bool bZoomed = false;
 
@@ -597,8 +597,9 @@ void CDODBot :: modThink ()
 
 		// slow down - be careful
 	}
-	else if ( (m_fCurrentDanger >= 20.0f) && (m_flStamina > 90.0f ) && (m_flSprintTime < engine->Time()))
+	else if ( hasSomeConditions(CONDITION_RUN) || ((m_fCurrentDanger >= 20.0f) && (m_flStamina > 90.0f ) && (m_flSprintTime < engine->Time())) )
 	{
+		// unprone
 		if ( m_bProne && ( m_fProneTime < engine->Time() ))
 		{
 			m_pButtons->tap(IN_ALT1);
@@ -611,12 +612,6 @@ void CDODBot :: modThink ()
 	else if (( m_fCurrentDanger < 1 ) || (m_flStamina < 5.0f ))
 	{
 		m_flSprintTime = engine->Time() + randomFloat(5.0f,20.0f);
-	}
-
-	if ( hasSomeConditions(CONDITION_RUN) && m_bProne && ( m_fProneTime < engine->Time() ))
-	{
-		m_pButtons->tap(IN_ALT1);
-		m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
 	}
 
 	if ( m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time()) )
@@ -766,6 +761,12 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 {
 	switch ( cmd )
 	{
+	case DOD_VC_USE_GRENADE:
+		if ( isVisible(pPlayer) )
+		{
+			updateCondition(CONDITION_GREN);
+		}
+		break;
 	case DOD_VC_GOGOGO:
 		if ( isVisible(pPlayer) )
 		{
@@ -910,12 +911,39 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 			if ( util->getIntData() ) // attack
 			{
-				if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(&vGoal,getTeam(),&iFlagID) )
+				if ( !CDODMod::isBombMap() || !CDODMod::isCommunalBombPoint() )
 				{
-					if ( m_iClass == DOD_CLASS_MACHINEGUNNER )
-						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_MACHINEGUN,m_iTeam,iFlagID,true,this);
+					if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(&vGoal,getTeam(),&iFlagID) )
+					{
+						if ( m_iClass == DOD_CLASS_MACHINEGUNNER )
+							pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_MACHINEGUN,m_iTeam,iFlagID,true,this);
+						else
+							pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,m_iTeam,iFlagID,true,this);
+					}
+				}
+				else
+				{
+					// attack the bomb point -- less chance if owned many bomb points already
+					if ( randomFloat(0.0f,1.0f) < 
+						((float)CDODMod::m_Flags.getNumPlantableBombs(m_iTeam)/
+						 CDODMod::m_Flags.getNumBombsOnMap(m_iTeam)) ) 
+					{
+						if ( m_iClass == DOD_CLASS_MACHINEGUNNER )
+							pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_MACHINEGUN,m_iTeam,CDODMod::getBombPointArea(m_iTeam),true,this);
+						else
+							pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,m_iTeam,CDODMod::getBombPointArea(m_iTeam),true,this);
+					}
 					else
-						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,m_iTeam,iFlagID,true,this);
+					{
+						// attack a point
+						if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(&vGoal,getTeam(),&iFlagID) )
+						{
+							if ( m_iClass == DOD_CLASS_MACHINEGUNNER )
+								pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_MACHINEGUN,m_iTeam,iFlagID,true,this);
+							else
+								pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,m_iTeam,iFlagID,true,this);
+						}
+					}
 				}
 
 				if ( pWaypoint ) // attack position -- pushing
@@ -995,6 +1023,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				CBotTask *findpath = new CFindPathTask(pWaypoint->getOrigin());//,LOOK_AROUND);
 				CBotTask *deftask = new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(7.5f,12.5f),0,true,vGoal,defend_wpt ? LOOK_SNIPE : LOOK_AROUND);
 
+				removeCondition(CONDITION_PUSH); 
 				findpath->setCompleteInterrupt(CONDITION_PUSH);
 				deftask->setCompleteInterrupt(CONDITION_PUSH);
 
@@ -1004,8 +1033,6 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				// add defend task
 				m_pSchedules->add(defend);
 
-				removeCondition(CONDITION_PUSH); // tried to push
-				
 				return true;
 			}
 		}
@@ -1049,7 +1076,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 			attack->setID(SCHED_BOMB);
 
-			if ( (iBombType == DOD_BOMB_PLANT) && (randomFloat(0.0f,200.0f) < m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint))) )
+			if ( pWaypoint && (iBombType == DOD_BOMB_PLANT) && (randomFloat(0.0f,200.0f) < m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint))) )
 			{
 				attack->addTask(new CFindPathTask(pWaypoint->getOrigin()));//,LOOK_AROUND));
 				attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
@@ -1073,7 +1100,41 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				if ( CDODMod::isCommunalBombPoint() )
+				{
+					CWaypoint *pWaypointPinch = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND|CWaypointTypes::W_FL_SNIPER|CWaypointTypes::W_FL_MACHINEGUN,m_iTeam,pWaypoint->getArea(),true,this);
+
+					if ( !pWaypointPinch )
+					{
+						if ( distanceFrom(pWaypoint->getOrigin()) > 1024.0 )
+							pWaypointPinch = CWaypoints::getPinchPointFromWaypoint(pWaypoint->getOrigin(),pWaypoint->getOrigin());
+						else
+							pWaypointPinch = CWaypoints::getPinchPointFromWaypoint(getOrigin(),pWaypoint->getOrigin());
+					}
+
+					if ( pWaypointPinch && (distanceFrom(pWaypointPinch->getOrigin()) < distanceFrom(pWaypoint->getOrigin())) )
+					{
+						CBotSchedule *defend = new CBotSchedule();
+						CBotTask *findpath1 = new CFindPathTask(pWaypointPinch->getOrigin());//,LOOK_AROUND);
+						CBotTask *findpath2 = new CFindPathTask(pWaypoint->getOrigin());//,LOOK_AROUND);
+						CBotTask *deftask = new CBotDefendTask(pWaypointPinch->getOrigin(),randomFloat(3.5f,6.5f),0,true,pWaypoint->getOrigin(),LOOK_SNIPE);
+
+						removeCondition(CONDITION_PUSH); 
+						deftask->setCompleteInterrupt(CONDITION_PUSH);
+
+						defend->setID(SCHED_DEFENDPOINT);
+						defend->addTask(findpath1); // find a spot to look out for enemies
+						defend->addTask(deftask);   // look out for enemies
+						defend->addTask(findpath2); // pickup bomb
+						// add defend task
+						m_pSchedules->add(defend);
+					}
+					else
+						m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				}
+				else
+					m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+
 				return true;
 			}
 		}
@@ -1125,6 +1186,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				m_pSchedules->add(pSched);
 
 				removeCondition(CONDITION_COVERT);
+				removeCondition(CONDITION_GREN);
 
 				return true;
 			}
@@ -1316,7 +1378,7 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 						}
 
 						// not deployed for a while -- go prone to deploy
-						if ( (m_fDeployMachineGunTime + 1.0f) < engine->Time() )
+						if ( !hasSomeConditions(CONDITION_RUN) && (m_fDeployMachineGunTime + 1.0f) < engine->Time() )
 							m_pButtons->holdButton(IN_ALT1,0,1.0f,0);
 
 						fDelay = randomFloat(0.7f,1.2f);
@@ -1379,6 +1441,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		return;
 
 	bCheckCurrent = true;
+	m_iTeam = getTeam();
 
 	fAttackUtil = 0.5f;
 	fDefendUtil = 0.4f;
@@ -1446,15 +1509,20 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		fDefendUtil = 0.8f - ((float)iNumEnemyBombsStillToPlant/iNumEnemyBombsOnMap)*0.4f;
 
 		fPlantUtil = 0.4f + (((float)iNumBombsToPlant/iNumBombsOnMap)*0.4f);
-		fDefuseBombUtil = 0.8f - (((float)iNumBombsToDefuse/iFlagsOwned)*0.8f);
+		fDefuseBombUtil = fDefendUtil * 2;
 		fDefendBombUtil = 0.8f - (((float)iNumBombsToDefend/iNumBombsOnMap)*0.8f);
+
+		fPlantUtil += randomFloat(-0.25f,0.25f); // add some fuzz
+		fDefRate = bot_defrate.GetFloat();
+		fDefendUtil += randomFloat(-fDefRate,fDefRate);
 
 		// bot is ... go go go!
 		if ( hasSomeConditions(CONDITION_PUSH) )
 		{
-			fPlantUtil *= 1.1f;
-			fDefuseBombUtil *= 1.2f;
-			fDefendBombUtil *= 0.9f;fDefendUtil *= 0.8f;
+			fPlantUtil *= 2.0f;
+			fDefuseBombUtil *= 2.0f;
+			fDefendBombUtil *= 0.75f;
+			fDefendUtil *= 0.75f;
 		}
 
 		ADD_UTILITY(BOT_UTIL_PLANT_BOMB,m_bHasBomb && (iNumBombsToPlant>0),fPlantUtil );
@@ -1518,6 +1586,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		(m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) || m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) || m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) || m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_GER)) )
 	{
 		float fDistance = distanceFrom(m_vLastSeeEnemyBlastWaypoint);
+		float fGrenUtil =  0.85f + ( (1.0f - getHealthPercent()) * 0.15f);
 
 		CBotWeapon *pBotWeapon = NULL;
 		CBotWeapon *pBotSmokeGren = m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) ? m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_US)) : m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SMOKE_GER));
@@ -1532,7 +1601,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		// if within throw distance and outside balst radius, I can throw it
 		if ( (!pBotWeapon->isExplosive() || (fDistance > BLAST_RADIUS)) && ( fDistance < 1500 ) )
 		{
-			ADD_UTILITY_WEAPON(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,0.85f + ( (1.0f - getHealthPercent()) * 0.15f),pBotWeapon);
+			ADD_UTILITY_WEAPON(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,hasSomeConditions(CONDITION_GREN) ? fGrenUtil*2 : fGrenUtil,pBotWeapon);
 		}
 	}
 

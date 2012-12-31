@@ -39,6 +39,7 @@
 #include "bot_configfile.h"
 #include "bot_getprop.h"
 #include "bot_dod_bot.h"
+#include "bot_waypoint.h"
 
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
@@ -66,6 +67,9 @@ edict_t * CDODMod::m_pPlayerResourceEntity = NULL;
 float CDODMod::m_fMapStartTime = 0.0f;
 edict_t * CDODMod::m_pGameRules = NULL;
 int CDODMod::m_iMapType = 0;
+bool CDODMod::m_bCommunalBombPoint = false;
+int CDODMod::m_iBombAreaAllies = 0;
+int CDODMod::m_iBombAreaAxis = 0;
 
 extern ConVar bot_use_disp_dist;
 
@@ -89,7 +93,7 @@ eDODVoiceCommand_t g_DODVoiceCommands[DOD_VC_INVALID] =
 	{DOD_VC_COVERING_FIRE,"cover"},
 	{DOD_VC_SNIPER,"sniper"},
 	{DOD_VC_NEED_MG,"moveupmg"},
-	{DOD_VC_SMOKE,"smoke"},
+	{DOD_VC_SMOKE,"usesmoke"},
 	{DOD_VC_NICE_SHOT,"niceshot"},
 	{DOD_VC_NEED_AMMO,"needammo"},
 	{DOD_VC_GRENADE2,"grenade"},
@@ -1166,6 +1170,7 @@ void CDODMod :: mapInit ()
 	m_Flags.init();
 	m_fMapStartTime = engine->Time();
 	m_iMapType = DOD_MAPTYPE_UNKNOWN;
+	m_bCommunalBombPoint = false;
 }
 
 
@@ -1443,12 +1448,29 @@ void CDODMod ::roundStart()
 	if ( m_iMapType == DOD_MAPTYPE_UNKNOWN )
 	{
 		if ( CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1,"CDODBombDispenserMapIcon") != NULL )
+		{
+			CWaypoint *pWaypointAllies;
+			CWaypoint *pWaypointAxis;
+
 			m_iMapType = DOD_MAPTYPE_BOMB;
+
+			pWaypointAllies = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_BOMBS_HERE,TEAM_ALLIES);
+			pWaypointAxis = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_BOMBS_HERE,TEAM_AXIS);
+
+			if ( pWaypointAllies && pWaypointAxis )
+			{
+				m_bCommunalBombPoint = (pWaypointAllies->getArea()>0) || (pWaypointAxis->getArea()>0);
+
+				m_iBombAreaAllies = pWaypointAllies->getArea();
+				m_iBombAreaAxis = pWaypointAxis->getArea();
+			}
+		}
 		else
 			m_iMapType = DOD_MAPTYPE_FLAG;
 	}
 
 	m_Flags.setup(m_pResourceEntity,m_iMapType);
+
 
 	//m_Flags.updateAll();
 }

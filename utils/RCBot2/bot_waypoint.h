@@ -227,6 +227,10 @@ public:
 		return (m_iFlags & iFlag) == iFlag;
 	}
 
+	inline bool hasSomeFlags ( int iFlag )
+	{
+		return (m_iFlags & iFlag) > 0;
+	}
 	// show info to player
 	void info ( edict_t *pEdict );
 

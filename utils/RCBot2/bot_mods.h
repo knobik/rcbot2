@@ -444,8 +444,6 @@ public:
 		setup("dod","day of defeat source",MOD_DOD,BOTTYPE_DOD);
 	}
 
-	static CDODFlags m_Flags;
-
 	static void roundStart ();
 	
 	static int numClassOnTeam( int iTeam, int iClass );
@@ -458,9 +456,13 @@ public:
 
 	static float getMapStartTime ();
 
-	static bool isBombMap () { return m_iMapType == DOD_MAPTYPE_BOMB; }
-	static bool isFlagMap () { return m_iMapType == DOD_MAPTYPE_FLAG; }
+	inline static bool isBombMap () { return m_iMapType == DOD_MAPTYPE_BOMB; }
+	inline static bool isFlagMap () { return m_iMapType == DOD_MAPTYPE_FLAG; }
 
+	inline static bool isCommunalBombPoint () { return m_bCommunalBombPoint; }
+	inline static int getBombPointArea (int iTeam) { if ( iTeam == TEAM_ALLIES ) return m_iBombAreaAllies; return m_iBombAreaAxis; } 
+
+	static CDODFlags m_Flags;
 
 protected:
 
@@ -475,6 +477,9 @@ protected:
 	static edict_t *m_pGameRules;
 	static float m_fMapStartTime;
 	static int m_iMapType;
+	static bool m_bCommunalBombPoint; // only one bomb suuply point for both teams
+	static int m_iBombAreaAllies;
+	static int m_iBombAreaAxis;
 
 	//virtual void entitySpawn ( edict_t *pEntity );
 

@@ -847,7 +847,7 @@ bool CWaypointNavigator :: getNextRoutePoint ( Vector *point )
 		if ( head && (*head!= -1))
 		{
 			pW = CWaypoints::getWaypoint(*head);
-			*point = pW->getOrigin() + pW->applyRadius();
+			*point = pW->getOrigin();// + pW->applyRadius();
 
 			return true;
 		}
@@ -1952,7 +1952,7 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, 
 
 		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) )// && (pWpt->getArea() == iArea) )
 		{
-			if ( (iFlags == -1) || pWpt->hasFlag(iFlags) )
+			if ( (iFlags == -1) || pWpt->hasSomeFlags(iFlags) )
 			{
 				if ( !bForceArea && !CPoints::isValidArea(pWpt->getArea()) )
 					continue;
