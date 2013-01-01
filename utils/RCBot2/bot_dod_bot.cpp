@@ -1,4 +1,4 @@
-// TO DO : ladders , sniper KPM , 
+// TO DO : ladders
 /*
  *    This file is part of RCBot.
  *
@@ -264,7 +264,7 @@ bool CDODBot :: startGame ()
 void CDODBot :: killed ( edict_t *pVictim )
 {
 	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
-		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
+		m_pNavigator->belief(CBotGlobals::entityOrigin(pVictim),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 
 	return;
 }
@@ -282,7 +282,7 @@ void CDODBot :: died ( edict_t *pKiller )
 	if ( pKiller )
 	{
 		if ( CBotGlobals::entityIsValid(pKiller) )
-			m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
+			m_pNavigator->belief(CBotGlobals::entityOrigin(pKiller),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 	}
 
 }
@@ -299,13 +299,21 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 
 			if ( (pclass == DOD_CLASS_SNIPER) && pWeapon->isZoomable() )
 			{
-				addVoiceCommand(DOD_VC_SNIPER);
+				if ( (m_LastHearVoiceCommand == DOD_VC_SNIPER) && m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) && !m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) )
+					addVoiceCommand(DOD_VC_USE_GRENADE);
+				else
+					addVoiceCommand(DOD_VC_SNIPER);
+
 				updateCondition(CONDITION_COVERT);
 				m_fCurrentDanger += 100.0f;
 			}
 			else if ( (pclass == DOD_CLASS_MACHINEGUNNER) && pWeapon->isDeployable() )
 			{
-				addVoiceCommand(DOD_VC_MGAHEAD);
+				if ( (m_LastHearVoiceCommand == DOD_VC_MGAHEAD) && m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) && !m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) )
+					addVoiceCommand(DOD_VC_USE_GRENADE);
+				else
+					addVoiceCommand(DOD_VC_MGAHEAD);
+
 				updateCondition(CONDITION_COVERT);
 				m_fCurrentDanger += 100.0f;
 			}
@@ -326,6 +334,35 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 		{
 			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
 			updateCondition(CONDITION_CHANGED);
+		}
+	}
+}
+
+
+void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *pWeapon )
+{
+	static CWaypoint *pWpt;
+	static CBotWeapon *pCurrentWeapon;
+
+	if ( (pDied != m_pEdict) && pTeamMate && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && (CClassInterface::getTeam(pDied)!=m_iTeam) )
+	{
+		if ( pWeapon )
+		{
+			pCurrentWeapon = getCurrentWeapon();
+
+			if ( pCurrentWeapon && (pWeapon->getID() == pCurrentWeapon->getID()) )
+				m_fCurrentDanger -= 50.0f;
+			else
+				m_fCurrentDanger -= 20.0f;
+
+			if ( m_fCurrentDanger < 0 )
+				m_fCurrentDanger = 0;
+		}
+
+		if ( m_pLastEnemy == pDied )
+		{
+			m_pLastEnemy = NULL;
+			m_fLastSeeEnemy = 0;
 		}
 	}
 }
@@ -365,6 +402,7 @@ void CDODBot :: spawnInit ()
 	m_flSprintTime = 0;
 	m_pCurrentWeapon = NULL;
 	m_fFixWeaponTime = 0;
+	m_LastHearVoiceCommand = DOD_VC_INVALID;
 }
 
 bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
@@ -683,6 +721,21 @@ void CDODBot :: modThink ()
 					m_pSchedules->add(attack);
 
 					removeCondition(CONDITION_PUSH);
+					updateCondition(CONDITION_RUN);
+			}
+		}
+		else if ( !m_pSchedules->hasSchedule(SCHED_BOMB) && 
+			!m_pSchedules->hasSchedule(SCHED_GOOD_HIDE_SPOT) &&
+			!CDODMod::m_Flags.isBombBeingDefused(iBombID) &&
+			CDODMod::m_Flags.isBombPlanted(iBombID) &&
+			CDODMod::m_Flags.isBombExplodeImminent(iBombID) )
+		{
+			if ( distanceFrom(m_pNearestBomb) < (BLAST_RADIUS*2) )
+			{
+				updateCondition(CONDITION_RUN);
+				// don't interrupt current shedule, just add to front
+				m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
+				m_pSchedules->addFront(new CGotoHideSpotSched(m_pNearestBomb));
 			}
 		}
 	}
@@ -872,6 +925,8 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 	default:
 		break;
 	}
+
+	m_LastHearVoiceCommand = (eDODVoiceCMD)cmd;
 }
 
 bool CDODBot :: executeAction ( CBotUtility *util )
@@ -1086,6 +1141,9 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			// add defend task
 			m_pSchedules->add(attack);
 
+			if ( iBombType == DOD_BOMB_DEFUSE ) 
+				updateCondition(CONDITION_RUN);
+
 			removeCondition(CONDITION_PUSH);
 			
 			return true;
@@ -1220,6 +1278,10 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 					// add defend task
 					m_pSchedules->add(attack);
 
+					// last flag
+					if ( CDODMod::m_Flags.getNumFlagsOwned(m_iTeam) == (CDODMod::m_Flags.getNumFlags()-1) )
+						addVoiceCommand(DOD_VC_GOGOGO);
+
 					removeCondition(CONDITION_PUSH);
 					
 					return true;
@@ -1333,7 +1395,8 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 			{
 				fDelay = randomFloat(0.05f,0.2f);
 
-				stopMoving();
+				if ( !hasSomeConditions(CONDITION_RUN) )
+					stopMoving();
 
 				if ( pWeapon->needsDeployedOrZoomed() ) // && pWeapon->getID() ==...
 				{
@@ -1441,7 +1504,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		return;
 
 	bCheckCurrent = true;
-	m_iTeam = getTeam();
+	m_iTeam = getTeam(); // update team
 
 	fAttackUtil = 0.5f;
 	fDefendUtil = 0.4f;
@@ -1512,7 +1575,9 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		fDefuseBombUtil = fDefendUtil * 2;
 		fDefendBombUtil = 0.8f - (((float)iNumBombsToDefend/iNumBombsOnMap)*0.8f);
 
+		
 		fPlantUtil += randomFloat(-0.25f,0.25f); // add some fuzz
+		fAttackUtil = fPlantUtil;
 		fDefRate = bot_defrate.GetFloat();
 		fDefendUtil += randomFloat(-fDefRate,fDefRate);
 
@@ -1599,7 +1664,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			pBotWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_FRAG_GER));
 				
 		// if within throw distance and outside balst radius, I can throw it
-		if ( (!pBotWeapon->isExplosive() || (fDistance > BLAST_RADIUS)) && ( fDistance < 1500 ) )
+		if ( pBotWeapon && (!pBotWeapon->isExplosive() || (fDistance > BLAST_RADIUS)) && ( fDistance < 1500 ) )
 		{
 			ADD_UTILITY_WEAPON(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,hasSomeConditions(CONDITION_GREN) ? fGrenUtil*2 : fGrenUtil,pBotWeapon);
 		}

@@ -409,16 +409,17 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 	static int i;
 	static float factor;
 	static int iWptIndex;
-
+	CWaypoint *pWpt;
 	dataUnconstArray<int> m_iVisibles;
+	dataUnconstArray<int> m_iInvisibles;
 	//int m_iVisiblePoints[CWaypoints::MAX_WAYPOINTS]; // make searching quicker
 
-	CWaypointLocations::GetAllVisible(vOrigin,vOrigin,&m_iVisibles);
-	CWaypointLocations::GetAllVisible(vOrigin,m_pBot->getEyePosition(),&m_iVisibles);
+	CWaypointLocations::GetAllVisible(vOrigin,vOrigin,&m_iVisibles,&m_iInvisibles);
+	CWaypointLocations::GetAllVisible(vOrigin,m_pBot->getEyePosition(),&m_iVisibles,&m_iInvisibles);
 
 	for ( i = 0; i < m_iVisibles.Size(); i ++ )
 	{
-		CWaypoint *pWpt = CWaypoints::getWaypoint(m_iVisibles[i]);
+		pWpt = CWaypoints::getWaypoint(m_iVisibles[i]);
 		iWptIndex = CWaypoints::getWaypointIndex(pWpt);
 
 		if ( iType == BELIEF_SAFETY )
@@ -437,6 +438,26 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 		}
 	}
 
+	for ( i = 0; i < m_iInvisibles.Size(); i ++ )
+	{
+		pWpt = CWaypoints::getWaypoint(m_iInvisibles[i]);
+		iWptIndex = CWaypoints::getWaypointIndex(pWpt);
+
+		// this waypoint is safer from this danger
+		if ( iType == BELIEF_DANGER )
+		{
+			if ( m_fBelief[iWptIndex] > 0)
+				m_fBelief[iWptIndex] *= 0.9;//(fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
+		}
+		else if ( iType == BELIEF_SAFETY )
+		{
+			if ( m_fBelief[iWptIndex] < MAX_BELIEF )
+				m_fBelief[iWptIndex] += (fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief*0.5f;
+			if ( m_fBelief[iWptIndex] > MAX_BELIEF )
+				m_fBelief[iWptIndex] = MAX_BELIEF;
+		}
+	}
+/*
 	i = m_oldRoute.size();
 
 	while ( !m_oldRoute.empty() )
@@ -465,9 +486,10 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 		}
 
 		m_oldRoute.pop();
-	}
+	}*/
 
 	m_iVisibles.Destroy();
+	m_iInvisibles.Destroy();
 
 	m_bBeliefChanged = true;
 }

@@ -1317,7 +1317,7 @@ bool CDODFlags:: getRandomBombToPlant ( Vector *position, int iTeam, edict_t **p
 	for ( short i = 0; i < m_iNumControlPoints; i ++ )
 	{
 		if ( (m_iOwner[i] != iTeam) && !isBombPlanted(i) && (m_pBombs[i] != NULL) )
-			for ( j = 0; j < getNumBombsRequired(i); j ++ ) { iPossible.push_back(i); }
+			for ( j = 0; j < getNumBombsRemaining(i); j ++ ) { iPossible.push_back(i); }
 	}
 
 	if ( iPossible.size() > 0 )

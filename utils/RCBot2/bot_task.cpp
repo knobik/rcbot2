@@ -414,7 +414,7 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			fdist = pBot->distanceFrom(m_vMoveTo);
 
-			if ( m_bProne )
+			if ( m_bProne && !pBot->hasSomeConditions(CONDITION_RUN) )
 				pBot->duck();
 
 			if ( fdist < m_fRadius )

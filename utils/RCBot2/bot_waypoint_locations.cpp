@@ -142,7 +142,7 @@ void CWaypointLocations :: AutoPath ( edict_t *pPlayer, int iWpt )
 	}
 }
 
-void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, dataUnconstArray<int> *iVisible )
+void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, dataUnconstArray<int> *iVisible, dataUnconstArray<int> *iInvisible )
 {
 	int iLoc = READ_LOC(vOrigin.x);
 	int jLoc = READ_LOC(vOrigin.y);
@@ -155,7 +155,7 @@ void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, 
 
 	int iMinLoci,iMaxLoci,iMinLocj,iMaxLocj,iMinLock,iMaxLock;
 
-	int iFrom = CWaypointLocations::NearestWaypoint(vVisibleFrom,500,-1);
+	int iFrom = CWaypointLocations::NearestWaypoint(vVisibleFrom,2048.0,-1,true,true,false,NULL,false,0,false,true,vOrigin);
 
 	CWaypointVisibilityTable *pTable = CWaypoints::getVisiblity();
 	
@@ -181,6 +181,8 @@ void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, 
 					
 					if ( pTable->GetVisibilityFromTo(iFrom,iWpt) )//CBotGlobals::isVisible(vVisibleFrom,CWaypoints::getWaypoint(iWpt)->getOrigin()) )
 						iVisible->Add(iWpt);
+					else
+						iInvisible->Add(iWpt);
 				}
 			}
 		}

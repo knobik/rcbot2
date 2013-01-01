@@ -37,6 +37,7 @@
 #define MAX_GREN_THROW_DIST 1024.0f
 
 #define SMOKE_RADIUS 150.0f
+#define DOD_BOMB_EXPLODE_IMMINENT_TIME 7.0f
 
 class CBroadcastBombPlanted : public IBotFunction
 {
@@ -171,6 +172,7 @@ public:
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 
 	void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pKillerWeapon );
+	void seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *pWeapon );
 
 	bool isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck );
 
@@ -221,6 +223,8 @@ private:
 
 	float m_fDeployMachineGunTime;
 	edict_t *m_pNearestBomb;
+
+	eDODVoiceCMD m_LastHearVoiceCommand;
 	// blah blah
 };
 

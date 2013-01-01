@@ -238,9 +238,19 @@ public:
 		return count;
 	}
 
+	inline float isBombExplodeImminent ( int id )
+	{
+		return (engine->Time() - m_fBombPlantedTime[id]) > DOD_BOMB_EXPLODE_IMMINENT_TIME;
+	}
+
 	inline void setBombPlanted ( int id, bool val )
 	{
 		m_bBombPlanted[id] = val;
+
+		if ( val )
+			m_fBombPlantedTime[id] = engine->Time();
+		else
+			m_fBombPlantedTime[id] = 0;
 	}
 
 	inline int getNumBombsToPlant ( int iTeam)
@@ -429,6 +439,7 @@ private:
 	// reply on this one
 	bool *m_bBombPlanted_Unreliable;
     bool m_bBombPlanted[MAX_DOD_FLAGS];
+	float m_fBombPlantedTime[MAX_DOD_FLAGS];
 	int *m_iBombsRequired;
 	int *m_iBombsRemaining;
 	bool *m_bBombBeingDefused;

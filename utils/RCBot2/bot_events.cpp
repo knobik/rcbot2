@@ -72,6 +72,31 @@ void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 	}
 	//CBots::botFunction()
 }
+class CBotSeeFriendlyKill : public IBotFunction
+{
+public:
+	CBotSeeFriendlyKill ( edict_t *pTeammate, edict_t *pDied, const char *szKillerWeapon )
+	{
+		m_pTeammate = pTeammate;
+		m_pWeapon = CWeapons::getWeaponByShortName(szKillerWeapon);
+		m_pDied = pDied;
+	}
+	void execute ( CBot *pBot )
+	{
+		if ( CClassInterface::getTeam(m_pTeammate) != pBot->getTeam() )
+			return;
+
+		if ( pBot->getEdict() != m_pTeammate )
+		{
+			if ( pBot->isVisible(m_pTeammate) )
+				pBot->seeFriendlyKill(m_pTeammate,m_pDied,m_pWeapon);
+		}
+	}
+private:
+	edict_t *m_pTeammate;
+	edict_t *m_pDied;
+	CWeapon *m_pWeapon;
+};
 
 class CBotSeeFriendlyDie : public IBotFunction
 {
@@ -118,11 +143,12 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 		pBot->enemyDown(m_pActivator);
 	}
 	
-	CBotSeeFriendlyDie *func = new CBotSeeFriendlyDie(m_pActivator,pAttacker,weapon);
+	CBotSeeFriendlyDie func1(m_pActivator,pAttacker,weapon);
+	CBotSeeFriendlyKill func2(pAttacker,m_pActivator,weapon);
 
-	CBots::botFunction(func);
+	CBots::botFunction(&func1);
+	CBots::botFunction(&func2);
 
-	delete func;
 }
 
 void CBombPickupEvent :: execute ( IBotEventInterface *pEvent )

@@ -578,7 +578,8 @@ public:
 
 	virtual bool wantToFollowEnemy ();
 
-	virtual void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pKillerWeapon ) { };
+	virtual void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon ) { };
+	virtual void seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *pWeapon ) { };
 
 	inline void selectWeapon ( int iWeaponId ) { m_iSelectWeapon = iWeaponId; }
 

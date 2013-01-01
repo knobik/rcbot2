@@ -1559,7 +1559,7 @@ void CBotTF2 :: died ( edict_t *pKiller )
 	{
 		if ( CBotGlobals::entityIsValid(pKiller) )
 		{
-			m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
+			m_pNavigator->belief(CBotGlobals::entityOrigin(pKiller),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 
 			if (CTeamFortress2Mod::isSentry(pKiller,CTeamFortress2Mod::getEnemyTeam(getTeam())))
 				m_pLastEnemySentry = MyEHandle(pKiller);
@@ -1576,7 +1576,7 @@ void CBotTF2 :: killed ( edict_t *pVictim, char *weapon )
 		m_iSentryKills++;
 
 	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
-		m_pNavigator->belief(getOrigin(),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
+		m_pNavigator->belief(CBotGlobals::entityOrigin(pVictim),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 
 	taunt();
 }
@@ -4067,10 +4067,12 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 					vPoint = pWaypoint->getOrigin();
 
 					dataUnconstArray<int> m_iVisibles;
+					dataUnconstArray<int> m_iInvisibles;
+
 
 		//int m_iVisiblePoints[CWaypoints::MAX_WAYPOINTS]; // make searching quicker
 
-					CWaypointLocations::GetAllVisible(vPoint,vPoint,&m_iVisibles);
+					CWaypointLocations::GetAllVisible(vPoint,vPoint,&m_iVisibles,&m_iInvisibles);
 
 					for ( int i = 0; i < m_iVisibles.Size(); i ++ )
 					{
@@ -4106,6 +4108,9 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 							return true;
 						}
 					}
+
+					m_iVisibles.Destroy();
+					m_iInvisibles.Destroy();
 				}
 			}
 			break;
