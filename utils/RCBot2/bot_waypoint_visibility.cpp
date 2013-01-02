@@ -138,6 +138,7 @@ void CWaypointVisibilityTable :: WorkOutVisibilityTable ()
 bool CWaypointVisibilityTable :: SaveToFile ( void )
 {
     char filename[1024];
+	wpt_vis_header_t header;
 
 	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,"rcv",true);
 
@@ -149,19 +150,23 @@ bool CWaypointVisibilityTable :: SaveToFile ( void )
 	   return false;
    }
 
-   fwrite(m_VisTable,sizeof(unsigned char),Ceiling(((float)(CWaypoints::numWaypoints()*CWaypoints::numWaypoints())/8)),bfp);
+	header.numwaypoints = CWaypoints::numWaypoints();
+	strncpy(header.szMapName,CBotGlobals::getMapName(),63);
+	header.waypoint_version = CWaypoints::WAYPOINT_VERSION;
+
+	fwrite(&header,sizeof(wpt_vis_header_t),1,bfp);
+	fwrite(m_VisTable,sizeof(byte),g_iMaxVisibilityByte,bfp);
 
    fclose(bfp);
 
    return true;
 }
 
-bool CWaypointVisibilityTable :: ReadFromFile ( void )
+bool CWaypointVisibilityTable :: ReadFromFile ( int numwaypoints )
 {
-   int iSize;
-   int iDesiredSize;
-
     char filename[1024];
+
+	wpt_vis_header_t header;
 
 	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,"rcv",true);
 
@@ -173,25 +178,16 @@ bool CWaypointVisibilityTable :: ReadFromFile ( void )
 	   return false;
    }
 
-   fseek (bfp, 0, SEEK_END); // seek at end
+   fread(&header,sizeof(wpt_vis_header_t),1,bfp);
 
-   iSize = ftell(bfp); // get file size
-   iDesiredSize = Ceiling(((float)(CWaypoints::numWaypoints()*CWaypoints::numWaypoints())/8));
-
-   // size not right, return false to re workout table
-   if ( iSize != iDesiredSize )
-   {
-	   fclose(bfp);
+   if ( header.numwaypoints != numwaypoints )
 	   return false;
-   }
+   if ( header.waypoint_version != CWaypoints::WAYPOINT_VERSION )
+	   return false;
+   if ( strncmp(header.szMapName,CBotGlobals::getMapName(),63) )
+	   return false;
 
-   fseek (bfp, 0, SEEK_SET); // seek at start
-
-   // clear table
-   Q_memset(m_VisTable,0,sizeof(g_iMaxVisibilityByte));
-
-   // read vis table
-   fread(m_VisTable,sizeof(unsigned char),iDesiredSize,bfp);
+   fread(m_VisTable,sizeof(byte),g_iMaxVisibilityByte,bfp);
 
    fclose(bfp);
 

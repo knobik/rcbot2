@@ -1210,6 +1210,65 @@ int CDODMod::getHighestScore ()
 	return highest;
 }
 
+bool CDODFlags::isTeamMateDefusing ( edict_t *pIgnore, int iTeam, int id )
+{
+	int i;
+	edict_t *pPlayer;
+
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		pPlayer = INDEXENT(i);
+
+		if ( pIgnore == pPlayer )
+			continue;
+
+		if ( !CBotGlobals::entityIsValid(pPlayer) )
+			continue;
+
+		if ( CClassInterface::isPlayerDefusingBomb_DOD(pPlayer) )
+		{
+			if ( CClassInterface::getTeam(pPlayer) != iTeam )
+				continue;
+
+			if ( (CBotGlobals::entityOrigin(m_pBombs[id]) - CBotGlobals::entityOrigin(pPlayer)).Length() < 128 )
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
+{
+	int i;
+	edict_t *pPlayer;
+
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		pPlayer = INDEXENT(i);
+
+		if ( pIgnore == pPlayer )
+			continue;
+
+		if ( !CBotGlobals::entityIsValid(pPlayer) )
+			continue;
+
+		if ( CClassInterface::isPlayerPlantingBomb_DOD(pPlayer) )
+		{
+			if ( CClassInterface::getTeam(pPlayer) != iTeam )
+				continue;
+
+			if ( (CBotGlobals::entityOrigin(m_pBombs[id]) - CBotGlobals::entityOrigin(pPlayer)).Length() < 128 )
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
 
 bool CDODFlags::getRandomEnemyControlledFlag ( Vector *position, int iTeam, int *id )
 {

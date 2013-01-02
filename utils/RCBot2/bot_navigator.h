@@ -104,7 +104,7 @@ public:
 
 	virtual bool beliefSave ( bool bOverride = false ) { return false; };
 
-	virtual void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType ) = 0;
+	virtual void belief ( Vector origin, Vector vOther, float fBelief, float fStrength, BotBelief iType ) = 0;
 
 	// nearest cover position to vOrigin only
 	virtual bool getCoverPosition ( Vector vCoverOrigin, Vector *vCover ) = 0;
@@ -402,7 +402,7 @@ public:
 
 	//virtual void goBack();
 	
-	void belief ( Vector origin, Vector facing, float fBelief, float fStrength, BotBelief iType );
+	void belief ( Vector origin, Vector vOther, float fBelief, float fStrength, BotBelief iType );
 
 	void beliefOne ( int iWptIndex, BotBelief iBeliefType, float fDist );
 

@@ -264,7 +264,7 @@ bool CDODBot :: startGame ()
 void CDODBot :: killed ( edict_t *pVictim )
 {
 	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
-		m_pNavigator->belief(CBotGlobals::entityOrigin(pVictim),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
+		m_pNavigator->belief(CBotGlobals::entityOrigin(pVictim),getEyePosition(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 
 	return;
 }
@@ -282,7 +282,7 @@ void CDODBot :: died ( edict_t *pKiller )
 	if ( pKiller )
 	{
 		if ( CBotGlobals::entityIsValid(pKiller) )
-			m_pNavigator->belief(CBotGlobals::entityOrigin(pKiller),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
+			m_pNavigator->belief(CBotGlobals::entityOrigin(pKiller),getEyePosition(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 	}
 
 }

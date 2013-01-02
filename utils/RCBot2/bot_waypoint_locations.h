@@ -140,7 +140,7 @@ public:
 	
 	static int NearestWaypoint ( const Vector &vOrigin, float fDist, int iIgnoreWpt, bool bGetVisible = true, bool bGetUnreachable = false, bool bIsBot = false, dataUnconstArray<int> *iFailedWpts = NULL, bool bNearestAimingOnly = false, int iTeam = 0, bool bCheckArea = false, bool bGetVisibleFromOther = false, Vector &vOther = Vector(0,0,0) );
 
-	static void GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, dataUnconstArray<int> *iVisible, dataUnconstArray<int> *iInvisible );
+	static void GetAllVisible( int iFrom, int iOther, Vector &vOrigin, Vector &vOther, float fEDist, dataUnconstArray<int> *iVisible, dataUnconstArray<int> *iInvisible );
 
 	///////////
 

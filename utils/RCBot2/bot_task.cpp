@@ -323,6 +323,8 @@ CBotDODBomb :: CBotDODBomb ( int iBombType, int iBombID, edict_t *pBomb, Vector 
 
 void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	bool bWorking = false;
+
 	pBot->wantToShoot(false);
 
 	if ( m_fTime == 0 )
@@ -334,29 +336,44 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_iType == DOD_BOMB_PLANT) 
 	{
+		bWorking = CClassInterface::isPlayerPlantingBomb_DOD(pBot->getEdict());
+
 		if ( CDODMod::m_Flags.isBombPlanted(m_iBombID) )
 		{
 			complete();
 		}
+		else if ( !bWorking && CDODMod::m_Flags.isTeamMatePlanting(pBot->getEdict(),pBot->getTeam(),m_iBombID) )
+			complete(); // team mate doing my job
+			
 		//else if ( !CClassInterface::isPlayerPlantingBomb_DOD(pBot->getEdict()) )// it is still planted
 		//	complete(); // bomb is being defused by someone else - give up
 	}
 	else if ( m_iType == DOD_BOMB_DEFUSE)
 	{
+		bWorking = CClassInterface::isPlayerDefusingBomb_DOD(pBot->getEdict());
+
 		if ( !CDODMod::m_Flags.isBombPlanted(m_iBombID) )
 			complete();
-		else if ( CDODMod::m_Flags.isBombBeingDefused(m_iBombID) && !CClassInterface::isPlayerDefusingBomb_DOD(pBot->getEdict()) )// it is still planted
-			complete(); // bomb is being defused by someone else - give up
+		else if ( !bWorking && CDODMod::m_Flags.isTeamMateDefusing(pBot->getEdict(),pBot->getTeam(),m_iBombID) )
+			complete(); // team mate doing my job
+
+		//else if ( CDODMod::m_Flags.isBombBeingDefused(m_iBombID) && !CClassInterface::isPlayerDefusingBomb_DOD(pBot->getEdict()) )// it is still planted
+		//	complete(); // bomb is being defused by someone else - give up
 	}
 	
 	pBot->setLookVector(m_vOrigin);
 	pBot->setLookAtTask(LOOK_VECTOR);
+
+	pBot->use();
 	
-	if ( pBot->distanceFrom(m_vOrigin) > 90 )
+	if ( !bWorking )
+	{
 		pBot->setMoveTo(m_vOrigin);
+		pBot->setMoveSpeed(CClassInterface::getMaxSpeed(pBot->getEdict())/4);
+	}
 	else
 	{
-		pBot->use();
+		pBot->stopMoving();
 	}
 }
 

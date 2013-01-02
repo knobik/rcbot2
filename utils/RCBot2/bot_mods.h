@@ -325,6 +325,9 @@ public:
 		return ((m_pBombs[iId]!=NULL)&&(m_iOwner[iId]!=iTeam) && !isBombPlanted(iId));
 	}
 
+	bool isTeamMateDefusing ( edict_t *pIgnore, int iTeam, int id );
+	bool isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id );
+
 	inline int getNumBombsRequired ( int iId )
 	{
 		if ( iId == -1 )

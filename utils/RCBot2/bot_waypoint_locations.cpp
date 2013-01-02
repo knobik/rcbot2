@@ -141,9 +141,10 @@ void CWaypointLocations :: AutoPath ( edict_t *pPlayer, int iWpt )
 		}
 	}
 }
-
-void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, dataUnconstArray<int> *iVisible, dataUnconstArray<int> *iInvisible )
+// @param iFrom waypoint number from a and b within distance
+void CWaypointLocations :: GetAllVisible ( int iFrom, int iOther, Vector &vOrigin, Vector &vOther, float fEDist, dataUnconstArray<int> *iVisible, dataUnconstArray<int> *iInvisible )
 {
+	CWaypoint *pWpt;
 	int iLoc = READ_LOC(vOrigin.x);
 	int jLoc = READ_LOC(vOrigin.y);
 	int kLoc = READ_LOC(vOrigin.z);
@@ -154,8 +155,6 @@ void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, 
 	int iWpt;
 
 	int iMinLoci,iMaxLoci,iMinLocj,iMaxLocj,iMinLock,iMaxLock;
-
-	int iFrom = CWaypointLocations::NearestWaypoint(vVisibleFrom,2048.0,-1,true,true,false,NULL,false,0,false,true,vOrigin);
 
 	CWaypointVisibilityTable *pTable = CWaypoints::getVisiblity();
 	
@@ -177,12 +176,21 @@ void CWaypointLocations :: GetAllVisible ( Vector vVisibleFrom, Vector vOrigin, 
 				for (  int l = 0; l < m_iLocations[i][j][k].Size(); l ++ )
 				{
 					iWpt = arr->ReturnValueFromIndex(l);
+					pWpt = CWaypoints::getWaypoint(iWpt);
+
 					//int iWpt = tempStack.ChooseFromStack();
 					
-					if ( pTable->GetVisibilityFromTo(iFrom,iWpt) )//CBotGlobals::isVisible(vVisibleFrom,CWaypoints::getWaypoint(iWpt)->getOrigin()) )
-						iVisible->Add(iWpt);
-					else
-						iInvisible->Add(iWpt);
+					// within range only deal with these waypoints
+					if ( (pWpt->distanceFrom(vOrigin) < fEDist) && (pWpt->distanceFrom(vOther) < fEDist) )
+					{
+						// iFrom should be the enemy waypoint
+						if ( pTable->GetVisibilityFromTo(iFrom,iWpt) ) //|| pTable->GetVisibilityFromTo(iOther,iWpt) )
+						{   //CBotGlobals::isVisible(vVisibleFrom,CWaypoints::getWaypoint(iWpt)->getOrigin()) )
+							iVisible->Add(iWpt);
+						}
+						else if ( !iVisible->IsMember(iWpt) )
+							iInvisible->Add(iWpt);
+					}
 				}
 			}
 		}

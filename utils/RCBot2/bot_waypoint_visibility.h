@@ -35,6 +35,13 @@
 
 const int g_iMaxVisibilityByte = (CWaypoints::MAX_WAYPOINTS*CWaypoints::MAX_WAYPOINTS)/8; // divide by 8 bits, need byte number
 
+typedef struct
+{
+	int numwaypoints;
+	int waypoint_version;
+	char szMapName[64];
+}wpt_vis_header_t;
+
 class CWaypointVisibilityTable
 {
 public:
@@ -68,7 +75,7 @@ public:
 
 	bool SaveToFile ( void );
 
-	bool ReadFromFile ( void );
+	bool ReadFromFile ( int numwaypoints );
 
 	void workVisibilityForWaypoint ( int i, int iNumWaypoints, bool bTwoway = false );
 

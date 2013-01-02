@@ -404,18 +404,34 @@ void CWaypointNavigator :: beliefOne ( int iWptIndex, BotBelief iBeliefType, flo
 }
 
 // get belief nearest to current origin using waypoints to store belief
-void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief, float fStrength, BotBelief iType )
+void CWaypointNavigator :: belief ( Vector vOrigin, Vector vOther, float fBelief, 
+								   float fStrength, BotBelief iType )
 {
 	static int i;
 	static float factor;
+	static float fEDist;
 	static int iWptIndex;
 	CWaypoint *pWpt;
 	dataUnconstArray<int> m_iVisibles;
 	dataUnconstArray<int> m_iInvisibles;
-	//int m_iVisiblePoints[CWaypoints::MAX_WAYPOINTS]; // make searching quicker
+	static int iWptFrom;
+	static int iWptTo;
 
-	CWaypointLocations::GetAllVisible(vOrigin,vOrigin,&m_iVisibles,&m_iInvisibles);
-	CWaypointLocations::GetAllVisible(vOrigin,m_pBot->getEyePosition(),&m_iVisibles,&m_iInvisibles);
+	// get nearest waypoint visible to others
+	iWptFrom = CWaypointLocations::NearestWaypoint(vOrigin,2048.0,-1,true,true,false,NULL,false,0,false,true,vOther);
+	iWptTo = CWaypointLocations::NearestWaypoint(vOther,2048.0,-1,true,true,false,NULL,false,0,false,true,vOrigin);
+
+	// no waypoint information
+	if ( (iWptFrom == -1) || (iWptTo == -1) )
+		return;
+
+	fEDist = (vOrigin-vOther).Length() + 400.0f; // range
+
+	m_iVisibles.Add(iWptFrom);
+	m_iVisibles.Add(iWptTo);
+
+	CWaypointLocations::GetAllVisible(iWptFrom,iWptTo,vOrigin,vOther,fEDist,&m_iVisibles,&m_iInvisibles);
+	CWaypointLocations::GetAllVisible(iWptFrom,iWptTo,vOther,vOrigin,fEDist,&m_iVisibles,&m_iInvisibles);
 
 	for ( i = 0; i < m_iVisibles.Size(); i ++ )
 	{
@@ -428,6 +444,8 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 				m_fBelief[iWptIndex] *= bot_belief_fade.GetFloat();//(fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
 			if ( m_fBelief[iWptIndex] < 0 )
 				m_fBelief[iWptIndex] = 0;
+
+			//debugoverlay->AddTextOverlayRGB(pWpt->getOrigin(),0,5.0f,0.0,150,0,200,"Safety");
 		}
 		else if ( iType == BELIEF_DANGER )
 		{
@@ -435,6 +453,8 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 				m_fBelief[iWptIndex] += (fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
 			if ( m_fBelief[iWptIndex] > MAX_BELIEF )
 				m_fBelief[iWptIndex] = MAX_BELIEF;
+
+			//debugoverlay->AddTextOverlayRGB(pWpt->getOrigin(),0,5.0f,255,0,0,200,"Danger %0.2f",m_fBelief[iWptIndex]);
 		}
 	}
 
@@ -448,6 +468,8 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 		{
 			if ( m_fBelief[iWptIndex] > 0)
 				m_fBelief[iWptIndex] *= 0.9;//(fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief;
+
+			//debugoverlay->AddTextOverlayRGB(pWpt->getOrigin(),1,5.0f,0.0,150,0,200,"Safety INV");
 		}
 		else if ( iType == BELIEF_SAFETY )
 		{
@@ -455,8 +477,12 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector facing, float fBelief
 				m_fBelief[iWptIndex] += (fStrength / (vOrigin-pWpt->getOrigin()).Length())*fBelief*0.5f;
 			if ( m_fBelief[iWptIndex] > MAX_BELIEF )
 				m_fBelief[iWptIndex] = MAX_BELIEF;
+
+			//debugoverlay->AddTextOverlayRGB(pWpt->getOrigin(),1,5.0f,255,0,0,200,"Danger INV %0.2f",m_fBelief[iWptIndex]);
 		}
 	}
+
+
 /*
 	i = m_oldRoute.size();
 
@@ -1400,7 +1426,7 @@ bool CWaypoints :: load (const char *szMapName)
 
 	// if we're loading from another map, just load visibility, save effort!
 	if ( (szMapName == NULL) && (header.iFlags & W_FILE_FL_VISIBILITY) )
-		bWorkVisibility = ( !m_pVisibilityTable->ReadFromFile() );
+		bWorkVisibility = ( !m_pVisibilityTable->ReadFromFile(iSize) );
 
 	for ( int i = 0; i < iSize; i ++ )
 	{

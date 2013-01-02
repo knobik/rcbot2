@@ -37,11 +37,12 @@
 #include "bot_schedule.h"
 #include "bot_waypoint.h" // for waypoint commands
 #include "bot_waypoint_locations.h" // for waypoint commands
-
+#include "ndebugoverlay.h"
+#include "bot_waypoint_visibility.h"
 #include "bot_getprop.h"
 
 CBotCommandContainer *CBotGlobals :: m_pCommands = new CRCBotCommand();
-
+extern IVDebugOverlay *debugoverlay;
 ///////////////////////////////////////////////////
 // Setup commands
 CRCBotCommand :: CRCBotCommand ()
@@ -85,6 +86,7 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointPaste());
 	add(new CWaypointShiftAreas());
 	add(new CWaypointTeleportCommand());
+	add(new CWaypointShowVisCommand());
 }///////////////
 
 CWaypointTeleportCommand :: CWaypointTeleportCommand()
@@ -355,6 +357,57 @@ eBotCommandResult CWaypointSetAreaCommand :: execute ( CClient *pClient, const c
 
 	return COMMAND_ACCESSED;
 }
+//////////////
+
+CWaypointShowVisCommand :: CWaypointShowVisCommand ()
+{
+	setName("showvis");
+	setHelp("Go to a waypoint, use showvis to see visibility");
+}
+
+eBotCommandResult CWaypointShowVisCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	pClient->updateCurrentWaypoint();
+
+	if ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) )
+	{
+		CWaypoint *pWpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+		int i = 0; 
+		int index;
+		bool bVis;
+		float ftime;
+
+		ftime = (pcmd&&*pcmd) ? atof(pcmd) : 5.0f;
+
+		if ( pWpt )
+		{
+			index = CWaypoints::getWaypointIndex(pWpt);
+			CWaypointVisibilityTable *pTable = CWaypoints::getVisiblity();
+	
+			for ( i = 0; i < CWaypoints::numWaypoints(); i ++ )
+			{
+				CWaypoint *pOther = CWaypoints::getWaypoint(i);
+
+				if ( !pOther->isUsed() )
+					continue;
+
+				if ( pOther->distanceFrom(pWpt) > 1024.0f )
+					continue;
+				
+				bVis = pTable->GetVisibilityFromTo(index,i);
+				
+				debugoverlay->AddTextOverlayRGB(pOther->getOrigin(),0,ftime,bVis ? 0 : 255,bVis ? 255 : 0,0,200,bVis ? "VIS" : "INV" );
+			}
+		}
+		
+	}
+	else
+		return COMMAND_ERROR;
+
+	return COMMAND_ACCESSED;
+}
+
 ///////////////
 CWaypointSetRadiusCommand :: CWaypointSetRadiusCommand ()
 {

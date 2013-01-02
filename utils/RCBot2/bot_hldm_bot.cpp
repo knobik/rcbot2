@@ -77,7 +77,7 @@ void CHLDMBot :: killed ( edict_t *pVictim )
 
 	// update belief around this waypoint
 	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
-		m_pNavigator->belief(CBotGlobals::entityOrigin(pVictim),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
+		m_pNavigator->belief(CBotGlobals::entityOrigin(pVictim),getEyePosition(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 }
 
 // the bot was killed by pKiller
@@ -95,7 +95,7 @@ void CHLDMBot :: died ( edict_t *pKiller )
 	{
 		if ( CBotGlobals::entityIsValid(pKiller) )
 		{
-			m_pNavigator->belief(CBotGlobals::entityOrigin(pKiller),getOrigin(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
+			m_pNavigator->belief(CBotGlobals::entityOrigin(pKiller),getEyePosition(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 		}
 	}
 }
