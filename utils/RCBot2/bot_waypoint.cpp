@@ -1702,6 +1702,7 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 {
 	int iFlags = 0;
 	int iPrevFlags = 0;
+	int iArea = 0;
 	Vector vWptOrigin = pClient->getOrigin();
 	QAngle playerAngles = CBotGlobals::playerAngles (pClient->getPlayer());
 	float fMaxDistance = 0.0; // distance for auto type
@@ -1752,6 +1753,13 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 
 	extern ConVar rcbot_wpt_autotype;
 
+	CBotMod *pCurrentMod = CBotGlobals::getCurrentMod();
+
+	if ( bUseTemplate )
+		iArea = pClient->getWptCopyArea();
+	else
+		iArea = pClient->getWptArea();
+
 	if ( rcbot_wpt_autotype.GetInt() && (!bUseTemplate || (rcbot_wpt_autotype.GetInt()==2)) )
 	{
 		int i = 0;
@@ -1771,29 +1779,12 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 					{			
 						fDistance=(CBotGlobals::entityOrigin(pEdict) - vWptOrigin).Length();
 
-						if ( fDistance <= 64.0f )
+						if ( fDistance <= 80.0f )
 						{
 							if ( fDistance > fMaxDistance )
 								fMaxDistance = fDistance;
 
-							string_t model = pEdict->GetIServerEntity()->GetModelName();
-
-							if ( (fDistance < 48.0f) && (strncmp(pEdict->GetClassName(),"item_health",11) == 0) )
-								iFlags |= CWaypointTypes::W_FL_HEALTH;
-							else if ( (fDistance < 48.0f) && (strncmp(pEdict->GetClassName(),"item_ammo",9) == 0) )
-								iFlags |= CWaypointTypes::W_FL_AMMO;
-							else if ( strcmp(pEdict->GetClassName(),"prop_dynamic") == 0 )
-							{
-								if ( strcmp(model.ToCStr(),"models/props_gameplay/resupply_locker.mdl") == 0 )
-									iFlags |= CWaypointTypes::W_FL_RESUPPLY;
-							}
-							else if ( strcmp(pEdict->GetClassName(),"item_teamflag") == 0 )
-								iFlags |= CWaypointTypes::W_FL_FLAG;
-							else if ( strcmp(pEdict->GetClassName(),"team_control_point") == 0 )
-							{
-								iFlags |= CWaypointTypes::W_FL_CAPPOINT;	
-								fMaxDistance = 100;
-							}
+							pCurrentMod->addWaypointFlags(pEdict,&iFlags,&iArea,&fMaxDistance);
 						}
 					}
 				}
@@ -1804,11 +1795,11 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 
 	if ( bUseTemplate )
 	{
-		addWaypoint(pClient->getPlayer(),vWptOrigin,pClient->getWptCopyFlags(),pClient->isAutoPathOn(),(int)playerAngles.y,pClient->getWptCopyArea(),pClient->getWptCopyRadius()); // sort flags out
+		addWaypoint(pClient->getPlayer(),vWptOrigin,pClient->getWptCopyFlags(),pClient->isAutoPathOn(),(int)playerAngles.y,iArea,pClient->getWptCopyRadius()); // sort flags out
 	}
 	else
 	{
-		addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,pClient->getWptArea(),(iFlags!=iPrevFlags) ? (fMaxDistance/2) : 0); // sort flags out	
+		addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,iArea,(iFlags!=iPrevFlags) ? (fMaxDistance/2) : 0); // sort flags out	
 	}
 }
 
@@ -2130,6 +2121,8 @@ CWaypointType *CWaypointTypes :: getType( const char *szType )
 
 void CWaypointTypes :: showTypesOnConsole ( edict_t *pPrintTo )
 {
+	CBotMod *pMod = CBotGlobals::getCurrentMod();
+
 	CBotGlobals::botMessage(pPrintTo,0,"Available waypoint types");
 
 	for ( unsigned int i = 0; i < m_Types.size(); i ++ )
@@ -2137,7 +2130,8 @@ void CWaypointTypes :: showTypesOnConsole ( edict_t *pPrintTo )
 		const char *name = m_Types[i]->getName();
 		const char *description = m_Types[i]->getDescription();
 
-		CBotGlobals::botMessage(pPrintTo,0,"\"%s\" (%s)",name,description);
+		if ( m_Types[i]->forMod(pMod->getModId()) )
+			CBotGlobals::botMessage(pPrintTo,0,"\"%s\" (%s)",name,description);
 	}
 }
 
@@ -2167,31 +2161,32 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_CROUCH,"crouch","bot will duck here",WptColor(200,100,0)));
 	addType(new CWaypointType(W_FL_UNREACHABLE,"unreachable","bot can't go here (used for visibility purposes only)",WptColor(200,200,200)));
 	addType(new CWaypointType(W_FL_LADDER,"ladder","bot will climb a ladder here",WptColor(255,255,0)));
-	addType(new CWaypointType(W_FL_FLAG,"flag","bot will find a flag here",WptColor(255,255,0)));
+	addType(new CWaypointType(W_FL_FLAG,"flag","bot will find a flag here",WptColor(255,255,0),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_CAPPOINT,"capture","TF2/DOD bot will find a capture point here",WptColor(255,255,0)));
-	addType(new CWaypointType(W_FL_NOBLU,"noblueteam","TF2 blue team can't use this waypoint",WptColor(255,0,0)));
-	addType(new CWaypointType(W_FL_NOALLIES,"noallies","DOD allies team can't use this waypoint",WptColor(255,0,0)));
-	addType(new CWaypointType(W_FL_NORED,"noredteam","TF2 red team can't use this waypoint",WptColor(0,0,128)));
-	addType(new CWaypointType(W_FL_NOAXIS,"noaxis","DOD axis team can't use this waypoint",WptColor(255,0,0)));
+	addType(new CWaypointType(W_FL_NOBLU,"noblueteam","TF2 blue team can't use this waypoint",WptColor(255,0,0),(1<<MOD_TF2)));
+	addType(new CWaypointType(W_FL_NOALLIES,"noallies","DOD allies team can't use this waypoint",WptColor(255,0,0),(1<<MOD_DOD)));
+	addType(new CWaypointType(W_FL_NORED,"noredteam","TF2 red team can't use this waypoint",WptColor(0,0,128),(1<<MOD_TF2)));
+	addType(new CWaypointType(W_FL_NOAXIS,"noaxis","DOD axis team can't use this waypoint",WptColor(255,0,0),(1<<MOD_DOD)));
 	addType(new CWaypointType(W_FL_HEALTH,"health","bot can sometimes get health here",WptColor(255,255,255)));
 	addType(new CWaypointType(W_FL_OPENS_LATER,"openslater","this waypoint is available when a door is open only",WptColor(100,100,200)));
 	addType(new CWaypointType(W_FL_SNIPER,"sniper","a bot can snipe here",WptColor(0,255,0)));
-	addType(new CWaypointType(W_FL_ROCKET_JUMP,"rocketjump","TF2 a bot can rocket jump here",WptColor(10,100,0)));
+	addType(new CWaypointType(W_FL_ROCKET_JUMP,"rocketjump","TF2 a bot can rocket jump here",WptColor(10,100,0),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_AMMO,"ammo","bot can sometimes get ammo here",WptColor(50,100,10)));
-	addType(new CWaypointType(W_FL_RESUPPLY,"resupply","TF2 bot can always get ammo and health here",WptColor(255,100,255)));
-	addType(new CWaypointType(W_FL_SENTRY,"sentry","TF2 engineer bot can build here",WptColor(255,0,0)));
-	addType(new CWaypointType(W_FL_MACHINEGUN,"machinegun","DOD machine gunner will deploy gun here",WptColor(255,0,0)));
-	addType(new CWaypointType(W_FL_DOUBLEJUMP,"doublejump","TF2 scout can double jump here",WptColor(10,10,100)));
+	addType(new CWaypointType(W_FL_RESUPPLY,"resupply","TF2 bot can always get ammo and health here",WptColor(255,100,255),(1<<MOD_TF2)));
+	addType(new CWaypointType(W_FL_BOMBS_HERE,"bombs","DOD bots can pickup bombs here",WptColor(255,100,255),(1<<MOD_DOD)));
+	addType(new CWaypointType(W_FL_SENTRY,"sentry","TF2 engineer bot can build here",WptColor(255,0,0),(1<<MOD_TF2)));
+	addType(new CWaypointType(W_FL_MACHINEGUN,"machinegun","DOD machine gunner will deploy gun here",WptColor(255,0,0),(1<<MOD_DOD)));
+	addType(new CWaypointType(W_FL_DOUBLEJUMP,"doublejump","TF2 scout can double jump here",WptColor(10,10,100),(1<<MOD_TF2)));
 
-	addType(new CWaypointType(W_FL_TELE_ENTRANCE,"teleentrance","TF2 engineer bot can build tele entrance here",WptColor(50,50,150)));
-	addType(new CWaypointType(W_FL_TELE_EXIT,"teleexit","TF2 engineer bot can build tele exit here",WptColor(100,100,255)));
+	addType(new CWaypointType(W_FL_TELE_ENTRANCE,"teleentrance","TF2 engineer bot can build tele entrance here",WptColor(50,50,150),(1<<MOD_TF2)));
+	addType(new CWaypointType(W_FL_TELE_EXIT,"teleexit","TF2 engineer bot can build tele exit here",WptColor(100,100,255),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_DEFEND,"defend","bot will defend at this position",WptColor(160,50,50)));
 	addType(new CWaypointType(W_FL_AREAONLY,"areaonly","bot will only use this waypoint at certain areas of map",WptColor(150,200,150)));
-	addType(new CWaypointType(W_FL_ROUTE,"route","bot will attempt to go through one of these",WptColor(100,100,100)));
+	addType(new CWaypointType(W_FL_ROUTE,"route","bot will attempt to go through one of these",WptColor(100,100,100),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_WAIT_OPEN,"waitopen","bot will wait until arena point is open to use this waypoint",WptColor(150,150,100)));
-	addType(new CWaypointType(W_FL_NO_FLAG,"noflag","TF2 bot will lose flag if he goes thorugh here",WptColor(200,100,50)));
+	addType(new CWaypointType(W_FL_NO_FLAG,"noflag","TF2 bot will lose flag if he goes thorugh here",WptColor(200,100,50),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_LIFT,"lift","bot needs to wait on a lift here",WptColor(50,80,180)));
-	addType(new CWaypointType(W_FL_FLAGONLY,"flagonly","TF2 bot needs the flag to go through here",WptColor(180,50,80)));
+	addType(new CWaypointType(W_FL_FLAGONLY,"flagonly","TF2 bot needs the flag to go through here",WptColor(180,50,80),(1<<MOD_TF2)));
 }
 
 void CWaypointTypes :: freeMemory ()
@@ -2207,6 +2202,7 @@ void CWaypointTypes :: freeMemory ()
 
 void CWaypointTypes:: printInfo ( CWaypoint *pWpt, edict_t *pPrintTo, float duration )
 {
+	CBotMod *pCurrentMod = CBotGlobals::getCurrentMod();
 	char szMessage[1024];
 	Q_snprintf(szMessage,1024,"Waypoint ID %d (Area = %d | Radius = %0.1f)[",CWaypoints::getWaypointIndex(pWpt),pWpt->getArea(),pWpt->getRadius());	
 
@@ -2216,7 +2212,7 @@ void CWaypointTypes:: printInfo ( CWaypoint *pWpt, edict_t *pPrintTo, float dura
 
 		for ( unsigned int i = 0; i < m_Types.size(); i ++ )
 		{
-			if ( m_Types[i]->isBitsInFlags(pWpt->getFlags()) )
+			if ( m_Types[i]->forMod(pCurrentMod->getModId()) && m_Types[i]->isBitsInFlags(pWpt->getFlags()) )
 			{
 				if ( bComma )
 					strcat(szMessage,",");
@@ -2277,12 +2273,13 @@ void CWaypointType :: removeTypeFromWaypoint ( CWaypoint *pWaypoint )
 
 }*/
 
-CWaypointType :: CWaypointType (int iBit, const char *szName, const char *szDescription, WptColor vColour )
+CWaypointType :: CWaypointType (int iBit, const char *szName, const char *szDescription, WptColor vColour, int iModBits )
 {
 	m_iBit = iBit;
 	m_szName = CStrings::getString(szName);
 	m_szDescription = CStrings::getString(szDescription);
 	m_vColour = vColour;
+	m_iMods = iModBits;
 }
 
 bool CWaypoint :: forTeam ( int iTeam )

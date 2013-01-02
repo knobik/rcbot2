@@ -67,7 +67,7 @@ class CWaypointType
 {
 public:
 
-	CWaypointType ( int iBit, const char *szName, const char *szDescription, WptColor vColour );
+	CWaypointType ( int iBit, const char *szName, const char *szDescription, WptColor vColour, int iModBits = BITS_MOD_ALL );
 
 	inline const char *getName () { return m_szName; }
 	inline const char *getDescription () { return m_szDescription; }

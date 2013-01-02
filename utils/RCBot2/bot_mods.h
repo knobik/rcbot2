@@ -102,6 +102,8 @@ public:
 
 	eBotType getBotType () { return m_iBotType; }
 
+	virtual void addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance ){ return; }
+
 ////////////////////////////////
 	virtual void initMod ();
 
@@ -476,6 +478,8 @@ public:
 	inline static bool isCommunalBombPoint () { return m_bCommunalBombPoint; }
 	inline static int getBombPointArea (int iTeam) { if ( iTeam == TEAM_ALLIES ) return m_iBombAreaAllies; return m_iBombAreaAxis; } 
 
+	void addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance );
+
 	static CDODFlags m_Flags;
 
 protected:
@@ -759,6 +763,8 @@ public:
 
 	static void setAttackDefendMap ( bool bSet ) { m_bAttackDefendMap = bSet; }
 	static bool isAttackDefendMap () { return m_bAttackDefendMap; }
+
+	void addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance );
 
 	static void flagDropped (int iTeam)
 	{

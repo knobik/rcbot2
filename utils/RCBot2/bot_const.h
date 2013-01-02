@@ -112,6 +112,8 @@ typedef enum
 	MOD_MAX
 }eModId;
 
+#define BITS_MOD_ALL ~(1<<MOD_MAX)
+
 #define BOT_JUMP_HEIGHT 45
 
 #define MIN_COVER_MOVE_DIST 128

@@ -399,6 +399,28 @@ void CTeamFortress2Mod::sapperPlaced(edict_t *pOwner,eEngiBuild type,edict_t *pS
 	}
 }
 
+void CTeamFortress2Mod:: addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance )
+{
+	string_t model = pEdict->GetIServerEntity()->GetModelName();
+
+	if ( strncmp(pEdict->GetClassName(),"item_health",11) == 0 )
+		*iFlags |= CWaypointTypes::W_FL_HEALTH;
+	else if ( strncmp(pEdict->GetClassName(),"item_ammo",9) == 0 )
+		*iFlags |= CWaypointTypes::W_FL_AMMO;
+	else if ( strcmp(pEdict->GetClassName(),"prop_dynamic") == 0 )
+	{
+		if ( strcmp(model.ToCStr(),"models/props_gameplay/resupply_locker.mdl") == 0 )
+			*iFlags |= CWaypointTypes::W_FL_RESUPPLY;
+	}
+	else if ( strcmp(pEdict->GetClassName(),"item_teamflag") == 0 )
+		*iFlags |= CWaypointTypes::W_FL_FLAG;
+	else if ( strcmp(pEdict->GetClassName(),"team_control_point") == 0 )
+	{
+		*iFlags |= CWaypointTypes::W_FL_CAPPOINT;	
+		*fMaxDistance = 100;
+	}
+}
+
 void CTeamFortress2Mod::sapperDestroyed(edict_t *pOwner,eEngiBuild type, edict_t *pSapper)
 {
 	static short int index; 
@@ -1532,6 +1554,31 @@ void CDODMod ::roundStart()
 
 
 	//m_Flags.updateAll();
+}
+
+void CDODMod :: addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance )
+{
+	if ( isBombMap()  )
+	{
+		int id = m_Flags.getBombID(pEdict);
+
+		if ( id != -1 )
+		{
+			*iFlags |= CWaypointTypes::W_FL_CAPPOINT;
+			*iArea = id;
+		}
+	}
+	else if ( isFlagMap() )
+	{
+		int id = m_Flags.getFlagID(pEdict);
+
+		if ( id != -1 )
+		{
+			*iFlags |= CWaypointTypes::W_FL_CAPPOINT;
+			*iArea = id;
+		}
+	}
+
 }
 
 void CDODMod :: modFrame()
