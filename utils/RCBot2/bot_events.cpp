@@ -143,12 +143,14 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 		pBot->enemyDown(m_pActivator);
 	}
 	
-	CBotSeeFriendlyDie func1(m_pActivator,pAttacker,weapon);
-	CBotSeeFriendlyKill func2(pAttacker,m_pActivator,weapon);
+	if ( m_pActivator && pAttacker ) // not worldspawn
+	{
+		CBotSeeFriendlyDie func1(m_pActivator,pAttacker,weapon);
+		CBotSeeFriendlyKill func2(pAttacker,m_pActivator,weapon);
 
-	CBots::botFunction(&func1);
-	CBots::botFunction(&func2);
-
+		CBots::botFunction(&func1);
+		CBots::botFunction(&func2);
+	}
 }
 
 void CBombPickupEvent :: execute ( IBotEventInterface *pEvent )

@@ -2642,16 +2642,6 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->stopMoving();
 
-		if ( pBot->hasEnemy() )
-		{
-			pBot->setLookAtTask(LOOK_ENEMY);
-
-			pBot->handleAttack(pCurrentWeapon,pBot->getEnemy());
-
-			// havin' fun
-			m_fEnemyTime = engine->Time();
-		}
-
 		// no enemy for a while
 		if ( (m_fEnemyTime + m_fTime) < engine->Time() )
 		{
@@ -2660,6 +2650,16 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			complete();
 		}
+	}
+
+	if ( pBot->hasEnemy() )
+	{
+		pBot->setLookAtTask(LOOK_ENEMY);
+
+		pBot->handleAttack(pCurrentWeapon,pBot->getEnemy());
+
+		// havin' fun
+		m_fEnemyTime = engine->Time();
 	}
 }
 

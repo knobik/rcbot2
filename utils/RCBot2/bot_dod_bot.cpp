@@ -145,14 +145,26 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	}
 	else
 	{
-		if ( pEntity == m_pNearestFlag )
+		if ( pEntity == m_pNearestFlag ) // forget flag
 			m_pNearestFlag = NULL;
 		else if ( pEntity == m_pEnemyGrenade )
-			m_pEnemyGrenade = NULL;
+		{
+			// remember grenade if it is within radius of blowing me up
+			if ( distanceFrom(m_pEnemyGrenade) > (BLAST_RADIUS*2) )
+				m_pEnemyGrenade = NULL;
+		}
 		else if ( pEntity == m_pEnemyRocket )
-			m_pEnemyRocket = NULL;
+		{
+			// remember rocket if it is within radius of blowing me up
+			if ( distanceFrom(m_pEnemyRocket) > (BLAST_RADIUS*2) )
+				m_pEnemyRocket = NULL;
+		}
 		else if ( pEntity == m_pNearestBomb )
-			m_pNearestBomb = NULL;
+		{
+			// remember bomb if it is within radius of blowing me up
+			if ( distanceFrom(m_pNearestBomb) > (BLAST_RADIUS*2) )
+				m_pNearestBomb = NULL;
+		}
 	}
 
 	if ( !bNoDraw && (pEntity != m_pNearestSmokeToEnemy) && (strncmp(szClassname,"grenade_smoke",13) == 0) )
@@ -829,7 +841,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 			if ( randomFloat(0.0f,1.0f) > 0.75f )
 				addVoiceCommand(DOD_VC_YES);
 		}
-		else if ( randomFloat(0.0f,1.0f) > 0.75f )
+		else if ( randomFloat(0.0f,1.0f) > 0.9f )
 			addVoiceCommand(DOD_VC_NO);
 		break;
 	case DOD_VC_HOLD:
@@ -842,7 +854,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 			if ( randomFloat(0.0f,1.0f) > 0.75f )
 				addVoiceCommand(DOD_VC_YES);
 		}
-		else if ( randomFloat(0.0f,1.0f) > 0.75f )
+		else if ( randomFloat(0.0f,1.0f) > 0.9f )
 			addVoiceCommand(DOD_VC_NO);
 		break;
 	case DOD_VC_SMOKE:
@@ -938,6 +950,53 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 	switch ( util->getId() )
 	{
+	case BOT_UTIL_DEFEND_NEAREST_POINT:
+		{
+			Vector vGoal;
+			int id = util->getIntData();
+			bool defend_wpt = true;
+
+			vGoal = util->getVectorData();
+
+			CWaypoint *pWaypoint;
+
+			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,m_iTeam,id,true,this);
+
+			if ( pWaypoint == NULL )
+			{			
+				defend_wpt = false;
+
+				if ( distanceFrom(vGoal) > 1024 ) // outside waypoint bucket of goal
+					pWaypoint = CWaypoints::getPinchPointFromWaypoint(vGoal,vGoal);
+				else
+					pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),vGoal);
+			}
+
+			if ( pWaypoint )
+			{
+
+				if ( randomFloat(0.0f,1.0f) > 0.9f )
+					addVoiceCommand(DOD_VC_ENEMY_BEHIND);
+				
+				CBotSchedule *defend = new CBotSchedule();
+				CBotTask *findpath = new CFindPathTask(pWaypoint->getOrigin());//,LOOK_AROUND);
+				CBotTask *deftask = new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(7.5f,12.5f),0,true,vGoal,defend_wpt ? LOOK_SNIPE : LOOK_AROUND);
+
+				removeCondition(CONDITION_PUSH); 
+				findpath->setCompleteInterrupt(CONDITION_PUSH);
+				deftask->setCompleteInterrupt(CONDITION_PUSH);
+
+				defend->setID(SCHED_DEFENDPOINT);
+				defend->addTask(findpath);
+				defend->addTask(deftask);
+				// add defend task
+				m_pSchedules->add(defend);
+
+				return true;
+
+			}
+		}
+		break;
 	case BOT_UTIL_ATTACK_NEAREST_POINT:
 		{
 			Vector vGoal;
@@ -1266,26 +1325,29 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				else
 					pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),vGoal);
 
-				if ( pWaypoint )
+				CBotSchedule *attack = new CBotSchedule();
+
+				attack->setID(SCHED_ATTACKPOINT);
+
+				if ( pWaypoint && (randomFloat(0.0f,MAX_BELIEF) < m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint))) )
 				{
-					CBotSchedule *attack = new CBotSchedule();
-
-					attack->setID(SCHED_ATTACKPOINT);
 					attack->addTask(new CFindPathTask(pWaypoint->getOrigin()));//,LOOK_AROUND));
-					attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),200,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
-					attack->addTask(new CFindPathTask(vGoal));
-					attack->addTask(new CBotDODAttackPoint(iFlagID,vGoal,150.0f));
-					// add defend task
-					m_pSchedules->add(attack);
-
-					// last flag
-					if ( CDODMod::m_Flags.getNumFlagsOwned(m_iTeam) == (CDODMod::m_Flags.getNumFlags()-1) )
-						addVoiceCommand(DOD_VC_GOGOGO);
-
-					removeCondition(CONDITION_PUSH);
-					
-					return true;
+					attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
 				}
+
+				attack->addTask(new CFindPathTask(vGoal));
+				attack->addTask(new CBotDODAttackPoint(iFlagID,vGoal,150.0f));
+				// add defend task
+				m_pSchedules->add(attack);
+
+				// last flag
+				if ( CDODMod::m_Flags.getNumFlagsOwned(m_iTeam) == (CDODMod::m_Flags.getNumFlags()-1) )
+					addVoiceCommand(DOD_VC_GOGOGO);
+
+				removeCondition(CONDITION_PUSH);
+				
+				return true;
+		
 			}
 		}
 		break;
@@ -1524,26 +1586,27 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 	if ( CDODMod::isFlagMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
 	{
+		float fFlagRatio;
+		float fDefRatio;
 		iFlagID = -1;
 		iFlagsOwned = CDODMod::m_Flags.getNumFlagsOwned(m_iTeam);
 		iNumFlags = CDODMod::m_Flags.getNumFlags();
+		fDefRate = bot_defrate.GetFloat();
+
+		fFlagRatio = (float)iFlagsOwned/iNumFlags;
+		fDefRatio = 1.0f - fFlagRatio;
 
 		if ( m_pNearestFlag )
 			iFlagID = CDODMod::m_Flags.getFlagID(m_pNearestFlag);
 
-		fDefendUtil = (float)iFlagsOwned/iNumFlags;
-		fAttackUtil = 1.0f - fDefendUtil;
-
-		fAttackUtil += randomFloat(-0.25f,0.25f); // add some fuzz
+		fAttackUtil = 0.5f + randomFloat(-fFlagRatio,fFlagRatio)*0.25f;
+		fDefendUtil = 0.5f + randomFloat(-fDefRatio,fDefRatio)*fDefRate;
 
 		if ( hasSomeConditions(CONDITION_PUSH) )
 			fAttackUtil *= 2;
-
-		fDefRate = bot_defrate.GetFloat();
-		fDefendUtil += randomFloat(-fDefRate,fDefRate);
 		
 		ADD_UTILITY(BOT_UTIL_ATTACK_POINT,(m_pNearestFlag==NULL)||!CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam),fAttackUtil);
-		ADD_UTILITY(BOT_UTIL_DEFEND_POINT,(m_pNearestFlag==NULL)||CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam),fDefendUtil);
+		ADD_UTILITY(BOT_UTIL_DEFEND_POINT,(m_pNearestFlag==NULL)||!CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam),fDefendUtil);
 
 		if ( m_pNearestFlag )
 		{
@@ -1551,6 +1614,11 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			ADD_UTILITY_DATA_VECTOR(BOT_UTIL_ATTACK_NEAREST_POINT,
 				!CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) && (CDODMod::m_Flags.numCappersRequired(iFlagID,m_iTeam)-
 				CDODMod::m_Flags.numFriendliesAtCap(iFlagID,m_iTeam))<=1,(iFlagsOwned == (iNumFlags-1)) ? 0.9f : 0.75f,iFlagID,CBotGlobals::entityOrigin(m_pNearestFlag));
+
+			ADD_UTILITY_DATA_VECTOR(BOT_UTIL_DEFEND_NEAREST_POINT,
+				CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) && ((CDODMod::m_Flags.numEnemiesAtCap(iFlagID,m_iTeam)>0)||hasEnemy()),
+				(iFlagsOwned == 1) ? 0.9f : 0.75f,iFlagID,CBotGlobals::entityOrigin(m_pNearestFlag));
+
 		}
 	}
 	else if ( CDODMod::isBombMap() && (CDODMod::m_Flags.getNumFlags() > 0) )

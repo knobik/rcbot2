@@ -162,7 +162,7 @@ enum
 #define WEAP_FL_MELEE_SEC_ATT	8192 // weapon has a melee secondary attack
 #define WEAP_FL_FIRE_SELECT		16384 // weapon can choose fire mode
 #define WEAP_FL_CANTFIRE_NORM	32768 // weapon can't be fired normally, needs to be zoomed/deployed
-
+#define WEAP_FL_GRENADE			65536
 
 extern WeaponsData_t TF2Weaps[];
 extern WeaponsData_t HL2DMWeaps[];
@@ -287,6 +287,11 @@ public:
 	inline bool mustHoldAttack ()
 	{
 		return hasAllFlags(WEAP_FL_HOLDATTACK);
+	}
+
+	inline bool isGrenade ()
+	{
+		return hasAllFlags(WEAP_FL_GRENADE);
 	}
 
 	inline bool isMelee ()
@@ -603,6 +608,23 @@ public:
 	CBotWeapon *getWeapon ( CWeapon *pWeapon );
 
 	CBotWeapon *getActiveWeapon ( const char *szWeaponName );
+
+	CBotWeapon *getGrenade ()
+	{
+		for ( int i = 0; i < MAX_WEAPONS; i ++ )
+		{
+			if ( m_theWeapons[i].hasWeapon() )
+			{
+				if ( m_theWeapons[i].getWeaponInfo() )
+				{
+					if ( m_theWeapons[i].getWeaponInfo()->isGrenade() )
+						return &(m_theWeapons[i]);
+				}
+			}
+		}
+
+		return NULL;
+	}
 
 	void clearWeapons ();
 

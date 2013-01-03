@@ -40,6 +40,7 @@
 #include "ndebugoverlay.h"
 #include "bot_waypoint_visibility.h"
 #include "bot_getprop.h"
+#include "bot_weapons.h"
 
 CBotCommandContainer *CBotGlobals :: m_pCommands = new CRCBotCommand();
 extern IVDebugOverlay *debugoverlay;
@@ -575,6 +576,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CBotGoto());
 	add(new CBotFlush());
 	add(new CDebugTaskCommand());
+	add(new CBotTaskCommand());
 	add(new CDebugButtonsCommand());
 	add(new CDebugSpeedCommand());
 	add(new CDebugUsercmdCommand());
@@ -817,6 +819,50 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 	return COMMAND_ACCESSED;
 }
 //////////////////////
+//edits schedules
+
+eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient && pClient->getDebugBot()!=NULL )
+	{
+		CBot *pBot = pClient->getDebugBot();
+
+		if ( pBot->inUse() )
+		{
+			CBotSchedules *pSched = pBot->getSchedule();
+
+			if ( pcmd && *pcmd )
+			{
+				int task = atoi(pcmd);
+
+				pSched->freeMemory();
+
+				// tests grenade throwing == 71
+				if ( task == BOT_UTIL_THROW_GRENADE )
+				{
+					CBotWeapons *pWeapons;
+					CBotWeapon *gren;
+
+					pWeapons = pBot->getWeapons();
+					gren = pWeapons->getGrenade();
+
+					if ( gren )
+					{
+						CBotSchedule *sched = new CBotSchedule(new CThrowGrenadeTask(gren,pBot->getAmmo(gren->getWeaponInfo()->getAmmoIndex1()),pClient->getOrigin()));
+						pSched->add(sched);
+					}
+
+				}
+			}
+			
+		}
+	}
+	return COMMAND_ACCESSED;
+
+}
+//////////////////////
+//clear bots schedules
+
 eBotCommandResult CBotFlush :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( pClient && pClient->getDebugBot()!=NULL )

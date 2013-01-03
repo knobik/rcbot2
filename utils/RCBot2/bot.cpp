@@ -147,7 +147,8 @@ void CBot :: runPlayerMove()
 
 	if ( rcbot_move_forward.GetBool() )
 	{
-		cmd.forwardmove = m_fIdealMoveSpeed;
+		cmd.forwardmove = 0;
+		cmd.sidemove = 0;
 	}
 	else
 	{

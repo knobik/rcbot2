@@ -1306,9 +1306,19 @@ bool CDODFlags::getRandomEnemyControlledFlag ( Vector *position, int iTeam, int 
 		if ( m_iOwner[i] != iTeam )
 		{
 			if ( iTeam == TEAM_ALLIES )
-				for ( j = 0; j < (m_iNumAxis[i]+1); j ++ ) { iPossible.push_back(i); }
-			else if ( iTeam == TEAM_AXIS )
+			{
+				// more chance if more teammates there
 				for ( j = 0; j < (m_iNumAllies[i]+1); j ++ ) { iPossible.push_back(i); }
+			}
+			else if ( iTeam == TEAM_AXIS )
+			{
+				//
+				for ( j = 0; j < (m_iNumAxis[i]+1); j ++ ) { iPossible.push_back(i); }
+			}
+
+			// more chance if not owned by anyone yet
+			if ( m_iOwner[i] == 0 )
+				iPossible.push_back(i);
 		}
 	}
 
@@ -1430,10 +1440,10 @@ bool CDODFlags::getRandomTeamControlledFlag ( Vector *position, int iTeam, int *
 	{
 		if ( m_iOwner[i] == iTeam )
 		{
-			if ( iTeam == TEAM_ALLIES )
-				for ( j = 0; j < (m_iNumAllies[i]+1); j ++ ) { iPossible.push_back(i); }
-			else if ( iTeam == TEAM_AXIS )
+			if ( iTeam == TEAM_ALLIES ) // more chance if there are enemies at our flag
 				for ( j = 0; j < (m_iNumAxis[i]+1); j ++ ) { iPossible.push_back(i); }
+			else if ( iTeam == TEAM_AXIS )
+				for ( j = 0; j < (m_iNumAllies[i]+1); j ++ ) { iPossible.push_back(i); }
 		}
 	}
 
