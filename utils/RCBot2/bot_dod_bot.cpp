@@ -1581,9 +1581,10 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	// always able to roam around -- low utility
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.01f);
 
-	// I have an enemy 
+	// I had an enemy a minute ago
 	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.81f);
 
+	// flag capture map
 	if ( CDODMod::isFlagMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
 	{
 		float fFlagRatio;
@@ -1621,6 +1622,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 		}
 	}
+	// bomb map
 	else if ( CDODMod::isBombMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
 	{
 		// same thing as above except with bombs
@@ -1695,6 +1697,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		}
 	}
 
+	// sniping or machinegunning
 	switch ( m_iClass )
 	{
 	case DOD_CLASS_SNIPER:
@@ -1715,6 +1718,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		break;
 	}
 
+	// grenades
 	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && 
 		(m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) || m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) || m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) || m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_GER)) )
 	{

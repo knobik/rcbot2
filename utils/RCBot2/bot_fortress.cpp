@@ -1346,11 +1346,12 @@ void CBotTF2 :: setClass ( TF_Class _class )
 	m_iClass = _class;
 }
 
-void CBotTF2 :: taunt ()
+// bOverride will be true in messaround mode
+void CBotTF2 :: taunt ( bool bOverride )
 {
 	extern ConVar rcbot_taunt;
 	// haven't taunted for a while, no emeny, not ubered, OK! Taunt!
-	if ( rcbot_taunt.GetBool() && !m_pEnemy && (m_fTauntTime < engine->Time()) && (!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict)) )
+	if ( bOverride || (rcbot_taunt.GetBool() && !m_pEnemy && (m_fTauntTime < engine->Time()) && (!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict))) )
 	{
 		helpers->ClientCommand(m_pEdict,"taunt");
 		m_fTauntTime = engine->Time() + randomFloat(40.0,100.0); // Don't taunt for another minute or two

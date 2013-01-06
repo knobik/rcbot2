@@ -40,11 +40,29 @@
 vector <CBotProfile*> CBotProfiles :: m_Profiles;
 CBotProfile *CBotProfiles :: m_pDefaultProfile = NULL;
 
-CBotProfile :: CBotProfile (const char *szName, const char *szModel,int iTeam,const char *szWeapon, int iVisionTicks, int iPathTicks, int iClass)
+CBotProfile :: CBotProfile ( CBotProfile &other )
 {
+	*this = other;
+}
+
+CBotProfile :: CBotProfile (
+		const char *szName, 
+		const char *szModel, 
+		int iTeam, 
+		int iVisionTicks, 
+		int iPathTicks, 
+		int iVisionTicksClients,
+		float fSensitivity,
+		float fBraveness,
+		float fAimSkill,
+		int iClass )
+{ 
+	m_iVisionTicksClients = iVisionTicksClients;
+	m_fSensitivity = fSensitivity;
+	m_fBraveness = fBraveness;
+	m_fAimSkill = fAimSkill;
 	m_szName = CStrings::getString(szName);
 	m_szModel = CStrings::getString(szModel);
-	m_szWeapon = CStrings::getString(szWeapon);
 	m_iPathTicks = iPathTicks;
 	m_iVisionTicks = iVisionTicks;
 	m_iTeam = iTeam;
@@ -65,6 +83,10 @@ void CBotProfiles :: deleteProfiles ()
 	m_pDefaultProfile = NULL;
 }
 
+// requires CBotProfile 'read' declared
+#define READ_PROFILE_STRING(kvname,varname) if ( !pKVL->getString("kvname",&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
+#define READ_PROFILE_INT(kvname,varname) if ( !pKVL->getInt("kvname",&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
+#define READ_PROFILE_FLOAT(kvname,varname) if ( !pKVL->getFloat("kvname",&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
 // find profiles and setup list
 void CBotProfiles :: setupProfiles ()
 {
@@ -74,7 +96,18 @@ void CBotProfiles :: setupProfiles ()
 	char filename[512];
 
 	// Setup Default profile
-	m_pDefaultProfile = new CBotProfile("RCBot","default",-1,"default",CBotVisibles::DEFAULT_MAX_TICKS,IBotNavigator::MAX_PATH_TICKS);	
+	m_pDefaultProfile = new CBotProfile(
+		"RCBot", // name
+		"default", // model (team in HL2DM)
+		-1, // iTeam
+		CBotVisibles::DEFAULT_MAX_TICKS, // vis ticks
+		IBotNavigator::MAX_PATH_TICKS, // path ticks
+		2, // visrevs clients
+		8, // sensitivity
+		0.5f, // braveness
+		0.5f, // aim skill
+		0 // class
+		);	
 
 	// read profiles
 	iId = 1;
@@ -89,49 +122,25 @@ void CBotProfiles :: setupProfiles ()
 
 		if ( fp )
 		{
+			CBotProfile read;
 			CRCBotKeyValueList *pKVL = new CRCBotKeyValueList();
 
 			CBotGlobals::botMessage(NULL,0,"Reading bot profile \"%s\"",filename);
 
-			int iTeam;
-			char *szModel;
-			char *szName;
-			char *szWeapon;
-			int iVisionTicks;
-			int iPathTicks;
-			int iClass;
-
-			float skill;
-			float aim_skill;
-			float aim_time;
-			float aim_speed;
-
 			pKVL->parseFile(fp);		
 
-			if ( !pKVL->getInt("team",&iTeam) )
-				iTeam = m_pDefaultProfile->getTeam();
-			if ( !pKVL->getString("model",&szModel) )
-				szModel = m_pDefaultProfile->getModel();
-			if ( !pKVL->getString("name",&szName) )
-				szName = m_pDefaultProfile->getName();
-			if ( !pKVL->getString("weapon",&szWeapon) )
-				szWeapon = m_pDefaultProfile->getWeapon();
-			if ( !pKVL->getInt("visionticks",&iVisionTicks) )
-				iVisionTicks = m_pDefaultProfile->getVisionTicks();
-			if ( !pKVL->getInt("pathticks",&iPathTicks) )
-				iPathTicks = m_pDefaultProfile->getPathTicks();
-			if ( !pKVL->getInt("class",&iClass) )
-				iClass = 0;
-			if ( !pKVL->getFloat("skill",&skill) )
-				skill = 0;
-			if ( !pKVL->getFloat("aim_speed",&aim_speed) )
-				aim_speed = 0;
-			if ( !pKVL->getFloat("aim_time",&aim_time) )
-				aim_time = 0;
-			if ( !pKVL->getFloat("aim_skill",&aim_skill) )
-				aim_skill = 0;
+			READ_PROFILE_INT("team",m_iTeam);
+			READ_PROFILE_STRING("model",m_szModel);
+			READ_PROFILE_STRING("name",m_szName);
+			READ_PROFILE_INT("visionticks",m_iVisionTicks);
+			READ_PROFILE_INT("pathticks",m_iPathTicks);
+			READ_PROFILE_INT("visionticksclients",m_iVisionTicksClients);
+			READ_PROFILE_FLOAT("sensitivity",m_fSensitivity);
+			READ_PROFILE_FLOAT("aim_skill",m_fAimSkill);
+			READ_PROFILE_FLOAT("braveness",m_fBraveness);
+			READ_PROFILE_INT("class",m_iClass);
 
-			m_Profiles.push_back(new CBotProfile(szName,szModel,iTeam,szWeapon,iVisionTicks,iPathTicks,iClass));
+			m_Profiles.push_back(new CBotProfile(read));
 
 			delete pKVL;
 

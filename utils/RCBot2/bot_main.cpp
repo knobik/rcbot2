@@ -93,7 +93,7 @@ ConVar bot_spyknifefov("rcbot_spyknifefov","80",0,"the FOV from the enemy that s
 ConVar bot_visrevs("rcbot_visrevs","9",0,"how many revs the bot searches for visible monsters, lower to reduce cpu usage min:5");
 ConVar bot_pathrevs("rcbot_pathrevs","40",0,"how many revs the bot searches for a path each frame, lower to reduce cpu usage, but causes bots to stand still more");
 ConVar bot_command("rcbot_cmd","",0,"issues a command to all bots");
-ConVar bot_rocketpredict( "rcbot_rocketpred", "0.6", 0, "multiplier for soldier / demoman rocket/grenade prediction" );
+ConVar bot_rocketpredict( "rcbot_rocketpred", "0.6", 0, "multiplier for rocket/grenade prediction" );
 ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
 ConVar bot_scoutdj( "rcbot_scoutdj", "0.28", 0, "time scout uses to double jump" );
 ConVar bot_anglespeed( "rcbot_anglespeed", "8.0", 0, "speed that bots turn" );
@@ -113,7 +113,7 @@ ConVar bot_avoid_strength("rcbot_avoid_strength","64",0,"strength of avoidance (
 ConVar bot_messaround("rcbot_messaround","1",0,"bots mess around at start up");
 ConVar bot_heavyaimoffset("rcbot_heavyaimoffset","0.1",0,"fraction of how much the heavy aims at a diagonal offset");
 ConVar bot_aimsmoothing("rcbot_aimsmooting","0",0,"(0 = no smoothing)");
-ConVar bot_bossattackfactor("rcbot_bossattackfactor","1.0",0,"the higher the more ofetn the bots will shoot the boss");
+ConVar bot_bossattackfactor("rcbot_bossattackfactor","1.0",0,"the higher the more often the bots will shoot the boss");
 ConVar rcbot_enemyshootfov("rcbot_enemyshootfov","0.6",0,"the fov dot product before the bot shoots an enemy 0.7 = 45 degrees");
 ConVar rcbot_enemyshoot_gravgun_fov("rcbot_enemyshoot_gravgun_fov","0.97",0,"the fov dot product before the bot shoots an enemy 0.98 = 11 degrees");
 ConVar rcbot_wptplace_width("rcbot_wpt_width","48",0,"width of the player, automatic paths won't connect unless there is enough space for a player");
@@ -139,8 +139,9 @@ ConVar rcbot_jump_obst_speed("rcbot_jump_obst_speed","100",0,"the speed of the b
 
 ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee weapons");
 ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions to test cpu speed");
-ConVar rcbot_move_forward("rcbot_forward","0",0,"if 1 , bots will all move forward");
+ConVar rcbot_dont_move("rcbot_dontmove","0",0,"if 1 , bots will all move forward");
 ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","416",0,"offset of the PlayerRunCommand function");
+ConVar rcbot_runplayercmd_hookonce("rcbot_runplayer_hookonce","1",0,"function will hook only once, if 0 it will unook and rehook after every map");
 
 CON_COMMAND( enginetime, "get engine time" )
 {
@@ -692,6 +693,10 @@ void CRCBotPlugin::LevelShutdown( void ) // !!!!this can get called multiple tim
 {
 	CClients::initall();
 	CWaypointDistances::save();
+
+	if ( !rcbot_runplayercmd_hookonce.GetBool() )
+		UnhookPlayerRunCommand();
+
 	CBots::freeMapMemory();	
 	CWaypoints::init();
 

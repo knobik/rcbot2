@@ -563,7 +563,7 @@ public:
 
 	bool isTF () { return true; }
 
-	void taunt ();
+	void taunt ( bool bOverride = false );
 
 	void callMedic ();
 

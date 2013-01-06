@@ -119,6 +119,7 @@ float  CBots :: m_flAddKickBotTime = 0;
 
 extern IVDebugOverlay *debugoverlay;
 extern ConVar bot_use_vc_commands;
+extern ConVar rcbot_dont_move;
 ///////////////////////////////////////
 // voice commands
 ////////////////////////////////////////////////
@@ -145,7 +146,7 @@ void CBot :: runPlayerMove()
 	Q_memset( &cmd, 0, sizeof( cmd ) );
 	//////////////////////////////////
 
-	if ( rcbot_move_forward.GetBool() )
+	if ( rcbot_dont_move.GetBool() )
 	{
 		cmd.forwardmove = 0;
 		cmd.sidemove = 0;
@@ -234,18 +235,19 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 	engine->SetFakeClientConVarValue(pEdict,"cl_autowepswitch","1");	
 	engine->SetFakeClientConVarValue(pEdict,"tf_medigun_autoheal","1");	
 
-	if (strcmp(m_szBotName,pProfile->getName()) )
+	// joining name not the same as the profile name, change name
+	if (strcmp(m_szBotName,pProfile->m_szName) )
 	{
-		engine->SetFakeClientConVarValue(pEdict,"name",pProfile->getName());
-		strcpy(m_szBotName,pProfile->getName());
+		engine->SetFakeClientConVarValue(pEdict,"name",pProfile->m_szName);
+		strcpy(m_szBotName,pProfile->m_szName);
 	}
 
-	if ( m_pPlayerInfo && (pProfile->getTeam() != -1) )
-		m_pPlayerInfo->ChangeTeam(pProfile->getTeam());
+	if ( m_pPlayerInfo && (pProfile->m_iTeam != -1) )
+		m_pPlayerInfo->ChangeTeam(pProfile->m_iTeam);
 
 	/////////////////////////////
 	// safe copy
-	strncpy(szModel,pProfile->getModel(),127);
+	strncpy(szModel,pProfile->m_szModel,127);
 	szModel[127] = 0;
 
 	if ( FStrEq(szModel,"default") )	
@@ -258,8 +260,8 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 			sprintf(szModel,"models/humans/Group03/female_0%d.mdl",iModel);
 	}
 
-	m_iDesiredTeam = pProfile->getTeam();
-	m_iDesiredClass = pProfile->getClass();
+	m_iDesiredTeam = pProfile->m_iTeam;
+	m_iDesiredClass = pProfile->m_iClass;
 
 	engine->SetFakeClientConVarValue(pEdict,"cl_playermodel",szModel);
 	engine->SetFakeClientConVarValue(pEdict,"hud_fastswitch","1");
@@ -312,6 +314,8 @@ bool CBot :: checkStuck ()
 	float fIdealSpeed;
 
 	if ( !moveToIsValid() )
+		return false;
+	if ( rcbot_dont_move.GetBool() ) // bots not moving
 		return false;
 
 	fTime = engine->Time();
@@ -2222,6 +2226,9 @@ bool CBots :: controlBot ( edict_t *pEdict )
 	return true;
 }
 
+#define SET_PROFILE_DATA_INT(varname,membername) if ( varname && *varname ) { pBotProfile->membername = atoi(varname); }
+#define SET_PROFILE_STRING(varname,localname,membername) if ( varname && *varname ) { localname = (char*)varname; } else { localname = pBotProfile->membername; }
+
 bool CBots :: controlBot ( const char *szOldName, const char *szName, const char *szTeam, const char *szClass )
 {
 	edict_t *pEdict;	
@@ -2260,23 +2267,9 @@ bool CBots :: controlBot ( const char *szOldName, const char *szName, const char
 		if ( pBotProfile == NULL )
 			return false;
 	}
-
-	if ( szClass && *szClass )
-	{
-		pBotProfile->setClass(atoi(szClass));
-	}
-
-	if ( szTeam && *szTeam )
-	{
-		pBotProfile->setTeam(atoi(szTeam));
-	}
-	
-	if ( szName && *szName )
-	{
-		szOVName = (char*)szName;
-	}
-	else
-		szOVName = pBotProfile->getName();
+	SET_PROFILE_DATA_INT(szClass,m_iClass);
+	SET_PROFILE_DATA_INT(szTeam,m_iTeam);
+	SET_PROFILE_STRING(szName,szOVName,m_szName);
 
 	//IBotController *p = g_pBotManager->GetBotController(pEdict);	
 
@@ -2310,22 +2303,9 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 
 	m_pNextProfile = pBotProfile;
 
-	if ( szClass && *szClass )
-	{
-		pBotProfile->setClass(atoi(szClass));
-	}
-
-	if ( szTeam && *szTeam )
-	{
-		pBotProfile->setTeam(atoi(szTeam));
-	}
-	
-	if ( szName && *szName )
-	{
-		szOVName = (char*)szName;
-	}
-	else
-		szOVName = pBotProfile->getName();
+	SET_PROFILE_DATA_INT(szClass,m_iClass);
+	SET_PROFILE_DATA_INT(szTeam,m_iTeam);
+	SET_PROFILE_STRING(szName,szOVName,m_szName);
 
 	strncpy(m_szNextName,szOVName,63);
 	m_szNextName[63] = 0;
