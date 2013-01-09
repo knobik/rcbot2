@@ -1133,6 +1133,10 @@ void CBot :: touchedWpt ( CWaypoint *pWaypoint )
 	updateDanger(m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint)));
 }
 
+void CBot :: updateDanger ( float fBelief ) 
+{ 
+	m_fCurrentDanger = (m_fCurrentDanger * m_pProfile->m_fBraveness) + (fBelief * (1.0f-m_pProfile->m_fBraveness)); 
+}
 // setup buttons and data structures
 void CBot :: setup ()
 {
@@ -1218,7 +1222,7 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	m_iPrevHealth = iHealthNow;	
 
 	// TO DO: replace with perceptron method
-	if ( m_iAccumulatedDamage > (m_pPlayerInfo->GetMaxHealth()/4) )
+	if ( m_iAccumulatedDamage > (m_pPlayerInfo->GetMaxHealth()*m_pProfile->m_fBraveness) )
 	{
 		if ( !bDontHide )
 		{
@@ -1672,8 +1676,8 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 		return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
 	}
 
-	fDistFactor = (distanceFrom(pEntity)/2048.0f)*(m_fFov/90.0f);
-
+	fDistFactor = (distanceFrom(pEntity)/1024.0f)*(m_fFov/90.0f);
+	fDistFactor *= (1.0f - m_pProfile->m_fAimSkill);// add skill factor
 
 	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.1f,0.4f);
 
@@ -2029,7 +2033,7 @@ void CBot :: doLook ()
 	{	
 		QAngle requiredAngles;
 
-		extern ConVar bot_anglespeed;
+		//extern ConVar bot_anglespeed;
 		
 		VectorAngles(m_vLookAt-getEyePosition(),requiredAngles);
 		CBotGlobals::fixFloatAngle(&requiredAngles.x);
@@ -2038,8 +2042,8 @@ void CBot :: doLook ()
 		if ( m_iLookTask == LOOK_GROUND )
 			requiredAngles.x = 89.0f;
 
-		changeAngles(bot_anglespeed.GetFloat(),&requiredAngles.x,&m_vViewAngles.x,NULL);
-		changeAngles(bot_anglespeed.GetFloat(),&requiredAngles.y,&m_vViewAngles.y,NULL);
+		changeAngles((float)m_pProfile->m_iSensitivity,&requiredAngles.x,&m_vViewAngles.x,NULL);
+		changeAngles((float)m_pProfile->m_iSensitivity,&requiredAngles.y,&m_vViewAngles.y,NULL);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.x);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.y);
 

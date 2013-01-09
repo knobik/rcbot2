@@ -780,7 +780,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 			succ->unClose();
 
 			succ->setParent(iCurrentNode);
-			succ->setCost(fCost+m_fBelief[iSucc]);	
+			succ->setCost(fCost+(m_fBelief[iSucc]*(1.5f-m_pBot->getProfile()->m_fBraveness)));	
 			succ->setWaypoint(iSucc);
 
 			if ( !succ->heuristicSet() )		

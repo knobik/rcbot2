@@ -682,6 +682,16 @@ void CBotGlobals :: addDirectoryDelimiter ( char *szString )
 #endif
 }
 
+Vector CBotGlobals:: getVelocity ( edict_t *pPlayer )
+{
+	CClient *pClient = CClients::get(pPlayer);
+
+	if ( pClient )
+		return pClient->getVelocity();
+
+	return Vector(0,0,0);
+}
+
 FILE *CBotGlobals :: openFile ( char *szFile, char *szMode )
 {
 	FILE *fp = fopen(szFile,szMode);

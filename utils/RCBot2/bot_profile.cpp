@@ -43,6 +43,9 @@ CBotProfile *CBotProfiles :: m_pDefaultProfile = NULL;
 CBotProfile :: CBotProfile ( CBotProfile &other )
 {
 	*this = other;
+
+	m_szName = CStrings::getString(other.m_szName);
+	m_szModel = CStrings::getString(other.m_szModel);
 }
 
 CBotProfile :: CBotProfile (
@@ -52,13 +55,13 @@ CBotProfile :: CBotProfile (
 		int iVisionTicks, 
 		int iPathTicks, 
 		int iVisionTicksClients,
-		float fSensitivity,
+		int iSensitivity,
 		float fBraveness,
 		float fAimSkill,
 		int iClass )
 { 
 	m_iVisionTicksClients = iVisionTicksClients;
-	m_fSensitivity = fSensitivity;
+	m_iSensitivity = iSensitivity;
 	m_fBraveness = fBraveness;
 	m_fAimSkill = fAimSkill;
 	m_szName = CStrings::getString(szName);
@@ -84,9 +87,10 @@ void CBotProfiles :: deleteProfiles ()
 }
 
 // requires CBotProfile 'read' declared
-#define READ_PROFILE_STRING(kvname,varname) if ( !pKVL->getString("kvname",&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
-#define READ_PROFILE_INT(kvname,varname) if ( !pKVL->getInt("kvname",&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
-#define READ_PROFILE_FLOAT(kvname,varname) if ( !pKVL->getFloat("kvname",&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
+#define READ_PROFILE_STRING(kvname,varname) if ( !pKVL->getString(##kvname##,&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
+#define READ_PROFILE_INT(kvname,varname) if ( !pKVL->getInt(##kvname##,&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
+// reads integers between 0 and 100 and converts to between 0.0 and 1.0
+#define READ_PROFILE_FLOAT(kvname,varname) { float fval; if ( !pKVL->getFloat(##kvname##,&fval) ) { read.varname = m_pDefaultProfile->varname; } else { read.varname = fval * 0.01f; } }
 // find profiles and setup list
 void CBotProfiles :: setupProfiles ()
 {
@@ -94,6 +98,8 @@ void CBotProfiles :: setupProfiles ()
 	bool bDone;
 	char szId[4];
 	char filename[512];
+
+	extern ConVar bot_anglespeed;
 
 	// Setup Default profile
 	m_pDefaultProfile = new CBotProfile(
@@ -103,7 +109,7 @@ void CBotProfiles :: setupProfiles ()
 		CBotVisibles::DEFAULT_MAX_TICKS, // vis ticks
 		IBotNavigator::MAX_PATH_TICKS, // path ticks
 		2, // visrevs clients
-		8, // sensitivity
+		bot_anglespeed.GetInt(), // sensitivity
 		0.5f, // braveness
 		0.5f, // aim skill
 		0 // class
@@ -135,7 +141,7 @@ void CBotProfiles :: setupProfiles ()
 			READ_PROFILE_INT("visionticks",m_iVisionTicks);
 			READ_PROFILE_INT("pathticks",m_iPathTicks);
 			READ_PROFILE_INT("visionticksclients",m_iVisionTicksClients);
-			READ_PROFILE_FLOAT("sensitivity",m_fSensitivity);
+			READ_PROFILE_INT("sensitivity",m_iSensitivity);
 			READ_PROFILE_FLOAT("aim_skill",m_fAimSkill);
 			READ_PROFILE_FLOAT("braveness",m_fBraveness);
 			READ_PROFILE_INT("class",m_iClass);

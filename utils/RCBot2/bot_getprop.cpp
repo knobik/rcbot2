@@ -223,12 +223,14 @@ bool UTIL_FindInSendTable(SendTable *pTable,
 		pname = prop->GetName();
 
 		if ( g_PrintProps )
-			Msg("%s\n",pname);
+			Msg("%d : %s\n",offset + prop->GetOffset(),pname);
 
 		if (pname && strcmp(name, pname) == 0)
 		{
 			info->prop = prop;
-			info->actual_offset = offset + info->prop->GetOffset();
+			// for some reason offset is sometimes negative when it shouldn't be
+			// so take the absolute value
+			info->actual_offset = offset + abs(info->prop->GetOffset());
 			return true;
 		}
 		if (prop->GetDataTable())

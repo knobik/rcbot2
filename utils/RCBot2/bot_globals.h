@@ -174,7 +174,9 @@ public:
 
 	static bool isCurrentMod ( eModId modid );
 
-	inline static bool setupMapTime ( ) { return m_fMapStartTime == 0; } 
+	inline static bool setupMapTime ( ) { return m_fMapStartTime == 0; }
+
+	Vector getVelocity ( edict_t *pPlayer );
 
 	////////
 	static CBotCommandContainer *m_pCommands;

@@ -645,7 +645,7 @@ public:
 	// return an enemy sentry gun / special visible (e.g.) for quick checking
 	virtual edict_t *getVisibleSpecial ();
 
-	inline void updateDanger ( float fBelief ) { m_fCurrentDanger = (m_fCurrentDanger/2) + (fBelief/2); }
+	void updateDanger ( float fBelief );
 
 	inline void reduceTouchDistance ( ) { if ( m_fWaypointTouchDistance > 40 ) m_fWaypointTouchDistance *= 0.9; }
 

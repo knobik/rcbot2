@@ -228,13 +228,11 @@ bool CDODBot :: startGame ()
 			else
 				m_pPlayerInfo->ChangeTeam(TEAM_AXIS);
 		}
-			
-		m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
 
 		return false;
 	}
 
-	// not the correct class?
+	// not the correct class? and desired class is valid?
 	if ( (m_iDesiredClass >= 0) && (m_iDesiredClass <= 5) && (m_iDesiredClass != CClassInterface::getPlayerClassDOD(m_pEdict)) )
 	{
 		int iTeam = m_pPlayerInfo->GetTeamIndex();
@@ -245,6 +243,16 @@ bool CDODBot :: startGame ()
 
 		return false;
 	}
+	else if ( m_iSelectedClass == -1 )
+	{
+		// haven't selected class yet 
+		// select random class
+		m_iDesiredClass = randomInt(0,5);
+
+		// come back next frame
+		return false;
+	}
+	//else if ( m_pProfile->m_iClass 
 	//	engine->ClientCommand(m_pEdict,"joinclass %d\n",m_iDesiredClass); 
 
 	/*if ( CClassInterface::getDesPlayerClassDOD(m_pEdict) == -1 )
