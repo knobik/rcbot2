@@ -603,6 +603,16 @@ void CFlagCaptured :: execute ( IBotEventInterface *pEvent )
 
 }
 /////////////////////////////////////////////////
+void CDODPointCaptured :: execute ( IBotEventInterface *pEvent )
+{
+	int cp = pEvent->getInt("cp");
+	int team = pEvent->getInt("team");
+
+	CBroadcastBombPlanted func(cp,team);
+
+	CBots::botFunction(&func);
+}
+
 void CDODBombExploded :: execute ( IBotEventInterface *pEvent )
 {
 	int cp = pEvent->getInt("cp");
@@ -724,6 +734,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CDODBombPlanted());
 	addEvent(new CDODBombExploded());
 	addEvent(new CDODBombDefused());
+	addEvent(new CDODPointCaptured());
 	
 /*
 pumpkin_lord_summoned 

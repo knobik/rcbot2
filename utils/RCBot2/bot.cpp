@@ -1259,7 +1259,7 @@ void CBot :: findEnemy ( edict_t *pOldEnemy )
 {
 	m_pFindEnemyFunc->init();
 
-	if ( isEnemy(pOldEnemy,true) ) 
+	if ( pOldEnemy && isEnemy(pOldEnemy,true) ) 
 		m_pFindEnemyFunc->setOldEnemy(pOldEnemy);
 	/*else if ( CBotGlobals::entityIsAlive(pOldEnemy) ) /// lost enemy
 	{

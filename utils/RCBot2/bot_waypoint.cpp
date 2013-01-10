@@ -1158,10 +1158,12 @@ bool CWaypoint :: touched ( edict_t *pEdict )
 // checks if a waypoint is touched
 bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset, float fTouchDist )
 {
+	extern ConVar rcbot_ladder_offs;
+
 	if ( (vOrigin-(m_vOrigin+vOffset)).Length2D() <= fTouchDist )
 	{
 		if ( hasFlag(CWaypointTypes::W_FL_LADDER) )
-			return ((vOrigin.z+32) > m_vOrigin.z);
+			return ((vOrigin.z+rcbot_ladder_offs.GetFloat()) > m_vOrigin.z);
 
 		return fabs(vOrigin.z-m_vOrigin.z) <= fTouchDist;
 	}
