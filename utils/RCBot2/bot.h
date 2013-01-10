@@ -640,6 +640,8 @@ public:
 
 	bool isOnLift (void);
 
+	virtual bool isDOD () { return false; }
+
 	virtual bool isTF2 () { return false; }
 
 	// return an enemy sentry gun / special visible (e.g.) for quick checking

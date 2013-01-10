@@ -326,6 +326,8 @@ public:
 		return CBot::hurt(pAttacker,iHealthNow,bDontHide);
 	}
 
+	void chooseClass ();
+
 	virtual TF_Class getClass () { return TF_CLASS_CIVILIAN; }
 
 	virtual void updateClass () { };

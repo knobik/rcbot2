@@ -232,9 +232,9 @@ void CBotVisibles :: updateVisibles ()
 	static int iSpecialIndex;
 
 	iTicks = 0;
-	iMaxTicks = bot_visrevs.GetInt();
+	iMaxTicks = m_pBot->getProfile()->m_iVisionTicks;// bot_visrevs.GetInt();
 	iStartIndex = m_iCurrentIndex;
-	iMaxClientTicks = bot_visrevs_clients.GetInt();
+	iMaxClientTicks =m_pBot->getProfile()->m_iVisionTicksClients; // bot_visrevs_clients.GetInt();
 
 	if ( iMaxTicks <= 2 )
 		iMaxTicks = 2;

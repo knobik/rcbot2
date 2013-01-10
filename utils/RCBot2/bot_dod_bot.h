@@ -178,6 +178,9 @@ public:
 
 	void grenadeThrown () { addVoiceCommand(DOD_VC_FIRE_IN_THE_HOLE); }
 
+	void chooseClass(); // updates m_iDesiredClass
+	void changeClass(); // uses m_iDesiredClass
+
 private:
 
 	int m_iSelectedClass;

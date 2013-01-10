@@ -112,7 +112,7 @@ void CBotProfiles :: setupProfiles ()
 		bot_anglespeed.GetInt(), // sensitivity
 		0.5f, // braveness
 		0.5f, // aim skill
-		0 // class
+		-1 // class
 		);	
 
 	// read profiles

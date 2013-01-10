@@ -43,6 +43,7 @@
 #include "bot_fortress.h"
 #include "bot_profiling.h"
 #include "bot_getprop.h"
+#include "bot_dod_bot.h"
 
 extern ConVar *sv_gravity;
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -2367,8 +2368,6 @@ CMessAround::CMessAround ( edict_t *pFriendly )
 
 void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 {
-	CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
-
 	if ( !m_pFriendly || !CBotGlobals::entityIsValid(m_pFriendly) )
 		fail();
 
@@ -2380,29 +2379,29 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
 		bool ok = true;
 
-		if ( !pBotTF2->FInViewCone(m_pFriendly) )
+		if ( !pBot->FInViewCone(m_pFriendly) )
 		{
-			pBotTF2->setLookVector(origin);
-			pBotTF2->setLookAtTask((LOOK_VECTOR));
+			pBot->setLookVector(origin);
+			pBot->setLookAtTask((LOOK_VECTOR));
 			ok = false;
 		}
 
-		if ( pBotTF2->distanceFrom(m_pFriendly) > 100 )
+		if ( pBot->distanceFrom(m_pFriendly) > 100 )
 		{
-			pBotTF2->setMoveTo((origin));
+			pBot->setMoveTo((origin));
 			ok = false;
 		}
 
 		if ( ok )
 		{
-			CBotWeapon *pWeapon = pBotTF2->getBestWeapon(NULL,true,true);
+			CBotWeapon *pWeapon = pBot->getBestWeapon(NULL,true,true);
 
 			if ( pWeapon )
 			{
-				pBotTF2->selectBotWeapon(pWeapon);
+				pBot->selectBotWeapon(pWeapon);
 
 				if ( randomInt(0,1) )
-					pBotTF2->primaryAttack();
+					pBot->primaryAttack();
 			}
 		}
 
@@ -2415,21 +2414,26 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
 		bool ok = true;
 
-		if ( !pBotTF2->FInViewCone(m_pFriendly) )
+		if ( !pBot->FInViewCone(m_pFriendly) )
 		{
-			pBotTF2->setLookVector(origin);
-			pBotTF2->setLookAtTask((LOOK_VECTOR));
+			pBot->setLookVector(origin);
+			pBot->setLookAtTask((LOOK_VECTOR));
 			ok = false;
 		}
 
-		if ( pBotTF2->distanceFrom(m_pFriendly) > 100 )
+		if ( pBot->distanceFrom(m_pFriendly) > 100 )
 		{
-			pBotTF2->setMoveTo((origin));
+			pBot->setMoveTo((origin));
 			ok = false;
 		}
 
 		if ( ok )
-			pBotTF2->taunt();
+		{
+			if ( pBot->isTF2() )
+				((CBotTF2*)pBot)->taunt();
+			//else if ( pBot->isDOD() )
+			//	((CDODBot*)pBot)->taunt(); pBot->impulse(100);
+		}
 
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(3.5f,6.5f);
@@ -2440,7 +2444,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	case 2:
 	{
 		if ( !m_fTime )
-			pBotTF2->addVoiceCommand((eTFVoiceCMD)randomInt(0,31));
+			pBot->addVoiceCommand(randomInt(0,31));
 
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);
@@ -2450,11 +2454,14 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	case 3:
 	{
 		if ( randomInt(0,1) )
-			pBotTF2->jump();
+			pBot->jump();
 		else
 		{
-			if ( pBotTF2->getClass() == TF_CLASS_HWGUY )
-				pBotTF2->secondaryAttack(true);
+			if ( pBot->isTF2() )
+			{
+				if ( ((CBotTF2*)pBot)->getClass() == TF_CLASS_HWGUY )
+					pBot->secondaryAttack(true);
+			}
 		}
 
 		if ( !m_fTime )
@@ -2467,8 +2474,16 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	if ( m_fTime < engine->Time() )
 		complete();
 
-	if ( CTeamFortress2Mod::hasRoundStarted() )
-		complete();
+	if ( pBot->isTF2() )
+	{
+		if ( CTeamFortress2Mod::hasRoundStarted() )
+			complete();
+	}
+	else if ( pBot->isDOD() )
+	{
+		if ( CDODMod::m_Flags.getNumFlags() > 0 )
+			complete();
+	}
 
 }
 

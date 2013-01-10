@@ -232,26 +232,17 @@ bool CDODBot :: startGame ()
 		return false;
 	}
 
+	if ( (m_iDesiredClass < 0) || (m_iDesiredClass > 5) )
+		chooseClass();
+
 	// not the correct class? and desired class is valid?
 	if ( (m_iDesiredClass >= 0) && (m_iDesiredClass <= 5) && (m_iDesiredClass != CClassInterface::getPlayerClassDOD(m_pEdict)) )
 	{
-		int iTeam = m_pPlayerInfo->GetTeamIndex();
-
-		helpers->ClientCommand(m_pEdict,g_DODClassCmd[iTeam-2][m_iDesiredClass]);
-
-		m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
+		changeClass();
 
 		return false;
 	}
-	else if ( m_iSelectedClass == -1 )
-	{
-		// haven't selected class yet 
-		// select random class
-		m_iDesiredClass = randomInt(0,5);
 
-		// come back next frame
-		return false;
-	}
 	//else if ( m_pProfile->m_iClass 
 	//	engine->ClientCommand(m_pEdict,"joinclass %d\n",m_iDesiredClass); 
 
@@ -509,6 +500,69 @@ void CDODBot :: touchedWpt ( CWaypoint *pWaypoint )
 		m_pNavigator->beliefOne(wptindex,BELIEF_SAFETY,0);
 }
 
+void CDODBot :: changeClass ()
+{
+	int iTeam = getTeam();
+	// change class
+	//selectClass();
+	helpers->ClientCommand(m_pEdict,g_DODClassCmd[iTeam-2][m_iDesiredClass]);
+
+	m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
+}
+
+void CDODBot :: chooseClass ()
+{
+	float fClassFitness[6]; // 6 classes
+	float fTotalFitness = 0;
+	float fRandom;
+
+	short int i = 0;
+	
+	int iTeam = getTeam();
+	int iClass;
+	edict_t *pPlayer;
+
+	for ( i = 1; i < 6; i ++ )
+		fClassFitness[i] = 1.0f;
+
+	if ( (m_iClass >= 0) && (m_iClass < 6) )
+		fClassFitness[m_iClass] = 0.1f;
+
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		pPlayer = INDEXENT(i);
+		
+		if ( CBotGlobals::entityIsValid(pPlayer) && (CClassInterface::getTeam(pPlayer) == iTeam))
+		{
+			iClass = CClassInterface::getPlayerClassDOD(pPlayer);
+
+			if ( (iClass >= 0) && (iClass < 6) )
+				fClassFitness [iClass] *= 0.6f; 
+		}
+	}
+
+	for ( int i = 0; i < 6; i ++ )
+		fTotalFitness += fClassFitness[i];
+
+	fRandom = randomFloat(0,fTotalFitness);
+
+	fTotalFitness = 0;
+
+	m_iDesiredClass = 0;
+
+	for ( int i = 0; i < 6; i ++ )
+	{
+		fTotalFitness += fClassFitness[i];
+
+		if ( fRandom <= fTotalFitness )
+		{
+			m_iDesiredClass = i;
+			break;
+		}
+	}
+
+}
+
 void CDODBot :: modThink ()
 {
 	static float fMaxSpeed;
@@ -527,61 +581,8 @@ void CDODBot :: modThink ()
 				// if I think I could do better
 				if ( randomFloat(0.0f,1.0f) > (scoreValue / CDODMod::getHighestScore()) )
 				{
-					float fClassFitness[6]; // 6 classes
-					float fTotalFitness = 0;
-					float fRandom;
-
-					short int i = 0;
-					
-					int iTeam = getTeam();
-					int iClass;
-					edict_t *pPlayer;
-
-					for ( i = 1; i < 6; i ++ )
-						fClassFitness[i] = 1.0f;
-
-					if ( (m_iClass >= 0) && (m_iClass < 6) )
-						fClassFitness[m_iClass] = 0.1f;
-
-					for ( i = 1; i <= gpGlobals->maxClients; i ++ )
-					{
-						pPlayer = INDEXENT(i);
-						
-						if ( CBotGlobals::entityIsValid(pPlayer) && (CTeamFortress2Mod::getTeam(pPlayer) == iTeam))
-						{
-							iClass = CClassInterface::getPlayerClassDOD(pPlayer);
-
-							if ( (iClass >= 0) && (iClass < 6) )
-								fClassFitness [iClass] *= 0.6f; 
-						}
-					}
-
-					for ( int i = 0; i < 6; i ++ )
-						fTotalFitness += fClassFitness[i];
-
-					fRandom = randomFloat(0,fTotalFitness);
-
-					fTotalFitness = 0;
-
-					m_iDesiredClass = 0;
-
-					for ( int i = 0; i < 6; i ++ )
-					{
-						fTotalFitness += fClassFitness[i];
-
-						if ( fRandom <= fTotalFitness )
-						{
-							m_iDesiredClass = i;
-							break;
-						}
-					}
-					
-					// change class
-					//selectClass();
-					helpers->ClientCommand(m_pEdict,g_DODClassCmd[iTeam-2][m_iDesiredClass]);
-
-					m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
-				
+					chooseClass();
+					changeClass();
 				}
 		}
 	}
@@ -958,6 +959,48 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 	switch ( util->getId() )
 	{
+	case BOT_UTIL_MESSAROUND:
+		{
+			// find a nearby friendly
+			int i = 0;
+			edict_t *pEdict;
+			edict_t *pNearby = NULL;
+			float fMaxDistance = 500;
+			float fDistance;
+
+			for ( i = 1; i <= CBotGlobals::maxClients(); i ++ )
+			{
+				pEdict = INDEXENT(i);
+
+				if ( CBotGlobals::entityIsValid(pEdict) )
+				{
+					if ( CClassInterface::getTeam(pEdict) == getTeam() )
+					{
+						if ( (fDistance=distanceFrom(pEdict)) < fMaxDistance )
+						{
+							if ( isVisible(pEdict) )
+							{
+								// add a little bit of randomness
+								if ( !pNearby || randomInt(0,1) )
+								{
+									pNearby = pEdict;
+									fMaxDistance = fDistance;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if ( pNearby )
+			{
+				// this will work in DOD too
+				m_pSchedules->add(new CBotTF2MessAroundSched(pNearby));
+				return true;
+			}
+
+			return false;
+		}
 	case BOT_UTIL_DEFEND_NEAREST_POINT:
 		{
 			Vector vGoal;
@@ -1558,6 +1601,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	static bool bCheckCurrent;
 	static int iFlagID;
 	static int iFlagsOwned;
+	static int iEnemyFlagsOwned;
 	static int iNumFlags;
 	static int iNumBombsToPlant;
 	static int iNumBombsOnMap;
@@ -1599,17 +1643,18 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		float fDefRatio;
 		iFlagID = -1;
 		iFlagsOwned = CDODMod::m_Flags.getNumFlagsOwned(m_iTeam);
+		iEnemyFlagsOwned = CDODMod::m_Flags.getNumFlagsOwned(m_iTeam == TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES);
 		iNumFlags = CDODMod::m_Flags.getNumFlags();
 		fDefRate = bot_defrate.GetFloat();
 
-		fFlagRatio = (float)iFlagsOwned/iNumFlags;
-		fDefRatio = 1.0f - fFlagRatio;
+		fFlagRatio = (float)iEnemyFlagsOwned/iNumFlags;
+		fDefRatio = (float)iFlagsOwned/iNumFlags;
 
 		if ( m_pNearestFlag )
 			iFlagID = CDODMod::m_Flags.getFlagID(m_pNearestFlag);
 
-		fAttackUtil = 0.5f + randomFloat(-fFlagRatio,fFlagRatio)*0.25f;
-		fDefendUtil = 0.5f + randomFloat(-fDefRatio,fDefRatio)*fDefRate;
+		fAttackUtil = 0.3f + (randomFloat(0.0f,fFlagRatio)*(m_pProfile->m_fBraveness*0.5f));
+		fDefendUtil = 0.3f + (randomFloat(0.0f,fDefRatio)*(0.5f - (m_pProfile->m_fBraveness*0.5f)));
 
 		if ( hasSomeConditions(CONDITION_PUSH) )
 			fAttackUtil *= 2;
@@ -1704,6 +1749,10 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 		}
 	}
+	else
+	{
+		ADD_UTILITY(BOT_UTIL_MESSAROUND,(getHealthPercent()>0.75f), fAttackUtil );
+	}
 
 	// sniping or machinegunning
 	switch ( m_iClass )
@@ -1749,6 +1798,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			ADD_UTILITY_WEAPON(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,hasSomeConditions(CONDITION_GREN) ? fGrenUtil*2 : fGrenUtil,pBotWeapon);
 		}
 	}
+
 
 	/*if ( m_pNearbyWeapon.get() )
 	{
