@@ -142,8 +142,8 @@ ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions 
 ConVar rcbot_dont_move("rcbot_dontmove","0",0,"if 1 , bots will all move forward");
 ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","416",0,"offset of the PlayerRunCommand function");
 ConVar rcbot_runplayercmd_hookonce("rcbot_runplayer_hookonce","1",0,"function will hook only once, if 0 it will unook and rehook after every map");
-ConVar rcbot_ladder_offs("rcbot_ladder_offs","8",0,"difference in height for bot to think it has touched the ladder waypoint");
-CON_COMMAND( enginetime, "get engine time" )
+ConVar rcbot_ladder_offs("rcbot_ladder_offs","38",0,"difference in height for bot to think it has touched the ladder waypoint");
+/*CON_COMMAND( enginetime, "get engine time" )
 {
 	Msg("%f\n",engine->Time());
 }
@@ -154,7 +154,7 @@ CON_COMMAND( maptime, "get map time" )
 	Msg("diff = %f\n",engine->Time() - CDODMod::getMapStartTime());
 	Msg("gpGlobals->realtime = %f\n",gpGlobals->realtime);
 	Msg("gpGlobals->curtime = %f\n",gpGlobals->curtime);
-}
+}*/
 //ConVar rcbot_override("rcbot_override","1",0,"if 1 the plugin will override other bots runplayer functions");
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");
