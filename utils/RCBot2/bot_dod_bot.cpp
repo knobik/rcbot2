@@ -146,7 +146,10 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	else
 	{
 		if ( pEntity == m_pNearestFlag ) // forget flag
-			m_pNearestFlag = NULL;
+		{
+			if ( distanceFrom(m_pNearestFlag) > 512.0f ) // 'defend' / 'attack' radius
+				m_pNearestFlag = NULL;
+		}
 		else if ( pEntity == m_pEnemyGrenade )
 		{
 			// remember grenade if it is within radius of blowing me up
@@ -1658,9 +1661,9 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 		if ( hasSomeConditions(CONDITION_PUSH) )
 			fAttackUtil *= 2;
-		
-		ADD_UTILITY(BOT_UTIL_ATTACK_POINT,(m_pNearestFlag==NULL)||!CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam),fAttackUtil);
-		ADD_UTILITY(BOT_UTIL_DEFEND_POINT,(m_pNearestFlag==NULL)||!CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam),fDefendUtil);
+		// if we see a flag and we own it, don't worry about it
+		ADD_UTILITY(BOT_UTIL_ATTACK_POINT,(m_pNearestFlag==NULL)||CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam),fAttackUtil);
+		ADD_UTILITY(BOT_UTIL_DEFEND_POINT,(m_pNearestFlag==NULL)||CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam),fDefendUtil);
 
 		if ( m_pNearestFlag )
 		{

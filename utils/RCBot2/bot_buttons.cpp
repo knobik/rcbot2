@@ -66,6 +66,7 @@ CBotButtons :: CBotButtons()
 	add(new CBotButton(IN_FORWARD)); // for ladders
 	add(new CBotButton(IN_USE)); // for chargers
 	add(new CBotButton(IN_ALT1)); // for proning
+	add(new CBotButton(IN_RUN)); // ????
 
 	m_bLetGoAll = false;
 }
