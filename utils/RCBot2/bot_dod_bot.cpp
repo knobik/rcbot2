@@ -358,7 +358,7 @@ void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *p
 	static CWaypoint *pWpt;
 	static CBotWeapon *pCurrentWeapon;
 
-	if ( (pDied != m_pEdict) && pTeamMate && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && (CClassInterface::getTeam(pDied)!=m_iTeam) )
+	if ( (pDied != m_pEdict) && pTeamMate && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && (CClassInterface::getTeam(pDied)!=m_iTeam) )
 	{
 		if ( pWeapon )
 		{
@@ -371,6 +371,12 @@ void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *p
 
 			if ( m_fCurrentDanger < 0 )
 				m_fCurrentDanger = 0;
+		}
+
+		if ( pDied == m_pEnemy )
+		{
+			if ( ( getHealthPercent() < 0.1f ) && ( randomFloat(0.0,1.0) > 0.75f ) )
+				addVoiceCommand(DOD_VC_NICE_SHOT);
 		}
 
 		if ( m_pLastEnemy == pDied )
@@ -709,14 +715,16 @@ void CDODBot :: modThink ()
 
 		if ( m_fShoutGrenade > 0.95f ) 
 		{
-			if ( CClassInterface::getGrenadeThrower(m_pEnemyGrenade) != m_pEdict )
-				addVoiceCommand(DOD_VC_GRENADE2);
-
-			updateCondition(CONDITION_RUN);
-			m_fShoutGrenade = 0.0f;
-
 			if ( distanceFrom(m_pEnemyGrenade) < (BLAST_RADIUS*2) )
 			{
+				if ( CClassInterface::getGrenadeThrower(m_pEnemyGrenade) != m_pEdict )
+				{
+					addVoiceCommand(DOD_VC_GRENADE2);
+					m_fShoutGrenade = 0.0f;
+				}
+
+				updateCondition(CONDITION_RUN);
+
 				if ( !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
 				{
 					// don't interrupt current shedule, just add to front
@@ -1066,8 +1074,12 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			// add defend task
 			m_pSchedules->add(attack);
 			removeCondition(CONDITION_PUSH);
-			addVoiceCommand(DOD_VC_GOGOGO);
-			
+
+			if ( CDODMod::m_Flags.getNumFlagsOwned(m_iTeam) == (CDODMod::m_Flags.getNumFlags()-1) )
+			{
+				addVoiceCommand(DOD_VC_GOGOGO);
+			}
+
 			return true;
 		}
 		break;
@@ -1395,8 +1407,8 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				m_pSchedules->add(attack);
 
 				// last flag
-				if ( CDODMod::m_Flags.getNumFlagsOwned(m_iTeam) == (CDODMod::m_Flags.getNumFlags()-1) )
-					addVoiceCommand(DOD_VC_GOGOGO);
+				//if ( CDODMod::m_Flags.getNumFlagsOwned(m_iTeam) == (CDODMod::m_Flags.getNumFlags()-1) )
+				//	addVoiceCommand(DOD_VC_GOGOGO);
 
 				removeCondition(CONDITION_PUSH);
 				
@@ -1590,6 +1602,9 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	return true;
 }
 
+#define BOT_DEFEND 0
+#define BOT_ATTACK 1
+
 void CDODBot :: getTasks (unsigned int iIgnore)
 {
 	static CBotUtilities utils;
@@ -1642,9 +1657,14 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	// flag capture map
 	if ( CDODMod::isFlagMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
 	{
+		/*
+		int iAttackOrDefend; 
+		float fAttackRatio;
+
 		float fFlagRatio;
 		float fDefRatio;
 		iFlagID = -1;
+
 		iFlagsOwned = CDODMod::m_Flags.getNumFlagsOwned(m_iTeam);
 		iEnemyFlagsOwned = CDODMod::m_Flags.getNumFlagsOwned(m_iTeam == TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES);
 		iNumFlags = CDODMod::m_Flags.getNumFlags();
@@ -1653,20 +1673,39 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		fFlagRatio = (float)iEnemyFlagsOwned/iNumFlags;
 		fDefRatio = (float)iFlagsOwned/iNumFlags;
 
+		fAttackRatio = fFlagRatio 
+
 		if ( m_pNearestFlag )
 			iFlagID = CDODMod::m_Flags.getFlagID(m_pNearestFlag);
 
 		fAttackUtil = 0.3f + (randomFloat(0.0f,fFlagRatio)*(m_pProfile->m_fBraveness*0.5f));
 		fDefendUtil = 0.3f + (randomFloat(0.0f,fDefRatio)*(0.5f - (m_pProfile->m_fBraveness*0.5f)));
+*/
+		if ( (m_pNearestFlag==NULL)||CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) )
+		{
+			if ( CDODMod::shouldAttack(m_iTeam) )
+			{
+				fAttackUtil = 0.6f;
+				fDefendUtil = 0.3f;
+			}
+			else
+			{
+				fAttackUtil = 0.3f;
+				fDefendUtil = 0.5f;
+			}
 
-		if ( hasSomeConditions(CONDITION_PUSH) )
-			fAttackUtil *= 2;
-		// if we see a flag and we own it, don't worry about it
-		ADD_UTILITY(BOT_UTIL_ATTACK_POINT,(m_pNearestFlag==NULL)||CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam),fAttackUtil);
-		ADD_UTILITY(BOT_UTIL_DEFEND_POINT,(m_pNearestFlag==NULL)||CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam),fDefendUtil);
+			if ( hasSomeConditions(CONDITION_PUSH) )
+				fAttackUtil *= 2;
+
+			// if we see a flag and we own it, don't worry about it
+			ADD_UTILITY(BOT_UTIL_ATTACK_POINT,true,fAttackUtil);
+			ADD_UTILITY(BOT_UTIL_DEFEND_POINT,true,fDefendUtil);
+		}
 
 		if ( m_pNearestFlag )
 		{
+			iFlagID = CDODMod::m_Flags.getFlagID(m_pNearestFlag);
+
 			// attack the flag if I've reached the last one
 			ADD_UTILITY_DATA_VECTOR(BOT_UTIL_ATTACK_NEAREST_POINT,
 				!CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) && (CDODMod::m_Flags.numCappersRequired(iFlagID,m_iTeam)-

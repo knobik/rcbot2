@@ -44,6 +44,7 @@
 #define DOD_MAPTYPE_FLAG 1
 #define DOD_MAPTYPE_BOMB 2
 
+class CBotNeuralNet;
 
 #include <vector>
 using namespace std;
@@ -114,6 +115,8 @@ public:
 	virtual void clientCommand ( edict_t *pEntity, int argc,const char *pcmd, const char *arg1, const char *arg2 ) {};
 
 	virtual void modFrame () { };
+
+	virtual void freeMemory() {};
 private:
 	char *m_szModFolder;
 	char *m_szSteamFolder;
@@ -482,6 +485,8 @@ public:
 
 	static CDODFlags m_Flags;
 
+	static bool shouldAttack ( int iTeam ); // uses the neural net to return probability of attack
+
 protected:
 
 	void initMod ();
@@ -489,6 +494,8 @@ protected:
 	void mapInit ();
 
 	void modFrame ();
+
+	void freeMemory ();
 
 	static edict_t *m_pResourceEntity;
 	static edict_t *m_pPlayerResourceEntity;
@@ -498,6 +505,8 @@ protected:
 	static bool m_bCommunalBombPoint; // only one bomb suuply point for both teams
 	static int m_iBombAreaAllies;
 	static int m_iBombAreaAxis;
+
+	static CBotNeuralNet *gNetAttackOrDefend;
 
 	//virtual void entitySpawn ( edict_t *pEntity );
 
