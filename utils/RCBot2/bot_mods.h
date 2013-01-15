@@ -506,7 +506,7 @@ protected:
 	static int m_iBombAreaAllies;
 	static int m_iBombAreaAxis;
 
-	static CBotNeuralNet *gNetAttackOrDefend;
+	static CPerceptron *gNetAttackOrDefend;
 
 	//virtual void entitySpawn ( edict_t *pEntity );
 

@@ -72,7 +72,7 @@ int CDODMod::m_iMapType = 0;
 bool CDODMod::m_bCommunalBombPoint = false;
 int CDODMod::m_iBombAreaAllies = 0;
 int CDODMod::m_iBombAreaAxis = 0;
-CBotNeuralNet *CDODMod::gNetAttackOrDefend = NULL;
+CPerceptron *CDODMod::gNetAttackOrDefend = NULL;
 
 extern ConVar bot_use_disp_dist;
 
@@ -1175,30 +1175,74 @@ void CTeamFortress2Mod :: mapInit ()
 
 }
 
-bool CDODMod :: shouldAttack ( int iTeam ) // uses the neural net to return probability of attack
+bool CDODMod :: shouldAttack ( int iTeam )
+// uses the perceptron to return probability of attack
 {
 	int numflags = m_Flags.getNumFlags();
-	ga_nn_value output;
-	CTrainingSet *tset = new CTrainingSet(2,1,1);
+	ga_nn_value inputs[2];
 
-	tset->addSet();
-	tset->in(((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam == TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES))/numflags);
-	tset->in(((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam))/numflags);
+	//ga_nn_value output;
+	//CTrainingSet *tset = new CTrainingSet(2,1,1);
 
-	gNetAttackOrDefend->execute(tset->getBatches()->in,&output,0.0f,1.0f);
+	//tset->addSet();
+	//tset->in(((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam == TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES))/numflags);
+	//tset->in(((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam))/numflags);
 
-	tset->freeMemory();
-	delete tset;
+	inputs[0] = (((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam == TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES))/numflags);
+	inputs[1] = (((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam))/numflags);
 
-	return randomFloat(0.0,1.0) < output;
+	//gNetAttackOrDefend->execute(tset->getBatches()->in,&output,0.0f,1.0f);
+
+	gNetAttackOrDefend->input(inputs);
+	gNetAttackOrDefend->execute();
+
+//	gNetAttackOrDefend->getOutput();
+
+//	tset->freeMemory();
+//	delete tset;
+
+	return randomFloat(0.0,1.0) < gNetAttackOrDefend->getOutput();
 }
 ////////////////////////////////////////////////
 void CDODMod :: initMod ()
 {
 	unsigned int i;
+
+	ga_nn_value inputs[2];
+
 	// Setup Weapons
 
-	gNetAttackOrDefend = new CBotNeuralNet(2,2,2,1,0.4f);
+
+	// linearly suitable
+	gNetAttackOrDefend = new CPerceptron(2);
+
+	CBotGlobals::botMessage(NULL,0,"Training DOD:S perceptron 1... hold on...");
+
+	for ( short int i = 0; i < 1000; i ++ )
+	{
+		inputs[0] = 0.1f;
+		inputs[1] = 0.1f;
+		gNetAttackOrDefend->input(inputs);
+		gNetAttackOrDefend->execute();
+		gNetAttackOrDefend->train(0.9f);
+
+		inputs[0] = 0.9f;
+		inputs[1] = 0.1f;
+		gNetAttackOrDefend->input(inputs);
+		gNetAttackOrDefend->execute();
+		gNetAttackOrDefend->train(0.2f); // attack prob 0.1
+
+		inputs[0] = 0.1f;
+		inputs[1] = 0.9f;
+		gNetAttackOrDefend->input(inputs);
+		gNetAttackOrDefend->execute();
+		gNetAttackOrDefend->train(0.9f); // attack prob 0.9
+	}
+
+	CBotGlobals::botMessage(NULL,0,"... done!");
+
+
+	/*gNetAttackOrDefend = new CBotNeuralNet(2,2,2,1,0.4f);
 
 	CTrainingSet *tset = new CTrainingSet(2,1,4);
 
@@ -1229,7 +1273,7 @@ void CDODMod :: initMod ()
 	CBotGlobals::botMessage(NULL,0,"... done!");
 
 	tset->freeMemory();
-	delete tset;
+	delete tset;*/
 
 	CBots::controlBotSetup(true);
 

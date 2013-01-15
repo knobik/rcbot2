@@ -49,6 +49,7 @@ CPerceptron :: CPerceptron (unsigned short int iInputs)
 	m_weights = new ga_nn_value[iInputs];
 	m_iInputs = iInputs;
 	
+	m_LearnRate = 0.4f;
 	// bias weight
 	m_Bias = -0.5;
 	
