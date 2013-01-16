@@ -1,4 +1,3 @@
-// TO DO : ladders
 /*
  *    This file is part of RCBot.
  *
@@ -959,6 +958,10 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 	}
 
 	m_LastHearVoiceCommand = (eDODVoiceCMD)cmd;
+
+	// don't say the same command for a second or two
+	if ( cmd < MAX_VOICE_CMDS )
+		m_fLastVoiceCommand[cmd] = engine->Time() + randomFloat(1.0f,3.0f);
 }
 
 bool CDODBot :: executeAction ( CBotUtility *util )

@@ -4330,7 +4330,7 @@ inline Vector BOTUTIL_SmoothAim( Vector aiming_start, Vector aiming_end, float t
 Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 {
 	extern ConVar bot_aimsmoothing;
-	extern ConVar bot_rocketpredict;
+	
 	static CBotWeapon *pWp;
 	static float fDist;
 	static float fTime;
@@ -4414,7 +4414,7 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 						// time = distance/speed
 						fTime = fDist/iSpeed;
 
-						vAim = vAim + ((vVelocity*fTime)*bot_rocketpredict.GetFloat());
+						vAim = vAim + ((vVelocity*fTime)*m_pProfile->m_fAimSkill );
 					}
 
 					if ( pWp->getID() == TF2_WEAPON_GRENADELAUNCHER )

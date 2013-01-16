@@ -72,7 +72,8 @@ int CDODMod::m_iMapType = 0;
 bool CDODMod::m_bCommunalBombPoint = false;
 int CDODMod::m_iBombAreaAllies = 0;
 int CDODMod::m_iBombAreaAxis = 0;
-CPerceptron *CDODMod::gNetAttackOrDefend = NULL;
+//CPerceptron *CDODMod::gNetAttackOrDefend = NULL;
+float CDODMod::fAttackProbLookUp[MAX_DOD_FLAGS+1][MAX_DOD_FLAGS+1];
 
 extern ConVar bot_use_disp_dist;
 
@@ -1178,71 +1179,32 @@ void CTeamFortress2Mod :: mapInit ()
 bool CDODMod :: shouldAttack ( int iTeam )
 // uses the perceptron to return probability of attack
 {
-	int numflags = m_Flags.getNumFlags();
-	ga_nn_value inputs[2];
+	static short int iFlags_0;
+	static short int iFlags_1;
+	static short int iNumFlags;
 
-	//ga_nn_value output;
-	//CTrainingSet *tset = new CTrainingSet(2,1,1);
 
-	//tset->addSet();
-	//tset->in(((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam == TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES))/numflags);
-	//tset->in(((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam))/numflags);
+	iNumFlags = m_Flags.getNumFlags();
 
-	inputs[0] = (((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam == TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES))/numflags);
-	inputs[1] = (((ga_nn_value)m_Flags.getNumFlagsOwned(iTeam))/numflags);
+	iFlags_0 = (int) (((float)m_Flags.getNumFlagsOwned(iTeam == TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES) / iNumFlags)*MAX_DOD_FLAGS);
+	iFlags_1 = (int) (((float)m_Flags.getNumFlagsOwned(iTeam) / iNumFlags)*MAX_DOD_FLAGS);
 
-	//gNetAttackOrDefend->execute(tset->getBatches()->in,&output,0.0f,1.0f);
-
-	gNetAttackOrDefend->input(inputs);
-	gNetAttackOrDefend->execute();
-
-//	gNetAttackOrDefend->getOutput();
-
-//	tset->freeMemory();
-//	delete tset;
-
-	return randomFloat(0.0,1.0) < gNetAttackOrDefend->getOutput();
+	return randomFloat(0.0,1.0) < fAttackProbLookUp[iFlags_0][iFlags_1];//gNetAttackOrDefend->getOutput();
 }
 ////////////////////////////////////////////////
 void CDODMod :: initMod ()
 {
 	unsigned int i;
 
-	ga_nn_value inputs[2];
-
 	// Setup Weapons
 
 
 	// linearly suitable
-	gNetAttackOrDefend = new CPerceptron(2);
+	//gNetAttackOrDefend = new CPerceptron(2);
 
 	CBotGlobals::botMessage(NULL,0,"Training DOD:S perceptron 1... hold on...");
 
-	for ( short int i = 0; i < 1000; i ++ )
-	{
-		inputs[0] = 0.1f;
-		inputs[1] = 0.1f;
-		gNetAttackOrDefend->input(inputs);
-		gNetAttackOrDefend->execute();
-		gNetAttackOrDefend->train(0.9f);
-
-		inputs[0] = 0.9f;
-		inputs[1] = 0.1f;
-		gNetAttackOrDefend->input(inputs);
-		gNetAttackOrDefend->execute();
-		gNetAttackOrDefend->train(0.2f); // attack prob 0.1
-
-		inputs[0] = 0.1f;
-		inputs[1] = 0.9f;
-		gNetAttackOrDefend->input(inputs);
-		gNetAttackOrDefend->execute();
-		gNetAttackOrDefend->train(0.9f); // attack prob 0.9
-	}
-
-	CBotGlobals::botMessage(NULL,0,"... done!");
-
-
-	/*gNetAttackOrDefend = new CBotNeuralNet(2,2,2,1,0.4f);
+	CBotNeuralNet *nn = new CBotNeuralNet(2,2,2,1,0.4f);
 
 	CTrainingSet *tset = new CTrainingSet(2,1,4);
 
@@ -1268,12 +1230,49 @@ void CDODMod :: initMod ()
 	tset->in(0.5f); // T - team flag ratio
 	tset->out(0.6f); // probability of attack
 
-	CBotGlobals::botMessage(NULL,0,"Training DOD:S NN... hold on...");
-	gNetAttackOrDefend->batch_train(tset,800);
-	CBotGlobals::botMessage(NULL,0,"... done!");
+	nn->batch_train(tset,1000);
+/*
+	for ( short int i = 0; i < 1000; i ++ )
+	{
+		inputs[0] = 0.1f;
+		inputs[1] = 0.1f;
+		gNetAttackOrDefend->input(inputs);
+		gNetAttackOrDefend->execute();
+		gNetAttackOrDefend->train(0.9f);
+
+		inputs[0] = 0.9f; // enemy has 90% of flags
+		inputs[1] = 0.1f; // team has 10% of flags
+		gNetAttackOrDefend->input(inputs);
+		gNetAttackOrDefend->execute();
+		gNetAttackOrDefend->train(0.2f); // attack prob 20%
+
+		inputs[0] = 0.1f; // enemy has 10% of flags
+		inputs[1] = 0.9f; // team has 90% of flags
+		gNetAttackOrDefend->input(inputs);
+		gNetAttackOrDefend->execute();
+		gNetAttackOrDefend->train(0.9f); // attack prob 90%
+	}
+*/
+	// create look up table for porbabilities
+	for ( short int i = 0; i <= MAX_DOD_FLAGS; i ++ )
+	{
+		for ( short int j = 0; j <= MAX_DOD_FLAGS; j ++ )
+		{
+			tset->init();
+			tset->addSet();
+			tset->in(((float)i) / MAX_DOD_FLAGS);
+			tset->in(((float)j) / MAX_DOD_FLAGS);
+			nn->execute(tset->getBatches()->in,&(fAttackProbLookUp[i][j]),0.0f,1.0f);
+		}
+	}
 
 	tset->freeMemory();
-	delete tset;*/
+	delete tset;
+	delete nn;
+
+	CBotGlobals::botMessage(NULL,0,"... done!");
+
+
 
 	CBots::controlBotSetup(true);
 
@@ -1561,9 +1560,7 @@ bool CDODFlags::getRandomTeamControlledFlag ( Vector *position, int iTeam, int *
 
 void CDODMod::freeMemory()
 {
-	if ( gNetAttackOrDefend != NULL )
-		delete gNetAttackOrDefend;
-	gNetAttackOrDefend = NULL;
+
 }
 
 void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)

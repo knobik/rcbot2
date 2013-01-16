@@ -769,8 +769,16 @@ void CBot :: think ()
 	// deal with it here
 	if ( (m_fNextVoiceCommand < engine->Time()) && !m_nextVoicecmd.empty() )
 	{
+		byte cmd = m_nextVoicecmd.front();
+
 		m_fNextVoiceCommand = engine->Time() + randomFloat(0.4f,1.2f);
-		voiceCommand(m_nextVoicecmd.front());
+		
+		if ( m_fLastVoiceCommand[cmd] < engine->Time() )
+		{
+			voiceCommand(cmd);
+			m_fLastVoiceCommand[cmd] = engine->Time() + randomFloat(8.0f,16.0f);
+		}
+
 		m_nextVoicecmd.pop();
 	}
 
@@ -785,7 +793,6 @@ void CBot :: addVoiceCommand ( int cmd )
 	{
 		m_nextVoicecmd.push(cmd); 
 		m_fNextVoiceCommand = engine->Time() + randomFloat(0.2f,1.0f);
-		m_fLastVoiceCommand[cmd] = engine->Time() + randomFloat(8.0f,16.0f);
 	}
 }
 
@@ -1668,6 +1675,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	static Vector v_org;
 	static Vector v_size;
 	static Vector vel;
+	//static Vector v_change;
 
 	//return CBotGlobals::entityOrigin(pEntity);
 	
@@ -1676,15 +1684,18 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 		return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
 	}
 
-	fDistFactor = (distanceFrom(pEntity)/1024.0f)*(m_fFov/90.0f);
-	fDistFactor *= (1.0f - m_pProfile->m_fAimSkill);// add skill factor
-
 	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.1f,0.4f);
 
 	v_size = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
 	v_size = v_size / 2;
 
 	v_org = CBotGlobals::entityOrigin(pEntity);
+
+	//v_change = m_vAimVector - v_org;
+
+	fDistFactor = (distanceFrom(pEntity)/512.0f)*(m_fFov/90.0f);
+	fDistFactor *= (1.0f - m_pProfile->m_fAimSkill);// add skill factor
+	//fDistFactor *= (v_change/v_size).Length(); // change in aiming
 
     v_right = (v_org-getOrigin()).Cross(Vector(0,0,1)); 
 
@@ -1695,16 +1706,20 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	m_vAimVector = v_org + (fDistFactor*Vector(randomFloat(-v_size.x,v_size.x),randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));
 	
 	// add another offset based on distance
-	m_vAimVector = m_vAimVector + (fDistFactor*Vector(v_right.x*randomFloat(-16,16),v_right.y*randomFloat(-16,16),randomFloat(-16,16)));
+	m_vAimVector = m_vAimVector + (fDistFactor*Vector(v_right.x*randomFloat(-v_size.x,v_size.x),v_right.y*randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));
 
 	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
 		m_vAimVector = m_vAimVector + Vector(0,0,v_size.z);
 
+	// change in velocity
 	if ( CClassInterface::getVelocity(pEntity,&vel) )
 	{
-		vel = vel/300;
+		vel = vel/320;
 
-		m_vAimVector = m_vAimVector + Vector(randomFloat(-32,32)*vel.x,randomFloat(-32,32)*vel.y,randomFloat(-32,32)*vel.z);
+		m_vAimVector = m_vAimVector + Vector(
+			randomFloat(-v_size.x,v_size.x)*vel.x,
+			randomFloat(-v_size.y,v_size.y)*vel.y,
+			randomFloat(-v_size.z,v_size.z)*vel.z);
 	}
 
 	return m_vAimVector;///BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());

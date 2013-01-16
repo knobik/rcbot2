@@ -425,7 +425,7 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector vOther, float fBelief
 	if ( (iWptFrom == -1) || (iWptTo == -1) )
 		return;
 
-	fEDist = (vOrigin-vOther).Length() + 400.0f; // range
+	fEDist = (vOrigin-vOther).Length(); // range
 
 	m_iVisibles.Add(iWptFrom);
 	m_iVisibles.Add(iWptTo);

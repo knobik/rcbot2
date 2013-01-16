@@ -506,8 +506,10 @@ protected:
 	static int m_iBombAreaAllies;
 	static int m_iBombAreaAxis;
 
-	static CPerceptron *gNetAttackOrDefend;
+	//static CPerceptron *gNetAttackOrDefend;
 
+									// enemy			// team
+	static float fAttackProbLookUp[MAX_DOD_FLAGS+1][MAX_DOD_FLAGS+1];
 	//virtual void entitySpawn ( edict_t *pEntity );
 
 	//virtual void clientCommand ( edict_t *pEntity, int argc,const char *pcmd, const char *arg1, const char *arg2 ) {};
