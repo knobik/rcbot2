@@ -50,6 +50,7 @@ extern ConVar bot_min_cc_time;
 extern ConVar bot_change_class;
 extern ConVar rcbot_enemyshootfov;
 extern ConVar bot_defrate;
+extern ConVar rcbot_smoke_time;
 
 const char *g_DODClassCmd[2][6] = 
 { {"cls_garand","cls_tommy","cls_bar","cls_spring","cls_30cal","cls_bazooka"},
@@ -201,7 +202,7 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		fSmokeTime = gpGlobals->curtime - CClassInterface::getSmokeSpawnTime(pEntity);
 
-		if ( bNoDraw || ((fSmokeTime < 1.0f) || (fSmokeTime > 10.0f)) )
+		if ( bNoDraw || ((fSmokeTime < 1.0f) || (fSmokeTime > rcbot_smoke_time.GetFloat())) )
 			m_pNearestSmokeToEnemy = NULL;
 	}
 }
@@ -595,6 +596,7 @@ void CDODBot :: modThink ()
 		}
 	}
 
+	m_fFov = BOT_DEFAULT_FOV;
 	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict);
 
 	setMoveSpeed(fMaxSpeed*0.75f);
@@ -623,6 +625,11 @@ void CDODBot :: modThink ()
 
 		if ( pWeapon && pWeapon->isDeployable() && CClassInterface::isMachineGunDeployed(m_pCurrentWeapon) )
 			m_fDeployMachineGunTime = engine->Time();
+
+		if ( pWeapon && pWeapon->isZoomable() && CClassInterface::isSniperWeaponZoomed(m_pCurrentWeapon) )
+		{
+			m_fFov = 45.0f;
+		}
 	}
 
 	if ( CClassInterface::isMoveType(m_pEdict,MOVETYPE_LADDER) )

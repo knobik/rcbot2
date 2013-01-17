@@ -1671,6 +1671,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	static Vector v_right;
 
 	static float fDistFactor;
+	static float fSensFactor;
 	//static Vector v_max,v_min;
 	static Vector v_org;
 	static Vector v_size;
@@ -1693,8 +1694,11 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 
 	//v_change = m_vAimVector - v_org;
 
-	fDistFactor = (distanceFrom(pEntity)/512.0f)*(m_fFov/90.0f);
-	fDistFactor *= (1.0f - m_pProfile->m_fAimSkill);// add skill factor
+	fDistFactor = (distanceFrom(pEntity)*0.0025f)*(m_fFov/90.0f);
+	fDistFactor *= (1.5f - m_pProfile->m_fAimSkill);// add skill factor
+	fSensFactor = (float)m_pProfile->m_iSensitivity / 10;
+
+	fDistFactor *= fSensFactor;
 	//fDistFactor *= (v_change/v_size).Length(); // change in aiming
 
     v_right = (v_org-getOrigin()).Cross(Vector(0,0,1)); 
@@ -2331,6 +2335,7 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 
 	if ( CBots::controlBots() )
 	{
+		extern ConVar bot_sv_cheats_auto;
 		char cmd[128];
 
 		//if ( pBotProfile->getTeam() >= 1 )
@@ -2354,10 +2359,31 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 		// control next bot that joins server
 		m_bControlNext = true;
 
+
 		if ( CClients::get(0)->getPlayer() && !engine->IsDedicatedServer()) // The_Shadow
+		{
+			if ( bot_sv_cheats_auto.GetBool() )
+				engine->ClientCommand(CClients::get(0)->getPlayer(),"sv_cheats 1\n");
+
 			engine->ClientCommand(CClients::get(0)->getPlayer(),cmd);
+
+			if ( bot_sv_cheats_auto.GetBool() )
+				engine->ClientCommand(CClients::get(0)->getPlayer(),"sv_cheats 0\n");
+
+		}
 		else
+		{
+			if ( bot_sv_cheats_auto.GetBool() )
+				engine->ServerCommand("sv_cheats 1\n");
+
 			engine->ServerCommand(cmd); // Might not work
+
+			if ( bot_sv_cheats_auto.GetBool() )
+				engine->ServerCommand("sv_cheats 0\n");
+
+		}
+
+
 
 		return true;
 	}

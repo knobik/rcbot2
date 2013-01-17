@@ -1,3 +1,67 @@
+0.7
+
+General
+---------
+- fixed waypoint visibility table
+- bot belief (danger) changes
+- learned bot belief is saved across maps
+- opens later waypoint now works
+- bug with finding enemies fixed
+- getprop system updated
+- CPU optimizations (requires increasing vis revs - see individual bot profiles)
+
+
+DOD:S
+-----
+- support for DOD:S
+- support for capture flag maps / bomb maps
+- comes with dod_anzio, dod_colmar, dod_avalanche and dod_jagd waypoints
+- requires qaypoints for other maps to work for them
+- bots support attacking and defending
+- sniping
+- machine gunning
+- radio commands
+- automatic class changing
+- 'smart' capturing decisions
+- grenade throwing 
+- understand smoke grenades
+- bots can go prone
+- bots run for cover when reloading and when they see a grenade
+- bots can climb up and down ladders if waypointed properly
+
+I just need to add bomb map support and fix a few things and it should be ready
+
+HL2DM
+-----
+
+- normal weapon switching depending on ammo/distance
+- bots picking up objects with grav gun and shooting enemies
+- ladder climbing
+- sprinting
+- bots jumping over obstacles
+- bots using chargers (armor/health)
+
+TF2
+---
+- hooks player move function so all the pyro/gravity/rocket jump/double jump/hw guy bugs are fixed
+- waypoints for some event maps and others (thanks community) 
+- medic improvements
+- bots fight halloween bosses (added cvar rcbot_bossattackfactor)
+- bots shout 'activate uber' when being healed and can be ubered if they want to be ubered
+- spies choose diguise classes better
+- engineers place dispensers more reliably
+- general optimizations
+- rewritten getprop code
+- spies cloaking/decloaking better when they see an enemy 
+- a nested move+look priority system
+- bots push on overtime and when nearby players say 'go go go' or 'move up'
+- spy changes
+- bots only shoot when nearly looking at enemy (added cvar rcbot_enemyshootfov)
+- bots dont listen to medics using medi guns or engineers using wrench
+- bots aim jitter in tf2
+- engineer on blue team (attack map) bug fixed when wanting to place teleports
+- bots no longer pick up health if they are being healed by a medic
+
 0.65
 update: waypoints for some event maps and others (thanks community) 
 change: medic improvements

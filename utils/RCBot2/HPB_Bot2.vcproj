@@ -138,8 +138,8 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;"
-				Outputs="&quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_bot2.dll&quot;"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\day of defeat source\bin\HPB_bot2.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\xxrcinstall\files\HPB_bot2.dll&quot;&#x0D;&#x0A;&#x0D;&#x0A;"
+				Outputs="&quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_bot2.dll&quot;7;&quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\day of defeat source\bin\HPB_bot2.dll&quot;;&quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\xxrcinstall\files\HPB_bot2.dll&quot;"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
