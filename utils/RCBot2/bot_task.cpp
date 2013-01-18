@@ -682,7 +682,10 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( !found )
 		complete();
 	else if ( m_fDefendTime == 0 )
+	{
 		m_fDefendTime = engine->Time() + randomFloat(30.0,60.0);
+		pBot->resetLookAroundTime();
+	}
 	else if ( m_fDefendTime < engine->Time() )
 		complete();
 	else
@@ -1828,6 +1831,7 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		m_fTime = engine->Time() + randomFloat(40.0f,90.0f);
 		pBot->secondaryAttack();
+		pBot->resetLookAroundTime();
 	}
 
 	pBotWeapon = pBot->getCurrentWeapon();
@@ -1884,11 +1888,17 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( pBot->hasEnemy() )
 		{
-			pBot->setLookAtTask((LOOK_ENEMY));
-
 			// careful that the round may have not started yet
 			if ( CTeamFortress2Mod::hasRoundStarted() )
+			{
+				pBot->setMoveLookPriority(MOVELOOK_ATTACK);
+
+				pBot->setLookAtTask(LOOK_ENEMY);
+
 				pBot->handleAttack(pBotWeapon,pBot->getEnemy());
+
+				pBot->setMoveLookPriority(MOVELOOK_TASK);
+			}
 		}
 		else
 		{
@@ -2576,6 +2586,7 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		m_fEnemyTime = engine->Time();
 		m_fTime = m_fEnemyTime + randomFloat(20.0f,40.0f);
+		pBot->resetLookAroundTime();
 	}
 
 	pCurrentWeapon = pBot->getCurrentWeapon();
@@ -2637,13 +2648,13 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_bUseZ )
 	{
-		pBot->setAiming(Vector(m_vAim.x,m_vAim.y,m_z));
-		pBot->setLookAtTask(LOOK_SNIPE);
+		pBot->setLookAtTask(LOOK_VECTOR);
+		pBot->setLookVector(pBot->snipe(Vector(m_vAim.x,m_vAim.y,m_z)));
 	}
 	else
 	{
 		pBot->setLookAtTask(LOOK_SNIPE);
-		pBot->setAiming(m_vAim);
+		pBot->setLookVector(pBot->snipe(m_vAim));
 	}
 
 	fDist = (m_vOrigin - pBot->getOrigin()).Length2D();
@@ -2669,9 +2680,14 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( pBot->hasEnemy() )
 	{
+
+		pBot->setMoveLookPriority(MOVELOOK_ATTACK);
+
 		pBot->setLookAtTask(LOOK_ENEMY);
 
 		pBot->handleAttack(pCurrentWeapon,pBot->getEnemy());
+
+		pBot->setMoveLookPriority(MOVELOOK_TASK);
 
 		// havin' fun
 		m_fEnemyTime = engine->Time();

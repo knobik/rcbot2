@@ -1675,7 +1675,9 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	//static Vector v_max,v_min;
 	static Vector v_org;
 	static Vector v_size;
-	static Vector vel;
+	static Vector myvel;
+	static Vector enemyvel;
+	static Vector vel; // realtive velocity
 	//static Vector v_change;
 
 	//return CBotGlobals::entityOrigin(pEntity);
@@ -1685,7 +1687,8 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 		return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
 	}
 
-	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.1f,0.4f);
+	myvel = Vector(0,0,0);
+	enemyvel = Vector(0,0,0);
 
 	v_size = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
 	v_size = v_size / 2;
@@ -1716,15 +1719,21 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 		m_vAimVector = m_vAimVector + Vector(0,0,v_size.z);
 
 	// change in velocity
-	if ( CClassInterface::getVelocity(pEntity,&vel) )
+	if ( CClassInterface::getVelocity(pEntity,&enemyvel) && CClassInterface::getVelocity(m_pEdict,&myvel) )
 	{
-		vel = vel/320;
+		vel = enemyvel - myvel; // relative velocity
 
-		m_vAimVector = m_vAimVector + Vector(
+		vel = vel / 320;
+
+		m_vAimVector = m_vAimVector + (fDistFactor * Vector(
 			randomFloat(-v_size.x,v_size.x)*vel.x,
 			randomFloat(-v_size.y,v_size.y)*vel.y,
-			randomFloat(-v_size.z,v_size.z)*vel.z);
+			randomFloat(-v_size.z,v_size.z)*vel.z));
 	}
+	else
+		vel = Vector(0.5f,0.5f,0.5f);
+
+	m_fNextUpdateAimVector = engine->Time() + 0.2f + (vel.Length()*0.2f);
 
 	return m_vAimVector;///BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
 
@@ -1740,6 +1749,37 @@ void CBot :: checkCanPickup ( edict_t *pPickup )
 {
 
 
+}
+
+Vector CBot::snipe (Vector &vAiming )
+{
+		if ( m_fLookAroundTime < engine->Time() )
+		{
+			CTraceFilterWorldAndPropsOnly filter;
+			float fTime;
+			Vector vOrigin = getOrigin();
+
+			trace_t *tr = CBotGlobals::getTraceResult();
+
+			m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
+			// forward
+			CBotGlobals::traceLine(vOrigin,m_vWaypointAim+m_vLookAroundOffset,MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);	
+
+			fTime = 1.0f + (tr->fraction * randomFloat(3.0f,7.0f));
+
+			m_fLookAroundTime = engine->Time() + fTime;
+#ifndef __linux__
+			if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
+			{
+				debugoverlay->AddLineOverlay (getOrigin(), m_vWaypointAim, 255,100,100, false, fTime);
+				debugoverlay->AddLineOverlay (getOrigin(), m_vWaypointAim+m_vLookAroundOffset, 255,40,40, false, fTime);
+			}
+#endif
+
+			//m_vWaypointAim = m_vWaypointAim + m_vLookAroundOffset;
+		}
+
+		return vAiming+m_vLookAroundOffset;
 }
 
 void CBot :: getLookAtVector ()
@@ -1857,34 +1897,7 @@ void CBot :: getLookAtVector ()
 		break;
 	case LOOK_SNIPE:
 		{
-			if ( m_fLookAroundTime < engine->Time() )
-			{
-				CTraceFilterWorldAndPropsOnly filter;
-				float fTime;
-				Vector vOrigin = getOrigin();
-
-				trace_t *tr = CBotGlobals::getTraceResult();
-
-				m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
-				// forward
-				CBotGlobals::traceLine(vOrigin,m_vWaypointAim+m_vLookAroundOffset,MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);	
-
-				fTime = 1.0f + (tr->fraction * randomFloat(3.0f,7.0f));
-
-				m_fLookAroundTime = engine->Time() + fTime;
-#ifndef __linux__
-				if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
-				{
-					debugoverlay->AddLineOverlay (getOrigin(), m_vWaypointAim, 255,100,100, false, fTime);
-					debugoverlay->AddLineOverlay (getOrigin(), m_vWaypointAim+m_vLookAroundOffset, 255,40,40, false, fTime);
-				}
-#endif
-
-				//m_vWaypointAim = m_vWaypointAim + m_vLookAroundOffset;
-			}
-
-			setLookAt(m_vWaypointAim+m_vLookAroundOffset);
-
+			setLookAt(snipe(m_vWaypointAim));
 
 		if ( bDebug )
 				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_SNIPE",this);
@@ -1956,6 +1969,7 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
 {
    float fCurrent180;  // current +/- 180 degrees
    float fDiff;
+   	extern ConVar bot_aimsmoothing;
 
    // turn from the current v_angle yaw to the ideal_yaw by selecting
    // the quickest way to turn to face that direction
@@ -1971,9 +1985,15 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
       return;
    }
 
-   // check if difference is less than the max degrees per turn
-   if (fDiff < fSpeed)
-      fSpeed = fDiff;  // just need to turn a little bit (less than max)
+   
+   if ( bot_aimsmoothing.GetBool() && (fDiff < (fSpeed*4)) ) // start smoothing
+   {
+	   fSpeed = fSpeed * (fDiff/(fSpeed*4));
+      // check if difference is less than the max degrees per turn
+	  // just need to turn a little bit (less than max)
+   }
+   else if (fDiff < fSpeed)
+     fSpeed = fDiff;
 
    // here we have four cases, both angle positive, one positive and
    // the other negative, one negative and the other positive, or

@@ -32,6 +32,7 @@ typedef enum
 	GETPROP_TF2OBJECTUPGRADELEVEL,
 	GETPROP_TF2OBJECTMAXHEALTH,
 	GETPROP_TF2DISPMETAL,
+	GETPROP_TF2MINIBUILDING,
 	GETPROP_MAXSPEED,
 	GETPROP_CONSTRAINT_SPEED,
 	GETPROP_TF2OBJECTBUILDING,
@@ -280,6 +281,7 @@ public:
 	inline static int getTF2UpgradeLevel ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTUPGRADELEVEL].getInt(edict,0); }
 	inline static int getTF2GetBuildingMaxHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTMAXHEALTH].getInt(edict,0); }
 	inline static int getTF2DispMetal ( edict_t *edict ) { return g_GetProps[GETPROP_TF2DISPMETAL].getInt(edict,0); }
+	inline static bool getTF2BuildingIsMini ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MINIBUILDING].getBool(edict,false); }
 	inline static float getMaxSpeed(edict_t *edict) { return g_GetProps[GETPROP_MAXSPEED].getFloat(edict,0); }
 	inline static float getSpeedFactor(edict_t *edict) { return g_GetProps[GETPROP_CONSTRAINT_SPEED].getFloat(edict,0); } 
 	inline static bool isObjectBeingBuilt(edict_t *edict) { return g_GetProps[GETPROP_TF2OBJECTBUILDING].getBool(edict,false); }

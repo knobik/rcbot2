@@ -2,14 +2,16 @@
 
 General
 ---------
-- fixed waypoint visibility table
+- fixed waypoint visibility table saving & loading
 - bot belief (danger) changes
 - learned bot belief is saved across maps
 - opens later waypoint now works
 - bug with finding enemies fixed
 - getprop system updated
 - CPU optimizations (requires increasing vis revs - see individual bot profiles)
-
+- a nested move+look priority system
+- general optimizations
+- rewritten getprop code
 
 DOD:S
 -----
@@ -44,21 +46,22 @@ HL2DM
 TF2
 ---
 - hooks player move function so all the pyro/gravity/rocket jump/double jump/hw guy bugs are fixed
+- doesn't crash when tf bot is added
+- engineers move their buildings
+- sniper bug fixed when they look into the sky before sniping
 - waypoints for some event maps and others (thanks community) 
-- medic improvements
+- many medic improvements
 - bots fight halloween bosses (added cvar rcbot_bossattackfactor)
 - bots shout 'activate uber' when being healed and can be ubered if they want to be ubered
 - spies choose diguise classes better
 - engineers place dispensers more reliably
-- general optimizations
-- rewritten getprop code
 - spies cloaking/decloaking better when they see an enemy 
-- a nested move+look priority system
 - bots push on overtime and when nearby players say 'go go go' or 'move up'
-- spy changes
+- spy cloaking changes
+- heavy minigun rev up changes
 - bots only shoot when nearly looking at enemy (added cvar rcbot_enemyshootfov)
 - bots dont listen to medics using medi guns or engineers using wrench
-- bots aim jitter in tf2
+- fixed bots aim jitter in tf2
 - engineer on blue team (attack map) bug fixed when wanting to place teleports
 - bots no longer pick up health if they are being healed by a medic
 

@@ -622,6 +622,10 @@ public:
 
 	inline Vector getLookVector () { return m_vLookVector; }
 
+	inline void resetLookAroundTime () { m_fLookAroundTime = 0.0f; }
+
+	inline Vector snipe ( Vector &vAiming );
+
 	//inline void dontAvoid () { m_fAvoidTime = engine->Time() + 1.0f; }
 
 	float m_fWaypointStuckTime;

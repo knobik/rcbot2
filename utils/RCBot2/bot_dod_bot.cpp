@@ -1162,7 +1162,21 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			{
 				CBotSchedule *snipe = new CBotSchedule();
 				CBotTask *findpath = new CFindPathTask(pWaypoint->getOrigin());
-				CBotTask *snipetask = new CBotDODSnipe(util->getWeaponChoice(),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),iFlagID!=-1,vGoal.z+48);
+				CBotTask *snipetask;
+				
+				// find Z for goal if no flag id
+				if ( (iFlagID == -1) && (pWaypoint->getArea() > 0) && CDODMod::isBombMap() && CDODMod::isCommunalBombPoint() )
+				{
+					CWaypoint *pBombs = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_BOMBS_HERE,m_iTeam,pWaypoint->getArea(),true);
+
+					if ( pBombs )
+					{
+						iFlagID = pWaypoint->getArea();
+						vGoal = pBombs->getOrigin();
+					}
+				}
+
+				snipetask = new CBotDODSnipe(util->getWeaponChoice(),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),iFlagID!=-1,vGoal.z+48);
 
 				findpath->setCompleteInterrupt(CONDITION_PUSH);
 				snipetask->setCompleteInterrupt(CONDITION_PUSH);

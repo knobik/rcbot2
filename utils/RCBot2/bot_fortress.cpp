@@ -3141,7 +3141,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			ADD_UTILITY(BOT_UTIL_UPGTMDISP,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) && (m_pNearestDisp!=NULL)&&(m_pNearestDisp!=m_pDispenser) && (iMetal>=200) && ((iAllyDispLevel<3)||(fAllyDispenserHealthPercent<1.0f)),0.7+((1.0f-fAllyDispenserHealthPercent)*0.3));
 		}
 
-		if ( m_pNearestAllySentry && (m_pNearestAllySentry != m_pSentryGun) )
+		if ( m_pNearestAllySentry && (m_pNearestAllySentry != m_pSentryGun) && !CClassInterface::getTF2BuildingIsMini(m_pNearestAllySentry) )
 		{
 			iAllySentryLevel = CClassInterface::getTF2UpgradeLevel(m_pNearestAllySentry);
 			fAllySentryHealthPercent = CClassInterface::getSentryHealth(m_pNearestAllySentry);
@@ -3175,7 +3175,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!m_bIsCarryingObj && !bHasFlag&&m_pSentryGun&&(iSentryLevel>1)&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9));
 		}
 
-		ADD_UTILITY(BOT_UTIL_UPGSENTRY,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag && m_pSentryGun && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2));
+		ADD_UTILITY(BOT_UTIL_UPGSENTRY,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag && m_pSentryGun && !CClassInterface::getTF2BuildingIsMini(m_pSentryGun) && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2));
 		ADD_UTILITY(BOT_UTIL_GETAMMODISP,!m_bIsCarryingObj && m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),fUseDispFactor);
 
 		ADD_UTILITY(BOT_UTIL_UPGTELENT,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5)));
@@ -4340,8 +4340,8 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 
 	if ( m_fNextUpdateAimVector > engine->Time() )
 	{
-		if ( m_bPrevAimVectorValid && bot_aimsmoothing.GetBool() )
-			return BOTUTIL_SmoothAim(m_vPrevAimVector,m_vAimVector,m_fStartUpdateAimVector,engine->Time(),m_fNextUpdateAimVector);
+		//if ( m_bPrevAimVectorValid && bot_aimsmoothing.GetBool() )
+		//	return BOTUTIL_SmoothAim(m_vPrevAimVector,m_vAimVector,m_fStartUpdateAimVector,engine->Time(),m_fNextUpdateAimVector);
 
 		return m_vAimVector;
 	}
@@ -4428,7 +4428,7 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 	m_fStartUpdateAimVector = engine->Time();
 	m_vAimVector = vAim;
 
-	if ( bot_aimsmoothing.GetBool() )
+	/*if ( bot_aimsmoothing.GetBool() )
 	{
 		if ( m_bPrevAimVectorValid )
 		{
@@ -4439,7 +4439,7 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 			m_vPrevAimVector = m_vAimVector;
 			m_bPrevAimVectorValid = true;
 		}
-	}
+	}*/
 
 	return m_vAimVector;
 }
