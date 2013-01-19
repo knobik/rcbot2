@@ -94,6 +94,9 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#define DEG_TO_RAD(x) (x)*0.0174533
+#define RAD_TO_DEG(x) (x)*57.29578
+
 extern void HookPlayerRunCommand ( edict_t *edict );
 
 // instantiate bots -- make different for different mods
@@ -1575,7 +1578,8 @@ void CBot :: doMove ()
 		fDist = distanceFrom(m_vMoveTo);
 
 		/////////
-		radians = fAngle * 3.141592f / 180.0f; // degrees to radians
+		radians = DEG_TO_RAD(fAngle);
+		//radians = fAngle * 3.141592f / 180.0f; // degrees to radians
         // fl Move is percentage (0 to 1) of forward speed,
         // flSide is percentage (0 to 1) of side speed.
 		
@@ -1967,15 +1971,22 @@ int CBot :: getPlayerID ()
 
 void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float *fUpdate )
 {
-   float fCurrent180;  // current +/- 180 degrees
-   float fDiff;
-   	extern ConVar bot_aimsmoothing;
+   /*float fCurrent180;  // current +/- 180 degrees
+   float fDiff;*/
+   float fChange;
+   float fAlpha;
+   float fNegAlpha;
+   	//extern ConVar bot_aimsmoothing;
+	extern ConVar bot_anglespeed;
+
+   fAlpha = (fSpeed/bot_anglespeed.GetFloat());
+   fNegAlpha = 1.0f-fAlpha;
 
    // turn from the current v_angle yaw to the ideal_yaw by selecting
    // the quickest way to turn to face that direction
    
    // find the difference in the current and ideal angle
-   fDiff = fabs(*fCurrent - *fIdeal);
+   /*fDiff = fabs(*fCurrent - *fIdeal);
 
    // check if the bot is already facing the ideal_yaw direction...
    if (fDiff <= 0.1)
@@ -1984,9 +1995,17 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
 
       return;
    }
+*/
+   fChange = (fAlpha * *fIdeal);
 
-   
-   if ( bot_aimsmoothing.GetBool() && (fDiff < (fSpeed*4)) ) // start smoothing
+   if ( (*fIdeal - *fCurrent) > 180 )
+	   *fCurrent = (fNegAlpha * *fCurrent) - fChange;
+   else
+	   *fCurrent = (fNegAlpha * *fCurrent) + fChange;
+
+ //  *fCurrent = RAD_TO_DEG(asin(sin((radianscurrent*(1.0f-(fSpeed/20))) + (radiansideal*(fSpeed/20))))) - 180.0f;
+
+   /*if ( bot_aimsmoothing.GetBool() && (fDiff < (fSpeed*4)) ) // start smoothing
    {
 	   fSpeed = fSpeed * (fDiff/(fSpeed*4));
       // check if difference is less than the max degrees per turn
@@ -2029,7 +2048,7 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
          *fCurrent -= fSpeed;
       else
          *fCurrent += fSpeed;
-   }
+   }*/
 
    CBotGlobals::fixFloatAngle(fCurrent);
    //CBotGlobals::fixFloatDegrees360(fCurrent);
