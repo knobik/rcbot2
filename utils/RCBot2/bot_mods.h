@@ -179,6 +179,11 @@ public:
 		memset(m_bBombPlanted,0,sizeof(bool)*MAX_DOD_FLAGS);
 		memset(m_pFlags,0,sizeof(edict_t*)*MAX_DOD_FLAGS);
 		memset(m_pBombs,0,sizeof(edict_t*)*MAX_DOD_FLAGS);
+
+		for ( short int i = 0; i < MAX_DOD_FLAGS; i ++ )
+		{
+			m_iWaypoint[i] = -1;
+		}
 	}
 
 	int getNumFlags () { return m_iNumControlPoints; }
@@ -197,7 +202,7 @@ public:
 
 	void setup (edict_t *pResourceEntity, int iMapType);
 
-	bool getRandomEnemyControlledFlag ( Vector *position, int iTeam, int *id = NULL );
+	bool getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id = NULL );
 	bool getRandomTeamControlledFlag ( Vector *position, int iTeam, int *id = NULL );
 
 	bool getRandomBombToDefuse ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
@@ -434,6 +439,7 @@ public:
 private:
 	edict_t *m_pFlags[MAX_DOD_FLAGS];
 	edict_t *m_pBombs[MAX_DOD_FLAGS];
+	int m_iWaypoint[MAX_DOD_FLAGS];
 
 	int m_iNumControlPoints;
 	Vector *m_vCPPositions;

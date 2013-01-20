@@ -549,7 +549,7 @@ void CBotFortress :: detectedAsSpy( edict_t *pDetector, bool bDisguiseComprimise
 		if ( m_fClassDisguiseTime[m_iDisguiseClass] == 0 )
 			m_fClassDisguiseTime [m_iDisguiseClass] = fTime;
 		else
-			m_fClassDisguiseTime [m_iDisguiseClass] = (m_fClassDisguiseTime [m_iDisguiseClass] /2) + (fTime / 2);
+			m_fClassDisguiseTime [m_iDisguiseClass] = (m_fClassDisguiseTime [m_iDisguiseClass] * 0.5f) + (fTime * 0.5f);
 
 		for ( unsigned short int i = 0; i < 10; i ++ )
 		{

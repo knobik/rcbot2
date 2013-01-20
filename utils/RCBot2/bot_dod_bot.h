@@ -115,6 +115,8 @@ public:
 
 	bool isDOD () { return true; }
 
+	bool withinTeammate ( );
+
 	bool hasBomb () { return m_bHasBomb; }
 	void removeBomb () { m_bHasBomb = false; }
 	void bombPlanted ( int iCP, int iTeam );

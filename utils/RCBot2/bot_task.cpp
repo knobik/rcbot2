@@ -2663,6 +2663,9 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->setMoveTo(m_vOrigin);
 		pBot->setMoveSpeed(CClassInterface::getMaxSpeed(pBot->getEdict())/8);
+
+		if ( ( fDist < 48 ) && ((CDODBot*)pBot)->withinTeammate() )
+			fail();
 	}
 	else
 	{

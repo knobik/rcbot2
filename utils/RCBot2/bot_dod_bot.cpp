@@ -971,6 +971,44 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 		m_fLastVoiceCommand[cmd] = engine->Time() + randomFloat(1.0f,3.0f);
 }
 
+bool CDODBot :: withinTeammate ( )
+{
+	// check if the bot is right nex tot a team mate (somtimes bots can't deploy if theyr are next to one already)
+
+	short int i;
+	edict_t *pPlayer;
+	IPlayerInfo *playerinfo;
+
+	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		pPlayer = INDEXENT(i);
+
+		// skip me
+		if ( pPlayer == m_pEdict )
+			continue;
+
+		if ( pPlayer && !pPlayer->IsFree() )
+		{
+			playerinfo = playerinfomanager->GetPlayerInfo(pPlayer);
+
+			if ( playerinfo )
+			{
+				if ( playerinfo->IsConnected() && !playerinfo->IsDead() )
+				{
+					// this player is in the game
+					if ( playerinfo->GetTeamIndex() == m_iTeam )
+					{
+						if ( (playerinfo->GetAbsOrigin() - getOrigin()).Length() < 52.0f )
+							return true;
+					}
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
 bool CDODBot :: executeAction ( CBotUtility *util )
 {
 	int iBombType = 0;
@@ -1103,7 +1141,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			{
 				if ( !CDODMod::isBombMap() || !CDODMod::isCommunalBombPoint() )
 				{
-					if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(&vGoal,getTeam(),&iFlagID) )
+					if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(this,&vGoal,getTeam(),&iFlagID) )
 					{
 						if ( m_iClass == DOD_CLASS_MACHINEGUNNER )
 							pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_MACHINEGUN,m_iTeam,iFlagID,true,this);
@@ -1126,7 +1164,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 					else
 					{
 						// attack a point
-						if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(&vGoal,getTeam(),&iFlagID) )
+						if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(this,&vGoal,getTeam(),&iFlagID) )
 						{
 							if ( m_iClass == DOD_CLASS_MACHINEGUNNER )
 								pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_MACHINEGUN,m_iTeam,iFlagID,true,this);
@@ -1406,7 +1444,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			Vector vGoal;
 			int iFlagID;
 
-			if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(&vGoal,getTeam(),&iFlagID) )
+			if ( CDODMod::m_Flags.getRandomEnemyControlledFlag(this,&vGoal,getTeam(),&iFlagID) )
 			{
 				CWaypoint *pWaypoint;
 

@@ -39,8 +39,9 @@
 #include "bot_configfile.h"
 #include "bot_getprop.h"
 #include "bot_dod_bot.h"
+#include "bot_navigator.h"
 #include "bot_waypoint.h"
-
+#include "bot_waypoint_locations.h"
 #include "bot_perceptron.h"
 
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
@@ -1390,47 +1391,63 @@ bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
 	return false;
 }
 
-bool CDODFlags::getRandomEnemyControlledFlag ( Vector *position, int iTeam, int *id )
+bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id )
 {
 	vector<int> iPossible;
-	short int j;
-	int selection;
+	IBotNavigator *pNav;
+	float fTotal;
+	float fRand;
 
 	if ( id )
 		*id = -1;
 
+	pNav = pBot->getNavigator();
+
+	fTotal = 0.0f;
+
 	for ( short i = 0; i < m_iNumControlPoints; i ++ )
 	{
-		if ( m_iOwner[i] != iTeam )
+		if ( m_iWaypoint[i] != -1 )
 		{
-			if ( iTeam == TEAM_ALLIES )
-			{
-				// more chance if more teammates there
-				for ( j = 0; j < (m_iNumAllies[i]+1); j ++ ) { iPossible.push_back(i); }
-			}
-			else if ( iTeam == TEAM_AXIS )
-			{
-				//
-				for ( j = 0; j < (m_iNumAxis[i]+1); j ++ ) { iPossible.push_back(i); }
-			}
+			if ( ( m_pFlags[i] == NULL ) || ( m_iOwner[i] == iTeam ) )
+				continue;
 
-			// more chance if not owned by anyone yet
-			if ( m_iOwner[i] == 0 )
-				iPossible.push_back(i);
+			if ( iTeam == TEAM_ALLIES )
+				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAllies[i]+1);
+			else
+				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAxis[i]+1);
 		}
 	}
 
-	if ( iPossible.size() > 0 )
+	if ( fTotal == 0.0f )
+		return false;
+
+	fRand = randomFloat(0,fTotal);
+	fTotal = 0.0f;
+
+	for ( short i = 0; i < m_iNumControlPoints; i ++ )
 	{
-		selection = iPossible[randomInt(0,iPossible.size()-1)];
+		if ( m_iWaypoint[i] != -1 )
+		{
+			if ( ( m_pFlags[i] == NULL ) || ( m_iOwner[i] == iTeam ) )
+				continue;
 
-		*position = m_vCPPositions[selection];
+			if ( iTeam == TEAM_ALLIES )
+				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAllies[i]+1);
+			else
+				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAxis[i]+1);
+		}
 
-		if ( id ) // area of the capture point
-			*id = selection;
+		if ( fRand <= fTotal )
+		{
+			if ( id )
+				*id = i;
+			*position = m_vCPPositions[i];
+			return true;
+		}
 	}
 
-	return (iPossible.size()>0);
+	return false;
 }
 
 bool CDODFlags::getRandomBombToDefuse  ( Vector *position, int iTeam, edict_t **pBombTarget, int *id )
@@ -1616,8 +1633,18 @@ void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)
 		}
 	}
 
-		m_iNumAxisBombsOnMap = getNumPlantableBombs(TEAM_AXIS);
-		m_iNumAlliesBombsOnMap = getNumPlantableBombs(TEAM_ALLIES);
+	// find waypoints
+	for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+	{
+		if ( m_iWaypoint[i] == -1 )
+		{
+			// get any nearby waypoint so the bot knows which waypoint to get danger from
+			m_iWaypoint[i] = CWaypointLocations::NearestWaypoint(m_vCPPositions[i],400.0f,-1,false,true);
+		}
+	}
+
+	m_iNumAxisBombsOnMap = getNumPlantableBombs(TEAM_AXIS);
+	m_iNumAlliesBombsOnMap = getNumPlantableBombs(TEAM_ALLIES);
 }
 
 int CDODMod ::getScore(edict_t *pPlayer)

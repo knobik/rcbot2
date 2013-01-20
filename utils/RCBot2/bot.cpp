@@ -1017,6 +1017,8 @@ void CBot :: spawnInit ()
 {
 	resetTouchDistance(48.0f);
 
+	m_fAimMoment = 0.0f;
+
 	memset(m_fLastVoiceCommand,0,sizeof(float)*MAX_VOICE_CMDS);
 
 	m_fLastUpdateLastSeeEnemy = 0;
@@ -1695,7 +1697,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	enemyvel = Vector(0,0,0);
 
 	v_size = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
-	v_size = v_size / 2;
+	v_size = v_size * 0.5f;
 
 	v_org = CBotGlobals::entityOrigin(pEntity);
 
@@ -1703,7 +1705,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 
 	fDistFactor = (distanceFrom(pEntity)*0.0025f)*(m_fFov/90.0f);
 	fDistFactor *= (1.5f - m_pProfile->m_fAimSkill);// add skill factor
-	fSensFactor = (float)m_pProfile->m_iSensitivity / 10;
+	fSensFactor = (float)m_pProfile->m_iSensitivity * 0.1f;
 
 	fDistFactor *= fSensFactor;
 	//fDistFactor *= (v_change/v_size).Length(); // change in aiming
@@ -1727,7 +1729,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	{
 		vel = enemyvel - myvel; // relative velocity
 
-		vel = vel / 320;
+		vel = vel * 0.003125f;
 
 		m_vAimVector = m_vAimVector + (fDistFactor * Vector(
 			randomFloat(-v_size.x,v_size.x)*vel.x,
@@ -1971,16 +1973,52 @@ int CBot :: getPlayerID ()
 
 void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float *fUpdate )
 {
+	float current = *fCurrent;
+	float ideal = *fIdeal;
+	float diff;
+	float delta;
+	float alpha;
+	extern ConVar bot_anglespeed;
+
+	alpha = fSpeed * gpGlobals->frametime;
+
+	diff = ideal - current;
+
+	if ( diff < -180.0f )
+		diff += 360.0f;
+	else if ( diff > 180.0f )
+		diff -= 360.0f;
+
+	delta = (diff*alpha) + (m_fAimMoment*(alpha*2));
+	m_fAimMoment = delta;
+
+	current = current + delta;
+
+	if ( current > 180.0f )
+		current = current - 360.0f;
+	else if ( current < -180.0f )
+		current = current + 360.0f;
+
+	*fCurrent = current;
+
+	/*
    /*float fCurrent180;  // current +/- 180 degrees
-   float fDiff;*/
+   float fDiff;
+
    float fChange;
    float fAlpha;
    float fNegAlpha;
+   static float m_fAimMomentum = 0.0f;
    	//extern ConVar bot_aimsmoothing;
 	extern ConVar bot_anglespeed;
 
-   fAlpha = (fSpeed/bot_anglespeed.GetFloat());
+   fAlpha = (fSpeed*bot_anglespeed.GetFloat());
    fNegAlpha = 1.0f-fAlpha;
+
+   float x = *fIdeal - *fCurrent;
+
+   if ( x > 180 )
+	   x = x - 180;
 
    // turn from the current v_angle yaw to the ideal_yaw by selecting
    // the quickest way to turn to face that direction
@@ -1995,14 +2033,27 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
 
       return;
    }
-*/
+
    fChange = (fAlpha * *fIdeal);
+   fChange += m_fAimMomentum * 0.5f;
+   m_fAimMomentum = fChange;
 
-   if ( (*fIdeal - *fCurrent) > 180 )
-	   *fCurrent = (fNegAlpha * *fCurrent) - fChange;
-   else
-	   *fCurrent = (fNegAlpha * *fCurrent) + fChange;
+   if ( *fIdeal > *fCurrent )
+   {
+	   if ( ( *fIdeal >= 90.0f ) && ( *fCurrent < -90.0f ) )
+			*fCurrent = (fNegAlpha * *fCurrent) - fChange;
+	   else
+		   	*fCurrent = (fNegAlpha * *fCurrent) + fChange;
+   }
+   else if ( *fIdeal < *fCurrent )
+   {
+	   if ( ( *fIdeal <= -90.0f ) && ( *fCurrent > 90.0f ) )
+			*fCurrent = (fNegAlpha * *fCurrent) + fChange;
+	   else
+		   	*fCurrent = (fNegAlpha * *fCurrent) - fChange;
+   }
 
+   
  //  *fCurrent = RAD_TO_DEG(asin(sin((radianscurrent*(1.0f-(fSpeed/20))) + (radiansideal*(fSpeed/20))))) - 180.0f;
 
    /*if ( bot_aimsmoothing.GetBool() && (fDiff < (fSpeed*4)) ) // start smoothing
@@ -2048,13 +2099,13 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
          *fCurrent -= fSpeed;
       else
          *fCurrent += fSpeed;
-   }*/
+   }
 
    CBotGlobals::fixFloatAngle(fCurrent);
    //CBotGlobals::fixFloatDegrees360(fCurrent);
 
    if ( fUpdate )
-		*fUpdate = *fCurrent;
+		*fUpdate = *fCurrent;*/
 }
 
 bool CBot :: select_CWeapon ( CWeapon *pWeapon )
@@ -2100,6 +2151,10 @@ void CBot :: doLook ()
 		if ( m_iLookTask == LOOK_GROUND )
 			requiredAngles.x = 89.0f;
 
+		CBotCmd cmd = m_pPlayerInfo->GetLastUserCommand();
+
+		m_vViewAngles = cmd.viewangles;
+
 		changeAngles((float)m_pProfile->m_iSensitivity,&requiredAngles.x,&m_vViewAngles.x,NULL);
 		changeAngles((float)m_pProfile->m_iSensitivity,&requiredAngles.y,&m_vViewAngles.y,NULL);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.x);
@@ -2110,6 +2165,12 @@ void CBot :: doLook ()
 			m_vViewAngles.x = 89.0f;
 		else if ( m_vViewAngles.x < -89.0f )
 			m_vViewAngles.x = -89.0f;
+
+		// Clamp yaw
+		//if ( m_vViewAngles.x > 180.0f )
+		//	m_vViewAngles.x = 180.0f;
+		//else if ( m_vViewAngles.x < -180.0f )
+		//	m_vViewAngles.x = -180.0f;
 	}
 
 	//m_pController->SetLocalAngles(m_vViewAngles);
