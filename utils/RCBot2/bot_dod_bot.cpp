@@ -501,12 +501,12 @@ void CDODBot :: touchedWpt ( CWaypoint *pWaypoint )
 
 	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_BOMBS_HERE) )
 		m_bHasBomb = true;
-	else if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) ) 
+	/*else if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) ) 
 	{
 		m_pNavigator->beliefOne(wptindex,BELIEF_DANGER,distanceFrom(m_pEnemy));
 	}
 	else
-		m_pNavigator->beliefOne(wptindex,BELIEF_SAFETY,0);
+		m_pNavigator->beliefOne(wptindex,BELIEF_SAFETY,0);*/
 }
 
 void CDODBot :: changeClass ()
@@ -628,7 +628,7 @@ void CDODBot :: modThink ()
 
 		if ( pWeapon && pWeapon->isZoomable() && CClassInterface::isSniperWeaponZoomed(m_pCurrentWeapon) )
 		{
-			m_fFov = 45.0f;
+			m_fFov = 20.0f;
 		}
 	}
 
@@ -1179,7 +1179,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			}
 			else // defend
 			{
-				if ( CDODMod::m_Flags.getRandomTeamControlledFlag(&vGoal,getTeam(),&iFlagID) )
+				if ( CDODMod::m_Flags.getRandomTeamControlledFlag(this,&vGoal,getTeam(),&iFlagID) )
 				{
 					if ( m_iClass == DOD_CLASS_MACHINEGUNNER )
 						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_MACHINEGUN,m_iTeam,iFlagID,true,this);
@@ -1241,7 +1241,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 			if ( util->getId() == BOT_UTIL_DEFEND_POINT )
 			{
-				if ( !CDODMod::m_Flags.getRandomTeamControlledFlag(&vGoal,getTeam(),&id) )
+				if ( !CDODMod::m_Flags.getRandomTeamControlledFlag(this,&vGoal,getTeam(),&id) )
 					return false;
 			}
 
@@ -1719,30 +1719,9 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	// flag capture map
 	if ( CDODMod::isFlagMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
 	{
-		/*
-		int iAttackOrDefend; 
-		float fAttackRatio;
-
-		float fFlagRatio;
-		float fDefRatio;
-		iFlagID = -1;
-
-		iFlagsOwned = CDODMod::m_Flags.getNumFlagsOwned(m_iTeam);
-		iEnemyFlagsOwned = CDODMod::m_Flags.getNumFlagsOwned(m_iTeam == TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES);
-		iNumFlags = CDODMod::m_Flags.getNumFlags();
-		fDefRate = bot_defrate.GetFloat();
-
-		fFlagRatio = (float)iEnemyFlagsOwned/iNumFlags;
-		fDefRatio = (float)iFlagsOwned/iNumFlags;
-
-		fAttackRatio = fFlagRatio 
-
 		if ( m_pNearestFlag )
 			iFlagID = CDODMod::m_Flags.getFlagID(m_pNearestFlag);
 
-		fAttackUtil = 0.3f + (randomFloat(0.0f,fFlagRatio)*(m_pProfile->m_fBraveness*0.5f));
-		fDefendUtil = 0.3f + (randomFloat(0.0f,fDefRatio)*(0.5f - (m_pProfile->m_fBraveness*0.5f)));
-*/
 		if ( (m_pNearestFlag==NULL)||CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) )
 		{
 			if ( CDODMod::shouldAttack(m_iTeam) )
@@ -1766,8 +1745,6 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 		if ( m_pNearestFlag )
 		{
-			iFlagID = CDODMod::m_Flags.getFlagID(m_pNearestFlag);
-
 			// attack the flag if I've reached the last one
 			ADD_UTILITY_DATA_VECTOR(BOT_UTIL_ATTACK_NEAREST_POINT,
 				!CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) && (CDODMod::m_Flags.numCappersRequired(iFlagID,m_iTeam)-
@@ -1984,6 +1961,10 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 	static smoke_t *smokeinfo;
 	static bool bProne;
 	static float fStamina;
+	static CBotWeapon *pWp;
+	static Vector vel;
+
+	pWp = getCurrentWeapon();
 
 	vAim = CBot::getAimVector(pEntity);
 
@@ -1993,6 +1974,18 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 	if ( bProne )
 	{
 		vAim.z = vAim.z - randomFloat(0.0,8.0f);
+	}
+
+	if ( pWp != NULL )
+	{
+		if ( pWp->isExplosive() )
+		{
+			if ( CClassInterface::getVelocity(pEntity,&vel) )
+				vAim = vAim + (vel * randomFloat(m_pProfile->m_fAimSkill-0.1f,m_pProfile->m_fAimSkill+0.1f));
+
+			// shoot the ground
+			vAim = vAim - Vector(0,0,randomFloat(16.0f,32.0f));
+		}
 	}
 
 	if ( m_pNearestSmokeToEnemy )

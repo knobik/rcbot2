@@ -1199,11 +1199,8 @@ void CDODMod :: initMod ()
 
 	// Setup Weapons
 
-
-	// linearly suitable
-	//gNetAttackOrDefend = new CPerceptron(2);
-
-	CBotGlobals::botMessage(NULL,0,"Training DOD:S perceptron 1... hold on...");
+///-------------------------------------------------
+	CBotGlobals::botMessage(NULL,0,"Training DOD:S capture decision 'NN' ... hold on...");
 
 	CBotNeuralNet *nn = new CBotNeuralNet(2,2,2,1,0.4f);
 
@@ -1232,29 +1229,8 @@ void CDODMod :: initMod ()
 	tset->out(0.6f); // probability of attack
 
 	nn->batch_train(tset,1000);
-/*
-	for ( short int i = 0; i < 1000; i ++ )
-	{
-		inputs[0] = 0.1f;
-		inputs[1] = 0.1f;
-		gNetAttackOrDefend->input(inputs);
-		gNetAttackOrDefend->execute();
-		gNetAttackOrDefend->train(0.9f);
 
-		inputs[0] = 0.9f; // enemy has 90% of flags
-		inputs[1] = 0.1f; // team has 10% of flags
-		gNetAttackOrDefend->input(inputs);
-		gNetAttackOrDefend->execute();
-		gNetAttackOrDefend->train(0.2f); // attack prob 20%
-
-		inputs[0] = 0.1f; // enemy has 10% of flags
-		inputs[1] = 0.9f; // team has 90% of flags
-		gNetAttackOrDefend->input(inputs);
-		gNetAttackOrDefend->execute();
-		gNetAttackOrDefend->train(0.9f); // attack prob 90%
-	}
-*/
-	// create look up table for porbabilities
+	// create look up table for probabilities
 	for ( short int i = 0; i <= MAX_DOD_FLAGS; i ++ )
 	{
 		for ( short int j = 0; j <= MAX_DOD_FLAGS; j ++ )
@@ -1272,7 +1248,7 @@ void CDODMod :: initMod ()
 	delete nn;
 
 	CBotGlobals::botMessage(NULL,0,"... done!");
-
+///-------------------------------------------------
 
 
 	CBots::controlBotSetup(true);
@@ -1390,7 +1366,7 @@ bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
 
 	return false;
 }
-
+// return the flag with the least danger (randomly)
 bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id )
 {
 	vector<int> iPossible;
@@ -1413,9 +1389,9 @@ bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int
 				continue;
 
 			if ( iTeam == TEAM_ALLIES )
-				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAllies[i]+1);
+				fTotal += (((MAX_BELIEF + 1.0f) - pNav->getBelief(m_iWaypoint[i])) / MAX_BELIEF) * (m_iNumAllies[i]+1);
 			else
-				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAxis[i]+1);
+				fTotal += (((MAX_BELIEF + 1.0f) - pNav->getBelief(m_iWaypoint[i])) / MAX_BELIEF) * (m_iNumAxis[i]+1);
 		}
 	}
 
@@ -1433,9 +1409,9 @@ bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int
 				continue;
 
 			if ( iTeam == TEAM_ALLIES )
-				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAllies[i]+1);
+				fTotal += (((MAX_BELIEF + 1.0f) - pNav->getBelief(m_iWaypoint[i])) / MAX_BELIEF) * (m_iNumAllies[i]+1);
 			else
-				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAxis[i]+1);
+				fTotal += (((MAX_BELIEF + 1.0f) - pNav->getBelief(m_iWaypoint[i])) / MAX_BELIEF) * (m_iNumAxis[i]+1);
 		}
 
 		if ( fRand <= fTotal )
@@ -1541,38 +1517,63 @@ bool CDODFlags:: getRandomBombToPlant ( Vector *position, int iTeam, edict_t **p
 }
 
 
-bool CDODFlags::getRandomTeamControlledFlag ( Vector *position, int iTeam, int *id )
+bool CDODFlags::getRandomTeamControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id )
 {
-	short int j;
-	int selection;
-
 	vector<int> iPossible;
+	IBotNavigator *pNav;
+	float fTotal;
+	float fRand;
 
 	if ( id )
 		*id = -1;
 
+	pNav = pBot->getNavigator();
+
+	fTotal = 0.0f;
+
 	for ( short i = 0; i < m_iNumControlPoints; i ++ )
 	{
-		if ( m_iOwner[i] == iTeam )
+		if ( m_iWaypoint[i] != -1 )
 		{
-			if ( iTeam == TEAM_ALLIES ) // more chance if there are enemies at our flag
-				for ( j = 0; j < (m_iNumAxis[i]+1); j ++ ) { iPossible.push_back(i); }
-			else if ( iTeam == TEAM_AXIS )
-				for ( j = 0; j < (m_iNumAllies[i]+1); j ++ ) { iPossible.push_back(i); }
+			if ( ( m_pFlags[i] == NULL ) || ( m_iOwner[i] != iTeam ) )
+				continue;
+
+			if ( iTeam == TEAM_AXIS )
+				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAllies[i]+1);
+			else
+				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAxis[i]+1);
 		}
 	}
 
-	if ( iPossible.size() > 0 )
+	if ( fTotal == 0.0f )
+		return false;
+
+	fRand = randomFloat(0,fTotal);
+	fTotal = 0.0f;
+
+	for ( short i = 0; i < m_iNumControlPoints; i ++ )
 	{
-		selection = iPossible[randomInt(0,iPossible.size()-1)];
+		if ( m_iWaypoint[i] != -1 )
+		{
+			if ( ( m_pFlags[i] == NULL ) || ( m_iOwner[i] != iTeam ) )
+				continue;
 
-		*position = m_vCPPositions[selection];
+			if ( iTeam == TEAM_AXIS )
+				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAllies[i]+1);
+			else
+				fTotal += ((pNav->getBelief(m_iWaypoint[i])+MAX_BELIEF)/(MAX_BELIEF*2)) * (m_iNumAxis[i]+1);
+		}
 
-		if ( id ) // area of the capture point
-			*id = selection;
+		if ( fRand <= fTotal )
+		{
+			if ( id )
+				*id = i;
+			*position = m_vCPPositions[i];
+			return true;
+		}
 	}
 
-	return (iPossible.size()>0);
+	return false;
 }
 
 void CDODMod::freeMemory()

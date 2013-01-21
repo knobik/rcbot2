@@ -203,7 +203,7 @@ public:
 	void setup (edict_t *pResourceEntity, int iMapType);
 
 	bool getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id = NULL );
-	bool getRandomTeamControlledFlag ( Vector *position, int iTeam, int *id = NULL );
+	bool getRandomTeamControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id = NULL );
 
 	bool getRandomBombToDefuse ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
 	bool getRandomBombToPlant ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );

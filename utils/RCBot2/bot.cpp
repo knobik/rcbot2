@@ -855,9 +855,7 @@ void CBot :: init (bool bVarInit)
 	m_bUsed = false;
 	m_pController = NULL;
 	m_pPlayerInfo = NULL;
-//	m_pGAvStuck = NULL;
-//	m_pGAStuck = NULL;
-//	m_pThinkStuck = NULL;
+
 	m_pWeapons = NULL;
 	m_fTimeCreated = 0;	
 	m_pProfile = NULL;
@@ -1684,6 +1682,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	static Vector myvel;
 	static Vector enemyvel;
 	static Vector vel; // realtive velocity
+	extern ConVar bot_general_difficulty;
 	//static Vector v_change;
 
 	//return CBotGlobals::entityOrigin(pEntity);
@@ -1704,10 +1703,11 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	//v_change = m_vAimVector - v_org;
 
 	fDistFactor = (distanceFrom(pEntity)*0.0025f)*(m_fFov/90.0f);
-	fDistFactor *= (1.5f - m_pProfile->m_fAimSkill);// add skill factor
+	fDistFactor *= ( 1.0f + (m_pProfile->m_fAimSkill - bot_general_difficulty.GetFloat()) );// add skill factor
 	fSensFactor = (float)m_pProfile->m_iSensitivity * 0.1f;
 
 	fDistFactor *= fSensFactor;
+
 	//fDistFactor *= (v_change/v_size).Length(); // change in aiming
 
     v_right = (v_org-getOrigin()).Cross(Vector(0,0,1)); 
@@ -1978,9 +1978,12 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
 	float diff;
 	float delta;
 	float alpha;
+	float alphaspeed;
+
 	extern ConVar bot_anglespeed;
 
-	alpha = fSpeed * gpGlobals->frametime;
+	alphaspeed = (fSpeed/20);
+	alpha = alphaspeed * bot_anglespeed.GetFloat();
 
 	diff = ideal - current;
 
@@ -1989,123 +1992,22 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
 	else if ( diff > 180.0f )
 		diff -= 360.0f;
 
-	delta = (diff*alpha) + (m_fAimMoment*(alpha*2));
-	m_fAimMoment = delta;
+	delta = (diff*alpha) + (m_fAimMoment*alphaspeed);
+	m_fAimMoment = (m_fAimMoment * alphaspeed) + (delta * (1.0f-alphaspeed));
 
 	current = current + delta;
 
 	if ( current > 180.0f )
-		current = current - 360.0f;
+		current -= 360.0f;
 	else if ( current < -180.0f )
-		current = current + 360.0f;
+		current += 360.0f;
 
 	*fCurrent = current;
 
-	/*
-   /*float fCurrent180;  // current +/- 180 degrees
-   float fDiff;
-
-   float fChange;
-   float fAlpha;
-   float fNegAlpha;
-   static float m_fAimMomentum = 0.0f;
-   	//extern ConVar bot_aimsmoothing;
-	extern ConVar bot_anglespeed;
-
-   fAlpha = (fSpeed*bot_anglespeed.GetFloat());
-   fNegAlpha = 1.0f-fAlpha;
-
-   float x = *fIdeal - *fCurrent;
-
-   if ( x > 180 )
-	   x = x - 180;
-
-   // turn from the current v_angle yaw to the ideal_yaw by selecting
-   // the quickest way to turn to face that direction
-   
-   // find the difference in the current and ideal angle
-   /*fDiff = fabs(*fCurrent - *fIdeal);
-
-   // check if the bot is already facing the ideal_yaw direction...
-   if (fDiff <= 0.1)
-   {
-      //fSpeed = fDiff;
-
-      return;
-   }
-
-   fChange = (fAlpha * *fIdeal);
-   fChange += m_fAimMomentum * 0.5f;
-   m_fAimMomentum = fChange;
-
-   if ( *fIdeal > *fCurrent )
-   {
-	   if ( ( *fIdeal >= 90.0f ) && ( *fCurrent < -90.0f ) )
-			*fCurrent = (fNegAlpha * *fCurrent) - fChange;
-	   else
-		   	*fCurrent = (fNegAlpha * *fCurrent) + fChange;
-   }
-   else if ( *fIdeal < *fCurrent )
-   {
-	   if ( ( *fIdeal <= -90.0f ) && ( *fCurrent > 90.0f ) )
-			*fCurrent = (fNegAlpha * *fCurrent) + fChange;
-	   else
-		   	*fCurrent = (fNegAlpha * *fCurrent) - fChange;
-   }
-
-   
- //  *fCurrent = RAD_TO_DEG(asin(sin((radianscurrent*(1.0f-(fSpeed/20))) + (radiansideal*(fSpeed/20))))) - 180.0f;
-
-   /*if ( bot_aimsmoothing.GetBool() && (fDiff < (fSpeed*4)) ) // start smoothing
-   {
-	   fSpeed = fSpeed * (fDiff/(fSpeed*4));
-      // check if difference is less than the max degrees per turn
-	  // just need to turn a little bit (less than max)
-   }
-   else if (fDiff < fSpeed)
-     fSpeed = fDiff;
-
-   // here we have four cases, both angle positive, one positive and
-   // the other negative, one negative and the other positive, or
-   // both negative.  handle each case separately...
-
-   if ((*fCurrent >= 0) && (*fIdeal >= 0))  // both positive
-   {
-      if (*fCurrent > *fIdeal)
-         *fCurrent -= fSpeed;
-      else
-         *fCurrent += fSpeed;
-   }
-   else if ((*fCurrent >= 0) && (*fIdeal < 0))
-   {
-      fCurrent180 = *fCurrent - 180;
-
-      if (fCurrent180 > *fIdeal)
-         *fCurrent += fSpeed;
-      else
-         *fCurrent -= fSpeed;
-   }
-   else if ((*fCurrent < 0) && (*fIdeal >= 0))
-   {
-      fCurrent180 = *fCurrent + 180;
-      if (fCurrent180 > *fIdeal)
-         *fCurrent += fSpeed;
-      else
-         *fCurrent -= fSpeed;
-   }
-   else  // (current < 0) && (ideal < 0)  both negative
-   {
-      if (*fCurrent > *fIdeal)
-         *fCurrent -= fSpeed;
-      else
-         *fCurrent += fSpeed;
-   }
-
-   CBotGlobals::fixFloatAngle(fCurrent);
-   //CBotGlobals::fixFloatDegrees360(fCurrent);
-
-   if ( fUpdate )
-		*fUpdate = *fCurrent;*/
+	if ( *fCurrent > 180.0f )
+		*fCurrent -= 360.0f;
+	else if ( *fCurrent < -180.0f )
+		*fCurrent += 360.0f;
 }
 
 bool CBot :: select_CWeapon ( CWeapon *pWeapon )

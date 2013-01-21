@@ -4306,14 +4306,18 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 		}
 	}
 
-	wptindex = CWaypoints::getWaypointIndex(pWaypoint);
-
-	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) ) 
+	// only good for spies so they know when to cloak better
+	if ( getClass() == TF_CLASS_SPY )
 	{
-		m_pNavigator->beliefOne(wptindex,BELIEF_DANGER,distanceFrom(m_pEnemy));
+		wptindex = CWaypoints::getWaypointIndex(pWaypoint);
+
+		if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) ) 
+		{
+			m_pNavigator->beliefOne(wptindex,BELIEF_DANGER,distanceFrom(m_pEnemy));
+		}
+		else
+			m_pNavigator->beliefOne(wptindex,BELIEF_SAFETY,0);
 	}
-	else
-		m_pNavigator->beliefOne(wptindex,BELIEF_SAFETY,0);
 }
 
 
