@@ -209,6 +209,11 @@ public:
 	bool getRandomBombToPlant ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
 	bool getRandomBombToDefend ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
 
+	inline int getWaypointAtFlag ( int iFlagId )
+	{
+		return m_iWaypoint[iFlagId];
+	}
+
 	inline int getNumBombsToDefend ( int iTeam )
 	{
 		int count = 0;

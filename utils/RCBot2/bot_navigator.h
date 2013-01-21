@@ -62,7 +62,7 @@ public:
 	virtual void init () = 0;
 
 	// returns true when working out route finishes, not if successful
-	virtual bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false ) = 0;
+	virtual bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false, int iGoalId = -1 ) = 0;
 
 	virtual void rollBackPosition () = 0;
 
@@ -358,7 +358,7 @@ public:
 
 	CWaypoint *chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals );
 
-	bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false  );
+	bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false, int iGoalId = -1  );
 
 	bool getNextRoutePoint ( Vector *vPoint );
 
@@ -459,7 +459,7 @@ private:
 class CNavMeshNavigator : public IBotNavigator
 {
 public:
-	virtual bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false  );
+	virtual bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false, int iGoalId = -1  );
 
 	virtual Vector getNextPoint ();
 

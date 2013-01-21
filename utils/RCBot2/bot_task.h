@@ -97,12 +97,22 @@ public:
 		m_bGetPassedVector = false;
 		m_pEdict = NULL;
 		m_LookTask = LOOK_WAYPOINT;
+		m_iWaypointId = -1;
 	}
 
 	CFindPathTask ( Vector vOrigin, eLookTask looktask = LOOK_WAYPOINT )
 	{
 		m_vVector = vOrigin;
 		m_pEdict = NULL; // no edict
+		m_LookTask = looktask;
+		m_iWaypointId = -1;
+	}
+
+	// having this constructor saves us trying to find the goal waypoint again if we
+	// already know it
+	CFindPathTask ( int iWaypointId, eLookTask looktask = LOOK_WAYPOINT )
+	{
+		m_iWaypointId = iWaypointId;
 		m_LookTask = looktask;
 	}
 
@@ -126,6 +136,7 @@ private:
 	MyEHandle m_pEdict;
 	eLookTask m_LookTask;
 	int m_iInt;
+	int m_iWaypointId;
 };
 
 class CBotTF2DemomanPipeTrap : public CBotTask

@@ -616,7 +616,12 @@ float CWaypointNavigator :: distanceTo ( CWaypoint *pWaypoint )
 }
 
 // find route using A* algorithm
-bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart, bool bNoInterruptions )
+bool CWaypointNavigator :: workRoute ( Vector vFrom, 
+									  Vector vTo, 
+									  bool *bFail, 
+									  bool bRestart, 
+									  bool bNoInterruptions, 
+									  int iGoalId )
 {
 	extern ConVar bot_pathrevs;
 
@@ -630,7 +635,11 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bo
 		*bFail = false;
 
 		m_bWorkingRoute = true;
-		m_iGoalWaypoint = CWaypointLocations::NearestWaypoint(vTo,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,&m_iFailedGoals,false,m_pBot->getTeam());
+
+		if ( iGoalId == -1 )
+			m_iGoalWaypoint = CWaypointLocations::NearestWaypoint(vTo,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,&m_iFailedGoals,false,m_pBot->getTeam());
+		else
+			m_iGoalWaypoint = iGoalId;
 
 		if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
 		{

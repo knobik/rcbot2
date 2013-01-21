@@ -1110,14 +1110,22 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 	case BOT_UTIL_ATTACK_NEAREST_POINT:
 		{
 			Vector vGoal;
-			int iFlagID = util->getIntData();
+
+			int iFlagID;
+			int iWaypointGoal; 
+
+			iFlagID = util->getIntData();
+			iWaypointGoal = CDODMod::m_Flags.getWaypointAtFlag(iFlagID);
 
 			vGoal = util->getVectorData();
 
-			CBotSchedule *attack = new CBotSchedule();
+			if ( iWaypointGoal == -1 )
+				return false;
 
+			CBotSchedule *attack = new CBotSchedule();
+			
 			attack->setID(SCHED_ATTACKPOINT);
-			attack->addTask(new CFindPathTask(vGoal));//,LOOK_AROUND));
+			attack->addTask(new CFindPathTask(iWaypointGoal));//,LOOK_AROUND));
 			attack->addTask(new CBotDODAttackPoint(iFlagID,vGoal,150.0f));
 			// add defend task
 			m_pSchedules->add(attack);
@@ -1199,7 +1207,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			if ( pWaypoint )
 			{
 				CBotSchedule *snipe = new CBotSchedule();
-				CBotTask *findpath = new CFindPathTask(pWaypoint->getOrigin());
+				CBotTask *findpath = new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint));
 				CBotTask *snipetask;
 				
 				// find Z for goal if no flag id
@@ -1299,6 +1307,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 		}
 	case BOT_UTIL_PLANT_BOMB:
 		{
+
 			if ( util->getId() == BOT_UTIL_PLANT_BOMB )
 			{
 				if ( !CDODMod::m_Flags.getRandomBombToPlant(&vGoal,m_iTeam,&pBombTarget,&id) )
@@ -1306,7 +1315,12 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 				iBombType = DOD_BOMB_PLANT;
 			}
-					
+
+			int iWptGoal = CDODMod::m_Flags.getWaypointAtFlag(id);
+	
+			if ( iWptGoal == -1 )
+				return false;
+
 			CWaypoint *pWaypoint;
 
 			if ( distanceFrom(vGoal) > 1024 ) // outside waypoint bucket of goal
@@ -1323,7 +1337,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				attack->addTask(new CFindPathTask(pWaypoint->getOrigin()));//,LOOK_AROUND));
 				attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
 			}
-			attack->addTask(new CFindPathTask(vGoal));
+			attack->addTask(new CFindPathTask(iWptGoal));
 			attack->addTask(new CBotDODBomb(iBombType,id,pBombTarget,vGoal,-1));
 			// add defend task
 			m_pSchedules->add(attack);
@@ -1448,6 +1462,12 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			{
 				CWaypoint *pWaypoint;
 
+				int iGoalWaypoint = CDODMod::m_Flags.getWaypointAtFlag(iFlagID);
+
+				// no waypoint...
+				if ( iGoalWaypoint == -1 )
+					return false;
+				
 				if ( distanceFrom(vGoal) > 1024 ) // outside waypoint bucket of goal
 					pWaypoint = CWaypoints::getPinchPointFromWaypoint(vGoal,vGoal);
 				else
@@ -1459,11 +1479,12 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 				if ( pWaypoint && (randomFloat(0.0f,MAX_BELIEF) < m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint))) )
 				{
-					attack->addTask(new CFindPathTask(pWaypoint->getOrigin()));//,LOOK_AROUND));
+					attack->addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint)));//,LOOK_AROUND));
 					attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
 				}
 
-				attack->addTask(new CFindPathTask(vGoal));
+
+				attack->addTask(new CFindPathTask(iGoalWaypoint));
 				attack->addTask(new CBotDODAttackPoint(iFlagID,vGoal,150.0f));
 				// add defend task
 				m_pSchedules->add(attack);

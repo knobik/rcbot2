@@ -32,7 +32,7 @@
 
 //#include "nav_mesh.h"
 
-bool CNavMeshNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart, bool bNoInterruptions )
+bool CNavMeshNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart, bool bNoInterruptions, int iGoalId )
 {
 	return true;
 }

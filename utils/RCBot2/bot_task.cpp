@@ -1457,6 +1457,7 @@ void CFindPathTask :: init ()
 
 CFindPathTask :: CFindPathTask ( edict_t *pEdict )
 {
+	m_iWaypointId = -1;
 	m_pEdict = pEdict;
 	m_vVector = CBotGlobals::entityOrigin(pEdict);
 }
@@ -1478,6 +1479,8 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 	if ( (m_iInt == 0) || (m_iInt == 1) )
 	{
+		IBotNavigator *pNav = pBot->getNavigator();
+
 		pBot->m_fWaypointStuckTime = 0;
 
 #ifdef _DEBUG
@@ -1489,7 +1492,12 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		}
 #endif
 
-		if ( pBot->getNavigator()->workRoute(pBot->getOrigin(),m_vVector,&bFail,(m_iInt==0),m_bNoInterruptions) )
+		if ( pNav->workRoute( pBot->getOrigin(),
+			                   m_vVector,
+							   &bFail,
+							   (m_iInt==0),
+							   m_bNoInterruptions, 
+							   m_iWaypointId ) )
 		{
 			pBot->m_fWaypointStuckTime = engine->Time() + randomFloat(10.0f,15.0f);
 			pBot->moveFailed(); // reset
