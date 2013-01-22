@@ -559,6 +559,7 @@ public:
 	void jump ();
 	void duck ( bool hold = false );
 	void use ();
+	void reload();
 
 	virtual void setVisible ( edict_t *pEntity, bool bVisible );
 

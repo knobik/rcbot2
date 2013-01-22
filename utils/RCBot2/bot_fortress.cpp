@@ -57,6 +57,7 @@ extern ConVar bot_use_vc_commands;
 extern ConVar bot_max_cc_time;
 extern ConVar bot_min_cc_time;
 extern ConVar bot_change_class;
+extern ConVar rcbot_demo_jump;
 
 #define TF2_SPY_CLOAK_BELIEF 38
 #define TF2_HWGUY_REV_BELIEF 60
@@ -1264,6 +1265,8 @@ void CBotTF2 :: fixWeapons ()
 {
 	if ( m_pWeapons && (m_iClass != TF_CLASS_MAX) )
 	{
+		m_pWeapons->update();
+		/*
 		m_pWeapons->clearWeapons();
 		
 		switch ( m_iClass )
@@ -1340,7 +1343,7 @@ void CBotTF2 :: fixWeapons ()
 			m_pWeapons->addWeapon(TF2_WEAPON_BOTTLE);
 
 		break;
-		}
+		}*/
 
 	}
 }
@@ -1796,7 +1799,29 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 		
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_ROCKET_JUMP) )
 		{
-			return ( (getClass() == TF_CLASS_SOLDIER) && (getHealthPercent() > 0.6) );
+			CBotWeapons *pWeapons = getWeapons();
+			CBotWeapon *pWeapon;
+
+			if (getHealthPercent() > 0.5)
+			{
+				// only soldiers or demomen can use these
+				if ( getClass() == TF_CLASS_SOLDIER )
+				{
+					pWeapon = pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_ROCKETLAUNCHER));
+					
+					if ( pWeapon )
+						return (pWeapon->getAmmo(this) > 0);
+				}
+				else if ( ( getClass() == TF_CLASS_DEMOMAN ) && rcbot_demo_jump.GetBool() )
+				{
+					pWeapon = pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS));
+
+					if ( pWeapon )
+						return (pWeapon->getClip1(this) > 0);
+				}
+				
+				return false;
+			}
 		}
 		
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_DOUBLEJUMP) )
@@ -4295,7 +4320,13 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 	{
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_ROCKET_JUMP) )
 		{
-			m_pSchedules->addFront(new CBotSchedule(new CBotTFRocketJump()));
+			if ( getNavigator()->hasNextPoint() )
+			{
+				if ( getClass() == TF_CLASS_SOLDIER )
+					m_pSchedules->addFront(new CBotSchedule(new CBotTFRocketJump()));
+				else if ( (getClass() == TF_CLASS_DEMOMAN) && rcbot_demo_jump.GetBool() )
+					m_pSchedules->addFront(new CBotSchedule(new CBotTF2DemomanPipeJump(this,pWaypoint->getOrigin(),getNavigator()->getNextPoint(),getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)))));
+			}
 		}
 		else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_DOUBLEJUMP) )
 		{

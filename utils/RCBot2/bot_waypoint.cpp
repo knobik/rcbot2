@@ -885,10 +885,6 @@ bool CWaypointNavigator :: hasNextPoint ()
 // return the vector of the next point
 Vector CWaypointNavigator :: getNextPoint ()
 {
-	//CWaypoint *pWpt = CWaypoints::getWaypoint(*m_currentRoute.GetHeadInfoPointer());
-	
-	//return pWpt->getOrigin();
-
 	return CWaypoints::getWaypoint(m_iCurrentWaypoint)->getOrigin();
 }
 
@@ -995,8 +991,6 @@ void CWaypointNavigator :: updatePosition ()
 
 		if ( bTouched )
 		{
-			m_pBot->touchedWpt(pWaypoint);
-
 			fPrevBelief = getBelief(CWaypoints::getWaypointIndex(pWaypoint));
 
 			m_bOffsetApplied = false;
@@ -1020,32 +1014,12 @@ void CWaypointNavigator :: updatePosition ()
 				if ( m_iCurrentWaypoint != -1 )
 				{ // random point, but more chance of choosing the most dangerous point
 					m_bDangerPoint = randomDangerPath(&m_vDangerPoint);
-					/*
-					//getDangerPoint(
-					int maxDangerPoint = -1;
-					float fMaxDanger = 10.0f;
-					float fBelief;
-					CWaypoint *pWpt =  CWaypoints::getWaypoint(m_iCurrentWaypoint);
-					vWptOrigin = pWpt->getOrigin();
-
-					for ( int i = 0; i < pWpt->numPaths(); i ++ )
-					{
-						if ( (fBelief=getBelief(pWpt->getPath(i))) > fMaxDanger )
-						{
-							fMaxDanger = fBelief;
-							maxDangerPoint = i;
-						}
-					}
-
-					if ( maxDangerPoint != -1 )
-					{
-						m_bDangerPoint = true;
-						m_vDangerPoint = CWaypoints::getWaypoint(maxDangerPoint)->getOrigin();
-					}*/
 				}
 
 				fBelief = getBelief(m_iCurrentWaypoint);
 			}
+
+			m_pBot->touchedWpt(pWaypoint);
 		}
 	}
 	else

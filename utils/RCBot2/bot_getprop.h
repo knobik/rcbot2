@@ -81,6 +81,7 @@ typedef enum
 	GETPROP_DOD_BOMBSREMAINING,
 	GETPROP_DOD_PLANTINGBOMB,
 	GETPROP_DOD_DEFUSINGBOMB,
+	GETPROP_ALL_ENTOWNER,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -243,6 +244,7 @@ public:
 
 	static edict_t *FindEntityByNetClass(int start, const char *classname);
 	static edict_t *FindEntityByNetClassNearest(Vector vstart, const char *classname);
+	static edict_t *FindEntityByClassnameNearest(Vector vstart, const char *classname, float fMinDist = 8192.0f, edict_t *pOwner = NULL );
 
 	// TF2
 	static int getTF2Score ( edict_t *edict );
@@ -268,6 +270,7 @@ public:
 	}
 	inline static bool getMedigunHealing ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MEDIGUN_HEALING].getBool(edict,false); }
 	inline static edict_t *getMedigunTarget ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MEDIGUN_TARGETTING].getEntity(edict); }
+	inline static edict_t *getOwner ( edict_t *edict ) { return g_GetProps[GETPROP_ALL_ENTOWNER].getEntity(edict); }
 	inline static bool isMedigunTargetting ( edict_t *pgun, edict_t *ptarget) { return (g_GetProps[GETPROP_TF2MEDIGUN_TARGETTING].getEntity(pgun) == ptarget); }
 	//static void setTickBase ( edict_t *edict, int tickbase ) { return ;
 	inline static int isTeleporterMode (edict_t *edict, eTeleMode mode ) { return (g_GetProps[GETPROP_TF2TELEPORTERMODE].getInt(edict,-1) == (int)mode); }

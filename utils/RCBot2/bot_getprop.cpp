@@ -398,6 +398,8 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_PLANTINGBOMB,"CDODPlayer","m_bPlanting",0);
 		DEFINE_GETPROP(GETPROP_DOD_DEFUSINGBOMB,"CDODPlayer","m_bDefusing",0);
 
+		DEFINE_GETPROP(GETPROP_ALL_ENTOWNER,"CBaseEntity","m_hOwnerEntity",0);
+
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
 			//if ( g_GetProps[i]
@@ -431,6 +433,44 @@ void CClassInterfaceValue :: getData ( edict_t *edict )
 	m_data = (void *)((char *)pEntity + m_offset);
 }
 
+edict_t *CClassInterface::FindEntityByClassnameNearest(Vector vstart, const char *classname, float fMindist, edict_t *pOwner)
+{
+	edict_t *current;
+	edict_t *pfound = NULL;
+	float fDist;
+	// speed up loop by by using smaller ints in register
+	register short int max = (short int)gpGlobals->maxEntities;
+
+	for (register short int i = 0; i < max; i++)
+	{
+		current = engine->PEntityOfEntIndex(i);
+
+		if (current == NULL)
+			continue;
+
+		if ( current->IsFree() )
+			continue;
+
+		if ( pOwner != NULL )
+		{
+			if ( getOwner(current) != pOwner )
+				continue;
+		}
+
+		if (strcmp(classname, current->GetClassName() ) == 0)
+		{
+			fDist = (vstart - CBotGlobals::entityOrigin(current)).Length();
+
+			if ( !pfound  || (fDist < fMindist))
+			{
+				fMindist = fDist;
+				pfound = current;
+			}
+		}
+	}
+
+	return pfound;
+}
 
 edict_t *CClassInterface::FindEntityByNetClassNearest(Vector vstart, const char *classname)
 {

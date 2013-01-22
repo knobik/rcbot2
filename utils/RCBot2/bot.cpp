@@ -1853,6 +1853,11 @@ void CBot :: getLookAtVector ()
 				CClients::clientDebugMsg(BOT_DEBUG_LOOK,"LOOK_LAST_ENEMY",this);
 		}
 		break;
+	case LOOK_WAYPOINT_NEXT_ONLY:
+		{
+			setLookAt(m_vMoveTo);
+			break;
+		}
 	case LOOK_WAYPOINT:
 		{
 			Vector vLook;
@@ -2139,7 +2144,11 @@ void CBot :: tapButton ( int iButton )
 {
 	m_pButtons->tap(iButton);
 }
-
+void CBot :: reload ()
+{
+	if ( m_pButtons->canPressButton(IN_RELOAD) )
+		m_pButtons->tap(IN_RELOAD);
+}
 void CBot :: use ()
 {
 	if ( m_pButtons->canPressButton(IN_USE) )
