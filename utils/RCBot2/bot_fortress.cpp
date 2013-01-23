@@ -519,7 +519,7 @@ void CBotFortress :: killed ( edict_t *pVictim, char *weapon )
 
 void CBotFortress :: died ( edict_t *pKiller )
 {
-	CBot::spawnInit();
+	CBot::died(pKiller);
 
 	droppedFlag();
 
@@ -1559,9 +1559,9 @@ edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding, int index )
 
 void CBotTF2 :: died ( edict_t *pKiller )
 {
-	droppedFlag();
+	CBot::died(pKiller);
 
-	spawnInit();
+	droppedFlag();
 
 	if ( pKiller )
 	{
@@ -1819,9 +1819,9 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 					if ( pWeapon )
 						return (pWeapon->getClip1(this) > 0);
 				}
-				
-				return false;
 			}
+
+			return false;
 		}
 		
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_DOUBLEJUMP) )
@@ -1992,6 +1992,9 @@ void CBotTF2 :: modThink ()
 	static bool bNeedHealth;
 	static bool bNeedAmmo;
 	static bool bIsCloaked;
+
+	if ( m_pWeapons )
+		m_pWeapons->update(false); // don't override ammo types from engine
 
 	bNeedHealth = hasSomeConditions(CONDITION_NEED_HEALTH) && !m_bIsBeingHealed;
 	bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
@@ -3317,6 +3320,12 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		!m_pHeal && !m_pLastCalledMedic && m_bEntranceVectorValid && (numplayersonteam>1) && 
 		((!CTeamFortress2Mod::isAttackDefendMap() && !CTeamFortress2Mod::hasRoundStarted()) || (numplayersonteam_alive < numplayersonteam)),0.94f);
 
+	if ( m_iClass==TF_CLASS_DEMOMAN )
+	{
+		ADD_UTILITY(BOT_UTIL_PIPE_LAST_ENEMY,(m_pLastEnemy!=NULL) && (distanceFrom(m_pLastEnemy) > (BLAST_RADIUS)) && !isVisible(m_pLastEnemy) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS),0.8f);
+		ADD_UTILITY(BOT_UTIL_PIPE_NEAREST_SENTRY,(m_pNearestEnemySentry!=NULL) && !isVisible(m_pNearestEnemySentry),0.8f);
+	}
+
 	if ( m_iClass==TF_CLASS_SPY )
 	{
 		ADD_UTILITY(BOT_UTIL_BACKSTAB,!hasFlag() && (!m_pNearestEnemySentry || (CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry))) && (m_fBackstabTime<engine->Time()) && (m_iClass==TF_CLASS_SPY) && 
@@ -3546,10 +3555,10 @@ bool CBotTF2 ::deployStickies(eDemoTrapType type, Vector vStand, Vector vLocatio
 	return m_iTrapType!=TF_TRAP_TYPE_NONE;
 }
 
-void CBotTF2::detonateStickies()
+void CBotTF2::detonateStickies(bool isJumping)
 {
-	// don't try to blow myself up
-	if ( distanceFrom(m_vStickyLocation) > 50 )
+	// don't try to blow myself up unless i'm jumping
+	if ( isJumping || (distanceFrom(m_vStickyLocation) > (BLAST_RADIUS/2)) )
 	{
 		secondaryAttack();
 		m_iTrapType = TF_TRAP_TYPE_NONE;
@@ -4168,6 +4177,50 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 		case BOT_UTIL_SAP_NEAREST_SENTRY:
 			m_pSchedules->add(new CBotSpySapBuildingSched(m_pNearestEnemySentry,ENGI_SENTRY));
 			return true;
+		case BOT_UTIL_PIPE_NEAREST_SENTRY:
+		case BOT_UTIL_PIPE_LAST_ENEMY:
+			{
+				Vector vLoc;
+
+				if ( id == BOT_UTIL_PIPE_NEAREST_SENTRY )
+				{
+					m_pLastEnemy = m_pNearestEnemySentry;
+				}
+
+				if ( distanceFrom(m_pLastEnemy) > 1024.0f )
+					vLoc = m_vLastDiedOrigin;
+				else
+					vLoc = getOrigin();
+
+				// update last enemy info
+			
+				m_fLastSeeEnemy = engine->Time();
+				m_fLastUpdateLastSeeEnemy = 0;
+				m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
+				m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
+
+				CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,vLoc,1024.0,-1,true,true,false,false,getTeam(),true));
+					
+				if ( pWpt )
+				{
+					m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
+
+					CBotTask *findpath = new CFindPathTask(m_vLastSeeEnemyBlastWaypoint,LOOK_LAST_ENEMY);
+					CBotTask *pipetask = new CBotTF2DemomanPipeEnemy(getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)),m_pLastEnemy);
+					CBotSchedule *pipesched = new CBotSchedule();
+
+					//if ( !isVisible(m_pLastEnemy) )
+						findpath->setCompleteInterrupt(CONDITION_SEE_LAST_ENEMY_POS);
+
+					pipesched->addTask(findpath);
+					pipesched->addTask(pipetask);
+
+					m_pSchedules->add(pipesched);
+
+					return true;
+				}
+			}
+			break;
 		case BOT_UTIL_GETAMMOKIT:
 			m_pSchedules->removeSchedule(SCHED_PICKUP);
 			m_pSchedules->addFront(new CBotPickupSched(m_pAmmo));
@@ -4357,10 +4410,6 @@ inline Vector BOTUTIL_SmoothAim( Vector aiming_start, Vector aiming_end, float t
 		// linear
 		return aiming_start + ((aiming_end - aiming_start) * ((timenow - timestart)/(timeend - timestart)));
 }
-
-
-#define TF2_ROCKETSPEED   1100
-#define TF2_GRENADESPEED  1065 // TF2 wiki
 
 Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 {

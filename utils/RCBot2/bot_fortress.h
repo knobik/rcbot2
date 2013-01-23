@@ -35,6 +35,9 @@
 
 #include "bot_utility.h"
 
+#define TF2_ROCKETSPEED   1100
+#define TF2_GRENADESPEED  1065 // TF2 wiki
+
 class CBotWeapon;
 class CWaypoint;
 class CBotUtility;
@@ -100,7 +103,8 @@ typedef enum
 	TF_TRAP_TYPE_WPT,
 	TF_TRAP_TYPE_POINT,
 	TF_TRAP_TYPE_FLAG,
-	TF_TRAP_TYPE_PL
+	TF_TRAP_TYPE_PL,
+	TF_TRAP_TYPE_ENEMY
 }eDemoTrapType;
 
 typedef enum
@@ -610,7 +614,9 @@ public:
 
 	bool deployStickies ( eDemoTrapType type, Vector vStand, Vector vLocation, Vector vSpread, Vector *vPoint, int *iState, int *iStickyNum, bool *bFail, float *fTime );
 
-	void detonateStickies ();
+	void detonateStickies (bool isJumping = false);
+
+	void setStickyTrapType ( Vector vLocation, eDemoTrapType iTrapType ) { m_vStickyLocation = vLocation; m_iTrapType = iTrapType; }
 
 	bool canDeployStickies ();
 

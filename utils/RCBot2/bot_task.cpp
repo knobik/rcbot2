@@ -2395,7 +2395,11 @@ void CBotTF2DemomanPipeJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 				m_pPipeBomb = CClassInterface::FindEntityByClassnameNearest(pBot->getOrigin(),"tf_projectile_pipe_remote",150.0f,NULL);
 
 				if ( m_pPipeBomb )
+				{
+					// set this up incase of fail, the bot knows he has a sticky there
+					((CBotTF2*)pBot)->setStickyTrapType(m_vStart,TF_TRAP_TYPE_ENEMY);
 					m_iState++;
+				}
 				else
 					fail();
 			}
@@ -2433,7 +2437,7 @@ void CBotTF2DemomanPipeJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			if ( CClassInterface::getVelocity(m_pPipeBomb,&vel) )
 			{
 				if ( vel.Length() > 1.0 )
-					break;
+					break; // wait until the pipe bomb has rested
 			}
 
 			v_comp = m_vEnd - m_vStart;
@@ -2497,13 +2501,13 @@ void CBotTF2DemomanPipeJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			{
 				if ( vel.z > 10 )
 				{
-					pBot->secondaryAttack();
+					((CBotTF2*)pBot)->detonateStickies(true);
 					complete();
 				}
 			}
 			else
 			{
-				pBot->secondaryAttack();
+				((CBotTF2*)pBot)->detonateStickies(true);
 				complete();
 			}
 		}
@@ -2512,6 +2516,82 @@ void CBotTF2DemomanPipeJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		fail();
 	}
 }
+
+//////////////////////////////////////////
+CBotTF2DemomanPipeEnemy :: CBotTF2DemomanPipeEnemy ( CBotWeapon *pPipeLauncher, edict_t *pEnemy )
+{
+	m_vEnemy = CBotGlobals::entityOrigin(pEnemy);
+	m_pEnemy = MyEHandle(pEnemy);
+	m_fTime = 0.0f;
+	m_vAim = CBotGlobals::entityOrigin(pEnemy);
+	m_pPipeLauncher = pPipeLauncher;
+}
+
+void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fTime == 0 )
+	{
+		float fFraction = 0.75f;
+
+		if ( sv_gravity )
+		{
+			fFraction = sv_gravity->GetFloat() / TF2_GRENADESPEED;
+		}
+
+		m_vStand = pBot->getOrigin();
+		m_vAim = (m_vEnemy - m_vStand)/2;
+		m_vAim.z = (m_vEnemy.z + m_vAim.Length()) * fFraction;
+		m_vAim = m_vStand + m_vAim;
+
+		/*
+		if ( sv_gravity )
+		{
+			float fFraction = ((m_vAim-m_vStand).Length())/MAX_GREN_THROW_DIST;
+
+			m_vAim.z = m_vAim.z + (sv_gravity->GetFloat() * randomFloat(1.5f,2.5f) * fFraction);
+		}*/
+
+		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
+	}
+
+	if ( (m_pEnemy.get() == NULL) || (m_fTime < engine->Time()) )
+	{
+		// blow up any grens before we finish
+		((CBotTF2*)pBot)->detonateStickies();
+		complete();
+	}
+
+	if ( (m_pPipeLauncher->getAmmo(pBot) + m_pPipeLauncher->getClip1(pBot)) == 0 )
+	{
+		((CBotTF2*)pBot)->detonateStickies();
+		complete();
+	}
+	else if ( pBot->getCurrentWeapon() != m_pPipeLauncher )
+		pBot->selectBotWeapon(m_pPipeLauncher);
+	else if ( m_pPipeLauncher->getClip1(pBot) == 0 )
+	{
+		if ( randomInt(0,1) )
+			pBot->reload();
+	}
+	else if ( pBot->distanceFrom(m_vStand) > 100.0f )
+		pBot->setMoveTo(m_vStand);
+	else
+	{
+		pBot->setLookAtTask(LOOK_VECTOR);
+		pBot->setLookVector(m_vAim);
+		pBot->stopMoving();
+
+		if ( pBot->DotProductFromOrigin(m_vAim) > 0.99 )
+		{
+			if ( randomInt(0,1) )
+			{
+				pBot->primaryAttack();
+				((CBotTF2*)pBot)->setStickyTrapType(m_vEnemy,TF_TRAP_TYPE_ENEMY);
+			}
+		}
+	}
+}
+
 
 //////////////////////////////////////////
 CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate)

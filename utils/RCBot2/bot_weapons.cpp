@@ -275,7 +275,7 @@ CBotWeapons :: CBotWeapons ( CBot *pBot )
 	m_fUpdateWeaponsTime = 0;
 }
 
-void CBotWeapons ::update ( )
+void CBotWeapons ::update ( bool bOverrideAllFromEngine )
 {
 	if ( m_fUpdateWeaponsTime < engine->Time() )
 	{
@@ -316,9 +316,9 @@ void CBotWeapons ::update ( )
 				if ( bFound && pWeapon && (iWeaponState != WEAPON_NOT_CARRIED) )
 				{
 					if ( !m_BotWeapon_iter->hasWeapon() )
-						addWeapon(m_BotWeapon_iter->getID(),pWeapon);
+						addWeapon(m_BotWeapon_iter->getID(),pWeapon,bOverrideAllFromEngine);
 					else if ( m_BotWeapon_iter->getWeaponEntity() != pWeapon )
-						m_BotWeapon_iter->setWeaponEntity(pWeapon);
+						m_BotWeapon_iter->setWeaponEntity(pWeapon,bOverrideAllFromEngine);
 				}
 				else
 				{
@@ -400,18 +400,22 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bo
 	return m_theBestWeapon;
 }
 
-void CBotWeapon :: setWeaponEntity (edict_t *pent) 
+void CBotWeapon :: setWeaponEntity (edict_t *pent, bool bOverrideAmmoTypes ) 
 { 
-	int iAmmoType1,iAmmoType2;
 	m_pEnt = pent; 
 	m_iClip1 = CClassInterface::getWeaponClip1Pointer(pent);
 	m_iClip2 = CClassInterface::getWeaponClip2Pointer(pent);
-	CClassInterface::getAmmoTypes(pent,&iAmmoType1,&iAmmoType2);
-	m_pWeaponInfo->setAmmoIndex(iAmmoType1,iAmmoType2);
+
+	if ( bOverrideAmmoTypes )
+	{
+		int iAmmoType1,iAmmoType2;
+		CClassInterface::getAmmoTypes(pent,&iAmmoType1,&iAmmoType2);
+		m_pWeaponInfo->setAmmoIndex(iAmmoType1,iAmmoType2);
+	}
 }
 
 
-void CBotWeapons :: addWeapon ( int iId, edict_t *pent )
+void CBotWeapons :: addWeapon ( int iId, edict_t *pent, bool bOverrideAll )
 {
 
 	register int i = 0;
@@ -434,7 +438,7 @@ void CBotWeapons :: addWeapon ( int iId, edict_t *pent )
 	// if entity comes from the engine use the entity
 	if ( pent )
 	{
-		m_theWeapons[iId].setWeaponEntity(pent);
+		m_theWeapons[iId].setWeaponEntity(pent,bOverrideAll);
 		m_theWeapons[iId].setWeaponIndex(ENTINDEX(pent));
 	}
 	else // find the weapon entity

@@ -811,6 +811,7 @@ protected:
 	float m_fStartUpdateAimVector;
 	Vector m_vAimVector;
 	Vector m_vPrevAimVector;
+	Vector m_vLastDiedOrigin;
 	bool m_bPrevAimVectorValid;
 
 	eLookTask m_iLookTask;

@@ -574,7 +574,7 @@ public:
 
 	inline void setWeaponIndex (int iIndex) { m_iWeaponIndex = iIndex; } // Entity Index
 
-	void setWeaponEntity (edict_t *pent);
+	void setWeaponEntity (edict_t *pent, bool bOverrideAmmoTypes = true );
 
 	inline edict_t *getWeaponEntity () { return m_pEnt; }
 
@@ -603,7 +603,7 @@ public:
 /////////////////////////////////////
 	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true, bool bMeleeOnly = false );
 
-	void addWeapon ( int iId, edict_t *pent = NULL );
+	void addWeapon ( int iId, edict_t *pent = NULL, bool bOverrideAll = true );
 
 	CBotWeapon *getWeapon ( CWeapon *pWeapon );
 
@@ -630,7 +630,7 @@ public:
 
 	bool hasWeapon ( int id );
 
-	void update ( ); // update from sendprop
+	void update ( bool bOverrideAllFromEngine = true ); // update from sendprop
 
 private:
 	// bot that has these weapons

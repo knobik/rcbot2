@@ -1177,6 +1177,7 @@ void CBot :: setup ()
 void CBot :: died ( edict_t *pKiller )
 {	
 	spawnInit();
+	m_vLastDiedOrigin = getOrigin();
 }
 
 /*

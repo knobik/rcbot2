@@ -86,7 +86,7 @@ void CHLDMBot :: died ( edict_t *pKiller )
 	extern ConVar bot_beliefmulti;
 
 	// re-initialize stuff per life
-	spawnInit();
+	CBot::died(pKiller);
 
 	//if ( randomInt(0,1) )
 	m_pButtons->attack(); // respawn
@@ -484,12 +484,15 @@ void CHLDMBot :: modThink ()
 	if ( !CBotGlobals::entityIsValid(m_FailedPhysObj) )
 		m_FailedPhysObj = NULL;
 
-	if ( m_fFixWeaponTime < engine->Time() )
-	{
-		fixWeapons();
-		m_pCurrentWeapon = CClassInterface::getCurrentWeapon(m_pEdict);
-		m_fFixWeaponTime = engine->Time() + 1.0f;
-	}
+	if ( m_pWeapons )
+		m_pWeapons->update();
+
+	//if ( m_fFixWeaponTime < engine->Time() )
+	//{
+	//	fixWeapons();
+	m_pCurrentWeapon = CClassInterface::getCurrentWeapon(m_pEdict);
+	//	m_fFixWeaponTime = engine->Time() + 1.0f;
+	//}
 
 	if ( m_pCurrentWeapon )
 		CClassInterface::getWeaponClip(m_pCurrentWeapon,&m_iClip1,&m_iClip2);

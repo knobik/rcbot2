@@ -285,7 +285,7 @@ void CDODBot :: killed ( edict_t *pVictim )
 
 void CDODBot :: died ( edict_t *pKiller )
 {
-	spawnInit();
+	CBot::died(pKiller);
 
 	// check if I want to change class
 	m_bCheckClass = true;

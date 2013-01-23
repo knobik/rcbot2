@@ -67,6 +67,7 @@ const char *szSchedules[] =
 	"SCHED_TF2_PUSH_PAYLOADBOMB",
 	"SCHED_TF2_DEFEND_PAYLOADBOMB",
 	"SCHED_TF2_DEMO_PIPETRAP",
+	"SCHED_TF2_DEMO_PIPESENTRY",
 	"SCHED_BACKSTAB",
 	"SCHED_REMOVESAPPER",
 	"SCHED_GOTONEST",
@@ -75,8 +76,18 @@ const char *szSchedules[] =
 	"SCHED_FOLLOW_LAST_ENEMY",
 	"SCHED_SHOOT_LAST_ENEMY_POS"
 };
+//////////////////////
+CBotTF2DemoPipeEnemySched :: CBotTF2DemoPipeEnemySched ( CBotWeapon *pLauncher, Vector vStand, edict_t *pEnemy )
+{
+	addTask(new CFindPathTask(vStand));
+	addTask(new CBotTF2DemomanPipeEnemy(pLauncher,pEnemy));
+}
 
-
+void CBotTF2DemoPipeEnemySched :: init()
+{
+	setID(SCHED_TF2_DEMO_PIPEENEMY);
+}
+///////////////////
 CBotTF2DemoPipeTrapSched :: CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate )
 {
 	addTask(new CFindPathTask(vStand));

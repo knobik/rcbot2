@@ -71,6 +71,7 @@ typedef enum
 	SCHED_TF2_PUSH_PAYLOADBOMB,
 	SCHED_TF2_DEFEND_PAYLOADBOMB,
 	SCHED_TF2_DEMO_PIPETRAP,
+	SCHED_TF2_DEMO_PIPEENEMY,
 	SCHED_BACKSTAB,
 	SCHED_REMOVESAPPER,
 	SCHED_GOTONEST,
@@ -290,6 +291,17 @@ class CBotTF2DemoPipeTrapSched : public CBotSchedule
 {
 public:
 	CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate = false );
+
+	void init();
+};
+
+class CBotTF2DemoPipeEnemySched : public CBotSchedule
+{
+public:
+	CBotTF2DemoPipeEnemySched ( 
+		CBotWeapon *pLauncher,
+		Vector vStand, 
+		edict_t *pEnemy );
 
 	void init();
 };

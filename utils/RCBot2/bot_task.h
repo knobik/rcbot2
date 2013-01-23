@@ -166,6 +166,29 @@ private:
 	CBotWeapon *m_pWeapon;
 };
 
+// automatically detonate pipes from a standing location, make sure
+// the bot is not standing in a location visible to the enemy
+// in vStand
+class CBotTF2DemomanPipeEnemy : public CBotTask 
+{
+public:
+	CBotTF2DemomanPipeEnemy ( CBotWeapon *pPipeLauncher, edict_t *pEnemy );
+
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotTF2DemomanPipeEnemy");
+	}
+private:
+	Vector m_vStand;
+	Vector m_vEnemy;
+	MyEHandle m_pEnemy;
+	Vector m_vAim;
+	float m_fTime;
+	CBotWeapon *m_pPipeLauncher;
+};
+
 class CBotTF2DemomanPipeTrap : public CBotTask
 {
 public:
@@ -428,19 +451,6 @@ public:
 	void debugString ( char *string )
 	{
 		sprintf(string,"CBotTF2SpyDisguise");
-	}
-};
-
-class CBotTF2SapBuilding : public CBotTask
-{
-public:
-	CBotTF2SapBuilding ( edict_t *pBuilding );
-	
-	void execute (CBot *pBot,CBotSchedule *pSchedule);
-
-	void debugString ( char *string )
-	{
-		sprintf(string,"CBotTF2SapBuilding");
 	}
 };
 
