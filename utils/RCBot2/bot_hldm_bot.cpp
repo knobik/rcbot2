@@ -71,9 +71,11 @@ bool CHLDMBot :: startGame ()
 }
 
 // the bot killed pVictim
-void CHLDMBot :: killed ( edict_t *pVictim )
+void CHLDMBot :: killed ( edict_t *pVictim, char *weapon )
 {
 	extern ConVar bot_beliefmulti;
+
+	CBot::killed(pVictim,weapon);
 
 	// update belief around this waypoint
 	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
@@ -81,12 +83,12 @@ void CHLDMBot :: killed ( edict_t *pVictim )
 }
 
 // the bot was killed by pKiller
-void CHLDMBot :: died ( edict_t *pKiller )
+void CHLDMBot :: died ( edict_t *pKiller, const char *pszWeapon )
 {
 	extern ConVar bot_beliefmulti;
 
 	// re-initialize stuff per life
-	CBot::died(pKiller);
+	CBot::died(pKiller, pszWeapon);
 
 	//if ( randomInt(0,1) )
 	m_pButtons->attack(); // respawn

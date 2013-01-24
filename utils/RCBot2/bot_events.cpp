@@ -132,7 +132,7 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
 
 	if ( pBot )
-		pBot->died(pAttacker);
+		pBot->died(pAttacker,weapon);
 
 	pBot = CBots::getBotPointer(pAttacker);
 

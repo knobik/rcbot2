@@ -894,21 +894,11 @@ void CBot :: updateConditions ()
 			}
 			else 
 			{
-				CWaypoint *pWpt;
 
 				if ( !m_pLastEnemy || (m_pLastEnemy != m_pEnemy ))
 					enemyLost();
 
-				m_fLastSeeEnemy = engine->Time();
-				m_pLastEnemy = m_pEnemy;
-				m_fLastUpdateLastSeeEnemy = 0;
-				m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
-				m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
-
-				pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),8192.0,-1,true,true,false,false,0,false));
-				
-				if ( pWpt )
-					m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
+				setLastEnemy(m_pEnemy);
 
 				removeCondition(CONDITION_SEE_CUR_ENEMY);
 				updateCondition(CONDITION_ENEMY_OBSCURED);
@@ -1112,6 +1102,23 @@ void CBot :: spawnInit ()
 		m_pVisibles->reset();
 }
 
+void CBot::setLastEnemy(edict_t *pEnemy)
+{
+	CWaypoint *pWpt;
+
+	m_fLastSeeEnemy = engine->Time();
+	m_pLastEnemy = pEnemy;
+	m_fLastUpdateLastSeeEnemy = 0;
+	m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
+	m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
+
+	pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),8192.0,-1,true,true,false,false,0,false));
+	
+	if ( pWpt )
+		m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
+
+}
+
 bool CBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
 {
 	int id = pBotWeapon->getWeaponIndex();
@@ -1174,7 +1181,7 @@ void CBot :: setup ()
 /*
 * called when a bot dies
 */
-void CBot :: died ( edict_t *pKiller )
+void CBot :: died ( edict_t *pKiller, const char *pszWeapon )
 {	
 	spawnInit();
 	m_vLastDiedOrigin = getOrigin();
@@ -1185,15 +1192,8 @@ void CBot :: died ( edict_t *pKiller )
 */
 void CBot :: killed ( edict_t *pVictim, char *weapon )
 {	
-	m_pLastEnemy = NULL;
-
-	if ( pVictim )
-	{
-		// TO DO: been killed code
-		//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pVictim);
-
-		//pVictim->GetIServerEntity()->GetBaseEntity()
-	}
+	if ( pVictim == m_pLastEnemy )
+		m_pLastEnemy = NULL;
 }
 
 // called when bot shoots a wall or similar object -i.e. not the enemy
@@ -1226,6 +1226,7 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	if ( m_fUpdateDamageTime < fTime )
 	{
 		m_fUpdateDamageTime = fTime + 0.5;
+		m_fCurrentDanger += (((float)m_iAccumulatedDamage)/m_pPlayerInfo->GetMaxHealth())*MAX_BELIEF;
 		m_iAccumulatedDamage = 0;
 	}
 
@@ -1576,7 +1577,7 @@ void CBot :: doMove ()
 		}
 
 		fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo);
-		fDist = distanceFrom(m_vMoveTo);
+		fDist = (getOrigin()-m_vMoveTo).Length2D();
 
 		/////////
 		radians = DEG_TO_RAD(fAngle);
@@ -1614,7 +1615,7 @@ void CBot :: doMove ()
 			m_fForwardSpeed = 0.0;
 		if ( fabs(m_fSideSpeed) < 1.0 )
 			m_fSideSpeed = 0.0;
-		if ( fDist < 2.0f )
+		if ( fDist < 8.0f )
 		{
 			m_fForwardSpeed = 0.0f;
 			m_fSideSpeed = 0.0f;
@@ -1977,6 +1978,11 @@ int CBot :: getPlayerID ()
 	return m_pPlayerInfo->GetUserID();
 }
 
+void CBot :: letGoOfButton ( int button )
+{
+	m_pButtons->letGo(button);
+}
+
 void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float *fUpdate )
 {
 	float current = *fCurrent;
@@ -1999,7 +2005,16 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
 		diff -= 360.0f;
 
 	delta = (diff*alpha) + (m_fAimMoment*alphaspeed);
+
+	//check for QNAN
+	if ( delta != delta )
+		delta = 1.0f;
+
 	m_fAimMoment = (m_fAimMoment * alphaspeed) + (delta * (1.0f-alphaspeed));
+
+	//check for QNAN
+	if ( m_fAimMoment != m_fAimMoment )
+		m_fAimMoment = 1.0f;
 
 	current = current + delta;
 

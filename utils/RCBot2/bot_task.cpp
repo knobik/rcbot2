@@ -517,7 +517,7 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			((CBotFortress*)pBot)->wantToDisguise(false);
 
-			if ( fdist < 32 )
+			if ( fdist < 52 )
 			{
 				pBot->stopMoving();
 			}
@@ -1025,6 +1025,7 @@ void CBotTaskEngiPickupBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( CBotGlobals::yawAngleFromEdict(pBot->getEdict(),CBotGlobals::entityOrigin(m_pBuilding)) < 25 )
 		{	
 			pBot->secondaryAttack();
+			((CBotTF2*)pBot)->resetCarryTime();
 		}
 	}
 	else
@@ -1061,6 +1062,10 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( v_comp.Length() >  )
 */
 		m_fTime = engine->Time() + 6.0f;
+		pBot->resetLookAroundTime();
+
+		if ( CTeamFortress2Mod::buildingNearby(pBot->getTeam(),m_vOrigin) )
+			m_vOrigin = m_vOrigin + Vector(randomFloat(-200.0f,200.0f),randomFloat(-200.0f,200.0f),0);
 	}
 
 	pBot->setLookVector(m_vOrigin);
@@ -1338,6 +1343,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	bool bAimingOk = true;
 
+
 	if ( !pBot->isTF() )
 		fail();
 
@@ -1359,6 +1365,18 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	pBot->setLookAtTask((LOOK_BUILD));
 	bAimingOk = pBot->DotProductFromOrigin(pBot->getAiming()) > 0.965925f; // 15 degrees
+
+	if ( m_fTime == 0.0f )
+	{
+		pBot->resetLookAroundTime();
+
+		if ( CTeamFortress2Mod::buildingNearby(pBot->getTeam(),m_vOrigin) )
+			m_vOrigin = m_vOrigin + Vector(randomFloat(-200.0f,200.0f),randomFloat(-200.0f,200.0f),0);
+
+		m_fTime = engine->Time() + randomFloat(4.0f,8.0f);
+	}
+	else if ( m_fTime < engine->Time() )
+		fail();
 
 	if ( m_iObject == ENGI_DISP )
 	{
@@ -2518,29 +2536,41 @@ void CBotTF2DemomanPipeJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 }
 
 //////////////////////////////////////////
-CBotTF2DemomanPipeEnemy :: CBotTF2DemomanPipeEnemy ( CBotWeapon *pPipeLauncher, edict_t *pEnemy )
+CBotTF2DemomanPipeEnemy :: CBotTF2DemomanPipeEnemy ( Vector vStand, Vector vBlastPoint, CBotWeapon *pPipeLauncher, Vector vEnemy, edict_t *pEnemy )
 {
-	m_vEnemy = CBotGlobals::entityOrigin(pEnemy);
+	m_vEnemy = vEnemy;
 	m_pEnemy = MyEHandle(pEnemy);
 	m_fTime = 0.0f;
-	m_vAim = CBotGlobals::entityOrigin(pEnemy);
+	m_vAim = vBlastPoint;
 	m_pPipeLauncher = pPipeLauncher;
+	m_vStand = vStand;
+	m_fHoldAttackTime = 0.0f;
+	m_fHeldAttackTime = 0.0f;
 }
 
 void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	if ( pBot->distanceFrom(m_vStand) > 200 )
+		fail();
+
 	if ( m_fTime == 0 )
 	{
-		float fFraction = 0.75f;
+		m_vAim = (m_vEnemy - pBot->getOrigin())/2;
 
 		if ( sv_gravity )
 		{
-			fFraction = sv_gravity->GetFloat() / TF2_GRENADESPEED;
+			float fFraction = pBot->distanceFrom(m_vEnemy)/TF2_GRENADESPEED;
+
+			m_vAim.z = m_vEnemy.z + (sv_gravity->GetFloat() * randomFloat(0.9f,1.1f) * fFraction);
+
+			//fFraction = sv_gravity->GetFloat() / TF2_GRENADESPEED;
 		}
 
-		m_vStand = pBot->getOrigin();
-		m_vAim = (m_vEnemy - m_vStand)/2;
-		m_vAim.z = (m_vEnemy.z + m_vAim.Length()) * fFraction;
+		m_fHoldAttackTime = (pBot->distanceFrom(m_vEnemy)/512.0f) - 1.0f;
+
+		if ( m_fHoldAttackTime < 0.0f )
+			m_fHoldAttackTime = 0.0f;
+
 		m_vAim = m_vStand + m_vAim;
 
 		/*
@@ -2554,16 +2584,23 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
 	}
 
-	if ( (m_pEnemy.get() == NULL) || (m_fTime < engine->Time()) )
+	if ( !CBotGlobals::entityIsValid(m_pEnemy) || !CBotGlobals::entityIsAlive(m_pEnemy) || (m_fTime < engine->Time()) )
 	{
 		// blow up any grens before we finish
+		//if ( m_pEnemy.get() && pBot->isVisible(m_pEnemy.get()) )
 		((CBotTF2*)pBot)->detonateStickies();
+
 		complete();
 	}
 
+	pBot->wantToChangeWeapon(false);
+	pBot->wantToShoot(false);
+
 	if ( (m_pPipeLauncher->getAmmo(pBot) + m_pPipeLauncher->getClip1(pBot)) == 0 )
 	{
-		((CBotTF2*)pBot)->detonateStickies();
+		if ( pBot->isVisible(m_pEnemy.get()) )
+			((CBotTF2*)pBot)->detonateStickies();
+
 		complete();
 	}
 	else if ( pBot->getCurrentWeapon() != m_pPipeLauncher )
@@ -2583,11 +2620,22 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( pBot->DotProductFromOrigin(m_vAim) > 0.99 )
 		{
-			if ( randomInt(0,1) )
+			float fTime = engine->Time();
+
+			if ( m_fHeldAttackTime == 0 )
+				m_fHeldAttackTime = fTime + m_fHoldAttackTime + randomFloat(0.0,0.15);
+
+			if ( m_fHeldAttackTime > fTime)
+				pBot->primaryAttack(true);
+			else
 			{
-				pBot->primaryAttack();
-				((CBotTF2*)pBot)->setStickyTrapType(m_vEnemy,TF_TRAP_TYPE_ENEMY);
+				if ( m_fHeldAttackTime < (fTime - 0.1f) )
+					m_fHeldAttackTime = 0;
+
+				pBot->letGoOfButton(IN_ATTACK);
 			}
+
+			((CBotTF2*)pBot)->setStickyTrapType(m_vEnemy,TF_TRAP_TYPE_ENEMY);
 		}
 	}
 }

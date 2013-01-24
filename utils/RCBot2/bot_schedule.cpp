@@ -76,11 +76,11 @@ const char *szSchedules[] =
 	"SCHED_FOLLOW_LAST_ENEMY",
 	"SCHED_SHOOT_LAST_ENEMY_POS"
 };
-//////////////////////
+////////////////////// unused
 CBotTF2DemoPipeEnemySched :: CBotTF2DemoPipeEnemySched ( CBotWeapon *pLauncher, Vector vStand, edict_t *pEnemy )
 {
-	addTask(new CFindPathTask(vStand));
-	addTask(new CBotTF2DemomanPipeEnemy(pLauncher,pEnemy));
+	//addTask(new CFindPathTask(vStand));
+	//addTask(new CBotTF2DemomanPipeEnemy(pLauncher,pEnemy));
 }
 
 void CBotTF2DemoPipeEnemySched :: init()
@@ -542,12 +542,20 @@ void CBotDefendPointSched ::init ()
 void CBotSchedule :: execute ( CBot *pBot )
 {
 	// current task
-	CBotTask *pTask = m_Tasks.GetFrontInfo();
+	static CBotTask *pTask;
 	static eTaskState iState;
+
+	if ( m_Tasks.IsEmpty() )
+	{
+		m_bFailed = true;
+		return;
+	}
+
+	pTask = m_Tasks.GetFrontInfo();
 
 	if ( pTask == NULL )
 	{
-		m_bFailed = TRUE;
+		m_bFailed = true;
 		return;
 	}
 

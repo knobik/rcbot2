@@ -197,8 +197,16 @@ public:
 		
 		if ( !m_data ) 
 			return defaultvalue; 
-		
-		return *((int*)m_data);
+
+		try
+		{
+			return *((int*)m_data);
+		}
+
+		catch ( ... )
+		{
+			return defaultvalue;
+		}
 	}
 
 	inline int *getIntPointer ( edict_t *edict ) 

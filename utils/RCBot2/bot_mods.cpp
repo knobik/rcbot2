@@ -316,6 +316,51 @@ int CTeamFortress2Mod ::getHighestScore ()
 	return highest;
 }
 
+
+bool CTeamFortress2Mod::buildingNearby ( int iTeam, Vector vOrigin )
+{
+	edict_t *pPlayer;
+	short int i;
+
+		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		{
+			pPlayer = INDEXENT(i+1);
+
+			if ( CClassInterface::getTF2Class(pPlayer) != TF_CLASS_ENGINEER )
+				continue;
+
+			if ( CClassInterface::getTeam(pPlayer) != iTeam )
+				continue;
+
+			if ( m_SentryGuns[i].sentry.get() )
+			{
+				if ( (vOrigin-CBotGlobals::entityOrigin(m_SentryGuns[i].sentry.get())).Length() < 100 )
+					return true;
+			}
+
+			if ( m_Dispensers[i].disp.get() )
+			{
+				if ( (vOrigin-CBotGlobals::entityOrigin(m_Dispensers[i].disp.get())).Length() < 100 )
+					return true;
+			}
+
+			if ( m_Teleporters[i].entrance.get() )
+			{
+				if ( (vOrigin-CBotGlobals::entityOrigin(m_Teleporters[i].entrance.get())).Length() < 100 )
+					return true;
+			}
+
+			if ( m_Teleporters[i].exit.get() )
+			{
+				if ( (vOrigin-CBotGlobals::entityOrigin(m_Teleporters[i].exit.get())).Length() < 100 )
+					return true;
+			}
+
+		}
+
+		return false;
+}
+
 // get the owner of 
 edict_t *CTeamFortress2Mod ::getBuildingOwner (eEngiBuild object, short index)
 {
@@ -1113,6 +1158,7 @@ void CTeamFortress2Mod :: initMod ()
 	CRCBotTF2UtilFile::loadConfig();
 	//memset(g_fBotUtilityPerturb,0,sizeof(float)*TF_CLASS_MAX*BOT_UTIL_MAX);
 }
+
 
 void CTeamFortress2Mod :: mapInit ()
 {

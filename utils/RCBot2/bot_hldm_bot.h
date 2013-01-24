@@ -50,8 +50,8 @@ public:
 
 	bool startGame ();
 
-	void died ( edict_t *pKiller );
-	void killed ( edict_t *pVictim );
+	void died ( edict_t *pKiller, const char *pszWeapon );
+	void killed ( edict_t *pVictim, char *weapon );
 
 	void spawnInit ();
 

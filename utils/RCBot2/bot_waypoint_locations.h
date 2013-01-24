@@ -127,9 +127,9 @@ public:
 									    int *iMinLoc, int *jMinLoc, int *kMinLoc,
 									    int *iMaxLoc, int *jMaxLoc, int *kMaxLoc );
 
-	static int GetCoverWaypoint ( Vector vPlayerOrigin, Vector vCoverFrom, dataUnconstArray<int> *iIgnoreWpts, Vector *vGoalOrigin = NULL, int iTeam = 0  );
+	static int GetCoverWaypoint ( Vector vPlayerOrigin, Vector vCoverFrom, dataUnconstArray<int> *iIgnoreWpts, Vector *vGoalOrigin = NULL, int iTeam = 0, float fMinDist = MIN_COVER_MOVE_DIST, float fMaxDist = HALF_MAX_MAP_SIZE );
 
-	static void FindNearestCoverWaypointInBucket ( int i, int j, int k, const Vector &vOrigin, float *pfMinDist, int *piIndex, dataUnconstArray<int> *iIgnoreWpts, int iCoverFromWpt, Vector *vGoalOrigin = NULL, int iTeam = 0 );
+	static void FindNearestCoverWaypointInBucket ( int i, int j, int k, const Vector &vOrigin, float *pfMinDist, int *piIndex, dataUnconstArray<int> *iIgnoreWpts, int iCoverFromWpt, Vector *vGoalOrigin = NULL, int iTeam = 0, float fMinDist = MIN_COVER_MOVE_DIST );
 
 	static void AddWptLocation ( int iIndex, const float *fOrigin );
 
@@ -148,9 +148,9 @@ public:
 
 	static void AutoPathInBucket ( edict_t *pPlayer, int i, int j, int k, int iWpt );
 	
-	static int NearestBlastWaypoint ( const Vector &vOrigin, const Vector &vSrc, float fNearestDist, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, bool bNearestAimingOnly, int iTeam, bool bCheckArea );
+	static int NearestBlastWaypoint ( const Vector &vOrigin, const Vector &vSrc, float fNearestDist, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, bool bNearestAimingOnly, int iTeam, bool bCheckArea, float fBlastRadius = BLAST_RADIUS );
 
-	static void FindNearestBlastInBucket ( int i, int j, int k, const Vector &vOrigin, const Vector &vSrc, float *pfMinDist, int *piIndex, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, bool bNearestAimingOnly, int iTeam, bool bCheckArea );
+	static void FindNearestBlastInBucket ( int i, int j, int k, const Vector &vOrigin, const Vector &vSrc, float *pfMinDist, int *piIndex, int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, bool bIsBot, bool bNearestAimingOnly, int iTeam, bool bCheckArea, float fBlastRadius = BLAST_RADIUS );
 
 private:
 	

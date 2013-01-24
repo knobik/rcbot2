@@ -744,6 +744,8 @@ public:
 
 	static int getEnemyTeam ( int iTeam );
 
+	static bool buildingNearby ( int iTeam, Vector vOrigin );
+
 // Naris @ AlliedModders .net
 
 	static bool TF2_IsPlayerZoomed(edict_t *pPlayer);
@@ -828,6 +830,18 @@ public:
 	static void sapperDestroyed(edict_t *pOwner,eEngiBuild type,edict_t *pSapper);
 	static void sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding);
 	static void dispenserBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding);
+
+	static edict_t *getMySentryGun ( edict_t *pOwner )
+	{
+		int id = ENTINDEX(pOwner)-1;
+
+		if ( id>=0 )
+		{
+			return m_SentryGuns[id].sentry.get();
+		}
+
+		return NULL;
+	}
 
 	static bool isMySentrySapped ( edict_t *pOwner ) 
 	{

@@ -172,7 +172,7 @@ private:
 class CBotTF2DemomanPipeEnemy : public CBotTask 
 {
 public:
-	CBotTF2DemomanPipeEnemy ( CBotWeapon *pPipeLauncher, edict_t *pEnemy );
+	CBotTF2DemomanPipeEnemy ( Vector vStand, Vector vBlastPoint, CBotWeapon *pPipeLauncher, Vector vEnemy, edict_t *pEnemy );
 
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -186,6 +186,8 @@ private:
 	MyEHandle m_pEnemy;
 	Vector m_vAim;
 	float m_fTime;
+	float m_fHoldAttackTime;
+	float m_fHeldAttackTime;
 	CBotWeapon *m_pPipeLauncher;
 };
 

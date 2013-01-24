@@ -514,12 +514,14 @@ bool CBotFortress :: isAlive ()
 
 void CBotFortress :: killed ( edict_t *pVictim, char *weapon )
 {
+	CBot::killed(pVictim,weapon);
+
 	return;
 }
 
-void CBotFortress :: died ( edict_t *pKiller )
+void CBotFortress :: died ( edict_t *pKiller, const char *pszWeapon )
 {
-	CBot::died(pKiller);
+	CBot::died(pKiller,pszWeapon);
 
 	droppedFlag();
 
@@ -1210,6 +1212,8 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	m_fCarryTime = 0.0f;
+
 	m_bIsCarryingTeleExit = false;
 	 m_bIsCarryingSentry = false;;
 	 m_bIsCarryingDisp = false;;
@@ -1358,7 +1362,7 @@ void CBotTF2 :: taunt ( bool bOverride )
 {
 	extern ConVar rcbot_taunt;
 	// haven't taunted for a while, no emeny, not ubered, OK! Taunt!
-	if ( bOverride || (rcbot_taunt.GetBool() && !m_pEnemy && (m_fTauntTime < engine->Time()) && (!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict))) )
+	if ( bOverride || (!m_bHasFlag && rcbot_taunt.GetBool() && !CTeamFortress2Mod::TF2_IsPlayerOnFire(m_pEdict) && !m_pEnemy && (m_fTauntTime < engine->Time()) && (!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict))) )
 	{
 		helpers->ClientCommand(m_pEdict,"taunt");
 		m_fTauntTime = engine->Time() + randomFloat(40.0,100.0); // Don't taunt for another minute or two
@@ -1557,9 +1561,9 @@ edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding, int index )
 	return pBest;
 }
 
-void CBotTF2 :: died ( edict_t *pKiller )
+void CBotTF2 :: died ( edict_t *pKiller, const char *pszWeapon  )
 {
-	CBot::died(pKiller);
+	CBot::died(pKiller,pszWeapon);
 
 	droppedFlag();
 
@@ -1569,8 +1573,8 @@ void CBotTF2 :: died ( edict_t *pKiller )
 		{
 			m_pNavigator->belief(CBotGlobals::entityOrigin(pKiller),getEyePosition(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 
-			if (CTeamFortress2Mod::isSentry(pKiller,CTeamFortress2Mod::getEnemyTeam(getTeam())))
-				m_pLastEnemySentry = MyEHandle(pKiller);
+			if ( !strcmp(pszWeapon,"obj_sentrygun") )
+				m_pLastEnemySentry = CTeamFortress2Mod::getMySentryGun(pKiller);
 		}
 	}
 
@@ -1579,6 +1583,7 @@ void CBotTF2 :: died ( edict_t *pKiller )
 
 void CBotTF2 :: killed ( edict_t *pVictim, char *weapon )
 {
+	CBotFortress::killed(pVictim,weapon);
 
 	if ( (m_iClass == TF_CLASS_ENGINEER) && weapon && *weapon && (strncmp(weapon,"obj_sentry",10) == 0) )
 		m_iSentryKills++;
@@ -1681,11 +1686,14 @@ void CBotTF2 :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 		//{
 		//	DOD_Class pclass = (DOD_Class)CClassInterface::getPlayerClassDOD(pKiller);
 
-			if ( CTeamFortress2Mod::isSentryGun(pKiller) )
+			if ( pWeapon && (pWeapon->getID() == TF2_WEAPON_SENTRYGUN) )
 			{
 				addVoiceCommand(TF_VC_SENTRYAHEAD);
 				updateCondition(CONDITION_COVERT);
 				m_fCurrentDanger += 100.0f;
+				m_pLastEnemySentry = CTeamFortress2Mod::getMySentryGun(pKiller);
+				m_vLastDiedOrigin = CBotGlobals::entityOrigin(pDied);
+				pKiller = m_pLastEnemySentry;
 			}
 			else 
 			{
@@ -1703,7 +1711,7 @@ void CBotTF2 :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 		m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
 		m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
 
-		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),1024.0,-1,true,true,false,false,0,false));
+		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,getOrigin(),4096.0,-1,true,true,false,false,0,false));
 			
 		if ( pWpt )
 			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
@@ -2140,7 +2148,7 @@ void CBotTF2 :: modThink ()
 		{
 			if ( m_pEnemy )
 			{
-				if ( (CBotGlobals::entityOrigin(m_pEnemy)-m_vStickyLocation).Length()<200 )
+				if ( (CBotGlobals::entityOrigin(m_pEnemy)-m_vStickyLocation).Length()<BLAST_RADIUS )
 					detonateStickies();
 			}
 		}
@@ -2314,6 +2322,15 @@ void CBotTF2 :: modThink ()
 
 void CBotTF2::handleWeapons()
 {
+	if ( m_iClass == TF_CLASS_ENGINEER )
+	{
+		if ( m_bIsCarryingObj )
+		{
+			// don't shoot while carrying object unless after 10 seconds of carrying
+			if ( (getHealthPercent() > 0.75) || ((m_fCarryTime + 10.0f) > engine->Time()) )
+				return;
+		}
+	}
 
 	//
 	// Handle attacking at this point
@@ -3250,6 +3267,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		fGetFlagUtility = 0.6f;
 	else if ( m_iClass == TF_CLASS_MEDIC )
 		fGetFlagUtility = 1.0f - (((float)numplayersonteam)/(gpGlobals->maxClients/2));
+	else if ( m_iClass == TF_CLASS_ENGINEER )
+		fGetFlagUtility = 0.1f; // not my priority
 
 	fDefendFlagUtility = bot_defrate.GetFloat()/2;
 
@@ -3322,8 +3341,12 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	if ( m_iClass==TF_CLASS_DEMOMAN )
 	{
-		ADD_UTILITY(BOT_UTIL_PIPE_LAST_ENEMY,(m_pLastEnemy!=NULL) && (distanceFrom(m_pLastEnemy) > (BLAST_RADIUS)) && !isVisible(m_pLastEnemy) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS),0.8f);
-		ADD_UTILITY(BOT_UTIL_PIPE_NEAREST_SENTRY,(m_pNearestEnemySentry!=NULL) && !isVisible(m_pNearestEnemySentry),0.8f);
+		if ( !hasEnemy() && ( m_iTrapType != TF_TRAP_TYPE_ENEMY ) )
+		{
+			ADD_UTILITY(BOT_UTIL_PIPE_LAST_ENEMY,(m_pLastEnemy!=NULL) && (distanceFrom(m_pLastEnemy) > (BLAST_RADIUS)),0.8f);
+			ADD_UTILITY(BOT_UTIL_PIPE_NEAREST_SENTRY,(m_pNearestEnemySentry!=NULL) && (distanceFrom(m_pNearestEnemySentry) > (BLAST_RADIUS)),0.81f);
+			ADD_UTILITY(BOT_UTIL_PIPE_LAST_ENEMY_SENTRY,(m_pLastEnemySentry!=NULL) && (distanceFrom(m_pLastEnemySentry) > (BLAST_RADIUS)),0.82f);
+		}
 	}
 
 	if ( m_iClass==TF_CLASS_SPY )
@@ -4169,7 +4192,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			m_pSchedules->add(new CBotSpySapBuildingSched(m_pLastEnemy,ENGI_TELE));
 			return true;
 		case BOT_UTIL_SAP_LASTENEMY_SENTRY:
-			m_pSchedules->add(new CBotSpySapBuildingSched(m_pLastEnemy,ENGI_SENTRY));
+			m_pSchedules->add(new CBotSpySapBuildingSched(m_pLastEnemySentry,ENGI_SENTRY));
 			return true;
 		case BOT_UTIL_SAP_ENEMY_SENTRY:
 			m_pSchedules->add(new CBotSpySapBuildingSched(m_pEnemy,ENGI_SENTRY));
@@ -4179,38 +4202,43 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			return true;
 		case BOT_UTIL_PIPE_NEAREST_SENTRY:
 		case BOT_UTIL_PIPE_LAST_ENEMY:
+		case BOT_UTIL_PIPE_LAST_ENEMY_SENTRY:
 			{
 				Vector vLoc;
+				Vector vEnemy;
+				edict_t *pEnemy;
+
+				vLoc = getOrigin();
 
 				if ( id == BOT_UTIL_PIPE_NEAREST_SENTRY )
 				{
-					m_pLastEnemy = m_pNearestEnemySentry;
+					pEnemy = m_pNearestEnemySentry;
+					vEnemy = CBotGlobals::entityOrigin(m_pNearestEnemySentry);
+				}
+				else if ( id == BOT_UTIL_PIPE_LAST_ENEMY_SENTRY )
+				{
+					pEnemy = m_pLastEnemySentry;
+					vEnemy = CBotGlobals::entityOrigin(m_pLastEnemySentry);
+					vLoc = m_vLastDiedOrigin;
+				}
+				else
+				{
+					pEnemy = m_pLastEnemy;
+					vEnemy = m_vLastSeeEnemy;
 				}
 
-				if ( distanceFrom(m_pLastEnemy) > 1024.0f )
-					vLoc = m_vLastDiedOrigin;
-				else
-					vLoc = getOrigin();
+				CWaypoint *pWptBlast = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(CBotGlobals::entityOrigin(pEnemy),vLoc,4096.0,-1,true,true,false,false,getTeam(),false));
 
-				// update last enemy info
-			
-				m_fLastSeeEnemy = engine->Time();
-				m_fLastUpdateLastSeeEnemy = 0;
-				m_vLastSeeEnemy = CBotGlobals::entityOrigin(m_pLastEnemy);
-				m_vLastSeeEnemyBlastWaypoint = m_vLastSeeEnemy;
-
-				CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(m_vLastSeeEnemy,vLoc,1024.0,-1,true,true,false,false,getTeam(),true));
-					
-				if ( pWpt )
+				if ( pWptBlast )
 				{
-					m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
+					CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(vLoc,pWptBlast->getOrigin(),4096.0,CWaypoints::getWaypointIndex(pWptBlast),true,false,true,false,getTeam(),true,1024.0f));
 
-					CBotTask *findpath = new CFindPathTask(m_vLastSeeEnemyBlastWaypoint,LOOK_LAST_ENEMY);
-					CBotTask *pipetask = new CBotTF2DemomanPipeEnemy(getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)),m_pLastEnemy);
+					CBotTask *findpath = new CFindPathTask(pWpt->getOrigin());
+					CBotTask *pipetask = new CBotTF2DemomanPipeEnemy(
+						pWpt->getOrigin(),pWptBlast->getOrigin(),
+						getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)),
+						vEnemy,pEnemy);
 					CBotSchedule *pipesched = new CBotSchedule();
-
-					//if ( !isVisible(m_pLastEnemy) )
-						findpath->setCompleteInterrupt(CONDITION_SEE_LAST_ENEMY_POS);
 
 					pipesched->addTask(findpath);
 					pipesched->addTask(pipetask);

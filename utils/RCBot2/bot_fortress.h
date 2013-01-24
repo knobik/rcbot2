@@ -269,7 +269,7 @@ public:
 
 	virtual void getTasks ( unsigned int iIgnore = 0 ) { CBot :: getTasks(iIgnore); }
 
-	virtual void died ( edict_t *pKiller );
+	virtual void died ( edict_t *pKiller, const char *pszWeapon );
 
 	virtual void killed ( edict_t *pVictim, char *weapon );
 
@@ -585,7 +585,7 @@ public:
 
 	void getTasks ( unsigned int iIgnore = 0 );
 
-	void died ( edict_t *pKiller );
+	void died ( edict_t *pKiller, const char *pszWeapon );
 
 	void killed ( edict_t *pVictim, char *weapon );
 
@@ -656,6 +656,8 @@ public:
 	inline bool isCarrying () { return m_bIsCarryingObj; }
 
 	void updateCarrying ();
+
+	inline void resetCarryTime () { m_fCarryTime = engine->Time(); }
 private:
 	// time for next jump
 	float m_fDoubleJumpTime;
@@ -713,6 +715,8 @@ private:
 	bool m_bIsCarryingDisp;
 	bool m_bIsCarryingTeleEnt;
 	bool m_bIsCarryingObj;
+
+	float m_fCarryTime;
 
 	float m_fCheckNextCarrying;
 

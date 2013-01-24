@@ -275,17 +275,19 @@ bool CDODBot :: startGame ()
 	return true;
 }
 
-void CDODBot :: killed ( edict_t *pVictim )
+void CDODBot :: killed ( edict_t *pVictim, char *weapon )
 {
+	CBot::killed(pVictim,weapon);
+
 	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
 		m_pNavigator->belief(CBotGlobals::entityOrigin(pVictim),getEyePosition(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 
 	return;
 }
 
-void CDODBot :: died ( edict_t *pKiller )
+void CDODBot :: died ( edict_t *pKiller, const char *pszWeapon )
 {
-	CBot::died(pKiller);
+	CBot::died(pKiller,pszWeapon);
 
 	// check if I want to change class
 	m_bCheckClass = true;

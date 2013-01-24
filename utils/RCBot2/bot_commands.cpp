@@ -838,8 +838,15 @@ eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd,
 
 				pSched->freeMemory();
 
-				// tests grenade throwing == 71
-				if ( task == BOT_UTIL_THROW_GRENADE )
+				// 83
+				if ( task == BOT_UTIL_PIPE_LAST_ENEMY )
+				{
+					pBot->setLastEnemy(pClient->getPlayer());
+					pBot->getSchedule()->freeMemory();
+					((CBotTF2*)pBot)->executeAction(BOT_UTIL_PIPE_LAST_ENEMY,NULL,NULL,NULL);
+				}
+				// 71
+				else if ( task == BOT_UTIL_THROW_GRENADE )
 				{
 					CBotWeapons *pWeapons;
 					CBotWeapon *gren;

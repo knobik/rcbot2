@@ -332,7 +332,7 @@ public:
 	/*
 	 * called when a bot dies
 	 */
-	virtual void died ( edict_t *pKiller );
+	virtual void died ( edict_t *pKiller, const char *pszWeapon );
 	virtual void killed ( edict_t *pVictim, char *weapon );
 
 	virtual int getTeam ();
@@ -518,6 +518,8 @@ public:
 
 	virtual void enemyLost () {};
 
+	void setLastEnemy (edict_t *pEnemy);
+
 	inline void enemyDown (edict_t *pEnemy) 
 	{ 
 		if ( pEnemy == m_pEnemy ) 
@@ -674,6 +676,8 @@ public:
 	virtual void voiceCommand ( int cmd ) { };
 
 	void addVoiceCommand ( int cmd );
+
+	void letGoOfButton ( int button );
 
 protected:
 
