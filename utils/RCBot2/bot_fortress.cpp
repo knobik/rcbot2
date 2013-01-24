@@ -4339,7 +4339,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pNearby )
 				{
-					m_pSchedules->add(new CBotTF2MessAroundSched(pNearby));
+					m_pSchedules->add(new CBotTF2MessAroundSched(pNearby,TF_VC_INVALID));
 					return true;
 				}
 

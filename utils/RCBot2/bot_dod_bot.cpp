@@ -533,8 +533,7 @@ void CDODBot :: chooseClass ()
 	int iClass;
 	edict_t *pPlayer;
 
-	for ( i = 1; i < 6; i ++ )
-		fClassFitness[i] = 1.0f;
+	memset(fClassFitness,0,sizeof(float)*6); // 6 dod classes
 
 	if ( (m_iClass >= 0) && (m_iClass < 6) )
 		fClassFitness[m_iClass] = 0.1f;
@@ -1056,7 +1055,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			if ( pNearby )
 			{
 				// this will work in DOD too
-				m_pSchedules->add(new CBotTF2MessAroundSched(pNearby));
+				m_pSchedules->add(new CBotTF2MessAroundSched(pNearby,DOD_VC_INVALID));
 				return true;
 			}
 

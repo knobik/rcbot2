@@ -319,7 +319,7 @@ public:
 class CBotTF2MessAroundSched : public CBotSchedule
 {
 public:
-	CBotTF2MessAroundSched ( edict_t *pFriendly );
+	CBotTF2MessAroundSched ( edict_t *pFriendly, int iMaxVoiceCmd );
 
 	void init();
 };

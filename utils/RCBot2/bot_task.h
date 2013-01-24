@@ -781,7 +781,7 @@ private:
 class CMessAround : public CBotTask
 {
 public:
-	CMessAround ( edict_t *pFriendly );
+	CMessAround ( edict_t *pFriendly, int iMaxVoiceCmd );
 
 	void execute ( CBot *pBot, CBotSchedule *pSchedule );
 
@@ -792,6 +792,7 @@ public:
 private:
 	float m_fTime;
 	MyEHandle m_pFriendly;
+	int m_iMaxVoiceCmd;
 	int m_iType; // 0 = attack friendly , 1 = taunt, 2 = random voice command
 };
 

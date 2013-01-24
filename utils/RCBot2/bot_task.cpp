@@ -2684,11 +2684,12 @@ void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 }
 /////////
 
-CMessAround::CMessAround ( edict_t *pFriendly )
+CMessAround::CMessAround ( edict_t *pFriendly, int iMaxVoiceCmd )
 {
 	m_fTime = 0.0f;
 	m_pFriendly = pFriendly;
 	m_iType = randomInt(0,3);
+	m_iMaxVoiceCmd = iMaxVoiceCmd;
 }
 
 void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
@@ -2769,7 +2770,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	case 2:
 	{
 		if ( !m_fTime )
-			pBot->addVoiceCommand(randomInt(0,31));
+			pBot->addVoiceCommand(randomInt(0,m_iMaxVoiceCmd-1));
 
 		if ( !m_fTime )
 			m_fTime = engine->Time() + randomFloat(1.5f,3.0f);

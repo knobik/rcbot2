@@ -464,9 +464,9 @@ void CBotAttackPointSched ::init ()
 	setID(SCHED_ATTACKPOINT);
 }
 ///////////////
-CBotTF2MessAroundSched :: CBotTF2MessAroundSched ( edict_t *pFriendly )
+CBotTF2MessAroundSched :: CBotTF2MessAroundSched ( edict_t *pFriendly, int iMaxVoiceCmd )
 {
-	addTask(new CMessAround(pFriendly));
+	addTask(new CMessAround(pFriendly,iMaxVoiceCmd));
 }
 
 void CBotTF2MessAroundSched :: init()
