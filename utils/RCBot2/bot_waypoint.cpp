@@ -1115,13 +1115,24 @@ void CWaypoint :: drawPaths ( edict_t *pEdict, unsigned short int iDrawType )
 // draws one path beam
 void CWaypoint :: drawPathBeam ( CWaypoint *to, unsigned short int iDrawType )
 {
+	static int r,g,b;
+
+	r = g = b = 200;
+
+	if ( to->hasSomeFlags(CWaypointTypes::W_FL_UNREACHABLE) )
+	{
+		r = 255;
+		g = 100;
+		b = 100;
+	}
+
 	switch ( iDrawType )
 	{
 	case DRAWTYPE_EFFECTS:
 		g_pEffects->Beam( m_vOrigin, to->getOrigin(), CWaypoints::waypointTexture(), 
 		0, 0, 1,
 		1, PATHWAYPOINT_WIDTH, PATHWAYPOINT_WIDTH, 255, 
-		1, 200, 200, 200, 200, 10);	
+		1, r, g, b, 200, 10);	
 		break;
 #ifndef __linux__
 	case DRAWTYPE_DEBUGENGINE2:
