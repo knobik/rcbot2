@@ -3251,7 +3251,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			m_pNearestDisp = CTeamFortress2Mod::nearestDispenser(getOrigin(),iTeam);
 		}
 
-		ADD_UTILITY(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,1000.0f/fResupplyDist);
+		ADD_UTILITY(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,1000.0f/fResupplyDist);
 		ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO, !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,400.0f/fAmmoDist);
 
 		if ( m_pNearestDisp )
@@ -3284,7 +3284,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	}
 
 	
-	ADD_UTILITY(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,1000.0f/fResupplyDist);
+	ADD_UTILITY(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,1000.0f/fResupplyDist);
 
 	ADD_UTILITY(BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0);
 	ADD_UTILITY(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0);
@@ -3801,23 +3801,36 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			}
 			break;
 		case BOT_UTIL_DEFEND_POINT:
-
-			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true,this);
-
-			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin(),(m_iClass == TF_CLASS_MEDIC) ? randomFloat(5.0f,10.0f) : 0.0f));
-				removeCondition(CONDITION_PUSH);
-				return true;
-			}
+				extern ConVar rcbot_tf2_protect_cap_time;
 
-			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea,true,this);
+				float fTime = rcbot_tf2_protect_cap_time.GetFloat();
+				// chance of going to point
+				float fprob = (fTime - (engine->Time() - CPoints::getPointCaptureTime(m_iCurrentDefendArea)))/fTime;
 
-			if ( pWaypoint )
-			{
-				m_pSchedules->add(new CBotDefendPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
-				removeCondition(CONDITION_PUSH);
-				return true;
+				if ( fprob < 0.33f )
+					fprob = 0.33f;
+
+				if ( randomFloat(0.0,1.0f) > fprob )
+				{
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true,this);
+
+					if ( pWaypoint )
+					{
+						m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin(),(m_iClass == TF_CLASS_MEDIC) ? randomFloat(5.0f,10.0f) : 0.0f));
+						removeCondition(CONDITION_PUSH);
+						return true;
+					}
+				}
+
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea,true,this);
+
+				if ( pWaypoint )
+				{
+					m_pSchedules->add(new CBotDefendPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
+					removeCondition(CONDITION_PUSH);
+					return true;
+				}
 			}
 			break;
 		case BOT_UTIL_CAPTURE_FLAG:

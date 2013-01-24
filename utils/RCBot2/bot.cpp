@@ -1741,7 +1741,7 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	else
 		vel = Vector(0.5f,0.5f,0.5f);
 
-	m_fNextUpdateAimVector = engine->Time() + 0.2f + (vel.Length()*0.2f);
+	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.3f,0.5f) - (vel.Length()*0.2f);
 
 	return m_vAimVector;///BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
 

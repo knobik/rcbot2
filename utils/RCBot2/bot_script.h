@@ -73,10 +73,16 @@ public:
 	void addValidArea ( int iArea );
 
 	int getValidAreas ( void );
+
+	void updateCaptureTime ();
+
+	inline float getCaptureTime () { return m_fCaptureTime; }
+
 private:
 	vector <CPointStyle> m_iNextRed[2];
 	vector <CPointStyle> m_iNextBlue[2];
 	vector <int> m_iValidAreas;
+	float m_fCaptureTime;
 };
 
 class CPoint : public CResetPoint
@@ -95,6 +101,10 @@ class CPoints
 public:
 	
 	static void pointCaptured ( int iTeamCaptured, const char *szName );
+
+	static void pointBeingCaptured ( int iTeam, const char *szName );
+
+	static float getPointCaptureTime ( unsigned int id );
 
 	static void resetPoints();
 

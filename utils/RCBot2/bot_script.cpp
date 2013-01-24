@@ -106,6 +106,13 @@ bool CPoint :: isPoint ( const char *szName )
 	return !strcmp(szName,m_szName); 
 }
 
+float CPoints::getPointCaptureTime ( unsigned int id )
+{
+	if ( id < m_points.size() )
+		return m_points[id]->getCaptureTime();
+
+	return 0.0f;
+}
 
 CResetPoint *CPoints::getPoint ( const char *szName )
 {
@@ -145,6 +152,19 @@ int CResetPoint :: getValidAreas ( void )
 	}
 
 	return iAreas;
+}
+
+void CResetPoint :: updateCaptureTime ()
+{
+	m_fCaptureTime = engine->Time();
+}
+
+void CPoints :: pointBeingCaptured ( int iTeam, const char *szName )
+{
+	CResetPoint *p = CPoints::getPoint(szName);
+
+	if ( p )
+		p->updateCaptureTime();
 }
 
 void CPoints :: pointCaptured ( int iTeamCaptured, const char *szName )

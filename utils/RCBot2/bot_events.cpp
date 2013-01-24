@@ -470,6 +470,7 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 	int capteam = pEvent->getInt("capteam",0);
 	int capindex = pEvent->getInt("cp",0);
 	const char *cappers = pEvent->getString("cappers",NULL);
+	const char *cpname = pEvent->getString("cpname");
 
 	
 	if ( cappers )
@@ -482,6 +483,8 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 			i++;
 		}
 	}
+
+	CPoints::pointBeingCaptured(capteam,cpname);
 
 	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(capteam,Vector(0,0,0),EVENT_CAPPOINT);
 
