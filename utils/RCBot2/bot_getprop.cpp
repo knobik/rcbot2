@@ -397,6 +397,8 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_BOMBSREMAINING,"CDODObjectiveResource","m_iBombsRemaining",0);
 		DEFINE_GETPROP(GETPROP_DOD_PLANTINGBOMB,"CDODPlayer","m_bPlanting",0);
 		DEFINE_GETPROP(GETPROP_DOD_DEFUSINGBOMB,"CDODPlayer","m_bDefusing",0);
+		DEFINE_GETPROP(GETPROP_DOD_BOMB_STATE,"CDODBombTarget","m_iState",0);
+		DEFINE_GETPROP(GETPROP_DOD_BOMB_TEAM,"CDODBombTarget","m_iBombingTeam",0);
 
 		DEFINE_GETPROP(GETPROP_ALL_ENTOWNER,"CBaseEntity","m_hOwnerEntity",0);
 

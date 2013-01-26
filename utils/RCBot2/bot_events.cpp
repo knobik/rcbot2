@@ -637,7 +637,7 @@ void CDODBombPlanted :: execute ( IBotEventInterface *pEvent )
 
 	CBroadcastBombPlanted func(cp,team);
 
-	if ( m_pActivator )
+/*	if ( m_pActivator )
 	{
 		CBot *pBot;
 
@@ -646,7 +646,7 @@ void CDODBombPlanted :: execute ( IBotEventInterface *pEvent )
 			// hack
 			((CDODBot*)pBot)->removeBomb();
 		}
-	}
+	}*/
 
 	CBots::botFunction(&func);
 

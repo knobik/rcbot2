@@ -161,6 +161,7 @@ typedef enum
 #define CONDITION_COVERT				32768
 #define CONDITION_RUN					65536
 #define CONDITION_GREN					131072
+#define CONDITION_NEED_BOMB				262144
 
 ////////////////////////
 #define BLAST_RADIUS 200

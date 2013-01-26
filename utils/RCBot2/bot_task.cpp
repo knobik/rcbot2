@@ -312,7 +312,8 @@ void CBotTF2WaitFlagTask :: debugString ( char *string )
 CBotDODBomb :: CBotDODBomb ( int iBombType, int iBombID, edict_t *pBomb, Vector vPosition, int iPrevOwner )
 {
 	m_iType = iBombType;
-	m_iBombID = iBombID; m_fTime = 0;
+	m_iBombID = iBombID; 
+	m_fTime = 0;
 
 	if ( m_iBombID == -1 )
 		m_iBombID = CDODMod::m_Flags.getBombID(pBomb);
@@ -361,7 +362,32 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		//else if ( CDODMod::m_Flags.isBombBeingDefused(m_iBombID) && !CClassInterface::isPlayerDefusingBomb_DOD(pBot->getEdict()) )// it is still planted
 		//	complete(); // bomb is being defused by someone else - give up
 	}
-	
+	else if ( m_iType == DOD_BOMB_PATH_PLANT ) // a bomb that's in the way 
+	{
+		bWorking = CClassInterface::isPlayerPlantingBomb_DOD(pBot->getEdict());
+
+		if ( CClassInterface::getDODBombState(m_pBombTarget) != DOD_BOMB_STATE_AVAILABLE )
+		{
+			//CDODBot *pDODBot = (CDODBot*)pBot;
+
+			//pDODBot->removeBomb();
+
+			complete();
+		}
+		else if ( !bWorking && CDODMod::m_Flags.isTeamMatePlanting(pBot->getEdict(),pBot->getTeam(),CBotGlobals::entityOrigin(m_pBombTarget)) )
+			complete(); // team mate doing my job
+
+	}
+	else if ( m_iType == DOD_BOMB_PATH_DEFUSE ) // a bomb that's in the way 
+	{
+		bWorking = CClassInterface::isPlayerDefusingBomb_DOD(pBot->getEdict());
+
+		if ( CClassInterface::getDODBombState(m_pBombTarget) == DOD_BOMB_STATE_AVAILABLE )
+			complete();
+		else if ( !bWorking && CDODMod::m_Flags.isTeamMateDefusing(pBot->getEdict(),pBot->getTeam(),CBotGlobals::entityOrigin(m_pBombTarget)) )
+			complete(); // team mate doing my job
+	}
+
 	pBot->setLookVector(m_vOrigin);
 	pBot->setLookAtTask(LOOK_VECTOR);
 
@@ -381,6 +407,52 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 void CBotDODBomb :: debugString ( char *string )
 {
 	sprintf(string,"CBotDODBomb %d %d %f %d",m_iType, m_iBombID,m_fTime,m_iPrevTeam);
+}
+
+//////
+
+
+void CDODWaitForBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_fTime == 0.0f )
+	{
+		CWaypoint *pCurrent;
+		pBot->updateCondition(CONDITION_RUN);
+		pCurrent = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(pBot->getOrigin(),400.0f,CWaypoints::getWaypointIndex(m_pBlocking),true,false,false));
+
+		if ( pCurrent == NULL )
+			pCurrent = m_pBlocking;
+
+		m_fTime = engine->Time() + randomFloat(2.0f,5.0f);
+		m_pRunTo = CWaypoints::getNextCoverPoint(pCurrent,m_pBlocking) ;
+	}
+
+	if ( m_pRunTo )
+	{
+		if (m_pRunTo->touched(pBot->getOrigin(),Vector(0,0,0),48.0f) )
+		{
+			if ( pBot->distanceFrom(m_pBombTarget) > (BLAST_RADIUS*2) )
+				pBot->stopMoving();
+			else
+				m_pRunTo = CWaypoints::getNextCoverPoint(m_pRunTo,m_pBlocking) ;
+		}
+		else
+			pBot->setMoveTo(m_pRunTo->getOrigin());
+	}
+
+	if ( m_fTime < engine->Time() )
+		complete();
+
+	if ( CClassInterface::getDODBombState (m_pBombTarget) != 2 )
+		complete();
+
+	pBot->lookAtEdict(m_pBombTarget);
+	pBot->setLookAtTask(LOOK_EDICT);
+}
+
+void CDODWaitForBombTask :: debugString ( char *string )
+{
+	sprintf(string,"CDODWaitForBombTask");
 }
 
 //////////

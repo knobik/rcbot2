@@ -1478,7 +1478,7 @@ void CBot :: listenForPlayers ()
 
 bool CBot :: onLadder ()
 {	
-	return false;//return (m_pBaseEdict->GetMoveType() == MOVETYPE_LADDER);
+	return CClassInterface::isMoveType(m_pEdict,MOVETYPE_LADDER);
 }
 
 void CBot :: freeAllMemory ()
@@ -1615,7 +1615,7 @@ void CBot :: doMove ()
 			m_fForwardSpeed = 0.0;
 		if ( fabs(m_fSideSpeed) < 1.0 )
 			m_fSideSpeed = 0.0;
-		if ( fDist < 8.0f )
+		if ( (!onLadder() && !m_pNavigator->nextPointIsOnLadder()) && (fDist < 8.0f) )
 		{
 			m_fForwardSpeed = 0.0f;
 			m_fSideSpeed = 0.0f;

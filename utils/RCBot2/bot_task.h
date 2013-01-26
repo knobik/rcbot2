@@ -473,8 +473,24 @@ private:
 	int m_iTries;
 };
 
-#define DOD_BOMB_DEFUSE  1
-#define DOD_BOMB_PLANT   2
+class CDODWaitForBombTask : public CBotTask
+{
+public:
+	CDODWaitForBombTask ( edict_t *pBombTarget, CWaypoint *pBlocking )
+	{
+		m_pBombTarget = pBombTarget;
+		m_fTime = 0.0f;
+		m_pBlocking = pBlocking;
+	}
+	virtual void debugString ( char *string );
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+private:
+	edict_t *m_pBombTarget;
+	float m_fTime;
+	CWaypoint *m_pRunTo;
+	CWaypoint *m_pBlocking;
+};
 
 class CBotDODBomb : public CBotTask
 {

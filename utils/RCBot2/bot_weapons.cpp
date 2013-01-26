@@ -62,7 +62,8 @@ const char *g_szDODWeapons[] =
 	"weapon_frag_us", 
 	"weapon_frag_ger", 
 	"weapon_smoke_us", 
-	"weapon_smoke_ger"
+	"weapon_smoke_ger",
+	"weapon_basebomb"
 };
 
 const char *g_szHL2DMWeapons[] =
@@ -115,6 +116,7 @@ WeaponsData_t DODWeaps[] =
 	{3,DOD_WEAPON_FRAG_GER, g_szDODWeapons[21],		WEAP_FL_GRENADE|WEAP_FL_EXPLOSIVE|WEAP_FL_NONE,0,1200,-1,1},
 	{3,DOD_WEAPON_SMOKE_US, g_szDODWeapons[22],		WEAP_FL_GRENADE,0,1200,-1,1},
 	{3,DOD_WEAPON_SMOKE_GER, g_szDODWeapons[23],	WEAP_FL_GRENADE,0,1200,-1,1},
+	{3,DOD_WEAPON_BOMB, g_szDODWeapons[24], WEAP_FL_NONE,0,0,-1,1}
 };
 
 

@@ -37,6 +37,7 @@
 #include "bot_strings.h"
 #include "bot_fortress.h"
 #include "bot_dod_bot.h"
+#include "bot_waypoint.h"
 
 #define MAX_CAP_POINTS 32
 
@@ -343,6 +344,9 @@ public:
 	bool isTeamMateDefusing ( edict_t *pIgnore, int iTeam, int id );
 	bool isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id );
 
+	bool isTeamMateDefusing ( edict_t *pIgnore, int iTeam, Vector vOrigin );
+	bool isTeamMatePlanting ( edict_t *pIgnore, int iTeam, Vector vOrigin );
+
 	inline int getNumBombsRequired ( int iId )
 	{
 		if ( iId == -1 )
@@ -498,6 +502,29 @@ public:
 
 	static bool shouldAttack ( int iTeam ); // uses the neural net to return probability of attack
 
+	static edict_t *getBombTarget ( CWaypoint *pWaypoint );
+
+	static inline CWaypoint *getBombWaypoint ( edict_t *pBomb )
+	{
+		for ( unsigned int i = 0; i < m_BombWaypoints.size(); i ++ )
+		{
+			if ( m_BombWaypoints[i].pEdict == pBomb )
+				return m_BombWaypoints[i].pWaypoint;
+		}
+
+		return NULL;
+	}
+
+	static inline bool isPathBomb ( edict_t *pBomb )
+	{
+		for ( unsigned int i = 0; i < m_BombWaypoints.size(); i ++ )
+		{
+			if ( m_BombWaypoints[i].pEdict == pBomb )
+				return true;
+		}
+
+		return false;
+	}
 protected:
 
 	void initMod ();
@@ -517,14 +544,10 @@ protected:
 	static int m_iBombAreaAllies;
 	static int m_iBombAreaAxis;
 
-	//static CPerceptron *gNetAttackOrDefend;
+	static vector<edict_wpt_pair_t> m_BombWaypoints;
 
 									// enemy			// team
 	static float fAttackProbLookUp[MAX_DOD_FLAGS+1][MAX_DOD_FLAGS+1];
-	//virtual void entitySpawn ( edict_t *pEntity );
-
-	//virtual void clientCommand ( edict_t *pEntity, int argc,const char *pcmd, const char *arg1, const char *arg2 ) {};
-
 };
 
 class CDODModDedicated : public CDODMod

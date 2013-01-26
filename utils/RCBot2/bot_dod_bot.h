@@ -97,6 +97,15 @@ typedef enum
  DOD_CLASS_ROCKET
 }DOD_Class;
 
+#define DOD_BOMB_STATE_UNAVAILABLE 0
+#define DOD_BOMB_STATE_AVAILABLE   1
+#define DOD_BOMB_STATE_ACTIVE	   2
+
+#define DOD_BOMB_DEFUSE			1
+#define DOD_BOMB_PLANT			2
+#define DOD_BOMB_PATH_PLANT		3
+#define DOD_BOMB_PATH_DEFUSE	4
+
 #define DOD_CLASSNAME_CONTROLPOINT "dod_control_point"
 #define DOD_CLASSNAME_BOMBTARGET "dod_bomb_target"
 
@@ -180,7 +189,7 @@ public:
 
 	void grenadeThrown () { addVoiceCommand(DOD_VC_FIRE_IN_THE_HOLE); }
 
-	void chooseClass(); // updates m_iDesiredClass
+	void chooseClass( bool bIsChangingClass ); // updates m_iDesiredClass
 	void changeClass(); // uses m_iDesiredClass
 
 private:
@@ -227,7 +236,8 @@ private:
 	smoke_t m_CheckSmoke[MAX_PLAYERS];
 
 	float m_fDeployMachineGunTime;
-	edict_t *m_pNearestBomb;
+	edict_t *m_pNearestBomb; // "capture" bomb
+	edict_t *m_pNearestPathBomb; // blocking path bomb
 
 	eDODVoiceCMD m_LastHearVoiceCommand;
 	// blah blah

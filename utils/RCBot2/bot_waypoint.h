@@ -53,6 +53,12 @@ public:
 	int iFlags;
 };
 
+typedef struct
+{
+	edict_t *pEdict;
+	CWaypoint *pWaypoint;
+}edict_wpt_pair_t;
+
 enum
 {
  DRAWTYPE_EFFECTS = 0,
@@ -116,6 +122,7 @@ public:
 	static const int W_FL_HEALTH = 256;
 	static const int W_FL_OPENS_LATER = 512;
 	static const int W_FL_ROCKET_JUMP = 1024;
+	static const int W_FL_BOMB_TO_OPEN = 1024; // DOD:S
 	static const int W_FL_SNIPER = 2048;
 	static const int W_FL_AMMO = 4096;
 	static const int W_FL_RESUPPLY = 8192;
@@ -351,6 +358,7 @@ public:
 		return &m_theWaypoints[iIndex];
 	}
 
+	static CWaypoint *getNextCoverPoint ( CWaypoint *pCurrent, CWaypoint *pBlocking );
 
 	// save waypoints
 	static bool save ( bool bVisiblityMade );
@@ -382,6 +390,7 @@ public:
 	static CWaypoint *getPinchPointFromWaypoint ( Vector vPlayerOrigin, Vector vPinchOrigin );
 	static CWaypoint *getNestWaypoint ( int iTeam, int iArea, bool bForceArea = false, CBot *pBot = NULL );
 
+	static void updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int iWptFlag, const char *szClassname );
 private:
 	static CWaypoint m_theWaypoints[MAX_WAYPOINTS];	
 	static int m_iNumWaypoints;

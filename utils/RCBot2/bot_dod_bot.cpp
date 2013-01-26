@@ -95,6 +95,24 @@ bool CDODBot::canGotoWaypoint(Vector vPrevWaypoint, CWaypoint *pWaypoint)
 		{
 			return false;
 		}
+		else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_BOMB_TO_OPEN) )
+		{
+			edict_t *pBombTarget = CDODMod::getBombTarget(pWaypoint);
+
+			if ( pBombTarget )
+			{
+				// if its blown we can go there
+				if ( CClassInterface::getDODBombState(pBombTarget)==0 )
+					return true;
+				// if its for our team we can blow it up 
+				if ( CClassInterface::getDODBombTeam(pBombTarget) == m_iTeam )
+					return m_bHasBomb;
+
+				return false;
+			}
+			else
+				return false;
+		}
 
 		return true;
 	}
@@ -142,6 +160,11 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		{
 			m_pEnemyRocket = pEntity;
 		}
+		else if ( (pEntity!=m_pNearestPathBomb) && CDODMod::isPathBomb(pEntity) )
+		{
+			if ( (m_pNearestPathBomb == NULL) || (distanceFrom(pEntity)<distanceFrom(m_pNearestPathBomb)))
+				m_pNearestPathBomb = pEntity;
+		}
 	}
 	else
 	{
@@ -167,6 +190,11 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			// remember bomb if it is within radius of blowing me up
 			if ( distanceFrom(m_pNearestBomb) > (BLAST_RADIUS*2) )
 				m_pNearestBomb = NULL;
+		}
+		else if ( m_pNearestPathBomb == pEntity )
+		{
+			if ( distanceFrom(m_pNearestPathBomb) > (BLAST_RADIUS*2) )
+				m_pNearestPathBomb = NULL;
 		}
 	}
 
@@ -236,7 +264,7 @@ bool CDODBot :: startGame ()
 	}
 
 	if ( (m_iDesiredClass < 0) || (m_iDesiredClass > 5) )
-		chooseClass();
+		chooseClass(false);
 
 	// not the correct class? and desired class is valid?
 	if ( (m_iDesiredClass >= 0) && (m_iDesiredClass <= 5) && (m_iDesiredClass != CClassInterface::getPlayerClassDOD(m_pEdict)) )
@@ -395,6 +423,8 @@ void CDODBot :: spawnInit ()
 
 	m_bHasBomb = false;
 
+	m_pNearestPathBomb = NULL;
+
 	m_pNearestBomb = NULL;
 
 	memset(m_CheckSmoke,0,sizeof(smoke_t)*MAX_PLAYERS);
@@ -502,7 +532,59 @@ void CDODBot :: touchedWpt ( CWaypoint *pWaypoint )
 	wptindex = CWaypoints::getWaypointIndex(pWaypoint);
 
 	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_BOMBS_HERE) )
-		m_bHasBomb = true;
+	{
+		//removeCondition(CONDITION_NEED_BOMB);
+		//m_bHasBomb = true;
+	}
+	else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_BOMB_TO_OPEN) )
+	{
+		edict_t *pBombTarget = CDODMod::getBombTarget(pWaypoint);
+		Vector vBombTarget = CBotGlobals::entityOrigin(pBombTarget);
+
+		// find bomb target for this waypoint and place bomb
+		if ( pBombTarget && (CClassInterface::getDODBombState(pBombTarget) == 1) )
+		{
+			if ( (CClassInterface::getDODBombTeam(pBombTarget) == m_iTeam) && m_bHasBomb )
+			{
+				// check if someone isn't bombing already
+				if ( CDODMod::m_Flags.isTeamMatePlanting(m_pEdict,m_iTeam,pWaypoint->getOrigin()) )
+				{
+			
+					CBotSchedule *bombsched = new CBotSchedule();
+					//todob
+					m_pSchedules->freeMemory();
+
+					bombsched->setID(SCHED_GOOD_HIDE_SPOT);
+
+					bombsched->addTask(new CDODWaitForBombTask(pBombTarget,pWaypoint));
+
+					m_pSchedules->add(bombsched);
+				
+					
+				}
+				else // plant
+				{
+
+					CBotSchedule *bombsched = new CBotSchedule();
+					//todob
+					m_pSchedules->freeMemory();
+
+					bombsched->setID(SCHED_BOMB);
+
+					bombsched->addTask(new CBotDODBomb(DOD_BOMB_PATH_PLANT,-1,pBombTarget,CBotGlobals::entityOrigin(pBombTarget),-1));
+					bombsched->addTask(new CDODWaitForBombTask(pBombTarget,pWaypoint));
+
+					m_pSchedules->add(bombsched);
+				}
+			}
+			else
+			{
+				updateCondition(CONDITION_NEED_BOMB);
+				updateCondition(CONDITION_CHANGED);
+			}
+		}
+	}
+
 	/*else if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) ) 
 	{
 		m_pNavigator->beliefOne(wptindex,BELIEF_DANGER,distanceFrom(m_pEnemy));
@@ -521,7 +603,7 @@ void CDODBot :: changeClass ()
 	m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat(),bot_max_cc_time.GetFloat());
 }
 
-void CDODBot :: chooseClass ()
+void CDODBot :: chooseClass ( bool bIsChangingClass )
 {
 	float fClassFitness[6]; // 6 classes
 	float fTotalFitness = 0;
@@ -533,9 +615,10 @@ void CDODBot :: chooseClass ()
 	int iClass;
 	edict_t *pPlayer;
 
-	memset(fClassFitness,0,sizeof(float)*6); // 6 dod classes
+	for ( i = 0; i < 6; i ++ ) 
+		fClassFitness[i] = 1.0f;
 
-	if ( (m_iClass >= 0) && (m_iClass < 6) )
+	if ( bIsChangingClass && ((m_iClass >= 0) && (m_iClass < 6)) )
 		fClassFitness[m_iClass] = 0.1f;
 
 	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
@@ -591,7 +674,7 @@ void CDODBot :: modThink ()
 				// if I think I could do better
 				if ( randomFloat(0.0f,1.0f) > (scoreValue / CDODMod::getHighestScore()) )
 				{
-					chooseClass();
+					chooseClass(true);
 					changeClass();
 				}
 		}
@@ -604,6 +687,8 @@ void CDODBot :: modThink ()
 	
 	m_iClass = (DOD_Class)CClassInterface::getPlayerClassDOD(m_pEdict);	
 	m_iTeam = getTeam();
+
+	m_bHasBomb = m_pWeapons->hasWeapon(CWeapons::getWeapon(DOD_WEAPON_BOMB)->getID());
 
 	if ( m_iTeam == TEAM_ALLIES ) // im allies
 		m_iEnemyTeam = TEAM_AXIS;
@@ -633,7 +718,7 @@ void CDODBot :: modThink ()
 		}
 	}
 
-	if ( CClassInterface::isMoveType(m_pEdict,MOVETYPE_LADDER) )
+	if ( onLadder() )
 	{
 		setMoveLookPriority(MOVELOOK_OVERRIDE);
 		setLookAtTask(LOOK_WAYPOINT);
@@ -737,6 +822,33 @@ void CDODBot :: modThink ()
 					// don't interrupt current shedule, just add to front
 					m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
 					m_pSchedules->addFront(new CGotoHideSpotSched(m_pEnemyGrenade));
+				}
+			}
+		}
+	}
+
+	if ( m_pNearestPathBomb )
+	{
+		// active bomb
+		if ( CClassInterface::getDODBombState(m_pNearestPathBomb) == 2 )
+		{
+			if ( distanceFrom(m_pNearestPathBomb) < (BLAST_RADIUS*2) )
+			{
+				// run
+				if ( !m_pSchedules->hasSchedule(SCHED_BOMB) && 
+					!m_pSchedules->hasSchedule(SCHED_GOOD_HIDE_SPOT) )
+				{
+					
+					CWaypoint *pWaypoint = CDODMod::getBombWaypoint(m_pNearestPathBomb);
+
+					if ( pWaypoint )
+					{
+						CBotSchedule *runsched = new CBotSchedule(new CDODWaitForBombTask(m_pNearestPathBomb,pWaypoint));
+						runsched->setID(SCHED_GOOD_HIDE_SPOT);
+
+						m_pSchedules->freeMemory();
+						m_pSchedules->add(runsched);
+					}
 				}
 			}
 		}
@@ -1291,6 +1403,10 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 	// no breaking -- defusing/planting bomb stuff
 	case BOT_UTIL_DEFUSE_NEAREST_BOMB:
 		iBombType = DOD_BOMB_DEFUSE;
+
+		if ( CDODMod::m_Flags.isTeamMateDefusing(m_pEdict,m_iTeam,util->getIntData()) )
+			return false; // teammate doing the job already
+
 	case BOT_UTIL_PLANT_NEAREST_BOMB:
 		id = util->getIntData();
 		vGoal = util->getVectorData();
@@ -1298,24 +1414,34 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 		if ( util->getId() == BOT_UTIL_PLANT_NEAREST_BOMB )
 			iBombType = DOD_BOMB_PLANT;
+
+		if ( CDODMod::m_Flags.isTeamMatePlanting(m_pEdict,m_iTeam,id) )
+			return false; // teammate doing the job already
+
 	case BOT_UTIL_DEFUSE_BOMB:
 		if ( util->getId() == BOT_UTIL_DEFUSE_BOMB )
 		{
 			if ( !CDODMod::m_Flags.getRandomBombToDefuse(&vGoal,m_iTeam,&pBombTarget,&id) )
 				return false;
 
+			if ( CDODMod::m_Flags.isTeamMateDefusing(m_pEdict,m_iTeam,id) )
+				return false; // teammate doing the job already
+
 			iBombType = DOD_BOMB_DEFUSE;
 		}
 	case BOT_UTIL_PLANT_BOMB:
 		{
-
 			if ( util->getId() == BOT_UTIL_PLANT_BOMB )
 			{
 				if ( !CDODMod::m_Flags.getRandomBombToPlant(&vGoal,m_iTeam,&pBombTarget,&id) )
 					return false;
 
+				if ( CDODMod::m_Flags.isTeamMatePlanting(m_pEdict,m_iTeam,id) )
+					return false; // teammate doing the job already here
+
 				iBombType = DOD_BOMB_PLANT;
 			}
+
 
 			int iWptGoal = CDODMod::m_Flags.getWaypointAtFlag(id);
 	
@@ -1819,7 +1945,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		ADD_UTILITY(BOT_UTIL_PLANT_BOMB,m_bHasBomb && (iNumBombsToPlant>0),fPlantUtil );
 		ADD_UTILITY(BOT_UTIL_DEFUSE_BOMB,(iNumBombsToDefuse>0), fDefuseBombUtil);
 		ADD_UTILITY(BOT_UTIL_DEFEND_BOMB,(iNumBombsToDefend>0), fDefendBombUtil);
-		ADD_UTILITY(BOT_UTIL_PICKUP_BOMB,!m_bHasBomb && (iNumBombsToPlant>0),fPlantUtil);
+
+		ADD_UTILITY(BOT_UTIL_PICKUP_BOMB,!m_bHasBomb && (iNumBombsToPlant>0),hasSomeConditions(CONDITION_NEED_BOMB) ? 0.9f : fPlantUtil);
 
 		if ( iNumEnemyBombsOnMap > 0 )
 		{
@@ -1981,19 +2108,26 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 	static Vector vAim;
 	static short int iSlot;
 	static smoke_t *smokeinfo;
-	static bool bProne;
+	//static bool bProne;
 	static float fStamina;
 	static CBotWeapon *pWp;
 	static Vector vel;
+	static int index;
+	bool bIsEnemyProne;
+	float fEnemyStamina;
 
 	pWp = getCurrentWeapon();
 
 	vAim = CBot::getAimVector(pEntity);
 
+	// CRASH fix
+	bIsEnemyProne = false;
+	index = ENTINDEX(pEntity);
 	// for some reason, prone does not change collidable size
-	CClassInterface::getPlayerInfoDOD(pEntity,&bProne,&fStamina);
+	if ( (index > 0) && (index <= gpGlobals->maxClients) )
+		CClassInterface::getPlayerInfoDOD(pEntity,&bIsEnemyProne,&fEnemyStamina);
 	// .. so update 
-	if ( bProne )
+	if ( bIsEnemyProne )
 	{
 		vAim.z = vAim.z - randomFloat(0.0,8.0f);
 	}
@@ -2007,6 +2141,9 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 
 			// shoot the ground
 			vAim = vAim - Vector(0,0,randomFloat(16.0f,32.0f));
+
+			// add gravity height
+			vAim.z += (distanceFrom(pEntity) * (0.075f *m_pProfile->m_fAimSkill));
 		}
 	}
 

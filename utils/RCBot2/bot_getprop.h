@@ -82,6 +82,8 @@ typedef enum
 	GETPROP_DOD_PLANTINGBOMB,
 	GETPROP_DOD_DEFUSINGBOMB,
 	GETPROP_ALL_ENTOWNER,
+	GETPROP_DOD_BOMB_STATE,
+	GETPROP_DOD_BOMB_TEAM,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -303,6 +305,8 @@ public:
 	inline static CBaseHandle *getWeaponList ( edict_t *player ) { return g_GetProps[GETPROP_WEAPONLIST].getEntityHandle(player);}
 	inline static int getWeaponState ( edict_t *pgun ) { return g_GetProps[GETPROP_WEAPONSTATE].getInt(pgun,0); }
 
+	inline static int getDODBombState ( edict_t *pBombTarget ) { return g_GetProps[GETPROP_DOD_BOMB_STATE].getInt(pBombTarget,0); }
+	inline static int getDODBombTeam ( edict_t *pBombTarget ) { return g_GetProps[GETPROP_DOD_BOMB_TEAM].getInt(pBombTarget,0); }
 	inline static int *getWeaponClip1Pointer ( edict_t *pgun ) { return g_GetProps[GETPROP_WEAPONCLIP1].getIntPointer(pgun); }
 	inline static int *getWeaponClip2Pointer ( edict_t *pgun ) { return g_GetProps[GETPROP_WEAPONCLIP2].getIntPointer(pgun); }
 

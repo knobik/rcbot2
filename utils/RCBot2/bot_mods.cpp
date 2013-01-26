@@ -75,6 +75,7 @@ int CDODMod::m_iBombAreaAllies = 0;
 int CDODMod::m_iBombAreaAxis = 0;
 //CPerceptron *CDODMod::gNetAttackOrDefend = NULL;
 float CDODMod::fAttackProbLookUp[MAX_DOD_FLAGS+1][MAX_DOD_FLAGS+1];
+vector<edict_wpt_pair_t> CDODMod::m_BombWaypoints;
 
 extern ConVar bot_use_disp_dist;
 
@@ -1355,6 +1356,11 @@ int CDODMod::getHighestScore ()
 
 bool CDODFlags::isTeamMateDefusing ( edict_t *pIgnore, int iTeam, int id )
 {
+	return isTeamMateDefusing(pIgnore,iTeam,CBotGlobals::entityOrigin(m_pBombs[id]));
+}
+
+bool CDODFlags::isTeamMateDefusing ( edict_t *pIgnore, int iTeam, Vector vOrigin )
+{
 	int i;
 	edict_t *pPlayer;
 
@@ -1373,7 +1379,7 @@ bool CDODFlags::isTeamMateDefusing ( edict_t *pIgnore, int iTeam, int id )
 			if ( CClassInterface::getTeam(pPlayer) != iTeam )
 				continue;
 
-			if ( (CBotGlobals::entityOrigin(m_pBombs[id]) - CBotGlobals::entityOrigin(pPlayer)).Length() < 128 )
+			if ( (vOrigin - CBotGlobals::entityOrigin(pPlayer)).Length() < 128 )
 			{
 				return true;
 			}
@@ -1383,7 +1389,8 @@ bool CDODFlags::isTeamMateDefusing ( edict_t *pIgnore, int iTeam, int id )
 	return false;
 }
 
-bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
+
+bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, Vector vOrigin )
 {
 	int i;
 	edict_t *pPlayer;
@@ -1403,7 +1410,7 @@ bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
 			if ( CClassInterface::getTeam(pPlayer) != iTeam )
 				continue;
 
-			if ( (CBotGlobals::entityOrigin(m_pBombs[id]) - CBotGlobals::entityOrigin(pPlayer)).Length() < 128 )
+			if ( (vOrigin - CBotGlobals::entityOrigin(pPlayer)).Length() < 128 )
 			{
 				return true;
 			}
@@ -1411,6 +1418,11 @@ bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
 	}
 
 	return false;
+}
+
+bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
+{
+	return isTeamMatePlanting(pIgnore,iTeam,CBotGlobals::entityOrigin(m_pBombs[id]));
 }
 // return the flag with the least danger (randomly)
 bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id )
@@ -1674,7 +1686,7 @@ void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)
 			{
 				vOrigin = CBotGlobals::entityOrigin(pent);
 
-				if ( (vOrigin - m_vCPPositions[j]).Length() < 128 )
+				if ( (vOrigin - m_vCPPositions[j]).Length() < 512.0f )
 					m_pBombs[j] = pent;
 			}
 		}
@@ -1702,6 +1714,19 @@ int CDODMod ::getScore(edict_t *pPlayer)
 		CClassInterface::getPlayerDeathsDOD(pPlayer,m_pPlayerResourceEntity);
 
 	return 0;
+}
+
+edict_t *CDODMod :: getBombTarget ( CWaypoint *pWpt )
+{
+	register unsigned short int size = m_BombWaypoints.size();
+
+	for ( register unsigned short int i = 0; i < size; i ++ )
+	{
+		if ( m_BombWaypoints[i].pWaypoint == pWpt )
+			return m_BombWaypoints[i].pEdict;
+	}
+
+	return NULL;
 }
 
 void CDODMod ::roundStart()
@@ -1738,6 +1763,11 @@ void CDODMod ::roundStart()
 	}
 
 	m_Flags.setup(m_pResourceEntity,m_iMapType);
+
+	// find bombs at waypoints
+	m_BombWaypoints.clear();
+
+	CWaypoints::updateWaypointPairs(&m_BombWaypoints,CWaypointTypes::W_FL_BOMB_TO_OPEN,"dod_bomb_target");
 
 
 	//m_Flags.updateAll();

@@ -1302,6 +1302,29 @@ float CWaypoint :: distanceFrom ( Vector vOrigin )
 {
 	return VectorDistance((m_vOrigin - vOrigin));//.Length();
 }
+///////////////////////////////////////////////////
+void CWaypoints :: updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int iWptFlag, const char *szClassname )
+{
+	register short int iSize = numWaypoints();
+	CWaypoint *pWpt;
+	edict_wpt_pair_t pair;
+
+	pWpt = m_theWaypoints;
+
+	for ( register short int i = 0; i < iSize; i ++ )
+	{
+		if ( pWpt->isUsed() && pWpt->hasFlag(iWptFlag) )
+		{
+			pair.pWaypoint = pWpt;
+			pair.pEdict = CClassInterface::FindEntityByClassnameNearest(pWpt->getOrigin(),szClassname,300.0f);
+
+			if ( pair.pEdict != NULL )
+				pPairs->push_back(pair);
+		}
+
+		pWpt++;
+	}
+}
 /////////////////////////////////////////////////////////////////////////////////////
 // save waypoints (visibilitymade saves having to work out visibility again)
 bool CWaypoints :: save ( bool bVisiblityMade )
@@ -1971,6 +1994,51 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vecto
 	return pWpt;
 }
 
+#define MAX_DEPTH 10
+/*
+void CWaypointNavigator::runAwayFrom ( int iId )
+{
+	CWaypoint *pRunTo = CWaypoints::getNextCoverPoint(CWaypoints::getWaypoint(m_iCurrentWaypoint),CWaypoints::getWaypoint(iId)) ;
+
+	if ( pRunTo )
+	{
+		if ( pRunTo->touched(m_pBot->getOrigin(),Vector(0,0,0),48.0f) )
+			m_iCurrentWaypoint = CWaypoints::getWaypointIndex(pRunTo);
+		else
+			m_pBot->setMoveTo(pRunTo->getOrigin());
+	}
+
+}*/
+
+CWaypoint *CWaypoints::getNextCoverPoint ( CWaypoint *pCurrent, CWaypoint *pBlocking )
+{
+	int iMaxDist = -1;
+	int iNext;
+	float fMaxDist = 0.0f;
+	float fDist = 0.0f;
+	CWaypoint *pNext;
+
+	for ( int i = 0; i < pCurrent->numPaths(); i ++ )
+	{
+		iNext = pCurrent->getPath(i);
+		pNext = CWaypoints::getWaypoint(iNext);
+
+		if ( pNext == pBlocking )
+			continue;
+
+		if ( (iMaxDist == -1) || ((fDist=pNext->distanceFrom(pBlocking->getOrigin())) > fMaxDist) )
+		{
+			fMaxDist = fDist;
+			iMaxDist = iNext;
+		}
+	}
+
+	if ( iMaxDist == -1 )
+		return NULL;
+
+	return CWaypoints::getWaypoint(iMaxDist);
+}
+
 CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot )
 {
 	register short int i;
@@ -2167,6 +2235,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_OPENS_LATER,"openslater","this waypoint is available when a door is open only",WptColor(100,100,200)));
 	addType(new CWaypointType(W_FL_SNIPER,"sniper","a bot can snipe here",WptColor(0,255,0)));
 	addType(new CWaypointType(W_FL_ROCKET_JUMP,"rocketjump","TF2 a bot can rocket jump here",WptColor(10,100,0),(1<<MOD_TF2)));
+	addType(new CWaypointType(W_FL_BOMB_TO_OPEN,"bombtoopen","DOD:S bot needs to blow up this point to move on",WptColor(50,200,30),(1<<MOD_DOD)));
 	addType(new CWaypointType(W_FL_AMMO,"ammo","bot can sometimes get ammo here",WptColor(50,100,10)));
 	addType(new CWaypointType(W_FL_RESUPPLY,"resupply","TF2 bot can always get ammo and health here",WptColor(255,100,255),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_BOMBS_HERE,"bombs","DOD bots can pickup bombs here",WptColor(255,100,255),(1<<MOD_DOD)));

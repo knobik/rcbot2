@@ -437,9 +437,20 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	extern MTRand_int32 irand;
 	// TODO: check rcbot isn't already loaded already
 
+	ConVar *rcbot_instance;
 
 	ConnectTier1Libraries( &interfaceFactory, 1 );
 	ConnectTier2Libraries( &interfaceFactory, 1 );
+
+	rcbot_instance = cvar->FindVar("rcbot_ver");
+
+	if ( rcbot_instance != NULL )
+	{
+		Msg("An instance of RCBOT is already running. Can't load!");
+		DisconnectTier2Libraries( );
+		DisconnectTier1Libraries( );
+		return false;
+	}
 
 	LOAD_GAME_SERVER_INTERFACE(playerinfomanager,IPlayerInfoManager,INTERFACEVERSION_PLAYERINFOMANAGER);
 
@@ -629,6 +640,8 @@ void CRCBotPlugin::LevelInit( char const *pMapName )
 	
 	if ( pMod )
 		pMod->mapInit();
+
+	CClients::setListenServerClient(NULL);
 }
 
 //---------------------------------------------------------------------------------
