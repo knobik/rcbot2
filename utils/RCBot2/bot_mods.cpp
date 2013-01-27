@@ -1356,7 +1356,10 @@ int CDODMod::getHighestScore ()
 
 bool CDODFlags::isTeamMateDefusing ( edict_t *pIgnore, int iTeam, int id )
 {
-	return isTeamMateDefusing(pIgnore,iTeam,CBotGlobals::entityOrigin(m_pBombs[id]));
+	if ( m_pBombs[id][0] != NULL )
+		return isTeamMateDefusing(pIgnore,iTeam,CBotGlobals::entityOrigin(m_pBombs[id][0]));
+
+	return false;
 }
 
 bool CDODFlags::isTeamMateDefusing ( edict_t *pIgnore, int iTeam, Vector vOrigin )
@@ -1422,7 +1425,10 @@ bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, Vector vOrigin
 
 bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
 {
-	return isTeamMatePlanting(pIgnore,iTeam,CBotGlobals::entityOrigin(m_pBombs[id]));
+	if ( m_pBombs[id][0] )
+		return isTeamMatePlanting(pIgnore,iTeam,CBotGlobals::entityOrigin(m_pBombs[id][0]));
+
+	return false;
 }
 // return the flag with the least danger (randomly)
 bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id )
@@ -1496,7 +1502,7 @@ bool CDODFlags::getRandomBombToDefuse  ( Vector *position, int iTeam, edict_t **
 	// more possibility to return bomb targets with no bomb already
 	for ( short i = 0; i < m_iNumControlPoints; i ++ )
 	{
-		if ( (m_iOwner[i] == iTeam) && isBombPlanted(i) && !isBombBeingDefused(i) && (m_pBombs[i] != NULL) )
+		if ( (m_iOwner[i] == iTeam) && isBombPlanted(i) && !isBombBeingDefused(i) && (m_pBombs[i][0] != NULL) )
 			for ( j = 0; j < getNumBombsRequired(i); j ++ ) { iPossible.push_back(i); }
 	}
 
@@ -1504,8 +1510,17 @@ bool CDODFlags::getRandomBombToDefuse  ( Vector *position, int iTeam, edict_t **
 	{
 		selection = iPossible[randomInt(0,iPossible.size()-1)];
 
-		*position = CBotGlobals::entityOrigin(m_pBombs[selection]);
-		*pBombTarget = m_pBombs[selection];
+		if ( m_pBombs[selection][1] != NULL )
+		{
+			if ( CClassInterface::getDODBombState(m_pBombs[selection][1]) == DOD_BOMB_STATE_ACTIVE )
+				*pBombTarget = m_pBombs[selection][1];
+			else
+				*pBombTarget = m_pBombs[selection][0];
+		}
+		else
+			*pBombTarget = m_pBombs[selection][0];
+
+		*position = CBotGlobals::entityOrigin(*pBombTarget);
 
 		if ( id ) // area of the capture point
 			*id = selection;
@@ -1526,7 +1541,7 @@ bool CDODFlags:: getRandomBombToDefend ( Vector *position, int iTeam, edict_t **
 	// more possibility to return bomb targets with no bomb already
 	for ( short i = 0; i < m_iNumControlPoints; i ++ )
 	{
-		if ( (m_iOwner[i] != iTeam) && isBombPlanted(i) && (m_pBombs[i] != NULL) )
+		if ( (m_iOwner[i] != iTeam) && isBombPlanted(i) && (m_pBombs[i][0] != NULL) )
 			for ( j = 0; j < getNumBombsRequired(i); j ++ ) { iPossible.push_back(i); }
 	}
 
@@ -1534,8 +1549,17 @@ bool CDODFlags:: getRandomBombToDefend ( Vector *position, int iTeam, edict_t **
 	{
 		selection = iPossible[randomInt(0,iPossible.size()-1)];
 
-		*position = CBotGlobals::entityOrigin(m_pBombs[selection]);
-		*pBombTarget = m_pBombs[selection];
+		if ( m_pBombs[selection][1] != NULL )
+		{
+			if ( CClassInterface::getDODBombState(m_pBombs[selection][1]) != 0 )
+				*pBombTarget = m_pBombs[selection][1];
+			else
+				*pBombTarget = m_pBombs[selection][0];
+		}
+		else
+			*pBombTarget = m_pBombs[selection][0];
+
+		*position = CBotGlobals::entityOrigin(*pBombTarget);
 
 		if ( id ) // area of the capture point
 			*id = selection;
@@ -1556,7 +1580,7 @@ bool CDODFlags:: getRandomBombToPlant ( Vector *position, int iTeam, edict_t **p
 	// more possibility to return bomb targets with no bomb already
 	for ( short i = 0; i < m_iNumControlPoints; i ++ )
 	{
-		if ( (m_iOwner[i] != iTeam) && !isBombPlanted(i) && (m_pBombs[i] != NULL) )
+		if ( (m_iOwner[i] != iTeam) && !isBombPlanted(i) && (m_pBombs[i][0] != NULL) )
 			for ( j = 0; j < getNumBombsRemaining(i); j ++ ) { iPossible.push_back(i); }
 	}
 
@@ -1564,8 +1588,17 @@ bool CDODFlags:: getRandomBombToPlant ( Vector *position, int iTeam, edict_t **p
 	{
 		selection = iPossible[randomInt(0,iPossible.size()-1)];
 
-		*position = CBotGlobals::entityOrigin(m_pBombs[selection]);
-		*pBombTarget = m_pBombs[selection];
+		if ( m_pBombs[selection][1] != NULL )
+		{
+			if ( CClassInterface::getDODBombState(m_pBombs[selection][1]) == DOD_BOMB_STATE_AVAILABLE )
+				*pBombTarget = m_pBombs[selection][1];
+			else
+				*pBombTarget = m_pBombs[selection][0];
+		}
+		else
+			*pBombTarget = m_pBombs[selection][0];
+
+		*position = CBotGlobals::entityOrigin(*pBombTarget);
 
 		if ( id ) // area of the capture point
 			*id = selection;
@@ -1687,7 +1720,12 @@ void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)
 				vOrigin = CBotGlobals::entityOrigin(pent);
 
 				if ( (vOrigin - m_vCPPositions[j]).Length() < 512.0f )
-					m_pBombs[j] = pent;
+				{
+					if ( m_pBombs[j][0] == NULL )
+						m_pBombs[j][0] = pent;
+					else
+						m_pBombs[j][1] = pent;
+				}
 			}
 		}
 	}

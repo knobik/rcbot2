@@ -330,7 +330,10 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pBot->wantToShoot(false);
 
 	if ( m_fTime == 0 )
+	{
 		m_fTime = engine->Time() + randomFloat(8.0f,12.0f);
+		((CDODBot*)pBot)->setNearestBomb(m_pBombTarget);
+	}
 	else if ( m_fTime < engine->Time() )
 	{
 		fail();
@@ -426,6 +429,8 @@ void CDODWaitForBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		m_fTime = engine->Time() + randomFloat(2.0f,5.0f);
 		m_pRunTo = CWaypoints::getNextCoverPoint(pCurrent,m_pBlocking) ;
 	}
+
+	pBot->updateCondition(CONDITION_RUN);
 
 	if ( m_pRunTo )
 	{
@@ -2992,6 +2997,9 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		fail();
 		return;
 	}
+
+	// refrain from proning
+	pBot->updateCondition(CONDITION_RUN);
 
 	if ( pCurrentWeapon != m_pWeaponToUse )
 	{

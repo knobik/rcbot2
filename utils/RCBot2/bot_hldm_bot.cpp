@@ -486,8 +486,8 @@ void CHLDMBot :: modThink ()
 	if ( !CBotGlobals::entityIsValid(m_FailedPhysObj) )
 		m_FailedPhysObj = NULL;
 
-	if ( m_pWeapons )
-		m_pWeapons->update();
+	//if ( m_pWeapons )
+	//	m_pWeapons->update();
 
 	//if ( m_fFixWeaponTime < engine->Time() )
 	//{

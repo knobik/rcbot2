@@ -192,6 +192,8 @@ public:
 	void chooseClass( bool bIsChangingClass ); // updates m_iDesiredClass
 	void changeClass(); // uses m_iDesiredClass
 
+	void setNearestBomb ( edict_t *pBomb ) { m_pNearestBomb = pBomb; }
+
 private:
 
 	int m_iSelectedClass;

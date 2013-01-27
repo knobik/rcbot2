@@ -1267,9 +1267,9 @@ bool CBotTF2 ::checkAttackPoint()
 
 void CBotTF2 :: fixWeapons ()
 {
-	if ( m_pWeapons && (m_iClass != TF_CLASS_MAX) )
-	{
-		m_pWeapons->update();
+	//if ( m_pWeapons && (m_iClass != TF_CLASS_MAX) )
+	//{
+	//	m_pWeapons->update();
 		/*
 		m_pWeapons->clearWeapons();
 		
@@ -1349,7 +1349,7 @@ void CBotTF2 :: fixWeapons ()
 		break;
 		}*/
 
-	}
+	//}
 }
 
 void CBotTF2 :: setClass ( TF_Class _class )
@@ -2001,8 +2001,8 @@ void CBotTF2 :: modThink ()
 	static bool bNeedAmmo;
 	static bool bIsCloaked;
 
-	if ( m_pWeapons )
-		m_pWeapons->update(false); // don't override ammo types from engine
+	//if ( m_pWeapons ) // done in bot.cpp 
+	//	m_pWeapons->update(false); // don't override ammo types from engine
 
 	bNeedHealth = hasSomeConditions(CONDITION_NEED_HEALTH) && !m_bIsBeingHealed;
 	bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
@@ -2083,12 +2083,12 @@ void CBotTF2 :: modThink ()
 	m_fIdealMoveSpeed = CTeamFortress2Mod::TF2_GetPlayerSpeed(m_pEdict,m_iClass);
 
 	// refind my weapons, if i couldn't select them
-	if ( m_bFixWeapons || (m_iPrevWeaponSelectFailed>2) )
-	{
-		fixWeapons();
-		m_bFixWeapons = false;
-		m_iPrevWeaponSelectFailed = 0;
-	}
+	//if ( m_bFixWeapons || (m_iPrevWeaponSelectFailed>2) )
+	//{
+	//	fixWeapons();
+	//	m_bFixWeapons = false;
+	//	m_iPrevWeaponSelectFailed = 0;
+	}//
 
 	if ( m_iClass == TF_CLASS_HWGUY )
 	{

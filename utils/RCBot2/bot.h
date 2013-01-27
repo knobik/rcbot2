@@ -590,6 +590,8 @@ public:
 
 	CBotWeapon *getCurrentWeapon ();
 
+	void kill ();
+
 	bool isUsingProfile ( CBotProfile *pProfile );
 
 	inline CBotProfile *getProfile () { return m_pProfile; }
@@ -678,6 +680,8 @@ public:
 	void addVoiceCommand ( int cmd );
 
 	void letGoOfButton ( int button );
+
+	virtual bool overrideAmmoTypes () { return true; }
 
 protected:
 

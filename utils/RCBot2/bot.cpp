@@ -572,6 +572,11 @@ void CBot :: debugMsg ( int iLev, const char *szMsg )
 	}
 }
 
+void CBot :: kill ()
+{
+	helpers->ClientCommand(m_pEdict,"kill\n");
+}
+
 void CBot :: think ()
 {
 	static float fTime;
@@ -670,6 +675,12 @@ void CBot :: think ()
 	m_bOpenFire = true;
 	m_bWantToListen = true;
 	m_bWantToChangeWeapon = true;
+
+	if ( m_pWeapons )
+	{
+		// update carried weapons
+		m_pWeapons->update(overrideAmmoTypes());
+	}
 	//
 #ifdef _DEBUG
 	if ( rcbot_debug_iglev.GetInt() != 5 )

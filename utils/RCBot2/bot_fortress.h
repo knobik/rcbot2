@@ -381,6 +381,8 @@ public:
 
 	bool wantToNest ();
 
+	bool overrideAmmoTypes () { return false; }
+
 	bool wantToCloak();
 
 	bool wantToUnCloak();

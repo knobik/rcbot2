@@ -179,7 +179,7 @@ public:
 		m_iNumAlliesBombsOnMap = 0;
 		memset(m_bBombPlanted,0,sizeof(bool)*MAX_DOD_FLAGS);
 		memset(m_pFlags,0,sizeof(edict_t*)*MAX_DOD_FLAGS);
-		memset(m_pBombs,0,sizeof(edict_t*)*MAX_DOD_FLAGS);
+		memset(m_pBombs,0,sizeof(edict_t*)*MAX_DOD_FLAGS*2);
 
 		for ( short int i = 0; i < MAX_DOD_FLAGS; i ++ )
 		{
@@ -328,17 +328,17 @@ public:
 
 	inline bool canDefendBomb ( int iTeam, int iId )
 	{
-		return ((m_pBombs[iId]!=NULL)&&(m_iOwner[iId]!=iTeam) && isBombPlanted(iId));
+		return ((m_pBombs[iId][0]!=NULL)&&(m_iOwner[iId]!=iTeam) && isBombPlanted(iId));
 	}
 
 	inline bool canDefuseBomb ( int iTeam, int iId )
 	{
-		return ((m_pBombs[iId]!=NULL)&&(m_iOwner[iId]==iTeam) && isBombPlanted(iId));
+		return ((m_pBombs[iId][0]!=NULL)&&(m_iOwner[iId]==iTeam) && isBombPlanted(iId));
 	}
 
 	inline bool canPlantBomb ( int iTeam, int iId )
 	{
-		return ((m_pBombs[iId]!=NULL)&&(m_iOwner[iId]!=iTeam) && !isBombPlanted(iId));
+		return ((m_pBombs[iId][0]!=NULL)&&(m_iOwner[iId]!=iTeam) && !isBombPlanted(iId));
 	}
 
 	bool isTeamMateDefusing ( edict_t *pIgnore, int iTeam, int id );
@@ -419,9 +419,12 @@ public:
 
 	inline int getBombID ( edict_t *pent )
 	{
+		if ( pent == NULL )
+			return -1;
+
 		for ( short int i = 0; i < m_iNumControlPoints; i ++ )
 		{
-			if ( m_pBombs[i] == pent )
+			if ( (m_pBombs[i][0] == pent) || (m_pBombs[i][1] == pent) )
 				return i;
 		}
 
@@ -447,7 +450,7 @@ public:
 
 private:
 	edict_t *m_pFlags[MAX_DOD_FLAGS];
-	edict_t *m_pBombs[MAX_DOD_FLAGS];
+	edict_t *m_pBombs[MAX_DOD_FLAGS][2]; // maximum of 2 bombs per capture point
 	int m_iWaypoint[MAX_DOD_FLAGS];
 
 	int m_iNumControlPoints;
