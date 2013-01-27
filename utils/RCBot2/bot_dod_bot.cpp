@@ -1930,7 +1930,10 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		iNumEnemyBombsStillToPlant = CDODMod::m_Flags.getNumBombsToPlant(iEnemyTeam);
 
 		// different defend util here
-		fDefendUtil = 0.8f - ((float)iNumEnemyBombsStillToPlant/iNumEnemyBombsOnMap)*0.4f;
+		fDefendUtil = 0.4f;
+
+		if ( iNumEnemyBombsOnMap > 0 )
+			fDefendUtil = 0.8f - ((float)iNumEnemyBombsStillToPlant/iNumEnemyBombsOnMap)*0.4f;
 
 		fPlantUtil = 0.4f + (((float)iNumBombsToPlant/iNumBombsOnMap)*0.4f);
 		fDefuseBombUtil = fDefendUtil * 2;

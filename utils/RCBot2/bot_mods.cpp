@@ -1701,7 +1701,7 @@ void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)
 
 		i = gpGlobals->maxClients;
 
-		while ( (++i < gpGlobals->maxEntities) && (( m_pFlags[j] == NULL ) || ((iMapType == DOD_MAPTYPE_BOMB)&&(m_pBombs[j]==NULL))) )
+		while ( (++i < gpGlobals->maxEntities) && (( m_pFlags[j] == NULL ) || ((iMapType == DOD_MAPTYPE_BOMB)&&((m_pBombs[j][0]==NULL)||(m_pBombs[j][1]==NULL)))) )
 		{
 			pent = INDEXENT(i);
 

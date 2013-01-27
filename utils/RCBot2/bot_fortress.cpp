@@ -2088,7 +2088,7 @@ void CBotTF2 :: modThink ()
 	//	fixWeapons();
 	//	m_bFixWeapons = false;
 	//	m_iPrevWeaponSelectFailed = 0;
-	}//
+	//}//
 
 	if ( m_iClass == TF_CLASS_HWGUY )
 	{
