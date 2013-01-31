@@ -1726,30 +1726,49 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 	QAngle playerAngles = CBotGlobals::playerAngles (pClient->getPlayer());
 	float fMaxDistance = 0.0; // distance for auto type
 
+	extern ConVar rcbot_wpt_autotype;
+
+	CBotMod *pCurrentMod = CBotGlobals::getCurrentMod();
+
+	if ( bUseTemplate )
+		iArea = pClient->getWptCopyArea();
+	else
+		iArea = pClient->getWptArea();
+// override types and area here
 	if ( type1 && *type1 )
 	{
 		CWaypointType *t = CWaypointTypes::getType(type1);
 
 		if ( t )
 			iFlags |= t->getBits();
+		else if ( atoi(type1) > 0 )
+			iArea = atoi(type1);
 
 		if ( type2 && *type2 )
 		{
 			t = CWaypointTypes::getType(type2);
 			if ( t )
 				iFlags |= t->getBits();
+			else if ( atoi(type2) > 0 )
+				iArea = atoi(type2);
 
 			if ( type3 && *type3 )
 			{
 				t = CWaypointTypes::getType(type3);
 				if ( t )
 					iFlags |= t->getBits();
+				else if ( atoi(type3) > 0 )
+					iArea = atoi(type3);
 
 				if ( type4 && *type4 )
 				{
 					t = CWaypointTypes::getType(type4);
+
 					if ( t )
 						iFlags |= t->getBits();
+					else if ( atoi(type4) > 0 )
+						iArea = atoi(type4);
+
 				}
 			}
 
@@ -1770,14 +1789,6 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 	if ( pPlayer->GetFlags() & FL_DUCKING )
 		iFlags |= CWaypoint::W_FL_CROUCH;		*/
 
-	extern ConVar rcbot_wpt_autotype;
-
-	CBotMod *pCurrentMod = CBotGlobals::getCurrentMod();
-
-	if ( bUseTemplate )
-		iArea = pClient->getWptCopyArea();
-	else
-		iArea = pClient->getWptArea();
 
 	if ( rcbot_wpt_autotype.GetInt() && (!bUseTemplate || (rcbot_wpt_autotype.GetInt()==2)) )
 	{

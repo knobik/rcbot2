@@ -201,14 +201,14 @@ public:
 		return count;
 	}
 
-	void setup (edict_t *pResourceEntity, int iMapType);
+	int setup (edict_t *pResourceEntity);
 
 	bool getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id = NULL );
 	bool getRandomTeamControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id = NULL );
 
 	bool getRandomBombToDefuse ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
-	bool getRandomBombToPlant ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
-	bool getRandomBombToDefend ( Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
+	bool getRandomBombToPlant ( CBot *pBot, Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
+	bool getRandomBombToDefend ( CBot *pBot, Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
 
 	inline int getWaypointAtFlag ( int iFlagId )
 	{
@@ -494,7 +494,8 @@ public:
 	static float getMapStartTime ();
 
 	inline static bool isBombMap () { return m_iMapType == DOD_MAPTYPE_BOMB; }
-	inline static bool isFlagMap () { return m_iMapType == DOD_MAPTYPE_FLAG; }
+	inline static bool isFlagMap () { return (m_iMapType & DOD_MAPTYPE_FLAG) == DOD_MAPTYPE_FLAG; }
+	inline static bool mapHasBombs () { return (m_iMapType & DOD_MAPTYPE_BOMB) == DOD_MAPTYPE_BOMB; }
 
 	inline static bool isCommunalBombPoint () { return m_bCommunalBombPoint; }
 	inline static int getBombPointArea (int iTeam) { if ( iTeam == TEAM_ALLIES ) return m_iBombAreaAllies; return m_iBombAreaAxis; } 

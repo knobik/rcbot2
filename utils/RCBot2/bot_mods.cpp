@@ -1433,7 +1433,6 @@ bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
 // return the flag with the least danger (randomly)
 bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id )
 {
-	vector<int> iPossible;
 	IBotNavigator *pNav;
 	float fTotal;
 	float fRand;
@@ -1529,7 +1528,8 @@ bool CDODFlags::getRandomBombToDefuse  ( Vector *position, int iTeam, edict_t **
 	return (iPossible.size()>0);
 }
 
-bool CDODFlags:: getRandomBombToDefend ( Vector *position, int iTeam, edict_t **pBombTarget, int *id )
+//return random bomb with highest danger
+bool CDODFlags:: getRandomBombToDefend ( CBot *pBot, Vector *position, int iTeam, edict_t **pBombTarget, int *id )
 {
 	vector<int> iPossible;
 	short int j;
@@ -1568,49 +1568,86 @@ bool CDODFlags:: getRandomBombToDefend ( Vector *position, int iTeam, edict_t **
 	return (iPossible.size()>0);
 }
 
-bool CDODFlags:: getRandomBombToPlant ( Vector *position, int iTeam, edict_t **pBombTarget, int *id )
+// return rnaomd flag with lowest danger
+bool CDODFlags:: getRandomBombToPlant ( CBot *pBot, Vector *position, int iTeam, edict_t **pBombTarget, int *id )
 {
-	vector<int> iPossible;
-	short int j;
+	float fTotal;
+	float fRand;
+
+	IBotNavigator *pNav;
+
+//	short int j;
 	int selection;
 
 	if ( id )
 		*id = -1;
 
-	// more possibility to return bomb targets with no bomb already
-	for ( short i = 0; i < m_iNumControlPoints; i ++ )
+	selection = -1;
+
+	pNav = pBot->getNavigator();
+
+	fTotal = 0.0f;
+
+	for ( short int i = 0; i < m_iNumControlPoints; i ++ )
 	{
-		if ( (m_iOwner[i] != iTeam) && !isBombPlanted(i) && (m_pBombs[i][0] != NULL) )
-			for ( j = 0; j < getNumBombsRemaining(i); j ++ ) { iPossible.push_back(i); }
+		// if no waypoint -- can't go there
+		if ( m_iWaypoint[i] != -1 )
+		{
+			if ( ( m_pBombs[i][0] == NULL ) || ( m_iOwner[i] == iTeam ) || isBombPlanted(i) )
+				continue;
+
+				fTotal += (((MAX_BELIEF + 1.0f) - pNav->getBelief(m_iWaypoint[i])) / MAX_BELIEF) * getNumBombsRemaining(i);
+		}
 	}
 
-	if ( iPossible.size() > 0 )
-	{
-		selection = iPossible[randomInt(0,iPossible.size()-1)];
+	if ( fTotal == 0.0f )
+		return false;
 
-		if ( m_pBombs[selection][1] != NULL )
+	fRand = randomFloat(0.0f,fTotal);
+
+	fTotal = 0.0f;
+
+	for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+	{
+		if ( m_iWaypoint[i] != -1 )
 		{
-			if ( CClassInterface::getDODBombState(m_pBombs[selection][1]) == DOD_BOMB_STATE_AVAILABLE )
-				*pBombTarget = m_pBombs[selection][1];
-			else
-				*pBombTarget = m_pBombs[selection][0];
+			if ( ( m_pBombs[i][0] == NULL ) || ( m_iOwner[i] == iTeam ) || isBombPlanted(i) )
+				continue;
+
+				fTotal += (((MAX_BELIEF + 1.0f) - pNav->getBelief(m_iWaypoint[i])) / MAX_BELIEF) * getNumBombsRemaining(i);
 		}
 		else
-			*pBombTarget = m_pBombs[selection][0];
+			fTotal += 0.1f;
 
-		*position = CBotGlobals::entityOrigin(*pBombTarget);
+		if ( fRand <= fTotal )
+		{
+			selection = i;
 
-		if ( id ) // area of the capture point
-			*id = selection;
+			if ( m_pBombs[selection][1] != NULL )
+			{
+				if ( CClassInterface::getDODBombState(m_pBombs[selection][1]) == DOD_BOMB_STATE_AVAILABLE )
+					*pBombTarget = m_pBombs[selection][1];
+				else
+					*pBombTarget = m_pBombs[selection][0];
+			}
+			else
+				*pBombTarget = m_pBombs[selection][0];
+
+			*position = CBotGlobals::entityOrigin(*pBombTarget);
+
+			if ( id ) // area of the capture point
+				*id = selection;
+
+			return true;
+		}
 	}
 
-	return (iPossible.size()>0);
+	return false;
 }
 
 
 bool CDODFlags::getRandomTeamControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id )
 {
-	vector<int> iPossible;
 	IBotNavigator *pNav;
 	float fTotal;
 	float fRand;
@@ -1672,8 +1709,11 @@ void CDODMod::freeMemory()
 
 }
 
-void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)
+// returns map type
+int CDODFlags::setup(edict_t *pResourceEntity)
 {
+	int iNumBombCaps = 0;
+
 	m_iNumControlPoints = 0;
 
 	memset(m_bBombPlanted,0,sizeof(bool)*MAX_DOD_FLAGS); // all false
@@ -1701,7 +1741,7 @@ void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)
 
 		i = gpGlobals->maxClients;
 
-		while ( (++i < gpGlobals->maxEntities) && (( m_pFlags[j] == NULL ) || ((iMapType == DOD_MAPTYPE_BOMB)&&((m_pBombs[j][0]==NULL)||(m_pBombs[j][1]==NULL)))) )
+		while ( (++i < gpGlobals->maxEntities) && (( m_pFlags[j] == NULL ) || (*(m_pBombs[j])==NULL)||(m_pBombs[j][1]==NULL)) )
 		{
 			pent = INDEXENT(i);
 
@@ -1715,14 +1755,17 @@ void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)
 				if ( vOrigin == m_vCPPositions[j] )
 					m_pFlags[j] = pent;
 			}
-			else if ( ( iMapType == DOD_MAPTYPE_BOMB ) && ( strcmp(pent->GetClassName(),DOD_CLASSNAME_BOMBTARGET) == 0 ) )
+			else if ( strcmp(pent->GetClassName(),DOD_CLASSNAME_BOMBTARGET) == 0 )
 			{
 				vOrigin = CBotGlobals::entityOrigin(pent);
 
-				if ( (vOrigin - m_vCPPositions[j]).Length() < 512.0f )
+				if ( (vOrigin - m_vCPPositions[j]).Length() < 400.0f )
 				{
 					if ( m_pBombs[j][0] == NULL )
+					{
 						m_pBombs[j][0] = pent;
+						iNumBombCaps++;
+					}
 					else
 						m_pBombs[j][1] = pent;
 				}
@@ -1742,6 +1785,11 @@ void CDODFlags::setup(edict_t *pResourceEntity, int iMapType)
 
 	m_iNumAxisBombsOnMap = getNumPlantableBombs(TEAM_AXIS);
 	m_iNumAlliesBombsOnMap = getNumPlantableBombs(TEAM_ALLIES);
+
+	if ( iNumBombCaps == m_iNumControlPoints )
+		return DOD_MAPTYPE_BOMB;
+
+	return DOD_MAPTYPE_FLAG;
 }
 
 int CDODMod ::getScore(edict_t *pPlayer)
@@ -1776,14 +1824,18 @@ void CDODMod ::roundStart()
 	if ( !m_pGameRules )
 		m_pGameRules = CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1, "CDODGameRulesProxy");
 
-	if ( m_iMapType == DOD_MAPTYPE_UNKNOWN )
-	{
+	// find main map type
+	m_iMapType = m_Flags.setup(m_pResourceEntity);
+
+	//if ( m_iMapType == DOD_MAPTYPE_UNKNOWN )
+	//{
 		if ( CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1,"CDODBombDispenserMapIcon") != NULL )
 		{
 			CWaypoint *pWaypointAllies;
 			CWaypoint *pWaypointAxis;
 
-			m_iMapType = DOD_MAPTYPE_BOMB;
+			// add bitmask
+			m_iMapType |= DOD_MAPTYPE_BOMB;
 
 			pWaypointAllies = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_BOMBS_HERE,TEAM_ALLIES);
 			pWaypointAxis = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_BOMBS_HERE,TEAM_AXIS);
@@ -1796,11 +1848,9 @@ void CDODMod ::roundStart()
 				m_iBombAreaAxis = pWaypointAxis->getArea();
 			}
 		}
-		else
-			m_iMapType = DOD_MAPTYPE_FLAG;
-	}
-
-	m_Flags.setup(m_pResourceEntity,m_iMapType);
+		//else
+		//	m_iMapType = DOD_MAPTYPE_FLAG;
+	//}
 
 	// find bombs at waypoints
 	m_BombWaypoints.clear();

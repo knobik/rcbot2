@@ -198,7 +198,7 @@ private:
 
 	int m_iSelectedClass;
 
-	edict_t *m_pCurrentWeapon;
+	MyEHandle m_pCurrentWeapon;
 
 	CBaseHandle *m_Weapons;
 
@@ -238,8 +238,8 @@ private:
 	smoke_t m_CheckSmoke[MAX_PLAYERS];
 
 	float m_fDeployMachineGunTime;
-	edict_t *m_pNearestBomb; // "capture" bomb
-	edict_t *m_pNearestPathBomb; // blocking path bomb
+	MyEHandle m_pNearestBomb; // "capture" bomb
+	MyEHandle m_pNearestPathBomb; // blocking path bomb
 
 	eDODVoiceCMD m_LastHearVoiceCommand;
 	// blah blah

@@ -486,7 +486,7 @@ public:
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
 private:
-	edict_t *m_pBombTarget;
+	MyEHandle m_pBombTarget;
 	float m_fTime;
 	CWaypoint *m_pRunTo;
 	CWaypoint *m_pBlocking;

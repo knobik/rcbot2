@@ -333,6 +333,17 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		m_fTime = engine->Time() + randomFloat(8.0f,12.0f);
 		((CDODBot*)pBot)->setNearestBomb(m_pBombTarget);
+
+		if ( (m_iType == DOD_BOMB_PLANT) || (m_iType == DOD_BOMB_PATH_PLANT) )
+		{
+			 if ( CDODMod::m_Flags.isTeamMatePlanting(pBot->getEdict(),pBot->getTeam(),m_iBombID) )
+				 fail();
+		}
+		else
+		{
+			 if ( CDODMod::m_Flags.isTeamMateDefusing(pBot->getEdict(),pBot->getTeam(),m_iBombID) )
+				 fail();
+		}
 	}
 	else if ( m_fTime < engine->Time() )
 	{
@@ -347,7 +358,7 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		{
 			complete();
 		}
-		else if ( !bWorking && CDODMod::m_Flags.isTeamMatePlanting(pBot->getEdict(),pBot->getTeam(),m_iBombID) )
+		else if ( CDODMod::m_Flags.isTeamMatePlanting(pBot->getEdict(),pBot->getTeam(),m_iBombID) )
 			complete(); // team mate doing my job
 			
 		//else if ( !CClassInterface::isPlayerPlantingBomb_DOD(pBot->getEdict()) )// it is still planted
@@ -359,7 +370,7 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( !CDODMod::m_Flags.isBombPlanted(m_iBombID) )
 			complete();
-		else if ( !bWorking && CDODMod::m_Flags.isTeamMateDefusing(pBot->getEdict(),pBot->getTeam(),m_iBombID) )
+		else if ( CDODMod::m_Flags.isTeamMateDefusing(pBot->getEdict(),pBot->getTeam(),m_iBombID) )
 			complete(); // team mate doing my job
 
 		//else if ( CDODMod::m_Flags.isBombBeingDefused(m_iBombID) && !CClassInterface::isPlayerDefusingBomb_DOD(pBot->getEdict()) )// it is still planted
@@ -377,7 +388,7 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			complete();
 		}
-		else if ( !bWorking && CDODMod::m_Flags.isTeamMatePlanting(pBot->getEdict(),pBot->getTeam(),CBotGlobals::entityOrigin(m_pBombTarget)) )
+		else if ( CDODMod::m_Flags.isTeamMatePlanting(pBot->getEdict(),pBot->getTeam(),CBotGlobals::entityOrigin(m_pBombTarget)) )
 			complete(); // team mate doing my job
 
 	}
@@ -387,7 +398,7 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( CClassInterface::getDODBombState(m_pBombTarget) == DOD_BOMB_STATE_AVAILABLE )
 			complete();
-		else if ( !bWorking && CDODMod::m_Flags.isTeamMateDefusing(pBot->getEdict(),pBot->getTeam(),CBotGlobals::entityOrigin(m_pBombTarget)) )
+		else if ( CDODMod::m_Flags.isTeamMateDefusing(pBot->getEdict(),pBot->getTeam(),CBotGlobals::entityOrigin(m_pBombTarget)) )
 			complete(); // team mate doing my job
 	}
 
@@ -421,13 +432,25 @@ void CDODWaitForBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		CWaypoint *pCurrent;
 		pBot->updateCondition(CONDITION_RUN);
-		pCurrent = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(pBot->getOrigin(),400.0f,CWaypoints::getWaypointIndex(m_pBlocking),true,false,false));
+		pCurrent = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(pBot->getOrigin(),400.0f,CWaypoints::getWaypointIndex(m_pBlocking),true,false,true));
 
 		if ( pCurrent == NULL )
 			pCurrent = m_pBlocking;
 
 		m_fTime = engine->Time() + randomFloat(2.0f,5.0f);
 		m_pRunTo = CWaypoints::getNextCoverPoint(pCurrent,m_pBlocking) ;
+	}
+
+	if ( m_pBombTarget.get() == NULL )
+	{
+		complete();
+		return;
+	}
+
+	if ( m_pBombTarget.get()->GetUnknown() == NULL )
+	{
+		complete();
+		return;
 	}
 
 	pBot->updateCondition(CONDITION_RUN);
@@ -446,10 +469,16 @@ void CDODWaitForBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	if ( m_fTime < engine->Time() )
+	{
 		complete();
+		return;
+	}
 
 	if ( CClassInterface::getDODBombState (m_pBombTarget) != 2 )
+	{
 		complete();
+		return;
+	}
 
 	pBot->lookAtEdict(m_pBombTarget);
 	pBot->setLookAtTask(LOOK_EDICT);
@@ -478,11 +507,17 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	iTeam = pBot->getTeam();
 
 	if ( CDODMod::m_Flags.ownsFlag(m_iFlagID,iTeam) )
+	{
 		complete();
+		return;
+	}
 	else if ( m_fAttackTime == 0 )
 		m_fAttackTime = engine->Time() + randomFloat(30.0,60.0);
 	else if ( m_fAttackTime < engine->Time() )
+	{
 		complete();
+		return;
+	}
 	else
 	{
 		if ( m_fTime == 0 )

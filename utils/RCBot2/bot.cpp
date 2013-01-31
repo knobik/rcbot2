@@ -1442,7 +1442,7 @@ void CBot :: listenForPlayers ()
 		p = playerinfomanager->GetPlayerInfo(pPlayer);
 
 		// 05/07/09 fix crash bug
-		if ( !p || p->IsConnected() || p->IsDead() || p->IsObserver() || !p->IsPlayer() )
+		if ( !p || !p->IsConnected() || p->IsDead() || p->IsObserver() || !p->IsPlayer() )
 			continue;
 
 		cmd = p->GetLastUserCommand();
