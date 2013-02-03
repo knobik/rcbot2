@@ -146,16 +146,6 @@ void CClient :: clientConnected ( edict_t *pPlayer )
 	init();
 	// set player edict
 	setEdict(pPlayer);
-
-	if ( !engine->IsDedicatedServer() )
-	{
-		if ( CClients::noListenServerClient() )
-		{
-			// give listenserver client all access to bot commands
-			CClients::setListenServerClient(this);		
-			setAccessLevel(CMD_ACCESS_ALL);
-		}
-	}
 }
 
 void CClient :: updateCurrentWaypoint ()
@@ -214,11 +204,13 @@ void CClients :: clientActive ( edict_t *pPlayer )
 	pClient->clientActive();
 }
 
-void CClients :: clientConnected ( edict_t *pPlayer )
+CClient *CClients :: clientConnected ( edict_t *pPlayer )
 {
 	CClient *pClient = &m_Clients[slotOfEdict(pPlayer)];
 
 	pClient->clientConnected(pPlayer);
+
+	return pClient;
 }
 
 void CClients :: init ( edict_t *pPlayer )

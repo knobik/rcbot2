@@ -1713,6 +1713,7 @@ void CDODMod::freeMemory()
 int CDODFlags::setup(edict_t *pResourceEntity)
 {
 	int iNumBombCaps = 0;
+	int iNumFlags = 0;
 
 	m_iNumControlPoints = 0;
 
@@ -1753,7 +1754,9 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 				vOrigin = CBotGlobals::entityOrigin(pent);
 
 				if ( vOrigin == m_vCPPositions[j] )
+				{
 					m_pFlags[j] = pent;
+				}
 			}
 			else if ( strcmp(pent->GetClassName(),DOD_CLASSNAME_BOMBTARGET) == 0 )
 			{
@@ -1763,8 +1766,7 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 				{
 					if ( m_pBombs[j][0] == NULL )
 					{
-						m_pBombs[j][0] = pent;
-						iNumBombCaps++;
+						m_pBombs[j][0] = pent;						
 					}
 					else
 						m_pBombs[j][1] = pent;
@@ -1786,7 +1788,18 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 	m_iNumAxisBombsOnMap = getNumPlantableBombs(TEAM_AXIS);
 	m_iNumAlliesBombsOnMap = getNumPlantableBombs(TEAM_ALLIES);
 
-	if ( iNumBombCaps == m_iNumControlPoints )
+	for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+	{
+		if ( m_pFlags[i] != NULL )
+			iNumFlags++;
+		if ( m_pBombs[i][0] != NULL )
+			iNumBombCaps++;
+		if ( m_pBombs[i][1] != NULL )
+			iNumBombCaps++;
+	}
+
+
+	if ( iNumBombCaps >= iNumFlags )
 		return DOD_MAPTYPE_BOMB;
 
 	return DOD_MAPTYPE_FLAG;

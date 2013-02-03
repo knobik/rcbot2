@@ -174,7 +174,7 @@ class CClients
 {
 public:
 	// called when player joins
-	static void clientConnected ( edict_t *pPlayer );
+	static CClient *clientConnected ( edict_t *pPlayer );
 	static void clientDisconnected ( edict_t *pPlayer );
 	// player starts game
 	static void clientActive ( edict_t *pPlayer );

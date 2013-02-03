@@ -1397,6 +1397,9 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		
 		pBot->stopMoving();
 
+		if ( m_iWaypointType & CWaypointTypes::W_FL_CROUCH )
+			pBot->duck();
+
 		if ( m_bDefendOrigin )
 		{
 			pBot->setAiming(m_vDefendOrigin);
@@ -2982,7 +2985,7 @@ CBotNest::CBotNest()
 
 ////////////////////////////////////////////////////
 
-CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw, bool bUseZ, float z )
+CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw, bool bUseZ, float z, int iWaypointType )
 {
 	QAngle angle;
 	m_fEnemyTime = 0.0f;
@@ -2995,6 +2998,7 @@ CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float f
 	m_fScopeTime = 0;
 	m_bUseZ = bUseZ;
 	m_z = z; // z = ground level
+	m_iWaypointType = iWaypointType;
 }
 	
 void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -3101,6 +3105,11 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	else
 	{
 		pBot->stopMoving();
+
+		if ( m_iWaypointType & CWaypointTypes::W_FL_CROUCH )
+			pBot->duck();
+		//if ( m_iWaypointType & CWaypointTypes::W_FL_PRONE )
+		//	pBot->prone();
 
 		// no enemy for a while
 		if ( (m_fEnemyTime + m_fTime) < engine->Time() )

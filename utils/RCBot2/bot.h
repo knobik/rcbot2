@@ -907,7 +907,7 @@ public:
 
 	static int numBots ();
 
-	static void handlePlayerJoin ( edict_t *pEdict, const char *name );
+	static bool handlePlayerJoin ( edict_t *pEdict, const char *name );
 
 	static int slotOfEdict ( edict_t *pEdict );
 

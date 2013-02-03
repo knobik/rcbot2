@@ -643,6 +643,12 @@ void CBot :: think ()
 
 	m_fNextThink = fTime + 0.04;
 
+	if ( m_pWeapons )
+	{
+		// update carried weapons
+		m_pWeapons->update(overrideAmmoTypes());
+	}
+
 	/////////////////////////////
 
 	//m_iFlags = CClassInterface::getFlags(m_pEdict);
@@ -676,11 +682,7 @@ void CBot :: think ()
 	m_bWantToListen = true;
 	m_bWantToChangeWeapon = true;
 
-	if ( m_pWeapons )
-	{
-		// update carried weapons
-		m_pWeapons->update(overrideAmmoTypes());
-	}
+
 	//
 #ifdef _DEBUG
 	if ( rcbot_debug_iglev.GetInt() != 5 )
@@ -2779,14 +2781,18 @@ void CBots :: kickRandomBotOnTeam ( int team )
 }
 ////////////////////////
 
-void CBots :: handlePlayerJoin ( edict_t *pEdict, const char *name )
+bool CBots :: handlePlayerJoin ( edict_t *pEdict, const char *name )
 {
 	if ( m_bControlNext && ((strcmp(&name[strlen(name)-strlen(m_szNextName)],m_szNextName) == 0) || (strncmp(name,"Bot",3) == 0)) )
 	{
 		m_ControlQueue.push(pEdict);
 		m_bControlNext = false;
 		engine->SetFakeClientConVarValue(pEdict,"tf_medigun_autoheal","1");	
+
+		return true;
 	}
+
+	return false;
 }
 
 void CBots :: handleAutomaticControl ()

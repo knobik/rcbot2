@@ -749,10 +749,26 @@ void CRCBotPlugin::ClientDisconnect( edict_t *pEntity )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::ClientPutInServer( edict_t *pEntity, char const *playername )
 {
-	if ( CBots::controlBots() )
-		CBots::handlePlayerJoin(pEntity,playername);
+	bool is_Rcbot = false;
 
-	CClients::clientConnected(pEntity);
+	CClient *pClient = CClients::clientConnected(pEntity);
+
+	if ( CBots::controlBots() )
+		is_Rcbot = CBots::handlePlayerJoin(pEntity,playername);
+	
+	if ( !is_Rcbot && pClient )
+	{	
+		if ( !engine->IsDedicatedServer() )
+		{
+			if ( CClients::noListenServerClient() )
+			{
+				// give listenserver client all access to bot commands
+				CClients::setListenServerClient(pClient);		
+				pClient->setAccessLevel(CMD_ACCESS_ALL);
+			}
+		}
+	}
+
 }
 
 CRCBotEventListener *CRCBotPlugin:: getEventListener ( void )

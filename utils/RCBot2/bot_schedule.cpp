@@ -376,6 +376,16 @@ CBotDefendSched ::CBotDefendSched ( Vector vOrigin, float fMaxTime )
 	addTask(new CBotDefendTask(vOrigin,fMaxTime));
 }
 
+CBotDefendSched::CBotDefendSched ( int iWaypointID, float fMaxTime )
+{
+	CWaypoint *pWaypoint;
+
+	pWaypoint = CWaypoints::getWaypoint(iWaypointID);
+
+	addTask(new CFindPathTask(iWaypointID));
+	addTask(new CBotDefendTask(pWaypoint->getOrigin(),fMaxTime,8,false,Vector(0,0,0),LOOK_SNIPE,pWaypoint->getFlags()));
+}
+
 void CBotDefendSched :: init ()
 {
 	setID(SCHED_DEFEND);
