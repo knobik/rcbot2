@@ -399,6 +399,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_DEFUSINGBOMB,"CDODPlayer","m_bDefusing",0);
 		DEFINE_GETPROP(GETPROP_DOD_BOMB_STATE,"CDODBombTarget","m_iState",0);
 		DEFINE_GETPROP(GETPROP_DOD_BOMB_TEAM,"CDODBombTarget","m_iBombingTeam",0);
+		DEFINE_GETPROP(GETPROP_DOD_CP_VISIBLE,"CDODObjectiveResource","m_bCPIsVisible",0);
 
 		DEFINE_GETPROP(GETPROP_ALL_ENTOWNER,"CBaseEntity","m_hOwnerEntity",0);
 

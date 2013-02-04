@@ -638,6 +638,9 @@ private:
 	// bot that has these weapons
 	CBot *m_pBot;
 
+	// mask of weapons bot already has so we know if we need to update or not
+	unsigned int m_iWeaponsSignature;
+
 	// weapons local to the bot only 
 	// (holds ammo/preference etc and link to actual weapon)
 	CBotWeapon m_theWeapons[MAX_WEAPONS];//[MAX_WEAPONS];

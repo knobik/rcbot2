@@ -277,19 +277,36 @@ CBotWeapons :: CBotWeapons ( CBot *pBot )
 	}
 
 	m_fUpdateWeaponsTime = 0;
+	m_iWeaponsSignature = 0x0;
 }
 
 void CBotWeapons ::update ( bool bOverrideAllFromEngine )
 {
-	if ( m_fUpdateWeaponsTime < engine->Time() )
+	// create mask of weapons data
+	short int i = 0;
+	unsigned short int iWeaponsSignature = 0x0; // check sum of weapons
+	edict_t *pWeapon;
+	CBaseHandle *m_Weapons = CClassInterface::getWeaponList(m_pBot->getEdict());
+	CBaseHandle *m_Weapon_iter;
+
+	m_Weapon_iter = m_Weapons;
+
+	for ( i = 0; i < MAX_WEAPONS; i ++ )
 	{
-		edict_t *pWeapon;
+		pWeapon = (m_Weapon_iter==NULL) ? NULL : INDEXENT(m_Weapon_iter->GetEntryIndex());
+		iWeaponsSignature += ((unsigned int)pWeapon) + ((pWeapon == NULL) ? 0 : (unsigned int)CClassInterface::getWeaponState(pWeapon));
+		m_Weapon_iter++;
+	}
+
+	// if weapons have changed this will be different
+	if ( iWeaponsSignature != m_iWeaponsSignature ) // m_fUpdateWeaponsTime < engine->Time() )
+	{
+
 		int iWeaponState;
 		register unsigned short int i,j;
 		bool bFound;
 
 		CBaseHandle *m_Weapons = CClassInterface::getWeaponList(m_pBot->getEdict());
-		CBaseHandle *m_Weapon_iter;
 		CBotWeapon *m_BotWeapon_iter = m_theWeapons;
 
 		// loop through the weapons array and see if it is in the CBaseCombatCharacter
@@ -335,6 +352,8 @@ void CBotWeapons ::update ( bool bOverrideAllFromEngine )
 		}
 
 		m_fUpdateWeaponsTime = engine->Time() + 1.0f;
+
+		m_iWeaponsSignature = iWeaponsSignature;
 	}
 }
 

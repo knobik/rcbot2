@@ -1687,7 +1687,7 @@ bool CDODBot:: checkStuck ()
 	{
 		CBotWeapon *pWeapon = getCurrentWeapon();
 
-		if ( pWeapon )
+		if ( pWeapon && (pWeapon->getWeaponEntity()!=NULL) )
 		{
 			if ( pWeapon->isZoomable() && CClassInterface::isSniperWeaponZoomed(pWeapon->getWeaponEntity()) )
 				secondaryAttack();

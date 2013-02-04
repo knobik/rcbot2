@@ -84,6 +84,7 @@ typedef enum
 	GETPROP_ALL_ENTOWNER,
 	GETPROP_DOD_BOMB_STATE,
 	GETPROP_DOD_BOMB_TEAM,
+	GETPROP_DOD_CP_VISIBLE,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -269,6 +270,7 @@ public:
 	inline static bool getVelocity ( edict_t *edict, Vector *v ) {return g_GetProps[GETPROP_VELOCITY].getVector(edict,v); }
 	inline static int getTF2Class ( edict_t *edict ) { return g_GetProps[GETPROP_TF2CLASS].getInt(edict,0); }
 	inline static float getTF2SpyCloakMeter ( edict_t *edict ) { return g_GetProps[GETPROP_TF2SPYMETER].getFloat(edict,0); }
+	inline static bool *getDODCPVisible ( edict_t *pResource ) { return g_GetProps[GETPROP_DOD_CP_VISIBLE].getBoolPointer(pResource); }
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health ) 
 	{ 
 		CClassInterfaceValue::resetError();

@@ -1714,10 +1714,13 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 {
 	int iNumBombCaps = 0;
 	int iNumFlags = 0;
+	bool *CPsVisible;
 
 	m_iNumControlPoints = 0;
 
 	memset(m_bBombPlanted,0,sizeof(bool)*MAX_DOD_FLAGS); // all false
+
+	CPsVisible = CClassInterface::getDODCPVisible(pResourceEntity);
 
 	if ( pResourceEntity )
 	{  
@@ -1732,6 +1735,11 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 
 	short int i,j;
 
+	string_t model;		
+	const char *modelname;
+	bool bVisible;
+				
+
 	// find the edicts of the flags using the origin and classname
 
 	for ( j = 0; j < m_iNumControlPoints; j ++ )
@@ -1742,7 +1750,8 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 
 		i = gpGlobals->maxClients;
 
-		while ( (++i < gpGlobals->maxEntities) && (( m_pFlags[j] == NULL ) || (*(m_pBombs[j])==NULL)||(m_pBombs[j][1]==NULL)) )
+		// find visible flags -- with a model
+		while ( (++i < gpGlobals->maxEntities) &&  (m_pFlags[j] == NULL ) )
 		{
 			pent = INDEXENT(i);
 
@@ -1755,10 +1764,35 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 
 				if ( vOrigin == m_vCPPositions[j] )
 				{
-					m_pFlags[j] = pent;
+					bVisible = ((CClassInterface::getEffects(pent) & EF_NODRAW) != EF_NODRAW);
+
+					model = pent->GetIServerEntity()->GetModelName();
+					modelname = model.ToCStr();
+
+					if ( bVisible && modelname && *modelname )
+					{
+						m_pFlags[j] = pent;
+						break; // found it
+					}
+				
 				}
 			}
-			else if ( strcmp(pent->GetClassName(),DOD_CLASSNAME_BOMBTARGET) == 0 )
+		}
+
+		if ( m_pFlags[j] == NULL ) 
+			continue;
+
+		// find bombs near flag
+		i = gpGlobals->maxClients;
+
+		while ( (++i < gpGlobals->maxEntities) && ((m_pBombs[j][0]==NULL)||(m_pBombs[j][1]==NULL)) )
+		{
+			pent = INDEXENT(i);
+
+			if ( !pent || pent->IsFree() )
+				continue;
+
+			if ( strcmp(pent->GetClassName(),DOD_CLASSNAME_BOMBTARGET) == 0 )
 			{
 				vOrigin = CBotGlobals::entityOrigin(pent);
 
@@ -1798,6 +1832,8 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 			iNumBombCaps++;
 	}
 
+	// update new number
+	m_iNumControlPoints = iNumFlags;
 
 	if ( iNumBombCaps >= iNumFlags )
 		return DOD_MAPTYPE_BOMB;
@@ -1849,7 +1885,15 @@ void CDODMod ::roundStart()
 
 			// add bitmask
 			m_iMapType |= DOD_MAPTYPE_BOMB;
+/*
+			if ( m_iMapType == DOD_MAPTYPE_FLAG) 
+				CRCBotPlugin::HudTextMessage(CClients::get(0)->getPlayer(),"RCBot detected Flag map","RCBot2","RCbot2 detected a flag map");
+			else if ( m_iMapType == DOD_MAPTYPE_BOMB )
+				CRCBotPlugin::HudTextMessage(CClients::get(0)->getPlayer(),"RCBot detected bomb map","RCBot2","RCbot2 detected a bomb map");
+			else if ( m_iMapType == 3 )
+				CRCBotPlugin::HudTextMessage(CClients::get(0)->getPlayer(),"RCBot detected flag map with bombs ","RCBot2","RCbot2 detected a flag capture map with bombs");
 
+*/
 			pWaypointAllies = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_BOMBS_HERE,TEAM_ALLIES);
 			pWaypointAxis = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_BOMBS_HERE,TEAM_AXIS);
 
