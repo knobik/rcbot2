@@ -57,6 +57,7 @@ typedef struct
 {
 	edict_t *pEdict;
 	CWaypoint *pWaypoint;
+	Vector v_ground;
 }edict_wpt_pair_t;
 
 enum

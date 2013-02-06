@@ -529,6 +529,11 @@ public:
 
 		return false;
 	}
+
+	// for getting the ground of bomb to open waypoints
+	// the ground might change
+	static Vector getGround ( CWaypoint *pWaypoint );
+
 protected:
 
 	void initMod ();

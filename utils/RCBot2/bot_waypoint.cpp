@@ -1010,6 +1010,8 @@ void CWaypointNavigator :: updatePosition ()
 			{
 				m_vPreviousPoint = m_pBot->getOrigin();
 				m_iCurrentWaypoint = m_currentRoute.Pop();
+				// fix : update pWaypoint as Current Waypoint
+				pWaypoint = CWaypoints::getWaypoint(m_iCurrentWaypoint);
 
 				if ( m_iCurrentWaypoint != -1 )
 				{ // random point, but more chance of choosing the most dangerous point
@@ -1046,7 +1048,18 @@ void CWaypointNavigator :: updatePosition ()
 		else
 			m_vOffset = Vector(0,0,0);
 
+		// poor coupling here
+		if ( CBotGlobals::isCurrentMod(MOD_DOD) && pWaypoint->hasFlag(CWaypointTypes::W_FL_BOMB_TO_OPEN) )
+		{
+			m_vOffset += (CDODMod::getGround(pWaypoint) - pWaypoint->getOrigin());
+		}
+
 		m_bOffsetApplied = true;
+
+		/*if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
+		{
+			debugoverlay->AddLineOverlay(m_pBot->getOrigin(),pWaypoint->getOrigin() + m_vOffset,255,255,0,true,5.0f);
+		}*/
 	}
 
 	// fix for bots not finding goals
@@ -1152,14 +1165,17 @@ bool CWaypoint :: touched ( edict_t *pEdict )
 // checks if a waypoint is touched
 bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset, float fTouchDist )
 {
+	static Vector v_dynamic;
 	extern ConVar rcbot_ladder_offs;
 
-	if ( (vOrigin-(m_vOrigin+vOffset)).Length2D() <= fTouchDist )
+	v_dynamic = m_vOrigin+vOffset;
+
+	if ( (vOrigin-v_dynamic).Length2D() <= fTouchDist )
 	{
 		if ( hasFlag(CWaypointTypes::W_FL_LADDER) )
-			return ((vOrigin.z+rcbot_ladder_offs.GetFloat()) > m_vOrigin.z);
+			return ((vOrigin.z+rcbot_ladder_offs.GetFloat()) > v_dynamic.z);
 
-		return fabs(vOrigin.z-m_vOrigin.z) <= fTouchDist;
+		return fabs(vOrigin.z-v_dynamic.z) <= fTouchDist;
 	}
 
 	return false;
@@ -1308,8 +1324,13 @@ void CWaypoints :: updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int i
 	register short int iSize = numWaypoints();
 	CWaypoint *pWpt;
 	edict_wpt_pair_t pair;
+	CTraceFilterWorldAndPropsOnly filter;
+	trace_t *trace_result;
 
 	pWpt = m_theWaypoints;
+	trace_result = CBotGlobals::getTraceResult();
+
+	Vector vOrigin;
 
 	for ( register short int i = 0; i < iSize; i ++ )
 	{
@@ -1319,7 +1340,16 @@ void CWaypoints :: updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int i
 			pair.pEdict = CClassInterface::FindEntityByClassnameNearest(pWpt->getOrigin(),szClassname,300.0f);
 
 			if ( pair.pEdict != NULL )
+			{
+				vOrigin = CBotGlobals::entityOrigin(pair.pEdict);
+
+				CBotGlobals::traceLine(vOrigin,vOrigin-Vector(0,0,CWaypointLocations::REACHABLE_RANGE),MASK_SOLID_BRUSHONLY,&filter);
+				// updates trace_result
+
+				pair.v_ground = trace_result->endpos + Vector(0,0,48.0f);
+
 				pPairs->push_back(pair);
+			}
 		}
 
 		pWpt++;

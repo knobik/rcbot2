@@ -1917,6 +1917,26 @@ void CDODMod ::roundStart()
 
 	//m_Flags.updateAll();
 }
+// when a bomb explodes it might leave a part of the ground available
+// find it and add it as a waypoint offset
+Vector CDODMod :: getGround ( CWaypoint *pWaypoint )
+{
+	for ( unsigned int i = 0; i < m_BombWaypoints.size(); i ++ )
+	{
+		if ( m_BombWaypoints[i].pWaypoint == pWaypoint )
+		{
+			if ( m_BombWaypoints[i].pEdict )
+			{
+				if ( CClassInterface::getDODBombState(m_BombWaypoints[i].pEdict) == 0 )
+					return m_BombWaypoints[i].v_ground;
+				
+				break;
+			}
+		}
+	}
+
+	return pWaypoint->getOrigin();
+}
 
 void CDODMod :: addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance )
 {
