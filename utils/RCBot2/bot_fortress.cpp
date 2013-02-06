@@ -2664,8 +2664,16 @@ void CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 			{
 				if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pEntity) )
 				{
-					if ( !m_pCloakedSpy || ((m_pCloakedSpy!=pEntity)&&(distanceFrom(pEntity) < distanceFrom(m_pCloakedSpy))) )
-						m_pCloakedSpy = pEntity;
+					// check if disguise is not spy on my team
+					int iClass, iTeam, iIndex, iHealth;
+					
+					CClassInterface::getTF2SpyDisguised(pEntity,&iClass,&iTeam,&iIndex,&iHealth);
+
+					if ( iClass != TF_CLASS_SPY ) // spies cloaking is normal / non spies cloaking is not!
+					{
+						if ( !m_pCloakedSpy || ((m_pCloakedSpy!=pEntity)&&(distanceFrom(pEntity) < distanceFrom(m_pCloakedSpy))) )
+							m_pCloakedSpy = pEntity;
+					}
 				}
 			}
 		}
@@ -4889,8 +4897,15 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 					{
 						bValid = true;
 					}
-					else if ( !isClassOnTeam(dclass,getTeam()) ) // be smart - check if player disguised as a class that exists on my team
+					else if ( !isClassOnTeam(dclass,getTeam()) ) 
+					{// be smart - check if player disguised as a class that exists on my team
 						bValid = true;
+					}
+					else if ( dhealth <= 0 )
+					{
+						// be smart - check if player's health is below 0
+						bValid = true;
+					}
 					else
 						bValid = thinkSpyIsEnemy(pEdict);
 

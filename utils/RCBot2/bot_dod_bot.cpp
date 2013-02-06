@@ -1629,7 +1629,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 				attack->setID(SCHED_ATTACKPOINT);
 
-				if ( pWaypoint && (randomFloat(0.0f,MAX_BELIEF) < m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint))) )
+				if ( pWaypoint && (randomFloat(0.0f,MAX_BELIEF) < m_pNavigator->getBelief(iGoalWaypoint)) )
 				{
 					attack->addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint)));//,LOOK_AROUND));
 					attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));

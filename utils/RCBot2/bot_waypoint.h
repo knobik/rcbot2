@@ -358,7 +358,7 @@ public:
 		return &m_theWaypoints[iIndex];
 	}
 
-	static CWaypoint *getNextCoverPoint ( CWaypoint *pCurrent, CWaypoint *pBlocking );
+	static CWaypoint *getNextCoverPoint ( CBot *pBot, CWaypoint *pCurrent, CWaypoint *pBlocking );
 
 	// save waypoints
 	static bool save ( bool bVisiblityMade );

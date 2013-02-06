@@ -1714,13 +1714,13 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 {
 	int iNumBombCaps = 0;
 	int iNumFlags = 0;
-	bool *CPsVisible;
+	//bool *CPsVisible;
 
 	m_iNumControlPoints = 0;
 
 	memset(m_bBombPlanted,0,sizeof(bool)*MAX_DOD_FLAGS); // all false
 
-	CPsVisible = CClassInterface::getDODCPVisible(pResourceEntity);
+	//CPsVisible = CClassInterface::getDODCPVisible(pResourceEntity);
 
 	if ( pResourceEntity )
 	{  

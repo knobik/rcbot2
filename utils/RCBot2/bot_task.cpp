@@ -438,7 +438,7 @@ void CDODWaitForBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			pCurrent = m_pBlocking;
 
 		m_fTime = engine->Time() + randomFloat(2.0f,5.0f);
-		m_pRunTo = CWaypoints::getNextCoverPoint(pCurrent,m_pBlocking) ;
+		m_pRunTo = CWaypoints::getNextCoverPoint(pBot,pCurrent,m_pBlocking) ;
 	}
 
 	if ( m_pBombTarget.get() == NULL )
@@ -462,7 +462,7 @@ void CDODWaitForBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			if ( pBot->distanceFrom(m_pBombTarget) > (BLAST_RADIUS*2) )
 				pBot->stopMoving();
 			else
-				m_pRunTo = CWaypoints::getNextCoverPoint(m_pRunTo,m_pBlocking) ;
+				m_pRunTo = CWaypoints::getNextCoverPoint(pBot,m_pRunTo,m_pBlocking) ;
 		}
 		else
 			pBot->setMoveTo(m_pRunTo->getOrigin());

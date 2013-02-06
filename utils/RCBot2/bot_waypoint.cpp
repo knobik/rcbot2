@@ -2021,7 +2021,7 @@ void CWaypointNavigator::runAwayFrom ( int iId )
 
 }*/
 
-CWaypoint *CWaypoints::getNextCoverPoint ( CWaypoint *pCurrent, CWaypoint *pBlocking )
+CWaypoint *CWaypoints::getNextCoverPoint ( CBot *pBot, CWaypoint *pCurrent, CWaypoint *pBlocking )
 {
 	int iMaxDist = -1;
 	int iNext;
@@ -2035,6 +2035,9 @@ CWaypoint *CWaypoints::getNextCoverPoint ( CWaypoint *pCurrent, CWaypoint *pBloc
 		pNext = CWaypoints::getWaypoint(iNext);
 
 		if ( pNext == pBlocking )
+			continue;
+
+		if ( !pBot->canGotoWaypoint(pCurrent->getOrigin(),pNext) )
 			continue;
 
 		if ( (iMaxDist == -1) || ((fDist=pNext->distanceFrom(pBlocking->getOrigin())) > fMaxDist) )
