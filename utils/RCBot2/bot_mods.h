@@ -45,6 +45,10 @@
 #define DOD_MAPTYPE_FLAG 1
 #define DOD_MAPTYPE_BOMB 2
 
+#define BOT_ADD_METHOD_DEFAULT 0
+#define BOT_ADD_METHOD_PUPPET 1
+#define BOT_ADD_PUPPET_COMMAND "bot"
+
 class CBotNeuralNet;
 
 #include <vector>

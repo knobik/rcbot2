@@ -2380,7 +2380,7 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 
 		//if ( pBotProfile->getTeam() >= 1 )
 		// fix : dedicated server  - The_Shadow
-		sprintf(cmd,"bot -name \"%s\"\n",szOVName);
+		sprintf(cmd,"%s -name \"%s\"\n",BOT_ADD_PUPPET_COMMAND,szOVName);
 /*
 		if ( szTeam && *szTeam )
 		{
@@ -2422,8 +2422,6 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 				engine->ServerCommand("sv_cheats 0\n");
 
 		}
-
-
 
 		return true;
 	}
