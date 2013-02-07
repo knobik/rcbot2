@@ -31,6 +31,9 @@
 #include "server_class.h"
 
 #include "bot.h"
+
+#include "in_buttons.h"
+
 #include "bot_mods.h"
 #include "bot_globals.h"
 #include "bot_fortress.h"
@@ -1366,6 +1369,8 @@ bool CDODFlags::isTeamMateDefusing ( edict_t *pIgnore, int iTeam, Vector vOrigin
 {
 	int i;
 	edict_t *pPlayer;
+	IPlayerInfo *pPlayerinfo;
+	CBotCmd cmd;
 
 	for ( i = 1; i <= gpGlobals->maxClients; i ++ )
 	{
@@ -1377,7 +1382,10 @@ bool CDODFlags::isTeamMateDefusing ( edict_t *pIgnore, int iTeam, Vector vOrigin
 		if ( !CBotGlobals::entityIsValid(pPlayer) )
 			continue;
 
-		if ( CClassInterface::isPlayerDefusingBomb_DOD(pPlayer) )
+		pPlayerinfo = playerinfomanager->GetPlayerInfo(pPlayer);
+		cmd = pPlayerinfo->GetLastUserCommand();
+
+		if ( CClassInterface::isPlayerDefusingBomb_DOD(pPlayer) || (cmd.buttons & IN_USE) )
 		{
 			if ( CClassInterface::getTeam(pPlayer) != iTeam )
 				continue;
@@ -1451,6 +1459,12 @@ bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int
 			if ( ( m_pFlags[i] == NULL ) || ( m_iOwner[i] == iTeam ) )
 				continue;
 
+			if ( (iTeam == TEAM_ALLIES) && (m_iAlliesReqCappers[i] == 0) )
+				continue;
+
+			if ( (iTeam == TEAM_AXIS) && (m_iAxisReqCappers[i] == 0) )
+				continue;
+
 			if ( iTeam == TEAM_ALLIES )
 				fTotal += (((MAX_BELIEF + 1.0f) - pNav->getBelief(m_iWaypoint[i])) / MAX_BELIEF) * (m_iNumAllies[i]+1);
 			else
@@ -1469,6 +1483,12 @@ bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int
 		if ( m_iWaypoint[i] != -1 )
 		{
 			if ( ( m_pFlags[i] == NULL ) || ( m_iOwner[i] == iTeam ) )
+				continue;
+
+			if ( (iTeam == TEAM_ALLIES) && (m_iAlliesReqCappers[i] == 0) )
+				continue;
+
+			if ( (iTeam == TEAM_AXIS) && (m_iAxisReqCappers[i] == 0) )
 				continue;
 
 			if ( iTeam == TEAM_ALLIES )
@@ -1593,10 +1613,10 @@ bool CDODFlags:: getRandomBombToPlant ( CBot *pBot, Vector *position, int iTeam,
 		// if no waypoint -- can't go there
 		if ( m_iWaypoint[i] != -1 )
 		{
-			if ( ( m_pBombs[i][0] == NULL ) || ( m_iOwner[i] == iTeam ) || isBombPlanted(i) )
+			if ( ( m_pBombs[i][0] == NULL ) || ( m_iOwner[i] == iTeam ) || isBombPlanted(i) || (m_iBombsRemaining[i] == 0) )
 				continue;
 
-				fTotal += (((MAX_BELIEF + 1.0f) - pNav->getBelief(m_iWaypoint[i])) / MAX_BELIEF) * getNumBombsRemaining(i);
+			fTotal += (((MAX_BELIEF + 1.0f) - pNav->getBelief(m_iWaypoint[i])) / MAX_BELIEF) * getNumBombsRemaining(i);
 		}
 	}
 
@@ -1735,9 +1755,9 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 
 	short int i,j;
 
-	string_t model;		
-	const char *modelname;
-	bool bVisible;
+//	string_t model;		
+//	const char *modelname;
+//	bool bVisible;
 				
 
 	// find the edicts of the flags using the origin and classname
@@ -1764,22 +1784,31 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 
 				if ( vOrigin == m_vCPPositions[j] )
 				{
+					/*
 					bVisible = ((CClassInterface::getEffects(pent) & EF_NODRAW) != EF_NODRAW);
 
 					model = pent->GetIServerEntity()->GetModelName();
 					modelname = model.ToCStr();
 
 					if ( bVisible && modelname && *modelname )
+					{*/
+
+					if ( m_iAlliesReqCappers[j] || m_iAxisReqCappers[j] || m_iBombsRequired[j] )
 					{
 						m_pFlags[j] = pent;
-						break; // found it
 					}
-				
+
+					break; // found it
 				}
 			}
 		}
 
+		// no flag for this point
 		if ( m_pFlags[j] == NULL ) 
+			continue;
+
+		// don't need to check for bombs
+		if ( m_iBombsRequired[j] == 0 )
 			continue;
 
 		// find bombs near flag
@@ -1822,6 +1851,7 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 	m_iNumAxisBombsOnMap = getNumPlantableBombs(TEAM_AXIS);
 	m_iNumAlliesBombsOnMap = getNumPlantableBombs(TEAM_ALLIES);
 
+	// sometimes m_iNumControlPoints is larger than it  should be. check the number of flags and bombs we found on the map
 	for ( short int i = 0; i < m_iNumControlPoints; i ++ )
 	{
 		if ( m_pFlags[i] != NULL )
@@ -1950,7 +1980,8 @@ void CDODMod :: addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, floa
 			*iArea = id;
 		}
 	}
-	else if ( isFlagMap() )
+	
+	if ( isFlagMap() )
 	{
 		int id = m_Flags.getFlagID(pEdict);
 

@@ -493,7 +493,7 @@ public:
 
 	static float getMapStartTime ();
 
-	inline static bool isBombMap () { return m_iMapType == DOD_MAPTYPE_BOMB; }
+	inline static bool isBombMap () { return (m_iMapType & DOD_MAPTYPE_BOMB) == DOD_MAPTYPE_BOMB; }
 	inline static bool isFlagMap () { return (m_iMapType & DOD_MAPTYPE_FLAG) == DOD_MAPTYPE_FLAG; }
 	inline static bool mapHasBombs () { return (m_iMapType & DOD_MAPTYPE_BOMB) == DOD_MAPTYPE_BOMB; }
 

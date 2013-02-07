@@ -140,7 +140,15 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 
 	if ( bVisible && !bNoDraw && bValid )
 	{
-		if ( (m_pNearestFlag != pEntity) && CDODMod::m_Flags.isFlag(pEntity) && 
+		if ( (m_pNearestBreakable != pEntity) && (strcmp(pEntity->GetClassName(),"prop_physics")==0) )
+		{
+			if ( !m_pNearestBreakable || (distanceFrom(pEntity)<distanceFrom(m_pNearestBreakable)) )
+			{
+				if ( CClassInterface::getPlayerHealth(pEntity) > 0 )
+					m_pNearestBreakable = pEntity;
+			}
+		}
+		else if ( (m_pNearestFlag != pEntity) && CDODMod::m_Flags.isFlag(pEntity) && 
 			(!m_pNearestFlag || (distanceFrom(pEntity)<distanceFrom(m_pNearestFlag)) ) )
 		{
 			m_pNearestFlag = pEntity;
@@ -175,6 +183,11 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		{
 			if ( !bValid || (distanceFrom(m_pNearestFlag) > 512.0f) ) // 'defend' / 'attack' radius
 				m_pNearestFlag = NULL;
+		}
+		else if ( pEntity == m_pNearestBreakable )
+		{
+			if ( !bValid || (distanceFrom(m_pNearestBreakable) > CWaypointLocations::REACHABLE_RANGE) || (CClassInterface::getPlayerHealth(m_pNearestBreakable)<=0) )
+				m_pNearestBreakable = NULL;
 		}
 		else if ( pEntity == m_pEnemyGrenade )
 		{
@@ -430,6 +443,7 @@ void CDODBot :: spawnInit ()
 	CBot::spawnInit();
 
 	m_bHasBomb = false;
+	m_pNearestBreakable = NULL;
 
 	m_pNearestPathBomb = NULL;
 
@@ -471,7 +485,14 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	int entity_index = ENTINDEX(pEdict);
 
 	if ( !entity_index || (entity_index > gpGlobals->maxClients) )
+	{
+		if ( pEdict == m_pNearestBreakable )
+		{
+			return CClassInterface::getPlayerHealth(pEdict) > 0;
+		}
+
 		return false;
+	}
 
 	if ( !pEdict )
 		return false;
@@ -1892,10 +1913,15 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	// flag capture map
 	if ( CDODMod::isFlagMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
 	{
-		if ( m_pNearestFlag )
-			iFlagID = CDODMod::m_Flags.getFlagID(m_pNearestFlag);
+		bool bAttackNearestFlag = false;
 
-		if ( (m_pNearestFlag==NULL)||CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) )
+		if ( m_pNearestFlag )
+		{
+			iFlagID = CDODMod::m_Flags.getFlagID(m_pNearestFlag);
+			bAttackNearestFlag = !CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) && ((CDODMod::m_Flags.numCappersRequired(iFlagID,m_iTeam)-CDODMod::m_Flags.numFriendliesAtCap(iFlagID,m_iTeam))>0);
+		}
+
+		if ( (m_pNearestFlag==NULL)||!bAttackNearestFlag )
 		{
 			if ( CDODMod::shouldAttack(m_iTeam) )
 			{
@@ -1920,8 +1946,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		{
 			// attack the flag if I've reached the last one
 			ADD_UTILITY_DATA_VECTOR(BOT_UTIL_ATTACK_NEAREST_POINT,
-				!CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) && (CDODMod::m_Flags.numCappersRequired(iFlagID,m_iTeam)-
-				CDODMod::m_Flags.numFriendliesAtCap(iFlagID,m_iTeam))<=1,(iFlagsOwned == (iNumFlags-1)) ? 0.9f : 0.75f,iFlagID,CBotGlobals::entityOrigin(m_pNearestFlag));
+				bAttackNearestFlag,(iFlagsOwned == (iNumFlags-1)) ? 0.9f : 0.75f,iFlagID,CBotGlobals::entityOrigin(m_pNearestFlag));
 
 			ADD_UTILITY_DATA_VECTOR(BOT_UTIL_DEFEND_NEAREST_POINT,
 				CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) && ((CDODMod::m_Flags.numEnemiesAtCap(iFlagID,m_iTeam)>0)||hasEnemy()),
@@ -1935,7 +1960,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		}
 	}
 	// bomb map
-	else if ( CDODMod::isBombMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
+	
+	if ( CDODMod::isBombMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
 	{
 		// same thing as above except with bombs
 		iFlagID = -1;
@@ -1956,7 +1982,11 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		if ( iNumEnemyBombsOnMap > 0 )
 			fDefendUtil = 0.8f - ((float)iNumEnemyBombsStillToPlant/iNumEnemyBombsOnMap)*0.4f;
 
-		fPlantUtil = 0.4f + (((float)iNumBombsToPlant/iNumBombsOnMap)*0.4f);
+		if ( CDODMod::isFlagMap() && (iNumBombsToPlant>0) )
+			fPlantUtil = 0.3f + ((((float)iFlagsOwned/iNumBombsToPlant)*0.6f)/iNumFlags);
+		else
+			fPlantUtil = 0.4f + (((float)iNumBombsToPlant/iNumBombsOnMap)*0.4f);
+		
 		fDefuseBombUtil = fDefendUtil * 2;
 		fDefendBombUtil = 0.8f - (((float)iNumBombsToDefend/iNumBombsOnMap)*0.8f);
 

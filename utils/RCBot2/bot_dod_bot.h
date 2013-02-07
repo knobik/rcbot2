@@ -240,6 +240,7 @@ private:
 	float m_fDeployMachineGunTime;
 	MyEHandle m_pNearestBomb; // "capture" bomb
 	MyEHandle m_pNearestPathBomb; // blocking path bomb
+	MyEHandle m_pNearestBreakable;
 
 	eDODVoiceCMD m_LastHearVoiceCommand;
 	// blah blah
