@@ -4624,6 +4624,7 @@ eBotFuncState CBotTF2 :: rocketJump(int *iState,float *fTime)
 bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 {
 	extern ConVar rcbot_enemyshootfov;
+	static float fDistance;
 
 	if ( DotProductFromOrigin(m_vAimVector) < rcbot_enemyshootfov.GetFloat() ) 
 		return true; // keep enemy / don't shoot : until angle between enemy is less than 45 degrees
@@ -4633,9 +4634,12 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	{
 		if ( isDisguised() )
 		{
-			if ( ( distanceFrom(pEnemy) < 130 ) && CBotGlobals::isAlivePlayer(pEnemy) && ( fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > bot_spyknifefov.GetFloat() ) )
+			fDistance = distanceFrom(pEnemy);
+			if ( ((fDistance < 400) && CTeamFortress2Mod::isCapping(pEnemy)) || 
+				( (fDistance < 130) && CBotGlobals::isAlivePlayer(pEnemy) && 
+				( fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > bot_spyknifefov.GetFloat() ) ) )
 			{
-				;
+				; // ok attack
 			}
 			else if ( m_fFrenzyTime < engine->Time() ) 
 				return true; // return but don't attack
@@ -4670,7 +4674,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 
 		if ( CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
-			float fDistance = distanceFrom(pEnemy);
+			fDistance = distanceFrom(pEnemy);
 
 			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) > 25) )
 				bSecAttack = true;

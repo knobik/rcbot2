@@ -509,6 +509,22 @@ public:
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 
+class CPathWaypointCreateFromToCommand : public CBotCommand
+{
+public:
+	CPathWaypointCreateFromToCommand();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+class CPathWaypointRemoveFromToCommand : public CBotCommand
+{
+public:
+	CPathWaypointRemoveFromToCommand();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 class CPathWaypointCreate1Command : public CBotCommand
 {
 public:

@@ -1148,6 +1148,7 @@ void CWaypoint :: drawPathBeam ( CWaypoint *to, unsigned short int iDrawType )
 		1, r, g, b, 200, 10);	
 		break;
 #ifndef __linux__
+	case DRAWTYPE_DEBUGENGINE3:
 	case DRAWTYPE_DEBUGENGINE2:
 	case DRAWTYPE_DEBUGENGINE:
 		debugoverlay->AddLineOverlay (m_vOrigin, to->getOrigin(), 200,200,200, false, 1);
@@ -1207,6 +1208,7 @@ WptColor CWaypointTypes ::getColour ( int iFlags )
 void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iDrawType )
 {
 	float fHeight = WAYPOINT_HEIGHT;
+	float fDistance = 250.0f;
 
 	QAngle qAim;
 	Vector vAim;
@@ -1230,13 +1232,15 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 	switch ( iDrawType )
 	{
+	case DRAWTYPE_DEBUGENGINE3:
+		fDistance = 64.0f;
 	case DRAWTYPE_DEBUGENGINE2:
 		// draw area
 		if ( pEdict )
 		{
 			
 
-			if ( distanceFrom(CBotGlobals::entityOrigin(pEdict)) < 250 )
+			if ( distanceFrom(CBotGlobals::entityOrigin(pEdict)) < fDistance )
 			{
 				CWaypointTypes::printInfo(this,pEdict,1.0);
 
@@ -1256,6 +1260,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 					if ( pClient )
 					{
 						CBot *pBot = pClient->getDebugBot();
+
 						if ( pBot )
 						{
 							debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+32.0f),0,1,0,0,255,255,"%0.4f",pBot->getNavigator()->getBelief(CWaypoints::getWaypointIndex(this)));
