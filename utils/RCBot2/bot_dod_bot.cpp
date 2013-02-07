@@ -51,6 +51,7 @@ extern ConVar bot_change_class;
 extern ConVar rcbot_enemyshootfov;
 extern ConVar bot_defrate;
 extern ConVar rcbot_smoke_time;
+extern ConVar rcbot_melee_only;
 
 const char *g_DODClassCmd[2][6] = 
 { {"cls_garand","cls_tommy","cls_bar","cls_spring","cls_30cal","cls_bazooka"},
@@ -140,7 +141,7 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 
 	if ( bVisible && !bNoDraw && bValid )
 	{
-		if ( (m_pNearestBreakable != pEntity) && (strcmp(pEntity->GetClassName(),"prop_physics")==0) )
+		if ( (m_pNearestBreakable != pEntity) && (strncmp(pEntity->GetClassName(),"prop_physics",12)==0) )
 		{
 			if ( !m_pNearestBreakable || (distanceFrom(pEntity)<distanceFrom(m_pNearestBreakable)) )
 			{
@@ -488,7 +489,7 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	{
 		if ( pEdict == m_pNearestBreakable )
 		{
-			return CClassInterface::getPlayerHealth(pEdict) > 0;
+			return (distanceFrom(pEdict) < 128.0f) && (CClassInterface::getPlayerHealth(pEdict) > 0);
 		}
 
 		return false;
@@ -533,7 +534,7 @@ void CDODBot :: handleWeapons ()
 	{
 		CBotWeapon *pWeapon;
 
-		pWeapon = getBestWeapon(m_pEnemy);
+		pWeapon = getBestWeapon(m_pEnemy,true,true,rcbot_melee_only.GetBool());
 
 		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 		{

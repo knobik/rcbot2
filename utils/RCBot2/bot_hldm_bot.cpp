@@ -618,16 +618,6 @@ bool CHLDMBot :: willCollide ( edict_t *pEntity, bool *bCanJump, float *fTime )
 				*bCanJump = true;
 
 			return (vOrigin - v_dest).Length() < (v_size.Length()/2);
-
-			/*v_min = vOrigin + v_min;
-			v_max = vOrigin + v_max;
-
-			return ( ( v_dest.x >= v_min.x ) &&
-				 ( v_dest.y >= v_min.y ) &&
-				 ( v_dest.z >= v_min.z ) &&
-				 (v_dest.x <= v_max.x ) &&
-				 (v_dest.y <= v_max.y ) &&
-				 (v_dest.z <= v_max.z ) );*/
 		}
 	}
 

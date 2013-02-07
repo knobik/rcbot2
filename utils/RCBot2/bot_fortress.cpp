@@ -58,6 +58,7 @@ extern ConVar bot_max_cc_time;
 extern ConVar bot_min_cc_time;
 extern ConVar bot_change_class;
 extern ConVar rcbot_demo_jump;
+extern ConVar rcbot_melee_only;
 
 #define TF2_SPY_CLOAK_BELIEF 38
 #define TF2_HWGUY_REV_BELIEF 60
@@ -2341,7 +2342,7 @@ void CBotTF2::handleWeapons()
 	{
 		CBotWeapon *pWeapon;
 
-		pWeapon = getBestWeapon(m_pEnemy,!hasFlag(),!hasFlag());
+		pWeapon = getBestWeapon(m_pEnemy,!hasFlag(),!hasFlag(),rcbot_melee_only.GetBool());
 
 		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 		{

@@ -88,7 +88,7 @@
 
 static ICvar *s_pCVar;
 
-ConVar bot_general_difficulty("rcbot_skill","0.5",0,"General difficulty of the bots. 0.5 = stock, < 0.5 easier, > 0.5 = harder");
+ConVar bot_general_difficulty("rcbot_skill","0.6",0,"General difficulty of the bots. 0.5 = stock, < 0.5 easier, > 0.5 = harder");
 ConVar bot_sv_cheats_auto("rcbot_sv_cheats_auto","0",0,"automatically put sv_cheats on and off for when adding bots only");
 ConVar bot_visrevs_clients("rcbot_visrevs_clients","4",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
 ConVar bot_spyknifefov("rcbot_spyknifefov","80",0,"the FOV from the enemy that spies must backstab from");
@@ -97,7 +97,7 @@ ConVar bot_pathrevs("rcbot_pathrevs","40",0,"how many revs the bot searches for 
 ConVar bot_command("rcbot_cmd","",0,"issues a command to all bots");
 ConVar bot_attack( "rcbot_flipout", "0", 0, "Rcbots all attack" );
 ConVar bot_scoutdj( "rcbot_scoutdj", "0.28", 0, "time scout uses to double jump" );
-ConVar bot_anglespeed( "rcbot_anglespeed", "0.19", 0, "smaller number will make bots turn slower (1 = instant turn but may overshoot)" );
+ConVar bot_anglespeed( "rcbot_anglespeed", "0.21", 0, "smaller number will make bots turn slower (1 = instant turn but may overshoot)" );
 ConVar bot_stop( "rcbot_stop", "0", 0, "Make bots stop thinking!");
 ConVar bot_waypointpathdist("rcbot_wpt_pathdist","400",0,"Length for waypoints to automatically add paths at");
 ConVar bot_rj("rcbot_rj","0.01",0,"time for soldier to fire rocket after jumping");

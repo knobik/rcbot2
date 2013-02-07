@@ -1053,11 +1053,11 @@ eBotCommandResult CPathWaypointCreateFromToCommand :: execute ( CClient *pClient
 	{
 		CWaypoint *pWaypoint = CWaypoints::getWaypoint(atoi(pcmd));
 
-		if ( pWaypoint )
+		if ( pWaypoint && pWaypoint->isUsed() )
 		{
 			CWaypoint *pWaypoint2 = CWaypoints::getWaypoint(atoi(arg1));
 
-			if ( pWaypoint2 )
+			if ( pWaypoint2 && pWaypoint2->isUsed() )
 			{
 				pWaypoint->addPathTo(atoi(arg1));
 				CBotGlobals::botMessage(pClient!=NULL ? pClient->getPlayer() : NULL,
@@ -1098,11 +1098,11 @@ eBotCommandResult CPathWaypointRemoveFromToCommand :: execute ( CClient *pClient
 	{
 		CWaypoint *pWaypoint = CWaypoints::getWaypoint(atoi(pcmd));
 
-		if ( pWaypoint )
+		if ( pWaypoint && pWaypoint->isUsed() )
 		{
 			CWaypoint *pWaypoint2 = CWaypoints::getWaypoint(atoi(arg1));
 
-			if ( pWaypoint2 )
+			if ( pWaypoint2 && pWaypoint2->isUsed() )
 			{
 				pWaypoint->removePathTo(atoi(arg1));
 				CBotGlobals::botMessage(pClient!=NULL ? pClient->getPlayer() : NULL,
