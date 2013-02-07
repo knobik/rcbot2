@@ -52,6 +52,8 @@ extern ConVar rcbot_enemyshootfov;
 extern ConVar bot_defrate;
 extern ConVar rcbot_smoke_time;
 extern ConVar rcbot_melee_only;
+extern ConVar rcbot_shoot_breakables;
+extern ConVar rcbot_shoot_breakable_dist;
 
 const char *g_DODClassCmd[2][6] = 
 { {"cls_garand","cls_tommy","cls_bar","cls_spring","cls_30cal","cls_bazooka"},
@@ -489,7 +491,10 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	{
 		if ( pEdict == m_pNearestBreakable )
 		{
-			return (distanceFrom(pEdict) < 128.0f) && (CClassInterface::getPlayerHealth(pEdict) > 0);
+			if ( rcbot_shoot_breakables.GetBool() )
+			{ 
+				return (distanceFrom(pEdict) < rcbot_shoot_breakable_dist.GetFloat()) && (CClassInterface::getPlayerHealth(pEdict) > 0);
+			}
 		}
 
 		return false;
