@@ -133,6 +133,7 @@ ConVar rcbot_tf2_protect_cap_time("rcbot_tf2_prot_cap_time","12.5",0,"time that 
 ConVar rcbot_move_dist("rcbot_move_dist","800",0,"minimum distance to move objects to");
 ConVar rcbot_shoot_breakables("rcbot_shoot_breakables","1",0,"if 1, bots will shoot breakable objects");
 ConVar rcbot_shoot_breakable_dist("rcbot_shoot_breakable_dist","128.0",0,"The distance bots will shoot breakables at");
+ConVar rcbot_shoot_breakable_cos("rcbot_shoot_breakable_cos","0.9",0,"The cosine of the angle bots should worry about breaking objects at (default = 0.9) ~= 25 degrees");
 ConVar rcbot_move_obj("rcbot_move_obj","1",0,"if 1 rcbot engineers will move objects around");
 ConVar rcbot_taunt("rcbot_taunt","1",0,"enable/disable bots taunting");
 ConVar rcbot_notarget("rcbot_notarget","0",0,"bots don't shoot the host!");

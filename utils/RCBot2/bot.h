@@ -67,6 +67,7 @@ using namespace std;
 
 #define MAX_AMMO_TYPES 32
 #define MAX_VOICE_CMDS 32
+#define MIN_WPT_TOUCH_DIST 16.0f
 
 // Interfaces from the engine
 //using namespace VEngineServerV21;
@@ -658,7 +659,7 @@ public:
 
 	void updateDanger ( float fBelief );
 
-	inline void reduceTouchDistance ( ) { if ( m_fWaypointTouchDistance > 40 ) m_fWaypointTouchDistance *= 0.9; }
+	inline void reduceTouchDistance ( ) { if ( m_fWaypointTouchDistance > MIN_WPT_TOUCH_DIST ) { m_fWaypointTouchDistance *= 0.9; } }
 
 	inline void resetTouchDistance ( float fDist ) { m_fWaypointTouchDistance = fDist; }
 

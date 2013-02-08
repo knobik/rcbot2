@@ -54,6 +54,7 @@ extern ConVar rcbot_smoke_time;
 extern ConVar rcbot_melee_only;
 extern ConVar rcbot_shoot_breakables;
 extern ConVar rcbot_shoot_breakable_dist;
+extern ConVar rcbot_shoot_breakable_cos;
 
 const char *g_DODClassCmd[2][6] = 
 { {"cls_garand","cls_tommy","cls_bar","cls_spring","cls_30cal","cls_bazooka"},
@@ -151,28 +152,31 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 					m_pNearestBreakable = pEntity;
 			}
 		}
-		else if ( (m_pNearestFlag != pEntity) && CDODMod::m_Flags.isFlag(pEntity) && 
-			(!m_pNearestFlag || (distanceFrom(pEntity)<distanceFrom(m_pNearestFlag)) ) )
+		else if ( (m_pNearestFlag != pEntity) && CDODMod::m_Flags.isFlag(pEntity) )
 		{
-			m_pNearestFlag = pEntity;
+			if ( !m_pNearestFlag || (distanceFrom(pEntity)<distanceFrom(m_pNearestFlag)) )
+				m_pNearestFlag = pEntity;
 		}
-		else if ( (m_pNearestBomb != pEntity) && CDODMod::m_Flags.isBomb(pEntity) && (CClassInterface::getDODBombState(pEntity)!=0) &&
-			      (!m_pNearestBomb || (distanceFrom(pEntity)<distanceFrom(m_pNearestBomb)) ) )
+		else if ( (m_pNearestBomb != pEntity) && CDODMod::m_Flags.isBomb(pEntity) )
 		{
-			m_pNearestBomb = pEntity;
+			if ( (CClassInterface::getDODBombState(pEntity)!=0) &&
+			      (!m_pNearestBomb || (distanceFrom(pEntity)<distanceFrom(m_pNearestBomb)) ) )
+			{
+				m_pNearestBomb = pEntity;
+			}
 		}
 		else if ( (pEntity!=m_pEnemyGrenade) && (strncmp(szClassname,"grenade",7) == 0 ) && 
 			((CClassInterface::getGrenadeThrower(pEntity) == m_pEdict) || 
-			 (CClassInterface::getTeam(pEntity) == m_iEnemyTeam)) && 
-			 (!m_pEnemyGrenade || (distanceFrom(pEntity)<distanceFrom(m_pEnemyGrenade))))
+			 (CClassInterface::getTeam(pEntity) == m_iEnemyTeam)))
 		{
-			m_pEnemyGrenade = pEntity;
+			if ( (!m_pEnemyGrenade || (distanceFrom(pEntity)<distanceFrom(m_pEnemyGrenade))) )
+				m_pEnemyGrenade = pEntity;
 		}
 		else if ( (pEntity!=m_pEnemyRocket) && (strncmp(szClassname,"rocket",6) == 0 ) && 
-			(CClassInterface::getTeam(pEntity) == m_iEnemyTeam) && 
-			(!m_pEnemyRocket || (distanceFrom(pEntity)<distanceFrom(m_pEnemyRocket))))
+			(CClassInterface::getTeam(pEntity) == m_iEnemyTeam) )
 		{
-			m_pEnemyRocket = pEntity;
+			if (!m_pEnemyRocket || (distanceFrom(pEntity)<distanceFrom(m_pEnemyRocket)) )
+				m_pEnemyRocket = pEntity;
 		}
 		else if ( (pEntity!=m_pNearestPathBomb) && CDODMod::isPathBomb(pEntity) && (CClassInterface::getDODBombState(pEntity)!=0) )
 		{
@@ -493,7 +497,8 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 		{
 			if ( rcbot_shoot_breakables.GetBool() )
 			{ 
-				return (distanceFrom(pEdict) < rcbot_shoot_breakable_dist.GetFloat()) && (CClassInterface::getPlayerHealth(pEdict) > 0);
+				if ( DotProductFromOrigin(CBotGlobals::entityOrigin(pEdict)) > rcbot_shoot_breakable_cos.GetFloat() )
+					return (distanceFrom(pEdict) < rcbot_shoot_breakable_dist.GetFloat()) && (CClassInterface::getPlayerHealth(pEdict) > 0);
 			}
 		}
 

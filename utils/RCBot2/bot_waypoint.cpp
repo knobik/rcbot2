@@ -1176,7 +1176,7 @@ bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset, float fTouchDist )
 		if ( hasFlag(CWaypointTypes::W_FL_LADDER) )
 			return ((vOrigin.z+rcbot_ladder_offs.GetFloat()) > v_dynamic.z);
 
-		return fabs(vOrigin.z-v_dynamic.z) <= fTouchDist;
+		return fabs(vOrigin.z-v_dynamic.z) <= WAYPOINT_HEIGHT;
 	}
 
 	return false;
@@ -1229,6 +1229,9 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 	// top + bottom heights = fHeight
 	fHeight /= 2;
+
+	if ( m_iFlags & CWaypointTypes::W_FL_CROUCH )
+		fHeight /= 2; // smaller again
 
 	switch ( iDrawType )
 	{

@@ -123,6 +123,7 @@ float  CBots :: m_flAddKickBotTime = 0;
 extern IVDebugOverlay *debugoverlay;
 extern ConVar bot_use_vc_commands;
 extern ConVar rcbot_dont_move;
+
 ///////////////////////////////////////
 // voice commands
 ////////////////////////////////////////////////
@@ -877,6 +878,8 @@ void CBot :: init (bool bVarInit)
 	m_fFov = BOT_DEFAULT_FOV;
 	m_bOpenFire = true;
 
+	cmd.command_number = 0;
+
 	if ( bVarInit )
 		spawnInit();
 }
@@ -1598,9 +1601,14 @@ void CBot :: doMove ()
         // fl Move is percentage (0 to 1) of forward speed,
         // flSide is percentage (0 to 1) of side speed.
 		
+		// quicker
+		SinCos(radians,&move.y,&move.x);
+		//move.x = TableCos(radians);
+		//move.y = TableSin(radians);
+		/*
 		move.x = cos(radians);
 		move.y = sin(radians);
-
+*/
 		move = move / move.Length();
 
 		flMove = move.x;
