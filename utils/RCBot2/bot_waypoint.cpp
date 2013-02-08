@@ -39,6 +39,9 @@
 #include "ndebugoverlay.h"
 
 #include "bot.h"
+
+#include "in_buttons.h"
+
 #include "bot_globals.h"
 #include "bot_client.h"
 #include "bot_navigator.h"
@@ -53,6 +56,7 @@
 #include "bot_getprop.h"
 
 #include "bot_wpt_dist.h"
+
 
 #include <vector>    //bir3yk
 using namespace std;    //bir3yk
@@ -1834,6 +1838,14 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 
 		edict_t *pEdict;
 		float fDistance;
+
+		IPlayerInfo *pPlayerInfo = playerinfomanager->GetPlayerInfo(pClient->getPlayer());
+
+		if ( pPlayerInfo )
+		{
+			if ( pPlayerInfo->GetLastUserCommand().buttons & IN_DUCK )
+				iFlags |= CWaypointTypes::W_FL_CROUCH;
+		}
 
 		for ( i = 0; i < gpGlobals->maxEntities; i ++ )
 		{
