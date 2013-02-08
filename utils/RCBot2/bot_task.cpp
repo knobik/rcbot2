@@ -587,8 +587,9 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	vector<int> areas;
 	unsigned int i;
 	bool found = false;
+	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
 
-	((CBotTF2*)pBot)->getAttackArea(&areas);
+	pTF2Bot->getAttackArea(&areas);
 	
 	i = 0;
 
@@ -622,12 +623,27 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			fdist = pBot->distanceFrom(m_vMoveTo);
 
-			if ( (((CBotTF2*)pBot)->getClass() == TF_CLASS_SPY) && (((CBotTF2*)pBot)->isDisguised()))
+			if ( pTF2Bot->getClass() == TF_CLASS_SPY )
 			{
-				pBot->primaryAttack(); // remove disguise to capture
-			}
+				if ( pTF2Bot->isDisguised() )
+					pBot->primaryAttack(); // remove disguise to capture
 
-			((CBotFortress*)pBot)->wantToDisguise(false);
+				pTF2Bot->wantToDisguise(false);
+
+				// block cloaking
+				if ( pTF2Bot->isCloaked() )
+				{
+					// uncloak
+					pBot->secondaryAttack();
+				}
+				else 
+				{
+					pBot->letGoOfButton(IN_ATTACK2);
+				}
+
+				pTF2Bot->waitCloak();
+
+			}
 
 			if ( fdist < 52 )
 			{

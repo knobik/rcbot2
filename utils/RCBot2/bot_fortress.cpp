@@ -59,6 +59,9 @@ extern ConVar bot_min_cc_time;
 extern ConVar bot_change_class;
 extern ConVar rcbot_demo_jump;
 extern ConVar rcbot_melee_only;
+extern ConVar rcbot_tf2_protect_cap_time;
+extern ConVar rcbot_tf2_protect_cap_percent;
+extern ConVar rcbot_tf2_spy_kill_on_cap_dist;
 
 #define TF2_SPY_CLOAK_BELIEF 38
 #define TF2_HWGUY_REV_BELIEF 60
@@ -472,6 +475,8 @@ void CBotFortress :: medicCalled(edict_t *pPlayer )
 {
 	bool bGoto = true;
 
+	if ( pPlayer == m_pEdict )
+		return; // can't heal self!
 	if ( m_iClass != TF_CLASS_MEDIC )
 		return; // nothing to do
 	if ( distanceFrom(pPlayer) > 1024 ) // a bit far away
@@ -1094,6 +1099,7 @@ void CBotFortress :: selectClass ()
 
 bool CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag )
 {
+	// job calls!
 	if ( someoneCalledMedic() )
 		return false;
 
@@ -1870,22 +1876,11 @@ void CBotFortress ::waitCloak()
 }
 
 bool CBotFortress:: wantToCloak()
-{
-	static bool bDebug;
-	//static bool bCloak;
-
-	bDebug = CClients::clientsDebugging();
-	//bCloak = false;
-			
+{	
 	if ( ( m_fFrenzyTime < engine->Time() ) && (!m_pEnemy || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY))  )
 	{
 		return ( (CClassInterface::getTF2SpyCloakMeter(m_pEdict) > 90.0f) && ( m_fCurrentDanger > TF2_SPY_CLOAK_BELIEF ));
-			//bCloak = true;
 	}
-
-	//if ( CClients::clientsDebugging() )
-	//	CClients::clientDebugMsg(this,BOT_DEBUG_THINK,"wantToCloak() m_fCurrentDanger = %0.2f, bCloak = %s",m_fCurrentDanger, (bCloak ? "true" : "false"));
-		
 
 	return false;
 }
@@ -3811,14 +3806,12 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_DEFEND_POINT:
 			{
-				extern ConVar rcbot_tf2_protect_cap_time;
-
 				float fTime = rcbot_tf2_protect_cap_time.GetFloat();
 				// chance of going to point
 				float fprob = (fTime - (engine->Time() - CPoints::getPointCaptureTime(m_iCurrentDefendArea)))/fTime;
 
-				if ( fprob < 0.33f )
-					fprob = 0.33f;
+				if ( fprob < rcbot_tf2_protect_cap_percent.GetFloat() )
+					fprob = rcbot_tf2_protect_cap_percent.GetFloat();
 
 				if ( randomFloat(0.0,1.0f) > fprob )
 				{
@@ -4636,7 +4629,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		if ( isDisguised() )
 		{
 			fDistance = distanceFrom(pEnemy);
-			if ( ((fDistance < 400) && CTeamFortress2Mod::isCapping(pEnemy)) || 
+			if ( ((fDistance < rcbot_tf2_spy_kill_on_cap_dist.GetFloat()) && CTeamFortress2Mod::isCapping(pEnemy)) || 
 				( (fDistance < 130) && CBotGlobals::isAlivePlayer(pEnemy) && 
 				( fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > bot_spyknifefov.GetFloat() ) ) )
 			{
