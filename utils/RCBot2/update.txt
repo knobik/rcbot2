@@ -1,3 +1,42 @@
+0.71
+
+General
+-------
+all: using optimized sin/cos
+all: fixed random crash to do with weapons (all mods)
+all: fixed, all mods: weapon updating
+all: fixed bug - bots not listening to other players (improves combat)
+all: fixed 'you do not have access to command' after map change (all mods)
+all: fixed divide by zero error
+all: fixed waypoint radiuses not being updated when bots touched waypoints
+all: changed bot touch waypoint behaviour
+
+waypointing: automatically add crouch waypoint if player is holding crouch button
+waypointing: added waypoint add <type> <area> e.g. rcbot waypoint add sniper 3 (adds sniper waypoint at area 3)
+waypointing: added pathwaypoint removefromto <id> <id> , and pathwaypoint createfromto <id> <id> commands
+waypointing: smaller crouch waypoints
+
+TF2
+----
+tf2: spies attack enemies on the point when disguised
+tf2: spy detection changes (if enemy is disguised as team spy and decloaks they don't detect the spy as long as everything else checks out)
+tf2: spies uncloaking when capturing point / spies defending point by attacking any enemy on point within a distance (cvar)
+
+DOD:S
+-------
+dods: extra waypoints for stock maps thanks to genmac (alencore)
+dods: bot's step back from bombs before they explode better
+dods: fixed a class bug where bots just stood still and did nothing
+dods: added command rcbot_nocapturing for custom maps/modes
+dods: bots can plant bombs that block paths (new waypoint 'bombtoopen')
+dods: bot choose to plant bombs in less dangerous capture points
+dods: defending/sniping - bots will crouch at crouch waypoints
+dods: improved flag/bomb detection/fixed number of capture points bots thought were available
+dods: bots support flag and bomb capture points on the same map
+dods: support for shooting breakable objects (new commands rcbot_shoot_breakable_dist, rcbot_shoot_breakables)
+dods: fixed bots interrupting other bots defusing or planting
+
+
 0.7
 
 General
