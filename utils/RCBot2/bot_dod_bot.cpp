@@ -55,6 +55,7 @@ extern ConVar rcbot_melee_only;
 extern ConVar rcbot_shoot_breakables;
 extern ConVar rcbot_shoot_breakable_dist;
 extern ConVar rcbot_shoot_breakable_cos;
+extern ConVar rcbot_nocapturing;
 
 const char *g_DODClassCmd[2][6] = 
 { {"cls_garand","cls_tommy","cls_bar","cls_spring","cls_30cal","cls_bazooka"},
@@ -1092,7 +1093,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 
 		break;
 	case DOD_VC_NEED_BACKUP:
-		if ( m_pNearestFlag && isVisible(pPlayer) )
+		if ( m_pNearestFlag && isVisible(pPlayer) && !rcbot_nocapturing.GetBool() )
 		{
 			Vector vPoint = CBotGlobals::entityOrigin(m_pNearestFlag);
 			Vector vPlayer = CBotGlobals::entityOrigin(pPlayer);
@@ -1922,7 +1923,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.81f);
 
 	// flag capture map
-	if ( CDODMod::isFlagMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
+	if ( CDODMod::isFlagMap() && (CDODMod::m_Flags.getNumFlags() > 0) && !rcbot_nocapturing.GetBool() )
 	{
 		bool bAttackNearestFlag = false;
 
@@ -1972,7 +1973,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	}
 	// bomb map
 	
-	if ( CDODMod::isBombMap() && (CDODMod::m_Flags.getNumFlags() > 0) )
+	if ( CDODMod::isBombMap() && (CDODMod::m_Flags.getNumFlags() > 0) && !rcbot_nocapturing.GetBool() )
 	{
 		// same thing as above except with bombs
 		iFlagID = -1;
