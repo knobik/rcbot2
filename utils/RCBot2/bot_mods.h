@@ -452,6 +452,12 @@ public:
 		return m_iNumAxisBombsOnMap;
 	}
 
+	inline void reset ()
+	{
+		// time up
+		m_iNumControlPoints = 0;
+	}
+
 private:
 	edict_t *m_pFlags[MAX_DOD_FLAGS];
 	edict_t *m_pBombs[MAX_DOD_FLAGS][2]; // maximum of 2 bombs per capture point

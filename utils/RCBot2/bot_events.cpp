@@ -666,12 +666,12 @@ void CDODRoundActive :: execute ( IBotEventInterface *pEvent )
 
 void CDODRoundWin :: execute ( IBotEventInterface *pEvent )
 {
-
+	//CDODMod::m_Flags.reset();
 }
 
 void CDODRoundOver :: execute ( IBotEventInterface *pEvent )
 {
-
+	//CDODMod::m_Flags.reset();
 }
 
 void CDODChangeClass :: execute ( IBotEventInterface *pEvent )

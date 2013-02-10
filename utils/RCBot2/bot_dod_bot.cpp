@@ -56,6 +56,7 @@ extern ConVar rcbot_shoot_breakables;
 extern ConVar rcbot_shoot_breakable_dist;
 extern ConVar rcbot_shoot_breakable_cos;
 extern ConVar rcbot_nocapturing;
+extern ConVar bot_messaround;
 
 const char *g_DODClassCmd[2][6] = 
 { {"cls_garand","cls_tommy","cls_bar","cls_spring","cls_30cal","cls_bazooka"},
@@ -1899,12 +1900,14 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	static float fDefuseBombUtil;
 	static float fPlantUtil; 
 	static int iEnemyTeam;
+	static bool bCanMessAround;
 	// if condition has changed or no tasks
 	if ( !hasSomeConditions(CONDITION_CHANGED) && !m_pSchedules->isEmpty() )
 		return;
 
 	bCheckCurrent = true;
 	m_iTeam = getTeam(); // update team
+	bCanMessAround = bot_messaround.GetBool();
 
 	fAttackUtil = 0.5f;
 	fDefendUtil = 0.4f;
@@ -1926,6 +1929,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	if ( CDODMod::isFlagMap() && (CDODMod::m_Flags.getNumFlags() > 0) && !rcbot_nocapturing.GetBool() )
 	{
 		bool bAttackNearestFlag = false;
+
+		bCanMessAround = false;
 
 		if ( m_pNearestFlag )
 		{
@@ -1975,6 +1980,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	
 	if ( CDODMod::isBombMap() && (CDODMod::m_Flags.getNumFlags() > 0) && !rcbot_nocapturing.GetBool() )
 	{
+		bCanMessAround = false;
 		// same thing as above except with bombs
 		iFlagID = -1;
 		iEnemyTeam = m_iTeam==TEAM_ALLIES ? TEAM_AXIS : TEAM_ALLIES;
@@ -2054,7 +2060,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 		}
 	}
-	else
+	
+	if ( bCanMessAround )
 	{
 		ADD_UTILITY(BOT_UTIL_MESSAROUND,(getHealthPercent()>0.75f), fAttackUtil );
 	}
