@@ -684,6 +684,8 @@ public:
 
 	virtual bool overrideAmmoTypes () { return true; }
 
+	virtual void debugBot ( char *msg );
+
 protected:
 
 	inline void setLookAt ( Vector vNew )
@@ -715,6 +717,7 @@ protected:
 	// bots edict
 	edict_t *m_pEdict;
 	MyEHandle m_pAvoidEntity;
+	//float m_fLastPrintDebugInfo;
 	// is bot used in the game?
 	bool m_bUsed;
 	// time the bot was made in the server

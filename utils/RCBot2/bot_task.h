@@ -434,6 +434,9 @@ public:
 	CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw, bool bUseZ = false, float z = 0, int iWaypointType = 0 );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule); 
+
+	void debugString ( char *string );
+
 private:
 	float m_fTime;
 	float m_fEnemyTime;

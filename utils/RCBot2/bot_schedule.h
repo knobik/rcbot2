@@ -105,6 +105,8 @@ public:
 
 	void execute ( CBot *pBot );
 
+	const char *getIDString ();
+
 	CBotTask *currentTask ()
 	{
 		if ( m_Tasks.IsEmpty() )
@@ -266,21 +268,32 @@ public:
 		m_Schedules.AddFront(pSchedule);
 	}
 
-	bool isEmpty ()
+	inline bool isEmpty ()
 	{
 		return m_Schedules.IsEmpty();
 	}
 
 	CBotTask *getCurrentTask ()
 	{
-		CBotSchedule *sched = m_Schedules.GetFrontInfo();
-
-		if ( sched != NULL )
+		if ( !m_Schedules.IsEmpty() )
 		{
-			return sched->currentTask();
+			CBotSchedule *sched = m_Schedules.GetFrontInfo();
+
+			if ( sched != NULL )
+			{
+				return sched->currentTask();
+			}
 		}
 
 		return NULL;
+	}
+
+	CBotSchedule *getCurrentSchedule ()
+	{
+		if ( isEmpty() )
+			return NULL;
+
+		return m_Schedules.GetFrontInfo();
 	}
 
 private:

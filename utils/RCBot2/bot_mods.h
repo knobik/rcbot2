@@ -196,7 +196,7 @@ public:
 	{
 		int count = 0;
 
-		for ( short i = 0; i < m_iNumControlPoints; i ++ )
+		for ( short int i = 0; i < m_iNumControlPoints; i ++ )
 		{
 			if ( m_iOwner[i] == iTeam )
 				count++;

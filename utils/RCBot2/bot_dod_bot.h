@@ -39,14 +39,19 @@
 #define SMOKE_RADIUS 150.0f
 #define DOD_BOMB_EXPLODE_IMMINENT_TIME 7.0f
 
-class CBroadcastBombPlanted : public IBotFunction
+class CBroadcastBombEvent : public IBotFunction
 {
 public:
-	CBroadcastBombPlanted ( int iCP, int iTeam ) { m_iCP = iCP; m_iTeam = iTeam; };
+	CBroadcastBombEvent ( int iEvent, int iCP, int iTeam ) 
+	{ 
+		m_iEvent = iEvent; m_iCP = iCP; m_iTeam = iTeam; 
+	};
+
 	void execute (CBot *pBot);
 private:
 	int m_iCP;
 	int m_iTeam;
+	int m_iEvent;
 };
 
 typedef enum
@@ -101,10 +106,12 @@ typedef enum
 #define DOD_BOMB_STATE_AVAILABLE   1
 #define DOD_BOMB_STATE_ACTIVE	   2
 
+#define DOD_BOMB_EXPLODED		0
 #define DOD_BOMB_DEFUSE			1
 #define DOD_BOMB_PLANT			2
 #define DOD_BOMB_PATH_PLANT		3
 #define DOD_BOMB_PATH_DEFUSE	4
+#define DOD_POINT_CAPTURED		5
 
 #define DOD_CLASSNAME_CONTROLPOINT "dod_control_point"
 #define DOD_CLASSNAME_BOMBTARGET "dod_bomb_target"
@@ -128,7 +135,7 @@ public:
 
 	bool hasBomb () { return m_bHasBomb; }
 	void removeBomb () { m_bHasBomb = false; }
-	void bombPlanted ( int iCP, int iTeam );
+	void bombEvent ( int iEvent, int iCP, int iTeam );
 
 	void modThink ();
 
@@ -241,8 +248,11 @@ private:
 	MyEHandle m_pNearestBomb; // "capture" bomb
 	MyEHandle m_pNearestPathBomb; // blocking path bomb
 	MyEHandle m_pNearestBreakable;
+	MyEHandle m_pNearestWeapon;
 
 	eDODVoiceCMD m_LastHearVoiceCommand;
+
+	float m_fLastCaptureEvent;
 	// blah blah
 };
 

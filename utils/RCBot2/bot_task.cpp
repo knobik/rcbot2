@@ -208,7 +208,7 @@ void CBotTF2ShootLastEnemyPosition ::  execute (CBot *pBot,CBotSchedule *pSchedu
 
 void CBotTF2ShootLastEnemyPosition :: debugString ( char *string )
 {
-	sprintf(string,"Shoot Last Enemy Position (%0.4f,%0.4f,%0.4f)",m_vPosition.x,m_vPosition.y,m_vPosition.z);
+	sprintf(string,"CBotTF2ShootLastEnemyPosition\nm_vPosition = (%0.4f,%0.4f,%0.4f)",m_vPosition.x,m_vPosition.y,m_vPosition.z);
 }
 
 
@@ -259,7 +259,7 @@ void CBotTF2WaitHealthTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 void CBotTF2WaitHealthTask :: debugString ( char *string )
 {
-	sprintf(string,"Wait Health (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
+	sprintf(string,"CBotTF2WaitHealthTask\nm_vOrigin = (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
 }
 
 
@@ -306,7 +306,7 @@ void CBotTF2WaitFlagTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 void CBotTF2WaitFlagTask :: debugString ( char *string )
 {
-	sprintf(string,"Wait Flag (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
+	sprintf(string,"CBotTF2WaitFlagTask\nm_vOrigin = (%0.4f,%0.4f,%0.4f)",m_vOrigin.x,m_vOrigin.y,m_vOrigin.z);
 }
 //////////
 CBotDODBomb :: CBotDODBomb ( int iBombType, int iBombID, edict_t *pBomb, Vector vPosition, int iPrevOwner )
@@ -420,7 +420,7 @@ void CBotDODBomb :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 void CBotDODBomb :: debugString ( char *string )
 {
-	sprintf(string,"CBotDODBomb %d %d %f %d",m_iType, m_iBombID,m_fTime,m_iPrevTeam);
+	sprintf(string,"CBotDODBomb\nm_iType = %d\nm_iBombID = %d\nm_fTime = %0.2f\nm_iPrevTeam = %d",m_iType, m_iBombID,m_fTime,m_iPrevTeam);
 }
 
 //////
@@ -568,7 +568,7 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 void CBotDODAttackPoint :: debugString ( char *string )
 {
-	sprintf(string,"CBotDODAttackPoint (%d,%0.1f,%0.1f,%0.1f,%0.1f)",m_iFlagID,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z,m_fRadius);
+	sprintf(string,"CBotDODAttackPoint\nm_iFlagID = %d\n m_vOrigin = (%0.1f,%0.1f,%0.1f,radius = %0.1f)",m_iFlagID,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z,m_fRadius);
 }
 
 ///////////
@@ -845,7 +845,7 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 void CBotTF2DefendPoint :: debugString ( char *string )
 {
-	sprintf(string,"CBotTF2DefendPoint (%d,%0.1f,%0.1f,%0.1f,%d)",m_iArea,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z,m_iRadius);
+	sprintf(string,"CBotTF2DefendPoint\nm_iArea=%d\nm_vOrigin=(%0.1f,%0.1f,%0.1f,%d)",m_iArea,m_vOrigin.x,m_vOrigin.y,m_vOrigin.z,m_iRadius);
 }
 
 ///////////
@@ -1613,7 +1613,7 @@ CFindPathTask :: CFindPathTask ( edict_t *pEdict )
 
 void CFindPathTask :: debugString ( char *string )
 {
-	sprintf(string,"Find Path (%d) (%0.4f,%0.4f,%0.4f)",m_iInt,m_vVector.x,m_vVector.y,m_vVector.z);
+	sprintf(string,"CFindPathTask\n m_iInt = %d\n m_vVector = (%0.4f,%0.4f,%0.4f)",m_iInt,m_vVector.x,m_vVector.y,m_vVector.z);
 }
 
 void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
@@ -1726,7 +1726,7 @@ void CMoveToTask :: init ()
 
 void CMoveToTask :: debugString ( char *string )
 {
-	sprintf(string,"MoveToTask (%0.4f,%0.4f,%0.4f)",m_vVector.x,m_vVector.y,m_vVector.z);	
+	sprintf(string,"CMoveToTask\nm_vVector =(%0.4f,%0.4f,%0.4f)",m_vVector.x,m_vVector.y,m_vVector.z);	
 }
 
 CMoveToTask :: CMoveToTask ( edict_t *pEdict )
@@ -2172,7 +2172,7 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 void CBotTF2SpySap :: debugString ( char *string )
 {
-	sprintf(string,"sap building");
+	sprintf(string,"CBotTF2SpySap");
 }
 
 
@@ -2252,7 +2252,7 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 void CBotTFUseTeleporter :: debugString ( char *string )
 {
-	sprintf(string,"CBotTFUseTeleporter %x",(int)m_pTele.get());
+	sprintf(string,"CBotTFUseTeleporter\nm_pTele = %x",(int)m_pTele.get());
 }
 
 ///////////////////////////////////////////////////
@@ -2340,7 +2340,7 @@ void CThrowGrenadeTask ::init()
 
 void CThrowGrenadeTask::debugString(char *string)
 {
-	sprintf(string,"CThrowGrenadeTask (%0.4f,%0.4f,%0.4f) fTime = %0.4f",m_vLoc.x,m_vLoc.y,m_vLoc.z,m_fTime);	
+	sprintf(string,"CThrowGrenadeTask\nm_vLoc =(%0.4f,%0.4f,%0.4f)\nfTime = %0.4f",m_vLoc.x,m_vLoc.y,m_vLoc.z,m_fTime);	
 }
 void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 {
@@ -2462,7 +2462,7 @@ CHideTask :: CHideTask( Vector vHideFrom )
 
 void CHideTask :: debugString ( char *string )
 {
-	sprintf(string,"CHideTask (%0.4f,%0.4f,%0.4f)",m_vHideFrom.x,m_vHideFrom.y,m_vHideFrom.z);	
+	sprintf(string,"CHideTask\nm_vHideFrom =(%0.4f,%0.4f,%0.4f)",m_vHideFrom.x,m_vHideFrom.y,m_vHideFrom.z);	
 }
 
 void CHideTask :: init ()
@@ -3015,6 +3015,11 @@ CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float f
 	m_bUseZ = bUseZ;
 	m_z = z; // z = ground level
 	m_iWaypointType = iWaypointType;
+}
+
+void CBotDODSnipe :: debugString ( char *string )
+{
+	sprintf(string,"CBotDODSnipe\nm_fTime = %0.2f\npWeaponToUse = %s\nm_bUseZ = %s\nm_z = %0.2f",m_fTime,m_pWeaponToUse->getWeaponInfo()->getWeaponName(),m_bUseZ ? "true":"false",m_z);
 }
 	
 void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)

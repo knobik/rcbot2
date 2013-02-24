@@ -149,7 +149,7 @@ ConVar rcbot_dont_move("rcbot_dontmove","0",0,"if 1 , bots will all move forward
 ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","416",0,"offset of the PlayerRunCommand function");
 ConVar rcbot_runplayercmd_hookonce("rcbot_runplayer_hookonce","1",0,"function will hook only once, if 0 it will unook and rehook after every map");
 ConVar rcbot_ladder_offs("rcbot_ladder_offs","42",0,"difference in height for bot to think it has touched the ladder waypoint");
-
+ConVar rcbot_ffa("rcbot_ffa","0",0,"Free for all mode -- bots shoot everyone");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 

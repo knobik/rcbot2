@@ -38,6 +38,7 @@
 #include "bot_dod_bot.h"
 #include "bot_weapons.h"
 #include "bot_getprop.h"
+#include "bot_dod_bot.h"
 
 vector<CBotEvent*> CBotEvents :: m_theEvents;
 extern ConVar bot_use_vc_commands;
@@ -609,16 +610,36 @@ void CFlagCaptured :: execute ( IBotEventInterface *pEvent )
 void CDODPointCaptured :: execute ( IBotEventInterface *pEvent )
 {
 	int cp = pEvent->getInt("cp");
-	int team = pEvent->getInt("team");
+	const char *szCappers = pEvent->getString("cappers",NULL);
 
-	CBroadcastBombPlanted func(cp,team);
+	// get a capper
+	int userid = szCappers[0];
 
-	CBots::botFunction(&func);
+	int team = 0;
+
+	// find the team - should be a player index
+	if ( (userid >= 0) && (userid <= gpGlobals->maxClients) )
+		team = CClassInterface::getTeam(INDEXENT(userid));
+
+	if ( team )
+	{
+		CBroadcastBombEvent func(DOD_POINT_CAPTURED,cp,team);
+
+		CBots::botFunction(&func);
+	}
 }
 
 void CDODBombExploded :: execute ( IBotEventInterface *pEvent )
 {
 	int cp = pEvent->getInt("cp");
+	int team = CClassInterface::getTeam(m_pActivator);
+
+	if ( m_pActivator )
+	{
+		CBroadcastBombEvent func(DOD_BOMB_EXPLODED,cp,team);
+
+		CBots::botFunction(&func);
+	}
 
 	CDODMod::m_Flags.setBombPlanted(cp,false);
 }
@@ -626,8 +647,13 @@ void CDODBombExploded :: execute ( IBotEventInterface *pEvent )
 void CDODBombDefused :: execute ( IBotEventInterface *pEvent )
 {
 	int cp = pEvent->getInt("cp");
+	int team = pEvent->getInt("team");
 
 	CDODMod::m_Flags.setBombPlanted(cp,false);
+
+	CBroadcastBombEvent func(DOD_BOMB_DEFUSE,cp,team);
+
+	CBots::botFunction(&func);
 }
 
 void CDODBombPlanted :: execute ( IBotEventInterface *pEvent )
@@ -635,7 +661,7 @@ void CDODBombPlanted :: execute ( IBotEventInterface *pEvent )
 	int cp = pEvent->getInt("cp");
 	int team = pEvent->getInt("team");
 
-	CBroadcastBombPlanted func(cp,team);
+	CBroadcastBombEvent func(DOD_BOMB_PLANT,cp,team);
 
 /*	if ( m_pActivator )
 	{

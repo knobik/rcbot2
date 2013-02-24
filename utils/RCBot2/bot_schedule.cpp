@@ -40,7 +40,7 @@
 #include "bot_getprop.h"
 ////////////////////////////////////
 
-const char *szSchedules[] = 
+const char *szSchedules[SCHED_MAX] = 
 {
 	"SCHED_NONE",
 	"SCHED_ATTACK",
@@ -74,7 +74,10 @@ const char *szSchedules[] =
 	"SCHED_MESSAROUND",
 	"SCHED_TF2_ENGI_MOVE_BUILDING",
 	"SCHED_FOLLOW_LAST_ENEMY",
-	"SCHED_SHOOT_LAST_ENEMY_POS"
+	"SCHED_SHOOT_LAST_ENEMY_POS",
+	"SCHED_GRAVGUN_PICKUP",
+	"SCHED_HELP_PLAYER",
+	"SCHED_BOMB"
 };
 ////////////////////// unused
 CBotTF2DemoPipeEnemySched :: CBotTF2DemoPipeEnemySched ( CBotWeapon *pLauncher, Vector vStand, edict_t *pEnemy )
@@ -620,6 +623,11 @@ void CBotSchedule :: removeTop ()
 	m_Tasks.RemoveFront();
 
 	delete pTask;
+}
+
+const char *CBotSchedule :: getIDString ()
+{
+	return szSchedules[m_iSchedId];
 }
 
 /////////////////////

@@ -74,6 +74,10 @@ public:
 
 	virtual bool hasNextPoint () = 0;
 
+	virtual int getCurrentWaypointID () = 0;
+
+	virtual int getCurrentGoalID () = 0;
+
 	virtual Vector getNextPoint () = 0;
 
 	virtual void updatePosition () = 0;
@@ -424,6 +428,16 @@ public:
 	bool beliefSave ( bool bOverride = false );
 
 	bool wantToSaveBelief ();
+
+	int getCurrentWaypointID ()
+	{
+		return m_iCurrentWaypoint;
+	}
+
+	int getCurrentGoalID ()
+	{
+		return m_iGoalWaypoint;
+	}
 
 private:
 	CBot *m_pBot;

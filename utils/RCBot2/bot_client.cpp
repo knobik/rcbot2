@@ -35,11 +35,14 @@
 #include "bot_commands.h"
 #include "bot_globals.h"
 #include "bot_waypoint.h"
+#include "ndebugoverlay.h"
 
 // setup static client array
 CClient CClients::m_Clients[MAX_PLAYERS];
 CClient *CClients::m_pListenServerClient = NULL;
 bool CClients::m_bClientsDebugging = false;
+
+extern IVDebugOverlay *debugoverlay;
 
 void CClient :: init ()
 {
@@ -92,6 +95,9 @@ void CClient :: think ()
 
 	if ( isDebugging() )
 	{
+		IPlayerInfo *p = playerinfomanager->GetPlayerInfo(m_pPlayer);
+
+
 		if ( isDebugOn(BOT_DEBUG_SPEED) )
 		{
 			CBotGlobals::botMessage(m_pPlayer,0,"speed = %0.0f",m_fSpeed);
@@ -99,7 +105,6 @@ void CClient :: think ()
 
 		if ( isDebugOn(BOT_DEBUG_USERCMD) )
 		{
-			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(m_pPlayer);
 
 			if ( p )
 			{
@@ -107,6 +112,56 @@ void CClient :: think ()
 
 				CBotGlobals::botMessage(m_pPlayer,0,"Btns = %d, cmd_no = %d, impulse = %d, weapselect = %d, weapsub = %d",cmd.buttons,cmd.command_number,cmd.impulse,cmd.weaponselect,cmd.weaponsubtype);
 
+			}
+		}
+
+
+		if ( (m_pDebugBot!=NULL) && isDebugOn(BOT_DEBUG_HUD) )
+		{
+			if ( m_fNextPrintDebugInfo < engine->Time() )
+			{
+
+				char msg[512];
+
+				QAngle eyes = p->GetLastUserCommand().viewangles;
+				Vector vForward;
+				// in fov? Check angle to edict
+				AngleVectors(eyes,&vForward);
+
+				vForward = vForward / vForward.Length(); // normalize
+				Vector vLeft = (vForward-p->GetAbsOrigin()).Cross(Vector(0,0,1));
+				vLeft = vLeft/vLeft.Length();
+				
+				Vector vDisplay = p->GetAbsOrigin() + vForward*300.0f; 
+				vDisplay = vDisplay - vLeft*300.0f;
+
+				// get debug message
+				m_pDebugBot->debugBot(msg);
+
+#ifndef __linux__
+				int i = 0; 
+				int n = 0;
+				char line[256];
+				int linenum = 0;
+				int iIndex = ENTINDEX(m_pDebugBot->getEdict());
+
+				do
+				{
+					while ( (msg[i]!=0) && (msg[i]!='\n') ) 
+						line[n++] = msg[i++];
+
+					line[n]=0;
+					debugoverlay->AddEntityTextOverlay(iIndex,linenum++,1.0f,255,255,255,255,line);
+					n = 0;
+
+					if ( msg[i] == 0 )
+						break;
+					i++;
+				}while ( 1 ) ;
+				//int ent_index, int line_offset, float duration, int r, int g, int b, int a, const char *format, ...
+			//	debugoverlay->AddEntityTextOverlay();
+#endif
+				m_fNextPrintDebugInfo = engine->Time() + 1.0f;
 			}
 		}
 			//this->cm_pDebugBot->getTaskDebug();

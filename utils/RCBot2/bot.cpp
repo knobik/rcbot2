@@ -124,6 +124,24 @@ extern IVDebugOverlay *debugoverlay;
 extern ConVar bot_use_vc_commands;
 extern ConVar rcbot_dont_move;
 
+const char *g_szLookTaskToString[LOOK_MAX] = 
+{
+	"LOOK_NONE",
+	"LOOK_VECTOR",
+	"LOOK_WAYPOINT",
+	"LOOK_WAYPOINT_NEXT_ONLY",
+	"LOOK_AROUND",
+	"LOOK_ENEMY",
+	"LOOK_LAST_ENEMY",
+	"LOOK_HURT_ORIGIN",
+	"LOOK_EDICT",
+	"LOOK_GROUND",
+	"LOOK_SNIPE",
+	"LOOK_WAYPOINT_AIM",
+	"LOOK_BUILD",
+	"LOOK_NOISE",
+};
+
 ///////////////////////////////////////
 // voice commands
 ////////////////////////////////////////////////
@@ -1323,6 +1341,64 @@ bool CBot :: isAlive ()
 int CBot :: getTeam ()
 {
 	return m_pPlayerInfo->GetTeamIndex();
+}
+
+void CBot ::debugBot(char *msg)
+{
+	//if ( m_fLastPrintDebugInfo < engine->Time() )
+	//{
+		//Vector vDisplay;
+		//Vector vForward;
+		//Vector vLeft;
+		//QAngle eyes;
+		//char msg[512];
+		bool hastask = m_pSchedules->getCurrentTask()!=NULL;
+
+		char task_string[256];
+
+		edict_t *pEnemy = m_pEnemy.get();
+
+		if ( hastask )
+			m_pSchedules->getCurrentTask()->debugString(task_string);
+
+		//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+		//eyes = p->GetLastUserCommand().viewangles;
+
+		// in fov? Check angle to edict
+		//AngleVectors(eyes,&vForward);
+
+		//vForward = vForward / vForward.Length(); // normalize
+		//vLeft = (vForward-p->GetAbsOrigin()).Cross(Vector(0,0,1));
+		//vLeft = vLeft/vLeft.Length();
+		
+		//vDisplay = p->GetAbsOrigin() + vForward*300.0f; 
+		//vDisplay = vDisplay - vLeft*300.0f;
+
+		sprintf(msg,"Debugging bot: %s\n \
+			Current Schedule: %s\n \
+			Current Task Details: \n \
+			---------------------\n \
+			%s\n \
+			Look Task:%s\n \
+			Current Waypoint:%d\n \
+			Current Goal: %d\n \
+			Enemy: %s", 
+			m_szBotName, 
+			m_pSchedules->isEmpty() ? "none" : m_pSchedules->getCurrentSchedule()->getIDString(),
+			hastask ? task_string : "none",
+			g_szLookTaskToString[m_iLookTask], 
+			m_pNavigator->hasNextPoint() ? m_pNavigator->getCurrentWaypointID() : -1, 
+			m_pNavigator->hasNextPoint() ? m_pNavigator->getCurrentGoalID() : -1,
+			(pEnemy!=NULL)?pEnemy->GetClassName():"none"
+			);
+				
+		
+		//debugoverlay->AddTextOverlay(vDisplay,1.0f,msg);
+
+		// one second update
+		//m_fLastPrintDebugInfo = engine->Time() + 1.0f;
+	//}
 }
 
 int CBot :: nearbyFriendlies (float fDistance)

@@ -165,6 +165,7 @@ enum
 #define WEAP_FL_FIRE_SELECT		16384 // weapon can choose fire mode
 #define WEAP_FL_CANTFIRE_NORM	32768 // weapon can't be fired normally, needs to be zoomed/deployed
 #define WEAP_FL_GRENADE			65536
+#define WEAP_FL_HIGH_RECOIL		131072 // can't be fired at long distance, but ok when deployed
 
 extern WeaponsData_t TF2Weaps[];
 extern WeaponsData_t HL2DMWeaps[];
@@ -259,6 +260,11 @@ public:
 	inline bool primaryInRange ( float fDistance )
 	{
 		return (fDistance>m_fPrimMinWeaponShootDist)&&(fDistance<m_fPrimMaxWeaponShootDist);
+	}
+
+	inline bool hasHighRecoil ()
+	{
+		return hasAllFlags(WEAP_FL_HIGH_RECOIL);
 	}
 
 	inline bool isZoomable ()
@@ -481,6 +487,11 @@ public:
 	inline bool canUseUnderWater ()
 	{
 		return m_pWeaponInfo->canUseUnderWater();
+	}
+
+	inline bool hasHighRecoil ()
+	{
+		return m_pWeaponInfo->hasHighRecoil();
 	}
 
 	inline int getID ()

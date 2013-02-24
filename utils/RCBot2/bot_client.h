@@ -168,6 +168,8 @@ private:
 	eWptCopyType m_WaypointCopyType;
 	// TODO: tooltips queue
 	// vector<CToolTip*> tooltips
+
+	float m_fNextPrintDebugInfo;
 };
 
 class CClients

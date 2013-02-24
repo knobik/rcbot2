@@ -57,6 +57,7 @@
 #define BOT_DEBUG_EDICTS 512
 #define BOT_DEBUG_THINK 1024
 #define BOT_DEBUG_LOOK 2048
+#define BOT_DEBUG_HUD 4096
 
 typedef enum
 {
@@ -73,8 +74,11 @@ typedef enum
 	LOOK_SNIPE,
 	LOOK_WAYPOINT_AIM,
 	LOOK_BUILD,
-	LOOK_NOISE
+	LOOK_NOISE,
+	LOOK_MAX
 }eLookTask;
+
+extern const char *g_szLookTaskToString[LOOK_MAX];
 
 typedef enum
 {
