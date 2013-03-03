@@ -1001,6 +1001,9 @@ void CWaypointNavigator :: updatePosition ()
 
 			m_bDangerPoint = false;
 
+			// fix: bots jumping at wrong positions
+			m_pBot->touchedWpt(pWaypoint);
+
 			if ( m_currentRoute.IsEmpty() ) // reached goal!!
 			{
 				m_vPreviousPoint = m_pBot->getOrigin();
@@ -1025,7 +1028,7 @@ void CWaypointNavigator :: updatePosition ()
 				fBelief = getBelief(m_iCurrentWaypoint);
 			}
 
-			m_pBot->touchedWpt(pWaypoint);
+			
 		}
 	}
 	else
@@ -2306,7 +2309,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_SENTRY,"sentry","TF2 engineer bot can build here",WptColor(255,0,0),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_MACHINEGUN,"machinegun","DOD machine gunner will deploy gun here",WptColor(255,0,0),(1<<MOD_DOD)));
 	addType(new CWaypointType(W_FL_DOUBLEJUMP,"doublejump","TF2 scout can double jump here",WptColor(10,10,100),(1<<MOD_TF2)));
-
+	addType(new CWaypointType(W_FL_PRONE,"prone","DOD:S bots prone here",WptColor(0,200,0),(1<<MOD_DOD)));
 	addType(new CWaypointType(W_FL_TELE_ENTRANCE,"teleentrance","TF2 engineer bot can build tele entrance here",WptColor(50,50,150),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_TELE_EXIT,"teleexit","TF2 engineer bot can build tele exit here",WptColor(100,100,255),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_DEFEND,"defend","bot will defend at this position",WptColor(160,50,50)));
