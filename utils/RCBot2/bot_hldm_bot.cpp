@@ -310,6 +310,33 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 			}
 
 		}
+	case BOT_UTIL_SNIPE:
+		{
+			// roam
+			CWaypoint *pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER);
+
+			if ( pWaypoint )
+			{
+				CBotSchedule *snipe = new CBotSchedule();
+				CBotTask *findpath = new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint));
+				CBotTask *snipetask;
+
+				snipetask = new CBotDODSnipe(m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_CROSSBOW)),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),false,0);
+
+				findpath->setCompleteInterrupt(CONDITION_PUSH);
+				snipetask->setCompleteInterrupt(CONDITION_PUSH);
+
+				snipe->setID(SCHED_DEFENDPOINT);
+				snipe->addTask(findpath);
+				snipe->addTask(snipetask);
+				
+				m_pSchedules->add(snipe);
+
+				return true;
+			}
+
+			break;
+		}
 	case BOT_UTIL_ROAM:
 		// roam
 		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::randomFlaggedWaypoint(getTeam()));
