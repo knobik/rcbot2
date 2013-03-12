@@ -1034,40 +1034,7 @@ void CWaypointNavigator :: updatePosition ()
 	else
 		m_bOffsetApplied = false;
 
-	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_CROUCH) )
-	{
-		m_pBot->duck(true);
-	}
-	
-	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_LIFT) )
-	{
-		m_pBot->updateCondition(CONDITION_LIFT);
-	}
-	else
-	{
-		m_pBot->removeCondition(CONDITION_LIFT);
-	}
-
-	if ( !m_bOffsetApplied )
-	{
-		if ( fRadius > 0 )
-			m_vOffset = Vector(randomFloat(-fRadius,fRadius),randomFloat(-fRadius,fRadius),0);
-		else
-			m_vOffset = Vector(0,0,0);
-
-		// poor coupling here
-		if ( CBotGlobals::isCurrentMod(MOD_DOD) && pWaypoint->hasFlag(CWaypointTypes::W_FL_BOMB_TO_OPEN) )
-		{
-			m_vOffset += (CDODMod::getGround(pWaypoint) - pWaypoint->getOrigin());
-		}
-
-		m_bOffsetApplied = true;
-
-		/*if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
-		{
-			debugoverlay->AddLineOverlay(m_pBot->getOrigin(),pWaypoint->getOrigin() + m_vOffset,255,255,0,true,5.0f);
-		}*/
-	}
+	m_pBot->walkingTowardsWaypoint(pWaypoint,&m_bOffsetApplied,m_vOffset);
 
 	// fix for bots not finding goals
 	if ( m_fNextClearFailedGoals && ( m_fNextClearFailedGoals < engine->Time() ) )
@@ -1243,7 +1210,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 	switch ( iDrawType )
 	{
 	case DRAWTYPE_DEBUGENGINE3:
-		fDistance = 64.0f;
+		fDistance = 72.0f;
 	case DRAWTYPE_DEBUGENGINE2:
 		// draw area
 		if ( pEdict )

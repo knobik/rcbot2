@@ -2236,6 +2236,27 @@ bool CDODBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
 	return false;
 }
 
+bool CDODBot :: walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset )
+{
+	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_PRONE) )
+	{
+		m_fCurrentDanger = 80;
+		removeCondition(CONDITION_RUN);
+	}
+
+	if ( CBot::walkingTowardsWaypoint(pWaypoint,bOffsetApplied,vOffset) )
+	{
+		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_BOMB_TO_OPEN) )
+		{	
+			vOffset += (CDODMod::getGround(pWaypoint) - pWaypoint->getOrigin());
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
 Vector CDODBot :: getAimVector ( edict_t *pEntity )
 {
 	static Vector vAim;

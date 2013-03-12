@@ -142,6 +142,31 @@ const char *g_szLookTaskToString[LOOK_MAX] =
 	"LOOK_NOISE",
 };
 
+// Borrowed from RCBot1
+bool BotFunc_BreakableIsEnemy ( edict_t *pBreakable, edict_t *pEdict )
+{
+	int flags = CClassInterface::getPlayerFlags(pBreakable);
+
+	// i. explosives required to blow breakable
+	// ii. OR is not a world brush (non breakable) and can be broken by shooting
+	if ( !(flags & FL_WORLDBRUSH) )
+	{
+		Vector vSize = pBreakable->GetCollideable()->OBBMaxs() - pBreakable->GetCollideable()->OBBMins();
+		Vector vMySize = pEdict->GetCollideable()->OBBMaxs() - pEdict->GetCollideable()->OBBMins();
+		
+		if ( (vSize.x >= vMySize.x) ||
+			(vSize.y >= vMySize.y) ||
+			(vSize.z >= (vMySize.z/2)) ) // this breakable could block my path
+		{
+			// Only shoot breakables that are bigger than me (crouch size)
+			// or that target something...
+			return ( CClassInterface::getPlayerHealth(pBreakable)<1000 ); // breakable still visible (not broken yet)
+		}
+	}
+
+	return false;
+}
+
 ///////////////////////////////////////
 // voice commands
 ////////////////////////////////////////////////
@@ -210,6 +235,45 @@ void CBot :: runPlayerMove()
 bool CBot :: startGame ()
 {
 	return true;
+}
+
+// returns true if offset has been applied when not before
+bool CBot :: walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset )
+{
+	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_CROUCH) )
+	{
+		duck(true);
+	}
+	
+	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_LIFT) )
+	{
+		updateCondition(CONDITION_LIFT);
+	}
+	else
+	{
+		removeCondition(CONDITION_LIFT);
+	}
+
+	if ( !*bOffsetApplied )
+	{
+		float fRadius = pWaypoint->getRadius();
+
+		if ( fRadius > 0 )
+			vOffset = Vector(randomFloat(-fRadius,fRadius),randomFloat(-fRadius,fRadius),0);
+		else
+			vOffset = Vector(0,0,0);
+
+		*bOffsetApplied = true;
+
+		return true;
+
+		/*if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
+		{
+			debugoverlay->AddLineOverlay(m_pBot->getOrigin(),pWaypoint->getOrigin() + m_vOffset,255,255,0,true,5.0f);
+		}*/
+	}
+
+	return false;
 }
 
 void CBot :: setEdict ( edict_t *pEdict)
@@ -1704,6 +1768,15 @@ void CBot :: doMove ()
 		{
 			// side speed 
 			m_fSideSpeed = m_fIdealMoveSpeed * flSide;
+		}
+
+		if ( hasSomeConditions(CONDITION_LIFT) )//fabs(m_vMoveTo.z - getOrigin().z) > 48 )
+		{
+			if ( fabs(m_vVelocity.z) > 16.0f )
+			{
+				m_fForwardSpeed = 0;
+				m_fSideSpeed = 0;
+			}
 		}
 
 		// moving less than 1.0 units/sec? just stop to 

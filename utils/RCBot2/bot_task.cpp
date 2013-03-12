@@ -895,6 +895,43 @@ void CBotTF2UpgradeBuilding:: debugString ( char *string )
 	sprintf(string,"CBotTF2UpgradeBuilding");
 }
 
+void CBotHL2DMUseButton :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	static Vector vOrigin;
+	
+	if ( m_pButton.get() == NULL )
+	{
+		fail();
+		return;
+	}
+
+	vOrigin = CBotGlobals::entityOrigin(m_pButton);
+
+	if ( m_fTime == 0.0f )
+	{
+		m_fTime = engine->Time() + randomFloat(4.0f,6.0f);
+	}
+
+	if ( m_fTime < engine->Time() )
+		complete();
+
+	//if ( CClassInterface::getAnimCycle(m_pCharger) == 1.0f )
+	//	complete();
+
+	pBot->setLookVector(vOrigin);
+	pBot->setLookAtTask(LOOK_VECTOR);
+
+	if ( pBot->distanceFrom(m_pButton) > 96 )
+	{
+		pBot->setMoveTo(vOrigin);
+	}
+	else if ( pBot->DotProductFromOrigin(vOrigin) > 0.97f )
+	{
+		pBot->use();
+		complete();
+	}
+}
+
 void CBotHL2DMUseCharger :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	static Vector vOrigin;
@@ -2955,9 +2992,9 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 
 	if ( !pBotTF2->wantToNest() )
 	{
-			complete();
-			pBotTF2->addVoiceCommand(TF_VC_GOGOGO);
-			return;
+		complete();
+		pBotTF2->addVoiceCommand(TF_VC_GOGOGO);
+		return;
 	}
 	else if ( pBot->hasSomeConditions(CONDITION_PUSH) )
 	{
@@ -3058,9 +3095,6 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-	// refrain from proning
-	pBot->updateCondition(CONDITION_RUN);
-
 	if ( pCurrentWeapon != m_pWeaponToUse )
 	{
 		if ( !pBot->select_CWeapon(CWeapons::getWeapon(m_pWeaponToUse->getID())) )
@@ -3126,11 +3160,16 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	else
 	{
 		pBot->stopMoving();
+		// refrain from proning
+		pBot->updateCondition(CONDITION_RUN);
 
 		if ( m_iWaypointType & CWaypointTypes::W_FL_CROUCH )
 			pBot->duck();
-		//if ( m_iWaypointType & CWaypointTypes::W_FL_PRONE )
-		//	pBot->prone();
+		else if ( m_iWaypointType & CWaypointTypes::W_FL_PRONE )
+		{			
+			pBot->updateDanger(MAX_BELIEF);
+			pBot->removeCondition(CONDITION_RUN);
+		}
 
 		// no enemy for a while
 		if ( (m_fEnemyTime + m_fTime) < engine->Time() )

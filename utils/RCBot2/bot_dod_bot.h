@@ -201,6 +201,8 @@ public:
 
 	void setNearestBomb ( edict_t *pBomb ) { m_pNearestBomb = pBomb; }
 
+	bool walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset );
+
 private:
 
 	int m_iSelectedClass;

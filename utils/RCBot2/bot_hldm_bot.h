@@ -83,6 +83,9 @@ public:
 	bool willCollide ( edict_t *pEntity, bool *bCanJump, float *fTime );
 
 	edict_t *getFailedObject () { return m_FailedPhysObj; }
+
+	virtual void touchedWpt ( CWaypoint *pWaypoint );
+
 private:
 	// blah blah
 	MyEHandle m_NearestPhysObj;
@@ -95,7 +98,13 @@ private:
 	MyEHandle m_pBattery; // nearest battery
 	MyEHandle m_pCharger; // nearest charger
 	MyEHandle m_pNearbyWeapon;
+	MyEHandle m_pNearestButton;
+	//MyEHandle m_pNearestBreakable;
+	MyEHandle m_pAmmoCrate;
 	edict_t *m_pCurrentWeapon;
+
+	float m_fUseButtonTime;
+	float m_fUseCrateTime;
 
 	CBaseHandle *m_Weapons;
 

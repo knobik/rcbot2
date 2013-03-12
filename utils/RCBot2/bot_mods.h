@@ -87,6 +87,7 @@ public:
 		m_szSteamFolder = NULL;
 		m_iModId = MOD_UNSUPPORTED;
 		m_iBotType = BOTTYPE_GENERIC;
+		m_bPlayerHasSpawned = false;
 	}
 
 	void setup ( char *szModFolder, char *szSteamFolder, eModId iModId, eBotType iBotType );
@@ -115,7 +116,7 @@ public:
 
 	virtual void mapInit ();
 
-	virtual void entitySpawn ( edict_t *pEntity );
+	virtual bool playerSpawned ( edict_t *pPlayer );
 
 	virtual void clientCommand ( edict_t *pEntity, int argc,const char *pcmd, const char *arg1, const char *arg2 ) {};
 
@@ -127,6 +128,7 @@ private:
 	char *m_szSteamFolder;
 	eModId m_iModId;
 	eBotType m_iBotType;
+	bool m_bPlayerHasSpawned;
 };
 
 ///////////////////
@@ -1087,15 +1089,26 @@ public:
 		setup("hl2mp","half-life 2 deathmatch",MOD_HLDM2,BOTTYPE_HL2DM);
 	}
 
-
-
 	void initMod ();
 
-	//void mapInit ();
+	void mapInit ();
+
+	bool playerSpawned ( edict_t *pPlayer );
+
+	static inline edict_t *getButtonAtWaypoint ( CWaypoint *pWaypoint )
+	{
+		for ( unsigned int i = 0; i < m_LiftWaypoints.size(); i ++ )
+		{
+			if ( m_LiftWaypoints[i].pWaypoint == pWaypoint )
+				return m_LiftWaypoints[i].pEdict;
+		}
+
+		return NULL;
+	}
 
 	//void entitySpawn ( edict_t *pEntity );
 private:
-
+	static vector<edict_wpt_pair_t> m_LiftWaypoints;
 };
 
 class CHalfLifeDeathmatchModDedicated : public CHalfLifeDeathmatchMod

@@ -79,6 +79,7 @@ int CDODMod::m_iBombAreaAxis = 0;
 //CPerceptron *CDODMod::gNetAttackOrDefend = NULL;
 float CDODMod::fAttackProbLookUp[MAX_DOD_FLAGS+1][MAX_DOD_FLAGS+1];
 vector<edict_wpt_pair_t> CDODMod::m_BombWaypoints;
+vector<edict_wpt_pair_t> CHalfLifeDeathmatchMod::m_LiftWaypoints;
 
 extern ConVar bot_use_disp_dist;
 
@@ -907,17 +908,22 @@ CBotMod *CBotMods :: getMod ( char *szModFolder, char *szSteamFolder )
 
 void CBotMod :: initMod ()
 {
-
+	m_bPlayerHasSpawned = false;
 }
 
 void CBotMod :: mapInit ()
 {
-
+	m_bPlayerHasSpawned = false;
 }
 
-void CBotMod :: entitySpawn ( edict_t *pEntity )
+bool CBotMod :: playerSpawned ( edict_t *pEntity )
 {
+	if ( m_bPlayerHasSpawned )
+		return false;
 
+	m_bPlayerHasSpawned = true;
+
+	return true;
 }
 
 /////////////////////////////////////////////////////////////
@@ -1138,6 +1144,18 @@ bool CTeamFortress2Mod :: isRocket ( edict_t *pEntity, int iTeam )
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"tf_projectile_rocket")==0);
 }
 
+bool CHalfLifeDeathmatchMod :: playerSpawned ( edict_t *pPlayer )
+{
+	if ( CBotMod::playerSpawned(pPlayer) )
+	{
+		m_LiftWaypoints.clear();
+
+		CWaypoints::updateWaypointPairs(&m_LiftWaypoints,CWaypointTypes::W_FL_LIFT,"func_button");
+	}
+
+	return true;
+}
+
 void CHalfLifeDeathmatchMod :: initMod ()
 {
 	unsigned int i;
@@ -1147,6 +1165,13 @@ void CHalfLifeDeathmatchMod :: initMod ()
 
 	for ( i = 0; i < HL2DM_WEAPON_MAX; i ++ )
 		CWeapons::addWeapon(new CWeapon(HL2DMWeaps[i].iSlot,HL2DMWeaps[i].szWeaponName,HL2DMWeaps[i].iId,HL2DMWeaps[i].m_iFlags,HL2DMWeaps[i].m_iAmmoIndex,HL2DMWeaps[i].minPrimDist,HL2DMWeaps[i].maxPrimDist,HL2DMWeaps[i].m_iPreference));
+}
+
+void CHalfLifeDeathmatchMod :: mapInit ()
+{
+	CBotMod::mapInit();
+
+	m_LiftWaypoints.clear();
 }
 
 void CTeamFortress2Mod :: initMod ()
@@ -1166,6 +1191,8 @@ void CTeamFortress2Mod :: initMod ()
 
 void CTeamFortress2Mod :: mapInit ()
 {
+	CBotMod::mapInit();
+
 	unsigned int i = 0;
 	string_t mapname = gpGlobals->mapname;
 
@@ -1311,6 +1338,8 @@ void CDODMod :: initMod ()
 
 void CDODMod :: mapInit ()
 {
+	CBotMod::mapInit();
+
 	m_pResourceEntity = NULL;
 	m_pGameRules = NULL;
 	m_pPlayerResourceEntity = NULL;

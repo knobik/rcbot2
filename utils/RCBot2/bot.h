@@ -90,6 +90,8 @@ extern CGlobalVars *gpGlobals;
 
 #define T_OFFSETMAX  3
 
+bool BotFunc_BreakableIsEnemy ( edict_t *pBreakable, edict_t *pEdict );
+
 /////////// Voice commands
 
 class IBotFunction
@@ -685,6 +687,8 @@ public:
 	virtual bool overrideAmmoTypes () { return true; }
 
 	virtual void debugBot ( char *msg );
+
+	virtual bool walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset );
 
 protected:
 

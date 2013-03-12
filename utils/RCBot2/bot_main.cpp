@@ -777,6 +777,11 @@ void CRCBotPlugin::ClientPutInServer( edict_t *pEntity, char const *playername )
 		}
 	}
 
+	CBotMod *pMod = CBotGlobals::getCurrentMod();
+
+	pMod->playerSpawned(pEntity);
+
+
 }
 
 CRCBotEventListener *CRCBotPlugin:: getEventListener ( void )

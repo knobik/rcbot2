@@ -102,6 +102,26 @@ void CHLDMBot :: died ( edict_t *pKiller, const char *pszWeapon )
 	}
 }
 
+void CHLDMBot :: touchedWpt ( CWaypoint *pWaypoint )
+{
+	CBot::touchedWpt(pWaypoint);
+
+	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_LIFT) )
+	{
+		if ( m_fUseButtonTime < engine->Time() )
+		{
+			edict_t *pButton = CHalfLifeDeathmatchMod::getButtonAtWaypoint(pWaypoint);
+
+			if ( pButton )
+			{
+				m_fUseButtonTime = engine->Time() + randomFloat(5.0f,10.0f);
+
+				m_pSchedules->addFront(new CBotSchedule(new CBotHL2DMUseButton(pButton)));
+
+			}
+		}
+	}
+}
 // new life
 void CHLDMBot :: spawnInit ()
 {
@@ -121,7 +141,9 @@ void CHLDMBot :: spawnInit ()
 	m_pAmmoKit = NULL;
 	m_pCurrentWeapon = NULL;
 	m_pCharger = NULL;
-	m_fFixWeaponTime = 0;
+	m_fFixWeaponTime = 0.0f;
+	m_fUseButtonTime = 0.0f;
+	m_fUseCrateTime = 0.0f;
 }
 
 // check updates on weapons every so often
@@ -195,8 +217,8 @@ bool CHLDMBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 		{
 			if ( distanceFrom(CBotGlobals::entityOrigin(pEdict)) < rcbot_jump_obst_dist.GetFloat() )
 			{
-				if ( ((CBotGlobals::entityOrigin(pEdict) - m_vMoveTo).Length()+48) < (getOrigin() - m_vMoveTo).Length() )
-					return true;
+				if ( BotFunc_BreakableIsEnemy(m_NearestBreakable,m_pEdict) || ((CBotGlobals::entityOrigin(pEdict) - m_vMoveTo).Length()+48) < (getOrigin() - m_vMoveTo).Length() )
+					return true;				
 			}
 		}
 
@@ -321,6 +343,7 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 				CBotTask *findpath = new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint));
 				CBotTask *snipetask;
 
+				// use DOD task
 				snipetask = new CBotDODSnipe(m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_CROSSBOW)),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),false,0);
 
 				findpath->setCompleteInterrupt(CONDITION_PUSH);
@@ -407,6 +430,7 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	static CBotUtilities utils;
 	static CBotUtility *next;
 	static CBotWeapon *gravgun;
+	static CBotWeapon *crossbow;
 	static CWeapon *pWeapon;
 	static bool bCheckCurrent;
 
@@ -428,6 +452,12 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 		{
 			ADD_UTILITY(BOT_UTIL_HL2DM_GRAVIGUN_PICKUP,(!m_pEnemy||(m_pCurrentWeapon&&(strcmp("weapon_physcannon",m_pCurrentWeapon->GetClassName())))) && gravgun && gravgun->hasWeapon() && (m_NearestPhysObj.get()!=NULL) && (gravgun->getWeaponIndex() > 0) && (CClassInterface::gravityGunObject(INDEXENT(gravgun->getWeaponIndex()))==NULL),0.9f);
 		}
+	}
+
+	if ( (crossbow = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_CROSSBOW))) != NULL )
+	{
+		if ( crossbow->hasWeapon() && !crossbow->outOfAmmo(this) )
+			ADD_UTILITY(BOT_UTIL_SNIPE,true,0.4f);
 	}
 
 	// low on health? Pick some up if there's any near by
@@ -716,10 +746,26 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		{
 			m_pBattery = pEntity;
 		}
-		else if ( ( strncmp(szClassname,"prop_physics",12)==0 ) && (CClassInterface::getPlayerHealth(pEntity)>0) &&
+		else if ( ( (strcmp(szClassname,"func_breakable")==0 ) || (strncmp(szClassname,"prop_physics",12)==0) ) && (CClassInterface::getPlayerHealth(pEntity)>0) &&
 			( !m_NearestBreakable.get() || (fDist<distanceFrom(m_NearestBreakable.get())) ))
 		{
 			m_NearestBreakable = pEntity;
+		}
+		else if ( (pEntity != m_pNearestButton) && ( strcmp(szClassname,"func_button")==0 ) )
+		{
+			if ( !m_pNearestButton.get() || (fDist<distanceFrom(m_pNearestButton.get())) )
+				m_pNearestButton = pEntity;
+		}
+		// covered above
+		/*else if ( (pEntity != m_pNearestBreakable) && ( strcmp(szClassname,"func_breakable")==0 ) )
+		{
+			if ( !m_pNearestBreakable.get() || (fDist<distanceFrom(m_pNearestBreakable.get())) )
+				m_pNearestBreakable = pEntity;
+		}*/
+		else if ( (pEntity != m_pAmmoCrate ) && ( strcmp(szClassname,"item_ammo_crate") == 0 ) )
+		{
+			if ( !m_pAmmoCrate.get() || (fDist<distanceFrom(m_pAmmoCrate.get())) )
+				m_pAmmoCrate = pEntity;
 		}
 		else if ( (pEntity != m_FailedPhysObj) && ( strncmp(szClassname,"prop_physics",12)==0 ) && 
 			( !m_NearestPhysObj.get() || (fDist<distanceFrom(m_NearestPhysObj.get())) ))
@@ -780,6 +826,8 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		if ( m_pAmmoKit == pEntity )
 			m_pAmmoKit = NULL;
+		else if ( m_pAmmoCrate == pEntity )
+			m_pAmmoCrate = NULL;
 		else if ( m_pHealthKit == pEntity )
 			m_pHealthKit = NULL;
 		else if ( m_pBattery == pEntity )
@@ -794,6 +842,10 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_NearestBreakable = NULL;
 		else if ( m_pNearbyWeapon == pEntity )
 			m_pNearbyWeapon = NULL;
+		else if ( m_pNearestButton == pEntity )
+			m_pNearestButton = NULL;
+		//else if ( m_pNearestBreakable == pEntity )
+		//	m_pNearestBreakable = NULL;
 	}
 
 }
