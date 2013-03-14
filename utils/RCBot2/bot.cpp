@@ -158,6 +158,13 @@ bool BotFunc_BreakableIsEnemy ( edict_t *pBreakable, edict_t *pEdict )
 			(vSize.y >= vMySize.y) ||
 			(vSize.z >= (vMySize.z/2)) ) // this breakable could block my path
 		{
+			// 00000000001111111111222222222233333333334
+			// 01234567890123456789012345678901234567890
+			// models/props_c17/oildrum001_explosive.mdl
+			const char *model = pBreakable->GetIServerEntity()->GetModelName().ToCStr();
+
+			if ( (model[17] == 'o') && (model[28]== 'e') ) // explosive
+				return false;
 			// Only shoot breakables that are bigger than me (crouch size)
 			// or that target something...
 			return ( CClassInterface::getPlayerHealth(pBreakable)<1000 ); // breakable still visible (not broken yet)

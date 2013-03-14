@@ -3100,8 +3100,9 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( !pBot->select_CWeapon(CWeapons::getWeapon(m_pWeaponToUse->getID())) )
 		{
 			fail();
-			return;
 		}
+
+		return;
 	}
 	else
 	{
@@ -3264,38 +3265,17 @@ void CBotHL2DMSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( !pBot->select_CWeapon(CWeapons::getWeapon(m_pWeaponToUse->getID())) )
 		{
 			fail();
-			return;
 		}
-	}
-	else
-	{
-		/*if ( pCurrentWeapon->isZoomable() )
-			bDeployedOrZoomed = CClassInterface::isSniperWeaponZoomed(pCurrentWeapon->getWeaponEntity());
-		else if ( pCurrentWeapon->isDeployable() )
-			bDeployedOrZoomed = CClassInterface::isMachineGunDeployed(pCurrentWeapon->getWeaponEntity());
 
-		if ( m_fScopeTime < engine->Time() )
-		{
-			if ( !bDeployedOrZoomed )
-			{
-				pBot->secondaryAttack();
-			}
-
-			m_fScopeTime = engine->Time() + randomFloat(0.5f,1.0f);
-		}*/
+		return;
 	}
 
 	if ( pCurrentWeapon->getAmmo(pBot) < 1 )
 	{
-		//if ( bDeployedOrZoomed )
-			//pBot->secondaryAttack();
-
 		complete();
 	}
 	else if ( pBot->distanceFrom(m_vOrigin) > 200 ) // too far from sniper point
 	{
-		//if ( bDeployedOrZoomed )
-		//	pBot->secondaryAttack();
 		// too far away
 		fail();
 	}
@@ -3313,7 +3293,7 @@ void CBotHL2DMSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	fDist = (m_vOrigin - pBot->getOrigin()).Length2D();
 
-	if ( (fDist > 16) || !bDeployedOrZoomed )
+	if ( fDist > 16 )
 	{
 		pBot->setMoveTo(m_vOrigin);
 		pBot->setMoveSpeed(CClassInterface::getMaxSpeed(pBot->getEdict())/8);
@@ -3327,14 +3307,12 @@ void CBotHL2DMSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( m_iWaypointType & CWaypointTypes::W_FL_CROUCH )
 			pBot->duck();
-		//if ( m_iWaypointType & CWaypointTypes::W_FL_PRONE )
-		//	pBot->prone();
 
 		// no enemy for a while
 		if ( (m_fEnemyTime + m_fTime) < engine->Time() )
 		{
-			if ( bDeployedOrZoomed )
-				pBot->secondaryAttack();
+			//if ( bDeployedOrZoomed )
+			//	pBot->secondaryAttack();
 
 			complete();
 		}
