@@ -245,6 +245,57 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 {
 	switch ( iAction )
 	{
+	case BOT_UTIL_HL2DM_USE_CRATE:
+		// check if it is worth it first
+		{
+			const char *szModel;
+			char type;
+			CBotWeapon *pWeapon = NULL;
+
+			/*
+			possible models
+			0000000000111111111122222222223333
+			0123456789012345678901234567890123
+			models/items/ammocrate_ar2.mdl
+			models/items/ammocrate_grenade.mdl
+			models/items/ammocrate_rockets.mdl
+			models/items/ammocrate_smg1.mdl
+			*/
+
+			szModel = m_pAmmoCrate.get()->GetIServerEntity()->GetModelName().ToCStr();
+			type = szModel[23];
+
+			if ( type == 'a' ) // ar2
+			{
+				pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_AR2));
+			}
+			else if ( type == 'g' ) // grenade
+			{
+				pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_FRAG));
+			}
+			else if ( type == 'r' ) // rocket
+			{
+				pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_RPG));
+			}
+			else if ( type == 's' ) // smg
+			{
+				pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_SMG1));
+			}
+
+			if ( pWeapon && (pWeapon->getAmmo(this) < 1) )
+			{
+				CBotSchedule *pSched = new CBotSchedule();
+				
+				pSched->addTask(new CFindPathTask(m_pAmmoCrate));
+				pSched->addTask(new CBotHL2DMUseButton(m_pAmmoCrate));
+
+				m_pSchedules->add(pSched);
+
+				m_fUtilTimes[iAction] = engine->Time() + randomFloat(5.0f,10.0f);
+				return true;
+			}
+		}
+		return false;
 	case BOT_UTIL_PICKUP_WEAPON:
 		m_pSchedules->add(new CBotPickupSched(m_pNearbyWeapon.get()));
 		return true;
@@ -256,7 +307,7 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 		return true;
 	case BOT_UTIL_FIND_NEAREST_AMMO:
 		m_pSchedules->add(new CBotPickupSched(m_pAmmoKit.get()));
-		m_fUtilTimes[BOT_UTIL_FIND_NEAREST_AMMO] = engine->Time() + randomFloat(5.0f,10.0f);
+		m_fUtilTimes[iAction] = engine->Time() + randomFloat(5.0f,10.0f);
 		return true;
 	case BOT_UTIL_HL2DM_USE_HEALTH_CHARGER:
 		{
@@ -344,7 +395,7 @@ bool CHLDMBot :: executeAction ( eBotAction iAction )
 				CBotTask *snipetask;
 
 				// use DOD task
-				snipetask = new CBotDODSnipe(m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_CROSSBOW)),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),false,0);
+				snipetask = new CBotHL2DMSnipe(m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_CROSSBOW)),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),false,0);
 
 				findpath->setCompleteInterrupt(CONDITION_PUSH);
 				snipetask->setCompleteInterrupt(CONDITION_PUSH);
@@ -457,7 +508,7 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	if ( (crossbow = m_pWeapons->getWeapon(CWeapons::getWeapon(HL2DM_WEAPON_CROSSBOW))) != NULL )
 	{
 		if ( crossbow->hasWeapon() && !crossbow->outOfAmmo(this) )
-			ADD_UTILITY(BOT_UTIL_SNIPE,true,0.4f);
+			ADD_UTILITY(BOT_UTIL_SNIPE,true,0.91f);
 	}
 
 	// low on health? Pick some up if there's any near by
@@ -468,6 +519,7 @@ void CHLDMBot :: getTasks (unsigned int iIgnore)
 	ADD_UTILITY(BOT_UTIL_HL2DM_FIND_ARMOR,(m_pBattery.get() !=NULL) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
 	ADD_UTILITY(BOT_UTIL_HL2DM_USE_CHARGER,(m_pCharger.get() !=NULL) && (CClassInterface::getAnimCycle(m_pCharger)<1.0f) && (getArmorPercent()<1.0f),(1.0f-getArmorPercent())*0.75f);
 	
+	ADD_UTILITY(BOT_UTIL_HL2DM_USE_CRATE,(m_pAmmoCrate.get()!=NULL) && (m_fUseCrateTime < engine->Time()),1.0f);
 	// low on ammo? ammo nearby?
 	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_AMMO,(m_pAmmoKit.get() !=NULL) && (getAmmo(0)<5),0.01f*(100-getAmmo(0)));
 
