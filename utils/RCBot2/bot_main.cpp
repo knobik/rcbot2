@@ -169,6 +169,7 @@ CON_COMMAND( maptime, "get map time" )
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");
 ConVar *mp_teamplay = NULL;
+ConVar *sv_tags = NULL;
 
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
@@ -513,7 +514,19 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 
 	sv_cheats = cvar->FindVar("sv_cheats");
 	sv_gravity = cvar->FindVar("sv_gravity");
+	sv_tags = cvar->FindVar("sv_tags");
 
+	char sv_tags_str[512];
+	
+	strcpy(sv_tags_str,sv_tags->GetString());
+
+	if ( sv_tags_str[0] == 0 )
+		strcat(sv_tags_str,"rcbot2");
+	else
+		strcat(sv_tags_str,",rcbot2");
+
+	sv_tags->SetValue(sv_tags_str);
+	
 	return true;
 }
 
