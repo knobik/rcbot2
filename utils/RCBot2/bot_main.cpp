@@ -393,8 +393,8 @@ void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMsgName, char *s
 #define LOAD_GAME_SERVER_INTERFACE(var,type,version) if ( (var = (type*)gameServerFactory(version,NULL)) == NULL ) { Warning("[RCBOT] Cannot open game server interface "## #version ##" "## #type ##" "## #var ##"\n"); return false; } else { Msg("[RCBOT] Found interface "## #version ##" "## #type ##" "## #var ## "\n"); }
 #endif
 
-#define FILESYSTEM_INT FILESYSTEM_INTERFACE_VERSION
-#define FILESYSTEM_MAXVER 19
+//#define FILESYSTEM_INT FILESYSTEM_INTERFACE_VERSION
+//#define FILESYSTEM_MAXVER 19
 
 #define RCBot_LoadUndefinedInterface(var,type,vername,maxver,minver) { \
 	int ver = maxver; \
@@ -466,7 +466,7 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	gpGlobals = playerinfomanager->GetGlobalVars();	
 
 	LOAD_INTERFACE(engine,IVEngineServer,INTERFACEVERSION_VENGINESERVER);
-	RCBot_LoadUndefinedInterface(filesystem,IFileSystem,"VFileSystem",20,1);
+	RCBot_LoadUndefinedInterface(filesystem,IFileSystem,"VFileSystem",22,1);
 
 	if ( !CBotGlobals::gameStart() )
 		return false;
