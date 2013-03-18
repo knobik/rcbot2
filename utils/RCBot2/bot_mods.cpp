@@ -321,15 +321,20 @@ int CTeamFortress2Mod ::getHighestScore ()
 	return highest;
 }
 
-
+// check if there is another building near where I want to build
+// check quickly by using the storage of sentryguns etc in the mod class
 bool CTeamFortress2Mod::buildingNearby ( int iTeam, Vector vOrigin )
 {
 	edict_t *pPlayer;
 	short int i;
 
-		for ( i = 0; i < MAX_PLAYERS; i ++ )
+		for ( i = 1; i <= gpGlobals->maxClients; i ++ )
 		{
-			pPlayer = INDEXENT(i+1);
+			pPlayer = INDEXENT(i);
+
+			// crash bug fix 
+			if ( !pPlayer || pPlayer->IsFree() )
+				continue;
 
 			if ( CClassInterface::getTF2Class(pPlayer) != TF_CLASS_ENGINEER )
 				continue;

@@ -1517,6 +1517,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	pBot->wantToShoot(false); // don't shoot enemies , want to build the damn thing
 	pBot->wantToChangeWeapon(false); // if enemy just strike them with wrench
+	pBot->wantToListen(false); // sometimes bots dont place sentries because they are looking the wrong way due to a noise
 
 	tfBot = (CBotFortress*)pBot;
 
