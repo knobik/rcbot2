@@ -1,3 +1,21 @@
+0.72
+====
+all mods: Vfilesystem update 
+all mods: rcbot2 sv_tag 
+all mods: rcbot_ffa cvar , if 1 bots shoot each other disregarding teamplay
+all mods: fixed bug with bots jumping etc at the wrong position
+all mods: new debugging command 'rcbot debug hud' if 1, shows your debug bot info on screen
+tf2 : fixed engineer facing the correct way when building
+tf2 : fixed crash bug with engineer 
+hl2dm: bots use ammo crates if they need ammo 
+hl2dm: bots using buttons for lifts in hl2dm (need lift waypoints) 
+hl2dm: bots dont shoot explosive oildrum breakables 
+hl2dm: bots shoot breakables in the way
+hl2dm: bots go to snipe points if they have crossbow
+dod:s : bots prone when sniping on prone waypoints
+dod:s : added prone waypoint
+dod:s : machine gun changes -- bots shouldn't shoot from afar without deploying
+
 0.71
 
 General
