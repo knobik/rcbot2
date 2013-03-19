@@ -986,9 +986,10 @@ void CWaypointNavigator :: updatePosition ()
 	if ( !m_bWorkingRoute )
 	{
 		bool movetype_ok = CClassInterface::isMoveType(m_pBot->getEdict(),MOVETYPE_LADDER)||CClassInterface::isMoveType(m_pBot->getEdict(),MOVETYPE_FLYGRAVITY);
-		bTouched = false;
 
-		bTouched = pWaypoint->touched(m_pBot->getOrigin(),m_vOffset,m_pBot->getTouchDistance());
+		//bTouched = false;
+
+		bTouched = pWaypoint->touched(m_pBot->getOrigin(),m_vOffset,m_pBot->getTouchDistance(),!m_pBot->isUnderWater());
 
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_LADDER) )
 			bTouched = bTouched && movetype_ok;
@@ -1138,19 +1139,28 @@ bool CWaypoint :: touched ( edict_t *pEdict )
 	return touched(pEdict->m_pNetworkable->GetPVSInfo()->
 }*/
 // checks if a waypoint is touched
-bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset, float fTouchDist )
+bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset, float fTouchDist, bool onground )
 {
 	static Vector v_dynamic;
 	extern ConVar rcbot_ladder_offs;
 
 	v_dynamic = m_vOrigin+vOffset;
 
-	if ( (vOrigin-v_dynamic).Length2D() <= fTouchDist )
+	// on ground or ladder
+	if ( onground )
 	{
-		if ( hasFlag(CWaypointTypes::W_FL_LADDER) )
-			return ((vOrigin.z+rcbot_ladder_offs.GetFloat()) > v_dynamic.z);
+		if ( (vOrigin-v_dynamic).Length2D() <= fTouchDist )
+		{
+			if ( hasFlag(CWaypointTypes::W_FL_LADDER) )
+				return ((vOrigin.z+rcbot_ladder_offs.GetFloat()) > v_dynamic.z);
 
-		return fabs(vOrigin.z-v_dynamic.z) <= WAYPOINT_HEIGHT;
+			return fabs(vOrigin.z-v_dynamic.z) <= WAYPOINT_HEIGHT;
+		}
+	}
+	else // swimming
+	{
+		if ( (vOrigin-v_dynamic).Length() < fTouchDist )
+			return true;
 	}
 
 	return false;

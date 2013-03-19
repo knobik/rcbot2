@@ -365,21 +365,42 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 
 bool CBot :: FVisible ( Vector &vOrigin )
 {
-	return CBotGlobals::isVisible(m_pEdict,getEyePosition(),vOrigin);
+	//return CBotGlobals::isVisible(m_pEdict,getEyePosition(),vOrigin);
+	// fix bots seeing through gates/doors
+	return CBotGlobals::isVisibleHitAllExceptPlayer(m_pEdict,getEyePosition(),vOrigin);
+
 }
 
 bool CBot :: FVisible ( edict_t *pEdict )
 {
-	Vector eye = getEyePosition();
+	static Vector eye;
 
+	// use special hit traceline for players so bots dont shoot through things 
+	// For players -- do two tracelines -- one at the origin and one at the head (for headshots)
 	if ( ENTINDEX(pEdict) <= gpGlobals->maxClients )
 	{
-		if ( CBotGlobals::isVisible(m_pEdict,eye,pEdict) )
+		static Vector vOrigin;
+
+		// use this method to get origin -- quicker 
+		vOrigin = pEdict->GetCollideable()->GetCollisionOrigin();
+
+		if ( FVisible(vOrigin+Vector(0,0,pEdict->GetCollideable()->OBBMaxs().z)) )
+		{
+			if ( m_pEnemy == pEdict )
+				updateCondition(CONDITION_SEE_ENEMY_HEAD);
+
 			return true;
-		
-		return CBotGlobals::isVisible(m_pEdict,eye,pEdict->GetCollideable()->GetCollisionOrigin()+Vector(0,0,pEdict->GetCollideable()->OBBMaxs().z));
+		}
+
+		if ( m_pEnemy == pEdict )
+			removeCondition(CONDITION_SEE_ENEMY_HEAD);
+
+		return FVisible(vOrigin);
 	}
 
+	eye = getEyePosition();
+
+	// use typical traceline for non players
 	return CBotGlobals::isVisible(m_pEdict,eye,pEdict);//CBotGlobals::entityOrigin(pEdict)+Vector(0,0,50.0f));
 }
 

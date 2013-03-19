@@ -555,12 +555,16 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	{
 		extern ConVar rcbot_ffa;
 
-		return rcbot_ffa.GetBool();
+		if ( rcbot_ffa.GetBool() == false )
+			return false;
+
+		// if true continue down -- don't return
 	}
 
 	if ( bCheckWeapons && m_pNearestSmokeToEnemy )
 	{
-		return isVisibleThroughSmoke(m_pNearestSmokeToEnemy,pEdict);
+		if ( !isVisibleThroughSmoke(m_pNearestSmokeToEnemy,pEdict) )
+			return false;
 	}
 
 	return true;	
@@ -803,7 +807,8 @@ void CDODBot :: modThink ()
 
 	CClassInterface::getPlayerInfoDOD(m_pEdict,&m_bProne,&m_flStamina);
 
-	if ( !hasSomeConditions(CONDITION_RUN) && (m_fCurrentDanger >= 50.0f) )
+	// going prone
+	if ( !isUnderWater() && !hasSomeConditions(CONDITION_RUN) && (m_fCurrentDanger >= 50.0f) )
 	{
 		// not sniper rifle or machine gun but can look down the sights
 		if ( hasSomeConditions(CONDITION_COVERT) && m_pCurrentWeapon && pWeapon && (( pWeapon->getID() == DOD_WEAPON_K98 ) || (pWeapon->getID() == DOD_WEAPON_GARAND) ))

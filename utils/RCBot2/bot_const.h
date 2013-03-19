@@ -166,6 +166,7 @@ typedef enum
 #define CONDITION_RUN					65536
 #define CONDITION_GREN					131072
 #define CONDITION_NEED_BOMB				262144
+#define CONDITION_SEE_ENEMY_HEAD		524288
 
 ////////////////////////
 #define BLAST_RADIUS 200

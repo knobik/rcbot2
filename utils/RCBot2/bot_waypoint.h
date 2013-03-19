@@ -258,7 +258,7 @@ public:
 	}
 
 	//bool touched ( edict_t *pEdict );
-	bool touched ( Vector vOrigin, Vector vOffset, float fTouchDist );
+	bool touched ( Vector vOrigin, Vector vOffset, float fTouchDist, bool onground = true );
 
 	void botTouch ( CBot *pBot );
 
