@@ -62,7 +62,7 @@ public:
 
 	float getArmorPercent () { return (0.01f * m_pPlayerInfo->GetArmorValue()); }
 
-	void setVisible ( edict_t *pEntity, bool bVisible );
+	bool setVisible ( edict_t *pEntity, bool bVisible );
 
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
 

@@ -163,7 +163,7 @@ public:
 
 	void selectedClass ( int iClass );
 
-	void setVisible ( edict_t *pEntity, bool bVisible );
+	bool setVisible ( edict_t *pEntity, bool bVisible );
 
 	bool select_CWeapon ( CWeapon *pWeapon );
 

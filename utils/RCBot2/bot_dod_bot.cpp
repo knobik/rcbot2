@@ -142,7 +142,7 @@ bool CDODBot::canGotoWaypoint(Vector vPrevWaypoint, CWaypoint *pWaypoint)
 
 
 
-void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
+bool CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 {
 	//static float fDist;
 	static const char *szClassname;
@@ -150,13 +150,11 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	static bool bValid;
 	static float fSmokeTime;
 
-	CBot::setVisible(pEntity,bVisible);
+	bValid = CBot::setVisible(pEntity,bVisible);
 
 	szClassname = pEntity->GetClassName();
 
 	bNoDraw = ((CClassInterface::getEffects(pEntity) & EF_NODRAW) == EF_NODRAW);
-
-	bValid = CBotGlobals::entityIsValid(pEntity);
 
 	if ( bVisible && !bNoDraw && bValid )
 	{
@@ -286,6 +284,8 @@ void CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		if ( bNoDraw || ((fSmokeTime < 1.0f) || (fSmokeTime > rcbot_smoke_time.GetFloat())) )
 			m_pNearestSmokeToEnemy = NULL;
 	}
+
+	return bValid;
 }
 
 void CDODBot :: selectedClass ( int iClass )

@@ -327,14 +327,14 @@ bool CBotFortress :: wantToHeal ( edict_t *pPlayer )
 // 
 // bVisible = true when pEntity is Visible
 // bVisible = false when pEntity becomes inVisible
-void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
+bool CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 {
-	CBot::setVisible(pEntity,bVisible);
+	bool bValid = CBot::setVisible(pEntity,bVisible);
 
 	// check for people to heal
 	if ( m_iClass == TF_CLASS_MEDIC )
 	{
-		if ( bVisible )
+		if ( bValid && bVisible )
 		{
 			if ( ENTINDEX(pEntity) && (ENTINDEX(pEntity) <= gpGlobals->maxClients) ) // player
 			{
@@ -379,7 +379,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	else if ( m_iClass == TF_CLASS_SPY )
 	{
 		// Look for nearest sentry to sap!!!
-		if ( bVisible )
+		if ( bValid && bVisible )
 		{
 			if ( CTeamFortress2Mod::isSentry(pEntity,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 			{
@@ -411,7 +411,7 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	}
 
 	// Check for nearest Dispenser for health/ammo & flag
-	if ( bVisible && !(CClassInterface::getEffects(pEntity)&EF_NODRAW) ) // EF_NODRAW == invisible
+	if ( bValid && bVisible && !(CClassInterface::getEffects(pEntity)&EF_NODRAW) ) // EF_NODRAW == invisible
 	{
 		if ( (m_pFlag!=pEntity) && CTeamFortress2Mod::isFlag(pEntity,getTeam()) )
 			m_pFlag = pEntity;
@@ -436,11 +436,11 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 
 			fDistance = distanceFrom(pEntity);
 
-			if ( fDistance > 200 )
-				return;
-
-			if ( !m_pAmmo || (fDistance < distanceFrom(m_pAmmo))) 
-				m_pAmmo = pEntity;
+			if ( fDistance <= 200 )
+			{
+				if ( !m_pAmmo || (fDistance < distanceFrom(m_pAmmo))) 
+					m_pAmmo = pEntity;
+			}
 			
 		}
 		else if ( (pEntity != m_pHealthkit) && CTeamFortress2Mod::isHealthKit(pEntity) )
@@ -449,11 +449,11 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 
 			fDistance = distanceFrom(pEntity);
 
-			if ( fDistance > 200 )
-				return;
-
-			if ( !m_pHealthkit || (fDistance < distanceFrom(m_pHealthkit)))
-				m_pHealthkit = pEntity;
+			if ( fDistance <= 200 )
+			{
+				if ( !m_pHealthkit || (fDistance < distanceFrom(m_pHealthkit)))
+					m_pHealthkit = pEntity;
+			}
 		}
 	}
 	else 
@@ -469,6 +469,8 @@ void CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 		else if ( pEntity == m_pHeal )
 			m_pHeal = NULL;
 	}
+
+	return bValid;
 }
 
 void CBotFortress :: medicCalled(edict_t *pPlayer )
@@ -2636,11 +2638,11 @@ int CBotFortress :: getSpyDisguiseClass ( int iTeam )
 }
 
 
-void CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
+bool CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 {
-	CBotFortress::setVisible(pEntity,bVisible);
+	bool bValid = CBotFortress::setVisible(pEntity,bVisible);
 
-	if ( bVisible )
+	if ( bValid && bVisible )
 	{
 		if ( CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_RED) )
 		{
@@ -2652,7 +2654,7 @@ void CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 		}
 	}
 
-	if ( (ENTINDEX(pEntity)<gpGlobals->maxClients) && (ENTINDEX(pEntity)>0) )
+	if ( (ENTINDEX(pEntity)<=gpGlobals->maxClients) && (ENTINDEX(pEntity)>0) )
 	{
 		if ( bVisible )
 		{
@@ -2680,6 +2682,7 @@ void CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 		}
 	}
 
+	return bValid;
 	
 }
 

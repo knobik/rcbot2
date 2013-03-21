@@ -766,17 +766,17 @@ void CHLDMBot :: handleWeapons ()
 	}
 }
 // update some edicts in my memory if I see them or not
-void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
+bool CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 {
 	static float fDist;
 	const char *szClassname;
 
-	CBot::setVisible(pEntity,bVisible);
+	bool bValid = CBot::setVisible(pEntity,bVisible);
 
 	fDist = distanceFrom(pEntity);
 
 	// if no draw effect it is invisible
-	if ( bVisible && !(CClassInterface::getEffects(pEntity)&EF_NODRAW) ) 
+	if ( bValid && bVisible && !(CClassInterface::getEffects(pEntity)&EF_NODRAW) ) 
 	{
 		szClassname = pEntity->GetClassName();
 
@@ -835,7 +835,7 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 				// less juice than the current one I see
 				if ( CClassInterface::getAnimCycle(m_pCharger) < CClassInterface::getAnimCycle(pEntity) )
 				{
-					return;
+					return bValid;
 				}
 			}
 
@@ -852,7 +852,7 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 				// less juice than the current one I see - forget it
 				if ( CClassInterface::getAnimCycle(m_pHealthCharger) < CClassInterface::getAnimCycle(pEntity) )
 				{
-					return;
+					return bValid;
 				}
 			}
 
@@ -900,6 +900,7 @@ void CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		//	m_pNearestBreakable = NULL;
 	}
 
+	return bValid;
 }
 
 // lost my enemy - rethink my next move by flushiing schedules

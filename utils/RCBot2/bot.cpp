@@ -607,9 +607,11 @@ void CBot :: reachedCoverSpot ()
 }
 
 // something now visiable or not visible anymore
-void CBot :: setVisible ( edict_t *pEntity, bool bVisible )
+bool CBot :: setVisible ( edict_t *pEntity, bool bVisible )
 {
-	if ( bVisible )
+	bool bValid = (pEntity->GetUnknown()!=NULL);
+
+	if ( bValid && bVisible )
 	{
 		if ( canAvoid(pEntity) )
 		{
@@ -627,6 +629,8 @@ void CBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		}
 	}
 
+	// return if entity is valid or not
+	return bValid;
 }
 
 bool CBot :: isUsingProfile ( CBotProfile *pProfile )

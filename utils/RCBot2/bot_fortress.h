@@ -307,7 +307,7 @@ public:
 
 	virtual bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy ) { return CBot::handleAttack(pWeapon,pEnemy); }
 
-	virtual void setVisible ( edict_t *pEntity, bool bVisible );
+	virtual bool setVisible ( edict_t *pEntity, bool bVisible );
 
 	virtual void setClass ( TF_Class _class );
 
@@ -431,8 +431,8 @@ protected:
 	MyEHandle m_pTeleEntrance;
 	MyEHandle m_pTeleExit;
 
-	edict_t *m_pAmmo;
-	edict_t *m_pHealthkit;
+	MyEHandle m_pAmmo;
+	MyEHandle m_pHealthkit;
 
 	MyEHandle m_pNearestDisp;
 	MyEHandle m_pNearestEnemySentry;
@@ -440,7 +440,7 @@ protected:
 	MyEHandle m_pNearestEnemyTeleporter;
 	MyEHandle m_pNearestTeleEntrance;
 
-	edict_t *m_pFlag;
+	MyEHandle m_pFlag;
 	MyEHandle m_pPrevSpy;
 
 	float m_fFrenzyTime;
@@ -549,7 +549,7 @@ public:
 
 	void spawnInit ();
 
-	void setVisible ( edict_t *pEntity, bool bVisible );
+	bool setVisible ( edict_t *pEntity, bool bVisible );
 
 	Vector getAimVector ( edict_t *pEntity );
 

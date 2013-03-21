@@ -566,7 +566,7 @@ public:
 	void use ();
 	void reload();
 
-	virtual void setVisible ( edict_t *pEntity, bool bVisible );
+	virtual bool setVisible ( edict_t *pEntity, bool bVisible );
 
 	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide = false );
 	virtual void shot ( edict_t *pEnemy );

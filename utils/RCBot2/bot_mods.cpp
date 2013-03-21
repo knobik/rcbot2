@@ -243,7 +243,11 @@ void CTeamFortress2Mod :: setSetupTime ( int time )
 
 bool CTeamFortress2Mod :: isAmmo ( edict_t *pEntity )
 {
-	return strncmp(pEntity->GetClassName(),"item_ammopack",13)==0;
+	static const char *szClassname;
+
+	szClassname = pEntity->GetClassName();
+
+	return (strcmp(szClassname,"tf_ammo_pack")==0) || (strncmp(szClassname,"item_ammopack",13)==0);
 }
 
 bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity, int iTeam )
