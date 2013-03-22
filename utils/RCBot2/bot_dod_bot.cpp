@@ -57,6 +57,7 @@ extern ConVar rcbot_shoot_breakable_dist;
 extern ConVar rcbot_shoot_breakable_cos;
 extern ConVar rcbot_nocapturing;
 extern ConVar bot_messaround;
+extern ConVar rcbot_speed_boost;
 
 const char *g_DODClassCmd[2][6] = 
 { {"cls_garand","cls_tommy","cls_bar","cls_spring","cls_30cal","cls_bazooka"},
@@ -760,7 +761,7 @@ void CDODBot :: modThink ()
 	}
 
 	m_fFov = BOT_DEFAULT_FOV;
-	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict);
+	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict)*rcbot_speed_boost.GetFloat();
 
 	setMoveSpeed(fMaxSpeed*0.75f);
 	

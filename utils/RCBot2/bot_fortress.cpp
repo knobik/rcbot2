@@ -62,6 +62,7 @@ extern ConVar rcbot_melee_only;
 extern ConVar rcbot_tf2_protect_cap_time;
 extern ConVar rcbot_tf2_protect_cap_percent;
 extern ConVar rcbot_tf2_spy_kill_on_cap_dist;
+extern ConVar rcbot_speed_boost;
 
 #define TF2_SPY_CLOAK_BELIEF 38
 #define TF2_HWGUY_REV_BELIEF 60
@@ -2078,7 +2079,7 @@ void CBotTF2 :: modThink ()
 		}
 	}
 
-	m_fIdealMoveSpeed = CTeamFortress2Mod::TF2_GetPlayerSpeed(m_pEdict,m_iClass);
+	m_fIdealMoveSpeed = CTeamFortress2Mod::TF2_GetPlayerSpeed(m_pEdict,m_iClass)*rcbot_speed_boost.GetFloat();
 
 	// refind my weapons, if i couldn't select them
 	//if ( m_bFixWeapons || (m_iPrevWeaponSelectFailed>2) )

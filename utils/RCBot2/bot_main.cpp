@@ -36,6 +36,12 @@
 #include <stdio.h>
 #include <time.h>
 
+#ifdef __linux__
+#include <sys/mman.h>
+#include <errno.h>
+#include <unistd.h>
+#endif
+
 //#include "cbase.h"
 //#include "baseentity.h"
 #include "filesystem.h"
@@ -142,7 +148,7 @@ ConVar rcbot_notarget("rcbot_notarget","0",0,"bots don't shoot the host!");
 ConVar rcbot_nocapturing("rcbot_dontcapture","0",0,"bots don't capture flags in DOD:S");
 ConVar rcbot_jump_obst_dist("rcbot_jump_obst_dist","80",0,"the distance from an obstacle the bot will jump");
 ConVar rcbot_jump_obst_speed("rcbot_jump_obst_speed","100",0,"the speed of the bot for the bot to jump an obstacle");
-
+ConVar rcbot_speed_boost("rcbot_speed_boost","1",0,"multiplier for bots speed");
 ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee weapons");
 ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions to test cpu speed");
 ConVar rcbot_dont_move("rcbot_dontmove","0",0,"if 1 , bots will all move forward");
@@ -193,6 +199,7 @@ IServerGameDLL *servergamedll = NULL;
 CRCBotPlugin g_RCBOTServerPlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CRCBotPlugin, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_RCBOTServerPlugin );
 
+// linux:  Ted  http://rcbot.bots-united.com/forums/index.php?showuser=2257
 // Needed to hook virtual tables and member functions
 DWORD VirtualTableHook( DWORD* pdwNewInterface, int vtable, DWORD newInterface )
 {
@@ -200,14 +207,27 @@ DWORD VirtualTableHook( DWORD* pdwNewInterface, int vtable, DWORD newInterface )
 #ifndef __linux
     VirtualProtect( &pdwNewInterface[vtable], 4, PAGE_EXECUTE_READWRITE, &dwOld );
 #else
-	mprotect(&pdwNewInterface[vtable], 4, PROT_EXEC|PROT_READ|PROT_WRITE);
+	void *addr = &pdwNewInterface[vtable];
+
+	uintptr_t startPage = (uintptr_t(addr) & ~(uintptr_t(sysconf(_SC_PAGE_SIZE) - 1)));
+	length = sizeof(DWORD) + (uintptr_t(addr) - startPage);
+
+	if ( mprotect(startPage, length, PROT_EXEC|PROT_READ|PROT_WRITE) == -1 )
+	{
+		Warning("In VirtualTableHook while calling mprotect for write access: %s.\n",
+          strerror(errno));
+	}
 #endif
     dwStor = pdwNewInterface[vtable];
     *(DWORD*)&pdwNewInterface[vtable] = newInterface;
 #ifndef __linux
     VirtualProtect(&pdwNewInterface[vtable], 4, dwOld, &dwOld);
 #else
-	mprotect(&pdwNewInterface[vtable], 4, PROT_EXEC|PROT_READ);
+	if ( mprotect(startPage, length, PROT_EXEC|PROT_READ) == -1 )
+	{
+		Warning("In VirtualTableHook while calling mprotect for write access: %s.\n",
+          strerror(errno));
+	}
 #endif
 
     return dwStor;
