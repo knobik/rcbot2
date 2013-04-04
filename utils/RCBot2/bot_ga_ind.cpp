@@ -36,6 +36,11 @@
 
 CBotGAValues :: CBotGAValues()
 {
+	init();
+}
+
+void CBotGAValues :: init (void)
+{
 	clear();	
 	setFitness(0);
 }

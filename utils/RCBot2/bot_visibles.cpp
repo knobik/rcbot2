@@ -254,7 +254,8 @@ void CBotVisibles :: updateVisibles ()
 
 	if ( m_pBot->moveToIsValid() )
 	{
-		if ( m_pBot->FVisible(m_pBot->getMoveTo()) )
+		Vector vMoveTo = m_pBot->getMoveTo();
+		if ( m_pBot->FVisible(vMoveTo) )
 			m_pBot->updateCondition(CONDITION_SEE_WAYPOINT);
 		else
 			m_pBot->removeCondition(CONDITION_SEE_WAYPOINT);

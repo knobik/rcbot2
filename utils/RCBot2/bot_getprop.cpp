@@ -66,6 +66,7 @@ void UTIL_FindServerClassPrint(const char *name_cmd)
 	{
 		bInterfaceErr = true;
 	}
+#ifndef __linux__
 
 	if ( bInterfaceErr )
 	{
@@ -87,6 +88,7 @@ void UTIL_FindServerClassPrint(const char *name_cmd)
 			pClass = pClass->m_pNext;
 		}
 	}
+#endif
 }
 /**
  * Searches for a named Server Class.
@@ -115,7 +117,7 @@ ServerClass *UTIL_FindServerClass(const char *name)
 	{
 		bInterfaceErr = true;
 	}
-
+#ifndef __linux__
 	if ( bInterfaceErr )
 	{
 		// IServerGameDLL_004 == IServerGameDLL except without the replay init function
@@ -130,7 +132,7 @@ ServerClass *UTIL_FindServerClass(const char *name)
 			pClass = pClass->m_pNext;
 		}
 	}
-
+#endif
 	return NULL;
 	
 }

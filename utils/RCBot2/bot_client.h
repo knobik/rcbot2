@@ -38,7 +38,7 @@ typedef enum eWptCopyType
 	WPT_COPY_NONE = 0,
 	WPT_COPY_COPY,
 	WPT_COPY_CUT
-};
+}eWptCopyType_s;
 
 struct edict_t;
 class CBot;

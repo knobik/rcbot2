@@ -283,7 +283,8 @@ public:
 
 	virtual void checkHealingValid ();
 
-	virtual edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding, int index ) { return false; }
+// linux fix 2
+	virtual edict_t *findEngineerBuiltObject ( eEngiBuild iBuilding, int index ) { return NULL; }
 
 	virtual void engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd ) {};
 

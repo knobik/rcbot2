@@ -1308,7 +1308,7 @@ void CWaypoint :: clearPaths ()
 // get the distance from this waypoint from vector position vOrigin
 float CWaypoint :: distanceFrom ( Vector vOrigin )
 {
-	return VectorDistance((m_vOrigin - vOrigin));//.Length();
+	return (m_vOrigin - vOrigin).Length();
 }
 ///////////////////////////////////////////////////
 void CWaypoints :: updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int iWptFlag, const char *szClassname )

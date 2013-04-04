@@ -564,7 +564,7 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 												bool bGetVisible, bool bGetUnReachable, bool bIsBot, 
 												dataUnconstArray<int> *iFailedWpts, bool bNearestAimingOnly, 
 												int iTeam, bool bCheckArea, bool bGetVisibleFromOther, 
-												Vector &vOther )
+												Vector vOther )
 // Search for the nearest waypoint : I.e.
 // Find the waypoint that is closest to vOrigin from the distance pfMinDist
 // And set the piIndex to the waypoint index if closer.
@@ -646,7 +646,7 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 										   int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, 
 										   bool bIsBot, dataUnconstArray<int> *iFailedWpts, 
 										   bool bNearestAimingOnly, int iTeam, bool bCheckArea,
-										   bool bGetVisibleFromOther, Vector &vOther )
+										   bool bGetVisibleFromOther, Vector vOther )
 {
 	int iNearestIndex = -1;
 
@@ -708,7 +708,7 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 
 //////////////////////////////////
 // Draw waypoints around a player
-void CWaypointLocations :: DrawWaypoints ( edict_t *pEntity, Vector &vOrigin, float fDist, bool bDrawPaths, unsigned short int iDrawType )
+void CWaypointLocations :: DrawWaypoints ( edict_t *pEntity, Vector vOrigin, float fDist, bool bDrawPaths, unsigned short int iDrawType )
 {
 	static byte m_bPvs[MAX_MAP_CLUSTERS/8];
 	static int clusterIndex;

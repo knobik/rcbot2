@@ -121,7 +121,7 @@ IIndividual *CPopulation :: pick ()
 
 CGA :: CGA (ISelection *selectFunction) : m_theSelectFunction (selectFunction)
 {
-	CGA::CGA();
+	init();
 	m_thePopulation.clear();
 	m_theNewPopulation.clear();
 }

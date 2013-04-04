@@ -108,6 +108,11 @@ public:
 
 	CGA (int iMaxPopSize=0)
 	{
+		init(iMaxPopSize);
+	}
+
+	void init (int iMaxPopSize=0)
+	{
 		m_theSelectFunction = new CRouletteSelection();
 
 		m_thePopulation.setGA(this);

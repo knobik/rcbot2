@@ -76,9 +76,9 @@
 #include "bot_fortress.h"
 #include "bot_visibles.h"
 //#include "bot_memory.h"
-#include "bot_ga.h"
-#include "bot_ga_ind.h"
-#include "bot_perceptron.h"
+//#include "bot_ga.h"
+//#include "bot_ga_ind.h"
+//#include "bot_perceptron.h"
 #include "bot_ga_nn_const.h"
 #include "bot_weapons.h"
 #include "bot_profile.h"
@@ -379,12 +379,14 @@ bool CBot :: FVisible ( edict_t *pEdict )
 	// For players -- do two tracelines -- one at the origin and one at the head (for headshots)
 	if ( ENTINDEX(pEdict) <= gpGlobals->maxClients )
 	{
-		static Vector vOrigin;
+		Vector vOrigin;
+		Vector vHead;
 
 		// use this method to get origin -- quicker 
 		vOrigin = pEdict->GetCollideable()->GetCollisionOrigin();
+		vHead = vOrigin+Vector(0,0,pEdict->GetCollideable()->OBBMaxs().z);
 
-		if ( FVisible(vOrigin+Vector(0,0,pEdict->GetCollideable()->OBBMaxs().z)) )
+		if ( FVisible(vHead) )
 		{
 			if ( m_pEnemy == pEdict )
 				updateCondition(CONDITION_SEE_ENEMY_HEAD);
@@ -409,7 +411,7 @@ inline QAngle CBot :: eyeAngles ()
 	return CBotGlobals::playerAngles(m_pEdict);
 }
 
-inline Vector CBot :: getEyePosition ()
+Vector CBot :: getEyePosition ()
 {
 	
 	Vector vOrigin;//'/ = getOrigin();
@@ -1851,7 +1853,7 @@ bool CBot :: FInViewCone ( edict_t *pEntity )
 	return ( ((origin - getEyePosition()).Length()>1) && (DotProductFromOrigin(origin) > 0) ); // 90 degree !! 0.422618f ); // 65 degree field of view   
 }
 
-float CBot :: DotProductFromOrigin ( Vector &pOrigin )
+float CBot :: DotProductFromOrigin ( Vector pOrigin )
 {
 	static Vector vecLOS;
 	static float flDot;

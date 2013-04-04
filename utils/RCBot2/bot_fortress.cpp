@@ -1001,7 +1001,8 @@ void CBotFortress :: modThink ()
 
 	if ( m_bInitAlive )
 	{
-		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_TELE_ENTRANCE,getOrigin(),4096,getTeam()));
+		Vector vOrigin = getOrigin();
+		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_TELE_ENTRANCE,vOrigin,4096,getTeam()));
 
 		if ( pWpt )
 		{
@@ -3083,6 +3084,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( bNeedAmmo || bNeedHealth )
 	{
 		dataUnconstArray<int> *failed;
+		Vector vOrigin = getOrigin();
 
 		m_pNavigator->getFailedGoals(&failed);
 
@@ -3092,12 +3094,12 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		fHealthDist = 1;
 		fAmmoDist = 1;
 
-		pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,getOrigin(),iTeam,&fResupplyDist,failedlist));
+		pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,vOrigin,iTeam,&fResupplyDist,failedlist));
 		
 		if ( bNeedAmmo )
-			pWaypointAmmo = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_AMMO,getOrigin(),iTeam,&fAmmoDist,failedlist));
+			pWaypointAmmo = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_AMMO,vOrigin,iTeam,&fAmmoDist,failedlist));
 		if ( bNeedHealth )
-			pWaypointHealth = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_HEALTH,getOrigin(),iTeam,&fHealthDist,failedlist));
+			pWaypointHealth = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_HEALTH,vOrigin,iTeam,&fHealthDist,failedlist));
 	}
 
 	if ( iClass == TF_CLASS_ENGINEER )

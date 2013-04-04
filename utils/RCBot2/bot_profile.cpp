@@ -87,10 +87,17 @@ void CBotProfiles :: deleteProfiles ()
 }
 
 // requires CBotProfile 'read' declared
+#ifndef __linux__
 #define READ_PROFILE_STRING(kvname,varname) if ( !pKVL->getString(##kvname##,&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
 #define READ_PROFILE_INT(kvname,varname) if ( !pKVL->getInt(##kvname##,&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
 // reads integers between 0 and 100 and converts to between 0.0 and 1.0
 #define READ_PROFILE_FLOAT(kvname,varname) { float fval; if ( !pKVL->getFloat(##kvname##,&fval) ) { read.varname = m_pDefaultProfile->varname; } else { read.varname = fval * 0.01f; } }
+#else
+#define READ_PROFILE_STRING(kvname,varname) if ( !pKVL->getString(#kvname,&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
+#define READ_PROFILE_INT(kvname,varname) if ( !pKVL->getInt(#kvname,&read.varname) ) { read.varname = m_pDefaultProfile->varname; }
+// reads integers between 0 and 100 and converts to between 0.0 and 1.0
+#define READ_PROFILE_FLOAT(kvname,varname) { float fval; if ( !pKVL->getFloat(#kvname,&fval) ) { read.varname = m_pDefaultProfile->varname; } else { read.varname = fval * 0.01f; } }
+#endif
 // find profiles and setup list
 void CBotProfiles :: setupProfiles ()
 {

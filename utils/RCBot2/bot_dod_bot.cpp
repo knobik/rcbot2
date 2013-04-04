@@ -1577,8 +1577,9 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 	case BOT_UTIL_PICKUP_BOMB:
 		{
 			CWaypoint *pWaypoint;
+			Vector vOrigin = getOrigin();
 
-			pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_BOMBS_HERE,getOrigin(),8192.0,m_iTeam));
+			pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_BOMBS_HERE,vOrigin,8192.0,m_iTeam));
 
 			if ( pWaypoint )
 			{

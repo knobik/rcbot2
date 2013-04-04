@@ -41,6 +41,7 @@
 #include <direct.h> // for mkdir
 #else
 #include <fcntl.h>
+#include <sys/stat.h>
 #endif
 
 extern IServerGameEnts *servergameents;

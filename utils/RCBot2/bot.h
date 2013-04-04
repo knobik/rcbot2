@@ -300,20 +300,22 @@ public:
 
 	virtual unsigned int maxEntityIndex ( ) { return MAX_PLAYERS; }
 
-	inline float CBot :: distanceFrom(edict_t *pEntity)
+// linux fix 1
+	inline float distanceFrom(edict_t *pEntity)
 	{
 		return (pEntity->GetIServerEntity()->GetCollideable()->GetCollisionOrigin()-m_pController->GetLocalOrigin()).Length();
 	//return distanceFrom(CBotGlobals::entityOrigin(pEntity));
 	}
 	// return distance from this origin
-	inline float CBot :: distanceFrom ( Vector vOrigin )
+// linux fix 2
+	inline float distanceFrom ( Vector vOrigin )
 	{
 		return (vOrigin-m_pController->GetLocalOrigin()).Length();
 	}
 
 	virtual void handleWeapons ();
 
-	inline Vector getOrigin ();
+	Vector getOrigin ();
 	/*
 	 * init()
 	 *
@@ -355,7 +357,7 @@ public:
 
 	virtual bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 
-	float DotProductFromOrigin ( Vector &pOrigin );
+	float DotProductFromOrigin ( Vector pOrigin );
 
 	bool FVisible ( edict_t *pEdict );
 
@@ -405,13 +407,13 @@ public:
 		return (m_bUsed && (m_pEdict!=NULL));
 	}
 
-	inline edict_t *getEdict ();
+	edict_t *getEdict ();
 
-	inline void setEdict ( edict_t *pEdict);
+	void setEdict ( edict_t *pEdict);
 
-	inline bool FVisible ( Vector &vOrigin );
+	bool FVisible ( Vector &vOrigin );
 
-	inline Vector getEyePosition ();
+	Vector getEyePosition ();
 
 	void think ();
 
@@ -539,7 +541,7 @@ public:
 
 	virtual void spawnInit ();
 
-	inline QAngle eyeAngles ();
+	QAngle eyeAngles ();
 
 	virtual bool isAlive ();
 

@@ -89,8 +89,8 @@ public:
 		m_iBotType = BOTTYPE_GENERIC;
 		m_bPlayerHasSpawned = false;
 	}
-
-	void setup ( char *szModFolder, char *szSteamFolder, eModId iModId, eBotType iBotType );
+// linux fix
+	void setup ( const char *szModFolder, const char *szSteamFolder, eModId iModId, eBotType iBotType );
 
 	bool isSteamFolder ( char *szSteamFolder );
 
@@ -824,7 +824,7 @@ public:
 
 	static int getHighestScore ();
 
-	static edict_t *CTeamFortress2Mod :: nearestDispenser ( Vector vOrigin, int team );
+	static edict_t *nearestDispenser ( Vector vOrigin, int team );
 
 	static void flagPickedUp (int iTeam, edict_t *pPlayer);
 	static void flagReturned (int iTeam);

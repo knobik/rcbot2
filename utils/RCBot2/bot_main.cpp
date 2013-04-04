@@ -207,27 +207,27 @@ DWORD VirtualTableHook( DWORD* pdwNewInterface, int vtable, DWORD newInterface )
 #ifndef __linux
     VirtualProtect( &pdwNewInterface[vtable], 4, PAGE_EXECUTE_READWRITE, &dwOld );
 #else
-	void *addr = &pdwNewInterface[vtable];
-
-	uintptr_t startPage = (uintptr_t(addr) & ~(uintptr_t(sysconf(_SC_PAGE_SIZE) - 1)));
-	length = sizeof(DWORD) + (uintptr_t(addr) - startPage);
-
-	if ( mprotect(startPage, length, PROT_EXEC|PROT_READ|PROT_WRITE) == -1 )
-	{
-		Warning("In VirtualTableHook while calling mprotect for write access: %s.\n",
+   // need page aligned address
+    char *addr = reinterpret_cast<char *>(reinterpret_cast<DWORD>(&pdwNewInterface[vtable])
+                      - reinterpret_cast<DWORD>(&pdwNewInterface[vtable])
+                      % sysconf(_SC_PAGE_SIZE));
+    int len = sizeof(DWORD) + reinterpret_cast<DWORD>(&pdwNewInterface[vtable])
+      % sysconf(_SC_PAGE_SIZE);
+    if (mprotect(addr, len, PROT_EXEC|PROT_READ|PROT_WRITE) == -1) {
+      Warning("In VirtualTableHook while calling mprotect for write access: %s.\n",
           strerror(errno));
-	}
+    } else {
 #endif
     dwStor = pdwNewInterface[vtable];
     *(DWORD*)&pdwNewInterface[vtable] = newInterface;
 #ifndef __linux
     VirtualProtect(&pdwNewInterface[vtable], 4, dwOld, &dwOld);
 #else
-	if ( mprotect(startPage, length, PROT_EXEC|PROT_READ) == -1 )
-	{
-		Warning("In VirtualTableHook while calling mprotect for write access: %s.\n",
+    if (mprotect(addr, len, PROT_EXEC|PROT_READ) == -1) {
+      Warning("In VirtualTableHook while calling mprotect to remove write access: %s.\n",
           strerror(errno));
-	}
+    }
+    }
 #endif
 
     return dwStor;
@@ -239,7 +239,11 @@ DWORD* pdwNewInterface = 0;
 // PlayerRunCommmand Hook 
 // Some Mods have their own puppet bots that run around and override RCBOT if this is not here
 // this function overrides the puppet bots movements
+#ifdef __linux__
+void __attribute__((fastcall)) nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
+#else
 void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
+#endif
 {
 	edict_t *pEdict = servergameents->BaseEntityToEdict(_this);
 
@@ -416,6 +420,8 @@ void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMsgName, char *s
 //#define FILESYSTEM_INT FILESYSTEM_INTERFACE_VERSION
 //#define FILESYSTEM_MAXVER 19
 
+#ifndef __linux__
+
 #define RCBot_LoadUndefinedInterface(var,type,vername,maxver,minver) { \
 	int ver = maxver; \
 	char str [256]; \
@@ -457,6 +463,55 @@ void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMsgName, char *s
 	Msg("[RCBOT] Found interface "## #vername ##" "## #type ##" "## #var ##", ver = %03d\n",ver+1); \
 	}\
 }
+#else
+
+// we need to change preprocessor concatonations for this
+
+#define RCBot_LoadUndefinedInterface(var,type,vername,maxver,minver) { \
+	int ver = maxver; \
+	char str [256]; \
+	char tempver[8]; \
+	do{ \
+		strcpy(str,vername); \
+		sprintf(tempver,"%03d",ver); \
+		strcat(str,tempver); \
+		ver--; \
+		var = (type*)interfaceFactory(str,NULL); \
+		Msg("Trying... %s\n",str); \
+	}while((var==NULL)&&(ver>minver)); \
+    if ( var == NULL ) \
+    { \
+	Warning("[RCBOT] Cannot open interface " #vername " " #type " " #var " (Max ver: " #maxver ") Min ver: (" #minver ") \n"); \
+		return false; \
+	} else { \
+	Msg("[RCBOT] Found interface " #vername " " #type " " #var ", ver = %03d\n",ver+1); \
+	}\
+}
+
+//
+#define RCBot_LoadUndefinedGameInterface(var,type,vername,maxver,minver) { \
+	int ver = maxver; \
+	char str [256]; \
+	char tempver[8]; \
+	do{ \
+		strcpy(str,vername); \
+		sprintf(tempver,"%03d",ver); \
+		strcat(str,tempver); \
+		ver--; \
+		var = (type*)gameServerFactory(str,NULL); \
+		Msg("Trying... %s\n",str); \
+	}while((var==NULL)&&(ver>minver)); \
+    if ( var == NULL ) \
+    { \
+	Warning("[RCBOT] Cannot open interface " #vername " " #type " " #var " (Max ver: " #maxver ") Min ver: (" #minver ") \n"); \
+		return false; \
+	} else { \
+	Msg("[RCBOT] Found interface " #vername " " #type " " #var ", ver = %03d\n",ver+1); \
+	}\
+}
+
+#endif
+
 
 //---------------------------------------------------------------------------------
 // Purpose: called when the plugin is loaded, load the interface we need from the engine

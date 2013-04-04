@@ -2320,7 +2320,7 @@ void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	CBotWeapon *pWeapon;
 
-	if ( m_pEdict == NULL )
+	if ( m_pEdict.get() == NULL )
 	{
 		fail();
 		return;
@@ -3140,8 +3140,9 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_bUseZ )
 	{
+		Vector vAim = Vector(m_vAim.x,m_vAim.y,m_z);
 		pBot->setLookAtTask(LOOK_VECTOR);
-		pBot->setLookVector(pBot->snipe(Vector(m_vAim.x,m_vAim.y,m_z)));
+		pBot->setLookVector(pBot->snipe(vAim));
 	}
 	else
 	{
@@ -3283,8 +3284,9 @@ void CBotHL2DMSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_bUseZ )
 	{
+		Vector vAim = Vector(m_vAim.x,m_vAim.y,m_z);
 		pBot->setLookAtTask(LOOK_VECTOR);
-		pBot->setLookVector(pBot->snipe(Vector(m_vAim.x,m_vAim.y,m_z)));
+		pBot->setLookVector(pBot->snipe(vAim));
 	}
 	else
 	{

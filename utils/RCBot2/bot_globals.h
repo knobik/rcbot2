@@ -98,7 +98,8 @@ public:
 
 	static edict_t *findPlayerByTruncName ( const char *name );
 
-	inline static CBotMod *CBotGlobals :: getCurrentMod ()
+// linux fix
+	inline static CBotMod *getCurrentMod ()
 	{
 		return m_pCurrentMod;
 	}

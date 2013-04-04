@@ -40,6 +40,8 @@ public:
 
 	CBotGAValues( vector<float> values );
 
+	void init (void);
+
 	// crossover with other individual
 	void crossOver ( IIndividual *other );
 
@@ -79,7 +81,7 @@ class CBotStuckValues : public CBotGAValues
 public:
 	CBotStuckValues()
 	{
-		CBotGAValues::CBotGAValues();
+		init();
 		setup(5);
 	}
 
