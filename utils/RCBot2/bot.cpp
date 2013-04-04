@@ -2865,7 +2865,8 @@ void CBots :: freeAllMemory ()
 		m_Bots[i] = NULL;
 	}
 
-	delete[] m_Bots;
+	// update: ASSERT problem here!
+	//delete[] m_Bots;
 	m_Bots = NULL;
 }
 

@@ -811,6 +811,7 @@ void CDODBot :: modThink ()
 	// going prone
 	if ( !isUnderWater() && !hasSomeConditions(CONDITION_RUN) && (m_fCurrentDanger >= 50.0f) )
 	{
+		extern ConVar rcbot_prone_enemy_only;
 		// not sniper rifle or machine gun but can look down the sights
 		if ( hasSomeConditions(CONDITION_COVERT) && m_pCurrentWeapon && pWeapon && (( pWeapon->getID() == DOD_WEAPON_K98 ) || (pWeapon->getID() == DOD_WEAPON_GARAND) ))
 		{
@@ -827,8 +828,9 @@ void CDODBot :: modThink ()
 				m_fZoomOrDeployTime = engine->Time() + randomFloat(0.1f,0.2f);
 			}
 		}
-		
-		if ( (m_fCurrentDanger >= 80.0f) && !m_bProne && ( m_fProneTime < engine->Time() ))
+		// prone only if has enemy or last seen one a second ago
+		// if rcbot_prone_enemy_only is true
+		if ( (!rcbot_prone_enemy_only.GetBool() || ((m_pEnemy.get()!=NULL) || (m_fLastSeeEnemy + 5.0f > engine->Time()))) && (m_fCurrentDanger >= 80.0f) && !m_bProne && ( m_fProneTime < engine->Time() ))
 		{
 			m_pButtons->tap(IN_ALT1);
 			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);

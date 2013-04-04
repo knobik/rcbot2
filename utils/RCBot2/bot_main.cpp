@@ -96,6 +96,8 @@ static ICvar *s_pCVar;
 
 bool bInitialised = false;
 
+void UnhookPlayerRunCommand ();
+
 ConVar bot_general_difficulty("rcbot_skill","0.6",0,"General difficulty of the bots. 0.5 = stock, < 0.5 easier, > 0.5 = harder");
 ConVar bot_sv_cheats_auto("rcbot_sv_cheats_auto","0",0,"automatically put sv_cheats on and off for when adding bots only");
 ConVar bot_visrevs_clients("rcbot_visrevs_clients","4",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
@@ -154,10 +156,11 @@ ConVar rcbot_speed_boost("rcbot_speed_boost","1",0,"multiplier for bots speed");
 ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee weapons");
 ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions to test cpu speed");
 ConVar rcbot_dont_move("rcbot_dontmove","0",0,"if 1 , bots will all move forward");
-ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","416",0,"offset of the PlayerRunCommand function");
+ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","417",0,"offset of the PlayerRunCommand function");
 ConVar rcbot_runplayercmd_hookonce("rcbot_runplayer_hookonce","1",0,"function will hook only once, if 0 it will unook and rehook after every map");
 ConVar rcbot_ladder_offs("rcbot_ladder_offs","42",0,"difference in height for bot to think it has touched the ladder waypoint");
 ConVar rcbot_ffa("rcbot_ffa","0",0,"Free for all mode -- bots shoot everyone");
+ConVar rcbot_prone_enemy_only("rcbot_prone_enemy_only","1",0,"if 1 bots only prone in DOD:S when they have an enemy");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 
@@ -270,8 +273,16 @@ void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* p
 		pCmd->weaponsubtype = cmd->weaponsubtype;
 		pCmd->tick_count = cmd->tick_count;
 	}
-
-    (*_this.*pPlayerRunCommand)(pCmd, pMoveHelper);
+	try
+	{
+		(*_this.*pPlayerRunCommand)(pCmd, pMoveHelper);
+	}
+	catch(...)
+	{
+		UnhookPlayerRunCommand();
+		Error("RCBOT:  nPlayerRunCommand Failed. bad offset?");
+		return;
+	}
 }
 
 // begin hook
