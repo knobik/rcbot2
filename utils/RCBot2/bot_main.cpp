@@ -94,6 +94,8 @@
 
 static ICvar *s_pCVar;
 
+bool bInitialised = false;
+
 ConVar bot_general_difficulty("rcbot_skill","0.6",0,"General difficulty of the bots. 0.5 = stock, < 0.5 easier, > 0.5 = harder");
 ConVar bot_sv_cheats_auto("rcbot_sv_cheats_auto","0",0,"automatically put sv_cheats on and off for when adding bots only");
 ConVar bot_visrevs_clients("rcbot_visrevs_clients","4",0,"how many revs the bot searches for visible players and enemies, lower to reduce cpu usage");
@@ -601,6 +603,8 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 		strcat(sv_tags_str,",rcbot2");
 
 	sv_tags->SetValue(sv_tags_str);
+
+	bInitialised = true;
 	
 	return true;
 }
@@ -644,35 +648,41 @@ void CRCBotPlugin::ShowLicense ( void )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::Unload( void )
 {
-	UnhookPlayerRunCommand();
-
-	CBots::freeAllMemory();
-	CStrings::freeAllMemory();
-	CBotGlobals::freeMemory();
-	CBotMods::freeMemory();
-	CAccessClients::freeMemory();
-	CBotEvents::freeMemory();
-	CWaypoints::freeMemory();
-	CWaypointTypes::freeMemory();
-	CBotProfiles::deleteProfiles();
-	CWeapons::freeMemory();
-
-	//ConVar_Unregister();
-
-	if ( gameeventmanager1 )
-		gameeventmanager1->RemoveListener( this ); // make sure we are unloaded from the event system
-	if ( gameeventmanager )
+	// if another instance is running dont run through this
+	if ( bInitialised )
 	{
-		if ( eventListener2 )
-		{
-			gameeventmanager->RemoveListener( eventListener2 );
-			delete eventListener2;
-		}
-	}
+		UnhookPlayerRunCommand();
 
-	ConVar_Unregister( );
-	DisconnectTier2Libraries( );
-	DisconnectTier1Libraries( );
+		CBots::freeAllMemory();
+		CStrings::freeAllMemory();
+		CBotGlobals::freeMemory();
+		CBotMods::freeMemory();
+		CAccessClients::freeMemory();
+		CBotEvents::freeMemory();
+		CWaypoints::freeMemory();
+		CWaypointTypes::freeMemory();
+		CBotProfiles::deleteProfiles();
+		CWeapons::freeMemory();
+
+		//ConVar_Unregister();
+
+		if ( gameeventmanager1 )
+			gameeventmanager1->RemoveListener( this ); // make sure we are unloaded from the event system
+		if ( gameeventmanager )
+		{
+			if ( eventListener2 )
+			{
+				gameeventmanager->RemoveListener( eventListener2 );
+				delete eventListener2;
+			}
+		}
+
+		ConVar_Unregister( );
+
+		DisconnectTier2Libraries( );
+		DisconnectTier1Libraries( );
+
+	}
 }
 
 //---------------------------------------------------------------------------------

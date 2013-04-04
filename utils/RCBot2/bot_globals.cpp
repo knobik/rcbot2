@@ -29,6 +29,18 @@
  *
  */
 
+// use the home folder to store the bot files
+#define HOMEFOLDER
+
+#ifndef __linux__
+// for file stuff
+#include <windows.h>
+#define WIN32_LEAN_AND_MEAN
+
+#include <conio.h>
+
+#endif
+
 #include "bot.h"
 #include "bot_globals.h"
 #include "bot_strings.h"
@@ -712,7 +724,17 @@ void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const ch
 {
 	szOutput[0] = 0;
 
+#ifdef HOMEFOLDER
+	char home[512];
+#ifndef __linux
+	ExpandEnvironmentStringsA("%userprofile%",home,511);
+#else
+	sprintf(home,"~");
+#endif
+	strcat(szOutput,home);
+#else
 	strcat(szOutput,"..");
+#endif
 	addDirectoryDelimiter(szOutput);
 	strcat(szOutput,BOT_FOLDER);
 	addDirectoryDelimiter(szOutput);
@@ -817,3 +839,5 @@ float CBotGlobals :: yawAngleFromEdict (edict_t *pEntity,Vector vOrigin)
 	return fAngle;
 
 }
+
+
