@@ -830,7 +830,7 @@ void CDODBot :: modThink ()
 		}
 		// prone only if has enemy or last seen one a second ago
 		// if rcbot_prone_enemy_only is true
-		if ( (!rcbot_prone_enemy_only.GetBool() || ((m_pEnemy.get()!=NULL) || (m_fLastSeeEnemy + 5.0f > engine->Time()))) && (m_fCurrentDanger >= 80.0f) && !m_bProne && ( m_fProneTime < engine->Time() ))
+		if ( (hasSomeConditions(CONDITION_PRONE) || !rcbot_prone_enemy_only.GetBool() || ((m_pEnemy.get()!=NULL) || (m_fLastSeeEnemy + 5.0f > engine->Time()))) && (m_fCurrentDanger >= 80.0f) && !m_bProne && ( m_fProneTime < engine->Time() ))
 		{
 			m_pButtons->tap(IN_ALT1);
 			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
@@ -2251,7 +2251,10 @@ bool CDODBot :: walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetAppl
 	{
 		m_fCurrentDanger = 80;
 		removeCondition(CONDITION_RUN);
+		updateCondition(CONDITION_PRONE);
 	}
+	else
+		removeCondition(CONDITION_PRONE);
 
 	if ( CBot::walkingTowardsWaypoint(pWaypoint,bOffsetApplied,vOffset) )
 	{

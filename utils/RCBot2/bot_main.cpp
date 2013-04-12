@@ -156,7 +156,8 @@ ConVar rcbot_speed_boost("rcbot_speed_boost","1",0,"multiplier for bots speed");
 ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee weapons");
 ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions to test cpu speed");
 ConVar rcbot_dont_move("rcbot_dontmove","0",0,"if 1 , bots will all move forward");
-ConVar rcbot_runplayercmd("rcbot_runplayer_cmd","417",0,"offset of the PlayerRunCommand function");
+ConVar rcbot_runplayercmd_dods("rcbot_runplayer_cmd_dods","417",0,"offset of the DOD:S PlayerRunCommand function");
+ConVar rcbot_runplayercmd_tf2("rcbot_runplayer_cmd_tf2","416",0,"offset of the TF2 PlayerRunCommand function");
 ConVar rcbot_runplayercmd_hookonce("rcbot_runplayer_hookonce","1",0,"function will hook only once, if 0 it will unook and rehook after every map");
 ConVar rcbot_ladder_offs("rcbot_ladder_offs","42",0,"difference in height for bot to think it has touched the ladder waypoint");
 ConVar rcbot_ffa("rcbot_ffa","0",0,"Free for all mode -- bots shoot everyone");
@@ -294,15 +295,24 @@ void HookPlayerRunCommand ( edict_t *edict )
 
 		if(BasePlayer)
 		{
-			int vtable = rcbot_runplayercmd.GetInt();
+			int vtable = 0;
+
+			if ( CBotGlobals::isCurrentMod(MOD_DOD) )
+				vtable = rcbot_runplayercmd_dods.GetInt();
+			else
+				vtable = rcbot_runplayercmd_tf2.GetInt();
+
+			if ( vtable != 0 )
+			{
 	#ifndef WIN32
-			++vtable;
+				++vtable;
 	#endif
 	       // hook it
-			if ( pPlayerRunCommand == 0x0 )
-			{
-				pdwNewInterface = ( DWORD* )*( DWORD* )BasePlayer;
-				*(DWORD*)&pPlayerRunCommand = VirtualTableHook( pdwNewInterface, vtable, ( DWORD )nPlayerRunCommand );
+				if ( pPlayerRunCommand == 0x0 )
+				{
+					pdwNewInterface = ( DWORD* )*( DWORD* )BasePlayer;
+					*(DWORD*)&pPlayerRunCommand = VirtualTableHook( pdwNewInterface, vtable, ( DWORD )nPlayerRunCommand );
+				}
 			}
 		}
 	}
@@ -313,14 +323,23 @@ void UnhookPlayerRunCommand ()
 {
 	if ( pPlayerRunCommand && pdwNewInterface )
 	{
-		int vtable = rcbot_runplayercmd.GetInt();
+		int vtable = 0;
+
+		if ( CBotGlobals::isCurrentMod(MOD_DOD) )
+			vtable = rcbot_runplayercmd_dods.GetInt();
+		else
+			vtable = rcbot_runplayercmd_tf2.GetInt();
+
+		if ( vtable != 0 )
+		{
 	#ifndef WIN32
-		++vtable;
+			++vtable;
 	#endif
 	       
-		VirtualTableHook( pdwNewInterface, vtable, *(DWORD*)&pPlayerRunCommand );
-		pdwNewInterface = NULL;
-		pPlayerRunCommand = NULL;
+			VirtualTableHook( pdwNewInterface, vtable, *(DWORD*)&pPlayerRunCommand );
+			pdwNewInterface = NULL;
+			pPlayerRunCommand = NULL;
+		}
 	}
 }
 

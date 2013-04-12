@@ -1,5 +1,6 @@
 0.72
 ====
+all mods: please move rcbot2 folder to users home folder i.e. /users/<name> or ~/
 all mods: Vfilesystem update 
 all mods: rcbot2 sv_tag 
 all mods: rcbot_ffa cvar , if 1 bots shoot each other disregarding teamplay
