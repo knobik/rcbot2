@@ -770,6 +770,7 @@ void CBotMods :: createFile ()
 		fprintf(fp,"# SVENCOOP2\n");
 		fprintf(fp,"# TIMCOOP\n");
 		fprintf(fp,"# NS2\n");
+		fprintf(fp,"# DOD (day of defeat source)\n");
 		fprintf(fp,"#\n");
 		fprintf(fp,"# valid bot types\n");
 		fprintf(fp,"# ---------------\n");
@@ -780,6 +781,7 @@ void CBotMods :: createFile ()
 		fprintf(fp,"# FF\n");
 		fprintf(fp,"# COOP\n");
 		fprintf(fp,"# ZOMBIE\n");
+		fprintf(fp,"# DOD\n");
 		fprintf(fp,"#\n");
 		fprintf(fp,"#\n");
 		fprintf(fp,"#mod = CSS\n");
@@ -807,10 +809,10 @@ void CBotMods :: createFile ()
 		fprintf(fp,"#gamedir = hl1dm\n");
 		fprintf(fp,"#bot = HL1DM\n");
 		fprintf(fp,"#\n");
-		fprintf(fp,"mod = CUSTOM\n");
-		fprintf(fp,"steamdir = day of defeat source\n");
+		fprintf(fp,"mod = DOD\n");
+		fprintf(fp,"steamdir = orangebox\n");
 		fprintf(fp,"gamedir = dod\n");
-		fprintf(fp,"bot = ZOMBIE\n");
+		fprintf(fp,"bot = DOD\n");
 		fprintf(fp,"#\n");
 
 		fclose(fp);
