@@ -679,7 +679,10 @@ bool CBotGlobals :: makeFolders ( char *szFile )
 #ifndef __linux__
         mkdir(szFolderName);
 #else
-        mkdir(szFolderName, O_CREAT); //bir3yk
+        if ( mkdir(szFolderName, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) == 0 ) 
+		botMessage(NULL,0,"Trying to create folder '%s' successful",szFolderName);
+	else
+		botMessage(NULL,0,"Trying to create folder '%s' failed",szFolderName);
 #endif   
 	}
 
@@ -711,10 +714,15 @@ FILE *CBotGlobals :: openFile ( char *szFile, char *szMode )
 
 	if ( fp == NULL )
 	{
+		botMessage ( NULL, 0, "file not found/opening error '%s' mode %s", szFile, szMode );
+
 		makeFolders(szFile);
 
 		// try again
 		fp = fopen(szFile,szMode);
+
+		if ( fp == NULL )
+			botMessage ( NULL, 0, "failed to make folders for %s",szFile);
 	}
 
 	return fp;
@@ -729,7 +737,19 @@ void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const ch
 #ifndef __linux
 	ExpandEnvironmentStringsA("%userprofile%",home,511);
 #else
-	sprintf(home,"~");
+char *lhome = getenv ("HOME");
+if (lhome != NULL) 
+{
+        strncpy(home,lhome,511);
+	home[511] = 0; 
+//snprintf(path, sizeof(path), "%s/new_dir", home);
+        // now use path in mkdir
+        //mkdir(path, PERM);
+}
+else
+strcpy(home,".");
+
+	//sprintf(home,"~");
 #endif
 	strcat(szOutput,home);
 #else
