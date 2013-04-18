@@ -274,9 +274,12 @@ void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* p
 		pCmd->weaponsubtype = cmd->weaponsubtype;
 		pCmd->tick_count = cmd->tick_count;
 	}
+#ifdef __linux__
 	try
 	{
+#endif
 		(*_this.*pPlayerRunCommand)(pCmd, pMoveHelper);
+#ifdef __linux__
 	}
 	catch(...)
 	{
@@ -284,6 +287,7 @@ void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* p
 		Error("RCBOT:  nPlayerRunCommand Failed. bad offset?");
 		return;
 	}
+#endif
 }
 
 // begin hook
@@ -1034,7 +1038,7 @@ void CRCBotPlugin::FireGameEvent( KeyValues * event )
 
 		CBotEvents::executeEvent((void*)event,TYPE_KEYVALUES);	
 
-		if ( CClients::clientsDebugging() )
+		if ( CClients::clientsDebugging(BOT_DEBUG_GAME_EVENT) )
 		{
 			CClients::clientDebugMsg(BOT_DEBUG_GAME_EVENT,type);
 

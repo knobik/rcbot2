@@ -142,6 +142,7 @@ public:
 	static const int W_FL_NO_FLAG = 4194304;
 	static const int W_FL_LIFT = 8388608;
 	static const int W_FL_FLAGONLY = 16777216;
+	static const int W_FL_FALL = 33554432;
 
 	static void setup ();
 

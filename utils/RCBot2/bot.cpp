@@ -224,7 +224,7 @@ void CBot :: runPlayerMove()
 	m_iSelectWeapon = 0;
 	m_iImpulse = 0;
 
-	if ( CClients::clientsDebugging() )
+	if ( CClients::clientsDebugging(BOT_DEBUG_BUTTONS) )
 	{
 			char dbg[512];
 
@@ -2861,8 +2861,8 @@ void CBots :: freeAllMemory ()
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
 		m_Bots[i]->freeAllMemory();
-		delete m_Bots[i];
-		m_Bots[i] = NULL;
+		//delete m_Bots[i];
+		//m_Bots[i] = NULL;
 	}
 
 	// update: ASSERT problem here!

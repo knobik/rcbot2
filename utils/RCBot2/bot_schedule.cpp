@@ -585,7 +585,7 @@ void CBotSchedule :: execute ( CBot *pBot )
 			pTask->fail(); // fail
 		else
 		{			
-			if ( CClients::clientsDebugging() && CClients::clientsDebugging(BOT_DEBUG_TASK) )
+			if ( CClients::clientsDebugging(BOT_DEBUG_TASK) )
 			{
 				char dbg[512];
 

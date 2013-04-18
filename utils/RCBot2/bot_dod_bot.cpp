@@ -2203,7 +2203,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			if ( m_fUtilTimes[next->getId()] < engine->Time() )
 				m_fUtilTimes[next->getId()] = engine->Time() + randomFloat(0.1f,2.0f); // saves problems with consistent failing
 
-			if ( CClients::clientsDebugging() )
+			if ( CClients::clientsDebugging(BOT_DEBUG_UTIL) )
 				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[next->getId()],this);
 			
 			break;

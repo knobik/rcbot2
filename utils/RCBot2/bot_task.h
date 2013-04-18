@@ -446,6 +446,7 @@ private:
 	float m_fTime;
 	Vector m_vAim;
 	Vector m_vOrigin;
+	float m_fEnemyZ;
 };
 
 

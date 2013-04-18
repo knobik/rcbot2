@@ -2011,6 +2011,7 @@ CBotTF2Snipe :: CBotTF2Snipe ( Vector vOrigin, float fYaw )
 	AngleVectors(angle,&m_vAim);
 	m_vAim = vOrigin + (m_vAim*1024);
 	m_vOrigin = vOrigin;
+	m_fEnemyZ = 0;
 }
 	
 void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -2094,11 +2095,14 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 				pBot->setMoveLookPriority(MOVELOOK_TASK);
 			}
+
+			m_fEnemyZ = CBotGlobals::entityOrigin(pBot->getEnemy()).z;
+
 		}
 		else
 		{
 			pBot->setLookAtTask((LOOK_SNIPE));
-			pBot->setAiming(m_vAim);
+			pBot->setAiming(Vector(m_vAim.x,m_vAim.y,m_fEnemyZ));
 //			pBot->setAiming(m_vAiming);
 
 			if (m_fTime<engine->Time() )
@@ -3172,7 +3176,10 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		{			
 			pBot->updateDanger(MAX_BELIEF);
 			pBot->removeCondition(CONDITION_RUN);
+			pBot->updateCondition(CONDITION_PRONE);
 		}
+		else
+			pBot->removeCondition(CONDITION_PRONE);
 
 		// no enemy for a while
 		if ( (m_fEnemyTime + m_fTime) < engine->Time() )

@@ -3487,7 +3487,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		{
 			m_CurrentUtil = next->getId();
 
-			if ( CClients::clientsDebugging() )
+			if ( CClients::clientsDebugging(BOT_DEBUG_UTIL) )
 			{
 				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[next->getId()],this);
 			}
