@@ -1571,12 +1571,12 @@ eBotCommandResult CSearchCommand :: execute ( CClient *pClient, const char *pcmd
 //////////////////////////////////////////////////////////////////////
 void CBotCommand :: setName ( char *szName )
 {
-	m_szCommand = strdup(szName);
+	m_szCommand = CStrings::getString(szName);
 }
 
 void CBotCommand :: setHelp ( char *szHelp )
 {
-	m_szHelp = strdup(szHelp);
+	m_szHelp = CStrings::getString(szHelp);
 }
 
 void CBotCommand :: setAccessLevel ( int iAccessLevel )
@@ -1592,19 +1592,7 @@ CBotCommand :: CBotCommand ( char *szCommand, int iAccessLevel )
 
 void CBotCommand :: freeMemory ()
 {
-	// nothing to free
-
-	if ( m_szHelp != NULL )
-	{
-		free(m_szHelp);
-		m_szHelp = NULL;
-	}
-
-	if ( m_szCommand != NULL )
-	{
-		free(m_szCommand);
-		m_szCommand = NULL;
-	}
+	// nothing to free -- done in CStrings
 }
 
 bool CBotCommand :: hasAccess ( CClient *pClient )

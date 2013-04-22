@@ -685,8 +685,6 @@ void CRCBotPlugin::Unload( void )
 	// if another instance is running dont run through this
 	if ( bInitialised )
 	{
-		UnhookPlayerRunCommand();
-
 		CBots::freeAllMemory();
 		CStrings::freeAllMemory();
 		CBotGlobals::freeMemory();
@@ -697,6 +695,8 @@ void CRCBotPlugin::Unload( void )
 		CWaypointTypes::freeMemory();
 		CBotProfiles::deleteProfiles();
 		CWeapons::freeMemory();
+
+		UnhookPlayerRunCommand();
 
 		//ConVar_Unregister();
 

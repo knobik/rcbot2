@@ -2646,7 +2646,8 @@ void CBots :: init ()
 {
 	unsigned int i;
 
-	m_Bots = (CBot**)malloc(sizeof(CBot*) * MAX_PLAYERS);
+	m_Bots = new CBot*[MAX_PLAYERS];
+	//m_Bots = (CBot**)malloc(sizeof(CBot*) * MAX_PLAYERS);
 
 	for ( i = 0; i < MAX_PLAYERS; i ++ )
 	{
@@ -2861,11 +2862,10 @@ void CBots :: freeAllMemory ()
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
 		m_Bots[i]->freeAllMemory();
-		//delete m_Bots[i];
-		//m_Bots[i] = NULL;
+		delete m_Bots[i];
+		m_Bots[i] = NULL;
 	}
 
-	// update: ASSERT problem here!
 	delete[] m_Bots;
 	m_Bots = NULL;
 }

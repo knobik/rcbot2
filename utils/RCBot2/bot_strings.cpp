@@ -44,12 +44,18 @@ CStrings :: CStrings ()
 
 void CStrings :: freeAllMemory()
 {
+	char *pszFree;
+
 	// clear strings 
 	for ( int i = 0; i < MAX_STRINGS_HASH; i ++ )
 	{
 		for ( unsigned int j = 0; j < m_Strings[i].size(); j ++ )
 		{
-			free(m_Strings[i][j]);
+			pszFree = m_Strings[i][j];
+
+			if ( pszFree )
+				delete pszFree;
+
 			m_Strings[i][j] = NULL;
 		}
 
@@ -75,7 +81,13 @@ char *CStrings :: getString ( const char *szString )
 			return szCompString;
 	}
 
-	char *szNew = strdup(szString);
+	unsigned int len = strlen(szString);
+
+	char *szNew = new char[len+1];
+
+	strcpy(szNew,szString);
+
+	szNew[len] = 0;
 
 	m_Strings[iHash].push_back(szNew);
 
