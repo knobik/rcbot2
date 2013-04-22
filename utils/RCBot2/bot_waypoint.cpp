@@ -2296,6 +2296,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_NO_FLAG,"noflag","TF2 bot will lose flag if he goes thorugh here",WptColor(200,100,50),(1<<MOD_TF2)));
 	addType(new CWaypointType(W_FL_LIFT,"lift","bot needs to wait on a lift here",WptColor(50,80,180)));
 	addType(new CWaypointType(W_FL_FLAGONLY,"flagonly","TF2 bot needs the flag to go through here",WptColor(180,50,80),(1<<MOD_TF2)));
+	addType(new CWaypointType(W_FL_FALL,"fall","Bots might kill themselves if they fall down here with low health",WptColor(128,128,128)));
 }
 
 void CWaypointTypes :: freeMemory ()

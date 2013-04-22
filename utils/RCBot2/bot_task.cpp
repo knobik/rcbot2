@@ -1647,6 +1647,7 @@ CFindPathTask :: CFindPathTask ( edict_t *pEdict )
 	m_iWaypointId = -1;
 	m_pEdict = pEdict;
 	m_vVector = CBotGlobals::entityOrigin(pEdict);
+	m_LookTask = LOOK_WAYPOINT;
 }
 
 void CFindPathTask :: debugString ( char *string )
@@ -2011,7 +2012,7 @@ CBotTF2Snipe :: CBotTF2Snipe ( Vector vOrigin, float fYaw )
 	AngleVectors(angle,&m_vAim);
 	m_vAim = vOrigin + (m_vAim*1024);
 	m_vOrigin = vOrigin;
-	m_fEnemyZ = 0;
+	m_fEnemyZ = m_vAim.z;
 }
 	
 void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)

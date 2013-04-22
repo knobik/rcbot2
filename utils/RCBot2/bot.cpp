@@ -1085,6 +1085,15 @@ bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint )
 			return false;
 	}
 
+	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_FALL) )
+	{
+		if ( getHealthPercent() <= 0.1f )
+		{
+			if ( (vPrevWaypoint.z - pWaypoint->getOrigin().z) > 200.0f )
+				return false;
+		}
+	}
+
 	return true;
 }
 

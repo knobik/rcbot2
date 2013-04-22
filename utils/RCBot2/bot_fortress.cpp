@@ -3208,7 +3208,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		fSentryUtil = 0.8 + (((float)((int)bNeedAmmo))*0.1) + (((float)(int)bNeedHealth)*0.1);
 
-		//ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9)));
+		ADD_UTILITY(BOT_UTIL_PLACE_BUILDING, m_bIsCarryingObj, 1.0f); // something went wrong moving this- I still have it!!!
 
 		// destroy and build anew
 		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_SENTRY, !m_bIsCarryingObj && (iMetal>=130) && (m_pSentryGun.get()!=NULL) && !CPoints::isValidArea(m_iSentryArea),fSentryUtil);
@@ -4047,6 +4047,31 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				}
 				//else
 				//	destroySentry();
+			}
+			return false;
+		case BOT_UTIL_PLACE_BUILDING:
+			if ( m_bIsCarryingObj )
+			{
+				eEngiBuild iObject = ENGI_DISP;
+				QAngle eyes = eyeAngles();
+				Vector vForward;
+
+				VectorAngles(vForward,eyes);
+				vForward = vForward/vForward.Length();
+
+				if ( m_bIsCarryingTeleEnt ) 
+					iObject = ENGI_ENTRANCE;
+				else if ( m_bIsCarryingTeleExit )
+					iObject = ENGI_EXIT;
+				else if ( m_bIsCarryingDisp )
+					iObject = ENGI_DISP;
+				else if ( m_bIsCarryingSentry )	
+					iObject = ENGI_SENTRY;
+
+
+				m_pSchedules->add(new CBotSchedule(new CBotTaskEngiPlaceBuilding(iObject,getOrigin()+vForward*32.0f)));
+
+				return true;
 			}
 			return false;
 		case BOT_UTIL_ENGI_MOVE_DISP:
