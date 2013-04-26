@@ -1450,62 +1450,89 @@ int CBot :: getTeam ()
 	return m_pPlayerInfo->GetTeamIndex();
 }
 
+const char *pszConditionsDebugStrings[] =
+{"CONDITION_ENEMY_OBSCURED",
+"CONDITION_NO_WEAPON",
+"CONDITION_OUT_OF_AMMO",
+"CONDITION_SEE_CUR_ENEMY",
+"CONDITION_ENEMY_DEAD",
+"CONDITION_SEE_WAYPOINT",
+"CONDITION_NEED_AMMO",
+"CONDITION_NEED_HEALTH",
+"CONDITION_SEE_LOOK_VECTOR",
+"CONDITION_POINT_CAPTURED",
+"CONDITION_PUSH",
+"CONDITION_LIFT",
+"CONDITION_SEE_HEAL",
+"CONDITION_SEE_LAST_ENEMY_POS",
+"CONDITION_CHANGED",
+"CONDITION_COVERT",
+"CONDITION_RUN",
+"CONDITION_GREN",
+"CONDITION_NEED_BOMB",
+"CONDITION_SEE_ENEMY_HEAD",
+"CONDITION_PRONE"};
+
 void CBot ::debugBot(char *msg)
 {
-	//if ( m_fLastPrintDebugInfo < engine->Time() )
-	//{
-		//Vector vDisplay;
-		//Vector vForward;
-		//Vector vLeft;
-		//QAngle eyes;
-		//char msg[512];
-		bool hastask = m_pSchedules->getCurrentTask()!=NULL;
+	bool hastask = m_pSchedules->getCurrentTask()!=NULL;
+	int iEnemyID = 0;
 
-		char task_string[256];
+	char szConditions[512];
+	int iBit = 0;
+	int iMask;
 
-		edict_t *pEnemy = m_pEnemy.get();
+	szConditions[0] = 0; // initialise string
 
-		if ( hastask )
-			m_pSchedules->getCurrentTask()->debugString(task_string);
+	for ( iMask = 1; iMask <= CONDITION_MAX; iBit++ )
+	{
+		if ( m_iConditions & iMask )
+		{
+			strcat(szConditions,pszConditionsDebugStrings[iBit]);
+			strcat(szConditions,"\n");
+		}
+	
+		iMask *= 2;
+	}
 
-		//IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+	char task_string[256];
 
-		//eyes = p->GetLastUserCommand().viewangles;
+	edict_t *pEnemy = m_pEnemy.get();
 
-		// in fov? Check angle to edict
-		//AngleVectors(eyes,&vForward);
+	IPlayerInfo *p = NULL;
 
-		//vForward = vForward / vForward.Length(); // normalize
-		//vLeft = (vForward-p->GetAbsOrigin()).Cross(Vector(0,0,1));
-		//vLeft = vLeft/vLeft.Length();
-		
-		//vDisplay = p->GetAbsOrigin() + vForward*300.0f; 
-		//vDisplay = vDisplay - vLeft*300.0f;
+	iEnemyID = ENTINDEX(pEnemy);
 
-		sprintf(msg,"Debugging bot: %s\n \
-			Current Schedule: %s\n \
-			Current Task Details: \n \
-			---------------------\n \
-			%s\n \
-			Look Task:%s\n \
-			Current Waypoint:%d\n \
-			Current Goal: %d\n \
-			Enemy: %s", 
-			m_szBotName, 
-			m_pSchedules->isEmpty() ? "none" : m_pSchedules->getCurrentSchedule()->getIDString(),
-			hastask ? task_string : "none",
-			g_szLookTaskToString[m_iLookTask], 
-			m_pNavigator->hasNextPoint() ? m_pNavigator->getCurrentWaypointID() : -1, 
-			m_pNavigator->hasNextPoint() ? m_pNavigator->getCurrentGoalID() : -1,
-			(pEnemy!=NULL)?pEnemy->GetClassName():"none"
-			);
-				
-		
-		//debugoverlay->AddTextOverlay(vDisplay,1.0f,msg);
+	if ( (iEnemyID > 0) && (iEnemyID <= gpGlobals->maxClients) )
+		p = playerinfomanager->GetPlayerInfo(pEnemy);
+	
 
-		// one second update
-		//m_fLastPrintDebugInfo = engine->Time() + 1.0f;
-	//}
+	if ( hastask )
+		m_pSchedules->getCurrentTask()->debugString(task_string);
+
+	sprintf(msg,"Debugging bot: %s\n \
+		Current Schedule: %s\n \
+		Current Task Details: \n \
+		---------------------\n \
+		%s\n \
+		Look Task:%s\n \
+		Current Waypoint:%d\n \
+		Current Goal: %d\n \
+		Danger: %0.2f pc\n \
+		Enemy: %s (name = '%s')\n \
+		---CONDITIONS---\n%s", 
+		m_szBotName, 
+		m_pSchedules->isEmpty() ? "none" : m_pSchedules->getCurrentSchedule()->getIDString(),
+		hastask ? task_string : "none",
+		g_szLookTaskToString[m_iLookTask], 
+		m_pNavigator->hasNextPoint() ? m_pNavigator->getCurrentWaypointID() : -1, 
+		m_pNavigator->hasNextPoint() ? m_pNavigator->getCurrentGoalID() : -1,
+		(m_fCurrentDanger/MAX_BELIEF)*100,
+		(pEnemy!=NULL)?pEnemy->GetClassName():"none",
+		(p!=NULL)?p->GetName():"none",
+		szConditions
+		);
+
 }
 
 int CBot :: nearbyFriendlies (float fDistance)

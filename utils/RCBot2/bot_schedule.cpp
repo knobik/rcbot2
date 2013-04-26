@@ -641,6 +641,7 @@ void CBotSchedule :: _init ()
 {
 	m_bFailed = false;
 	m_bitsPass = 0;		
+	m_iSchedId = SCHED_NONE;
 
 	// pass information
 	iPass = 0;

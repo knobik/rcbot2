@@ -121,7 +121,7 @@ void CClient :: think ()
 			if ( m_fNextPrintDebugInfo < engine->Time() )
 			{
 
-				char msg[512];
+				char msg[1024];
 
 				QAngle eyes = p->GetLastUserCommand().viewangles;
 				Vector vForward;
