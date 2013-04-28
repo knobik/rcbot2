@@ -110,11 +110,7 @@ public:
 
 	// having this constructor saves us trying to find the goal waypoint again if we
 	// already know it
-	CFindPathTask ( int iWaypointId, eLookTask looktask = LOOK_WAYPOINT )
-	{
-		m_iWaypointId = iWaypointId;
-		m_LookTask = looktask;
-	}
+	CFindPathTask ( int iWaypointId, eLookTask looktask = LOOK_WAYPOINT );
 
 	CFindPathTask ( edict_t *pEdict );
 

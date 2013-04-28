@@ -125,7 +125,7 @@ ConVar bot_messaround("rcbot_messaround","1",0,"bots mess around at start up");
 ConVar bot_heavyaimoffset("rcbot_heavyaimoffset","0.1",0,"fraction of how much the heavy aims at a diagonal offset");
 ConVar bot_aimsmoothing("rcbot_aimsmooting","1",0,"(0 = no smoothing)");
 ConVar bot_bossattackfactor("rcbot_bossattackfactor","1.0",0,"the higher the more often the bots will shoot the boss");
-ConVar rcbot_enemyshootfov("rcbot_enemyshootfov","0.6",0,"the fov dot product before the bot shoots an enemy 0.7 = 45 degrees");
+ConVar rcbot_enemyshootfov("rcbot_enemyshootfov","0.97",0,"the fov dot product before the bot shoots an enemy 0.7 = 45 degrees");
 ConVar rcbot_enemyshoot_gravgun_fov("rcbot_enemyshoot_gravgun_fov","0.98",0,"the fov dot product before the bot shoots an enemy 0.98 = 11 degrees");
 ConVar rcbot_wptplace_width("rcbot_wpt_width","48",0,"width of the player, automatic paths won't connect unless there is enough space for a player");
 ConVar rcbot_wpt_autoradius("rcbot_wpt_autoradius","0",0,"every waypoint added is given this radius, 0 = no radius");

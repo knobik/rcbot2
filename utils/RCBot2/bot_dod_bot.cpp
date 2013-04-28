@@ -180,7 +180,10 @@ bool CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 				m_pNearestBomb = pEntity;
 			}
 		}
-		else if ( (pEntity!=m_pEnemyGrenade) && (strncmp(szClassname,"grenade",7) == 0 ) && 
+		// grenade_smoke
+		// 012345678
+		// don't run away from smoke grenades
+		else if ( (pEntity!=m_pEnemyGrenade) && (szClassname[8]!='s') && (strncmp(szClassname,"grenade",7) == 0 ) && 
 			((CClassInterface::getGrenadeThrower(pEntity) == m_pEdict) || 
 			 (CClassInterface::getTeam(pEntity) == m_iEnemyTeam)))
 		{
@@ -2291,12 +2294,21 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 	index = ENTINDEX(pEntity);
 	// for some reason, prone does not change collidable size
 	if ( (index > 0) && (index <= gpGlobals->maxClients) )
-		CClassInterface::getPlayerInfoDOD(pEntity,&bIsEnemyProne,&fEnemyStamina);
-	// .. so update 
-	if ( bIsEnemyProne )
 	{
-		vAim.z = vAim.z - randomFloat(0.0,8.0f);
+		CClassInterface::getPlayerInfoDOD(pEntity,&bIsEnemyProne,&fEnemyStamina);
+			// .. so update 
+		if ( bIsEnemyProne )
+		{
+			vAim.z = vAim.z - randomFloat(0.0,8.0f);
+		}
+		else if ( hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) )
+		{
+			// add head height (body height already added)
+			vAim.z += randomFloat(0.0f,32.0f);
+		}
+
 	}
+
 
 	if ( pWp != NULL )
 	{
@@ -2309,7 +2321,7 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 			vAim = vAim - Vector(0,0,randomFloat(16.0f,32.0f));
 
 			// add gravity height
-			vAim.z += (distanceFrom(pEntity) * (randomFloat(0.05,0.1)*m_pProfile->m_fAimSkill));
+			vAim.z += (distanceFrom(pEntity) * (randomFloat(0.05,0.15)*m_pProfile->m_fAimSkill));
 		}
 	}
 

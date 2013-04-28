@@ -1633,6 +1633,13 @@ void CFindGoodHideSpot :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	}
 }
 
+CFindPathTask :: CFindPathTask ( int iWaypointId, eLookTask looktask )
+{
+	m_iWaypointId = iWaypointId;
+	m_LookTask = looktask;
+	m_vVector = CWaypoints::getWaypoint(iWaypointId)->getOrigin();
+}
+
 void CFindPathTask :: init ()
 {
 	m_bNoInterruptions = false;

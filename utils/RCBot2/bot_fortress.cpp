@@ -4651,7 +4651,9 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	extern ConVar rcbot_enemyshootfov;
 	static float fDistance;
 
-	if ( DotProductFromOrigin(m_vAimVector) < rcbot_enemyshootfov.GetFloat() ) 
+	fDistance = distanceFrom(pEnemy);
+
+	if ( (fDistance > 128) && (DotProductFromOrigin(m_vAimVector) < rcbot_enemyshootfov.GetFloat()) ) 
 		return true; // keep enemy / don't shoot : until angle between enemy is less than 45 degrees
 
 	/* Handle Spy Attacking Choice here */
@@ -4659,7 +4661,6 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	{
 		if ( isDisguised() )
 		{
-			fDistance = distanceFrom(pEnemy);
 			if ( ((fDistance < rcbot_tf2_spy_kill_on_cap_dist.GetFloat()) && CTeamFortress2Mod::isCapping(pEnemy)) || 
 				( (fDistance < 130) && CBotGlobals::isAlivePlayer(pEnemy) && 
 				( fabs(CBotGlobals::yawAngleFromEdict(pEnemy,getOrigin())) > bot_spyknifefov.GetFloat() ) ) )
@@ -4699,8 +4700,6 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 
 		if ( CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
-			fDistance = distanceFrom(pEnemy);
-
 			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) > 25) )
 				bSecAttack = true;
 			else

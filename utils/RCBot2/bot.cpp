@@ -1007,7 +1007,7 @@ edict_t *CBot :: getEdict ()
 
 void CBot :: updateConditions ()
 {
-	if ( m_pEnemy )
+	if ( m_pEnemy.get() != NULL )
 	{
 		if ( !CBotGlobals::entityIsAlive(m_pEnemy) )
 		{
@@ -1026,22 +1026,28 @@ void CBot :: updateConditions ()
 			}
 			else 
 			{
-
 				if ( !m_pLastEnemy || (m_pLastEnemy != m_pEnemy ))
 					enemyLost();
 
 				setLastEnemy(m_pEnemy);
 
 				removeCondition(CONDITION_SEE_CUR_ENEMY);
+				removeCondition(CONDITION_SEE_ENEMY_HEAD);
 				updateCondition(CONDITION_ENEMY_OBSCURED);
 			}
 		}
 	}
 	else
 	{
-		removeCondition(CONDITION_SEE_CUR_ENEMY);
-		removeCondition(CONDITION_ENEMY_OBSCURED);
-		removeCondition(CONDITION_ENEMY_DEAD);
+		// save writing too much
+		//if ( hasSomeConditions(CONDITION_SEE_CUR_ENEMY|CONDITION_ENEMY_OBSCURED|
+		//						CONDITION_ENEMY_DEAD|CONDITION_SEE_ENEMY_HEAD) )
+		//{
+			removeCondition(CONDITION_SEE_CUR_ENEMY);
+			removeCondition(CONDITION_ENEMY_OBSCURED);
+			removeCondition(CONDITION_ENEMY_DEAD);
+			removeCondition(CONDITION_SEE_ENEMY_HEAD);
+		//}
 	}
 
 	if ( m_pLastEnemy )
