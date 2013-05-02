@@ -1901,6 +1901,78 @@ void CBotTFDoubleJump :: debugString ( char *string )
 {
 	sprintf(string,"CbotTFDoublejump");
 }
+///////////////////////////////////////////////
+void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
+{
+	CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
+	CBotWeapon *pWeapon;
+	CBotWeapon *pChooseWeapon;
+	CBotWeapons *pWeaponList;
+
+	if ( m_fTime == 0.0f )
+		m_fTime = engine->Time() + randomFloat(2.0f,5.0f);
+
+	if ( m_fTime < engine->Time() )
+		complete();
+
+	if ( pBot->hasEnemy() )
+		complete();
+
+	// automatically look at danger points
+	pBot->updateDanger(50.0f);
+
+	pBot->setLookAtTask(LOOK_WAYPOINT);
+/*
+	TF_CLASS_CIVILIAN = 0,
+	TF_CLASS_SCOUT,
+	TF_CLASS_SNIPER,
+	TF_CLASS_SOLDIER,
+	TF_CLASS_DEMOMAN,
+	TF_CLASS_MEDIC,
+	TF_CLASS_HWGUY,
+	TF_CLASS_PYRO,
+	TF_CLASS_SPY,
+	TF_CLASS_ENGINEER,
+	TF_CLASS_MAX*/
+
+	pWeapon = pBot->getCurrentWeapon();
+
+	switch ( pBotTF2->getClass() )
+	{
+	case TF_CLASS_PYRO:
+
+		pWeaponList = pBot->getWeapons();
+
+		pChooseWeapon = pWeaponList->getWeapon(CWeapons::getWeapon(TF2_WEAPON_FLAMETHROWER));
+		
+		if ( !pChooseWeapon->outOfAmmo(pBot) )
+			break;
+		// move down to melee if out of ammo
+	default:
+		pChooseWeapon = pBot->getBestWeapon(NULL,true,true,true);
+		break;
+	}
+
+	if ( pChooseWeapon && (pWeapon != pChooseWeapon) )
+	{
+		if ( !pBot->selectBotWeapon(pChooseWeapon) )
+		{
+			fail();
+		}
+	}
+	else
+	{
+		if ( randomInt(0,100) > 75 )
+			pBot->primaryAttack();
+	}
+	
+}
+
+void CSpyCheckAir :: debugString (char *string)
+{
+	sprintf(string,"CSpyCheckAir: checking for spies");
+}
+
 /////////////////////////////////////////////
 CBotRemoveSapper :: CBotRemoveSapper ( edict_t *pBuilding, eEngiBuild id )
 {

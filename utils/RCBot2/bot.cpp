@@ -2114,7 +2114,7 @@ void CBot :: getLookAtVector ()
 				setLookAt(m_pNavigator->getNextPoint()+Vector(0,0,64));
 			else if ( m_pLastEnemy && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && (m_fLastSeeEnemy>0) )
 				setLookAt(m_vLastSeeEnemy);
-			else if ( (m_fCurrentDanger > 15.0f) && m_pNavigator->getDangerPoint(&vLook) )
+			else if ( (m_fCurrentDanger >= 15.0f) && m_pNavigator->getDangerPoint(&vLook) )
 				setLookAt(vLook + Vector(0,0,36.0f));
 			else if ( m_pNavigator->getNextRoutePoint(&vLook) )
 				setLookAt(Vector(vLook.x,vLook.y,vLook.z + 36.0f));				

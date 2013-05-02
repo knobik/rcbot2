@@ -2284,6 +2284,9 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 	static int index;
 	bool bIsEnemyProne;
 	float fEnemyStamina;
+	bool bAddHeadHeight;
+
+	bAddHeadHeight = false;
 
 	pWp = getCurrentWeapon();
 
@@ -2304,12 +2307,12 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 		else if ( hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) )
 		{
 			// add head height (body height already added)
-			vAim.z += randomFloat(0.0f,32.0f);
+			bAddHeadHeight = true; 
 		}
 
 	}
 
-
+	// weapon is known
 	if ( pWp != NULL )
 	{
 		if ( pWp->isExplosive() )
@@ -2322,9 +2325,16 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 
 			// add gravity height
 			vAim.z += (distanceFrom(pEntity) * (randomFloat(0.05,0.15)*m_pProfile->m_fAimSkill));
+
+			bAddHeadHeight = false;
 		}
 	}
 
+	// if I see the enemy's head and want to shoot there, add height
+	if ( bAddHeadHeight )
+		vAim.z += randomFloat(0.0f,32.0f);
+
+	// if I know the enemy is near a smoke grenade i'll fire randomly into the cloud
 	if ( m_pNearestSmokeToEnemy )
 	{
 		iSlot = ENTINDEX(pEntity)-1;

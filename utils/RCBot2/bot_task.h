@@ -910,6 +910,18 @@ private:
 	float m_fHideTime;
 };
 
+class CSpyCheckAir : public CBotTask
+{
+public:
+	CSpyCheckAir () { m_fTime = 0.0f; }
+
+	void execute ( CBot *pBot, CBotSchedule *pSchedule );
+
+	void debugString (char *string);
+private:
+	float m_fTime;
+};
+
 class CPrimaryAttack : public CBotTask
 {
 public:

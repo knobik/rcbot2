@@ -1,3 +1,18 @@
+0.73
+====
+dod:s    : fix bots not proning on sniper spots
+dod:s    : bots don't run away from smoke grenades
+dod:s    : bots aim for the head if visible (more deadly)
+tf2      : update bot shooting fov
+tf2      : fixed engis not placing moved objects (esp. dispensers)
+all mods : new waypoint type "fall" (fall damage)
+all mods : fixed crash in debug hud with looktask string error
+all mods : fixed bad memory allocation errors
+all mods : reliability fix for cfindpath task
+all mods : more debug hud info
+all mods : debug crash fixes
+all mods : changes for linux - linux filesystem fixes
+
 0.72
 ====
 all mods: please move rcbot2 folder to users home folder i.e. /users/<name> or ~/

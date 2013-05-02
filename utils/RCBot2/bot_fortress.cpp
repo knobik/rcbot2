@@ -2452,6 +2452,14 @@ bool CBotTF2:: wantToListenToPlayer ( edict_t *pPlayer )
 				return false;
 		}
 		break;
+		case TF_CLASS_SPY:
+			{
+				// don't listen to cloaked spies
+				if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pPlayer) )
+					return false;
+			}
+			break;
+
 		default:
 		break;
 	}
@@ -3268,6 +3276,11 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			ADD_UTILITY(BOT_UTIL_GOTODISP,m_pNearestDisp && !CClassInterface::isObjectBeingBuilt(m_pNearestDisp) && (bNeedAmmo || bNeedHealth),1000.0f/distanceFrom(m_pNearestDisp));
 	}
 
+	ADD_UTILITY(BOT_UTIL_SPYCHECK_AIR,!m_bIsCarryingObj &&
+		(m_pPrevSpy!=NULL) && 
+		CBotGlobals::isAlivePlayer(m_pPrevSpy) && 
+		(!m_pEnemy || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) &&
+		(m_fSeeSpyTime > engine->Time()),m_fCurrentDanger/50);
 
 	fGetFlagUtility = 0.2+randomFloat(0.0f,0.2f);
 
@@ -3309,7 +3322,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		(CTeamFortress2Mod::getFlagCarrierTeam()==CTeamFortress2Mod::getEnemyTeam(iTeam)))) &&
 		(m_fLastKnownTeamFlagTime && (m_fLastKnownTeamFlagTime > engine->Time())), 
 		fDefendFlagUtility+(randomFloat(0.0,0.2)-0.1));
-	ADD_UTILITY(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER), 0.95);	
+	ADD_UTILITY(BOT_UTIL_SNIPE, !bHasFlag && (iClass==TF_CLASS_SNIPER) && (getHealthPercent()>0.2f), 0.95);	
 
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.0001);
 	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,1000.0f/fHealthDist);
@@ -4049,6 +4062,9 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				//	destroySentry();
 			}
 			return false;
+		case BOT_UTIL_SPYCHECK_AIR:
+			m_pSchedules->add(new CBotSchedule(new CSpyCheckAir()));
+			return true;
 		case BOT_UTIL_PLACE_BUILDING:
 			if ( m_bIsCarryingObj )
 			{
