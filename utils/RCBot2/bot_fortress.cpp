@@ -1153,7 +1153,9 @@ void CBotFortress :: foundSpy (edict_t *pEdict,TF_Class iDisguise)
 	m_fSeeSpyTime = engine->Time() + randomFloat(9.0f,18.0f);
 	m_vLastSeeSpy = CBotGlobals::entityOrigin(pEdict);
 	m_fLastSeeSpyTime = engine->Time();
-	m_iPrevSpyDisguises[randomInt(0,1)] = iDisguise;
+	if ( (m_iPrevSpyDisguises[0] != iDisguise) && (m_iPrevSpyDisguises[1] != iDisguise) )
+		m_iPrevSpyDisguises[randomInt(0,1)] = iDisguise;
+	
 	//m_fFirstSeeSpy = engine->Time(); // to do, add delayed action
 };
 
@@ -2108,7 +2110,7 @@ void CBotTF2 :: modThink ()
 	{
 		// check for spies within radius of bot 
 		float fPossibleDistance = (engine->Time()-m_fLastSeeSpyTime) * 
-			(m_pProfile->m_fAimSkill * 250.0f) * (m_fCurrentDanger/MAX_BELIEF);
+			(m_pProfile->m_fAimSkill * 310.0f) * (m_fCurrentDanger/MAX_BELIEF);
 
 		if ( (m_vLastSeeSpy-getOrigin()).Length() < fPossibleDistance )
 		{
@@ -3926,7 +3928,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				Vector vBuild = m_vTeleportEntrance+pWaypoint->applyRadius();
 
-				m_pSchedules->add(new CBotTFEngiBuild(ENGI_ENTRANCE,vBuild));
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_ENTRANCE,vBuild,getAiming()));
 				m_iTeleEntranceArea = pWaypoint->getArea();
 				return true;
 			}
@@ -3945,7 +3947,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				m_bTeleportExitVectorValid = true;
 				m_vTeleportExit = pWaypoint->getOrigin()+pWaypoint->applyRadius();
-				m_pSchedules->add(new CBotTFEngiBuild(ENGI_EXIT,m_vTeleportExit));
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_EXIT,m_vTeleportExit,getAiming()));
 				m_iTeleExitArea = pWaypoint->getArea();
 				return true;
 			}
@@ -3966,7 +3968,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				m_vSentryGun = pWaypoint->getOrigin()+pWaypoint->applyRadius();
 				m_bSentryGunVectorValid = true;
-				m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,m_vSentryGun));
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,m_vSentryGun,getAiming()));
 				m_iSentryArea = pWaypoint->getArea();
 				return true;
 			}
@@ -4024,7 +4026,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				m_vDispenser = pWaypoint->getOrigin();
 				m_bDispenserVectorValid = true;
-				m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,m_vDispenser+Vector(randomFloat(-96,96),randomFloat(-96,96),0)));
+				m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,m_vDispenser+Vector(randomFloat(-96,96),randomFloat(-96,96),0),getAiming()));
 				m_iDispenserArea = pWaypoint->getArea();
 				return true;
 			}
@@ -4125,7 +4127,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				QAngle eyes = eyeAngles();
 				Vector vForward;
 
-				VectorAngles(vForward,eyes);
+				AngleVectors(eyes,&vForward);
 				vForward = vForward/vForward.Length();
 
 				if ( m_bIsCarryingTeleEnt ) 

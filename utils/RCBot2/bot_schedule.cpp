@@ -119,10 +119,10 @@ void CBotTF2HealSched::init()
 
 /////////////////////////////////////////////
 
-CBotTFEngiBuild :: CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin )
+CBotTFEngiBuild :: CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin, Vector vAiming )
 {
 	addTask(new CFindPathTask(vOrigin)); // first
-	addTask(new CBotTFEngiBuildTask(iObject,vOrigin)); // second
+	addTask(new CBotTFEngiBuildTask(iObject,vOrigin,vAiming)); // second
 }
 
 void CBotTFEngiBuild :: init ()

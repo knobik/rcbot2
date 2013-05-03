@@ -1496,7 +1496,7 @@ void CBotTF2EngiLookAfter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 }
 
 ////////////////////////
-CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin )
+CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming )
 {
 	m_iObject = iObject;
 	m_vOrigin = vOrigin;
@@ -1504,6 +1504,7 @@ CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin 
 	m_fTime = 0;
 	m_iTries = 0;
 	m_fNextUpdateAngle = 0.0f;
+	m_vAimingVector = vAiming;
 }
 	
 void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -1532,9 +1533,6 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}*/
 
-	pBot->setLookAtTask((LOOK_BUILD));
-	bAimingOk = pBot->DotProductFromOrigin(pBot->getAiming()) > 0.965925f; // 15 degrees
-
 	if ( m_fTime == 0.0f )
 	{
 		pBot->resetLookAroundTime();
@@ -1544,7 +1542,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		m_fTime = engine->Time() + randomFloat(4.0f,8.0f);
 
-		m_fNextUpdateAngle = engine->Time() + 1.0f;
+		m_fNextUpdateAngle = engine->Time() + 0.5f;
 	}
 	else if ( m_fTime < engine->Time() )
 		fail();
@@ -1559,11 +1557,13 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			Vector vOrigin = pBot->getOrigin();
 			Vector vLookAt = vOrigin - (vSentry - vOrigin);
 
-			pBot->setLookVector(vLookAt);
-			pBot->setLookAtTask((LOOK_VECTOR));
+			m_vAimingVector = vLookAt;
+
+			//pBot->setLookVector(vLookAt);
+			//pBot->setLookAtTask(LOOK_VECTOR);
 			
 			//LOOK_VECTOR,11);
-			bAimingOk = pBot->DotProductFromOrigin(vLookAt) > 0.965925f; // 15 degrees // < CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getLookVector()) < 15;
+			//bAimingOk = pBot->DotProductFromOrigin(vLookAt) > 0.965925f; // 15 degrees // < CBotGlobals::yawAngleFromEdict(pBot->getEdict(),pBot->getLookVector()) < 15;
 		}
 		else
 		{
@@ -1571,14 +1571,38 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			Vector vOrigin = pBot->getOrigin();
 			Vector vLookAt = vOrigin - (vSentry - vOrigin);
 
-			pBot->setLookVector(vLookAt);
-			pBot->setLookAtTask((LOOK_VECTOR));
+			m_vAimingVector = vLookAt;
 
 			/*pBot->setLookVector(pBot->getAiming());
 			pBot->setLookAtTask((LOOK_VECTOR));*/
-			bAimingOk = pBot->DotProductFromOrigin(vLookAt) > 0.965925f;
+			//bAimingOk = pBot->DotProductFromOrigin(vLookAt) > 0.965925f;
 		}
 	}
+
+	if ( m_fNextUpdateAngle < engine->Time() )
+	{
+		QAngle angles;
+		Vector vforward = m_vAimingVector - pBot->getOrigin();
+		vforward = vforward/vforward.Length(); // normalize
+
+		VectorAngles(vforward,angles);
+
+		angles.y += 45.0f; // yaw
+		CBotGlobals::fixFloatAngle(&angles.y);
+
+		AngleVectors(angles,&vforward);
+
+		vforward = vforward/vforward.Length();
+
+		m_vAimingVector = pBot->getOrigin()+vforward*100.0f;
+		
+		m_fNextUpdateAngle = engine->Time() + 0.5f;
+	}
+
+	pBot->setLookAtTask(LOOK_VECTOR);
+	pBot->setLookVector(m_vAimingVector);
+
+	bAimingOk = pBot->DotProductFromOrigin(pBot->getLookVector()) > 0.965925f; // 15 degrees
 
 	if ( pBot->distanceFrom(m_vOrigin) > 100 )
 	{

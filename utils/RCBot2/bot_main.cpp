@@ -156,7 +156,7 @@ ConVar rcbot_speed_boost("rcbot_speed_boost","1",0,"multiplier for bots speed");
 ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee weapons");
 ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions to test cpu speed");
 ConVar rcbot_dont_move("rcbot_dontmove","0",0,"if 1 , bots will all move forward");
-ConVar rcbot_runplayercmd_dods("rcbot_runplayer_cmd_dods","417",0,"offset of the DOD:S PlayerRunCommand function");
+ConVar rcbot_runplayercmd_dods("rcbot_runplayer_cmd_dods","418",0,"offset of the DOD:S PlayerRunCommand function");
 ConVar rcbot_runplayercmd_tf2("rcbot_runplayer_cmd_tf2","416",0,"offset of the TF2 PlayerRunCommand function");
 ConVar rcbot_runplayercmd_hookonce("rcbot_runplayer_hookonce","1",0,"function will hook only once, if 0 it will unook and rehook after every map");
 ConVar rcbot_ladder_offs("rcbot_ladder_offs","42",0,"difference in height for bot to think it has touched the ladder waypoint");
