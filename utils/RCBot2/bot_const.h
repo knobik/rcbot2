@@ -168,7 +168,9 @@ typedef enum
 #define CONDITION_NEED_BOMB				262144 // bit 18
 #define CONDITION_SEE_ENEMY_HEAD		524288 // bit 19
 #define CONDITION_PRONE					1048576 // bit 20
-#define CONDITION_MAX					CONDITION_PRONE
+#define CONDITION_PARANOID				2097152 // bit 21
+#define CONDITION_MAX					CONDITION_PARANOID
+#define CONDITION_MAX_BITS				21
 
 ////////////////////////
 #define BLAST_RADIUS 200

@@ -904,7 +904,7 @@ bool CHLDMBot :: setVisible ( edict_t *pEntity, bool bVisible )
 }
 
 // lost my enemy - rethink my next move by flushiing schedules
-void CHLDMBot :: enemyLost ()
+void CHLDMBot :: enemyLost (edict_t *pEnemy)
 {
 	updateCondition(CONDITION_CHANGED);
 	//m_pSchedules->freeMemory();

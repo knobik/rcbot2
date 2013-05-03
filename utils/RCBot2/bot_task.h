@@ -517,6 +517,7 @@ private:
 	int m_iState;
 	float m_fTime;
 	int m_iTries;
+	float m_fNextUpdateAngle;
 };
 
 class CDODWaitForBombTask : public CBotTask

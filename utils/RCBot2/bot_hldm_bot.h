@@ -68,7 +68,7 @@ public:
 
 	void fixWeapons ();
 
-	void enemyLost ();
+	void enemyLost (edict_t *pEnemy);
 
 	inline void setFailedObject ( edict_t *pent ) 
 	{ 

@@ -247,6 +247,8 @@ public:
 
 	CBotFortress();
 
+	virtual void enemyLost (edict_t *pEnemy);
+
 	virtual int engiBuildObject ( int *iState, eEngiBuild iObject, float *fTime, int *iTries );
 
 	virtual float getEnemyFactor ( edict_t *pEnemy ) { return CBot::getEnemyFactor(pEnemy); }
@@ -265,7 +267,7 @@ public:
 
 	virtual void init (bool bVarInit=false);
 
-	virtual void foundSpy (edict_t *pEdict);
+	virtual void foundSpy (edict_t *pEdict, TF_Class iDisguise );
 
 	virtual void getTasks ( unsigned int iIgnore = 0 ) { CBot :: getTasks(iIgnore); }
 
@@ -349,6 +351,17 @@ public:
 
 	bool isAlive ();
 
+	void enemyDown (edict_t *pEnemy) 
+	{ 
+		CBot::enemyDown(pEnemy);
+
+		if ( pEnemy == m_pPrevSpy )
+		{
+			m_pPrevSpy = NULL;
+			m_fSeeSpyTime = 0.0f;
+		}
+	}
+
 	bool isTeleporterUseful ( edict_t *pTele );
 
 	bool waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag );
@@ -416,7 +429,7 @@ protected:
 
 	int getSpyDisguiseClass ( int iTeam );
 
-	virtual bool thinkSpyIsEnemy ( edict_t *pEdict );
+	virtual bool thinkSpyIsEnemy ( edict_t *pEdict, TF_Class iDisguise );
 
 	virtual bool checkStuck ( void ) { return CBot::checkStuck(); }
 
@@ -448,10 +461,15 @@ protected:
 	float m_fSpyCloakTime;
 	float m_fSpyUncloakTime;
 	float m_fSeeSpyTime;
+	float m_fLastSeeSpyTime;
 	float m_fSpyDisguiseTime;
 	float m_fLastSaySpy;
 	float m_fPickupTime;
 	float m_fLookAfterSentryTime;
+
+	TF_Class m_iPrevSpyDisguises[2];
+
+	Vector m_vLastSeeSpy;
 
 	// valid flag point area
 	Vector m_vLastKnownFlagPoint;
@@ -538,7 +556,7 @@ public:
 
 	float getEnemyFactor ( edict_t *pEnemy );
 
-	void foundSpy (edict_t *pEdict);
+	void foundSpy (edict_t *pEdict, TF_Class iDisguise);
 
 	void touchedWpt ( CWaypoint *pWaypoint );
 
@@ -623,7 +641,7 @@ public:
 
 	bool canDeployStickies ();
 
-	bool thinkSpyIsEnemy ( edict_t *pEdict );
+	bool thinkSpyIsEnemy ( edict_t *pEdict, TF_Class iDisguise );
 
 	void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon );
 

@@ -1027,7 +1027,7 @@ void CBot :: updateConditions ()
 			else 
 			{
 				if ( !m_pLastEnemy || (m_pLastEnemy != m_pEnemy ))
-					enemyLost();
+					enemyLost(m_pEnemy);
 
 				setLastEnemy(m_pEnemy);
 
@@ -1456,7 +1456,7 @@ int CBot :: getTeam ()
 	return m_pPlayerInfo->GetTeamIndex();
 }
 
-const char *pszConditionsDebugStrings[] =
+const char *pszConditionsDebugStrings[CONDITION_MAX_BITS+1] =
 {"CONDITION_ENEMY_OBSCURED",
 "CONDITION_NO_WEAPON",
 "CONDITION_OUT_OF_AMMO",
@@ -1477,7 +1477,8 @@ const char *pszConditionsDebugStrings[] =
 "CONDITION_GREN",
 "CONDITION_NEED_BOMB",
 "CONDITION_SEE_ENEMY_HEAD",
-"CONDITION_PRONE"};
+"CONDITION_PRONE",
+"CONDITION_PARANOID"};
 
 void CBot ::debugBot(char *msg)
 {

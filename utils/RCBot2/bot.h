@@ -630,11 +630,11 @@ public:
 		}	
 	}
 
-	virtual void enemyLost () {};
+	virtual void enemyLost (edict_t *pEnemy) {};
 
 	void setLastEnemy (edict_t *pEnemy);
 
-	inline void enemyDown (edict_t *pEnemy) 
+	virtual void enemyDown (edict_t *pEnemy) 
 	{ 
 		if ( pEnemy == m_pEnemy ) 
 			updateCondition(CONDITION_ENEMY_DEAD); 

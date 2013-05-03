@@ -755,6 +755,8 @@ public:
 
 	static int getTeam ( edict_t *pEntity );
 
+	static TF_Class getSpyDisguise ( edict_t *pPlayer );
+
 	static int getSentryLevel ( edict_t *pSentry );
 	static int getDispenserLevel ( edict_t *pDispenser );
 

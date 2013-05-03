@@ -1503,6 +1503,7 @@ CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin 
 	m_iState = 0;
 	m_fTime = 0;
 	m_iTries = 0;
+	m_fNextUpdateAngle = 0.0f;
 }
 	
 void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -1510,7 +1511,6 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CBotFortress *tfBot;
 
 	bool bAimingOk = true;
-
 
 	if ( !pBot->isTF() )
 		fail();
@@ -1543,6 +1543,8 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			m_vOrigin = m_vOrigin + Vector(randomFloat(-200.0f,200.0f),randomFloat(-200.0f,200.0f),0);
 
 		m_fTime = engine->Time() + randomFloat(4.0f,8.0f);
+
+		m_fNextUpdateAngle = engine->Time() + 1.0f;
 	}
 	else if ( m_fTime < engine->Time() )
 		fail();
@@ -2181,7 +2183,7 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 		else
 		{
-			pBot->setLookAtTask((LOOK_SNIPE));
+			pBot->setLookAtTask(LOOK_SNIPE);
 			pBot->setAiming(Vector(m_vAim.x,m_vAim.y,m_fEnemyZ));
 //			pBot->setAiming(m_vAiming);
 

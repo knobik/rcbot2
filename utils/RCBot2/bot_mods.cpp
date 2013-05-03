@@ -1016,6 +1016,19 @@ edict_t *CTeamFortress2Mod :: findResourceEntity()
 	return m_pResourceEntity;
 }
 
+TF_Class CTeamFortress2Mod :: getSpyDisguise ( edict_t *pPlayer )
+{
+	static int iClass;
+	static int iTeam;
+	static int iIndex;
+	static int iHealth;
+
+	CClassInterface::getTF2SpyDisguised(pPlayer,&iClass,&iTeam,&iIndex,&iHealth);
+
+	return (TF_Class)iClass;
+}
+
+
 float CTeamFortress2Mod :: TF2_GetClassSpeed(int iClass) 
 { 
 switch (iClass) 

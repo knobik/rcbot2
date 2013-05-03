@@ -223,8 +223,14 @@ void CBotBackstabSched :: init ()
 
 CBotTF2SnipeSched :: CBotTF2SnipeSched ( Vector vOrigin, float fYaw )
 {
-	addTask(new CFindPathTask(vOrigin)); // first
-	addTask(new CBotTF2Snipe(vOrigin,fYaw)); // second
+	CBotTask *pFindPath = new CFindPathTask(vOrigin);
+	CBotTask *pSnipeTask = new CBotTF2Snipe(vOrigin,fYaw);
+
+	pFindPath->setFailInterrupt(CONDITION_PARANOID);
+	pSnipeTask->setFailInterrupt(CONDITION_PARANOID);
+
+	addTask(pFindPath); // first
+	addTask(pSnipeTask); // second
 }
 void CBotTF2SnipeSched :: init ()
 {
