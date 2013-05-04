@@ -363,11 +363,11 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 	return true;
 }
 
-bool CBot :: FVisible ( Vector &vOrigin )
+bool CBot :: FVisible ( Vector &vOrigin, edict_t *pDest )
 {
 	//return CBotGlobals::isVisible(m_pEdict,getEyePosition(),vOrigin);
 	// fix bots seeing through gates/doors
-	return CBotGlobals::isVisibleHitAllExceptPlayer(m_pEdict,getEyePosition(),vOrigin);
+	return CBotGlobals::isVisibleHitAllExceptPlayer(m_pEdict,getEyePosition(),vOrigin,pDest);
 
 }
 
@@ -386,18 +386,29 @@ bool CBot :: FVisible ( edict_t *pEdict )
 		vOrigin = pEdict->GetCollideable()->GetCollisionOrigin();
 		vHead = vOrigin+Vector(0,0,pEdict->GetCollideable()->OBBMaxs().z);
 
-		if ( FVisible(vHead) )
+		if ( FVisible(vHead,pEdict) )
 		{
 			if ( m_pEnemy == pEdict )
 				updateCondition(CONDITION_SEE_ENEMY_HEAD);
 
 			return true;
 		}
+		
+#if defined(_DEBUG) && !defined(__linux__)
+		else if ( CClients::clientsDebugging(BOT_DEBUG_VIS) && (CBotGlobals::getTraceResult()->m_pEnt != NULL) )
+		{
+			extern IServerGameEnts *servergameents;
 
+			edict_t *edict = servergameents->BaseEntityToEdict(CBotGlobals::getTraceResult()->m_pEnt);
+
+			if ( edict )
+				debugoverlay->AddTextOverlay(CBotGlobals::getTraceResult()->endpos,2.0f,"Traceline hit %s",edict->GetClassName());
+		}
+#endif 
 		if ( m_pEnemy == pEdict )
 			removeCondition(CONDITION_SEE_ENEMY_HEAD);
 
-		return FVisible(vOrigin);
+		return FVisible(vOrigin,pEdict);
 	}
 
 	eye = getEyePosition();

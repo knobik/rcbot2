@@ -835,19 +835,19 @@ eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd,
 
 			if ( pcmd && *pcmd )
 			{
-				int task = atoi(pcmd);
+				//int task = atoi(pcmd);
 
 				pSched->freeMemory();
 
 				// 83
-				if ( task == BOT_UTIL_PIPE_LAST_ENEMY )
+				if ( !strcmp(pcmd,"pipe") )
 				{
 					pBot->setLastEnemy(pClient->getPlayer());
 					pBot->getSchedule()->freeMemory();
 					((CBotTF2*)pBot)->executeAction(BOT_UTIL_PIPE_LAST_ENEMY,NULL,NULL,NULL);
 				}
 				// 71
-				else if ( task == BOT_UTIL_THROW_GRENADE )
+				else if ( !strcmp(pcmd,"gren") )
 				{
 					CBotWeapons *pWeapons;
 					CBotWeapon *gren;
@@ -860,7 +860,44 @@ eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd,
 						CBotSchedule *sched = new CBotSchedule(new CThrowGrenadeTask(gren,pBot->getAmmo(gren->getWeaponInfo()->getAmmoIndex1()),pClient->getOrigin()));
 						pSched->add(sched);
 					}
+				}
+				else if ( !strcmp(pcmd,"snipe") )
+				{
+					if ( pClient )
+					{
+						CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_SNIPER,pClient->getOrigin(),200.0f,pBot->getTeam()));
+					
+						if ( pWaypoint )
+						{
+							CBotWeapon *pWeapon;
+							CBotWeapons *m_pWeapons;
+							CBotSchedule *snipe = new CBotSchedule();
+							CBotTask *findpath = new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint));
+							CBotTask *snipetask;
 
+							m_pWeapons = pBot->getWeapons();
+							pWeapon = m_pWeapons->hasWeapon(DOD_WEAPON_K98_SCOPED) ? m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_K98_SCOPED)) : m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SPRING));
+
+							if ( pWeapon )
+							{
+								snipetask = new CBotDODSnipe(pWeapon,pWaypoint->getOrigin(),pWaypoint->getAimYaw());
+
+								findpath->setCompleteInterrupt(CONDITION_PUSH);
+								snipetask->setCompleteInterrupt(CONDITION_PUSH);
+
+								snipe->setID(SCHED_DEFENDPOINT);
+								snipe->addTask(findpath);
+								snipe->addTask(snipetask);
+								
+								pSched->add(snipe);
+							}
+							else
+								CBotGlobals::botMessage(NULL,0,"Bot is not a sniper");
+						}
+						else
+							CBotGlobals::botMessage(NULL,0,"Sniper waypoint not found");
+
+					}
 				}
 			}
 			

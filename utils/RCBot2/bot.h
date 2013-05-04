@@ -520,7 +520,7 @@ public:
 
 	void setEdict ( edict_t *pEdict);
 
-	bool FVisible ( Vector &vOrigin );
+	bool FVisible ( Vector &vOrigin, edict_t *pDest = NULL );
 
 	Vector getEyePosition ();
 

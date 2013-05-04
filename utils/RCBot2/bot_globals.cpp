@@ -224,37 +224,54 @@ class CTraceFilterSimple : public CTraceFilter
 {
 public:
 	
-	CTraceFilterSimple( const IHandleEntity *passentity, int collisionGroup )
+	CTraceFilterSimple( const IHandleEntity *passentity1, const IHandleEntity *passentity2, int collisionGroup )
 	{
-		m_pPassEnt = passentity;
+		m_pPassEnt1 = passentity1;
+		
+		if ( passentity2 )
+			m_pPassEnt2 = passentity2;
+
 		m_collisionGroup = collisionGroup;
 	}
 	virtual bool ShouldHitEntity( IHandleEntity *pHandleEntity, int contentsMask )
 	{
-		if ( m_pPassEnt == pHandleEntity )
+		if ( m_pPassEnt1 == pHandleEntity )
 			return false;
+		if ( m_pPassEnt2 == pHandleEntity )
+			return false;
+#if defined(_DEBUG) && !defined(__linux__)
+		if ( CClients::clientsDebugging(BOT_DEBUG_VIS) )
+		{
+			static edict_t *edict;
+			
+			edict = INDEXENT(pHandleEntity->GetRefEHandle().GetEntryIndex());
+
+			debugoverlay->AddTextOverlayRGB(CBotGlobals::entityOrigin(edict),0,2.0f,255,100,100,200,"Traceline hit %s",edict->GetClassName());
+		}
+#endif
 		return true;
 	}
-	virtual void SetPassEntity( const IHandleEntity *pPassEntity ) { m_pPassEnt = pPassEntity; }
-	virtual void SetCollisionGroup( int iCollisionGroup ) { m_collisionGroup = iCollisionGroup; }
+	//virtual void SetPassEntity( const IHandleEntity *pPassEntity ) { m_pPassEnt = pPassEntity; }
+	//virtual void SetCollisionGroup( int iCollisionGroup ) { m_collisionGroup = iCollisionGroup; }
 
-	const IHandleEntity *GetPassEntity( void ){ return m_pPassEnt;}
+	//const IHandleEntity *GetPassEntity( void ){ return m_pPassEnt;}
 
 private:
-	const IHandleEntity *m_pPassEnt;
+	const IHandleEntity *m_pPassEnt1;
+	const IHandleEntity *m_pPassEnt2;
 	int m_collisionGroup;
 };
 
 
-bool CBotGlobals :: isVisibleHitAllExceptPlayer ( edict_t *pPlayer, Vector vSrc, Vector vDest)
+bool CBotGlobals :: isVisibleHitAllExceptPlayer ( edict_t *pPlayer, Vector vSrc, Vector vDest, edict_t *pDest )
 {
 	const IHandleEntity *ignore = pPlayer->GetIServerEntity();
 
-	CTraceFilterSimple traceFilter( ignore, MASK_ALL );
+	CTraceFilterSimple traceFilter( ignore, ((pDest==NULL)?NULL:pDest->GetIServerEntity()), MASK_ALL );
 
-	traceLine (vSrc,vDest,MASK_ALL,&traceFilter);
+	traceLine (vSrc,vDest,MASK_VISIBLE,&traceFilter);
 
-	return (traceVisible(NULL));
+	return (traceVisible(pDest));
 }
 
 bool CBotGlobals :: isVisible ( edict_t *pPlayer, Vector vSrc, Vector vDest)
