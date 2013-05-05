@@ -2272,6 +2272,88 @@ bool CDODBot :: walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetAppl
 	return false;
 }
 
+void CDODBot :: modAim ( edict_t *pEntity, Vector &v_origin, 
+						Vector *v_desired_offset, Vector &v_size, 
+						float fDist )
+{
+	//static Vector vAim;
+	static short int iSlot;
+	static smoke_t *smokeinfo;
+	//static bool bProne;
+	static float fStamina;
+	static CBotWeapon *pWp;
+	static Vector vel;
+	static int index;
+	bool bIsEnemyProne;
+	float fEnemyStamina;
+	bool bAddHeadHeight;
+
+	bAddHeadHeight = false;
+
+	CBot::modAim(pEntity,v_origin,v_desired_offset,v_size,fDist);
+
+	pWp = getCurrentWeapon();
+
+	// CRASH fix
+	bIsEnemyProne = false;
+	index = ENTINDEX(pEntity);
+	// for some reason, prone does not change collidable size
+	if ( (index > 0) && (index <= gpGlobals->maxClients) )
+	{
+		CClassInterface::getPlayerInfoDOD(pEntity,&bIsEnemyProne,&fEnemyStamina);
+			// .. so update 
+		if ( bIsEnemyProne )
+		{
+			v_desired_offset->z -= randomFloat(0.0,8.0f);
+		}
+		// aiming for head done in Cbot::getaimVector
+		/*else if ( hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) )
+		{
+			// add head height (body height already added)
+			bAddHeadHeight = true; 
+		}*/
+
+	}
+
+	// weapon is known
+	if ( pWp != NULL )
+	{
+		if ( pWp->isExplosive() )
+		{
+			if ( CClassInterface::getVelocity(pEntity,&vel) )
+				*v_desired_offset = *v_desired_offset + (vel * randomFloat(m_pProfile->m_fAimSkill-0.1f,m_pProfile->m_fAimSkill+0.1f));
+
+			if ( v_origin.z <= getOrigin().z )
+			{
+				// shoot the ground
+				*v_desired_offset = *v_desired_offset - Vector(0,0,randomFloat(16.0f,32.0f));
+			}
+
+			// add gravity height
+			v_desired_offset->z += (distanceFrom(pEntity) * (randomFloat(0.05,0.15)*m_pProfile->m_fAimSkill));
+		}
+	}
+
+	// if I know the enemy is near a smoke grenade i'll fire randomly into the cloud
+	if ( m_pNearestSmokeToEnemy )
+	{
+		iSlot = ENTINDEX(pEntity)-1;
+
+		if (( iSlot >= 0 ) && ( iSlot < MAX_PLAYERS ))
+		{
+			smokeinfo = &(m_CheckSmoke[iSlot]);
+
+			if ( smokeinfo->bInSmoke ) 
+			{
+				*v_desired_offset = *v_desired_offset + Vector(randomFloat(-SMOKE_RADIUS,SMOKE_RADIUS)*smokeinfo->fProb,randomFloat(-SMOKE_RADIUS,SMOKE_RADIUS)*smokeinfo->fProb,randomFloat(-SMOKE_RADIUS,SMOKE_RADIUS)*smokeinfo->fProb);
+				//return vAim = vAim + Vector(randomFloat(-SMOKE_RADIUS,SMOKE_RADIUS)*smokeinfo->fProb,randomFloat(-SMOKE_RADIUS,SMOKE_RADIUS)*smokeinfo->fProb,randomFloat(-SMOKE_RADIUS,SMOKE_RADIUS)*smokeinfo->fProb);
+			}
+		}
+	}
+
+	//return vAim;
+}
+/*
 Vector CDODBot :: getAimVector ( edict_t *pEntity )
 {
 	static Vector vAim;
@@ -2304,11 +2386,8 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 		{
 			vAim.z = vAim.z - randomFloat(0.0,8.0f);
 		}
-		else if ( hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) )
-		{
-			// add head height (body height already added)
-			bAddHeadHeight = true; 
-		}
+		// aiming for head done in Cbot::getaimVector
+
 
 	}
 
@@ -2326,13 +2405,13 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 			// add gravity height
 			vAim.z += (distanceFrom(pEntity) * (randomFloat(0.05,0.15)*m_pProfile->m_fAimSkill));
 
-			bAddHeadHeight = false;
+			if ( hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) )
+			{
+			// remove head height
+				vAim.z -= 32.0f;
+			}
 		}
 	}
-
-	// if I see the enemy's head and want to shoot there, add height
-	if ( bAddHeadHeight )
-		vAim.z += randomFloat(0.0f,32.0f);
 
 	// if I know the enemy is near a smoke grenade i'll fire randomly into the cloud
 	if ( m_pNearestSmokeToEnemy )
@@ -2352,7 +2431,7 @@ Vector CDODBot :: getAimVector ( edict_t *pEntity )
 
 	return vAim;
 }
-
+*/
 bool CDODBot :: isVisibleThroughSmoke ( edict_t *pSmoke, edict_t *pCheck )
 {
 	//if ( isVisible(pCheck) )

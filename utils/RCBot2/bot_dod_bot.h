@@ -142,7 +142,10 @@ public:
 	void init ();
 	void setup ();
 
-	Vector getAimVector ( edict_t *pEntity );
+	//Vector getAimVector ( edict_t *pEntity );
+	virtual void modAim ( edict_t *pEntity, Vector &v_origin, 
+		Vector *v_desired_offset, Vector &v_size,
+		float fDist);
 
 	bool startGame ();
 

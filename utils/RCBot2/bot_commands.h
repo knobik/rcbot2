@@ -694,6 +694,19 @@ public:
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 
+class CDebugAimCommand : public CBotCommand
+{
+public:
+	CDebugAimCommand ()
+	{
+		setName("aim");
+		setHelp("usage \"aim 1 or 0, 1 on, 0 off\" : displays aiming accuracy info on the hud");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 class CDebugHudCommand : public CBotCommand
 {
 public:

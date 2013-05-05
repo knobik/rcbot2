@@ -170,6 +170,12 @@ private:
 	static vector<CWaypointType*> m_Types;
 };
 
+class CWaypointTest
+{
+public:
+	void go ( edict_t *pPlayer );
+};
+
 class CWaypoint //: public INavigatorNode
 {
 public:

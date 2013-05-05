@@ -262,6 +262,15 @@ private:
 	int m_collisionGroup;
 };
 
+bool CBotGlobals :: checkOpensLater ( Vector vSrc, Vector vDest )
+{
+	CTraceFilterSimple traceFilter( NULL, NULL, MASK_ALL );
+
+	traceLine (vSrc,vDest,MASK_PLAYERSOLID,&traceFilter);
+
+	return (traceVisible(NULL));
+}
+
 
 bool CBotGlobals :: isVisibleHitAllExceptPlayer ( edict_t *pPlayer, Vector vSrc, Vector vDest, edict_t *pDest )
 {
@@ -269,7 +278,7 @@ bool CBotGlobals :: isVisibleHitAllExceptPlayer ( edict_t *pPlayer, Vector vSrc,
 
 	CTraceFilterSimple traceFilter( ignore, ((pDest==NULL)?NULL:pDest->GetIServerEntity()), MASK_ALL );
 
-	traceLine (vSrc,vDest,MASK_VISIBLE,&traceFilter);
+	traceLine (vSrc,vDest,MASK_SHOT|MASK_VISIBLE,&traceFilter);
 
 	return (traceVisible(pDest));
 }

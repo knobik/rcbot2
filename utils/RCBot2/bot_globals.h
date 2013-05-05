@@ -175,6 +175,8 @@ public:
 
 	static bool isCurrentMod ( eModId modid );
 
+	static bool checkOpensLater ( Vector vSrc, Vector vDest );
+
 	inline static bool setupMapTime ( ) { return m_fMapStartTime == 0; }
 
 	Vector getVelocity ( edict_t *pPlayer );

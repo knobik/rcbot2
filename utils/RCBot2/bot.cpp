@@ -1098,7 +1098,7 @@ bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint )
 
 	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_OPENS_LATER) )
 	{
-		if ( !CBotGlobals::isVisibleHitAllExceptPlayer(m_pEdict,vPrevWaypoint,pWaypoint->getOrigin()) )
+		if ( !CBotGlobals::checkOpensLater(vPrevWaypoint,pWaypoint->getOrigin()) )
 			return false;
 	}
 
@@ -1162,6 +1162,10 @@ edict_t *CBot :: getVisibleSpecial ()
 void CBot :: spawnInit ()
 {
 	resetTouchDistance(48.0f);
+
+	m_vAimOffset = Vector(1.0f,1.0f,1.0f);
+
+	m_fTotalAimFactor = 0.0f;
 
 	m_fAimMoment = 0.0f;
 
@@ -1930,11 +1934,128 @@ float CBot :: DotProductFromOrigin ( Vector pOrigin )
 	//return m_pBaseEdict->FInViewCone(CBaseEntity::Instance(pEntity));
 }
 
+Vector CBot::getAimVector ( edict_t *pEntity )
+{
+	static Vector v_desired_offset;
+	static Vector v_origin;
+	static float fSensitivity;
+	static Vector v_size;
+	static float fDist;
+
+	if ( m_fNextUpdateAimVector > engine->Time() )
+	{
+		return m_vAimVector;
+	}
+
+	fDist = distanceFrom(pEntity);
+
+	v_size = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
+	v_size = v_size * 0.5f;
+
+	fSensitivity = (float)m_pProfile->m_iSensitivity/20;
+
+	v_origin = CBotGlobals::entityOrigin(pEntity);
+
+	modAim(pEntity,v_origin,&v_desired_offset,v_size,fDist);
+
+	// post aim
+	// update 
+
+	m_vAimOffset.x = ((1.0f-fSensitivity)*m_vAimOffset.x) + fSensitivity*v_desired_offset.x; 
+	m_vAimOffset.y = ((1.0f-fSensitivity)*m_vAimOffset.y) + fSensitivity*v_desired_offset.y;
+	m_vAimOffset.z = ((1.0f-fSensitivity)*m_vAimOffset.z) + fSensitivity*v_desired_offset.z;
+
+	// check for QNAN
+	if ( (m_vAimOffset.x != m_vAimOffset.x) || 
+		(m_vAimOffset.y != m_vAimOffset.y) || 
+		(m_vAimOffset.z != m_vAimOffset.z) )
+	{
+		m_vAimOffset = Vector(1.0f,1.0f,1.0f);
+	}
+
+	m_vAimVector = v_origin + m_vAimOffset;
+
+	m_fNextUpdateAimVector = engine->Time() + (1.0f-m_pProfile->m_fAimSkill)*0.2f;
+
+#ifndef __linux__
+	if ( CClients::clientsDebugging(BOT_DEBUG_AIM) && CClients::isListenServerClient(CClients::get(0)) )
+	{
+		if ( CClients::get(0)->getDebugBot() == this )
+		{
+			int line = 0;
+			float ftime = m_fNextUpdateAimVector-engine->Time();
+
+			debugoverlay->AddTextOverlayRGB(m_vAimVector,line++,ftime,255,200,100,230,"x Aiming Info");
+			debugoverlay->AddTextOverlayRGB(m_vAimVector,line++,ftime,255,200,100,230,"fDist = %0.2f",fDist);
+			debugoverlay->AddTextOverlayRGB(m_vAimVector,line++,ftime,255,200,100,230,"fSensitivity = %0.2f",fSensitivity);
+			debugoverlay->AddTextOverlayRGB(m_vAimVector,line++,ftime,255,200,100,230,"v_size = (%0.2f,%0.2f,%0.2f)",v_size.x,v_size.y,v_size.z);
+			debugoverlay->AddTextOverlayRGB(m_vAimVector,line++,ftime,255,200,100,230,"v_desired_offset = (%0.2f,%0.2f,%0.2f)",v_desired_offset.x,v_desired_offset.y,v_desired_offset.z);
+			debugoverlay->AddTextOverlayRGB(m_vAimVector,line++,ftime,255,200,100,230,"m_vAimOffset = (%0.2f,%0.2f,%0.2f)",m_vAimOffset.x,m_vAimOffset.y,m_vAimOffset.z);
+		}
+	}
+#endif
+
+	return m_vAimVector;
+}
+
+void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset, Vector &v_size, float fDist )
+{
+	static Vector vel;
+	static Vector myvel;
+	static Vector enemyvel;
+	static float fDistFactor;
+	static float fHeadOffset;
+
+	fHeadOffset = 0;
+
+	fDistFactor = (1.0f - m_pProfile->m_fAimSkill) + (distanceFrom(pEntity)*0.000125f)*(m_fFov/90.0f);
+
+	// origin is always the bottom part of the entity
+	// add body height
+	fHeadOffset += v_size.z;
+
+	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
+	{
+		// aim for head
+		if ( hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) && (m_fFov < BOT_DEFAULT_FOV) )
+			fHeadOffset += v_size.z;
+	}
+
+	myvel = Vector(0,0,0);
+	enemyvel = Vector(0,0,0);
+
+	v_desired_offset->x = fDistFactor*randomFloat(-v_size.x,v_size.x);
+	v_desired_offset->y = fDistFactor*randomFloat(-v_size.y,v_size.y);
+	v_desired_offset->z = fDistFactor*randomFloat(-v_size.z,v_size.z);
+	v_desired_offset->z += fHeadOffset;
+
+	// change in velocity
+	if ( CClassInterface::getVelocity(pEntity,&enemyvel) && CClassInterface::getVelocity(m_pEdict,&myvel) )
+	{
+		vel = (enemyvel - myvel); // relative velocity
+
+		//fVelocityFactor = exp(-1.0f + ((vel.Length() * 0.003125f)*2)); // divide by max speed
+	}
+	else
+	{
+		vel = Vector(0.5f,0.5f,0.5f);
+		//fVelocityFactor = 1.0f;
+	}
+
+	// velocity
+	v_desired_offset->x += randomFloat(-vel.x,vel.x);
+	v_desired_offset->y += randomFloat(-vel.y,vel.y);
+	v_desired_offset->z += randomFloat(-vel.z,vel.z);
+
+}
+// preaim : cbot aim
+// modaim : add offsets based on 
+// postaim : modify the 
+/*
 Vector CBot :: getAimVector ( edict_t *pEntity )
 {
 	static Vector v_right;
 
-	static float fDistFactor;
 	static float fSensFactor;
 	//static Vector v_max,v_min;
 	static Vector v_org;
@@ -1943,13 +2064,20 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 	static Vector enemyvel;
 	static Vector vel; // realtive velocity
 	extern ConVar bot_general_difficulty;
-	//static Vector v_change;
 
-	//return CBotGlobals::entityOrigin(pEntity);
-	
 	if ( m_fNextUpdateAimVector > engine->Time() )
 	{
-		return m_vAimVector;//BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
+		return m_vAimVector;
+	}
+
+	fSensitivity = (float)m_pProfile->m_iSensitivity/20;
+	fHeadOffset = 0;
+
+	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
+	{
+		// aim for head
+		if ( hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) )
+			fHeadOffset = v_size.z;
 	}
 
 	myvel = Vector(0,0,0);
@@ -1962,49 +2090,61 @@ Vector CBot :: getAimVector ( edict_t *pEntity )
 
 	//v_change = m_vAimVector - v_org;
 
-	fDistFactor = (distanceFrom(pEntity)*0.0025f)*(m_fFov/90.0f);
-	fDistFactor *= ( 1.0f + (m_pProfile->m_fAimSkill - bot_general_difficulty.GetFloat()) );// add skill factor
-	fSensFactor = (float)m_pProfile->m_iSensitivity * 0.1f;
-
-	fDistFactor *= fSensFactor;
-
-	//fDistFactor *= (v_change/v_size).Length(); // change in aiming
-
-    v_right = (v_org-getOrigin()).Cross(Vector(0,0,1)); 
-
-	if ( v_right.Length() > 0 )
-		v_right = v_right / v_right.Length(); 
-
-	// add randomised offset based on size and distance
-	m_vAimVector = v_org + (fDistFactor*Vector(randomFloat(-v_size.x,v_size.x),randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));
-	
-	// add another offset based on distance
-	m_vAimVector = m_vAimVector + (fDistFactor*Vector(v_right.x*randomFloat(-v_size.x,v_size.x),v_right.y*randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));
-
-	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
-		m_vAimVector = m_vAimVector + Vector(0,0,v_size.z);
-
 	// change in velocity
 	if ( CClassInterface::getVelocity(pEntity,&enemyvel) && CClassInterface::getVelocity(m_pEdict,&myvel) )
 	{
-		vel = enemyvel - myvel; // relative velocity
+		vel = (enemyvel - myvel); // relative velocity
 
-		vel = vel * 0.003125f;
+		fVelocityFactor = exp(-1.0f + ((vel.Length() * 0.003125f)*2)); // divide by max speed
 
-		m_vAimVector = m_vAimVector + (fDistFactor * Vector(
-			randomFloat(-v_size.x,v_size.x)*vel.x,
-			randomFloat(-v_size.y,v_size.y)*vel.y,
-			randomFloat(-v_size.z,v_size.z)*vel.z));
+		//m_vAimVector = m_vAimVector + (fDistFactor * Vector(
+		//	randomFloat(-v_size.x,v_size.x)*vel.x,
+		//	randomFloat(-v_size.y,v_size.y)*vel.y,
+		//	randomFloat(-v_size.z,v_size.z)*vel.z));
 	}
 	else
+	{
 		vel = Vector(0.5f,0.5f,0.5f);
+		fVelocityFactor = 1.0f;
+	}
 
-	m_fNextUpdateAimVector = engine->Time() + randomFloat(0.3f,0.5f) - (vel.Length()*0.2f);
+	fDistFactor = 1.0f + (distanceFrom(pEntity)*0.000125f)*(m_fFov/90.0f);
+	//fAimSkillFactor = ( 1.0f + (m_pProfile->m_fAimSkill - bot_general_difficulty.GetFloat()) );// add skill factor
+	fSensFactor = 1.0f + ((float)m_pProfile->m_iSensitivity * 0.05f);
+
+	fTotalFactor = 1.0f;
+	fTotalFactor *= fSensFactor;
+	fTotalFactor *= fVelocityFactor;
+	fTotalFactor *= fDistFactor;
+	//fTotalFactor *= fAimSkillFactor;
+
+	m_fTotalAimFactor = (m_fTotalAimFactor*m_pProfile->m_fAimSkill) + fTotalFactor*(1.0f-m_pProfile->m_fAimSkill);
+
+	//fDistFactor *= (v_change/v_size).Length(); // change in aiming
+
+    //v_right = (v_org-getOrigin()).Cross(Vector(0,0,1)); 
+
+	//if ( v_right.Length() > 0 )
+	//	v_right = v_right / v_right.Length(); 
+
+	// add randomised offset based on size and distance
+	//m_vAimVector = v_org + (m_fTotalAimFactor*Vector(randomFloat(-v_size.x,v_size.x),randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));
+	
+	m_vAimOffset.x = ((1.0f-fSensitivity)*m_vAimOffset.x) + fSensitivity*m_fTotalAimFactor*randomFloat(-v_size.x,v_size.x);
+	m_vAimOffset.y = ((1.0f-fSensitivity)*m_vAimOffset.y) + fSensitivity*m_fTotalAimFactor*randomFloat(-v_size.y,v_size.y);
+	m_vAimOffset.z = ((1.0f-fSensitivity)*m_vAimOffset.z) + fSensitivity*m_fTotalAimFactor*randomFloat(-v_size.z,v_size.z+fHeadOffset);
+	// add another offset based on distance
+	//m_vAimVector = m_vAimVector + (fDistFactor*Vector(v_right.x*randomFloat(-v_size.x,v_size.x),v_right.y*randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));
+
+	m_vAimVector = v_org + m_vAimOffset;
+
+
+	m_fNextUpdateAimVector = engine->Time() + (1.0f-m_pProfile->m_fAimSkill)*0.2f;
 
 	return m_vAimVector;///BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
 
 }
-
+*/
 void CBot :: grenadeThrown ()
 {
 

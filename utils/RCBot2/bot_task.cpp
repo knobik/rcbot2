@@ -1211,21 +1211,11 @@ CBotTaskEngiPlaceBuilding :: CBotTaskEngiPlaceBuilding ( eEngiBuild iObject, Vec
 	m_iTries = 0;
 }
 
+// unused
 void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( m_fTime == 0.0f )
 	{
-		// forward
-		/*Vector v_start = pBot->getOrigin();
-		Vector v_comp = (pBot->getOrigin()-m_vOrigin);
-		v_comp = v_comp/v_comp.Length();
-		CBotGlobals::traceLine(v_start,v_start + (v_comp*4096.0),MASK_SOLID_BRUSHONLY,&filter);
-		trace_t *t = CBotGlobals::getTraceResult();
-
-		v_comp = t->endpos - m_vOrigin;
-		
-		if ( v_comp.Length() >  )
-*/
 		m_fTime = engine->Time() + 6.0f;
 		pBot->resetLookAroundTime();
 
@@ -1587,7 +1577,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		VectorAngles(vforward,angles);
 
-		angles.y += 45.0f; // yaw
+		angles.y += 22.5f; // yaw
 		CBotGlobals::fixFloatAngle(&angles.y);
 
 		AngleVectors(angles,&vforward);
@@ -1596,7 +1586,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		m_vAimingVector = pBot->getOrigin()+vforward*100.0f;
 		
-		m_fNextUpdateAngle = engine->Time() + 0.5f;
+		m_fNextUpdateAngle = engine->Time() + 0.75f;
 	}
 
 	pBot->setLookAtTask(LOOK_VECTOR);

@@ -1,9 +1,15 @@
 0.73
 ====
+dod:s	 : fixes bots not seeing properly through windows
 dod:s    : fix bots not proning on sniper spots
 dod:s    : bots don't run away from smoke grenades
 dod:s    : bots aim for the head if visible (more deadly)
+tf2		 : spy detection changes, bots shouldn't be able to redetect the same spy if if has changed disguise
+tf2		 : simple spy checking - bots melee the air, pyros fire flamethrower
 tf2      : update bot shooting fov
+tf2		 : bots don't listen to cloaked spies
+tf2		 : fixed sniper bug with snipers running on the spot
+tf2		 : changes to spy detection and engi building
 tf2      : fixed engis not placing moved objects (esp. dispensers)
 all mods : new waypoint type "fall" (fall damage)
 all mods : fixed crash in debug hud with looktask string error

@@ -45,19 +45,20 @@
 
 #define BOT_WPT_TOUCH_DIST 72 // distance for bot to touch waypoint
 
-#define BOT_DEBUG_GAME_EVENT 1
-#define BOT_DEBUG_NAV 2
-#define BOT_DEBUG_SPEED 4
-#define BOT_DEBUG_VIS 8
-#define BOT_DEBUG_TASK 16
-#define BOT_DEBUG_BUTTONS 32
-#define BOT_DEBUG_USERCMD 64
-#define BOT_DEBUG_UTIL 128
-#define BOT_DEBUG_PROFILE 256
-#define BOT_DEBUG_EDICTS 512
-#define BOT_DEBUG_THINK 1024
-#define BOT_DEBUG_LOOK 2048
-#define BOT_DEBUG_HUD 4096
+#define BOT_DEBUG_GAME_EVENT	1
+#define BOT_DEBUG_NAV			2
+#define BOT_DEBUG_SPEED			4
+#define BOT_DEBUG_VIS			8
+#define BOT_DEBUG_TASK			16
+#define BOT_DEBUG_BUTTONS		32
+#define BOT_DEBUG_USERCMD		64
+#define BOT_DEBUG_UTIL			128
+#define BOT_DEBUG_PROFILE		256
+#define BOT_DEBUG_EDICTS		512
+#define BOT_DEBUG_THINK			1024
+#define BOT_DEBUG_LOOK			2048
+#define BOT_DEBUG_HUD			4096
+#define BOT_DEBUG_AIM			8192
 
 typedef enum
 {

@@ -658,7 +658,10 @@ public:
 
 	inline bool currentEnemy ( edict_t *pEntity ) { return m_pEnemy == pEntity; }
 
-	virtual Vector getAimVector ( edict_t *pEntity );
+	Vector getAimVector ( edict_t *pEntity );
+	virtual void modAim ( edict_t *pEntity, Vector &v_origin, 
+		Vector *v_desired_offset, Vector &v_size,
+		float fDist);
 
 	inline Vector *getGoalOrigin ()
 	{
@@ -996,6 +999,9 @@ protected:
 	queue<int> m_nextVoicecmd;
 	float m_fNextVoiceCommand;
 	float m_fLastVoiceCommand[MAX_VOICE_CMDS];
+
+	float m_fTotalAimFactor;
+	Vector m_vAimOffset;
 };
 
 class CBots

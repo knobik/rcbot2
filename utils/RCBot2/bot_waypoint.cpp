@@ -2402,3 +2402,111 @@ bool CWaypoint :: forTeam ( int iTeam )
 	return true;	
 }
 
+class CTestBot : public CBotTF2
+{
+public:
+	CTestBot(edict_t *pEdict, int iTeam, int iClass)
+	{
+		init();
+		strcpy(m_szBotName,"Test Bot");
+		m_iClass = (TF_Class)iClass; 
+		m_iTeam = iTeam; 
+		m_pEdict = pEdict;
+		setup();
+	}
+};
+
+void CWaypointTest :: go ( edict_t *pPlayer )
+{
+	int i,j;
+	int iCheck = 0;
+	int iCurrentArea = 0;
+	CWaypoint *pWpt1;
+	CWaypoint *pWpt2;
+
+	IBotNavigator *pNav;
+	CBot *pBots[2];
+	CBot *pBot;
+
+	pBots[0] = new CTestBot(pPlayer,2,9);
+	pBots[1] = new CTestBot(pPlayer,3,9);
+
+	int iBot = 0;
+
+	for ( iBot = 0; iBot < 2; iBot ++ )
+	{
+		pBot = pBots[iBot];
+
+		pNav = pBot->getNavigator();
+
+		for ( i = 0; i < CWaypoints::MAX_WAYPOINTS; i ++ )
+		{
+			pWpt1 = CWaypoints::getWaypoint(i);
+			
+			iCheck = 0;
+
+			if ( !pWpt1->forTeam(iBot+2) )
+				continue;
+
+			if ( !pBot->canGotoWaypoint(Vector(0,0,0),pWpt1) )
+				continue;
+		
+			// simulate bot situations on the map
+			// e.g. bot is at sentry point A wanting more ammo at resupply X
+			if ( pWpt1->hasFlag(CWaypointTypes::W_FL_SENTRY) )
+				iCheck = CWaypointTypes::W_FL_RESUPPLY|CWaypointTypes::W_FL_AMMO;
+			if ( pWpt1->hasSomeFlags(CWaypointTypes::W_FL_RESUPPLY|CWaypointTypes::W_FL_AMMO) )
+				iCheck = CWaypointTypes::W_FL_SENTRY|CWaypointTypes::W_FL_TELE_ENTRANCE|CWaypointTypes::W_FL_TELE_EXIT;
+			
+			if ( iCheck != 0 )
+			{
+				for ( j = 0; j < CWaypoints::MAX_WAYPOINTS; j ++ )
+				{
+
+					if ( i == j )
+						continue;
+
+					pWpt2 = CWaypoints::getWaypoint(j);
+
+					if ( !pWpt2->forTeam(iBot+2) )
+						continue;
+
+					pWpt2 = CWaypoints::getWaypoint(j);
+
+					if ( !pBot->canGotoWaypoint(Vector(0,0,0),pWpt2) )
+						continue;
+
+					if ( (pWpt2->getArea() != 0) && (pWpt2->getArea() != pWpt1->getArea()) )
+						continue;
+
+					if ( pWpt2->hasSomeFlags(iCheck) )
+					{
+						bool bfail = false;
+						bool brestart = true;
+						bool bnointerruptions = true;
+
+						while ( pNav->workRoute(
+							pWpt1->getOrigin(),
+							pWpt2->getOrigin(),
+							&bfail,
+							brestart,
+							bnointerruptions,j) 
+							== 
+							false 
+							);
+
+						if ( bfail )
+						{
+							// log this one
+							CBotGlobals::botMessage(pPlayer,0,"Waypoint Test: Route fail from '%d' to '%d'",i,j);
+						}
+					}
+				}
+			}
+		}
+
+	}
+
+	delete pBots[0];
+	delete pBots[1];
+}

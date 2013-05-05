@@ -255,7 +255,12 @@ public:
 
 	virtual void checkDependantEntities();
 
-	virtual Vector getAimVector ( edict_t *pEntity ) { return CBot::getAimVector(pEntity); }
+	//virtual Vector getAimVector ( edict_t *pEntity ) { return CBot::getAimVector(pEntity); }
+
+	virtual void modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset, Vector &v_size, float fDist )
+	{
+		CBot::modAim(pEntity,v_origin,v_desired_offset,v_size,fDist);
+	}
 
 	virtual void touchedWpt ( CWaypoint *pWaypoint ) { CBot::touchedWpt(pWaypoint); }
 
@@ -521,6 +526,8 @@ protected:
 	float m_fTeleporterExtPlacedTime;
 	unsigned m_iTeleportedPlayers;
 
+	int m_iTeam;
+
 };
 //
 //
@@ -570,7 +577,10 @@ public:
 
 	bool setVisible ( edict_t *pEntity, bool bVisible );
 
-	Vector getAimVector ( edict_t *pEntity );
+	//Vector getAimVector ( edict_t *pEntity );
+	virtual void modAim ( edict_t *pEntity, Vector &v_origin, 
+		Vector *v_desired_offset, Vector &v_size,
+		float fDist);
 
 	void modThink ();
 

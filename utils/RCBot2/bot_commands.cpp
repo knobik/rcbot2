@@ -574,6 +574,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CDebugThinkCommand());
 	add(new CDebugLookCommand());
 	add(new CDebugHudCommand());
+	add(new CDebugAimCommand());
 	add(new CBotGoto());
 	add(new CBotFlush());
 	add(new CDebugTaskCommand());
@@ -1322,7 +1323,15 @@ eBotCommandResult CDebugHudCommand :: execute ( CClient *pClient, const char *pc
 
 	return COMMAND_ACCESSED;
 }
+eBotCommandResult CDebugAimCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( !pcmd || !*pcmd )
+		return COMMAND_ERROR;
 
+	pClient->setDebug(BOT_DEBUG_AIM,atoi(pcmd)>0);
+
+	return COMMAND_ACCESSED;
+}
 
 eBotCommandResult CDebugProfilingCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
