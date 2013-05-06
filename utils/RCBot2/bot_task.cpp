@@ -1247,7 +1247,7 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 	}
 	else
-		pBot->setMoveTo((m_vOrigin));
+		pBot->setMoveTo(m_vOrigin);
 	
 	if ( pBot->hasEnemy() )
 	{
@@ -1926,7 +1926,49 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	CBotWeapons *pWeaponList;
 
 	if ( m_fTime == 0.0f )
+	{
+		// record the number of people I see now
+		int i;
+		edict_t *pPlayer;
+		edict_t *pDisguised;
+
+		int iClass;
+		int iTeam;
+		int iIndex;
+		int iHealth;
+
+		seenlist = 0;		
+
+		for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+		{
+			pPlayer = INDEXENT(i);
+
+			if ( pPlayer == pBot->getEdict() )
+				continue;
+
+			if ( !CBotGlobals::entityIsValid(pPlayer) )
+				continue;
+
+			//if ( CClassInterface::getTeam(pPlayer) != pBot->getTeam() )
+			//{
+				if ( CClassInterface::getTF2Class(pPlayer) == TF_CLASS_SPY )
+				{
+					//CClassInterface::getTF2SpyDisguised(pPlayer,&iClass,&iTeam,&iIndex,&iHealth);
+
+					//if ( (iIndex > 0) && (iIndex <= gpGlobals->maxClients) )
+
+					if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pPlayer) )
+						continue; // can't see
+				}
+			//}
+
+			if ( pBot->isVisible(pPlayer) )
+				seenlist |= (1<<(i-1));
+		}
+		
 		m_fTime = engine->Time() + randomFloat(2.0f,5.0f);
+		m_fNextCheckUnseen = engine->Time() + 0.1f;
+	}
 
 	if ( m_fTime < engine->Time() )
 		complete();
@@ -1934,10 +1976,73 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	if ( pBot->hasEnemy() )
 		complete();
 
-	// automatically look at danger points
-	pBot->updateDanger(50.0f);
+	if ( (m_pUnseenBefore==NULL) && (m_fNextCheckUnseen < engine->Time()) )
+	{
+		int i;
+		edict_t *pPlayer;
 
-	pBot->setLookAtTask(LOOK_WAYPOINT);
+		seenlist = 0;
+
+		for ( i = 1; i <= gpGlobals->maxClients; i ++ )
+		{
+			pPlayer = INDEXENT(i);
+
+			if ( pPlayer == pBot->getEdict() )
+				continue;
+
+			if ( !CBotGlobals::entityIsValid(pPlayer) )
+				continue;
+
+			if ( CClassInterface::getTF2Class(pPlayer) == TF_CLASS_SPY )
+			{
+					//CClassInterface::getTF2SpyDisguised(pPlayer,&iClass,&iTeam,&iIndex,&iHealth);
+
+					//if ( (iIndex > 0) && (iIndex <= gpGlobals->maxClients) )
+
+				if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pPlayer) )
+					continue; // can't see but may still be in visible list
+			}
+
+			if ( pBot->isVisible(pPlayer) )
+			{
+				if ( !(seenlist & (1<<(i-1))) )
+				{
+					m_pUnseenBefore = pPlayer;
+					seenlist |= (1<<(i-1)); //add to list
+					break;
+				}
+			}
+			
+		}
+
+		if ( m_pUnseenBefore != NULL )
+		{
+			// add more time
+			m_fTime = engine->Time() + randomFloat(2.0f,5.0f);
+		}
+
+		m_fNextCheckUnseen = engine->Time() + 0.1f;
+	}
+	else if ( m_pUnseenBefore && (!CBotGlobals::entityIsAlive(m_pUnseenBefore) || !CBotGlobals::entityIsValid(m_pUnseenBefore)) ) 
+	{
+		m_pUnseenBefore = NULL;
+		m_fNextCheckUnseen = 0.0f;
+	}
+
+	if ( m_pUnseenBefore == NULL )
+	{
+		// automatically look at danger points
+		pBot->updateDanger(50.0f);
+
+		pBot->setLookAtTask(LOOK_WAYPOINT);
+	}
+	else
+	{
+		// smack him
+		pBot->lookAtEdict(m_pUnseenBefore);
+		pBot->setLookAtTask(LOOK_EDICT);
+		pBot->setMoveTo(CBotGlobals::entityOrigin(m_pUnseenBefore));
+	}
 /*
 	TF_CLASS_CIVILIAN = 0,
 	TF_CLASS_SCOUT,
@@ -1967,6 +2072,11 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	default:
 		pChooseWeapon = pBot->getBestWeapon(NULL,true,true,true);
 		break;
+	}
+
+	if ( m_pUnseenBefore )
+	{
+		pBot->setMoveTo(CBotGlobals::entityOrigin(m_pUnseenBefore));
 	}
 
 	if ( pChooseWeapon && (pWeapon != pChooseWeapon) )

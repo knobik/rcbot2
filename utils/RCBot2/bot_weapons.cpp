@@ -533,8 +533,10 @@ bool CBotWeapon :: outOfAmmo(CBot *pBot)
 	if ( m_pWeaponInfo->isGravGun() && m_pEnt )
 		return (CClassInterface::gravityGunObject(m_pEnt) == NULL);
 
-	if ( m_iClip1 )
-		return ( (!*m_iClip1) && !getAmmo(pBot) );
+	// if I have something in my clip now
+	// I am okay, otherwise return ammo in list
+	if ( m_iClip1 && (*m_iClip1 > 0) )
+		return false;
 
 	return getAmmo(pBot)==0;
 }

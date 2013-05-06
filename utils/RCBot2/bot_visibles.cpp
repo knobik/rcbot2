@@ -35,6 +35,7 @@
 #include "bot_profile.h"
 #include "bot_client.h"
 #include "bot_profiling.h"
+#include "bot_getprop.h"
 
 #include "ndebugoverlay.h"
 
@@ -223,6 +224,7 @@ void CBotVisibles :: updateVisibles ()
 {
 	static bool bVisible;
 	static edict_t *pEntity;
+	static edict_t *pGroundEntity;
 
 	static int iTicks;
 	static int iMaxTicks;  //m_pBot->getProfile()->getVisionTicks();
@@ -230,6 +232,15 @@ void CBotVisibles :: updateVisibles ()
 	static int iMaxClientTicks; 
 	static int iStartPlayerIndex;
 	static int iSpecialIndex;
+
+	//update ground entity
+	pGroundEntity = CClassInterface::getGroundEntity(m_pBot->getEdict());
+
+	if ( pGroundEntity && (ENTINDEX(pGroundEntity) > 0) )
+	{
+		setVisible(pGroundEntity,true);
+		m_pBot->setVisible(pGroundEntity,true);
+	}
 
 	iTicks = 0;
 	iMaxTicks = m_pBot->getProfile()->m_iVisionTicks;// bot_visrevs.GetInt();
@@ -266,11 +277,14 @@ void CBotVisibles :: updateVisibles ()
 	{
 		pEntity = INDEXENT(m_iCurPlayer);
 
-		if ( CBotGlobals::entityIsValid(pEntity) && (pEntity != m_pBot->getEdict()) )
+		if ( pEntity != pGroundEntity )
 		{
-			checkVisible(pEntity,&iTicks,&bVisible,m_iCurPlayer);
-			setVisible(pEntity,bVisible);
-			m_pBot->setVisible(pEntity,bVisible);
+			if ( CBotGlobals::entityIsValid(pEntity) && (pEntity != m_pBot->getEdict()) )
+			{
+				checkVisible(pEntity,&iTicks,&bVisible,m_iCurPlayer);
+				setVisible(pEntity,bVisible);
+				m_pBot->setVisible(pEntity,bVisible);
+			}
 		}
 
 		m_iCurPlayer++;
@@ -310,12 +324,15 @@ void CBotVisibles :: updateVisibles ()
 
 		pEntity = INDEXENT(m_iCurrentIndex);
 
-		if ( CBotGlobals::entityIsValid(pEntity) )
-		{		
-			checkVisible(pEntity,&iTicks,&bVisible,m_iCurrentIndex);
+		if ( pEntity != pGroundEntity )
+		{
+			if ( CBotGlobals::entityIsValid(pEntity) )
+			{		
+				checkVisible(pEntity,&iTicks,&bVisible,m_iCurrentIndex);
 
-			setVisible(pEntity,bVisible);
-			m_pBot->setVisible(pEntity,bVisible);
+				setVisible(pEntity,bVisible);
+				m_pBot->setVisible(pEntity,bVisible);
+			}
 		}
 
 		m_iCurrentIndex ++;

@@ -2006,9 +2006,10 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vecto
 
 		//pWpt = goals.Random();
 
+		// higher chance of choosing route with lowest danger
 		for ( i = 0; i < goals.Size(); i ++ )
 		{
-			fBelief += MAX_BELIEF - pNav->getBelief(CWaypoints::getWaypointIndex(goals[i]));
+			fBelief += (MAX_BELIEF - pNav->getBelief(CWaypoints::getWaypointIndex(goals[i])));
 		}
 	
 		fSelect = randomFloat(0,fBelief);
@@ -2017,7 +2018,7 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vecto
 		
 		for ( i = 0; i < goals.Size(); i ++ )
 		{
-			fBelief += MAX_BELIEF - pNav->getBelief(CWaypoints::getWaypointIndex(goals[i]));
+			fBelief += (MAX_BELIEF - pNav->getBelief(CWaypoints::getWaypointIndex(goals[i])));
 
 			if ( fSelect <= fBelief )
 			{

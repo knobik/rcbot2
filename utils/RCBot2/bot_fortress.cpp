@@ -1880,6 +1880,10 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 
 		return true;
 	}
+	else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_FALL) )
+	{
+		return ( getClass() == TF_CLASS_SCOUT );
+	}
 
 	return false;
 }
@@ -2386,19 +2390,21 @@ void CBotTF2::handleWeapons()
 
 		pWeapon = getBestWeapon(m_pEnemy,!hasFlag(),!hasFlag(),rcbot_melee_only.GetBool());
 
+		setLookAtTask(LOOK_ENEMY);
+
 		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 		{
 			//selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
 			selectWeapon(pWeapon->getWeaponIndex());
 		}
-
-		setLookAtTask((LOOK_ENEMY));
-
-		if ( !handleAttack ( pWeapon, m_pEnemy ) )
+		else
 		{
-			m_pEnemy = NULL;
-			m_pOldEnemy = NULL;
-			wantToShoot(false);
+			if ( !handleAttack ( pWeapon, m_pEnemy ) )
+			{
+				m_pEnemy = NULL;
+				m_pOldEnemy = NULL;
+				wantToShoot(false);
+			}
 		}
 	}
 }
@@ -2446,6 +2452,12 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 		return false;
 	if (( pEntity == m_pTeleExit ) && ( CClassInterface::isObjectCarried(pEntity) ))
 		return false;
+
+	edict_t *groundEntity = CClassInterface::getGroundEntity(m_pEdict);
+
+	// must stand on worldspawn
+	if ( groundEntity && (ENTINDEX(groundEntity)>0) && pEntity == groundEntity )
+		return true;
 
 	index = ENTINDEX(pEntity);
 
@@ -3527,10 +3539,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	//{
 	if ( bot_messaround.GetBool() )
 	{
-		float fMessUtil = fGetFlagUtility+0.1;
+		float fMessUtil = fGetFlagUtility+0.2f;
 
 		if ( getClass() == TF_CLASS_MEDIC )
-			fMessUtil -= randomFloat(0.0f,0.2f);
+			fMessUtil -= randomFloat(0.0f,0.3f);
 
 		ADD_UTILITY(BOT_UTIL_MESSAROUND,(getHealthPercent()>0.75f) && ((iTeam==TF2_TEAM_BLUE)||(!CTeamFortress2Mod::isAttackDefendMap())) && !CTeamFortress2Mod::hasRoundStarted(),fMessUtil);
 	}
@@ -4534,9 +4546,32 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 		else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_DOUBLEJUMP) )
 		{
 			extern ConVar bot_scoutdj;
-			tapButton(IN_JUMP);
+			m_pButtons->tap(IN_JUMP);
 			m_fDoubleJumpTime = engine->Time() + bot_scoutdj.GetFloat();
 			//m_pSchedules->addFront(new CBotSchedule(new CBotTFDoubleJump()));
+		}
+		else if ( pWaypoint->getFlags() == 0 )
+		{
+			if ( getNavigator()->hasNextPoint() && (getClass() == TF_CLASS_SCOUT) )
+			{
+				if ( randomInt(0,100) > (int)(m_pProfile->m_fBraveness*10) )
+				{
+					Vector v_next = getNavigator()->getNextPoint();
+					Vector v_org = getOrigin();					
+					Vector v_comp = v_next-v_org;
+					float fDist = v_comp.Length();
+					Vector v_vel = (m_vVelocity/m_vVelocity.Length()) * fDist;
+					
+					if ( (v_next-(v_org + v_vel)).Length() <= 24.0f )
+						m_pButtons->tap(IN_JUMP);
+				}
+			}
+		}
+		else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_FALL) )
+		{
+			// jump to avoid being hurt (scouts can jump in the air)
+			if ( fabs(m_vVelocity.z) > 1 )
+				jump();
 		}
 	}
 
@@ -4879,6 +4914,9 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 // enemy below me!
 		if ( pWeapon->isMelee() && (vEnemyOrigin.z < (getOrigin().z - 8)) && (vEnemyOrigin.z > (getOrigin().z-128))  )
 			duck();
+
+		if ( pWeapon->outOfAmmo(this) )
+			return false; // change weapon/enemy
 	}
 	else
 		primaryAttack();

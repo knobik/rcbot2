@@ -915,12 +915,15 @@ private:
 class CSpyCheckAir : public CBotTask
 {
 public:
-	CSpyCheckAir () { m_fTime = 0.0f; }
+	CSpyCheckAir () { m_fTime = 0.0f; m_pUnseenBefore = NULL; }
 
 	void execute ( CBot *pBot, CBotSchedule *pSchedule );
 
 	void debugString (char *string);
 private:
+	edict_t *m_pUnseenBefore;
+	int seenlist;
+	float m_fNextCheckUnseen;
 	float m_fTime;
 };
 

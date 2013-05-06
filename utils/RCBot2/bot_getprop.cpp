@@ -404,6 +404,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_DOD_CP_VISIBLE,"CDODObjectiveResource","m_bCPIsVisible",0);
 
 		DEFINE_GETPROP(GETPROP_ALL_ENTOWNER,"CBaseEntity","m_hOwnerEntity",0);
+		DEFINE_GETPROP(GETPROP_GROUND_ENTITY,"CBasePlayer","m_hGroundEntity",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
