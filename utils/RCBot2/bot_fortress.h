@@ -508,6 +508,10 @@ protected:
 	// bot should check if he can change class now
 	bool m_bCheckClass;
 	MyEHandle m_pLastCalledMedic;
+	CBotLastSee m_pLastSeeMedic;
+	/*MyEHandle m_pLastSeeMedic;
+	Vector m_vLastSeeMedic;
+	float m_fLastSeeMedicTime;*/
 	float m_fLastCalledMedicTime;
 	bool m_bIsBeingHealed;
 	float m_fMedicUpdatePosTime;

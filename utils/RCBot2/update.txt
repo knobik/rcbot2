@@ -31,6 +31,11 @@ all mods : bots turn quicker on ladders to improve climbing success
 all mods : fixed bots looking at waypoints wrong
 all mods : improved ladder climbing (make sure waypoint YAW is facing the ladder)
 
+tf2: bots try to go back to their last seen medic for health (it may also be a spy)
+all mods: bot debug hud more information
+tf2: ammo/health pickup changes
+tf2: possible crash fix for demoman
+
 0.72
 ====
 all mods: please move rcbot2 folder to users home folder i.e. /users/<name> or ~/

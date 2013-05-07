@@ -40,7 +40,7 @@
 #include "bot_getprop.h"
 ////////////////////////////////////
 
-const char *szSchedules[SCHED_MAX] = 
+const char *szSchedules[SCHED_MAX+1] = 
 {
 	"SCHED_NONE",
 	"SCHED_ATTACK",
@@ -77,7 +77,9 @@ const char *szSchedules[SCHED_MAX] =
 	"SCHED_SHOOT_LAST_ENEMY_POS",
 	"SCHED_GRAVGUN_PICKUP",
 	"SCHED_HELP_PLAYER",
-	"SCHED_BOMB"
+	"SCHED_TF_SPYCHECK",
+	"SCHED_BOMB",
+	"SCHED_MAX"
 };
 ////////////////////// unused
 CBotTF2DemoPipeEnemySched :: CBotTF2DemoPipeEnemySched ( CBotWeapon *pLauncher, Vector vStand, edict_t *pEnemy )
@@ -133,8 +135,15 @@ void CBotTFEngiBuild :: init ()
 
 CBotGetMetalSched :: CBotGetMetalSched ( Vector vOrigin )
 {
-	addTask(new CFindPathTask(vOrigin)); // first
-	addTask(new CBotTF2WaitAmmoTask(vOrigin));
+
+	CFindPathTask *task1 = new CFindPathTask(vOrigin);
+	CBotTF2WaitAmmoTask *task2 = new CBotTF2WaitAmmoTask(vOrigin);
+
+	task1->setCompleteInterrupt(0,CONDITION_NEED_AMMO);
+	task2->setCompleteInterrupt(0,CONDITION_NEED_AMMO);
+
+	addTask(task1); // first
+	addTask(task2);
 }
 
 void CBotGetMetalSched :: init ()
@@ -252,14 +261,16 @@ void CBotTFEngiLookAfterSentry :: init ()
 ////////////
 CBotTF2GetHealthSched :: CBotTF2GetHealthSched ( Vector vOrigin )
 {
-	CFindPathTask *pathtask = new CFindPathTask(vOrigin);
+	CFindPathTask *task1 = new CFindPathTask(vOrigin);
+	CBotTF2WaitHealthTask *task2 = new CBotTF2WaitHealthTask(vOrigin);
 
 	// if bot doesn't have need ammo flag anymore ....
 	// fail so that the bot doesn't move onto the next task
-	pathtask->setFailInterrupt(0,CONDITION_NEED_HEALTH);
+	task1->setCompleteInterrupt(0,CONDITION_NEED_HEALTH);
+	task2->setCompleteInterrupt(0,CONDITION_NEED_HEALTH);
 
-	addTask(pathtask); // first
-	addTask(new CBotTF2WaitHealthTask(vOrigin)); // second
+	addTask(task1); // first
+	addTask(task2); // second
 }
 
 void CBotTF2GetHealthSched :: init ()
@@ -270,14 +281,16 @@ void CBotTF2GetHealthSched :: init ()
 
 CBotTF2GetAmmoSched :: CBotTF2GetAmmoSched ( Vector vOrigin )
 {
-	CFindPathTask *pathtask = new CFindPathTask(vOrigin);
+	CFindPathTask *task1 = new CFindPathTask(vOrigin);
+	CBotTF2WaitAmmoTask *task2 = new CBotTF2WaitAmmoTask(vOrigin);
 
 	// if bot doesn't have need ammo flag anymore ....
 	// fail so that the bot doesn't move onto the next task
-	pathtask->setFailInterrupt(0,CONDITION_NEED_AMMO);
+	task1->setCompleteInterrupt(0,CONDITION_NEED_AMMO);
+	task2->setCompleteInterrupt(0,CONDITION_NEED_AMMO);
 
-	addTask(pathtask); // first
-	addTask(new CBotTF2WaitAmmoTask(vOrigin)); // second
+	addTask(task1); // first
+	addTask(task2); // second
 }
 
 void CBotTF2GetAmmoSched ::  init ()
@@ -509,7 +522,7 @@ CBotFollowLastEnemy ::	CBotFollowLastEnemy ( CBot *pBot, edict_t *pEnemy, Vector
 	else if ( pClient )
 		vVelocity = pClient->getVelocity();
 
-	pFindPath->setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
+	pFindPath->setCompleteInterrupt(CONDITION_SEE_CUR_ENEMY);
 
 	addTask(pFindPath);
 

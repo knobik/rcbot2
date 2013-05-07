@@ -592,6 +592,8 @@ void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
 
+	m_pLastSeeMedic.reset();
+
 	m_iPrevSpyDisguises[0] = m_iPrevSpyDisguises[1] = TF_CLASS_CIVILIAN;
 
 	m_fTaunting = 0.0f; // bots not moving FIX
@@ -900,7 +902,12 @@ bool CBotTF2 :: needAmmo()
 
 		if ( pWeapon )
 		{
-			return ( pWeapon->getAmmo(this) < 200 );
+			int iMetal = pWeapon->getAmmo(this);
+
+			if ( ( m_pSentryGun.get() == NULL ) || (CClassInterface::getTF2UpgradeLevel(m_pSentryGun) < 3) )
+				return ( iMetal < 200 ); // need 200 to upgrade sentry
+			else
+				return iMetal < 125; // need 125 for other stuff (e.g. teleporters)
 		}
 	}
 	else if ( getClass() == TF_CLASS_SOLDIER )
@@ -2114,9 +2121,13 @@ void CBotTF2 :: modThink ()
 	if ( ((m_iClass != TF_CLASS_SPY)||(!isDisguised())) && ((m_pEnemy.get() == NULL) || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) && (m_pPrevSpy.get() != NULL) && (m_fSeeSpyTime > engine->Time()) && 
 		!m_bIsCarryingObj && CBotGlobals::isAlivePlayer(m_pPrevSpy) ) 
 	{
-		// check for spies within radius of bot 
+		// check for spies within radius of bot / use aim skill as a skill factor
 		float fPossibleDistance = (engine->Time()-m_fLastSeeSpyTime) * 
 			(m_pProfile->m_fAimSkill * 310.0f) * (m_fCurrentDanger/MAX_BELIEF);
+
+		// increase distance for pyro, he can use flamethrower !
+		if ( m_iClass == TF_CLASS_PYRO ) 
+			fPossibleDistance += 200.0f;
 
 		if ( (m_vLastSeeSpy-getOrigin()).Length() < fPossibleDistance )
 		{
@@ -2457,7 +2468,17 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 
 	// must stand on worldspawn
 	if ( groundEntity && (ENTINDEX(groundEntity)>0) && pEntity == groundEntity )
-		return true;
+	{
+		ICollideable *box;
+
+		box = groundEntity->GetCollideable();
+
+		if ( box )
+		{
+			if ( (box->OBBMaxs() - box->OBBMins()).Length() < 200.0f )
+				return true;
+		}
+	}
 
 	index = ENTINDEX(pEntity);
 
@@ -2743,20 +2764,59 @@ bool CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		if ( bVisible )
 		{
-			if ( CClassInterface::getTF2Class(pEntity) == TF_CLASS_SPY )
+			TF_Class iPlayerclass = (TF_Class)CClassInterface::getTF2Class(pEntity);
+
+			if ( iPlayerclass == TF_CLASS_SPY )
 			{
+				// check if disguise is not spy on my team
+				int iClass, iTeam, iIndex, iHealth;
+					
+				CClassInterface::getTF2SpyDisguised(pEntity,&iClass,&iTeam,&iIndex,&iHealth);
+
 				if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pEntity) )
 				{
-					// check if disguise is not spy on my team
-					int iClass, iTeam, iIndex, iHealth;
-					
-					CClassInterface::getTF2SpyDisguised(pEntity,&iClass,&iTeam,&iIndex,&iHealth);
-
 					if ( iClass != TF_CLASS_SPY ) // spies cloaking is normal / non spies cloaking is not!
 					{
 						if ( !m_pCloakedSpy || ((m_pCloakedSpy!=pEntity)&&(distanceFrom(pEntity) < distanceFrom(m_pCloakedSpy))) )
 							m_pCloakedSpy = pEntity;
 					}
+				}
+				else if ( ( iClass == TF_CLASS_MEDIC ) && ( iTeam == m_iTeam ) )
+				{
+					if ( !m_pLastSeeMedic.check(pEntity) && CBotGlobals::entityIsAlive(pEntity) )
+					{
+						// i think this spy can cure me!
+						if ( (m_pLastSeeMedic.check(NULL) || (distanceFrom(pEntity) < distanceFrom(m_pLastSeeMedic.getLocation()))) && 
+							 !thinkSpyIsEnemy(pEntity,(TF_Class)iClass) )
+						{
+							m_pLastSeeMedic = CBotLastSee(pEntity);
+							/*m_pLastSeeMedic = pEntity;
+							m_vLastSeeMedic = CBotGlobals::entityOrigin(pEntity);
+							m_fLastSeeMedicTime = engine->Time();*/
+						}
+					}
+					else
+						m_pLastSeeMedic.update();
+
+				}
+			}
+			else if ( iPlayerclass == TF_CLASS_MEDIC )
+			{
+				if ( m_pLastSeeMedic.check(pEntity) )
+				{
+					m_pLastSeeMedic.update();
+					//m_fLastSeeMedicTime = engine->Time();
+					//m_vLastSeeMedic = CBotGlobals::entityOrigin(pEntity);
+				}
+				else
+				{
+					if ( CBotGlobals::entityIsAlive(pEntity) && ((m_pLastSeeMedic.check(NULL)) || (distanceFrom(pEntity) < distanceFrom(m_pLastSeeMedic.getLocation()))) )
+					{
+						m_pLastSeeMedic = CBotLastSee(pEntity);
+						//m_vLastSeeMedic = CBotGlobals::entityOrigin(pEntity);
+						//m_fLastSeeMedicTime = engine->Time();
+					}
+
 				}
 			}
 		}
@@ -3146,7 +3206,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	iClass = getClass();
 
 	bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
-	bNeedHealth = hasSomeConditions(CONDITION_NEED_HEALTH) && !m_bIsBeingHealed;
+
+	// don't need health if being healed or ubered!
+	bNeedHealth = hasSomeConditions(CONDITION_NEED_HEALTH) 
+					&& !m_bIsBeingHealed && !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict);
 
 	if ( m_pHealthkit )
 	{
@@ -3395,6 +3458,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.0001);
 	ADD_UTILITY(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,1000.0f/fHealthDist);
+	
+	ADD_UTILITY(BOT_UTIL_FIND_MEDIC_FOR_HEALTH,!bHasFlag && bNeedHealth && m_pLastSeeMedic.hasSeen(10.0f),1.0f);
 	
 	// only attack if attack area is > 0
 	ADD_UTILITY(BOT_UTIL_ATTACK_POINT,(m_fAttackPointTime<engine->Time()) && 
@@ -4212,6 +4277,31 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				}
 			}
 			return false;
+		case BOT_UTIL_FIND_MEDIC_FOR_HEALTH:
+			{
+				Vector vLoc = m_pLastSeeMedic.getLocation();
+				int iWpt = CWaypointLocations::NearestWaypoint(vLoc,400,-1,true,false,true,0,false,getTeam(),true);
+				if ( iWpt != -1 )
+				{
+					CFindPathTask *findpath = new CFindPathTask(iWpt,LOOK_WAYPOINT);
+					CTaskVoiceCommand *shoutMedic = new CTaskVoiceCommand(TF_VC_MEDIC);
+					CBotTF2WaitHealthTask *wait = new CBotTF2WaitHealthTask(vLoc);
+					CBotSchedule *newSched = new CBotSchedule();
+
+					findpath->setCompleteInterrupt(0,CONDITION_NEED_HEALTH);
+					shoutMedic->setCompleteInterrupt(0,CONDITION_NEED_HEALTH);
+					wait->setCompleteInterrupt(0,CONDITION_NEED_HEALTH);
+
+					newSched->addTask(findpath);
+					newSched->addTask(shoutMedic);
+					newSched->addTask(wait);
+					m_pSchedules->addFront(newSched);
+
+					return true;
+				}
+
+				return false;
+			}
 		case BOT_UTIL_GETHEALTHKIT:
 			m_pSchedules->removeSchedule(SCHED_PICKUP);
 			m_pSchedules->addFront(new CBotPickupSched(m_pHealthkit));
@@ -4367,19 +4457,22 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				{
 					CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(vLoc,pWptBlast->getOrigin(),4096.0,CWaypoints::getWaypointIndex(pWptBlast),true,false,true,false,getTeam(),true,1024.0f));
 
-					CBotTask *findpath = new CFindPathTask(pWpt->getOrigin());
-					CBotTask *pipetask = new CBotTF2DemomanPipeEnemy(
-						pWpt->getOrigin(),pWptBlast->getOrigin(),
-						getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)),
-						vEnemy,pEnemy);
-					CBotSchedule *pipesched = new CBotSchedule();
+					if ( pWpt )
+					{
+						CBotTask *findpath = new CFindPathTask(CWaypoints::getWaypointIndex(pWpt));
+						CBotTask *pipetask = new CBotTF2DemomanPipeEnemy(
+							pWpt->getOrigin(),pWptBlast->getOrigin(),
+							getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)),
+							vEnemy,pEnemy);
+						CBotSchedule *pipesched = new CBotSchedule();
 
-					pipesched->addTask(findpath);
-					pipesched->addTask(pipetask);
+						pipesched->addTask(findpath);
+						pipesched->addTask(pipetask);
 
-					m_pSchedules->add(pipesched);
+						m_pSchedules->add(pipesched);
 
-					return true;
+						return true;
+					}
 				}
 			}
 			break;

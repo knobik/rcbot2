@@ -391,6 +391,39 @@ class CTrainingSet;
 #define MOVELOOK_EVENT 5
 #define MOVELOOK_OVERRIDE 6
 
+class CBotLastSee
+{
+public:
+	CBotLastSee ()
+	{
+		reset();
+	}
+
+	inline void reset ()
+	{
+		m_pLastSee = NULL; // edict
+		m_fLastSeeTime = 0.0f; // time
+	}
+
+	CBotLastSee ( edict_t *pEdict );
+
+	void update ();
+
+	inline bool check ( edict_t *pEdict )
+	{
+		return (pEdict == (m_pLastSee.get()));
+	}
+
+	bool hasSeen ( float fTime );
+
+	Vector getLocation ();
+private:
+	MyEHandle m_pLastSee; // edict
+	float m_fLastSeeTime; // time
+	Vector m_vLastSeeLoc; // location
+	Vector m_vLastSeeVel; // velocity
+};
+
 class CBot 
 {
 public:

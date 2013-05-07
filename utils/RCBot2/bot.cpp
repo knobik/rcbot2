@@ -1519,6 +1519,8 @@ void CBot ::debugBot(char *msg)
 
 	char task_string[256];
 
+	extern const char *g_szUtils[BOT_UTIL_MAX+1];
+
 	edict_t *pEnemy = m_pEnemy.get();
 
 	IPlayerInfo *p = NULL;
@@ -1533,10 +1535,9 @@ void CBot ::debugBot(char *msg)
 		m_pSchedules->getCurrentTask()->debugString(task_string);
 
 	sprintf(msg,"Debugging bot: %s\n \
+		Current Util: %s \n \
 		Current Schedule: %s\n \
-		Current Task Details: \n \
-		---------------------\n \
-		%s\n \
+		Current Task: {%s}\n \
 		Look Task:%s\n \
 		Current Waypoint:%d\n \
 		Current Goal: %d\n \
@@ -1544,6 +1545,7 @@ void CBot ::debugBot(char *msg)
 		Enemy: %s (name = '%s')\n \
 		---CONDITIONS---\n%s", 
 		m_szBotName, 
+		(m_CurrentUtil>=0)?g_szUtils[m_CurrentUtil]:"none",
 		m_pSchedules->isEmpty() ? "none" : m_pSchedules->getCurrentSchedule()->getIDString(),
 		hastask ? task_string : "none",
 		g_szLookTaskToString[m_iLookTask], 
@@ -3228,3 +3230,41 @@ void CBots :: handleAutomaticControl ()
 		
 	}
 }
+
+
+
+CBotLastSee :: CBotLastSee ( edict_t *pEdict )
+{
+	m_pLastSee = pEdict;
+	update();
+}
+
+void CBotLastSee :: update ()
+{
+	if ( (m_pLastSee.get() == NULL) || !CBotGlobals::entityIsAlive(m_pLastSee) )
+	{
+		m_fLastSeeTime = 0.0f;
+		m_pLastSee = NULL;
+	}
+	else
+	{
+		m_fLastSeeTime = engine->Time();
+		m_vLastSeeLoc = CBotGlobals::entityOrigin(m_pLastSee);
+		CClassInterface::getVelocity(m_pLastSee,&m_vLastSeeVel);
+	}
+}
+
+bool CBotLastSee :: hasSeen ( float fTime )
+{
+	return (m_pLastSee.get() != NULL) && ((m_fLastSeeTime + fTime) > engine->Time());
+}
+
+Vector CBotLastSee :: getLocation ()
+{
+	return (m_vLastSeeLoc + m_vLastSeeVel);
+}
+
+	//MyEHandle m_pLastSee; // edict
+	//float m_fLastSeeTime; // time
+	//Vector m_vLastSeeLoc; // location
+	//Vector m_vLastSeeVel; // velocity

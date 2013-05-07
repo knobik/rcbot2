@@ -2704,7 +2704,7 @@ void CFindLastEnemy::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	else
 		pBot->stopMoving();
 
-	pBot->setLookAtTask((LOOK_AROUND));
+	pBot->setLookAtTask(LOOK_AROUND);
 
 	if ( m_fTime < engine->Time() )
 		complete();
