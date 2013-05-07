@@ -2260,20 +2260,36 @@ void CBot :: getLookAtVector ()
 		}
 	case LOOK_WAYPOINT:
 		{
+			//static float fWaypointHeight = 0.0f;
 			Vector vLook;
 
 			if ( m_pNavigator->nextPointIsOnLadder() )
-				setLookAt(m_pNavigator->getNextPoint()+Vector(0,0,64));
+			{
+				QAngle angle;
+				Vector vforward;
+
+				vLook = m_pNavigator->getNextPoint();
+
+				angle = QAngle(0,m_pNavigator->getNextYaw(),0);
+
+				AngleVectors(angle,&vforward);
+
+				vforward = (vforward/vforward.Length())*64;
+
+				vforward.z = 64.0f;
+
+				setLookAt(vLook + vforward);
+			}
 			else if ( m_pLastEnemy && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && (m_fLastSeeEnemy>0) )
 				setLookAt(m_vLastSeeEnemy);
 			else if ( (m_fCurrentDanger >= 15.0f) && m_pNavigator->getDangerPoint(&vLook) )
-				setLookAt(vLook + Vector(0,0,36.0f));
+				setLookAt(vLook);
 			else if ( m_pNavigator->getNextRoutePoint(&vLook) )
-				setLookAt(Vector(vLook.x,vLook.y,vLook.z + 36.0f));				
+				setLookAt(vLook);				
 			else
 			{
 				vLook = m_pNavigator->getPreviousPoint();
-				setLookAt(Vector(vLook.x,vLook.y,vLook.z + 36.0f));
+				setLookAt(vLook);
 			}
 				
 			if ( bDebug )
@@ -2461,6 +2477,7 @@ void CBot :: doLook ()
 	// looking at something?
     if ( lookAtIsValid () )
 	{	
+		float fSensitivity = (float)m_pProfile->m_iSensitivity;
 		QAngle requiredAngles;
 
 		//extern ConVar bot_anglespeed;
@@ -2476,8 +2493,13 @@ void CBot :: doLook ()
 
 		m_vViewAngles = cmd.viewangles;
 
-		changeAngles((float)m_pProfile->m_iSensitivity,&requiredAngles.x,&m_vViewAngles.x,NULL);
-		changeAngles((float)m_pProfile->m_iSensitivity,&requiredAngles.y,&m_vViewAngles.y,NULL);
+		if ( onLadder() ) // snap to ladder
+		{
+			fSensitivity = 14.0f;
+		}
+
+		changeAngles(fSensitivity,&requiredAngles.x,&m_vViewAngles.x,NULL);
+		changeAngles(fSensitivity,&requiredAngles.y,&m_vViewAngles.y,NULL);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.x);
 		CBotGlobals::fixFloatAngle(&m_vViewAngles.y);
 

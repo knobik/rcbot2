@@ -17,7 +17,19 @@ all mods : fixed bad memory allocation errors
 all mods : reliability fix for cfindpath task
 all mods : more debug hud info
 all mods : debug crash fixes
+07 May 2013
+-----------
 all mods : changes for linux - linux filesystem fixes
+tf2 : scouts jump around sometimes from waypoint to waypoint
+tf2 : extra spy checking, bots might melee friendlies searching for spies
+all mods : fixed bug when bots wouldn't change weapon when they were out of ammo
+all mods : aiming system changes, better aiming, especially for stationary targets
+07 May 2013 (2)
+-----------
+dod:s : fixed crash with bots capturing
+all mods : bots turn quicker on ladders to improve climbing success
+all mods : fixed bots looking at waypoints wrong
+all mods : improved ladder climbing (make sure waypoint YAW is facing the ladder)
 
 0.72
 ====

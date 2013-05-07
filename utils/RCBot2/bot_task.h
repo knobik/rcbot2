@@ -463,6 +463,7 @@ private:
 	Vector m_vAim;
 	Vector m_vOrigin;
 	CBotWeapon *m_pWeaponToUse;
+	Vector m_vLastEnemy;
 	bool m_bUseZ;
 	float m_z; // z = ground level
 	int m_iWaypointType;

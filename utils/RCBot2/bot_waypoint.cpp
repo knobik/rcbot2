@@ -334,6 +334,14 @@ bool CWaypointNavigator :: nextPointIsOnLadder ()
 	return false;
 }
 
+float CWaypointNavigator :: getNextYaw ()
+{
+	if ( m_iCurrentWaypoint != -1 )
+		return CWaypoints::getWaypoint(m_iCurrentWaypoint)->getAimYaw();
+
+	return false;
+}
+
 CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals )
 {
 	int i;

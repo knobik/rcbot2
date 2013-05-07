@@ -1373,6 +1373,14 @@ void CBotInvestigateTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vOrigin,m_fRadius,-1));
 
+		if ( pWaypoint == NULL )
+		{
+			// can't investigate
+			// but other tasks depend on this, so complete it
+			complete();
+			return;
+		}
+
 		if ( pWaypoint->numPaths() > 0 )
 		{
 			for ( int i = 0; i < pWaypoint->numPaths(); i ++ )
@@ -1930,13 +1938,13 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		// record the number of people I see now
 		int i;
 		edict_t *pPlayer;
-		edict_t *pDisguised;
+/*		edict_t *pDisguised;
 
 		int iClass;
 		int iTeam;
 		int iIndex;
 		int iHealth;
-
+*/
 		seenlist = 0;		
 
 		for ( i = 1; i <= gpGlobals->maxClients; i ++ )
@@ -3348,7 +3356,12 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		fail();
 	}
 
-	if ( m_bUseZ )
+	if ( (m_fEnemyTime + 5.0f) > engine->Time() )
+	{
+		pBot->setLookAtTask(LOOK_VECTOR);
+		pBot->setLookVector(m_vLastEnemy);
+	}
+	else if ( m_bUseZ )
 	{
 		Vector vAim = Vector(m_vAim.x,m_vAim.y,m_z);
 		pBot->setLookAtTask(LOOK_VECTOR);
@@ -3359,6 +3372,21 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		pBot->setLookAtTask(LOOK_SNIPE);
 		pBot->setLookVector(pBot->snipe(m_vAim));
 	}
+
+		// refrain from proning
+	pBot->updateCondition(CONDITION_RUN);
+
+	if ( m_iWaypointType & CWaypointTypes::W_FL_CROUCH )
+		pBot->duck();
+	else if ( m_iWaypointType & CWaypointTypes::W_FL_PRONE )
+	{			
+		pBot->updateDanger(MAX_BELIEF);
+		pBot->removeCondition(CONDITION_RUN);
+		pBot->updateCondition(CONDITION_PRONE);
+	}
+	else
+		pBot->removeCondition(CONDITION_PRONE);
+
 
 	fDist = (m_vOrigin - pBot->getOrigin()).Length2D();
 
@@ -3373,19 +3401,6 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	else
 	{
 		pBot->stopMoving();
-		// refrain from proning
-		pBot->updateCondition(CONDITION_RUN);
-
-		if ( m_iWaypointType & CWaypointTypes::W_FL_CROUCH )
-			pBot->duck();
-		else if ( m_iWaypointType & CWaypointTypes::W_FL_PRONE )
-		{			
-			pBot->updateDanger(MAX_BELIEF);
-			pBot->removeCondition(CONDITION_RUN);
-			pBot->updateCondition(CONDITION_PRONE);
-		}
-		else
-			pBot->removeCondition(CONDITION_PRONE);
 
 		// no enemy for a while
 		if ( (m_fEnemyTime + m_fTime) < engine->Time() )
@@ -3399,7 +3414,6 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( pBot->hasEnemy() )
 	{
-
 		pBot->setMoveLookPriority(MOVELOOK_ATTACK);
 
 		pBot->setLookAtTask(LOOK_ENEMY);
@@ -3410,6 +3424,8 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		// havin' fun
 		m_fEnemyTime = engine->Time();
+
+		m_vLastEnemy = CBotGlobals::entityOrigin(pBot->getEnemy());
 	}
 }
 
