@@ -36,6 +36,10 @@ all mods: bot debug hud more information
 tf2: ammo/health pickup changes
 tf2: possible crash fix for demoman
 
+tf2: engineer bots place a sentry when they hear 'put sentry here' voice command while moving a sentry
+tf2: bots check for spies again if they hear a 'spy' voice command
+tf2: medic crash bug fixed
+
 0.72
 ====
 all mods: please move rcbot2 folder to users home folder i.e. /users/<name> or ~/

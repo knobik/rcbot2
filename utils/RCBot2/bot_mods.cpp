@@ -939,6 +939,14 @@ bool CBotMod :: playerSpawned ( edict_t *pEntity )
 
 /////////////////////////////////////////////////////////////
 
+inline bool isPlayer ( edict_t *pEdict )
+{
+	static int index;
+
+	index = ENTINDEX(pEdict);
+
+	return (index>0)&&(index<=gpGlobals->maxClients);
+}
 
 // Naris @ AlliedModders .net
 
@@ -974,8 +982,13 @@ bool CTeamFortress2Mod :: TF2_IsPlayerCloaked(edict_t *pPlayer)
 
 bool CTeamFortress2Mod :: TF2_IsPlayerInvuln(edict_t *pPlayer)
 {
-    int pcond = CClassInterface :: getTF2Conditions(pPlayer);
-    return ((pcond & TF2_PLAYER_INVULN) == TF2_PLAYER_INVULN);
+	if ( isPlayer(pPlayer) )
+	{
+		int pcond = CClassInterface :: getTF2Conditions(pPlayer);
+		return ((pcond & TF2_PLAYER_INVULN) == TF2_PLAYER_INVULN);
+	}
+
+	return false;
 }
 
 bool CTeamFortress2Mod :: TF2_IsPlayerOnFire(edict_t *pPlayer)

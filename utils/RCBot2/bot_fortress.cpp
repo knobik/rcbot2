@@ -129,9 +129,39 @@ void CBotTF2 :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 {
 	switch ( cmd )
 	{
+	case TF_VC_SPY:
+		// someone shouted spy, HACK the bot to think they saw a spy here too
+		// for spy checking purposes
+		if ( isVisible(pPlayer) )
+		{
+			m_vLastSeeSpy = CBotGlobals::entityOrigin(pPlayer);
+			m_fSeeSpyTime = engine->Time() + randomFloat(3.0f,6.0f);
+			//m_pPrevSpy = pPlayer; // HACK
+		}
+		break;
 	// somebody shouted "MEDIC!"
 	case TF_VC_MEDIC:
 		medicCalled(pPlayer);
+		break;
+	case TF_VC_SENTRYHERE: // hear 'put sentry here' 
+		// if I'm carrying a sentry just drop it here
+		if ( getClass() == TF_CLASS_ENGINEER )
+		{
+			if ( m_bIsCarryingObj && m_bIsCarryingSentry )
+			{
+				if ( isVisible(pPlayer) && (distanceFrom(pPlayer) < 512) )
+				{
+					if ( randomInt(0,100) > 75 )
+						addVoiceCommand(TF_VC_YES);
+
+					primaryAttack();
+
+					m_pSchedules->removeSchedule(SCHED_TF2_ENGI_MOVE_BUILDING);
+				}
+				else if ( randomInt(0,100) > 75 )
+					addVoiceCommand(TF_VC_NO);
+			}
+		}
 		break;
 	case TF_VC_HELP:
 		// add utility can find player
@@ -2467,7 +2497,7 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 	edict_t *groundEntity = CClassInterface::getGroundEntity(m_pEdict);
 
 	// must stand on worldspawn
-	if ( groundEntity && (ENTINDEX(groundEntity)>0) && pEntity == groundEntity )
+	if ( groundEntity && (ENTINDEX(groundEntity)>0) && (pEntity == groundEntity) )
 	{
 		ICollideable *box;
 
