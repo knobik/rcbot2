@@ -589,6 +589,9 @@ void CHLDMBot :: modThink ()
 {
 	m_fIdealMoveSpeed = CClassInterface::getMaxSpeed(m_pEdict);
 
+	// update hitbox hull
+	//m_pEdict->GetCollideable()->GetCollisionOrigin();
+
 	if ( !CBotGlobals::entityIsValid(m_NearestPhysObj) )
 		m_NearestPhysObj = NULL;
 

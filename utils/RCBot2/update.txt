@@ -40,6 +40,10 @@ tf2: engineer bots place a sentry when they hear 'put sentry here' voice command
 tf2: bots check for spies again if they hear a 'spy' voice command
 tf2: medic crash bug fixed
 
+tf2: fixed blue team bots now don't defend the point on attack and defend maps
+tf2: engineer bots place moved object better if being attacked
+tf2: bots see teleporters quicker so they use them more often
+
 0.72
 ====
 all mods: please move rcbot2 folder to users home folder i.e. /users/<name> or ~/

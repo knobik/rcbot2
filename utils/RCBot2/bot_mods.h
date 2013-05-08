@@ -906,6 +906,11 @@ public:
 		return m_SentryGuns[id].sentry.get();
 	}
 
+	static edict_t *getTeleEntrance ( int id )
+	{
+		return m_Teleporters[id].entrance.get();
+	}
+
 	static bool isMyTeleporterSapped ( edict_t *pOwner )
 	{
 		int id = ENTINDEX(pOwner)-1;

@@ -1441,10 +1441,46 @@ void CBotTF2::healedPlayer(edict_t *pPlayer, float fAmount)
 // e.g. sentry gun -- if I dont see it quickly it might kill me
 edict_t *CBotFortress::getVisibleSpecial()
 {
+	static edict_t *pPlayer;
+	static edict_t *pReturn;
+
+	// this is a special visible which will return something important 
+	// that should be visible quickly, e.g. an enemy sentry gun
+	// or teleporter entrance for bots to make decisions quickly
 	if ( (signed int)m_iSpecialVisibleId >= gpGlobals->maxClients )
 		m_iSpecialVisibleId = 0;
+	
+	pPlayer = INDEXENT(m_iSpecialVisibleId+1);
+	pReturn = NULL;
 
-	return CTeamFortress2Mod::getSentryGun (m_iSpecialVisibleId++);
+	if ( pPlayer && (CClassInterface::getTF2Class(pPlayer) == TF_CLASS_ENGINEER) )
+	{
+		edict_t *pSentry = CTeamFortress2Mod::getSentryGun (m_iSpecialVisibleId);
+
+		// more interested in enemy sentries to sap and shoot!
+		pReturn = pSentry;
+
+		if ( CClassInterface::getTeam(pPlayer) == m_iTeam )
+		{
+			// more interested in teleporters on my team
+			edict_t *pTele = CTeamFortress2Mod::getTeleEntrance (m_iSpecialVisibleId);
+
+			pReturn = pTele;
+
+			if ( getClass() == TF_CLASS_ENGINEER )
+			{
+				// be a bit more random with engi's as they both might be important
+				// to repair other team members sentries!
+				if ( !pTele || randomInt(0,1) )
+					pReturn = pSentry;
+			}
+
+		}
+	}
+
+	m_iSpecialVisibleId++;
+
+	return pReturn;
 }
 /*
 lambda-
@@ -2414,8 +2450,8 @@ void CBotTF2::handleWeapons()
 	{
 		if ( m_bIsCarryingObj )
 		{
-			// don't shoot while carrying object unless after 10 seconds of carrying
-			if ( (getHealthPercent() > 0.75) || ((m_fCarryTime + 10.0f) > engine->Time()) )
+			// don't shoot while carrying object unless after 5 seconds of carrying
+			if ( (getHealthPercent() > 0.5f) || ((m_fCarryTime + 5.0f) > engine->Time()) )
 				return;
 		}
 	}
@@ -3501,7 +3537,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			CTeamFortress2Mod::isMapType(TF_MAP_CP)||CTeamFortress2Mod::isMapType(TF_MAP_TC)),fGetFlagUtility);
 
 	// only defend if defend area is > 0
-	ADD_UTILITY(BOT_UTIL_DEFEND_POINT,(m_iCurrentDefendArea>0) && 
+	ADD_UTILITY(BOT_UTIL_DEFEND_POINT,(!CTeamFortress2Mod::isAttackDefendMap()||(m_iTeam==TF2_TEAM_RED)) &&(m_iCurrentDefendArea>0) && 
 		(CTeamFortress2Mod::isMapType(TF_MAP_MVM)||CTeamFortress2Mod::isMapType(TF_MAP_SD)||CTeamFortress2Mod::isMapType(TF_MAP_CART)||
 		CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)||CTeamFortress2Mod::isMapType(TF_MAP_ARENA)||
 		CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||
@@ -4677,16 +4713,22 @@ void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
 		{
 			if ( getNavigator()->hasNextPoint() && (getClass() == TF_CLASS_SCOUT) )
 			{
-				if ( randomInt(0,100) > (int)(m_pProfile->m_fBraveness*10) )
+				if ( randomFloat(0.0f,100.0f) > (m_pProfile->m_fBraveness*10) )
 				{
-					Vector v_next = getNavigator()->getNextPoint();
-					Vector v_org = getOrigin();					
-					Vector v_comp = v_next-v_org;
-					float fDist = v_comp.Length();
-					Vector v_vel = (m_vVelocity/m_vVelocity.Length()) * fDist;
-					
-					if ( (v_next-(v_org + v_vel)).Length() <= 24.0f )
-						m_pButtons->tap(IN_JUMP);
+					float fVel = m_vVelocity.Length();
+
+					if ( fVel > 0.0f )
+					{
+						Vector v_next = getNavigator()->getNextPoint();
+						Vector v_org = getOrigin();					
+						Vector v_comp = v_next-v_org;
+						float fDist = v_comp.Length();
+
+						Vector v_vel = (m_vVelocity/fVel) * fDist;
+						
+						if ( (v_next-(v_org + v_vel)).Length() <= 24.0f )
+							m_pButtons->tap(IN_JUMP);
+					}
 				}
 			}
 		}
