@@ -1436,7 +1436,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 					}
 				}
 
-				snipetask = new CBotDODSnipe(util->getWeaponChoice(),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),iFlagID!=-1,vGoal.z+48);
+				snipetask = new CBotDODSnipe(util->getWeaponChoice(),pWaypoint->getOrigin(),pWaypoint->getAimYaw(),iFlagID!=-1,vGoal.z+48,pWaypoint->getFlags());
 
 				findpath->setCompleteInterrupt(CONDITION_PUSH);
 				snipetask->setCompleteInterrupt(CONDITION_PUSH);

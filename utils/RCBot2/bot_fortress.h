@@ -63,7 +63,7 @@ class CBotUtility;
 #define TF2_PLAYER_INVULN       (1 << 5)    // 32
 #define TF2_PLAYER_HEALING	    (1 << 6)    // 64
 #define TF2_PLAYER_TAUNTING	    (1 << 7)    // 128
-#define TF2_PLAYER_ONFIRE	    (1 << 14)   // 16384
+#define TF2_PLAYER_ONFIRE	    4194304 // fix may 2013
 
 //#define TF2_SPY_FOV_KNIFEATTACK 90.0f
 
@@ -249,6 +249,8 @@ public:
 
 	virtual void enemyLost (edict_t *pEnemy);
 
+	virtual void shot ( edict_t *pEnemy );
+
 	virtual int engiBuildObject ( int *iState, eEngiBuild iObject, float *fTime, int *iTries );
 
 	virtual float getEnemyFactor ( edict_t *pEnemy ) { return CBot::getEnemyFactor(pEnemy); }
@@ -423,6 +425,8 @@ public:
 
 	virtual void voiceCommand ( int cmd ) { };
 
+	virtual void seeFriendlyHurtEnemy ( edict_t *pTeammate, edict_t *pEnemy, CWeapon *pWeapon );
+
 protected:
 	virtual void selectTeam ();
 
@@ -529,6 +533,10 @@ protected:
 	float m_fTeleporterEntPlacedTime;
 	float m_fTeleporterExtPlacedTime;
 	unsigned m_iTeleportedPlayers;
+
+	// list of spies who I saw were attacked by my team-mates recently
+	// for use with spy checking
+	float m_fSpyList[MAX_PLAYERS];
 
 	int m_iTeam;
 

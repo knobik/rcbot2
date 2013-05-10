@@ -57,6 +57,15 @@ public:
 
 	static void freeMemory ();
 
+	static inline bool isPlayer ( edict_t *pEdict )
+	{
+		static int index;
+
+		index = ENTINDEX(pEdict);
+
+		return (index>0)&&(index<=gpGlobals->maxClients);
+	}
+
 	static bool walkableFromTo (edict_t *pPlayer,Vector v_src, Vector v_dest);
 
 	static float yawAngleFromEdict(edict_t *pEntity,Vector vOrigin);

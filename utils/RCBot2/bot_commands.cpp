@@ -881,7 +881,7 @@ eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd,
 
 							if ( pWeapon )
 							{
-								snipetask = new CBotDODSnipe(pWeapon,pWaypoint->getOrigin(),pWaypoint->getAimYaw());
+								snipetask = new CBotDODSnipe(pWeapon,pWaypoint->getOrigin(),pWaypoint->getAimYaw(),false,0,pWaypoint->getFlags());
 
 								findpath->setCompleteInterrupt(CONDITION_PUSH);
 								snipetask->setCompleteInterrupt(CONDITION_PUSH);

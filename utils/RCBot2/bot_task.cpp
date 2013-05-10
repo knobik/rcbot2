@@ -1932,6 +1932,7 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	CBotWeapon *pWeapon;
 	CBotWeapon *pChooseWeapon;
 	CBotWeapons *pWeaponList;
+	static int iAttackProb;
 
 	if ( m_fTime == 0.0f )
 	{
@@ -2031,7 +2032,7 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 		m_fNextCheckUnseen = engine->Time() + 0.1f;
 	}
-	else if ( m_pUnseenBefore && (!CBotGlobals::entityIsAlive(m_pUnseenBefore) || !CBotGlobals::entityIsValid(m_pUnseenBefore)) ) 
+	else if ( m_pUnseenBefore && (!CBotGlobals::entityIsAlive(m_pUnseenBefore) || !CBotGlobals::entityIsValid(m_pUnseenBefore) || !pBot->isVisible(m_pUnseenBefore) ) ) 
 	{
 		m_pUnseenBefore = NULL;
 		m_fNextCheckUnseen = 0.0f;
@@ -2075,9 +2076,14 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		pChooseWeapon = pWeaponList->getWeapon(CWeapons::getWeapon(TF2_WEAPON_FLAMETHROWER));
 		
 		if ( !pChooseWeapon->outOfAmmo(pBot) )
+		{
+			// use flamethrower
+			iAttackProb = 90;
 			break;
+		}
 		// move down to melee if out of ammo
 	default:
+		iAttackProb = 75;
 		pChooseWeapon = pBot->getBestWeapon(NULL,true,true,true);
 		break;
 	}
@@ -2096,7 +2102,7 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	}
 	else
 	{
-		if ( randomInt(0,100) > 75 )
+		if ( randomInt(0,100) < iAttackProb )
 			pBot->primaryAttack();
 	}
 	
@@ -3373,21 +3379,6 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		pBot->setLookVector(pBot->snipe(m_vAim));
 	}
 
-		// refrain from proning
-	pBot->updateCondition(CONDITION_RUN);
-
-	if ( m_iWaypointType & CWaypointTypes::W_FL_CROUCH )
-		pBot->duck();
-	else if ( m_iWaypointType & CWaypointTypes::W_FL_PRONE )
-	{			
-		pBot->updateDanger(MAX_BELIEF);
-		pBot->removeCondition(CONDITION_RUN);
-		pBot->updateCondition(CONDITION_PRONE);
-	}
-	else
-		pBot->removeCondition(CONDITION_PRONE);
-
-
 	fDist = (m_vOrigin - pBot->getOrigin()).Length2D();
 
 	if ( (fDist > 16) || !bDeployedOrZoomed )
@@ -3401,6 +3392,21 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	else
 	{
 		pBot->stopMoving();
+
+		if ( m_iWaypointType & CWaypointTypes::W_FL_PRONE )
+		{			
+			//pBot->updateDanger(MAX_BELIEF);
+			pBot->removeCondition(CONDITION_RUN);
+			pBot->updateCondition(CONDITION_PRONE);
+		}
+		else
+		{
+			if ( m_iWaypointType & CWaypointTypes::W_FL_CROUCH )
+				pBot->duck();
+			// refrain from proning
+			pBot->updateCondition(CONDITION_RUN);
+			pBot->removeCondition(CONDITION_PRONE);
+		}
 
 		// no enemy for a while
 		if ( (m_fEnemyTime + m_fTime) < engine->Time() )

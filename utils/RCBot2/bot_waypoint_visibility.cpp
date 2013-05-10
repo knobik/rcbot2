@@ -98,7 +98,7 @@ void CWaypointVisibilityTable :: workVisibilityForWaypoint ( int i, int iNumWayp
 	if ( !Waypoint1->isUsed() )
 		return;
 
-	for ( int j = 0; j < iNumWaypoints; j ++ )
+	for ( register short int j = 0; j < iNumWaypoints; j ++ )
 	{
 		if ( i == j )
 		{
@@ -122,7 +122,7 @@ void CWaypointVisibilityTable :: workVisibilityForWaypoint ( int i, int iNumWayp
 
 void CWaypointVisibilityTable :: WorkOutVisibilityTable ()
 {
-	int i;
+	register short int i;
 
 	int iNumWaypoints = CWaypoints::numWaypoints();
 

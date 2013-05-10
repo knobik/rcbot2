@@ -44,35 +44,6 @@ vector<CBotEvent*> CBotEvents :: m_theEvents;
 extern ConVar bot_use_vc_commands;
 ///////////////////////////////////////////////////////
 
-void CRoundStartEvent :: execute ( IBotEventInterface *pEvent )
-{
-	CBots::roundStart();
-}
-
-void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
-{
-	CBot *pBot = CBots::getBotPointer(m_pActivator);
-	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
-
-	if ( m_pActivator != pAttacker )
-	{
-		if ( pAttacker && (!pAttacker->m_pNetworkable || !pAttacker->m_NetworkSerialNumber) )
-			pAttacker = NULL;
-
-		if ( pBot )
-		{
-			pBot->hurt(pAttacker,pEvent->getInt("health"));
-		}
-
-		pBot = CBots::getBotPointer(pAttacker);
-
-		if ( pBot )
-		{
-			pBot->shot(m_pActivator);
-		}
-	}
-	//CBots::botFunction()
-}
 class CBotSeeFriendlyKill : public IBotFunction
 {
 public:
@@ -97,6 +68,31 @@ private:
 	edict_t *m_pTeammate;
 	edict_t *m_pDied;
 	CWeapon *m_pWeapon;
+};
+
+class CBotSeeFriendlyHurtEnemy : public IBotFunction
+{
+public:
+	CBotSeeFriendlyHurtEnemy ( edict_t *pTeammate, edict_t *pEnemy )
+	{
+		m_pTeammate = pTeammate;
+		m_pEnemy = pEnemy;
+	}
+
+	void execute ( CBot *pBot )
+	{
+		if ( CClassInterface::getTeam(m_pTeammate) != pBot->getTeam() )
+			return;
+
+		if ( pBot->getEdict() != m_pTeammate )
+		{
+			if ( pBot->isVisible(m_pTeammate) && pBot->isVisible(m_pEnemy) )
+				pBot->seeFriendlyHurtEnemy(m_pTeammate,m_pEnemy,NULL);
+		}
+	}
+private:
+	edict_t *m_pTeammate;
+	edict_t *m_pEnemy;
 };
 
 class CBotSeeFriendlyDie : public IBotFunction
@@ -124,6 +120,46 @@ private:
 	edict_t *m_pKiller;
 	CWeapon *m_pWeapon;
 };
+
+////////////////////////////////////////////////
+
+
+void CRoundStartEvent :: execute ( IBotEventInterface *pEvent )
+{
+	CBots::roundStart();
+}
+
+void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
+{
+	CBot *pBot = CBots::getBotPointer(m_pActivator);
+	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
+
+	if ( m_pActivator != pAttacker )
+	{
+		if ( pAttacker && (!pAttacker->m_pNetworkable || !pAttacker->m_NetworkSerialNumber) )
+			pAttacker = NULL;
+
+		if ( pBot )
+		{
+			pBot->hurt(pAttacker,pEvent->getInt("health"));
+		}
+
+		pBot = CBots::getBotPointer(pAttacker);
+
+		if ( pBot )
+		{
+			pBot->shot(m_pActivator);
+		}
+
+		if ( CBotGlobals::isPlayer(m_pActivator) && CBotGlobals::isPlayer(pAttacker) )
+		{
+			CBotSeeFriendlyHurtEnemy func1(pAttacker,m_pActivator);
+
+			CBots::botFunction(&func1);
+		}
+	}
+	//CBots::botFunction()
+}
 
 void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 {

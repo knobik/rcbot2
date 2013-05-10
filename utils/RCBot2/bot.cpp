@@ -1050,20 +1050,15 @@ void CBot :: updateConditions ()
 	}
 	else
 	{
-		// save writing too much
-		//if ( hasSomeConditions(CONDITION_SEE_CUR_ENEMY|CONDITION_ENEMY_OBSCURED|
-		//						CONDITION_ENEMY_DEAD|CONDITION_SEE_ENEMY_HEAD) )
-		//{
-			removeCondition(CONDITION_SEE_CUR_ENEMY);
-			removeCondition(CONDITION_ENEMY_OBSCURED);
-			removeCondition(CONDITION_ENEMY_DEAD);
-			removeCondition(CONDITION_SEE_ENEMY_HEAD);
-		//}
+		removeCondition(CONDITION_SEE_CUR_ENEMY);
+		removeCondition(CONDITION_ENEMY_OBSCURED);
+		removeCondition(CONDITION_ENEMY_DEAD);
+		removeCondition(CONDITION_SEE_ENEMY_HEAD);
 	}
 
 	if ( m_pLastEnemy )
 	{
-		if ( m_fLastSeeEnemy )
+		if ( m_fLastSeeEnemy > 0.0f )
 		{
 			if ( m_fLastUpdateLastSeeEnemy < engine->Time() )
 			{
@@ -1075,6 +1070,8 @@ void CBot :: updateConditions ()
 					removeCondition(CONDITION_SEE_LAST_ENEMY_POS);
 			}
 		}
+		else
+			removeCondition(CONDITION_SEE_LAST_ENEMY_POS);
 	}
 
 	if ( FVisible(m_vLookVector) )

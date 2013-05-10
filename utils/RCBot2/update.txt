@@ -1,48 +1,51 @@
-0.73
+0.74
 ====
+
 dod:s	 : fixes bots not seeing properly through windows
-dod:s    : fix bots not proning on sniper spots
+dod:s    : fix bots not proning on sniper spots (again!)
 dod:s    : bots don't run away from smoke grenades
 dod:s    : bots aim for the head if visible (more deadly)
-tf2		 : spy detection changes, bots shouldn't be able to redetect the same spy if if has changed disguise
+dod:s	 : fixed crash with bots capturing
+tf2		 : spy detection changes, bots shouldn't be able to redetect the same spy if it has changed disguise and gone out of sight
+tf2		 : spy detection improvement: bots seeing teammates shooting spies will shoot them too
+tf2		 : spy detection improvement: spies who are cloaked and on fire can be seen
+tf2		 : bots detect a spy if they are cloaked, on fire and no spies on team
+tf2		 : fixed on fire detection (medics heal at a higher priority)
+tf2		 : bots shout spy if they see an undisguised enemy spy
+tf2		 : bots remember spies that killed them
+tf2		 : changes to enemy following
 tf2		 : simple spy checking - bots melee the air, pyros fire flamethrower
 tf2      : update bot shooting fov
 tf2		 : bots don't listen to cloaked spies
 tf2		 : fixed sniper bug with snipers running on the spot
 tf2		 : changes to spy detection and engi building
 tf2      : fixed engis not placing moved objects (esp. dispensers)
+tf2		 : scouts jump around sometimes from waypoint to waypoint
+tf2		 : extra spy checking, bots might melee friendlies searching for spies
+tf2		 : bots try to go back to their last seen medic for health (it may also be a spy)
+tf2		 : ammo/health pickup changes, bots should change task if they suddenly picked up health or ammo
+tf2		 : possible crash fix for demoman
+tf2		 : engineer bots place a sentry when they hear 'put sentry here' voice command while moving a sentry
+tf2		 : bots check for spies again if they hear a 'spy' voice command
+tf2		 : medic crash bug fixed
+tf2		 : fixed blue team bots now don't defend the point on attack and defend maps
+tf2		 : engineer bots place moved object better if being attacked
+tf2		 : bots see teleporters quicker so they use them more often
+tf2		 : scouts automatically double jump off new waypoint type "fall" to save fall damage
 all mods : new waypoint type "fall" (fall damage)
 all mods : fixed crash in debug hud with looktask string error
 all mods : fixed bad memory allocation errors
 all mods : reliability fix for cfindpath task
 all mods : more debug hud info
 all mods : debug crash fixes
-07 May 2013
------------
-all mods : changes for linux - linux filesystem fixes
-tf2 : scouts jump around sometimes from waypoint to waypoint
-tf2 : extra spy checking, bots might melee friendlies searching for spies
+all mods : changes for linux
 all mods : fixed bug when bots wouldn't change weapon when they were out of ammo
 all mods : aiming system changes, better aiming, especially for stationary targets
-07 May 2013 (2)
------------
-dod:s : fixed crash with bots capturing
 all mods : bots turn quicker on ladders to improve climbing success
 all mods : fixed bots looking at waypoints wrong
 all mods : improved ladder climbing (make sure waypoint YAW is facing the ladder)
+all mods : bot debug hud more information
 
-tf2: bots try to go back to their last seen medic for health (it may also be a spy)
-all mods: bot debug hud more information
-tf2: ammo/health pickup changes
-tf2: possible crash fix for demoman
-
-tf2: engineer bots place a sentry when they hear 'put sentry here' voice command while moving a sentry
-tf2: bots check for spies again if they hear a 'spy' voice command
-tf2: medic crash bug fixed
-
-tf2: fixed blue team bots now don't defend the point on attack and defend maps
-tf2: engineer bots place moved object better if being attacked
-tf2: bots see teleporters quicker so they use them more often
 
 0.72
 ====

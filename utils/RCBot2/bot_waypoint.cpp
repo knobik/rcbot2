@@ -341,7 +341,7 @@ float CWaypointNavigator :: getNextYaw ()
 
 	return false;
 }
-
+// best waypoints are those with lowest danger
 CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals )
 {
 	int i;
@@ -350,31 +350,38 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 	float fBelief = 0;
 	float fSelect;
 
-	//pWpt = goals.Random();
-
-	for ( i = 0; i < goals->Size(); i ++ )
+	// simple checks
+	switch ( goals->Size() )
 	{
-		fBelief += MAX_BELIEF - m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
-	}
-
-	fSelect = randomFloat(0,fBelief);
-
-	fBelief = 0;
-	
-	for ( i = 0; i < goals->Size(); i ++ )
-	{
-		fBelief += MAX_BELIEF -m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
-
-		if ( fSelect <= fBelief )
+	case 0:return NULL;
+	case 1:return goals->ReturnValueFromIndex(0);
+	default:
 		{
-			pWpt = (*goals)[i];
-			break;
+			for ( i = 0; i < goals->Size(); i ++ )
+			{
+				fBelief += MAX_BELIEF - m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
+			}
+
+			fSelect = randomFloat(0,fBelief);
+
+			fBelief = 0;
+			
+			for ( i = 0; i < goals->Size(); i ++ )
+			{
+				fBelief += MAX_BELIEF -m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
+
+				if ( fSelect <= fBelief )
+				{
+					pWpt = (*goals)[i];
+					break;
+				}
+			}
+
+			if ( pWpt == NULL )
+				pWpt = goals->Random();
 		}
 	}
-
-	if ( pWpt == NULL )
-		pWpt = goals->Random();
-
+		
 	return pWpt;
 }
 
@@ -1737,7 +1744,9 @@ int CWaypoints :: getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam, fl
 
 void CWaypoints :: deletePathsTo ( int iWpt )
 {
-	for ( int i = 0; i < numWaypoints(); i ++ )
+	short int iNumWaypoints = (short int)numWaypoints();
+
+	for ( register short int i = 0; i < iNumWaypoints; i ++ )
 		m_theWaypoints[i].removePathTo(iWpt);
 }
 
@@ -1960,9 +1969,9 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vecto
 	register short int i;
 	static short int size;
 	static CWaypoint *pWpt;
-	static IBotNavigator *pNav;
+	static CWaypointNavigator *pNav;
 	
-	pNav = pBot->getNavigator();
+	pNav = (CWaypointNavigator*)pBot->getNavigator();
 
 	size = numWaypoints();
 
@@ -2009,34 +2018,7 @@ CWaypoint *CWaypoints :: randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vecto
 
 	if ( !goals.IsEmpty() )
 	{
-		float fBelief = 0;
-		float fSelect;
-
-		//pWpt = goals.Random();
-
-		// higher chance of choosing route with lowest danger
-		for ( i = 0; i < goals.Size(); i ++ )
-		{
-			fBelief += (MAX_BELIEF - pNav->getBelief(CWaypoints::getWaypointIndex(goals[i])));
-		}
-	
-		fSelect = randomFloat(0,fBelief);
-
-		fBelief = 0;
-		
-		for ( i = 0; i < goals.Size(); i ++ )
-		{
-			fBelief += (MAX_BELIEF - pNav->getBelief(CWaypoints::getWaypointIndex(goals[i])));
-
-			if ( fSelect <= fBelief )
-			{
-				pWpt = goals[i];
-				break;
-			}
-		}
-	
-		if ( pWpt == NULL )
-			pWpt = goals.Random();
+		pWpt = pNav->chooseBestFromBelief(&goals);
 	}
 
 	goals.Clear();
@@ -2124,10 +2106,10 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, 
 
 	if ( !goals.IsEmpty() )
 	{
-		CWaypointNavigator *pNav;
-		
 		if ( pBot )
 		{
+			CWaypointNavigator *pNav;
+		
 			pNav = (CWaypointNavigator*)pBot->getNavigator();
 
 			pWpt = pNav->chooseBestFromBelief(&goals);
