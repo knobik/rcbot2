@@ -6,6 +6,7 @@ dod:s    : fix bots not proning on sniper spots (again!)
 dod:s    : bots don't run away from smoke grenades
 dod:s    : bots aim for the head if visible (more deadly)
 dod:s	 : fixed crash with bots capturing
+tf2		 : fixed bots wrongly defending or attaking points when switching teams after round reset
 tf2		 : spy detection changes, bots shouldn't be able to redetect the same spy if it has changed disguise and gone out of sight
 tf2		 : spy detection improvement: bots seeing teammates shooting spies will shoot them too
 tf2		 : spy detection improvement: spies who are cloaked and on fire can be seen

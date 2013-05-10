@@ -820,6 +820,15 @@ void CBot :: think ()
 #ifdef _DEBUG
 	}
 
+	if ( rcbot_debug_iglev.GetInt() != 7 )
+	{
+#endif
+	setMoveLookPriority(MOVELOOK_TASK);
+	m_pSchedules->execute(this);
+	setMoveLookPriority(MOVELOOK_THINK);
+#ifdef _DEBUG
+	}
+// fix -- put listening AFTER task executed, as m_bWantToListen may update
 	if ( rcbot_debug_iglev.GetInt() != 6 )
 	{
 #endif
@@ -831,15 +840,6 @@ void CBot :: think ()
 		m_fLookSetTime = 0.0f;
 		m_fListenTime = 0.0f;
 	}
-#ifdef _DEBUG
-	}
-
-	if ( rcbot_debug_iglev.GetInt() != 7 )
-	{
-#endif
-	setMoveLookPriority(MOVELOOK_TASK);
-	m_pSchedules->execute(this);
-	setMoveLookPriority(MOVELOOK_THINK);
 #ifdef _DEBUG
 	}
 

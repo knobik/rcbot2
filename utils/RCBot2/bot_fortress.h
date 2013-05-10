@@ -61,8 +61,10 @@ class CBotUtility;
 #define TF2_PLAYER_DISGUISED	(1 << 3)    // 8
 #define TF2_PLAYER_CLOAKED      (1 << 4)    // 16
 #define TF2_PLAYER_INVULN       (1 << 5)    // 32
-#define TF2_PLAYER_HEALING	    (1 << 6)    // 64
+#define TF2_PLAYER_TELEGLOW     (1 << 6)    // 64
+#define TF2_PLAYER_HEALING	    2097152    
 #define TF2_PLAYER_TAUNTING	    (1 << 7)    // 128
+#define TF2_PLAYER_TELEPORTING	(1<<10)    // 1024 Player is teleporting
 #define TF2_PLAYER_ONFIRE	    4194304 // fix may 2013
 
 //#define TF2_SPY_FOV_KNIFEATTACK 90.0f
@@ -476,7 +478,7 @@ protected:
 	float m_fPickupTime;
 	float m_fLookAfterSentryTime;
 
-	TF_Class m_iPrevSpyDisguises[2];
+	TF_Class m_iPrevSpyDisguise;
 
 	Vector m_vLastSeeSpy;
 

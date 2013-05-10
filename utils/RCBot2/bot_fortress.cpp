@@ -232,7 +232,7 @@ CBotFortress :: CBotFortress()
 	CBot(); 
 
 	// remember prev spy disguised in game while playing
-	m_iPrevSpyDisguises[0] = m_iPrevSpyDisguises[1] = TF_CLASS_CIVILIAN;
+	m_iPrevSpyDisguise = (TF_Class)0;
 
 	m_fSentryPlaceTime = 0;
 	m_iSentryKills = 0;
@@ -912,7 +912,10 @@ void CBotFortress :: setClass ( TF_Class _class )
 
 bool CBotFortress :: thinkSpyIsEnemy ( edict_t *pEdict, TF_Class iDisguise )
 {
-	return ( (m_fSeeSpyTime > engine->Time()) && (m_pPrevSpy == pEdict) && ((m_iPrevSpyDisguises[0] == iDisguise)||(m_iPrevSpyDisguises[1] == iDisguise)) );
+	return ( (m_fSeeSpyTime > engine->Time()) &&  // if bot is in spy check mode
+		(m_pPrevSpy == pEdict) &&				 // and its the last spy we saw
+		// and its the same disguise or we last saw the spy just a couple of seconds ago
+		((m_iPrevSpyDisguise == iDisguise)||((engine->Time()-m_fLastSeeSpyTime)<3.0f)) );
 }
 
 bool CBotTF2 ::thinkSpyIsEnemy(edict_t *pEdict, TF_Class iDisguise)
@@ -1212,8 +1215,8 @@ void CBotFortress :: foundSpy (edict_t *pEdict,TF_Class iDisguise)
 	m_fSeeSpyTime = engine->Time() + randomFloat(9.0f,18.0f);
 	m_vLastSeeSpy = CBotGlobals::entityOrigin(pEdict);
 	m_fLastSeeSpyTime = engine->Time();
-	if ( iDisguise && ((m_iPrevSpyDisguises[0] != iDisguise) && (m_iPrevSpyDisguises[1] != iDisguise)) )
-		m_iPrevSpyDisguises[randomInt(0,1)] = iDisguise;
+	if ( iDisguise && (m_iPrevSpyDisguise != iDisguise) )
+		m_iPrevSpyDisguise = iDisguise;
 	
 	//m_fFirstSeeSpy = engine->Time(); // to do, add delayed action
 };
