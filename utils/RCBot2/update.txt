@@ -1,6 +1,7 @@
 0.74
 ====
 
+installer/launcher : fixed issues with dods install and launcher writing wrong values
 dod:s	 : fixes bots not seeing properly through windows
 dod:s    : fix bots not proning on sniper spots (again!)
 dod:s    : bots don't run away from smoke grenades
@@ -33,6 +34,10 @@ tf2		 : fixed blue team bots now don't defend the point on attack and defend map
 tf2		 : engineer bots place moved object better if being attacked
 tf2		 : bots see teleporters quicker so they use them more often
 tf2		 : scouts automatically double jump off new waypoint type "fall" to save fall damage
+tf2		 : fixed gameevent debug crashing
+tf2		 : changes to sniping/when area changes bots change position
+tf2		 : changes to engineer building to increase build success
+all mods : waypoint visibility percentage shown
 all mods : new waypoint type "fall" (fall damage)
 all mods : fixed crash in debug hud with looktask string error
 all mods : fixed bad memory allocation errors

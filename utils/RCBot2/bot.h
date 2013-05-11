@@ -303,7 +303,7 @@ private:
 // events
 class CRCBotEventListener : public IGameEventListener2
 {
-	void FireGameEvent( IGameEvent *event );
+	void FireGameEvent( IGameEvent *pevent );
 };
 //---------------------------------------------------------------------------------
 // Purpose: a sample 3rd party plugin class
@@ -341,7 +341,7 @@ public:
 	virtual void			OnEdictFreed( const edict_t *edict  );	
 
 	// IGameEventListener Interface
-	virtual void FireGameEvent( KeyValues * event );
+	virtual void FireGameEvent( KeyValues * pevent );
 	//virtual void FireGameEvent( IGameEvent * event );
 
 	virtual int GetCommandIndex() { return m_iClientCommandIndex; }

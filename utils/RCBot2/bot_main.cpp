@@ -1027,42 +1027,110 @@ void CRCBotPlugin::OnQueryCvarValueFinished( QueryCvarCookie_t iCookie, edict_t 
 	return;
 }
 
+// Data types from Keyvalues.h
+enum types_t
+{
+	TYPE_NONE = 0,
+	TYPE_STRING,
+	TYPE_INT,
+	TYPE_FLOAT,
+	TYPE_PTR,
+	TYPE_WSTRING,
+	TYPE_COLOR,
+	TYPE_UINT64,
+	TYPE_NUMTYPES, 
+};
 
 //---------------------------------------------------------------------------------
 // Purpose: called when an event is fired
 //---------------------------------------------------------------------------------
-void CRCBotPlugin::FireGameEvent( KeyValues * event )
+void CRCBotPlugin::FireGameEvent( KeyValues * pevent )
 {
+	static char szKey[128];
+	static char szValue[128];
+
 	if ( CBotGlobals :: isEventVersion (1) )
 	{
-		const char *type = event->GetName();
+		const char *type = pevent->GetName();
 
-		CBotEvents::executeEvent((void*)event,TYPE_KEYVALUES);	
+		CBotEvents::executeEvent((void*)pevent,TYPE_KEYVALUES);	
 
 		if ( CClients::clientsDebugging(BOT_DEBUG_GAME_EVENT) )
 		{
-			CClients::clientDebugMsg(BOT_DEBUG_GAME_EVENT,type);
+			KeyValues *pk = pevent->GetFirstTrueSubKey();
 
-			for ( KeyValues *pk = event->GetFirstTrueSubKey(); pk; pk = pk->GetNextTrueSubKey())
+			CClients::clientDebugMsg(NULL,BOT_DEBUG_GAME_EVENT,"[BEGIN \"%s\"]",type);
+
+			/*while ( pk != NULL )
+			{
+				CClients::clientDebugMsg(NULL,BOT_DEBUG_GAME_EVENT,"BEGIN %s",pk->GetName());
+				pk = pk->GetNextTrueSubKey();
+			}*/
+
+			pk = pevent->GetFirstValue();
+
+//For some reason KeyValues CRASHES when receiving the GetString of a non string
+//so we have to be careful below:
+
+			while ( pk != NULL )
+			{
+				strncpy(szKey,pk->GetName(),127);
+				szKey[127] = 0;
+
+				switch ( pk->GetDataType() )
+				{
+		case TYPE_FLOAT:
+					sprintf(szValue,"%0.2f",pk->GetFloat());
+					break;
+		case TYPE_INT:
+					sprintf(szValue,"%d",pk->GetInt());
+					break;
+		case TYPE_PTR:
+					sprintf(szValue,"%x",(int)pk->GetPtr());
+					break;
+		case TYPE_UINT64:
+					sprintf(szValue,"%d",pk->GetUint64());
+					break;
+		case TYPE_WSTRING:
+					strcpy(szValue,"WSTRING");
+					break;
+		case TYPE_STRING:
+					strncpy(szValue,pk->GetString(),127);
+					break;
+		default:
+				strcpy(szValue,"NULL");
+				break;
+				}
+				
+				szValue[127] = 0;
+
+				CClients::clientDebugMsg(NULL,BOT_DEBUG_GAME_EVENT,"\t%s = %s",szKey,szValue);
+				pk = pk->GetNextValue();
+			}
+
+			CClients::clientDebugMsg(NULL,BOT_DEBUG_GAME_EVENT,"[END \"%s\"]",type);
+
+/*
+			for ( KeyValues *pk = pevent->GetFirstTrueSubKey(); pk; pk = pk->GetNextTrueSubKey())
 			{
 				CClients::clientDebugMsg(BOT_DEBUG_GAME_EVENT,pk->GetName());
 			}
-			for ( KeyValues *pk = event->GetFirstValue(); pk; pk = pk->GetNextValue() )
+			for ( KeyValues *pk = pevent->GetFirstValue(); pk; pk = pk->GetNextValue() )
 			{		
 				char szMsg[512];
 
 				sprintf(szMsg,"%s = %s",pk->GetName(),pk->GetString());
 				CClients::clientDebugMsg(BOT_DEBUG_GAME_EVENT,szMsg);
-			}
+			}*/
 		}
 	}
 }
 
-void CRCBotEventListener::FireGameEvent( IGameEvent * event )
+void CRCBotEventListener::FireGameEvent( IGameEvent * pevent )
 {
 	if ( CBotGlobals :: isEventVersion (2) )
 	{
-		CBotEvents::executeEvent((void*)event,TYPE_IGAMEEVENT);
+		CBotEvents::executeEvent((void*)pevent,TYPE_IGAMEEVENT);
 	}
 }
 

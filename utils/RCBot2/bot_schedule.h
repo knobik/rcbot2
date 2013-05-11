@@ -490,7 +490,7 @@ public:
 class CBotTF2SnipeSched : public CBotSchedule
 {
 public:
-	CBotTF2SnipeSched ( Vector vOrigin, float fYaw );
+	CBotTF2SnipeSched ( Vector vOrigin, float fYaw, int iArea = 0 );
 
 	void init ();
 };

@@ -62,6 +62,7 @@ class CBotUtility;
 #define TF2_PLAYER_CLOAKED      (1 << 4)    // 16
 #define TF2_PLAYER_INVULN       (1 << 5)    // 32
 #define TF2_PLAYER_TELEGLOW     (1 << 6)    // 64
+#define TF2_PLAYER_KRITS		524288
 #define TF2_PLAYER_HEALING	    2097152    
 #define TF2_PLAYER_TAUNTING	    (1 << 7)    // 128
 #define TF2_PLAYER_TELEPORTING	(1<<10)    // 1024 Player is teleporting

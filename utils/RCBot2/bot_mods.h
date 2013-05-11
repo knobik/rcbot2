@@ -804,6 +804,8 @@ public:
 
 	static bool TF2_IsPlayerInvuln(edict_t *pPlayer);
 
+	static bool TF2_IsPlayerKrits(edict_t *pPlayer);
+
 	static bool TF2_IsPlayerOnFire(edict_t *pPlayer);
 
 	static bool TF2_IsPlayerTaunting(edict_t *pPlayer);

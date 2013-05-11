@@ -333,44 +333,28 @@ void CClients::clientDebugMsg(CBot *pBot, int iLev, const char *fmt, ... )
 	clientDebugMsg(iLev,string,pBot);
 }
 
+const char *g_szDebugTags[14] =
+{
+"GAME_EVENT",
+"NAV",
+"SPEED",
+"VIS",
+"TASK",
+"BUTTONS",
+"USERCMD",
+"UTIL",
+"PROFILE",
+"EDICTS",
+"THINK",
+"LOOK",
+"HUD",
+"AIM"
+};
+
+
 void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 {
 	CClient *pClient;
-
-	char *szDebugLev = NULL;
-
-	switch ( iLev )
-	{
-	case BOT_DEBUG_BUTTONS:
-		szDebugLev = "buttons";
-		break;
-	case BOT_DEBUG_TASK:
-		szDebugLev = "task";
-		break;
-	case BOT_DEBUG_NAV:
-		szDebugLev = "navigation";
-		break;
-	case BOT_DEBUG_GAME_EVENT:
-		szDebugLev = "game_event";
-		break;
-	case BOT_DEBUG_USERCMD:
-		szDebugLev = "usercmd";
-		break;
-	case BOT_DEBUG_UTIL:
-		szDebugLev = "utility";
-		break;
-	case BOT_DEBUG_PROFILE:
-		szDebugLev = "P";
-	case BOT_DEBUG_LOOK:
-		szDebugLev = "look";
-		break;
-	case BOT_DEBUG_THINK:
-		szDebugLev = "think";
-		break;
-	default:
-		szDebugLev = "unknown";
-		break;
-	}
 
 	for ( int i = 0; i < MAX_PLAYERS; i ++ )
 	{
@@ -383,7 +367,7 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 		if ( pBot && !pClient->isDebuggingBot(pBot) )
 			continue;
 
-		CBotGlobals::botMessage(pClient->getPlayer(),0,"[DEBUG %s] %s",szDebugLev,szMsg);
+		CBotGlobals::botMessage(pClient->getPlayer(),0,"[DEBUG %s] %s",g_szDebugTags[iLev],szMsg);
 	}
 }
 

@@ -230,10 +230,10 @@ void CBotBackstabSched :: init ()
 
 ///////////
 
-CBotTF2SnipeSched :: CBotTF2SnipeSched ( Vector vOrigin, float fYaw )
+CBotTF2SnipeSched :: CBotTF2SnipeSched ( Vector vOrigin, float fYaw, int iArea )
 {
 	CBotTask *pFindPath = new CFindPathTask(vOrigin);
-	CBotTask *pSnipeTask = new CBotTF2Snipe(vOrigin,fYaw);
+	CBotTask *pSnipeTask = new CBotTF2Snipe(vOrigin,fYaw,iArea);
 
 	pFindPath->setFailInterrupt(CONDITION_PARANOID);
 	pSnipeTask->setFailInterrupt(CONDITION_PARANOID);

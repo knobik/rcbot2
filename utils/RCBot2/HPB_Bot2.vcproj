@@ -85,7 +85,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib"
 				OutputFile=".\Debug/HPB_bot2.dll"
-				LinkIncremental="1"
+				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\lib\public;..\..\lib\common"
 				IgnoreAllDefaultLibraries="false"

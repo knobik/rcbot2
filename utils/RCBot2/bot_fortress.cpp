@@ -695,8 +695,6 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			}
 
 			*iState = 1;
-
-
 		}
 		break;
 	case 1:
@@ -1025,6 +1023,12 @@ void CBotFortress :: modThink ()
 		updateCondition(CONDITION_NEED_AMMO);
 	else
 		removeCondition(CONDITION_NEED_AMMO);
+
+	if ( !hasSomeConditions(CONDITION_PUSH) )
+	{
+		if ( CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) || CTeamFortress2Mod::TF2_IsPlayerKrits(m_pEdict) )
+			updateCondition(CONDITION_PUSH);
+	}
 
 	if ( m_fCallMedic < engine->Time() )
 	{
@@ -2559,15 +2563,10 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 	// must stand on worldspawn
 	if ( groundEntity && (ENTINDEX(groundEntity)>0) && (pEntity == groundEntity) )
 	{
-		ICollideable *box;
-
-		box = groundEntity->GetCollideable();
-
-		if ( box )
-		{
-			if ( (box->OBBMaxs() - box->OBBMins()).Length() < 200.0f )
-				return true;
-		}
+		if ( pEntity == m_pSentryGun )
+			return true;
+		if ( pEntity == m_pDispenser )
+			return true;
 	}
 
 	index = ENTINDEX(pEntity);
@@ -4580,7 +4579,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotTF2SnipeSched(pWaypoint->getOrigin(),pWaypoint->getAimYaw()));
+				m_pSchedules->add(new CBotTF2SnipeSched(pWaypoint->getOrigin(),pWaypoint->getAimYaw(),pWaypoint->getArea()));
 				return true;
 			}
 			break;

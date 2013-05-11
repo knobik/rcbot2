@@ -969,6 +969,14 @@ bool CTeamFortress2Mod :: TF2_IsPlayerCloaked(edict_t *pPlayer)
     return ((pcond & TF2_PLAYER_CLOAKED) == TF2_PLAYER_CLOAKED);
 }
 
+bool CTeamFortress2Mod :: TF2_IsPlayerKrits(edict_t *pPlayer)
+{
+	int pcond = CClassInterface :: getTF2Conditions(pPlayer);
+	return ((pcond & TF2_PLAYER_KRITS) == TF2_PLAYER_KRITS);
+
+	return false;
+}
+
 bool CTeamFortress2Mod :: TF2_IsPlayerInvuln(edict_t *pPlayer)
 {
 	if ( CBotGlobals::isPlayer(pPlayer) )

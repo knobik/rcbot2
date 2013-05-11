@@ -430,7 +430,7 @@ private:
 class CBotTF2Snipe : public CBotTask
 {
 public:
-	CBotTF2Snipe ( Vector vOrigin, float fYaw );
+	CBotTF2Snipe ( Vector vOrigin, float fYaw, int iArea = 0 );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -443,6 +443,7 @@ private:
 	Vector m_vAim;
 	Vector m_vOrigin;
 	float m_fEnemyZ;
+	int m_iArea;
 };
 
 

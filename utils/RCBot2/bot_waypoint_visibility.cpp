@@ -41,6 +41,7 @@ int CWaypointVisibilityTable :: iCurTo = 0;*/
 
 void CWaypointVisibilityTable :: workVisibility ()
 {		
+	int percent;
 	int iTicks = 0;
 	register unsigned short int iSize = (unsigned short int) CWaypoints::numWaypoints();
 
@@ -57,6 +58,11 @@ void CWaypointVisibilityTable :: workVisibility ()
 
 			if ( iTicks >= WAYPOINT_VIS_TICKS )
 			{
+				percent = (int)(((float)iCurFrom / iSize) * 100);
+
+				if ( (percent % 5) == 0 )
+					Msg(" *** working out visibility %d percent***\n",percent);
+
 				return;
 			}
 		}

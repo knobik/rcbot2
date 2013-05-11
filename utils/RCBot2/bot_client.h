@@ -106,8 +106,8 @@ public:
 
 	void clientActive ();
 
-	void setDebug ( int iLevel, bool bSet ) { if ( bSet ) { m_iDebugLevels |= iLevel; } else { m_iDebugLevels &= ~iLevel; } }
-	bool isDebugOn ( int iLevel ) { return (m_iDebugLevels & iLevel)>0; }
+	void setDebug ( int iLevel, bool bSet ) { if ( bSet ) { m_iDebugLevels |= (1<<iLevel); } else { m_iDebugLevels &= ~(1<<iLevel); } }
+	bool isDebugOn ( int iLevel ) { return (m_iDebugLevels & (1<<iLevel))>0; }
 	void clearDebug ( ) { m_iDebugLevels = 0; }
 	bool isDebugging () { return (m_iDebugLevels != 0); }
 

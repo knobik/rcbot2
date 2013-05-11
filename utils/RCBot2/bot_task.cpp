@@ -44,6 +44,7 @@
 #include "bot_profiling.h"
 #include "bot_getprop.h"
 #include "bot_dod_bot.h"
+#include "bot_script.h"
 
 extern ConVar *sv_gravity;
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -1577,7 +1578,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 	}
 
-	if ( m_fNextUpdateAngle < engine->Time() )
+	if ( (m_iTries > 1) && (m_fNextUpdateAngle < engine->Time()) )
 	{
 		QAngle angles;
 		Vector vforward = m_vAimingVector - pBot->getOrigin();
@@ -1609,7 +1610,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		else
 			pBot->setMoveTo((m_vOrigin));
 	}
-	else if ( bAimingOk )
+	else if ( bAimingOk || (m_iTries > 1) )
 	{
 		int state = tfBot->engiBuildObject(&m_iState,m_iObject,&m_fTime,&m_iTries);
 
@@ -2223,7 +2224,7 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 ////////////////////////////////////////////////////
 
-CBotTF2Snipe :: CBotTF2Snipe ( Vector vOrigin, float fYaw )
+CBotTF2Snipe :: CBotTF2Snipe ( Vector vOrigin, float fYaw, int iArea )
 {
 	QAngle angle;
 	m_fTime = 0.0f;
@@ -2232,6 +2233,7 @@ CBotTF2Snipe :: CBotTF2Snipe ( Vector vOrigin, float fYaw )
 	m_vAim = vOrigin + (m_vAim*1024);
 	m_vOrigin = vOrigin;
 	m_fEnemyZ = m_vAim.z;
+	m_iArea = iArea;
 }
 	
 void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -2239,6 +2241,9 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	CBotWeapon *pBotWeapon;
 	CWeapon *pWeapon;
+
+	if ( !CPoints::isValidArea(m_iArea) )
+		fail(); // move up
 
 	pBot->wantToShoot(false);
 	pBot->wantToListen(false);
@@ -3096,22 +3101,16 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	case 0:
 		{
 		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
-		bool ok = true;
 
-		if ( !pBot->FInViewCone(m_pFriendly) )
-		{
-			pBot->setLookVector(origin);
-			pBot->setLookAtTask((LOOK_VECTOR));
-			ok = false;
-		}
+		pBot->setLookVector(origin);
+		pBot->setLookAtTask((LOOK_VECTOR));
+
 
 		if ( pBot->distanceFrom(m_pFriendly) > 100 )
 		{
 			pBot->setMoveTo((origin));
-			ok = false;
 		}
-
-		if ( ok )
+		else if ( pBot->FInViewCone(m_pFriendly) )
 		{
 			CBotWeapon *pWeapon = pBot->getBestWeapon(NULL,true,true);
 
