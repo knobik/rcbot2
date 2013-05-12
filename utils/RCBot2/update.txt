@@ -37,6 +37,11 @@ tf2		 : scouts automatically double jump off new waypoint type "fall" to save fa
 tf2		 : fixed gameevent debug crashing
 tf2		 : changes to sniping/when area changes bots change position
 tf2		 : changes to engineer building to increase build success
+tf2		 : bots should be able to seee sentries better from below
+tf2		 : engineer bots should think about moving their objects after a point is captured
+tf2		 : bot belief updated properly for sentry guns
+tf2		 : bots choose more dangerous places to defend over the safest
+tf2		 : fixed snipers not moving when sniper waypoint changes area and when they run out of ammo
 all mods : waypoint visibility percentage shown
 all mods : new waypoint type "fall" (fall damage)
 all mods : fixed crash in debug hud with looktask string error

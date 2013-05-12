@@ -157,7 +157,7 @@ void CBotVisibles :: debugString ( char *string )
 @param	bVisible	returns if the entity is visible or not
 @param  iIndex      saves recalling INDEXENT
 */
-void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisible, int &iIndex )
+void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisible, int &iIndex, bool bCheckHead )
 {
 	// make these static, calling a function with data many times	
 	//static Vector vectorSurroundMins, vectorSurroundMaxs;
@@ -197,7 +197,7 @@ void CBotVisibles :: checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisibl
 			if ( playerInPVS )
 			{
 
-				*bVisible = m_pBot->FVisible(pEntity);
+				*bVisible = m_pBot->FVisible(pEntity,bCheckHead);
 
 #ifndef __linux__
 				if ( *bVisible )
@@ -311,7 +311,7 @@ void CBotVisibles :: updateVisibles ()
 		if ( CBotGlobals::entityIsValid(pEntity) )
 		{		
 			iSpecialIndex = ENTINDEX(pEntity);
-			checkVisible(pEntity,&iTicks,&bVisible,iSpecialIndex);
+			checkVisible(pEntity,&iTicks,&bVisible,iSpecialIndex,true);
 
 			setVisible(pEntity,bVisible);
 			m_pBot->setVisible(pEntity,bVisible);
@@ -324,7 +324,7 @@ void CBotVisibles :: updateVisibles ()
 
 		pEntity = INDEXENT(m_iCurrentIndex);
 
-		if ( pEntity != pGroundEntity )
+		if ( (pEntity != pGroundEntity) && (m_iCurrentIndex != iSpecialIndex)  )
 		{
 			if ( CBotGlobals::entityIsValid(pEntity) )
 			{		

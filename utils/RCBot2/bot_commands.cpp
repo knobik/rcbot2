@@ -81,7 +81,7 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointSetAngleCommand());
 	add(new CWaypointSetAreaCommand());
 	add(new CWaypointSetRadiusCommand());
-	add(new CWaypointMenu());
+	add(new CWaypointMenuCommand());
 	add(new CWaypointCut());
 	add(new CWaypointCopy());
 	add(new CWaypointPaste());
@@ -433,12 +433,12 @@ eBotCommandResult CWaypointSetRadiusCommand :: execute ( CClient *pClient, const
 }
 /////////////////
 
-CWaypointMenu :: CWaypointMenu()
+CWaypointMenuCommand :: CWaypointMenuCommand()
 {
 	setName("menu");
 };
 
-eBotCommandResult CWaypointMenu:: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+eBotCommandResult CWaypointMenuCommand:: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( pClient )
 	{
@@ -500,7 +500,7 @@ eBotCommandResult CWaypointMenu:: execute ( CClient *pClient, const char *pcmd, 
 			else
 				Q_snprintf( msg, sizeof(msg), "%s [ ]", p->getName() );
 
-			Q_snprintf( cmd, sizeof(cmd), "rcbot waypoint givetype %s; wait; cancelselect", p->getName() );
+			Q_snprintf( cmd, sizeof(cmd), "rcbot waypoint givetype %s", p->getName() );
 
 			KeyValues *item1 = kv->FindKey( num, true );
 			item1->SetString( "msg", msg );

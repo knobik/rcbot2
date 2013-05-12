@@ -342,10 +342,11 @@ float CWaypointNavigator :: getNextYaw ()
 	return false;
 }
 // best waypoints are those with lowest danger
-CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals )
+CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger )
 {
 	int i;
 	CWaypoint *pWpt = NULL;
+	CWaypoint *pCheck;
 
 	float fBelief = 0;
 	float fSelect;
@@ -359,7 +360,10 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 		{
 			for ( i = 0; i < goals->Size(); i ++ )
 			{
-				fBelief += MAX_BELIEF - m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
+				if ( bHighDanger )
+					fBelief += m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
+				else
+					fBelief += MAX_BELIEF - m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
 			}
 
 			fSelect = randomFloat(0,fBelief);
@@ -368,11 +372,15 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 			
 			for ( i = 0; i < goals->Size(); i ++ )
 			{
-				fBelief += MAX_BELIEF -m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
+				pCheck = (*goals)[i];
+				if ( bHighDanger )
+					fBelief += m_fBelief[CWaypoints::getWaypointIndex(pCheck)];
+				else
+					fBelief += MAX_BELIEF -m_fBelief[CWaypoints::getWaypointIndex(pCheck)];
 
 				if ( fSelect <= fBelief )
 				{
-					pWpt = (*goals)[i];
+					pWpt = pCheck;
 					break;
 				}
 			}
@@ -2074,7 +2082,7 @@ CWaypoint *CWaypoints::getNextCoverPoint ( CBot *pBot, CWaypoint *pCurrent, CWay
 	return CWaypoints::getWaypoint(iMaxDist);
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot )
+CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger )
 {
 	register short int i;
 	static short int size; 
@@ -2112,7 +2120,7 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, 
 		
 			pNav = (CWaypointNavigator*)pBot->getNavigator();
 
-			pWpt = pNav->chooseBestFromBelief(&goals);
+			pWpt = pNav->chooseBestFromBelief(&goals,bHighDanger);
 		}
 		else
 			pWpt = goals.Random();
@@ -2501,3 +2509,11 @@ void CWaypointTest :: go ( edict_t *pPlayer )
 	delete pBots[0];
 	delete pBots[1];
 }
+
+#ifndef __linux__
+void CWaypointMenu:: think ( int iWaypoint )
+{
+	//szMenutxt
+	//debugoverlay->AddScreenTextOverlay(100,100,0.25f,255,255,255,250,szMenutxt);
+}
+#endif

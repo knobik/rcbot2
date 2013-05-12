@@ -425,7 +425,7 @@ public:
 class CBotTFEngiBuild : public CBotSchedule
 {
 public:
-	CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin, Vector vAiming );
+	CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0 );
 
 	void init ();
 };

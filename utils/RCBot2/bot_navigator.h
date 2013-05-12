@@ -362,7 +362,7 @@ public:
 
 	void init ();
 
-	CWaypoint *chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals );
+	CWaypoint *chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger = false );
 
 	float getNextYaw ();
 

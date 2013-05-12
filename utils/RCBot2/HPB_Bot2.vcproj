@@ -491,6 +491,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_menu.h"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_mods.h"
 				>
 			</File>

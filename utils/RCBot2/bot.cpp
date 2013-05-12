@@ -371,13 +371,13 @@ bool CBot :: FVisible ( Vector &vOrigin, edict_t *pDest )
 
 }
 
-bool CBot :: FVisible ( edict_t *pEdict )
+bool CBot :: FVisible ( edict_t *pEdict, bool bCheckHead )
 {
 	static Vector eye;
 
 	// use special hit traceline for players so bots dont shoot through things 
 	// For players -- do two tracelines -- one at the origin and one at the head (for headshots)
-	if ( ENTINDEX(pEdict) <= gpGlobals->maxClients )
+	if ( bCheckHead || (ENTINDEX(pEdict) <= gpGlobals->maxClients) )
 	{
 		Vector vOrigin;
 		Vector vHead;
@@ -393,7 +393,7 @@ bool CBot :: FVisible ( edict_t *pEdict )
 
 			return true;
 		}
-		
+		/*
 #if defined(_DEBUG) && !defined(__linux__)
 		else if ( CClients::clientsDebugging(BOT_DEBUG_VIS) && (CBotGlobals::getTraceResult()->m_pEnt != NULL) )
 		{
@@ -404,7 +404,7 @@ bool CBot :: FVisible ( edict_t *pEdict )
 			if ( edict )
 				debugoverlay->AddTextOverlay(CBotGlobals::getTraceResult()->endpos,2.0f,"Traceline hit %s",edict->GetClassName());
 		}
-#endif 
+#endif */
 		if ( m_pEnemy == pEdict )
 			removeCondition(CONDITION_SEE_ENEMY_HEAD);
 

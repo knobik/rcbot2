@@ -103,7 +103,7 @@ public:
 
 	void eachVisible ( CVisibleFunc *pFunc );
 
-	void checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisible, int &iIndex );
+	void checkVisible ( edict_t *pEntity, int *iTicks, bool *bVisible, int &iIndex, bool bCheckHead = false );
 
 	void debugString ( char *string );
 

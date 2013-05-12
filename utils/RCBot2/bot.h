@@ -501,7 +501,7 @@ public:
 
 	float DotProductFromOrigin ( Vector pOrigin );
 
-	bool FVisible ( edict_t *pEdict );
+	bool FVisible ( edict_t *pEdict, bool bCheckHead = false );
 
 	bool isVisible ( edict_t *pEdict );
 
@@ -804,7 +804,7 @@ public:
 
 	virtual bool isTF2 () { return false; }
 
-	// return an enemy sentry gun / special visible (e.g.) for quick checking
+	// return an enemy sentry gun / special visible (e.g.) for quick checking - voffset is the 'head'
 	virtual edict_t *getVisibleSpecial ();
 
 	void updateDanger ( float fBelief );

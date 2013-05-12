@@ -507,7 +507,7 @@ public:
 class CBotTFEngiBuildTask : public CBotTask
 {
 public:
-	CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming );
+	CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0 );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -521,6 +521,7 @@ private:
 	int m_iTries;
 	float m_fNextUpdateAngle;
 	Vector m_vAimingVector;
+	int m_iArea;
 };
 
 class CDODWaitForBombTask : public CBotTask

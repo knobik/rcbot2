@@ -342,6 +342,18 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2ObjectDestroyedEvent : public CBotEvent
+{
+public:
+	CTF2ObjectDestroyedEvent()
+	{
+		setType("object_destroyed");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CTF2BuiltObjectEvent : public CBotEvent
 {
 public:

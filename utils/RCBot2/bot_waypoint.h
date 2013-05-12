@@ -392,7 +392,7 @@ public:
 
 	static int nearestWaypointGoal ( int iFlags, Vector &origin, float fDist, int iTeam = 0 );
 	static CWaypoint *randomRouteWaypoint ( CBot *pBot, Vector vOrigin, Vector vGoal, int iTeam, int iArea );
-	static CWaypoint *randomWaypointGoal ( int iFlags, int iTeam = 0, int iArea = 0, bool bForceArea = false, CBot *pBot = NULL );
+	static CWaypoint *randomWaypointGoal ( int iFlags, int iTeam = 0, int iArea = 0, bool bForceArea = false, CBot *pBot = NULL, bool bHighDanger = false );
 	static int randomFlaggedWaypoint (int iTeam = 0);
 
 	static CWaypointVisibilityTable *getVisiblity () { return m_pVisibilityTable; }
@@ -409,4 +409,27 @@ private:
 	static CWaypointVisibilityTable *m_pVisibilityTable;
 };
 
+typedef enum eWptMenu2Lev
+{
+	WPT_MENU_MAIN = 0,
+	WPT_MENU_AREA,
+	WPT_MENU_YAW,
+	WPT_MENU_TYPES,
+	WPT_MENU_SHOW,
+	WPT_MENU_PATHS,
+};
+
+class CWaypointMenu
+{
+public:
+	CWaypointMenu ();
+#ifdef __linux__
+		void think ( int iWaypoint ) {};
+#else
+		void think ( int iWaypoint );
+#endif
+private:
+	bool m_bOpen;
+	int m_iMenu;
+};
 #endif

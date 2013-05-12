@@ -643,6 +643,8 @@ public:
 
 	virtual bool needAmmo();
 
+	void buildingDestroyed ( int iType, edict_t *pAttacker, edict_t *pEdict );
+
 	TF_Class getClass ();
 
 	void updateClass ();

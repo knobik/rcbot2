@@ -1495,7 +1495,7 @@ void CBotTF2EngiLookAfter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 }
 
 ////////////////////////
-CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming )
+CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea )
 {
 	m_iObject = iObject;
 	m_vOrigin = vOrigin;
@@ -1504,6 +1504,7 @@ CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin,
 	m_iTries = 0;
 	m_fNextUpdateAngle = 0.0f;
 	m_vAimingVector = vAiming;
+	m_iArea = iArea;
 }
 	
 void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -1512,7 +1513,10 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	bool bAimingOk = true;
 
-	if ( !pBot->isTF() )
+	//if ( !pBot->isTF() ) // shouldn't happen ever
+	//	fail();
+
+	if ( !CPoints::isValidArea(m_iArea) )
 		fail();
 
 	pBot->wantToShoot(false); // don't shoot enemies , want to build the damn thing
