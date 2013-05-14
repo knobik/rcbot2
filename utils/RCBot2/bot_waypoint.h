@@ -409,27 +409,5 @@ private:
 	static CWaypointVisibilityTable *m_pVisibilityTable;
 };
 
-typedef enum eWptMenu2Lev
-{
-	WPT_MENU_MAIN = 0,
-	WPT_MENU_AREA,
-	WPT_MENU_YAW,
-	WPT_MENU_TYPES,
-	WPT_MENU_SHOW,
-	WPT_MENU_PATHS,
-};
 
-class CWaypointMenu
-{
-public:
-	CWaypointMenu ();
-#ifdef __linux__
-		void think ( int iWaypoint ) {};
-#else
-		void think ( int iWaypoint );
-#endif
-private:
-	bool m_bOpen;
-	int m_iMenu;
-};
 #endif

@@ -68,6 +68,8 @@ int CWaypoints::m_iWaypointTexture = 0;
 CWaypointVisibilityTable * CWaypoints::m_pVisibilityTable = NULL;
 vector<CWaypointType*> CWaypointTypes::m_Types;
 
+const WptColor WptColor::white = WptColor(255,255,255,255) ;
+
 extern IVDebugOverlay *debugoverlay;
 
 extern ConVar bot_belief_fade;
@@ -2509,11 +2511,3 @@ void CWaypointTest :: go ( edict_t *pPlayer )
 	delete pBots[0];
 	delete pBots[1];
 }
-
-#ifndef __linux__
-void CWaypointMenu:: think ( int iWaypoint )
-{
-	//szMenutxt
-	//debugoverlay->AddScreenTextOverlay(100,100,0.25f,255,255,255,250,szMenutxt);
-}
-#endif

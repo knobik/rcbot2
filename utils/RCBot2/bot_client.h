@@ -31,7 +31,11 @@
 #ifndef __RCBOT_CLIENT_H__
 #define __RCBOT_CLIENT_H__
 
+#include <vector>
+using namespace std;
+
 #include "bot_const.h"
+
 
 typedef enum eWptCopyType
 {
@@ -41,7 +45,10 @@ typedef enum eWptCopyType
 }eWptCopyType_s;
 
 struct edict_t;
+
 class CBot;
+class CWaypoint;
+class CBotMenu;
 
 class CClient
 {
@@ -52,8 +59,19 @@ public:
 		m_pPlayerInfo = NULL;
 		m_pDebugBot = NULL;
 		m_WaypointCopyType = WPT_COPY_NONE;
+		m_pMenu = NULL;
+		m_iMenuCommand = -1;
+		m_fNextUpdateMenuTime = 0.0f;
 	}
 	void init ();
+
+	inline bool isUsingMenu () { return (m_pMenu != NULL); }
+	inline void setCurrentMenu ( CBotMenu *pMenu ) { m_pMenu = pMenu; }
+	inline CBotMenu *getCurrentMenu () { return m_pMenu; }
+	inline void setMenuCommand ( int iCommand ) { m_iMenuCommand = iCommand; }
+	inline int getLastMenuCommand () { return m_iMenuCommand; }
+	bool needToRenderMenu ();
+	void updateRenderMenuTime ();
 
 	int accessLevel ();
 	// this player joins with pPlayer edict
@@ -170,6 +188,13 @@ private:
 	// vector<CToolTip*> tooltips
 
 	float m_fNextPrintDebugInfo;
+
+	// menu stuff
+	CBotMenu *m_pMenu;
+	int m_iPrevMenu;
+	int m_iMenuCommand;
+
+	float m_fNextUpdateMenuTime;
 };
 
 class CClients

@@ -41,6 +41,7 @@
 #include "bot_waypoint_visibility.h"
 #include "bot_getprop.h"
 #include "bot_weapons.h"
+#include "bot_menu.h"
 
 CBotCommandContainer *CBotGlobals :: m_pCommands = new CRCBotCommand();
 extern IVDebugOverlay *debugoverlay;
@@ -440,6 +441,10 @@ CWaypointMenuCommand :: CWaypointMenuCommand()
 
 eBotCommandResult CWaypointMenuCommand:: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
+	pClient->setCurrentMenu(CBotMenuList::getMenu(BOT_MENU_WPT));
+
+	return COMMAND_ACCESSED;
+	/*
 	if ( pClient )
 	{
 		// number of waypoint types to show per menu
@@ -530,7 +535,7 @@ eBotCommandResult CWaypointMenuCommand:: execute ( CClient *pClient, const char 
 		return COMMAND_ACCESSED;
 	}
 
-	return COMMAND_ERROR;
+	return COMMAND_ERROR;*/
 };
 ////////////////////////////
 

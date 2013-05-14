@@ -318,6 +318,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_menu.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_mods.cpp"
 				>
 			</File>

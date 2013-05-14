@@ -36,6 +36,7 @@
 #include "bot_globals.h"
 #include "bot_waypoint.h"
 #include "ndebugoverlay.h"
+#include "bot_menu.h"
 
 // setup static client array
 CClient CClients::m_Clients[MAX_PLAYERS];
@@ -65,6 +66,20 @@ void CClient :: init ()
 	m_fCopyWptRadius = 0.0f;
 	m_iCopyWptFlags = 0;
 	m_iCopyWptArea = 0;
+	m_pMenu = NULL;
+	m_iMenuCommand = -1;
+	m_fNextUpdateMenuTime = 0.0f;
+}
+
+bool CClient :: needToRenderMenu () 
+{ 
+	return m_fNextUpdateMenuTime < engine->Time(); 
+}
+
+void CClient :: updateRenderMenuTime () 
+{ 
+	extern ConVar rcbot_menu_update_time2;
+	m_fNextUpdateMenuTime = engine->Time() + rcbot_menu_update_time2.GetFloat(); 
 }
 
 void CClient :: setEdict ( edict_t *pPlayer )
@@ -80,6 +95,13 @@ void CClient :: think ()
 	{
 		m_bShowMenu = false;
 		engine->ClientCommand(m_pPlayer,"cancelselect");
+	}
+
+	if ( m_pMenu != NULL )
+	{
+		if ( needToRenderMenu() )
+			m_pMenu->render(this);
+		//CBotMenuList::render(pClient);
 	}
 
 	if ( isWaypointOn() )

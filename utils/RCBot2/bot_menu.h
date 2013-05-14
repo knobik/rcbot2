@@ -47,8 +47,13 @@
 #ifndef __BOT_MENU_H__
 #define __BOT_MENU_H__
 
+#include <vector>
+using namespace std;
+
 class CClient;
 class CBotMenu;
+class CBotMenuItem;
+class WptColor;
 
 // menu types
 typedef enum
@@ -80,6 +85,248 @@ typedef enum
 
 #define MAX_MENU_CAPTION_LENGTH 64
 
+class CBotMenuItem
+{
+public:
+	virtual const char *getCaption ( CClient *pClient, WptColor &color );
+
+	virtual void activate ( CClient *pClient ) = 0;
+
+	void setCaption ( const char *szCaption ) 
+	{
+		strncpy(m_szCaption,szCaption,63);
+		m_szCaption[63] = 0;
+	}
+
+protected:
+	char m_szCaption[64];
+};
+
+class CWaypointFlagMenuItem : public CBotMenuItem
+{
+public:
+	CWaypointFlagMenuItem ( int iFlag )
+	{
+		m_iFlag = iFlag;
+	}
+
+	const char *getCaption ( CClient *pClient, WptColor &color );
+
+	void activate ( CClient *pClient );
+
+private:
+	int m_iFlag;
+};
+
+class CBotGotoMenuItem : public CBotMenuItem
+{
+public:
+	CBotGotoMenuItem ( const char *szCaption, CBotMenu *pPrevMenu )  // caption = back / more etc
+	{
+		strncpy(m_szCaption,szCaption,63);
+		m_szCaption[63] = 0;
+		m_pPrevMenu = pPrevMenu;
+	}
+
+	void activate ( CClient *pClient )
+	{
+		pClient->setCurrentMenu(m_pPrevMenu);
+	}
+private:
+	CBotMenu *m_pPrevMenu;
+};
+
+class CBotExitMenuItem : public CBotMenuItem
+{
+	const char *getCaption ( CClient *pClient, WptColor &color )
+	{
+		return "Exit";
+	}
+
+	void activate ( CClient *pClient )
+	{
+		pClient->setCurrentMenu(NULL);
+	}
+};
+
+class CWaypointAreaMenuItem : public CBotMenuItem
+{
+public:
+	const char *getCaption ( CClient *pClient, WptColor &color );
+
+	void activate ( CClient *pClient );
+};
+
+class CBotMenu : public CBotMenuItem
+{
+public:
+
+	void freeMemory ();
+
+	virtual const char *getCaption ( CClient *pClient, WptColor &color )
+	{
+		return CBotMenuItem::getCaption(pClient,color);
+	}// returns the caption (may be dynamic)
+
+	void activate ( CClient *pClient );
+
+	Color getColor ( CClient *pClient ); // gets the colour of the caption
+
+	virtual void addMenuItem ( CBotMenuItem *item )
+	{
+		m_MenuItems.push_back(item);
+	}
+
+	void render ( CClient *pClient );
+
+	void selectedMenu ( CClient *pClient, unsigned int iMenu );
+
+private:
+	vector<CBotMenuItem*> m_MenuItems;
+};
+
+class CWaypointFlagMenu : public CBotMenu
+{
+public:
+	CWaypointFlagMenu (CBotMenu *pParent);
+	//CWaypointFlagMenu ( int iShow );
+	const char *getCaption(CClient *pClient,WptColor &color );
+};
+
+typedef enum eWptMenu2Lev
+{
+	WPT_MENU_MAIN = 0,
+	WPT_MENU_AREA,
+	WPT_MENU_YAW,
+	WPT_MENU_TYPES,
+	WPT_MENU_SHOW,
+	WPT_MENU_PATHS,
+};
+
+class CWaypointRadiusIncrease : public CBotMenuItem
+{
+public:
+	CWaypointRadiusIncrease() { setCaption("Increase Radius (+)"); }
+
+	void activate ( CClient *pClient );
+	//const char *getCaption(CClient *pClient, WptColor &color);
+};
+
+class CWaypointRadiusDecrease : public CBotMenuItem
+{
+public:
+	CWaypointRadiusDecrease() { setCaption("Decrease Radius (-)"); }
+
+	void activate ( CClient *pClient );
+	//const char *getCaption(CClient *pClient, WptColor &color);
+};
+
+class CWaypointRadiusMenu : public CBotMenu
+{
+public:
+	CWaypointRadiusMenu( CBotMenu *pParent )
+	{
+		addMenuItem(new CWaypointRadiusIncrease());
+		addMenuItem(new CWaypointRadiusDecrease());
+		addMenuItem(new CBotGotoMenuItem("Back",pParent));
+	}
+
+	const char *getCaption ( CClient *pClient, WptColor &color );
+};
+
+class CWaypointAreaIncrease : public CBotMenuItem
+{
+public:
+	CWaypointAreaIncrease() { setCaption("Increase Area (+)"); }
+
+	void activate ( CClient *pClient );
+	//const char *getCaption(CClient *pClient, WptColor &color);
+};
+
+class CWaypointAreaDecrease : public CBotMenuItem
+{
+public:
+	CWaypointAreaDecrease() { setCaption("Decrease Area (-)"); }
+
+	void activate ( CClient *pClient );
+	//const char *getCaption(CClient *pClient, WptColor &color);
+};
+
+class CWaypointAreaMenu : public CBotMenu
+{
+public:
+	CWaypointAreaMenu( CBotMenu *pParent )
+	{
+		addMenuItem(new CWaypointAreaIncrease());
+		addMenuItem(new CWaypointAreaDecrease());
+		addMenuItem(new CBotGotoMenuItem("Back",pParent));
+	}
+
+	const char *getCaption ( CClient *pClient, WptColor &color );
+};
+
+class CWaypointYawMenuItem : public CBotMenuItem
+{
+	const char *getCaption ( CClient *pClient, WptColor &color );
+
+	void activate ( CClient *pClient );
+};
+
+class CWaypointMenu : public CBotMenu
+{
+public:
+	// needs 
+	// Waypoint Menu ID []
+	// 1 Waypoint Flags []
+	// 2 area []
+	// 3 yaw [] degrees
+	// 4 remove all flags
+	// 5 clear waypoints
+	// 6 copy
+	// 7 cut
+	// 8 paste
+	// 9 Exit
+	CWaypointMenu ()
+	{
+		addMenuItem(new CWaypointFlagMenu(this));
+		addMenuItem(new CWaypointAreaMenu(this));
+		addMenuItem(new CWaypointRadiusMenu(this));
+		addMenuItem(new CWaypointYawMenuItem());
+		addMenuItem(new CBotGotoMenuItem("Exit",NULL));
+	}
+
+	//CWaypointFlagMenu ( int iShow );
+	const char *getCaption(CClient *pClient,WptColor &color );
+};
+
+typedef enum 
+{
+	BOT_MENU_WPT = 0,
+	BOT_MENU_MAX
+};
+
+class CBotMenuList
+{
+public:
+	CBotMenuList ()
+	{
+		memset(m_MenuList,0,sizeof(CBotMenu*)*BOT_MENU_MAX);
+	}
+
+	static void setupMenus ();
+
+	static void freeMemory ();
+	
+	static void render ( CClient *pClient ); // render
+
+	static void selectedMenu ( CClient *pClient, unsigned int iMenu );
+
+	static CBotMenu *getMenu ( int id ) { return m_MenuList[id]; }
+
+private:
+	static CBotMenu *m_MenuList[BOT_MENU_MAX];
+};
+/*
 class CMenuCaption
 {
 public:
@@ -171,7 +418,7 @@ public:
 
 	void InitMenu (void);
 
-	CBotMenu( const char *szCaption );
+	void init ( const char *szCaption, const char *szCommand );
 
 	void AddExitMenuItem ( int iMenuNum )
 	{
@@ -208,13 +455,46 @@ public:
 
 	void Render ( CClient *pClient );
 
-private:
+protected:
+
+	virtual const char *getCaption ();
 
 //	int m_iExitItem;
 
 	CBotMenuItem *m_Menus[10]; // Maximum of ten sub-menu's
 
-	CMenuCaption *m_szCaption;
+	char m_szCaption[128];
+	char m_szCommand[32]; // e.g. waypoint_menu
+};
+
+class CBotWaypointMenu : public CBotMenu
+{
+	CBotWaypointMenu ()
+	{
+		init("Waypoint Menu","waypoint_menu");
+		addMenuItem();
+	}
+
+private:
+	virtual const char *getCaption ()
+	{
+		m_szCaption;
+	}
+
+	int m_iWaypointID;
+};
+
+class CBotMenus
+{
+	CBotMenus()
+	{
+		m_Menus.push_back(new CBotWaypointMenu());
+	}
+
+	void check ();
+private:
+	int m_iActiveMenu;
+	vector<CBotMenu*> m_Menus;
 };
 
 class CBotMenuInfo : public CBotMenu
@@ -224,3 +504,6 @@ public:
 private:
 	int m_iValue;
 }
+*/
+
+#endif

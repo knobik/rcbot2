@@ -13,6 +13,14 @@ public:
 		memset(this,0,sizeof(WptColor));
 	}
 
+	WptColor ( int _r, int _g, int _b, int _a )
+	{
+		r=_r;
+		g=_g;
+		b=_b;
+		a=_a;
+	}
+
 	WptColor ( int _r, int _g, int _b )
 	{
 		r=_r;
@@ -48,6 +56,8 @@ public:
 	unsigned char g;
 	unsigned char b;
 	unsigned char a;
+
+	static const WptColor white;
 };
 
 #endif

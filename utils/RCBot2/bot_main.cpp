@@ -75,6 +75,7 @@
 #include "bot_weapons.h"
 #include "bot_mods.h"
 #include "bot_profiling.h"
+#include "bot_menu.h"
 #include "vstdlib/random.h" // for random  seed 
 
 #include "bot_wpt_dist.h"
@@ -162,7 +163,8 @@ ConVar rcbot_runplayercmd_hookonce("rcbot_runplayer_hookonce","1",0,"function wi
 ConVar rcbot_ladder_offs("rcbot_ladder_offs","42",0,"difference in height for bot to think it has touched the ladder waypoint");
 ConVar rcbot_ffa("rcbot_ffa","0",0,"Free for all mode -- bots shoot everyone");
 ConVar rcbot_prone_enemy_only("rcbot_prone_enemy_only","1",0,"if 1 bots only prone in DOD:S when they have an enemy");
-
+ConVar rcbot_menu_update_time1("rcbot_menu_update_time1","0.04",0,"time to update menus [displaying message]");
+ConVar rcbot_menu_update_time2("rcbot_menu_update_time2","0.2",0,"time to update menus [interval]");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 
@@ -618,6 +620,8 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	CBotConfigFile::reset();	
 	CBotConfigFile::load();
 
+	CBotMenuList::setupMenus();
+
 	CRCBotPlugin::ShowLicense();	
 
 	RandomSeed((unsigned int)time(NULL));
@@ -1005,10 +1009,26 @@ PLUGIN_RESULT CRCBotPlugin::ClientCommand( edict_t *pEntity, const CCommand &arg
 
 		return PLUGIN_STOP; // we handled this function
 	}
+	else if ( strncmp(pcmd,"menuselect",10) == 0 ) // menu command
+	{
+		if ( pClient->isUsingMenu() )
+		{
+			int iCommand = atoi(args.Arg(1));
 
+			// format is 1.2.3.4.5.6.7.8.9.0
+			if ( iCommand == 0 )
+				iCommand = 9;
+			else
+				iCommand --;
 
+			pClient->getCurrentMenu()->selectedMenu(pClient,iCommand);
+		}
+	}
+
+	// command capturing
 	pMod = CBotGlobals::getCurrentMod();
 
+	// capture some client commands e.g. voice commands
 	pMod->clientCommand(pEntity,args.ArgC(),pcmd,args.Arg(1),args.Arg(2));
 
 	return PLUGIN_CONTINUE;
