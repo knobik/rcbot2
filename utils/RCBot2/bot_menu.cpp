@@ -22,13 +22,14 @@ void CWaypointFlagMenuItem :: activate ( CClient *pClient )
 {
 	int iWpt = pClient->currentWaypoint();
 	CWaypoint *pWpt = CWaypoints::getWaypoint(iWpt);
+	CWaypointType *type = CWaypointTypes::getTypeByIndex(m_iFlag);
 
 	if ( pWpt )
 	{
-		if ( pWpt->hasFlag(1<<m_iFlag) )
-			pWpt->removeFlag(1<<m_iFlag);
+		if ( pWpt->hasFlag(type->getBits()) )
+			pWpt->removeFlag(type->getBits());
 		else
-			pWpt->addFlag(1<<m_iFlag);
+			pWpt->addFlag(type->getBits());
 	}
 }
 
@@ -58,7 +59,7 @@ const char *CWaypointFlagMenuItem :: getCaption ( CClient *pClient, WptColor &co
 
 	color = type->getColour();
 
-	sprintf(m_szCaption,"[%s] %s",(pWpt!=NULL)?(pWpt->hasFlag(1<<m_iFlag)?"x":" "):"No Waypoint",type->getName());
+	sprintf(m_szCaption,"[%s] %s",(pWpt!=NULL)?(pWpt->hasFlag(type->getBits())?"x":" "):"No Waypoint",type->getName());
 
 	return m_szCaption;
 }
@@ -266,6 +267,61 @@ void CWaypointRadiusDecrease :: activate ( CClient *pClient )
 		else
 			pWpt->setRadius(0.0f);
 	}
+}
+
+
+const char *CWaypointCutMenuItem :: getCaption ( CClient *pClient, WptColor &color )
+{
+	sprintf(m_szCaption,"Cut Waypoint");
+	color = WptColor::white;
+
+	return m_szCaption;
+}
+
+void CWaypointCutMenuItem :: activate ( CClient *pClient )
+{
+	pClient->updateCurrentWaypoint();
+
+	CWaypoint *pwpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+	if ( pwpt )
+	{
+		pClient->setWaypointCut(pwpt);
+		CWaypoints::deleteWaypoint(pClient->currentWaypoint());
+	}
+}
+
+const char *CWaypointCopyMenuItem :: getCaption ( CClient *pClient, WptColor &color )
+{
+	sprintf(m_szCaption,"Copy Waypoint");
+	color = WptColor::white;
+
+	return m_szCaption;
+}
+
+void CWaypointCopyMenuItem :: activate ( CClient *pClient )
+{
+		pClient->updateCurrentWaypoint();
+
+		CWaypoint *pwpt = CWaypoints::getWaypoint(pClient->currentWaypoint());
+
+		if ( pwpt )
+		{
+			pClient->setWaypointCopy(pwpt);
+		}
+}
+
+const char *CWaypointPasteMenuItem :: getCaption ( CClient *pClient, WptColor &color )
+{
+	sprintf(m_szCaption,"Paste Waypoint");
+	color = WptColor::white;
+
+	return m_szCaption;
+}
+
+void CWaypointPasteMenuItem :: activate ( CClient *pClient )
+{
+	CWaypoints::addWaypoint(pClient,NULL,NULL,NULL,NULL,true);
 }
 
 void CBotMenu ::render (CClient *pClient)

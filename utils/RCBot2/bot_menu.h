@@ -272,6 +272,27 @@ class CWaypointYawMenuItem : public CBotMenuItem
 	void activate ( CClient *pClient );
 };
 
+class CWaypointCutMenuItem : public CBotMenuItem
+{
+	const char *getCaption ( CClient *pClient, WptColor &color );
+
+	void activate ( CClient *pClient );
+};
+
+class CWaypointCopyMenuItem : public CBotMenuItem
+{
+	const char *getCaption ( CClient *pClient, WptColor &color );
+
+	void activate ( CClient *pClient );
+};
+
+class CWaypointPasteMenuItem : public CBotMenuItem
+{
+	const char *getCaption ( CClient *pClient, WptColor &color );
+
+	void activate ( CClient *pClient );
+};
+
 class CWaypointMenu : public CBotMenu
 {
 public:
@@ -292,6 +313,9 @@ public:
 		addMenuItem(new CWaypointAreaMenu(this));
 		addMenuItem(new CWaypointRadiusMenu(this));
 		addMenuItem(new CWaypointYawMenuItem());
+		addMenuItem(new CWaypointCutMenuItem());
+		addMenuItem(new CWaypointCopyMenuItem());
+		addMenuItem(new CWaypointPasteMenuItem());
 		addMenuItem(new CBotGotoMenuItem("Exit",NULL));
 	}
 
