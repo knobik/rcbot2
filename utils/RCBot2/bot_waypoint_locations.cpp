@@ -610,9 +610,9 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 		if ( bCheckArea && !CPoints::isValidArea(curr_wpt->getArea()) )
 			continue;
 
-		if ( iFlagsOnly != -1 )
+		if ( iFlagsOnly != 0 )
 		{
-			if ( curr_wpt->getFlags() && (!curr_wpt->hasFlag(iFlagsOnly)) )
+			if ( !curr_wpt->getFlags() || (!curr_wpt->hasFlag(iFlagsOnly)) )
 				continue;
 		}
 
@@ -759,8 +759,14 @@ void CWaypointLocations :: DrawWaypoints ( CClient *pClient, float fDist )
 
 					if ( !pWpt->isUsed() ) // deleted
 						continue;
-					if ( !pClient->isShowingWaypoint(pWpt->getFlags()) )
-						continue; // hidden
+
+					if ( !pClient->isShowingAllWaypoints() )
+					{
+						if ( pWpt->getFlags() == 0 )
+							continue; // hidden
+						else if ( !pClient->isShowingWaypoint(pWpt->getFlags()) )
+							continue;
+					}
 
 					vWpt = pWpt->getOrigin();
 

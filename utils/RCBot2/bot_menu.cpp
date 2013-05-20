@@ -434,11 +434,15 @@ CWaypointFlagShowMenu :: CWaypointFlagShowMenu (CBotMenu *pParent)
 const char *CWaypointFlagShowMenu::getCaption(CClient *pClient,WptColor &color )
 {
 	if ( pClient->isShowingAllWaypoints() )
+	{
 		sprintf(m_szCaption,"Showing All Waypoints (change)");
+		color = WptColor::white;
+	}
 	else
+	{
 		sprintf(m_szCaption,"Showing Only Some Waypoints (change)");
-
-	color = WptColor::white;
+		color = CWaypointTypes::getColour(pClient->getShowWaypointFlags());
+	}
 
 	return m_szCaption;
 }
@@ -450,7 +454,7 @@ const char *CWaypointFlagShowMenuItem :: getCaption ( CClient *pClient, WptColor
 
 	color = type->getColour();
 
-	sprintf(m_szCaption,"[%s] %s",pClient->isShowingWaypoint(type->getBits())?"showing":"hiding",type->getName());
+	sprintf(m_szCaption,"[%s] %s",(pClient->isShowingAllWaypoints()||pClient->isShowingWaypoint(type->getBits()))?"showing":"hiding",type->getName());
 
 	return m_szCaption;
 }

@@ -47,7 +47,7 @@ extern IVDebugOverlay *debugoverlay;
 
 void CClient :: init ()
 {
-	m_iWaypointShowFlags = -1;
+	m_iWaypointShowFlags = 0;
 	m_fSpeed = 0;
 	m_pPlayer = NULL;
 	m_szSteamID = NULL;
