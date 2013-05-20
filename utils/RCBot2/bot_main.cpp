@@ -700,6 +700,7 @@ void CRCBotPlugin::Unload( void )
 		CWaypointTypes::freeMemory();
 		CBotProfiles::deleteProfiles();
 		CWeapons::freeMemory();
+		CBotMenuList::freeMemory();
 
 		UnhookPlayerRunCommand();
 
@@ -910,6 +911,7 @@ void CRCBotPlugin::ClientPutInServer( edict_t *pEntity, char const *playername )
 				// give listenserver client all access to bot commands
 				CClients::setListenServerClient(pClient);		
 				pClient->setAccessLevel(CMD_ACCESS_ALL);
+				pClient->resetMenuCommands();
 			}
 		}
 	}

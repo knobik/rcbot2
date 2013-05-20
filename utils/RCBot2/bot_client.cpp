@@ -47,6 +47,7 @@ extern IVDebugOverlay *debugoverlay;
 
 void CClient :: init ()
 {
+	m_iWaypointShowFlags = -1;
 	m_fSpeed = 0;
 	m_pPlayer = NULL;
 	m_szSteamID = NULL;
@@ -60,6 +61,7 @@ void CClient :: init ()
 	m_iDebugLevels = 0;
 	m_pPlayerInfo = NULL;
 	m_iWptArea = 0;
+	m_iWaypointDrawType = 3;
 	m_bShowMenu = false;
 	m_fUpdatePos = 0.0f;
 	m_pDebugBot = NULL;
@@ -86,6 +88,38 @@ void CClient :: setEdict ( edict_t *pPlayer )
 {
 	m_pPlayer = pPlayer;
 	m_pPlayerInfo = playerinfomanager->GetPlayerInfo(pPlayer);
+}
+	
+void CClient :: setupMenuCommands ()
+{
+	/*engine->ClientCommand(m_pPlayer,"alias \"rcbot_setup\" \"bind 0 menuselect0\"");
+	engine->ClientCommand(m_pPlayer,"rcbot_setup");bind 2 \"menuselect 2\"");*/
+	engine->ClientCommand(m_pPlayer,"bind 1 \"menuselect 1\"");
+	engine->ClientCommand(m_pPlayer,"bind 2 \"menuselect 2\"");
+	engine->ClientCommand(m_pPlayer,"bind 3 \"menuselect 3\"");
+	engine->ClientCommand(m_pPlayer,"bind 4 \"menuselect 4\"");
+	engine->ClientCommand(m_pPlayer,"bind 5 \"menuselect 5\"");
+	engine->ClientCommand(m_pPlayer,"bind 6 \"menuselect 6\"");
+	engine->ClientCommand(m_pPlayer,"bind 7 \"menuselect 7\"");
+	engine->ClientCommand(m_pPlayer,"bind 8 \"menuselect 8\"");
+	engine->ClientCommand(m_pPlayer,"bind 9 \"menuselect 9\"");
+	engine->ClientCommand(m_pPlayer,"bind 0 \"menuselect 0\"");
+}
+	
+void CClient :: resetMenuCommands ()
+{
+	/*engine->ClientCommand(m_pPlayer,"alias \"rcbot_reset\" \"bind 0 slot10\"");
+	engine->ClientCommand(m_pPlayer,"rcbot_reset");bind 2 \"menuselect 2\"");*/
+	engine->ClientCommand(m_pPlayer,"bind 1 \"slot1\"");
+	engine->ClientCommand(m_pPlayer,"bind 2 \"slot2\"");
+	engine->ClientCommand(m_pPlayer,"bind 3 \"slot3\"");
+	engine->ClientCommand(m_pPlayer,"bind 4 \"slot4\"");
+	engine->ClientCommand(m_pPlayer,"bind 5 \"slot5\"");
+	engine->ClientCommand(m_pPlayer,"bind 6 \"slot6\"");
+	engine->ClientCommand(m_pPlayer,"bind 7 \"slot7\"");
+	engine->ClientCommand(m_pPlayer,"bind 8 \"slot8\"");
+	engine->ClientCommand(m_pPlayer,"bind 9 \"slot9\"");
+	engine->ClientCommand(m_pPlayer,"bind 0 \"slot10\"");
 }
 
 // called each frame
@@ -226,7 +260,7 @@ void CClient :: clientConnected ( edict_t *pPlayer )
 
 void CClient :: updateCurrentWaypoint ()
 {
-	setWaypoint(CWaypointLocations::NearestWaypoint(getOrigin(),50,-1,false,true));
+	setWaypoint(CWaypointLocations::NearestWaypoint(getOrigin(),50,-1,false,true,false,NULL,false,0,false,false,Vector(0,0,0),m_iWaypointShowFlags));
 }
 // this player disconnects
 void CClient :: clientDisconnected ()

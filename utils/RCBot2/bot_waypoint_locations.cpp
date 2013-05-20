@@ -564,7 +564,7 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 												bool bGetVisible, bool bGetUnReachable, bool bIsBot, 
 												dataUnconstArray<int> *iFailedWpts, bool bNearestAimingOnly, 
 												int iTeam, bool bCheckArea, bool bGetVisibleFromOther, 
-												Vector vOther )
+												Vector vOther, int iFlagsOnly )
 // Search for the nearest waypoint : I.e.
 // Find the waypoint that is closest to vOrigin from the distance pfMinDist
 // And set the piIndex to the waypoint index if closer.
@@ -610,6 +610,12 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 		if ( bCheckArea && !CPoints::isValidArea(curr_wpt->getArea()) )
 			continue;
 
+		if ( iFlagsOnly != -1 )
+		{
+			if ( curr_wpt->getFlags() && (!curr_wpt->hasFlag(iFlagsOnly)) )
+				continue;
+		}
+
 		if ( bIsBot )
 		{
 			if ( curr_wpt->getFlags() & (CWaypointTypes::W_FL_DOUBLEJUMP | CWaypointTypes::W_FL_ROCKET_JUMP | CWaypointTypes::W_FL_JUMP | CWaypointTypes::W_FL_OPENS_LATER) ) // fix : bit OR
@@ -636,7 +642,6 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 				*pfMinDist = fDist;
 			}
 		}
-		
 	}
 }
 
@@ -646,7 +651,7 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 										   int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, 
 										   bool bIsBot, dataUnconstArray<int> *iFailedWpts, 
 										   bool bNearestAimingOnly, int iTeam, bool bCheckArea,
-										   bool bGetVisibleFromOther, Vector vOther )
+										   bool bGetVisibleFromOther, Vector vOther, int iFlagsOnly )
 {
 	int iNearestIndex = -1;
 
@@ -682,7 +687,7 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 		{
 			for ( k = iMinLock; k <= iMaxLock; k++ )
 			{
-				FindNearestInBucket(i,j,k,vOrigin,&fNearestDist,&iNearestIndex,iIgnoreWpt,bGetVisible,bGetUnReachable,bIsBot,iFailedWpts,bNearestAimingOnly,iTeam,bCheckArea,bGetVisibleFromOther,vOther);
+				FindNearestInBucket(i,j,k,vOrigin,&fNearestDist,&iNearestIndex,iIgnoreWpt,bGetVisible,bGetUnReachable,bIsBot,iFailedWpts,bNearestAimingOnly,iTeam,bCheckArea,bGetVisibleFromOther,vOther,iFlagsOnly);
 			}
 		}
 	}
@@ -708,7 +713,7 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 
 //////////////////////////////////
 // Draw waypoints around a player
-void CWaypointLocations :: DrawWaypoints ( edict_t *pEntity, Vector vOrigin, float fDist, bool bDrawPaths, unsigned short int iDrawType )
+void CWaypointLocations :: DrawWaypoints ( CClient *pClient, float fDist )
 {
 	static byte m_bPvs[MAX_MAP_CLUSTERS/8];
 	static int clusterIndex;
@@ -718,12 +723,20 @@ void CWaypointLocations :: DrawWaypoints ( edict_t *pEntity, Vector vOrigin, flo
 	static CWaypoint *pWpt;
 	static int i,j,k;
 	static Vector vWpt;
+	static bool bDrawPaths;
+	static unsigned short int iDrawType;
+	static Vector vOrigin;
+	static edict_t *pEntity;
 	static int iMinLoci,iMaxLoci,iMinLocj,iMaxLocj,iMinLock,iMaxLock;
 
 	int iLoc = READ_LOC(vOrigin.x);
 	int jLoc = READ_LOC(vOrigin.y);
 	int kLoc = READ_LOC(vOrigin.z);
 
+	pEntity = pClient->getPlayer();
+	vOrigin = pClient->getOrigin();
+	bDrawPaths = false;
+	iDrawType = pClient->getDrawType();
 
 	getMinMaxs(iLoc,jLoc,kLoc,&iMinLoci,&iMinLocj,&iMinLock,&iMaxLoci,&iMaxLocj,&iMaxLock);
 
@@ -746,6 +759,8 @@ void CWaypointLocations :: DrawWaypoints ( edict_t *pEntity, Vector vOrigin, flo
 
 					if ( !pWpt->isUsed() ) // deleted
 						continue;
+					if ( !pClient->isShowingWaypoint(pWpt->getFlags()) )
+						continue; // hidden
 
 					vWpt = pWpt->getOrigin();
 

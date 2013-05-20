@@ -80,13 +80,10 @@ CWaypointFlagMenu :: CWaypointFlagMenu ( CBotMenu *pPrev )
 	// 9. Go Back
 
 	int iNumTypes = CWaypointTypes::getNumTypes();
-	int iLoops = (iNumTypes/9) + (((iNumTypes%9)==0)?0:1);
+
 	int iNumAdded = 0;
 	CBotMenu *pParent;
 	CBotMenu *pCurrent;
-	CBotMenu *pTemp;
-
-	//CBotMenu **pMenus = new CBotMenu*[iLoops];
 
 	int i;
 
@@ -103,8 +100,8 @@ CWaypointFlagMenu :: CWaypointFlagMenu ( CBotMenu *pPrev )
 
 		if ( (iNumAdded > 7) || (i == (iNumTypes-1)) )
 		{
-		//	make a new menu
-			pCurrent->addMenuItem(new CBotGotoMenuItem("Back...",pParent));
+			CBotMenuItem *back = new CBotGotoMenuItem("Back...",pParent);
+
 			pParent = pCurrent;
 
 			if ( (iNumAdded > 7) && (i < (iNumTypes-1)) )
@@ -113,38 +110,16 @@ CWaypointFlagMenu :: CWaypointFlagMenu ( CBotMenu *pPrev )
 				pCurrent->setCaption("Waypoint Flags (More)");
 				pParent->addMenuItem(new CBotGotoMenuItem("More...",pCurrent));
 			}
-			
+
+			pParent->addMenuItem(back);
+
+		//	make a new menu
+
 			iNumAdded = 0; // reset
 
 		}
 	}
 
-/*
-	pMenus[1] = new ( , pMenus[2] )
-	CWaypointFlagMenu *pPrev;
-
-	CBotGotoMenuItem *more = new CBotGotoMenuItem("More...",pMenu);
-	CBotGotoMenuItem *back = new CBotGotoMenuItem("Go Back",menu);
-
-	int i;
-	int iNumTypes = CWaypointTypes::getNumTypes();
-
-	for ( i = 0; (i < 9) && ((iShow + i) < iNumTypes); i ++ )
-	{
-		addMenuItem(new CWaypointFlagMenuItem(iShow+i));
-	}
-
-	if ( iShow == 0 )
-		addMenuItem(new CBotBackMenuItem(prev));
-	else
-		addMenuItem(new CBotBackMenuItem(CBotMenuList::getMenu(BOT_WPT_MENU)));
-
-	//= new CWaypointFlagMenu(i*9)
-
-	for ( int i = 0; i < iLoops; i ++ )
-	{
-		addMenuItem ();
-	}*/
 }
 
 void CBotMenuList :: setupMenus ()
@@ -401,4 +376,121 @@ void CBotMenu :: selectedMenu ( CClient *pClient, unsigned int iMenu )
 {
 	if ( iMenu < m_MenuItems.size() )
 		m_MenuItems[iMenu]->activate(pClient);
+}
+
+CWaypointFlagShowMenu :: CWaypointFlagShowMenu (CBotMenu *pParent)
+{
+	int iMod = CBotGlobals::getCurrentMod()->getModId();
+	// check the number of waypoint types available
+	// caption
+	// 1.
+	// 2.
+	// 3.
+	// 4.
+	// 5.
+	// 6.
+	// 7.
+	// 8. More...
+	// 9. Go Back
+
+	int iNumTypes = CWaypointTypes::getNumTypes();
+	int iNumAdded = 0;
+	CBotMenu *pCurrent;
+
+	int i;
+
+	pCurrent = this;
+
+	for ( i = 0; i < iNumTypes; i ++ )
+	{
+		if ( !CWaypointTypes::getTypeByIndex(i)->forMod(iMod) )
+			continue;
+
+		pCurrent->addMenuItem(new CWaypointFlagShowMenuItem(i));
+		iNumAdded++;
+
+		if ( (iNumAdded > 7) || (i == (iNumTypes-1)) )
+		{
+			CBotMenuItem *back = new CBotGotoMenuItem("Back...",pParent);
+		//	make a new menu
+			pParent = pCurrent;
+
+			if ( (iNumAdded > 7) && (i < (iNumTypes-1)) )
+			{
+				pCurrent = new CBotMenu();
+				pCurrent->setCaption("Show Waypoint Flags (More)");
+				pParent->addMenuItem(new CBotGotoMenuItem("More...",pCurrent));
+				
+			}
+
+			pParent->addMenuItem(back);
+
+			iNumAdded = 0; // reset
+
+		}
+	}
+}
+
+const char *CWaypointFlagShowMenu::getCaption(CClient *pClient,WptColor &color )
+{
+	if ( pClient->isShowingAllWaypoints() )
+		sprintf(m_szCaption,"Showing All Waypoints (change)");
+	else
+		sprintf(m_szCaption,"Showing Only Some Waypoints (change)");
+
+	color = WptColor::white;
+
+	return m_szCaption;
+}
+
+
+const char *CWaypointFlagShowMenuItem :: getCaption ( CClient *pClient, WptColor &color )
+{
+	CWaypointType *type = CWaypointTypes::getTypeByIndex(m_iFlag);
+
+	color = type->getColour();
+
+	sprintf(m_szCaption,"[%s] %s",pClient->isShowingWaypoint(type->getBits())?"showing":"hiding",type->getName());
+
+	return m_szCaption;
+}
+
+void CWaypointFlagShowMenuItem::activate ( CClient *pClient )
+{
+	CWaypointType *type = CWaypointTypes::getTypeByIndex(m_iFlag);
+
+	// toggle
+	if ( pClient->isShowingWaypoint(type->getBits()) )
+		pClient->dontShowWaypoints(type->getBits());
+	else
+		pClient->showWaypoints(type->getBits());
+}
+
+void CBotMenuItem :: freeMemory ()
+{
+	// do nothing
+}
+
+void CBotMenu :: freeMemory ()
+{
+	for ( unsigned int i = 0; i < m_MenuItems.size(); i ++ )
+	{
+		CBotMenuItem *temp = m_MenuItems[i];
+
+		temp->freeMemory();
+
+		delete temp;
+	}
+}
+
+void CBotMenuList :: freeMemory ()
+{
+	for ( unsigned int i = 0; i < BOT_MENU_MAX; i ++ )
+	{
+		CBotMenu *temp = m_MenuList[i];
+
+		temp->freeMemory();
+
+		delete temp;
+	}
 }

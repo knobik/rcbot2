@@ -62,11 +62,25 @@ public:
 		m_pMenu = NULL;
 		m_iMenuCommand = -1;
 		m_fNextUpdateMenuTime = 0.0f;
+		m_iWaypointShowFlags = -1;
+		m_iWaypointDrawType = 3;
 	}
+
 	void init ();
 
+	void setupMenuCommands ();
+	void resetMenuCommands ();
+
 	inline bool isUsingMenu () { return (m_pMenu != NULL); }
-	inline void setCurrentMenu ( CBotMenu *pMenu ) { m_pMenu = pMenu; }
+	inline void setCurrentMenu ( CBotMenu *pMenu ) 
+	{ 
+		m_pMenu = pMenu; 
+
+		if ( pMenu == NULL )
+			resetMenuCommands();
+		else
+			setupMenuCommands();
+	}
 	inline CBotMenu *getCurrentMenu () { return m_pMenu; }
 	inline void setMenuCommand ( int iCommand ) { m_iMenuCommand = iCommand; }
 	inline int getLastMenuCommand () { return m_iMenuCommand; }
@@ -143,6 +157,11 @@ public:
 	inline int getWptCopyArea () { return m_iCopyWptArea; }
 
 	inline eWptCopyType getWptCopyType () { return m_WaypointCopyType; }
+
+	inline bool isShowingWaypoint ( int iFlags ) { return (m_iWaypointShowFlags & iFlags) == iFlags; }
+	inline void showWaypoints ( int iFlags ) { m_iWaypointShowFlags |= iFlags; }
+	inline void dontShowWaypoints ( int iFlags ) { m_iWaypointShowFlags &= ~iFlags; }
+	inline bool isShowingAllWaypoints () { return m_iWaypointShowFlags == -1; }
 private:
 	edict_t *m_pPlayer;
 	// steam id
@@ -195,6 +214,8 @@ private:
 	int m_iMenuCommand;
 
 	float m_fNextUpdateMenuTime;
+
+	int m_iWaypointShowFlags; // -1 = showall (default)
 };
 
 class CClients

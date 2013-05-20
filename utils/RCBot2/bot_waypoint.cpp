@@ -1235,7 +1235,6 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 	AngleVectors(qAim,&vAim);
 
-
 	// top + bottom heights = fHeight
 	fHeight /= 2;
 
@@ -1611,7 +1610,7 @@ void CWaypoints :: drawWaypoints( CClient *pClient )
 	/////////////////////////////////////////////////
 	pClient->updateCurrentWaypoint();
 
-	CWaypointLocations::DrawWaypoints(pClient->getPlayer(),pClient->getOrigin(),CWaypointLocations::REACHABLE_RANGE,false,pClient->getDrawType());
+	CWaypointLocations::DrawWaypoints(pClient,CWaypointLocations::REACHABLE_RANGE);
 
 	if ( pClient->isPathWaypointOn() )
 	{
