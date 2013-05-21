@@ -88,6 +88,11 @@ typedef enum
 class CBotMenuItem
 {
 public:
+	CBotMenuItem ()
+	{
+		m_szCaption[0] = 0;
+	}
+
 	virtual const char *getCaption ( CClient *pClient, WptColor &color );
 
 	virtual void activate ( CClient *pClient ) = 0;
