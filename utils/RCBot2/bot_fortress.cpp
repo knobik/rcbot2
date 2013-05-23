@@ -1372,8 +1372,8 @@ void CBotTF2 :: spawnInit()
 	m_fUseTeleporterTime = 0.0f;
 	m_fSpySapTime = 0.0f;
 
-	m_pPushPayloadBomb = NULL;
-	m_pDefendPayloadBomb = NULL;
+	//m_pPushPayloadBomb = NULL;
+	//m_pDefendPayloadBomb = NULL;
 
 	m_bFixWeapons = true;
 	m_iPrevWeaponSelectFailed = 0;
@@ -3574,7 +3574,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( (m_iClass == TF_CLASS_HWGUY) || (m_iClass == TF_CLASS_DEMOMAN) || (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_PYRO) )
 		fDefendFlagUtility = bot_defrate.GetFloat() - randomFloat(0.0f,fDefendFlagUtility);
 	else if ( m_iClass == TF_CLASS_MEDIC )
-		fDefendFlagUtility = fGetFlagUtility;
+		fDefendFlagUtility = fGetFlagUtility-0.3f;
 
 	if ( hasSomeConditions(CONDITION_PUSH) || CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) )
 	{
@@ -3973,7 +3973,7 @@ bool CBotTF2 :: select_CWeapon ( CWeapon *pWeapon )
 
 	if ( pBotWeapon && !pBotWeapon->hasWeapon() )
 		return false;
-	if ( pBotWeapon && !pBotWeapon->isMelee() && pBotWeapon->outOfAmmo(this) )
+	if ( pBotWeapon && !pBotWeapon->isMelee() && pBotWeapon->canAttack() && pBotWeapon->outOfAmmo(this) )
 		return false;
 
 	sprintf(cmd,"use %s",pWeapon->getWeaponName());
@@ -4115,16 +4115,50 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			break;
 		case BOT_UTIL_DEFEND_POINT:
 			{
-				float fTime = rcbot_tf2_protect_cap_time.GetFloat();
-				// chance of going to point
-				float fprob = (fTime - (engine->Time() - CPoints::getPointCaptureTime(m_iCurrentDefendArea)))/fTime;
+				float fprob;
 
-				if ( fprob < rcbot_tf2_protect_cap_percent.GetFloat() )
-					fprob = rcbot_tf2_protect_cap_percent.GetFloat();
+				if ( (CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) ||  CTeamFortress2Mod::isMapType(TF_MAP_CART)) )
+				{
+					if ( m_pDefendPayloadBomb !=NULL )
+					{
+						static const float fSearchDist = 1500.0f;
+						Vector vPayloadBomb = CBotGlobals::entityOrigin(m_pDefendPayloadBomb);
+						CWaypoint *pCapturePoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPayloadBomb,fSearchDist,-1,false,false,false,NULL,false,0,true,false,Vector(0,0,0),CWaypointTypes::W_FL_CAPPOINT));
+
+						if ( pCapturePoint )
+						{
+							float fDistance = pCapturePoint->distanceFrom(vPayloadBomb);
+
+							if ( fDistance == 0 )
+								fprob = 1.0f;
+							else
+								fprob = 1.0f - (fDistance/fSearchDist);
+						}
+						else // no where near the capture point 
+						{
+							extern ConVar bot_defrate;
+
+							fprob = bot_defrate.GetFloat();
+						}
+					}
+					else
+					{
+						fprob = 0.05f;
+					}
+				}
+				else
+				{
+					float fTime = rcbot_tf2_protect_cap_time.GetFloat();
+					// chance of going to point
+					fprob = (fTime - (engine->Time() - CPoints::getPointCaptureTime(m_iCurrentDefendArea)))/fTime;
+
+					if ( fprob < rcbot_tf2_protect_cap_percent.GetFloat() )
+						fprob = rcbot_tf2_protect_cap_percent.GetFloat();
+				}
 
 				if ( randomFloat(0.0,1.0f) > fprob )
 				{
-					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true,this,true);
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true,this,false);
 
 					if ( pWaypoint )
 					{
