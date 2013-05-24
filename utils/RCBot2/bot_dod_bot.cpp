@@ -116,6 +116,18 @@ bool CDODBot::canGotoWaypoint(Vector vPrevWaypoint, CWaypoint *pWaypoint)
 		{
 			return false;
 		}
+		else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_BREAKABLE) )
+		{
+			edict_t *pBreakable = CDODMod::getBreakable(pWaypoint);
+
+			if ( CBotGlobals::entityIsValid(pBreakable) )
+			{
+				if ( !CBotGlobals::isBreakableOpen(pBreakable) )
+				{
+					return m_pWeapons->hasExplosives();
+				}
+			}
+		}
 		else if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_BOMB_TO_OPEN) )
 		{
 			edict_t *pBombTarget = CDODMod::getBombTarget(pWaypoint);
@@ -526,11 +538,17 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 	if ( !entity_index || (entity_index > gpGlobals->maxClients) )
 	{
-		if ( pEdict == m_pNearestBreakable )
+		bool bRegisteredBreakable = CDODMod::isBreakableRegistered(pEdict);
+
+		if ( !CBotGlobals::isBreakableOpen(pEdict) && ((pEdict == m_pNearestBreakable) || bRegisteredBreakable) )
 		{
 			if ( rcbot_shoot_breakables.GetBool() )
 			{ 
-				if ( DotProductFromOrigin(CBotGlobals::entityOrigin(pEdict)) > rcbot_shoot_breakable_cos.GetFloat() )
+				if ( bRegisteredBreakable ) 
+				{
+					return m_pWeapons->hasExplosives();
+				}
+				else if ( DotProductFromOrigin(CBotGlobals::entityOrigin(pEdict)) > rcbot_shoot_breakable_cos.GetFloat() )
 					return (distanceFrom(pEdict) < rcbot_shoot_breakable_dist.GetFloat()) && (CClassInterface::getPlayerHealth(pEdict) > 0);
 			}
 		}
@@ -585,7 +603,7 @@ void CDODBot :: handleWeapons ()
 	{
 		CBotWeapon *pWeapon;
 
-		pWeapon = getBestWeapon(m_pEnemy,true,true,rcbot_melee_only.GetBool());
+		pWeapon = getBestWeapon(m_pEnemy,true,true,rcbot_melee_only.GetBool(),((m_pEnemy == m_pNearestBreakable) || CDODMod::isBreakableRegistered(m_pEnemy)));
 
 		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 		{
@@ -860,7 +878,8 @@ void CDODBot :: modThink ()
 		m_flSprintTime = engine->Time() + randomFloat(5.0f,20.0f);
 	}
 
-	if ( m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time()) )
+	if ( (pWeapon && pWeapon->needToReload(this)) ||
+		(m_fLastSeeEnemy && ((m_fLastSeeEnemy + 5.0)<engine->Time())) )
 	{
 		m_fLastSeeEnemy = 0;
 		m_pButtons->tap(IN_RELOAD);

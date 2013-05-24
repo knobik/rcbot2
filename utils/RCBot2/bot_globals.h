@@ -188,7 +188,9 @@ public:
 
 	inline static bool setupMapTime ( ) { return m_fMapStartTime == 0; }
 
-	Vector getVelocity ( edict_t *pPlayer );
+	static bool isBreakableOpen ( edict_t *pBreakable );
+
+	static Vector getVelocity ( edict_t *pPlayer );
 
 	////////
 	static CBotCommandContainer *m_pCommands;

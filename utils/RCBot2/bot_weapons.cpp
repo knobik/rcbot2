@@ -231,7 +231,7 @@ bool CBotWeapon :: needToReload (CBot *pBot)
 { 
 	if ( m_iClip1 )
 	{
-		return *m_iClip1 == 0;
+		return (*m_iClip1 == 0) && (getAmmo(pBot)>0);
 	}
 
 	return false;
@@ -251,6 +251,25 @@ int CBotWeapon :: getAmmo (CBot *pBot, int type )
 
 	return 0;
 }
+
+
+bool CBotWeapons::hasExplosives( void )
+{
+	CBotWeapon *pWeapon;
+
+	for ( int i = 0; i < MAX_WEAPONS; i ++ )
+	{
+		pWeapon = &(m_theWeapons[i]);
+		// find weapon info from weapon id
+		if ( pWeapon->hasWeapon() && pWeapon->isExplosive() )
+		{
+			if ( !pWeapon->outOfAmmo(m_pBot) )
+				return true;
+		}
+	}
+	return false;
+}
+
 
 bool CBotWeapons::hasWeapon(int id)
 {
@@ -357,7 +376,7 @@ void CBotWeapons ::update ( bool bOverrideAllFromEngine )
 	}
 }
 
-CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bool bAllowMeleeFallback, bool bMeleeOnly )
+CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bool bAllowMeleeFallback, bool bMeleeOnly, bool bExplosivesOnly )
 {
 	CBotWeapon *m_theBestWeapon = NULL;
 	CBotWeapon *m_FallbackMelee = NULL;
@@ -388,6 +407,9 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bo
 			continue;
 
 		if ( !bAllowMelee && pWeapon->isMelee() )
+			continue;
+
+		if ( bExplosivesOnly && !pWeapon->isExplosive() )
 			continue;
 
 		if ( !pWeapon->isMelee() || pWeapon->isSpecial() )

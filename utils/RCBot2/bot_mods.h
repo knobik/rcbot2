@@ -518,7 +518,19 @@ public:
 
 	static bool shouldAttack ( int iTeam ); // uses the neural net to return probability of attack
 
-	static edict_t *getBombTarget ( CWaypoint *pWaypoint );
+	static edict_t *getBombTarget ( CWaypoint *pWpt );
+	static edict_t *getBreakable ( CWaypoint *pWpt );
+
+	static inline bool isBreakableRegistered ( edict_t *pBreakable )
+	{
+		for ( unsigned int i = 0; i < m_BreakableWaypoints.size(); i ++ )
+		{
+			if ( m_BreakableWaypoints[i].pEdict == pBreakable )
+				return true;
+		}
+
+		return false;
+	}
 
 	static inline CWaypoint *getBombWaypoint ( edict_t *pBomb )
 	{
@@ -566,6 +578,7 @@ protected:
 	static int m_iBombAreaAxis;
 
 	static vector<edict_wpt_pair_t> m_BombWaypoints;
+	static vector<edict_wpt_pair_t> m_BreakableWaypoints;
 
 									// enemy			// team
 	static float fAttackProbLookUp[MAX_DOD_FLAGS+1][MAX_DOD_FLAGS+1];

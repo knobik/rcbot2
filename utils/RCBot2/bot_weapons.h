@@ -614,7 +614,7 @@ public:
 /////////////////////////////////////
 	CBotWeapons ( CBot *pBot );    // // constructor
 /////////////////////////////////////
-	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true, bool bMeleeOnly = false );
+	CBotWeapon *getBestWeapon ( edict_t *pEnemy, bool bAllowMelee = true, bool bAllowMeleeFallback = true, bool bMeleeOnly = false, bool bExplosivesOnly = false );
 
 	void addWeapon ( int iId, edict_t *pent = NULL, bool bOverrideAll = true );
 
@@ -642,6 +642,8 @@ public:
 	void clearWeapons ();
 
 	bool hasWeapon ( int id );
+
+	bool hasExplosives ( void );
 
 	void update ( bool bOverrideAllFromEngine = true ); // update from sendprop
 

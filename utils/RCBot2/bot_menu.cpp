@@ -41,9 +41,15 @@ const char *CWaypointFlagMenu :: getCaption(CClient *pClient,WptColor &color )
 	CWaypoint *pWpt = CWaypoints::getWaypoint(iWpt);
 
 	if ( pWpt )
+	{
 		color = CWaypointTypes::getColour(pWpt->getFlags());
-
-	sprintf(m_szCaption,"Waypoint Flags ID = [%d]",iWpt);
+		sprintf(m_szCaption,"Waypoint Flags ID = [%d]",iWpt);
+	}
+	else
+	{
+		color = WptColor::white;
+		sprintf(m_szCaption,"No Waypoint");
+	}
 
 	return m_szCaption;
 }
@@ -165,7 +171,10 @@ const char *CWaypointMenu::getCaption(CClient *pClient,WptColor &color )
 {
 	int iWpt = pClient->currentWaypoint();
 	
-	sprintf(m_szCaption,"Waypoint Menu [%d]",iWpt);
+	if ( iWpt == -1 )
+		sprintf(m_szCaption,"Waypoint Menu - No waypoint - Walk towards a waypoint");
+	else
+		sprintf(m_szCaption,"Waypoint Menu [%d]",iWpt);
 
 	color = WptColor::white;
 
@@ -178,6 +187,8 @@ const char *CWaypointYawMenuItem :: getCaption ( CClient *pClient, WptColor &col
 
 	if ( pWpt )
 		sprintf(m_szCaption,"Yaw = %d degrees (press to update)",(int)pWpt->getAimYaw());
+	else
+		sprintf(m_szCaption,"No Waypoint");
 
 	return m_szCaption;
 }
@@ -331,6 +342,12 @@ void CBotMenu ::render (CClient *pClient)
 
 	debugoverlay->AddTextOverlayRGB(vOrigin,0,fUpdateTime,color.r,color.g,color.b,color.a,pszCaption);
 	debugoverlay->AddTextOverlayRGB(vOrigin,1,fUpdateTime,color.r,color.g,color.b,color.a,"----------------");
+/*
+	Vector screen;
+	Vector point = Vector(0,0,0);
+
+	debugoverlay->ScreenPosition(0.5f, 0.5f, screen);
+	debugoverlay->ScreenPosition(point,screen);*/
 
 	for ( i = 0; i < m_MenuItems.size(); i ++ )
 	{

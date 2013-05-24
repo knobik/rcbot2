@@ -3157,6 +3157,7 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 {
 	float fPreFactor = 0;
 
+	// Player
 	if ( ((ENTINDEX(pEnemy) > 0)&&(ENTINDEX(pEnemy)<=gpGlobals->maxClients)) )
 	{		
 		if ( CTeamFortress2Mod::isFlagCarrier(pEnemy) )
@@ -3207,7 +3208,7 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 	{
 		if ( CTeamFortress2Mod::isSentry(pEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
-			fPreFactor = -400.0f;
+			fPreFactor = -800.0f;
 		}
 		else if ( CTeamFortress2Mod::isBoss(pEnemy) )
 		{
@@ -3565,7 +3566,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	else if ( m_iClass == TF_CLASS_SPY )
 		fGetFlagUtility = 0.6f;
 	else if ( m_iClass == TF_CLASS_MEDIC )
-		fGetFlagUtility = 1.0f - (((float)numplayersonteam)/(gpGlobals->maxClients/2));
+		fGetFlagUtility = 0.85f - (((float)numplayersonteam)/(gpGlobals->maxClients/2));
 	else if ( m_iClass == TF_CLASS_ENGINEER )
 		fGetFlagUtility = 0.1f; // not my priority
 
@@ -3574,7 +3575,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	if ( (m_iClass == TF_CLASS_HWGUY) || (m_iClass == TF_CLASS_DEMOMAN) || (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_PYRO) )
 		fDefendFlagUtility = bot_defrate.GetFloat() - randomFloat(0.0f,fDefendFlagUtility);
 	else if ( m_iClass == TF_CLASS_MEDIC )
-		fDefendFlagUtility = fGetFlagUtility-0.3f;
+		fDefendFlagUtility = fGetFlagUtility;
 
 	if ( hasSomeConditions(CONDITION_PUSH) || CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) )
 	{

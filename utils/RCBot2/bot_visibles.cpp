@@ -116,10 +116,14 @@ CBotVisibles :: ~CBotVisibles ()
 void CBotVisibles :: eachVisible ( CVisibleFunc *pFunc )
 {
 	dataStack<edict_t*> tempStack = m_VisibleList;
+	edict_t *pEnt;
 
 	while ( !tempStack.IsEmpty() )
 	{
-		pFunc->execute(tempStack.ChooseFromStack());
+		pEnt = tempStack.ChooseFromStack();
+
+		if ( !pEnt->IsFree() )
+			pFunc->execute(pEnt);
 	}
 }
 

@@ -71,11 +71,12 @@ enum
 
 class CWaypoint;
 
+
 class CWaypointType
 {
 public:
 
-	CWaypointType ( int iBit, const char *szName, const char *szDescription, WptColor vColour, int iModBits = BITS_MOD_ALL );
+	CWaypointType ( int iBit, const char *szName, const char *szDescription, WptColor vColour, int iModBits = BITS_MOD_ALL, int iImportance = 0 );
 
 	inline const char *getName () { return m_szName; }
 	inline const char *getDescription () { return m_szDescription; }
@@ -85,6 +86,12 @@ public:
 	inline void setMods ( int iMods ){ m_iMods = iMods; }// input bitmask of mods (32 max)
 	inline bool forMod ( int iMod ) { return ((1<<iMod)&m_iMods)==(1<<iMod); }
 	inline WptColor getColour () { return m_vColour; }
+	inline int getImportance () { return m_iImportance; }
+
+	bool operator < ( CWaypointType *other )
+	{
+		return m_iImportance < other->getImportance();
+	}
 
 	//virtual void giveTypeToWaypoint ( CWaypoint *pWaypoint );
 	//virtual void removeTypeFromWaypoint ( CWaypoint *pWaypoint );
@@ -94,8 +101,11 @@ private:
 	int m_iBit; // bits used
 	char *m_szName; // e.g. "jump"/"ladder"
 	char *m_szDescription; // e.g. "will jump here"/"will climb here"
+	int m_iImportance;
 	WptColor m_vColour;
 };
+
+
 /*
 class CCrouchWaypointType : public CWaypointType
 {
@@ -143,6 +153,7 @@ public:
 	static const int W_FL_LIFT = 8388608;
 	static const int W_FL_FLAGONLY = 16777216;
 	static const int W_FL_FALL = 33554432;
+	static const int W_FL_BREAKABLE = 67108864;
 
 	static void setup ();
 

@@ -79,6 +79,7 @@ int CDODMod::m_iBombAreaAxis = 0;
 //CPerceptron *CDODMod::gNetAttackOrDefend = NULL;
 float CDODMod::fAttackProbLookUp[MAX_DOD_FLAGS+1][MAX_DOD_FLAGS+1];
 vector<edict_wpt_pair_t> CDODMod::m_BombWaypoints;
+vector<edict_wpt_pair_t> CDODMod::m_BreakableWaypoints;
 vector<edict_wpt_pair_t> CHalfLifeDeathmatchMod::m_LiftWaypoints;
 
 extern ConVar bot_use_disp_dist;
@@ -1944,6 +1945,19 @@ int CDODMod ::getScore(edict_t *pPlayer)
 	return 0;
 }
 
+edict_t *CDODMod :: getBreakable ( CWaypoint *pWpt )
+{
+	register unsigned short int size = m_BreakableWaypoints.size();
+
+	for ( register unsigned short int i = 0; i < size; i ++ )
+	{
+		if ( m_BreakableWaypoints[i].pWaypoint == pWpt )
+			return m_BreakableWaypoints[i].pEdict;
+	}
+
+	return NULL;
+}
+
 edict_t *CDODMod :: getBombTarget ( CWaypoint *pWpt )
 {
 	register unsigned short int size = m_BombWaypoints.size();
@@ -2004,9 +2018,10 @@ void CDODMod ::roundStart()
 
 	// find bombs at waypoints
 	m_BombWaypoints.clear();
+	m_BreakableWaypoints.clear();
 
 	CWaypoints::updateWaypointPairs(&m_BombWaypoints,CWaypointTypes::W_FL_BOMB_TO_OPEN,"dod_bomb_target");
-
+	CWaypoints::updateWaypointPairs(&m_BreakableWaypoints,CWaypointTypes::W_FL_BREAKABLE,"func_breakable");
 
 	//m_Flags.updateAll();
 }

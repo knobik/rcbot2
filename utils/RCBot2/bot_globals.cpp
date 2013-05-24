@@ -724,6 +724,11 @@ void CBotGlobals :: addDirectoryDelimiter ( char *szString )
 #endif
 }
 
+bool CBotGlobals :: isBreakableOpen ( edict_t *pBreakable )
+{
+	return ((CClassInterface::getEffects(pBreakable) & EF_NODRAW) == EF_NODRAW);
+}
+
 Vector CBotGlobals:: getVelocity ( edict_t *pPlayer )
 {
 	CClient *pClient = CClients::get(pPlayer);
