@@ -2305,11 +2305,15 @@ void CBotTF2 :: modThink ()
 
 			if ( pWeapon && (pWeapon->getID() == TF2_WEAPON_MINIGUN) )
 			{
-				if ( m_fCurrentDanger >= TF2_HWGUY_REV_BELIEF )
+				if ( !CTeamFortress2Mod::TF2_IsPlayerOnFire(m_pEdict) &&
+					!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) )
 				{
-					if ( pWeapon->getAmmo(this) > 100 )
+					if ( m_fCurrentDanger >= TF2_HWGUY_REV_BELIEF )
 					{
-						bRevMiniGun = true;
+						if ( pWeapon->getAmmo(this) > 100 )
+						{
+							bRevMiniGun = true;
+						}
 					}
 				}
 			}

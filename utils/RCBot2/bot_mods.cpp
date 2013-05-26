@@ -2127,3 +2127,25 @@ void CDODMod ::clientCommand( edict_t *pEntity, int argc, const char *pcmd, cons
 		}
 	}
 }
+
+bool CDODMod :: isBreakableRegistered ( edict_t *pBreakable, int iTeam )
+{
+	static CWaypoint *pWpt;
+
+	for ( unsigned int i = 0; i < m_BreakableWaypoints.size(); i ++ )
+	{
+		if ( m_BreakableWaypoints[i].pEdict == pBreakable )
+		{
+			pWpt = m_BreakableWaypoints[i].pWaypoint;
+
+			if ( pWpt->hasFlag(CWaypointTypes::W_FL_NOALLIES) )
+				return iTeam != TEAM_ALLIES;
+			else if ( pWpt->hasFlag(CWaypointTypes::W_FL_NOAXIS) )
+				return iTeam != TEAM_AXIS;
+
+			return true;
+		}
+	}
+
+	return false;
+}

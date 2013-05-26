@@ -538,7 +538,7 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 	if ( !entity_index || (entity_index > gpGlobals->maxClients) )
 	{
-		bool bRegisteredBreakable = CDODMod::isBreakableRegistered(pEdict);
+		bool bRegisteredBreakable = CDODMod::isBreakableRegistered(pEdict, m_iTeam);
 
 		if ( !CBotGlobals::isBreakableOpen(pEdict) && ((pEdict == m_pNearestBreakable) || bRegisteredBreakable) )
 		{
@@ -603,7 +603,7 @@ void CDODBot :: handleWeapons ()
 	{
 		CBotWeapon *pWeapon;
 
-		pWeapon = getBestWeapon(m_pEnemy,true,true,rcbot_melee_only.GetBool(),((m_pEnemy == m_pNearestBreakable) || CDODMod::isBreakableRegistered(m_pEnemy)));
+		pWeapon = getBestWeapon(m_pEnemy,true,true,rcbot_melee_only.GetBool(),((m_pEnemy == m_pNearestBreakable) || CDODMod::isBreakableRegistered(m_pEnemy,m_iTeam)));
 
 		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 		{

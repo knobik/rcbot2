@@ -521,16 +521,7 @@ public:
 	static edict_t *getBombTarget ( CWaypoint *pWpt );
 	static edict_t *getBreakable ( CWaypoint *pWpt );
 
-	static inline bool isBreakableRegistered ( edict_t *pBreakable )
-	{
-		for ( unsigned int i = 0; i < m_BreakableWaypoints.size(); i ++ )
-		{
-			if ( m_BreakableWaypoints[i].pEdict == pBreakable )
-				return true;
-		}
-
-		return false;
-	}
+	static bool isBreakableRegistered ( edict_t *pBreakable, int iTeam );
 
 	static inline CWaypoint *getBombWaypoint ( edict_t *pBomb )
 	{
