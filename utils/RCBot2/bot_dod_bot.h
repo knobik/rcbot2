@@ -154,6 +154,8 @@ public:
 
 	void spawnInit ();
 
+	float getEnemyFactor ( edict_t *pEnemy );
+
 	bool isEnemy ( edict_t *pEdict,bool bCheckWeapons = true );
 
 	float getArmorPercent () { return (0.01f * m_pPlayerInfo->GetArmorValue()); }

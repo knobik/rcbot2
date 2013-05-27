@@ -70,6 +70,20 @@ void CBroadcastBombEvent :: execute (CBot *pBot)
 
 	pDODBot->bombEvent(m_iCP,m_iTeam,DOD_BOMB_PLANT);
 }
+
+// The lower the better
+float CDODBot :: getEnemyFactor ( edict_t *pEnemy )
+{
+	float fPreFactor = CBot::getEnemyFactor(pEnemy);
+
+	// not a player
+	if ( ENTINDEX(pEnemy) > gpGlobals->maxClients )
+		fPreFactor += 1024.0f;
+		
+	return fPreFactor;
+}
+
+
 // could be a bomb or flag capture event
 void CDODBot :: bombEvent ( int iEvent, int iCP, int iTeam )
 {
@@ -544,9 +558,9 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 		{
 			if ( rcbot_shoot_breakables.GetBool() )
 			{ 
-				if ( bRegisteredBreakable ) 
+				if ( bRegisteredBreakable )  // this breakable is registered as explosive only
 				{
-					return m_pWeapons->hasExplosives();
+					return (distanceFrom(pEdict) > BLAST_RADIUS) && m_pWeapons->hasExplosives();
 				}
 				else if ( DotProductFromOrigin(CBotGlobals::entityOrigin(pEdict)) > rcbot_shoot_breakable_cos.GetFloat() )
 					return (distanceFrom(pEdict) < rcbot_shoot_breakable_dist.GetFloat()) && (CClassInterface::getPlayerHealth(pEdict) > 0);
