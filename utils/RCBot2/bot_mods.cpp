@@ -1905,10 +1905,18 @@ int CDODFlags::setup(edict_t *pResourceEntity)
 	// find waypoints
 	for ( short int i = 0; i < m_iNumControlPoints; i ++ )
 	{
+		// if we don't know any cap waypoint yet here find one
 		if ( m_iWaypoint[i] == -1 )
 		{
 			// get any nearby waypoint so the bot knows which waypoint to get danger from
-			m_iWaypoint[i] = CWaypointLocations::NearestWaypoint(m_vCPPositions[i],400.0f,-1,false,true);
+			// look for the nearest waypoint which is a cap point
+			m_iWaypoint[i] = CWaypointLocations::NearestWaypoint(m_vCPPositions[i],400.0f,-1,false,false,false,0,false,0,false,false,Vector(0,0,0),CWaypointTypes::W_FL_CAPPOINT );
+
+			// still no waypoint, search for any capture waypoint with the same area
+			if ( m_iWaypoint[i] == -1 )
+			{
+				m_iWaypoint[i] = CWaypoints::getWaypointIndex(CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,i,true));
+			}
 		}
 	}
 

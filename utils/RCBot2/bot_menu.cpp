@@ -515,3 +515,53 @@ void CBotMenuList :: freeMemory ()
 		delete temp;
 	}
 }
+
+const char *CPathWaypointDeleteToMenuItem :: getCaption ( CClient *pClient, WptColor &color )
+{
+	int iWpt = pClient->currentWaypoint();
+
+	color = WptColor::white;
+
+	if ( iWpt == -1 )
+	{
+		strcpy(m_szCaption,"No Waypoint");
+		return m_szCaption;
+	}
+
+	sprintf(m_szCaption,"Delete Paths To This Waypoint");
+
+	return m_szCaption;
+}
+
+void CPathWaypointDeleteToMenuItem :: activate ( CClient *pClient )
+{
+	if ( pClient->currentWaypoint() != -1 )
+		CWaypoints::deletePathsTo(pClient->currentWaypoint());
+}
+
+
+const char *CPathWaypointDeleteFromMenuItem :: getCaption ( CClient *pClient, WptColor &color )
+{
+	int iWpt = pClient->currentWaypoint();
+
+	color = WptColor::white;
+
+	if ( iWpt == -1 )
+	{
+		strcpy(m_szCaption,"No Waypoint");
+		return m_szCaption;
+	}
+
+	CWaypoint *pWaypoint = CWaypoints::getWaypoint(iWpt);
+
+	sprintf(m_szCaption,"Delete Paths From This Waypoint (%d)", pWaypoint->numPaths());
+
+	return m_szCaption;
+}
+
+void CPathWaypointDeleteFromMenuItem :: activate ( CClient *pClient )
+{
+	if ( pClient->currentWaypoint() != -1 )
+		CWaypoints::deletePathsFrom(pClient->currentWaypoint());
+}
+

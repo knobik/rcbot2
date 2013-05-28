@@ -314,6 +314,46 @@ class CWaypointPasteMenuItem : public CBotMenuItem
 	void activate ( CClient *pClient );
 };
 
+class CPathWaypointDeleteToMenuItem : public CBotMenuItem
+{
+	const char *getCaption ( CClient *pClient, WptColor &color );
+
+	void activate ( CClient *pClient );
+};
+
+class CPathWaypointDeleteFromMenuItem : public CBotMenuItem
+{
+	const char *getCaption ( CClient *pClient, WptColor &color );
+
+	void activate ( CClient *pClient );
+};
+
+class CPathWaypointMenu : public CBotMenu
+{
+public:
+	CPathWaypointMenu (CBotMenu *pParent)
+	{
+		addMenuItem(new CPathWaypointDeleteFromMenuItem());
+		addMenuItem(new CPathWaypointDeleteToMenuItem());
+		addMenuItem(new CBotGotoMenuItem("Back",pParent));
+		setCaption("Edit Path Options");
+	}
+};
+
+class CWaypointEditMenu : public CBotMenu
+{
+public:
+	CWaypointEditMenu (CBotMenu *pParent)
+	{
+		addMenuItem(new CWaypointCutMenuItem());
+		addMenuItem(new CWaypointCopyMenuItem());
+		addMenuItem(new CWaypointPasteMenuItem());
+		addMenuItem(new CBotGotoMenuItem("Back",pParent));
+		setCaption("Edit Waypoint Options");
+	}
+};
+
+
 class CWaypointMenu : public CBotMenu
 {
 public:
@@ -334,9 +374,8 @@ public:
 		addMenuItem(new CWaypointAreaMenu(this));
 		addMenuItem(new CWaypointRadiusMenu(this));
 		addMenuItem(new CWaypointYawMenuItem());
-		addMenuItem(new CWaypointCutMenuItem());
-		addMenuItem(new CWaypointCopyMenuItem());
-		addMenuItem(new CWaypointPasteMenuItem());
+		addMenuItem(new CWaypointEditMenu(this));
+		addMenuItem(new CPathWaypointMenu(this));
 		addMenuItem(new CWaypointFlagShowMenu(this));
 		addMenuItem(new CBotGotoMenuItem("Exit",NULL));
 	}

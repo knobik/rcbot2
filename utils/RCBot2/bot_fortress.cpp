@@ -2779,6 +2779,8 @@ bool CBotFortress :: wantToFollowEnemy ()
 		return false;
     else if ( (m_iClass == TF_CLASS_SPY) && isDisguised() ) // sneak around the enemy
         return true;
+	else if ( (m_iClass == TF_CLASS_SNIPER) && (distanceFrom(m_pLastEnemy)>CWaypointLocations::REACHABLE_RANGE) )
+		return false; // don't bother!
 	else if ( CBotGlobals::isPlayer(m_pLastEnemy) && (CClassInterface::getTF2Class(m_pLastEnemy) == TF_CLASS_SPY) && (thinkSpyIsEnemy(m_pLastEnemy,CTeamFortress2Mod::getSpyDisguise(m_pLastEnemy))) )
         return true; // always find spies!
 	else if ( CTeamFortress2Mod::isFlagCarrier(m_pLastEnemy) )
@@ -4021,6 +4023,26 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 		{
 		case BOT_UTIL_DEFEND_PAYLOAD_BOMB:
 			{
+				if ( m_pDefendPayloadBomb )
+				{
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea,true,this);
+
+					if ( pWaypoint )
+					{
+						Vector org1 = pWaypoint->getOrigin();
+						Vector org2 = CBotGlobals::entityOrigin(m_pDefendPayloadBomb);
+
+						pWaypoint = CWaypoints::randomWaypointGoalBetweenArea(CWaypointTypes::W_FL_DEFEND,m_iTeam,m_iCurrentDefendArea,true,this,true,&org1,&org2);
+
+						if ( pWaypoint )
+						{
+							m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin()));
+							removeCondition(CONDITION_PUSH);
+							return true;
+						}
+					}
+				}
+
 				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true,this,true);
 
 				if ( pWaypoint )
