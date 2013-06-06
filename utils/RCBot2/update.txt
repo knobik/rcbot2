@@ -1,5 +1,6 @@
 0.75
 ====
+installer: changed installation messages / added correct terms
 launcher: fixed exception at start up
 dod:s  added breakable waypoint for DOD:S (a rocket or grenade is required to break a wall nearby)
 dod:s  breakable waypoint can be team only
@@ -7,10 +8,13 @@ dod:s  removed health/ammo waypoint types for DOD:S
 dod:s  changes to reloading in dod:s to prevent bots clicking their gun too often
 all:   fixed some waypoint menu glitches
 all:   changed some captions on waypoint menu
+all:   added some pathwaypoint commands into waypoint menu
 tf2:   fixed medics not healing
 tf2:   medics follow their healing player better
 tf2:   sentry guns have an even higher priority to become enemies
 tf2:   hwguys don't waste time revving their minigun if on fire or ubered
+tf2:   engineer crash fix
+tf2:   choice of defend waypoint changed in pl maps
 
 0.74
 ====
