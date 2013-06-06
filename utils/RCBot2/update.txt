@@ -1,8 +1,8 @@
 0.75
 ====
 launcher: fixed exception at start up
-dod:s  breakable waypoint can be team only
 dod:s  added breakable waypoint for DOD:S (a rocket or grenade is required to break a wall nearby)
+dod:s  breakable waypoint can be team only
 dod:s  removed health/ammo waypoint types for DOD:S
 dod:s  changes to reloading in dod:s to prevent bots clicking their gun too often
 all:   fixed some waypoint menu glitches

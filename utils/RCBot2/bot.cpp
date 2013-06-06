@@ -1738,10 +1738,8 @@ void CBot :: forceGotoWaypoint ( int wpt )
 {
 	if ( wpt != -1 )
 	{
-		CWaypoint *pWaypoint = CWaypoints::getWaypoint(wpt);
-
 		m_pSchedules->freeMemory();
-		m_pSchedules->add(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+		m_pSchedules->add(new CBotSchedule(new CFindPathTask(wpt)));
 	}
 }
 
