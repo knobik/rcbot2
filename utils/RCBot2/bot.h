@@ -287,6 +287,11 @@ public:
 		return (get() == pent);
 	}
 
+	inline bool operator == ( MyEHandle &other )
+	{
+		return (get() == other.get());
+	}
+
 	inline edict_t * operator = ( edict_t *pent )
 	{
 		m_pEnt = pent;

@@ -3434,7 +3434,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		fTeleporterExtPlaceTime = (engine->Time()-m_fTeleporterExtPlacedTime);
 
 
-		if ( m_pTeleExit )
+		if ( m_pTeleExit.get() )
 		{
 			fExitDist = distanceFrom(m_pTeleExit);
 
@@ -3446,7 +3446,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		}
 
-		if ( m_pTeleEntrance )
+		if ( m_pTeleEntrance.get() )
 		{
 			fEntranceDist = distanceFrom(m_pTeleEntrance);
 
@@ -3458,7 +3458,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		}
 
-		if ( m_pSentryGun )
+		if ( m_pSentryGun.get() )
 		{
 			iSentryLevel = CClassInterface::getTF2UpgradeLevel(m_pSentryGun);//CTeamFortress2Mod::getSentryLevel(m_pSentryGun);
 			fSentryHealthPercent = ((float)CClassInterface::getSentryHealth(m_pSentryGun))/CClassInterface::getTF2GetBuildingMaxHealth(m_pSentryGun);
@@ -3467,7 +3467,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		}
 
-		if ( m_pDispenser )
+		if ( m_pDispenser.get() )
 		{
 			iMetalInDisp = CClassInterface::getTF2DispMetal(m_pDispenser);
 			iDispenserLevel = CClassInterface::getTF2UpgradeLevel(m_pDispenser); // CTeamFortress2Mod::getDispenserLevel(m_pDispenser);
@@ -3480,7 +3480,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 		}
 
-		if ( m_pNearestDisp && (m_pNearestDisp != m_pDispenser) )
+		if ( m_pNearestDisp && (m_pNearestDisp.get() != m_pDispenser.get()) )
 		{
 			iMetalInDisp = CClassInterface::getTF2DispMetal(m_pNearestDisp);
 			iAllyDispLevel = CClassInterface::getTF2UpgradeLevel(m_pNearestDisp); // CTeamFortress2Mod::getDispenserLevel(m_pDispenser);
@@ -3493,7 +3493,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			ADD_UTILITY(BOT_UTIL_UPGTMDISP,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) && (m_pNearestDisp!=NULL)&&(m_pNearestDisp!=m_pDispenser) && (iMetal>=200) && ((iAllyDispLevel<3)||(fAllyDispenserHealthPercent<1.0f)),0.7+((1.0f-fAllyDispenserHealthPercent)*0.3));
 		}
 
-		if ( m_pNearestAllySentry && (m_pNearestAllySentry != m_pSentryGun) && !CClassInterface::getTF2BuildingIsMini(m_pNearestAllySentry) )
+		if ( m_pNearestAllySentry && (m_pNearestAllySentry.get() != m_pSentryGun.get()) && !CClassInterface::getTF2BuildingIsMini(m_pNearestAllySentry) )
 		{
 			iAllySentryLevel = CClassInterface::getTF2UpgradeLevel(m_pNearestAllySentry);
 			fAllySentryHealthPercent = CClassInterface::getSentryHealth(m_pNearestAllySentry);
@@ -3523,11 +3523,11 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		}
 		else
 		{
-			ADD_UTILITY(BOT_UTIL_BUILDTELENT,!m_bIsCarryingObj && !bHasFlag&&((m_pSentryGun&&(iSentryLevel>1))||(!m_pSentryGun))&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f);
+			ADD_UTILITY(BOT_UTIL_BUILDTELENT,!m_bIsCarryingObj && !bHasFlag&&((m_pSentryGun.get()&&(iSentryLevel>1))||(m_pSentryGun.get()==NULL))&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.9f);
 			ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!m_bIsCarryingObj && !bHasFlag&&m_pSentryGun&&(iSentryLevel>1)&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9));
 		}
 
-		ADD_UTILITY(BOT_UTIL_UPGSENTRY,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag && m_pSentryGun && !CClassInterface::getTF2BuildingIsMini(m_pSentryGun) && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2));
+		ADD_UTILITY(BOT_UTIL_UPGSENTRY,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag &&( m_pSentryGun.get()!=NULL) && !CClassInterface::getTF2BuildingIsMini(m_pSentryGun) && (iMetal>=200) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2));
 		ADD_UTILITY(BOT_UTIL_GETAMMODISP,!m_bIsCarryingObj && m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),fUseDispFactor);
 
 		ADD_UTILITY(BOT_UTIL_UPGTELENT,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pTeleEntrance!=NULL && (iMetal>=200) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5)));
@@ -4312,10 +4312,10 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 		case BOT_UTIL_ENGI_DESTROY_DISP:
 			engineerBuild(ENGI_DISP,ENGI_DESTROY);
 		case BOT_UTIL_BUILDDISP:
-
+			pWaypoint = NULL;
 			if ( m_bDispenserVectorValid )
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vDispenser,150,-1,true,false,true,NULL,false,getTeam(),true));
-			else
+			else if ( m_pSentryGun.get() != NULL )
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam(),true));			
 
 			if ( pWaypoint )
