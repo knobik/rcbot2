@@ -68,7 +68,7 @@ void CBroadcastBombEvent :: execute (CBot *pBot)
 {
 	CDODBot *pDODBot = (CDODBot*)pBot;
 
-	pDODBot->bombEvent(m_iCP,m_iTeam,DOD_BOMB_PLANT);
+	pDODBot->bombEvent(DOD_BOMB_PLANT,m_iCP,m_iTeam);
 }
 
 // The lower the better
