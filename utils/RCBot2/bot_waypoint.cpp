@@ -1946,6 +1946,8 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 	{
 		addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,iArea,(iFlags!=iPrevFlags) ? (fMaxDistance/2) : 0); // sort flags out	
 	}
+
+	pClient->playSound("weapons/crossbow/hit1");
 }
 
 void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw, int iArea, float fRadius )

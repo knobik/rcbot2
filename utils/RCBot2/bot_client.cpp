@@ -122,9 +122,27 @@ void CClient :: resetMenuCommands ()
 	engine->ClientCommand(m_pPlayer,"bind 0 \"slot10\"");
 }
 
+void CClient :: playSound ( const char *pszSound )
+{
+	extern ConVar bot_cmd_enable_wpt_sounds;
+
+	if ( bot_cmd_enable_wpt_sounds.GetBool() )
+		sprintf(m_szSoundToPlay,"play \"%s\"",pszSound);
+}
+
 // called each frame
 void CClient :: think ()
 {
+	extern ConVar bot_cmd_enable_wpt_sounds;
+
+	if ( m_szSoundToPlay[0] != 0 )
+	{
+		if ( bot_cmd_enable_wpt_sounds.GetBool() )
+			engine->ClientCommand(m_pPlayer,m_szSoundToPlay);
+
+		m_szSoundToPlay[0] = 0;
+	}
+
 	if ( m_bShowMenu )
 	{
 		m_bShowMenu = false;

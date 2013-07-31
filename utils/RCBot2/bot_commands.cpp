@@ -669,6 +669,7 @@ eBotCommandResult CWaypointGiveTypeCommand :: execute ( CClient *pClient, const 
 						{
 							pWaypoint->removeFlag(pType->getBits());
 							CBotGlobals::botMessage(pEntity,0,"type %s removed from waypoint %d",type,CWaypoints::getWaypointIndex(pWaypoint));
+							pClient->playSound("UI\buttonrollover");
 						}
 						else
 						{
@@ -681,6 +682,8 @@ eBotCommandResult CWaypointGiveTypeCommand :: execute ( CClient *pClient, const 
 							}
 
 							CBotGlobals::botMessage(pEntity,0,"type %s added to waypoint %d",type,CWaypoints::getWaypointIndex(pWaypoint));
+
+							pClient->playSound("UI\buttonclickrelease");
 						}
 						
 					}
@@ -746,19 +749,23 @@ CWaypointDeleteCommand ::CWaypointDeleteCommand()
 
 eBotCommandResult CWaypointDeleteCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {	
-	pClient->updateCurrentWaypoint();
-
-	if ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) )
+	if ( pClient )
 	{
-		CWaypoints::deleteWaypoint(pClient->currentWaypoint());
-		CBotGlobals::botMessage(pClient->getPlayer(),0,"waypoint %d deleted",pClient->currentWaypoint());
-		pClient->updateCurrentWaypoint(); // waypoint deleted so get a new one
-	}
-	else
-	{
-		CBotGlobals::botMessage(pClient->getPlayer(),0,"no waypoint nearby to delete");
-	}
+		pClient->updateCurrentWaypoint();
 
+		if ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) )
+		{
+			CWaypoints::deleteWaypoint(pClient->currentWaypoint());
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"waypoint %d deleted",pClient->currentWaypoint());
+			pClient->updateCurrentWaypoint(); // waypoint deleted so get a new one
+			pClient->playSound("buttons/combine_button_locked");
+		}
+		else
+		{
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"no waypoint nearby to delete");
+			pClient->playSound("weapons/wpn_denyselect");
+		}
+	}
 
 	return COMMAND_ACCESSED;
 }
@@ -1062,7 +1069,16 @@ eBotCommandResult CPathWaypointCreate1Command :: execute ( CClient *pClient, con
 {
 	pClient->updateCurrentWaypoint();
 
-	pClient->setPathFrom(pClient->currentWaypoint());
+	if ( pClient->currentWaypoint() == -1 )
+	{
+		pClient->playSound("common/wpn_denyselect.wav");
+	}
+	else
+	{
+		pClient->setPathFrom(pClient->currentWaypoint());
+
+		pClient->playSound("common/wpn_hudoff.wav");
+	}
 
 	return COMMAND_ACCESSED;
 }
@@ -1082,7 +1098,12 @@ eBotCommandResult CPathWaypointCreate2Command :: execute ( CClient *pClient, con
 
 	// valid?
 	if ( pWpt )
+	{
 		pWpt->addPathTo(pClient->getPathTo());
+		pClient->playSound("buttons/button9");
+	}
+	else
+		pClient->playSound("common/wpn_denyselect");
 
 	return COMMAND_ACCESSED;
 }
@@ -1113,6 +1134,8 @@ eBotCommandResult CPathWaypointCreateFromToCommand :: execute ( CClient *pClient
 				pWaypoint->info(pClient->getPlayer());
 				pWaypoint2->draw(pClient->getPlayer(),true,DRAWTYPE_DEBUGENGINE);
 				pWaypoint2->info(pClient->getPlayer());
+
+				pClient->playSound("buttons/button9");
 
 				return COMMAND_ACCESSED;
 			}
@@ -1159,6 +1182,8 @@ eBotCommandResult CPathWaypointRemoveFromToCommand :: execute ( CClient *pClient
 				pWaypoint2->draw(pClient->getPlayer(),true,DRAWTYPE_DEBUGENGINE);
 				pWaypoint2->info(pClient->getPlayer());
 
+				pClient->playSound("buttons/button24");
+
 				return COMMAND_ACCESSED;
 			}
 			else
@@ -1186,7 +1211,15 @@ CPathWaypointRemove1Command :: CPathWaypointRemove1Command()
 eBotCommandResult CPathWaypointRemove1Command :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	pClient->updateCurrentWaypoint();
-	pClient->setPathFrom(pClient->currentWaypoint());
+
+	if ( pClient->currentWaypoint() != -1 )
+	{
+		pClient->setPathFrom(pClient->currentWaypoint());
+		pClient->playSound("common/wpn_hudoff.wav");
+	}
+	else
+		pClient->playSound("common/wpn_moveselect.wav");
+
 	return COMMAND_ACCESSED;
 }
 
@@ -1204,8 +1237,14 @@ eBotCommandResult CPathWaypointRemove2Command :: execute ( CClient *pClient, con
 	CWaypoint *pWpt = CWaypoints::getWaypoint(pClient->getPathFrom());
 
 	// valid?
-	if ( pWpt )
+	if ( !pWpt )
+		pClient->playSound("common/wpn_moveselect");			
+	else
+	{
+		pClient->playSound("buttons/button9");
+
 		pWpt->removePathTo(pClient->getPathTo());
+	}
 
 	return COMMAND_ACCESSED;	
 }
@@ -1227,6 +1266,7 @@ eBotCommandResult CWaypointAngleCommand :: execute ( CClient *pClient, const cha
 		{
 			QAngle eye = CBotGlobals::playerAngles(pClient->getPlayer());
 			CBotGlobals::botMessage(pClient->getPlayer(),0,"Waypoint Angle == %0.3f deg, (Eye == %0.3f)",CBotGlobals::yawAngleFromEdict(pClient->getPlayer(),pWpt->getOrigin()),eye.y);
+			pClient->playSound("buttons/combine_button1");
 		}
 	}
 

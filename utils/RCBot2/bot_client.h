@@ -64,6 +64,7 @@ public:
 		m_fNextUpdateMenuTime = 0.0f;
 		m_iWaypointShowFlags = 0;
 		m_iWaypointDrawType = 3;
+		m_szSoundToPlay[0] = 0;
 	}
 
 	void init ();
@@ -163,6 +164,7 @@ public:
 	inline void dontShowWaypoints ( int iFlags ) { m_iWaypointShowFlags &= ~iFlags; }
 	inline bool isShowingAllWaypoints () { return m_iWaypointShowFlags == 0; }
 	inline int getShowWaypointFlags () { return m_iWaypointShowFlags; }
+	void playSound ( const char *pszSound );
 private:
 	edict_t *m_pPlayer;
 	// steam id
@@ -217,6 +219,8 @@ private:
 	float m_fNextUpdateMenuTime;
 
 	int m_iWaypointShowFlags; // 0 = showall (default)
+
+	char m_szSoundToPlay[128];
 };
 
 class CClients
