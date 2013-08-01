@@ -1305,6 +1305,8 @@ void CBot :: touchedWpt ( CWaypoint *pWaypoint )
 		jump();
 	if ( pWaypoint->getFlags() & CWaypointTypes::W_FL_CROUCH )
 		duck();
+	if ( pWaypoint->getFlags() & CWaypointTypes::W_FL_SPRINT )
+		updateCondition(CONDITION_RUN);
 
 	updateDanger(m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint)));
 }
@@ -2276,6 +2278,11 @@ void CBot :: getLookAtVector ()
 				vforward.z = 64.0f;
 
 				setLookAt(vLook + vforward);
+			}
+			else if ( m_pNavigator->hasNextPoint() && m_pButtons->holdingButton(IN_SPEED) )
+			{
+				m_pNavigator->getNextRoutePoint(&vLook);
+				setLookAt(vLook);
 			}
 			else if ( m_pLastEnemy && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && (m_fLastSeeEnemy>0) )
 				setLookAt(m_vLastSeeEnemy);

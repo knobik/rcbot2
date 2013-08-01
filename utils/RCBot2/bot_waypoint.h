@@ -154,6 +154,7 @@ public:
 	static const int W_FL_FLAGONLY = 16777216;
 	static const int W_FL_FALL = 33554432;
 	static const int W_FL_BREAKABLE = 67108864;
+	static const int W_FL_SPRINT = 134217728;
 
 	static void setup ();
 

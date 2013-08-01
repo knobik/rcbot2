@@ -2431,6 +2431,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_WAIT_OPEN,"waitopen","bot will wait until arena point is open to use this waypoint",WptColor(150,150,100)));
 	addType(new CWaypointType(W_FL_LIFT,"lift","bot needs to wait on a lift here",WptColor(50,80,180)));
 
+	addType(new CWaypointType(W_FL_SPRINT,"sprint","bots will sprint here",WptColor(255,255,190),((1<<MOD_DOD)|(1<<MOD_HLDM2))));
 }
 
 void CWaypointTypes :: freeMemory ()

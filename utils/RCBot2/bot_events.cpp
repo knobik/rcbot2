@@ -168,7 +168,7 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 
 	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
 	
-	if ( pAttacker && ((CBotGlobals::entityOrigin(pAttacker)-CBotGlobals::entityOrigin(m_pActivator)).Length()>700.0f) )
+	if ( pAttacker && ((CBotGlobals::entityOrigin(pAttacker)-CBotGlobals::entityOrigin(m_pActivator)).Length()>512.0f) )
 	{
 		// killer
 		CClient *pClient = CClients::get(pAttacker);
@@ -181,7 +181,12 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 			{
 				if ( pWeapon->isScoped() )
 				{
-					pClient->autoEventWaypoint(CWaypointTypes::W_FL_SNIPER,200.0f);
+					pClient->autoEventWaypoint(CWaypointTypes::W_FL_SNIPER,100.0f);
+				}
+				else if ( pWeapon->isDeployable() )
+				{
+					//CClassInterface::isMachineGunDeployed(pWeapon->get)
+					//pWeapon->isDeployed()
 				}
 			}
 		}

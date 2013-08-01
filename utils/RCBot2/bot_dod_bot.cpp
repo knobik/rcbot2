@@ -796,9 +796,9 @@ void CDODBot :: modThink ()
 	}
 
 	m_fFov = BOT_DEFAULT_FOV;
-	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict)*rcbot_speed_boost.GetFloat();
+	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict)*0.9f;//*rcbot_speed_boost.GetFloat();
 
-	setMoveSpeed(fMaxSpeed*0.75f);
+	setMoveSpeed(fMaxSpeed);
 	
 	m_iClass = (DOD_Class)CClassInterface::getPlayerClassDOD(m_pEdict);	
 	m_iTeam = getTeam();
@@ -875,7 +875,7 @@ void CDODBot :: modThink ()
 
 		// slow down - be careful
 	}
-	else if ( hasSomeConditions(CONDITION_RUN) || ((m_fCurrentDanger >= 20.0f) && (m_flStamina > 90.0f ) && (m_flSprintTime < engine->Time())) )
+	else if ( hasSomeConditions(CONDITION_RUN) || ((m_fCurrentDanger >= 20.0f) && (m_flStamina >= 10.0f ) && (m_flSprintTime < engine->Time())) )
 	{
 		// unprone
 		if ( m_bProne && ( m_fProneTime < engine->Time() ))
@@ -886,8 +886,9 @@ void CDODBot :: modThink ()
 
 		setMoveSpeed(fMaxSpeed);
 		m_pButtons->holdButton(IN_SPEED,0,1,0);
+		m_pButtons->holdButton(IN_FORWARD,0,1,0);
 	}
-	else if (( m_fCurrentDanger < 1 ) || (m_flStamina < 5.0f ))
+	else if (( m_fCurrentDanger < 1 ) || (m_flStamina < 10.0f ))
 	{
 		m_flSprintTime = engine->Time() + randomFloat(5.0f,20.0f);
 	}
