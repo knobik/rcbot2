@@ -76,6 +76,7 @@ int CDODMod::m_iMapType = 0;
 bool CDODMod::m_bCommunalBombPoint = false;
 int CDODMod::m_iBombAreaAllies = 0;
 int CDODMod::m_iBombAreaAxis = 0;
+bool CTeamFortress2Mod::bFlagStateDefault = true;
 //CPerceptron *CDODMod::gNetAttackOrDefend = NULL;
 float CDODMod::fAttackProbLookUp[MAX_DOD_FLAGS+1][MAX_DOD_FLAGS+1];
 vector<edict_wpt_pair_t> CDODMod::m_BombWaypoints;
@@ -194,10 +195,12 @@ bool CTeamFortress2Mod::canTeamPickupFlag_SD(int iTeam,bool bGetUnknown)
 void CTeamFortress2Mod::flagReturned(int iTeam)
 {
 	m_iFlagCarrierTeam = 0;
+	bFlagStateDefault = true;
 }
 
 void CTeamFortress2Mod:: flagPickedUp (int iTeam, edict_t *pPlayer)
 {
+	bFlagStateDefault = false;
 	if ( iTeam == TF2_TEAM_BLUE )
 		m_pFlagCarrierBlue = pPlayer;
 	else if ( iTeam == TF2_TEAM_RED )
@@ -464,7 +467,7 @@ void CTeamFortress2Mod::sapperPlaced(edict_t *pOwner,eEngiBuild type,edict_t *pS
 	}
 }
 
-void CTeamFortress2Mod:: addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance )
+void CTeamFortress2Mod:: addWaypointFlags (edict_t *pPlayer, edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance )
 {
 	string_t model = pEdict->GetIServerEntity()->GetModelName();
 
@@ -475,10 +478,21 @@ void CTeamFortress2Mod:: addWaypointFlags (edict_t *pEdict, int *iFlags, int *iA
 	else if ( strcmp(pEdict->GetClassName(),"prop_dynamic") == 0 )
 	{
 		if ( strcmp(model.ToCStr(),"models/props_gameplay/resupply_locker.mdl") == 0 )
+		{
 			*iFlags |= CWaypointTypes::W_FL_RESUPPLY;
+
+			if ( CTeamFortress2Mod::getTeam(pPlayer) == TF2_TEAM_BLUE )
+				*iFlags |= CWaypointTypes::W_FL_NORED;
+			else if ( CTeamFortress2Mod::getTeam(pPlayer) == TF2_TEAM_RED )
+				*iFlags |= CWaypointTypes::W_FL_NOBLU;
+		}
 	}
-	else if ( strcmp(pEdict->GetClassName(),"item_teamflag") == 0 )
-		*iFlags |= CWaypointTypes::W_FL_FLAG;
+	// do this in the event code
+	/*else if ( strcmp(pEdict->GetClassName(),"item_teamflag") == 0 )
+	{
+		if ( !CTeamFortress2Mod::isFlagCarrier(pPlayer) )
+			*iFlags |= CWaypointTypes::W_FL_FLAG;
+	}*/
 	else if ( strcmp(pEdict->GetClassName(),"team_control_point") == 0 )
 	{
 		*iFlags |= CWaypointTypes::W_FL_CAPPOINT;	
@@ -1234,6 +1248,7 @@ void CTeamFortress2Mod :: mapInit ()
 	const char *szmapname = mapname.ToCStr();
 
 	m_pResourceEntity = NULL;
+	bFlagStateDefault = true;
 
 	if ( strncmp(szmapname,"ctf_",4) == 0 )
 		m_MapType = TF_MAP_CTF; // capture the flag
@@ -2054,7 +2069,7 @@ Vector CDODMod :: getGround ( CWaypoint *pWaypoint )
 	return pWaypoint->getOrigin();
 }
 
-void CDODMod :: addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance )
+void CDODMod :: addWaypointFlags (edict_t *pPlayer, edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance )
 {
 	if ( isBombMap()  )
 	{
@@ -2156,4 +2171,35 @@ bool CDODMod :: isBreakableRegistered ( edict_t *pBreakable, int iTeam )
 	}
 
 	return false;
+}
+
+void CTeamFortress2Mod :: getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff )
+{
+	if ( iTeam == TF2_TEAM_BLUE )
+	{
+		*iOn = CWaypointTypes::W_FL_NORED;
+		*iOff = CWaypointTypes::W_FL_NOBLU;
+	}
+	else if ( iTeam == TF2_TEAM_RED )
+	{
+		*iOn = CWaypointTypes::W_FL_NOBLU;
+		*iOff = CWaypointTypes::W_FL_NORED;
+	}
+
+}
+
+void CDODMod :: getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff )
+{
+	if ( iTeam == TEAM_ALLIES )
+	{
+		*iOn = CWaypointTypes::W_FL_NOAXIS;
+		*iOff = CWaypointTypes::W_FL_NOALLIES;
+	}
+	else if ( iTeam == TEAM_AXIS )
+	{
+		*iOn = CWaypointTypes::W_FL_NOALLIES;
+		*iOff = CWaypointTypes::W_FL_NOAXIS;
+	}
+
+
 }

@@ -99,6 +99,7 @@ bool bInitialised = false;
 
 void UnhookPlayerRunCommand ();
 
+ConVar bot_sv_cheat_warning("rcbot_sv_cheats_warning","1",0,"If disabled, bots will try to spawn even if sv_cheats is 1 - use only with admin cvar plugin");
 ConVar bot_cmd_enable_wpt_sounds("rcbot_enable_wpt_sounds","1",0,"Enable/disable sound effects when editing waypoints");
 ConVar bot_cmd_nocheats("rcbot_botcmd_nocheats","1",0,"If 1 bots don't need cheats to play");
 ConVar bot_general_difficulty("rcbot_skill","0.6",0,"General difficulty of the bots. 0.5 = stock, < 0.5 easier, > 0.5 = harder");

@@ -166,6 +166,7 @@ enum
 #define WEAP_FL_CANTFIRE_NORM	32768 // weapon can't be fired normally, needs to be zoomed/deployed
 #define WEAP_FL_GRENADE			65536
 #define WEAP_FL_HIGH_RECOIL		131072 // can't be fired at long distance, but ok when deployed
+#define WEAP_FL_SCOPE			262144 // has a scope . i.e. sniper rifle
 
 extern WeaponsData_t TF2Weaps[];
 extern WeaponsData_t HL2DMWeaps[];
@@ -240,6 +241,11 @@ public:
 	inline bool canDestroyPipeBombs()
 	{
 		return hasAllFlags(WEAP_FL_KILLPIPEBOMBS);
+	}
+
+	inline bool isScoped ()
+	{
+		return hasAllFlags(WEAP_FL_SCOPE);
 	}
 					
 	inline bool canDeflectRockets()

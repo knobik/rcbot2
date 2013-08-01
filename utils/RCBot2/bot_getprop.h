@@ -375,6 +375,11 @@ public:
 		return ((g_GetProps[GETPROP_MOVETYPE].getInt(pent,0) & 15) == movetype);
 	}
 
+	inline static int getMoveType ( edict_t *pent )
+	{
+		return (g_GetProps[GETPROP_MOVETYPE].getInt(pent,0) & 15);
+	}
+
 	inline static edict_t *getGrenadeThrower ( edict_t *gren )
 	{
 		return g_GetProps[GETPROP_DOD_GREN_THROWER].getEntity(gren);

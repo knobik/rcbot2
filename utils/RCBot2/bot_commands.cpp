@@ -89,6 +89,7 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointShiftAreas());
 	add(new CWaypointTeleportCommand());
 	add(new CWaypointShowVisCommand());
+	add(new CWaypointAutoWaypointCommand());
 }///////////////
 
 CWaypointTeleportCommand :: CWaypointTeleportCommand()
@@ -815,8 +816,9 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 
 	extern ConVar *sv_cheats;
 	extern ConVar bot_sv_cheats_auto;
+	extern ConVar bot_sv_cheat_warning;
 
-	if ( bot_sv_cheats_auto.GetBool() || !CBots::controlBots() || (!sv_cheats || sv_cheats->GetBool()) )
+	if ( !bot_sv_cheat_warning.GetBool() || bot_sv_cheats_auto.GetBool() || !CBots::controlBots() || (!sv_cheats || sv_cheats->GetBool()) )
 	{
 		//if ( !pcmd || !*pcmd )
 		//	bOkay = CBots::createBot();
@@ -1035,6 +1037,23 @@ eBotCommandResult CPathWaypointOffCommand :: execute ( CClient *pClient, const c
 	return COMMAND_ACCESSED;
 }
 
+CWaypointAutoWaypointCommand :: CWaypointAutoWaypointCommand()
+{
+	setName("autowaypoint");
+	setAccessLevel(CMD_ACCESS_WAYPOINT);
+}
+
+eBotCommandResult CWaypointAutoWaypointCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		pClient->setAutoWaypointMode(atoi(pcmd)>0,atoi(pcmd)==2);
+		CBotGlobals::botMessage(pClient->getPlayer(),0,"Autowaypointing Mode %s, Debug %s",(atoi(pcmd)>0)?"ON":"OFF",(atoi(pcmd)==2)?"ON":"OFF");
+	}
+
+	return COMMAND_ACCESSED;
+}
+
 CPathWaypointAutoOnCommand :: CPathWaypointAutoOnCommand()
 {
 	setName("enable");
@@ -1043,7 +1062,8 @@ CPathWaypointAutoOnCommand :: CPathWaypointAutoOnCommand()
 
 eBotCommandResult CPathWaypointAutoOnCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
-	pClient->setAutoPath(true);
+	if ( pClient )
+		pClient->setAutoPath(true);
 	return COMMAND_ACCESSED;
 }
 
@@ -1055,7 +1075,8 @@ CPathWaypointAutoOffCommand :: CPathWaypointAutoOffCommand()
 
 eBotCommandResult CPathWaypointAutoOffCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
-	pClient->setAutoPath(false);
+	if ( pClient )
+		pClient->setAutoPath(false);
 	return COMMAND_ACCESSED;
 }
 
@@ -1067,6 +1088,9 @@ CPathWaypointCreate1Command :: CPathWaypointCreate1Command()
 
 eBotCommandResult CPathWaypointCreate1Command :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
+	if ( !pClient )
+		return COMMAND_ERROR;
+
 	pClient->updateCurrentWaypoint();
 
 	if ( pClient->currentWaypoint() == -1 )

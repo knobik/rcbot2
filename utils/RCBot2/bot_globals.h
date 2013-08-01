@@ -150,6 +150,7 @@ public:
 	static bool isVisible ( edict_t *pPlayer, Vector vSrc, edict_t *pDest);
 	static bool isVisible ( Vector vSrc, Vector vDest);
 	static void traceLine ( Vector vSrc, Vector vDest, unsigned int mask, ITraceFilter *pFilter);
+	static float quickTraceline ( edict_t *pIgnore, Vector vSrc, Vector vDest ); // return fFraction
 	static bool traceVisible (edict_t *pEnt);
 	////////
 	static inline Vector entityOrigin ( edict_t *pEntity ) 

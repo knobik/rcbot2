@@ -259,6 +259,12 @@ public:
 	{
 		return (m_iFlags & iFlag) > 0;
 	}
+
+	inline void move ( Vector origin )
+	{
+		// move to new origin
+		m_vOrigin = origin;
+	}
 	// show info to player
 	void info ( edict_t *pEdict );
 
@@ -356,9 +362,9 @@ public:
 
 	static void drawWaypoints ( CClient *pClient );
 
-	static void addWaypoint ( CClient *pClient, const char *type1, const char *type2,const char *type3,const char *type4, bool bUseTemplate = false );
+	static int addWaypoint ( CClient *pClient, const char *type1, const char *type2,const char *type3,const char *type4, bool bUseTemplate = false );
 
-	static void addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags = CWaypointTypes::W_FL_NONE, bool bAutoPath = false, int iYaw = 0, int iArea = 0, float fRadius = 0 );
+	static int addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags = CWaypointTypes::W_FL_NONE, bool bAutoPath = false, int iYaw = 0, int iArea = 0, float fRadius = 0 );
 
 	static void removeWaypoint ( int iIndex );
 

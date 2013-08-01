@@ -320,6 +320,17 @@ void CBotGlobals :: traceLine (Vector vSrc, Vector vDest, unsigned int mask, ITr
 	enginetrace->TraceRay( ray, mask, pFilter, &m_TraceResult );
 }
 
+float CBotGlobals :: quickTraceline (edict_t *pIgnore,Vector vSrc, Vector vDest)
+{
+	CTraceFilterVis filter = CTraceFilterVis(pIgnore);
+
+	Ray_t ray;
+	memset(&m_TraceResult,0,sizeof(trace_t));
+	ray.Init( vSrc, vDest );
+	enginetrace->TraceRay( ray, MASK_NPCSOLID_BRUSHONLY, &filter, &m_TraceResult );
+	return m_TraceResult.fraction;
+}
+
 bool CBotGlobals :: traceVisible (edict_t *pEnt)
 {
 	return (m_TraceResult.fraction >= 1.0)||(m_TraceResult.m_pEnt && pEnt && (m_TraceResult.m_pEnt==pEnt->GetUnknown()->GetBaseEntity()));
@@ -487,12 +498,17 @@ bool CBotGlobals :: walkableFromTo (edict_t *pPlayer, Vector v_src, Vector v_des
 	extern ConVar rcbot_wptplace_width;
 	CTraceFilterVis filter = CTraceFilterVis(pPlayer);
 	float fDistance = sqrt((v_dest - v_src).LengthSqr());
+	CClient *pClient = CClients::get(pPlayer);
 	Vector vcross = v_dest - v_src;
 	Vector vleftsrc,vleftdest, vrightsrc,vrightdest;
+	float fWidth = rcbot_wptplace_width.GetFloat();
+
+	if ( pClient->autoWaypointOn() )
+		fWidth = 2.0f;
 
 	vcross = vcross / vcross.Length();
 	vcross = vcross.Cross(Vector(0,0,1));
-	vcross = vcross * (rcbot_wptplace_width.GetFloat()/2);
+	vcross = vcross * (fWidth*0.5f);
 
 	vleftsrc = v_src - vcross;
 	vrightsrc = v_src + vcross;

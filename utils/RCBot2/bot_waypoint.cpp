@@ -1824,9 +1824,10 @@ void CWaypoints :: deletePathsFrom ( int iWpt )
 	m_theWaypoints[iWpt].clearPaths();
 }
 
-void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char *type2,const char *type3,const char *type4,  bool bUseTemplate )
+int CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char *type2,const char *type3,const char *type4,  bool bUseTemplate )
 {
 	int iFlags = 0;
+	int iIndex = -1; // waypoint index
 	int iPrevFlags = 0;
 	int iArea = 0;
 	Vector vWptOrigin = pClient->getOrigin();
@@ -1929,7 +1930,7 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 							if ( fDistance > fMaxDistance )
 								fMaxDistance = fDistance;
 
-							pCurrentMod->addWaypointFlags(pEdict,&iFlags,&iArea,&fMaxDistance);
+							pCurrentMod->addWaypointFlags(pClient->getPlayer(),pEdict,&iFlags,&iArea,&fMaxDistance);
 						}
 					}
 				}
@@ -1940,17 +1941,19 @@ void CWaypoints :: addWaypoint ( CClient *pClient, const char *type1, const char
 
 	if ( bUseTemplate )
 	{
-		addWaypoint(pClient->getPlayer(),vWptOrigin,pClient->getWptCopyFlags(),pClient->isAutoPathOn(),(int)playerAngles.y,iArea,pClient->getWptCopyRadius()); // sort flags out
+		iIndex = addWaypoint(pClient->getPlayer(),vWptOrigin,pClient->getWptCopyFlags(),pClient->isAutoPathOn(),(int)playerAngles.y,iArea,pClient->getWptCopyRadius()); // sort flags out
 	}
 	else
 	{
-		addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,iArea,(iFlags!=iPrevFlags) ? (fMaxDistance/2) : 0); // sort flags out	
+		iIndex = addWaypoint(pClient->getPlayer(),vWptOrigin,iFlags,pClient->isAutoPathOn(),(int)playerAngles.y,iArea,(iFlags!=iPrevFlags) ? (fMaxDistance/2) : 0); // sort flags out	
 	}
 
 	pClient->playSound("weapons/crossbow/hit1");
+
+	return iIndex;
 }
 
-void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw, int iArea, float fRadius )
+int CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, bool bAutoPath, int iYaw, int iArea, float fRadius )
 {
 	int iIndex = freeWaypointIndex();
 	extern ConVar rcbot_wpt_autoradius;
@@ -1958,7 +1961,7 @@ void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, b
 	if ( iIndex == -1 )	
 	{
 		Msg("Waypoints full!");
-		return;
+		return -1;
 	}
 
 	if ( (fRadius == 0) && (rcbot_wpt_autoradius.GetFloat() > 0) )
@@ -1984,6 +1987,7 @@ void CWaypoints :: addWaypoint ( edict_t *pPlayer, Vector vOrigin, int iFlags, b
 		CWaypointLocations::AutoPath(pPlayer,iIndex);
 	}
 
+	return iIndex;
 }
 
 void CWaypoints :: removeWaypoint ( int iIndex )

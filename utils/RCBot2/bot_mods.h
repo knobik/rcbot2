@@ -109,7 +109,7 @@ public:
 
 	eBotType getBotType () { return m_iBotType; }
 
-	virtual void addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance ){ return; }
+	virtual void addWaypointFlags (edict_t *pPlayer, edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance ){ return; }
 
 ////////////////////////////////
 	virtual void initMod ();
@@ -123,6 +123,13 @@ public:
 	virtual void modFrame () { };
 
 	virtual void freeMemory() {};
+
+	virtual void getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff )
+	{
+		*iOn = 0;
+		*iOff = 0;
+	}
+
 private:
 	char *m_szModFolder;
 	char *m_szSteamFolder;
@@ -512,7 +519,7 @@ public:
 	inline static bool isCommunalBombPoint () { return m_bCommunalBombPoint; }
 	inline static int getBombPointArea (int iTeam) { if ( iTeam == TEAM_ALLIES ) return m_iBombAreaAllies; return m_iBombAreaAxis; } 
 
-	void addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance );
+	void addWaypointFlags (edict_t *pPlayer, edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance );
 
 	static CDODFlags m_Flags;
 
@@ -520,6 +527,8 @@ public:
 
 	static edict_t *getBombTarget ( CWaypoint *pWpt );
 	static edict_t *getBreakable ( CWaypoint *pWpt );
+
+	void getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff );
 
 	static bool isBreakableRegistered ( edict_t *pBreakable, int iTeam );
 
@@ -840,7 +849,9 @@ public:
 	static void setAttackDefendMap ( bool bSet ) { m_bAttackDefendMap = bSet; }
 	static bool isAttackDefendMap () { return m_bAttackDefendMap; }
 
-	void addWaypointFlags (edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance );
+	void addWaypointFlags (edict_t *pPlayer, edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance );
+
+	void getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff );
 
 	static void flagDropped (int iTeam)
 	{
@@ -1041,6 +1052,9 @@ public:
 
 	static void findMediGun ( edict_t *pPlayer );
 
+	static bool isFlagAtDefaultState () { return bFlagStateDefault; }
+	static void resetFlagStateToDefault() { bFlagStateDefault = true; }
+
 private:
 
 	static float TF2_GetClassSpeed(int iClass);
@@ -1073,6 +1087,7 @@ private:
 	static int m_iFlagCarrierTeam;
 	static MyEHandle m_pBoss;
 	static bool m_bBossSummoned;
+	static bool bFlagStateDefault;
 
 	static MyEHandle pMediGuns[MAX_PLAYERS];
 

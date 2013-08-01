@@ -36,6 +36,7 @@ using namespace std;
 
 #include "bot_const.h"
 
+#define MAX_STORED_AUTOWAYPOINT 5
 
 typedef enum eWptCopyType
 {
@@ -49,6 +50,72 @@ struct edict_t;
 class CBot;
 class CWaypoint;
 class CBotMenu;
+
+/**** Autowaypoint stuff borrowed from RCBot1 *****/
+// Store a vector as short integers and return as 
+// normal floats for less space usage.
+template <class T>
+class CTypeVector
+{
+public:
+
+	CTypeVector()
+	{
+		memset(this,0,sizeof(CTypeVector<T>));
+	}
+
+	void SetVector ( Vector vVec ) 
+	{ 
+		m_x = (T)vVec.x;
+		m_y = (T)vVec.y;
+		m_z = (T)vVec.z;
+
+		m_bVectorSet = TRUE;
+	}
+
+	inline Vector GetVector ( void ) const
+	{
+		return Vector((float)m_x,(float)m_y,(float)m_z);
+	}
+
+	inline BOOL IsVectorSet ()
+	{
+		return m_bVectorSet;
+	}
+
+	inline void UnSet ()
+	{
+		m_bVectorSet = FALSE;
+	}
+protected:
+	T m_x,m_y,m_z;
+
+	BOOL m_bVectorSet;
+};
+
+class CAutoWaypointCheck : public CTypeVector<vec_t>
+{
+public:
+	void SetPoint ( Vector vec, int iFlags )
+	{
+		m_iFlags = iFlags;
+
+		SetVector(vec);
+	}
+
+	int getFlags ()
+	{
+		return m_iFlags;
+	}
+
+	inline void UnSetPoint ()
+	{
+		m_bVectorSet = FALSE;
+		m_iFlags = 0;
+	}
+private:
+	int m_iFlags;
+};
 
 class CClient
 {
@@ -65,6 +132,9 @@ public:
 		m_iWaypointShowFlags = 0;
 		m_iWaypointDrawType = 3;
 		m_szSoundToPlay[0] = 0;
+		m_iAutoEventWaypoint = 0;
+		m_fAutoEventWaypointRadius = 0.0f;
+		m_vAutoEventWaypointOrigin = Vector(0,0,0);
 	}
 
 	void init ();
@@ -165,6 +235,13 @@ public:
 	inline bool isShowingAllWaypoints () { return m_iWaypointShowFlags == 0; }
 	inline int getShowWaypointFlags () { return m_iWaypointShowFlags; }
 	void playSound ( const char *pszSound );
+	inline void setAutoWaypointMode ( bool mode, bool debug ) 
+	{ 
+		m_bAutoWaypoint = mode; 
+		m_bDebugAutoWaypoint = debug; 
+	}
+	inline bool autoWaypointOn () { return m_bAutoWaypoint; }
+	void autoEventWaypoint ( int iType, float fRadius, bool bAtOtherOrigin = false, int iTeam = 0, Vector vOrigin = Vector(0,0,0));
 private:
 	edict_t *m_pPlayer;
 	// steam id
@@ -221,6 +298,32 @@ private:
 	int m_iWaypointShowFlags; // 0 = showall (default)
 
 	char m_szSoundToPlay[128];
+
+	/**** Autowaypoint stuff below borrowed and converted from RCBot1 ****/
+	CAutoWaypointCheck m_vLastAutoWaypointCheckPos[MAX_STORED_AUTOWAYPOINT]; 
+
+	bool m_bDebugAutoWaypoint;
+	bool m_bAutoWaypoint;
+	float m_fLastAutoWaypointCheckTime;
+	Vector m_vLastAutoWaypointPlacePos;
+	bool m_bSetUpAutoWaypoint;
+	float m_fCanPlaceJump;
+	int m_iLastButtons;
+
+	int m_iLastJumpWaypointIndex;
+	int m_iLastLadderWaypointIndex;
+	int m_iLastMoveType;
+	float m_fCanPlaceLadder;
+	int m_iJoinLadderWaypointIndex;
+
+	// new stuff
+	int m_iAutoEventWaypoint;
+	float m_fAutoEventWaypointRadius;
+	Vector m_vAutoEventWaypointOrigin;
+	int m_iAutoEventWaypointTeamOn; // waypoint flags to enable for team specific
+	int m_iAutoEventWaypointTeamOff;  // waypoint flags to disable for team specific
+	int m_iAutoEventWaypointTeam; // the player's team of the waypoint to add
+	int m_iAutoEventWaypointArea;
 };
 
 class CClients

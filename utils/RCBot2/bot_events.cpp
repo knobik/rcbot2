@@ -167,6 +167,42 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 	const char *weapon = pEvent->getString("weapon",NULL);
 
 	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
+	
+	if ( pAttacker && ((CBotGlobals::entityOrigin(pAttacker)-CBotGlobals::entityOrigin(m_pActivator)).Length()>700.0f) )
+	{
+		// killer
+		CClient *pClient = CClients::get(pAttacker);
+
+		if ( pClient && pClient->autoWaypointOn() )
+		{
+			CWeapon *pWeapon = CWeapons::getWeaponByShortName(weapon);
+
+			if ( pWeapon != NULL )
+			{
+				if ( pWeapon->isScoped() )
+				{
+					pClient->autoEventWaypoint(CWaypointTypes::W_FL_SNIPER,200.0f);
+				}
+			}
+		}
+
+		// victim
+		pClient = CClients::get(m_pActivator);
+
+		if ( CBotGlobals::isPlayer(pAttacker) && pClient && pClient->autoWaypointOn() )
+		{
+			CWeapon *pWeapon = CWeapons::getWeaponByShortName(weapon);
+
+			if ( pWeapon != NULL )
+			{
+				if ( pWeapon->isScoped() )
+				{
+					pClient->autoEventWaypoint(CWaypointTypes::W_FL_SNIPER,200.0f,true,CClassInterface::getTeam(pAttacker),CBotGlobals::entityOrigin(pAttacker));
+				}
+			}
+		}
+
+	}
 
 	if ( pBot )
 		pBot->died(pAttacker,weapon);
@@ -428,12 +464,35 @@ void CTF2BuiltObjectEvent :: execute ( IBotEventInterface *pEvent )
 	edict_t *pBuilding = INDEXENT(index);
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 
+	CClient *pClient = CClients::get(m_pActivator);
+
 	if ( type == ENGI_TELE )
+	{
 		CTeamFortress2Mod::teleporterBuilt(m_pActivator,type,pBuilding);
+
+		if ( pClient && pClient->autoWaypointOn() )
+		{
+			if ( CTeamFortress2Mod::isTeleporterEntrance(pBuilding,CTeamFortress2Mod::getTeam(m_pActivator)) )
+				pClient->autoEventWaypoint(CWaypointTypes::W_FL_TELE_ENTRANCE,400.0f);
+			else
+				pClient->autoEventWaypoint(CWaypointTypes::W_FL_TELE_EXIT,400.0f);
+		}
+	}
+
 	if ( type == ENGI_SENTRY )
+	{
 		CTeamFortress2Mod::sentryBuilt(m_pActivator,type,pBuilding);
+
+		if ( pClient && pClient->autoWaypointOn() )
+		{
+			pClient->autoEventWaypoint(CWaypointTypes::W_FL_SENTRY,400.0f);
+		}
+	}
+
 	if ( type == ENGI_DISP )
+	{
 		CTeamFortress2Mod::dispenserBuilt(m_pActivator,type,pBuilding);
+	}
 
 	if ( pBot && pBot->isTF() )
 	{
@@ -520,7 +579,6 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 	const char *cappers = pEvent->getString("cappers",NULL);
 	const char *cpname = pEvent->getString("cpname");
 
-	
 	if ( cappers )
 	{
 		int i = 0;
@@ -584,7 +642,24 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 		}
 
 		if ( pPlayer )
-			CTeamFortress2Mod::flagPickedUp(CTeamFortress2Mod::getTeam(pPlayer),pPlayer);
+		{
+			int iTeam = CTeamFortress2Mod::getTeam(pPlayer);
+
+			if ( CTeamFortress2Mod::isFlagAtDefaultState() )
+			{
+				CClient *pClient;
+
+				pClient = CClients::get(pPlayer);
+
+				if ( pClient && pClient->autoWaypointOn() )
+					pClient->autoEventWaypoint(CWaypointTypes::W_FL_FLAG,200.0f,false);
+			}
+
+			CTeamFortress2Mod::flagPickedUp(iTeam,pPlayer);
+
+		}
+		
+
 		break;
 	case FLAG_CAPTURED: // captured
 		{
@@ -608,8 +683,19 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 			}
 		
 			if ( pPlayer )
-				CTeamFortress2Mod::flagDropped(CTeamFortress2Mod::getTeam(pPlayer));
+			{
+				int iTeam = CTeamFortress2Mod::getTeam(pPlayer);
+				CTeamFortress2Mod::flagDropped(iTeam);
 
+				CClient *pClient;
+
+				pClient = CClients::get(pPlayer);
+
+				if ( pClient && pClient->autoWaypointOn() )
+					pClient->autoEventWaypoint(CWaypointTypes::W_FL_CAPPOINT,200.0f,false);
+			}
+
+			CTeamFortress2Mod::resetFlagStateToDefault();
 			
 		}
 		break;
@@ -638,6 +724,7 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 				CBroadcastFlagReturned returned = CBroadcastFlagReturned(CTeamFortress2Mod::getFlagCarrierTeam());
 				CBots::botFunction(&returned);
 			}
+			CTeamFortress2Mod::resetFlagStateToDefault();
 
 			CTeamFortress2Mod::flagReturned(0); // for special delivery
 			//p->GetTeamIndex(),CBotGlobals::entityOrigin(pPlayer));
