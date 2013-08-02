@@ -77,8 +77,8 @@ const char *szSchedules[SCHED_MAX+1] =
 	"SCHED_SHOOT_LAST_ENEMY_POS",
 	"SCHED_GRAVGUN_PICKUP",
 	"SCHED_HELP_PLAYER",
-	"SCHED_TF_SPYCHECK",
 	"SCHED_BOMB",
+	"SCHED_TF_SPYCHECK",
 	"SCHED_MAX"
 };
 ////////////////////// unused

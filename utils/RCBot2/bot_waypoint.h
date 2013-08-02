@@ -178,6 +178,8 @@ public:
 
 	static unsigned int getNumTypes ();
 
+	static CWaypointType *getTypeByFlags ( int iFlags );
+
 private:
 	static vector<CWaypointType*> m_Types;
 };

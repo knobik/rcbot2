@@ -503,8 +503,12 @@ bool CBotGlobals :: walkableFromTo (edict_t *pPlayer, Vector v_src, Vector v_des
 	Vector vleftsrc,vleftdest, vrightsrc,vrightdest;
 	float fWidth = rcbot_wptplace_width.GetFloat();
 
-	if ( pClient->autoWaypointOn() )
+	// minimum
+	if ( fWidth < 2.0f )
 		fWidth = 2.0f;
+
+	if ( pClient->autoWaypointOn() )
+		fWidth = 4.0f;
 
 	vcross = vcross / vcross.Length();
 	vcross = vcross.Cross(Vector(0,0,1));

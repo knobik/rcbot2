@@ -431,11 +431,13 @@ public:
 
 	static CWeapon *getWeapon ( const char *szWeapon );
 
-	static CWeapon *getWeaponByShortName ( const char *szWeapon );
+	static CWeapon *getWeaponByShortName ( const char *pszWeapon );
 
 	static void eachWeapon ( IWeaponFunc *pFunc );
 
 	static void freeMemory ();
+
+	static edict_t *findWeapon ( edict_t *pPlayer, const char *szWeaponName );
 private:
 	// available weapons in game
 	static vector<CWeapon*> m_theWeapons;

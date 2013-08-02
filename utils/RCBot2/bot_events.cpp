@@ -185,6 +185,24 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 				}
 				else if ( pWeapon->isDeployable() )
 				{
+					// non OO hack here
+					if ( CBotGlobals::isCurrentMod(MOD_DOD) )
+					{
+						edict_t *pentWeapon = CWeapons::findWeapon(pAttacker,pWeapon->getWeaponName());
+
+						if ( CClassInterface::isMachineGunDeployed(pentWeapon) )
+						{
+							bool bIsProne;
+							float flStamina;
+
+							CClassInterface::getPlayerInfoDOD(pAttacker,&bIsProne,&flStamina);
+
+							if ( !bIsProne )
+							{
+								pClient->autoEventWaypoint(CWaypointTypes::W_FL_MACHINEGUN,100.0f);
+							}
+						}
+					}
 					//CClassInterface::isMachineGunDeployed(pWeapon->get)
 					//pWeapon->isDeployed()
 				}
@@ -202,7 +220,7 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 			{
 				if ( pWeapon->isScoped() )
 				{
-					pClient->autoEventWaypoint(CWaypointTypes::W_FL_SNIPER,200.0f,true,CClassInterface::getTeam(pAttacker),CBotGlobals::entityOrigin(pAttacker));
+					pClient->autoEventWaypoint(CWaypointTypes::W_FL_SNIPER,200.0f,true,CClassInterface::getTeam(pAttacker),CBotGlobals::entityOrigin(pAttacker)+Vector(0,0,32.0f));
 				}
 			}
 		}
@@ -565,7 +583,6 @@ void CTF2PointBlockedCapture :: execute ( IBotEventInterface *pEvent )
 	int capindex = pEvent->getInt("cp",0);
 
 	CTeamFortress2Mod::removeCappers(capindex);
-	
 }
 
 void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
@@ -750,6 +767,7 @@ void CDODPointCaptured :: execute ( IBotEventInterface *pEvent )
 {
 	int cp = pEvent->getInt("cp");
 	const char *szCappers = pEvent->getString("cappers",NULL);
+	edict_t *pPlayer;
 
 	// get a capper
 	int userid = szCappers[0];
@@ -758,7 +776,17 @@ void CDODPointCaptured :: execute ( IBotEventInterface *pEvent )
 
 	// find the team - should be a player index
 	if ( (userid >= 0) && (userid <= gpGlobals->maxClients) )
-		team = CClassInterface::getTeam(INDEXENT(userid));
+	{
+		pPlayer = INDEXENT(userid);
+		team = CClassInterface::getTeam(pPlayer);
+
+		CClient *pClient = CClients::get(pPlayer);
+
+		if ( pClient && pClient->autoWaypointOn() )
+		{
+			pClient->autoEventWaypoint(CWaypointTypes::W_FL_CAPPOINT,150.0f,false,0,Vector(0,0,0),true);
+		}
+	}
 
 	if ( team )
 	{

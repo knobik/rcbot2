@@ -670,7 +670,7 @@ eBotCommandResult CWaypointGiveTypeCommand :: execute ( CClient *pClient, const 
 						{
 							pWaypoint->removeFlag(pType->getBits());
 							CBotGlobals::botMessage(pEntity,0,"type %s removed from waypoint %d",type,CWaypoints::getWaypointIndex(pWaypoint));
-							pClient->playSound("UI\buttonrollover");
+							pClient->playSound("UI/buttonrollover");
 						}
 						else
 						{
@@ -684,7 +684,7 @@ eBotCommandResult CWaypointGiveTypeCommand :: execute ( CClient *pClient, const 
 
 							CBotGlobals::botMessage(pEntity,0,"type %s added to waypoint %d",type,CWaypoints::getWaypointIndex(pWaypoint));
 
-							pClient->playSound("UI\buttonclickrelease");
+							pClient->playSound("UI/buttonclickrelease");
 						}
 						
 					}

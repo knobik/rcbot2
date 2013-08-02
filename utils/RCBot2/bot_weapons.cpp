@@ -300,6 +300,31 @@ CBotWeapons :: CBotWeapons ( CBot *pBot )
 	m_iWeaponsSignature = 0x0;
 }
 
+edict_t *CWeapons :: findWeapon ( edict_t *pPlayer, const char *pszWeaponName )
+{
+	register unsigned short int i,j;
+	bool bFound;
+
+	CBaseHandle *m_Weapons = CClassInterface::getWeaponList(pPlayer);
+	edict_t *pWeapon;
+	CBaseHandle *m_Weapon_iter = m_Weapons;
+	// loop through the weapons array and see if it is in the CBaseCombatCharacter
+
+	pWeapon = NULL;
+
+	for ( j = 0; j < MAX_WEAPONS; j ++ )
+	{
+		pWeapon = INDEXENT(m_Weapon_iter->GetEntryIndex());
+
+		if ( strcmp(pWeapon->GetClassName(),pszWeaponName) == 0 )
+			return pWeapon;
+
+		m_Weapon_iter++;
+	}
+
+	return NULL;
+}
+
 void CBotWeapons ::update ( bool bOverrideAllFromEngine )
 {
 	// create mask of weapons data

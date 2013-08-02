@@ -1876,6 +1876,16 @@ void CBot :: doMove ()
 			m_fForwardSpeed = 0.0;
 		if ( fabs(m_fSideSpeed) < 1.0 )
 			m_fSideSpeed = 0.0;
+
+		if ( (m_fForwardSpeed < 1.0f) && (m_fSideSpeed < 1.0f) )
+		{
+			if ( m_pButtons->holdingButton(IN_SPEED) && m_pButtons->holdingButton(IN_FORWARD) )
+			{
+				m_pButtons->letGo(IN_SPEED);
+				m_pButtons->letGo(IN_FORWARD);
+			}
+		}
+
 		if ( (!onLadder() && !m_pNavigator->nextPointIsOnLadder()) && (fDist < 8.0f) )
 		{
 			m_fForwardSpeed = 0.0f;

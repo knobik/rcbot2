@@ -2387,6 +2387,22 @@ CWaypointType *CWaypointTypes :: getTypeByIndex ( unsigned int iIndex )
 		return NULL;
 }
 
+CWaypointType *CWaypointTypes :: getTypeByFlags ( int iFlags )
+{
+	CBotMod *pMod = CBotGlobals::getCurrentMod();
+
+	for ( unsigned int i = 0; i < m_Types.size(); i ++ )
+	{
+		if ( !m_Types[i]->forMod(pMod->getModId()) )
+			continue;
+
+		if ( m_Types[i]->getBits() == iFlags )
+			return m_Types[i];
+	}
+
+	return NULL;
+}
+
 unsigned int CWaypointTypes :: getNumTypes ()
 {
 	return m_Types.size();

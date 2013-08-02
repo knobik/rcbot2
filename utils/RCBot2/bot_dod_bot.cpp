@@ -875,7 +875,7 @@ void CDODBot :: modThink ()
 
 		// slow down - be careful
 	}
-	else if ( hasSomeConditions(CONDITION_RUN) || ((m_fCurrentDanger >= 20.0f) && (m_flStamina >= 10.0f ) && (m_flSprintTime < engine->Time())) )
+	else if ( hasSomeConditions(CONDITION_RUN) || ((m_fCurrentDanger >= 20.0f) && (m_flStamina >= 5.0f ) && (m_flSprintTime < engine->Time())) )
 	{
 		// unprone
 		if ( m_bProne && ( m_fProneTime < engine->Time() ))
@@ -884,13 +884,13 @@ void CDODBot :: modThink ()
 			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
 		}
 
-		setMoveSpeed(fMaxSpeed);
+		setMoveSpeed(fMaxSpeed*1.1f); 
 		m_pButtons->holdButton(IN_SPEED,0,1,0);
 		m_pButtons->holdButton(IN_FORWARD,0,1,0);
 	}
 	else if (( m_fCurrentDanger < 1 ) || (m_flStamina < 10.0f ))
 	{
-		m_flSprintTime = engine->Time() + randomFloat(5.0f,20.0f);
+		m_flSprintTime = engine->Time() + randomFloat(2.0f,6.0f);
 	}
 
 	if ( (pWeapon && pWeapon->needToReload(this)) ||
@@ -1519,7 +1519,8 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			{
 				CBotSchedule *defend = new CBotSchedule();
 				CBotTask *findpath = new CFindPathTask(pWaypoint->getOrigin());//,LOOK_AROUND);
-				CBotTask *deftask = new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(7.5f,12.5f),0,true,vGoal,defend_wpt ? LOOK_SNIPE : LOOK_AROUND,pWaypoint->getFlags());
+				// fix -- make bots look at yaw
+				CBotTask *deftask = new CBotDefendTask(pWaypoint->getOrigin(),randomFloat(7.5f,12.5f),0,false,Vector(0,0,0),LOOK_SNIPE,pWaypoint->getFlags());
 
 				removeCondition(CONDITION_PUSH); 
 				findpath->setCompleteInterrupt(CONDITION_PUSH);

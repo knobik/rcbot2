@@ -130,16 +130,21 @@ void CClient :: playSound ( const char *pszSound )
 {
 	extern ConVar bot_cmd_enable_wpt_sounds;
 
-	if ( bot_cmd_enable_wpt_sounds.GetBool() )
-		sprintf(m_szSoundToPlay,"play \"%s\"",pszSound);
+	if ( isWaypointOn() )
+	{
+		if ( bot_cmd_enable_wpt_sounds.GetBool() )
+			sprintf(m_szSoundToPlay,"play \"%s\"",pszSound);
+	}
 }
 
-void CClient :: autoEventWaypoint ( int iType, float fRadius, bool bAtOtherOrigin, int iTeam, Vector vOrigin )
+void CClient :: autoEventWaypoint ( int iType, float fRadius, bool bAtOtherOrigin, int iTeam, Vector vOrigin, bool bIgnoreTeam, bool bAutoType )
 {
 	m_iAutoEventWaypoint = iType;
 	m_fAutoEventWaypointRadius = fRadius;
 
 	CBotMod *pMod = CBotGlobals::getCurrentMod();
+
+	m_bAutoEventWaypointAutoType = bAutoType;
 
 	if ( bAtOtherOrigin )
 	{
@@ -151,11 +156,15 @@ void CClient :: autoEventWaypoint ( int iType, float fRadius, bool bAtOtherOrigi
 		iTeam = CClassInterface::getTeam(m_pPlayer);
 	}
 
-	m_iAutoEventWaypointTeam = iTeam;
-
-	pMod->getTeamOnlyWaypointFlags(iTeam,&m_iAutoEventWaypointTeamOn,&m_iAutoEventWaypointTeamOff);
-
+	if ( bIgnoreTeam )
+		m_iAutoEventWaypointTeam = 0;
+	else
+	{
+		pMod->getTeamOnlyWaypointFlags(iTeam,&m_iAutoEventWaypointTeamOn,&m_iAutoEventWaypointTeamOff);
+		m_iAutoEventWaypointTeam = iTeam;
+	}	
 }
+
 
 // called each frame
 void CClient :: think ()
@@ -272,13 +281,13 @@ void CClient :: think ()
 	
 	if ( m_bAutoWaypoint )
 	{
-		if ( !m_bSetUpAutoWaypoint || m_pPlayerInfo->IsDead() )
+		if ( !m_pPlayerInfo )
+			m_pPlayerInfo = playerinfomanager->GetPlayerInfo(m_pPlayer);
+
+		if ( !m_bSetUpAutoWaypoint || !m_pPlayerInfo || m_pPlayerInfo->IsDead() )
 		{
 			int i;
 			int start = 0;
-
-			if ( !m_pPlayerInfo )
-				m_pPlayerInfo = playerinfomanager->GetPlayerInfo(m_pPlayer);
 
 			if ( !m_pPlayerInfo->IsDead() )
 				start = 1; // grab one location
@@ -335,7 +344,18 @@ void CClient :: think ()
 					
 					//if ( !pWpt || pWpt->distanceFrom(m_vAutoEventWaypointOrigin) > 32.0f )
 					//{
-					CWaypoints::addWaypoint(m_pPlayer,m_vAutoEventWaypointOrigin,(m_iAutoEventWaypoint|m_iAutoEventWaypointTeamOn)&~m_iAutoEventWaypointTeamOff,true,cmd.viewangles.y,0,32.0f);
+
+					if ( m_bAutoEventWaypointAutoType )
+					{
+						CWaypointType *pMainType = CWaypointTypes::getTypeByFlags(m_iAutoEventWaypoint);
+
+						if ( pMainType )
+							CWaypoints::addWaypoint(this,pMainType->getName(),"","","");
+						else
+							CWaypoints::addWaypoint(m_pPlayer,m_vAutoEventWaypointOrigin,(m_iAutoEventWaypointTeam==0)?(m_iAutoEventWaypoint):((m_iAutoEventWaypoint|m_iAutoEventWaypointTeamOn)&~m_iAutoEventWaypointTeamOff),true,cmd.viewangles.y,0,32.0f);
+					}
+					else
+						CWaypoints::addWaypoint(m_pPlayer,m_vAutoEventWaypointOrigin,(m_iAutoEventWaypointTeam==0)?(m_iAutoEventWaypoint):((m_iAutoEventWaypoint|m_iAutoEventWaypointTeamOn)&~m_iAutoEventWaypointTeamOff),true,cmd.viewangles.y,0,32.0f);
 					//}
 					/*else
 					{
