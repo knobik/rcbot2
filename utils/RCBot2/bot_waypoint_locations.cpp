@@ -612,7 +612,7 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 
 		if ( iFlagsOnly != 0 )
 		{
-			if ( !curr_wpt->getFlags() || (!curr_wpt->hasFlag(iFlagsOnly)) )
+			if ( !curr_wpt->getFlags() || (!curr_wpt->hasSomeFlags(iFlagsOnly)) )
 				continue;
 		}
 
@@ -723,7 +723,7 @@ void CWaypointLocations :: DrawWaypoints ( CClient *pClient, float fDist )
 	static CWaypoint *pWpt;
 	static int i,j,k;
 	static Vector vWpt;
-	static bool bDrawPaths;
+	//static bool bDrawPaths;
 	static unsigned short int iDrawType;
 	static Vector vOrigin;
 	static edict_t *pEntity;
@@ -735,7 +735,7 @@ void CWaypointLocations :: DrawWaypoints ( CClient *pClient, float fDist )
 
 	pEntity = pClient->getPlayer();
 	vOrigin = pClient->getOrigin();
-	bDrawPaths = false;
+	//bDrawPaths = false;
 	iDrawType = pClient->getDrawType();
 
 	getMinMaxs(iLoc,jLoc,kLoc,&iMinLoci,&iMinLocj,&iMinLock,&iMaxLoci,&iMaxLocj,&iMaxLock);
@@ -781,7 +781,7 @@ void CWaypointLocations :: DrawWaypoints ( CClient *pClient, float fDist )
 							engine->GetPVSForCluster( clusterIndex, sizeof(m_bPvs), m_bPvs );							
 
 							if ( engine->CheckOriginInPVS( vWpt, m_bPvs, sizeof( m_bPvs ) ) )
-								pWpt->draw(pEntity,bDrawPaths,iDrawType);
+								pWpt->draw(pEntity,pClient->isPathWaypointOn()&&(pClient->currentWaypoint()==iWpt),iDrawType);
 						}
 					}
 				}
