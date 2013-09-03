@@ -55,6 +55,7 @@ typedef struct
 	float maxPrimDist;
 	int m_iAmmoIndex;
 	int m_iPreference;
+	float m_fProjSpeed;
 }WeaponsData_t;
 
 
@@ -167,6 +168,7 @@ enum
 #define WEAP_FL_GRENADE			65536
 #define WEAP_FL_HIGH_RECOIL		131072 // can't be fired at long distance, but ok when deployed
 #define WEAP_FL_SCOPE			262144 // has a scope . i.e. sniper rifle
+#define WEAP_FL_PROJECTILE		524288 // affected by gravity
 
 extern WeaponsData_t TF2Weaps[];
 extern WeaponsData_t HL2DMWeaps[];
@@ -190,13 +192,15 @@ public:
 		m_fSecMinWeaponShootDist = 0.0f;
 		m_fSecMaxWeaponShootDist = 512.0f;
 
+		m_fProjectileSpeed = data.m_fProjSpeed;
+
 		m_iAmmoIndex1 = data.m_iAmmoIndex;
 		m_iAmmoIndex2 = -1;
 
 		m_iPreference = data.m_iPreference;
 	}
 
-	CWeapon( int iSlot, const char *szWeaponName, int iId, int iFlags = 0, int iAmmoIndex = -1, float minPrim =0.0f, float maxPrim = 4096.0f, int iPref = 0, int iAmmoIndex2 = -1 )
+	/*CWeapon( int iSlot, const char *szWeaponName, int iId, int iFlags = 0, int iAmmoIndex = -1, float minPrim =0.0f, float maxPrim = 4096.0f, int iPref = 0, int iAmmoIndex2 = -1 )
 	{
 		m_iSlot = iSlot;
 		setID(iId);
@@ -214,7 +218,7 @@ public:
 		m_iAmmoIndex2 = iAmmoIndex2;
 
 		m_iPreference = iPref;
-	}
+	}*/
 
 	inline void setName ( const char *szWeaponName )
 	{
@@ -276,6 +280,11 @@ public:
 	inline bool isZoomable ()
 	{
 		return hasAllFlags(WEAP_FL_ZOOMABLE);
+	}
+
+	inline bool isProjectile ()
+	{
+		return hasAllFlags(WEAP_FL_PROJECTILE);
 	}
 
 	inline bool isExplosive ()
@@ -386,6 +395,11 @@ public:
 		return hasSomeFlags(WEAP_FL_SEC_ATTACK);
 	}
 
+	inline float getProjectileSpeed ()
+	{
+		return m_fProjectileSpeed;
+	}
+
 private:
 
 	inline bool hasAllFlags ( int iFlags ) const
@@ -413,6 +427,8 @@ private:
 
 	float m_fSecMinWeaponShootDist;
 	float m_fSecMaxWeaponShootDist;
+
+	float m_fProjectileSpeed;
 };
 
 class IWeaponFunc;
@@ -525,6 +541,16 @@ public:
 	inline bool canDestroyPipeBombs()
 	{
 		return m_pWeaponInfo->canDestroyPipeBombs();
+	}
+
+	inline bool isProjectile ()
+	{
+		return m_pWeaponInfo->isProjectile();
+	}
+
+	inline float getProjectileSpeed ()
+	{
+		return m_pWeaponInfo->getProjectileSpeed();
 	}
 					
 	inline bool canDeflectRockets()

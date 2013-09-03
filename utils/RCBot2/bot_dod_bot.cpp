@@ -58,6 +58,7 @@ extern ConVar rcbot_shoot_breakable_cos;
 extern ConVar rcbot_nocapturing;
 extern ConVar bot_messaround;
 extern ConVar rcbot_speed_boost;
+extern ConVar rcbot_projectile_tweak;
 
 const char *g_DODClassCmd[2][6] = 
 { {"cls_garand","cls_tommy","cls_bar","cls_spring","cls_30cal","cls_bazooka"},
@@ -2353,7 +2354,7 @@ void CDODBot :: modAim ( edict_t *pEntity, Vector &v_origin,
 	// weapon is known
 	if ( pWp != NULL )
 	{
-		if ( pWp->isExplosive() )
+		if ( pWp->isProjectile() )
 		{
 			if ( CClassInterface::getVelocity(pEntity,&vel) )
 				*v_desired_offset = *v_desired_offset + (vel * randomFloat(m_pProfile->m_fAimSkill-0.1f,m_pProfile->m_fAimSkill+0.1f));
@@ -2364,8 +2365,18 @@ void CDODBot :: modAim ( edict_t *pEntity, Vector &v_origin,
 				*v_desired_offset = *v_desired_offset - Vector(0,0,randomFloat(16.0f,32.0f));
 			}
 
-			// add gravity height
-			v_desired_offset->z += (distanceFrom(pEntity) * (randomFloat(0.05,0.15)*m_pProfile->m_fAimSkill));
+			if ( pWp->getProjectileSpeed() > 0 )
+			{
+				extern ConVar *sv_gravity;
+
+				if ( sv_gravity != NULL )
+				{
+					float fTime = fDist/pWp->getProjectileSpeed();
+					// add gravity height
+					v_desired_offset->z += (pow(2,fTime)*(sv_gravity->GetFloat()*rcbot_projectile_tweak.GetFloat()));// - (getOrigin().z - v_origin.z);
+				}
+			}
+			//v_desired_offset->z += (distanceFrom(pEntity) * (randomFloat(0.05,0.15)*m_pProfile->m_fAimSkill));
 		}
 	}
 

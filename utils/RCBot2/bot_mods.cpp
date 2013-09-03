@@ -1213,7 +1213,7 @@ void CHalfLifeDeathmatchMod :: initMod ()
 	CBots::controlBotSetup(false);
 
 	for ( i = 0; i < HL2DM_WEAPON_MAX; i ++ )
-		CWeapons::addWeapon(new CWeapon(HL2DMWeaps[i].iSlot,HL2DMWeaps[i].szWeaponName,HL2DMWeaps[i].iId,HL2DMWeaps[i].m_iFlags,HL2DMWeaps[i].m_iAmmoIndex,HL2DMWeaps[i].minPrimDist,HL2DMWeaps[i].maxPrimDist,HL2DMWeaps[i].m_iPreference));
+		CWeapons::addWeapon(new CWeapon(HL2DMWeaps[i]));//.iSlot,HL2DMWeaps[i].szWeaponName,HL2DMWeaps[i].iId,HL2DMWeaps[i].m_iFlags,HL2DMWeaps[i].m_iAmmoIndex,HL2DMWeaps[i].minPrimDist,HL2DMWeaps[i].maxPrimDist,HL2DMWeaps[i].m_iPreference,HL2DMWeaps[i].m_fProjSpeed));
 }
 
 void CHalfLifeDeathmatchMod :: mapInit ()
@@ -1231,7 +1231,7 @@ void CTeamFortress2Mod :: initMod ()
 	CBots::controlBotSetup(true);
 
 	for ( i = 0; i < TF2_WEAPON_MAX; i ++ )
-		CWeapons::addWeapon(new CWeapon(TF2Weaps[i].iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference));
+		CWeapons::addWeapon(new CWeapon(TF2Weaps[i]));//.iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference,TF2Weaps[i].m_fProjSpeed));
 
 	CRCBotTF2UtilFile::loadConfig();
 	//memset(g_fBotUtilityPerturb,0,sizeof(float)*TF_CLASS_MAX*BOT_UTIL_MAX);

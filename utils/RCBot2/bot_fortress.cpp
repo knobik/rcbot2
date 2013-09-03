@@ -63,6 +63,7 @@ extern ConVar rcbot_tf2_protect_cap_time;
 extern ConVar rcbot_tf2_protect_cap_percent;
 extern ConVar rcbot_tf2_spy_kill_on_cap_dist;
 extern ConVar rcbot_speed_boost;
+extern ConVar rcbot_projectile_tweak;
 
 #define TF2_SPY_CLOAK_BELIEF 38
 #define TF2_HWGUY_REV_BELIEF 60
@@ -4945,13 +4946,13 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 		}
 		else if ( (m_iClass == TF_CLASS_SOLDIER) || (m_iClass == TF_CLASS_DEMOMAN) )
 		{
-			int iSpeed = 0;
+//			int iSpeed = 0;
 
 			switch ( pWp->getID() )
 			{
 				case TF2_WEAPON_ROCKETLAUNCHER:
 				{
-					iSpeed = TF2_ROCKETSPEED;
+					//iSpeed = TF2_ROCKETSPEED;
 
 					if ( v_origin.z <= getOrigin().z )
 						v_desired_offset->z -= randomFloat(8.0f,24.0f);
@@ -4959,14 +4960,15 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 				// fall through
 				case TF2_WEAPON_GRENADELAUNCHER:
 				{
+					extern ConVar *sv_gravity;
 					CClient *pClient = CClients::get(pEntity);
 					Vector vVelocity;
 
-					if ( iSpeed == 0 )
-						iSpeed = TF2_GRENADESPEED;
+					//if ( iSpeed == 0 )
+					//	iSpeed = TF2_GRENADESPEED;
 
-					if ( pClient )
-					{
+					//if ( pClient )
+					//{
 						if ( CClassInterface :: getVelocity(pEntity,&vVelocity) )
 						{
 							if ( pClient && (vVelocity == Vector(0,0,0)) )
@@ -4978,13 +4980,16 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 						// speed = distance/time
 						// .'.
 						// time = distance/speed
-						fTime = fDist/iSpeed;
 
-						*v_desired_offset = *v_desired_offset + ((vVelocity*fTime)*m_pProfile->m_fAimSkill );
-					}
+						if ( pWp->getProjectileSpeed() > 0 )
+						{
+							fTime = fDist/pWp->getProjectileSpeed();
 
-					if ( pWp->getID() == TF2_WEAPON_GRENADELAUNCHER )
-						v_desired_offset->z += sqrt(fDist);
+							*v_desired_offset = *v_desired_offset + ((vVelocity*fTime)*m_pProfile->m_fAimSkill );
+						
+							if ( (sv_gravity != NULL) && (pWp->getID() == TF2_WEAPON_GRENADELAUNCHER) )
+								v_desired_offset->z += (pow(2,fTime)*(sv_gravity->GetFloat()*rcbot_projectile_tweak.GetFloat()));// - (getOrigin().z - v_origin.z);
+						}
 				}
 			break;
 			}
