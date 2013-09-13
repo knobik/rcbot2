@@ -55,7 +55,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\public\mathlib;..\..\public;..\..\public\engine;..\..\public\tier0;..\..\public\tier1;..\..\dlls;..\..\game_shared;..\..\game\shared;..\..\game\server;..\..\public\game\server"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;HOMEFOLDER"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
@@ -163,7 +163,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				AdditionalIncludeDirectories="..\..\public\mathlib;..\..\public;..\..\public\engine;..\..\public\tier0;..\..\public\tier1;..\..\dlls;..\..\game_shared;..\..\game\shared;..\..\game\server;..\..\public\game\server"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;HOMEFOLDER"
 				StringPooling="true"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -196,6 +196,116 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="odbc32.lib odbccp32.lib tier0.lib tier1.lib tier2.lib tier3.lib mathlib.lib vstdlib.lib"
 				OutputFile=".\Release/HPB_bot2.dll"
+				LinkIncremental="1"
+				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="..\..\lib\public;..\..\lib\common"
+				IgnoreDefaultLibraryNames="LIBC;LIBCD"
+				GenerateDebugInformation="true"
+				ProgramDatabaseFile=".\Release/HPB_bot2.pdb"
+				GenerateMapFile="true"
+				MapFileName=".\Release/HPB_bot2.map"
+				SubSystem="2"
+				ImportLibrary=".\Release/HPB_bot2.lib"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release_NonHomeFolder|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="0"
+			ATLMinimizesCRunTimeLibraryUsage="false"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\half-life deathmatch source\bin\HPB_Bot2o.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_Bot2o.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\synergy\bin\HPB_Bot2o.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\half-life 2 deathmatch\bin\HPB_Bot2o.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\day of defeat source\bin\HPB_Bot2o.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Day of Defeat Source\bin\HPB_Bot2o.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\Half-Life 2 Deathmatch\bin\HPB_Bot2o.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\common\team fortress 2\bin\HPB_Bot2o.dll&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\xxrcinstall\files\HPB_Bot2o.dll&quot;&#x0D;&#x0A;copy &quot;$(ProjectDir)\update.txt&quot; &quot;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\xxrcinstall\files\rcbot2\manual\version.txt&quot;&#x0D;&#x0A;"
+				Outputs="c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\half-life deathmatch source\bin\HPB_Bot2o.dll;c:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\team fortress 2\bin\HPB_Bot2o.dll;c:\Program Files (x86)\Steam\steam-apps\paul.murphy@ntlworld.com\synergy\bin\HPB_Bot2o.dll;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\half-life 2 deathmatch\bin\HPB_Bot2o.dll;C:\Program Files (x86)\Steam\steamapps\paul.murphy@ntlworld.com\day of defeat source\bin\HPB_Bot2o.dll;C:\Program Files (x86)\Steam\steamapps\common\Day of Defeat Source\bin\HPB_Bot2o.dll;C:\Program Files (x86)\Steam\steamapps\common\Half-Life 2 Deathmatch\bin\HPB_Bot2o.dll;C:\Program Files (x86)\Steam\steamapps\common\team fortress 2\bin\HPB_Bot2o.dll"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				PreprocessorDefinitions="NDEBUG"
+				MkTypLibCompatible="true"
+				SuppressStartupBanner="true"
+				TargetEnvironment="1"
+				TypeLibraryName=".\Release/HPB_bot2.tlb"
+				HeaderFileName=""
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="2"
+				InlineFunctionExpansion="1"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="..\..\public\mathlib;..\..\public;..\..\public\engine;..\..\public\tier0;..\..\public\tier1;..\..\dlls;..\..\game_shared;..\..\game\shared;..\..\game\server;..\..\public\game\server"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
+				StringPooling="true"
+				RuntimeLibrary="0"
+				EnableFunctionLevelLinking="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				PrecompiledHeaderFile=".\Release/HPB_bot2.pch"
+				AssemblerListingLocation=".\Release/"
+				ObjectFile=".\Release/"
+				ProgramDataBaseFileName=".\Release/"
+				WarningLevel="3"
+				WarnAsError="true"
+				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="3"
+				CompileAs="0"
+				OmitDefaultLibName="false"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+				PreprocessorDefinitions="NDEBUG"
+				Culture="1033"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="odbc32.lib odbccp32.lib tier0.lib tier1.lib tier2.lib tier3.lib mathlib.lib vstdlib.lib"
+				OutputFile=".\Release/HPB_bot2o.dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\lib\public;..\..\lib\common"

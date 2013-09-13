@@ -29,9 +29,6 @@
  *
  */
 
-// use the home folder to store the bot files
-#define HOMEFOLDER
-
 #ifndef __linux__
 // for file stuff
 #include <windows.h>
@@ -788,19 +785,16 @@ void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const ch
 #ifndef __linux
 	ExpandEnvironmentStringsA("%userprofile%",home,511);
 #else
-char *lhome = getenv ("HOME");
-if (lhome != NULL) 
-{
-        strncpy(home,lhome,511);
-	home[511] = 0; 
-//snprintf(path, sizeof(path), "%s/new_dir", home);
-        // now use path in mkdir
-        //mkdir(path, PERM);
-}
-else
-strcpy(home,".");
+	char *lhome = getenv ("HOME");
 
-	//sprintf(home,"~");
+	if (lhome != NULL) 
+	{
+		strncpy(home,lhome,511);
+		home[511] = 0; 
+	}
+	else
+		strcpy(home,".");
+
 #endif
 	strcat(szOutput,home);
 #else

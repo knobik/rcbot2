@@ -1,3 +1,17 @@
+0.76
+====
+convar rcbot_sv_cheats_warning: If disabled, bots will try to spawn even if sv_cheats is 1 - use only with admin cvar plugin
+convar rcbot_enable_wpt_sounds: Enable/disable sound effects when editing waypoints
+changed weapon structure slightly to accommodate projectile speed
+altered gravity aiming for projectiles (use convar rcbot_projtweak to tweak)
+HPB_Bot2o.dll can be used if rcbot2 folder is not in the users home folder
+fixed waypoint path display bug
+sprint changes
+added waypoint editing sounds
+added autowaypointing from RCBOT1 with extras
+fixed bug #10 mistake with passed arguments in r285 @ sourceforge bugs
+updated default hook offsets
+
 0.75
 ====
 installer: changed installation messages / added correct terms
