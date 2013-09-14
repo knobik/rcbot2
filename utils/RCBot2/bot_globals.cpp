@@ -778,13 +778,12 @@ FILE *CBotGlobals :: openFile ( char *szFile, char *szMode )
 
 void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const char *szFolder, const char *szExtension, bool bModDependent )
 {
-	szOutput[0] = 0;
-
 #ifdef HOMEFOLDER
 	char home[512];
-#ifndef __linux
-	ExpandEnvironmentStringsA("%userprofile%",home,511);
-#else
+#endif
+	szOutput[0] = 0;
+
+#if defined(HOMEFOLDER) && defined(__linux)
 	char *lhome = getenv ("HOME");
 
 	if (lhome != NULL) 
@@ -794,12 +793,20 @@ void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const ch
 	}
 	else
 		strcpy(home,".");
+#endif
 
+#if defined(HOMEFOLDER) && defined(WIN32)
+	ExpandEnvironmentStringsA("%userprofile%",home,511);
 #endif
+
+#ifdef HOMEFOLDER
 	strcat(szOutput,home);
-#else
-	strcat(szOutput,"..");
 #endif
+
+#ifndef HOMEFOLDER
+	strcat(szOutput,"..");
+#endif HOMEFOLDER
+
 	addDirectoryDelimiter(szOutput);
 	strcat(szOutput,BOT_FOLDER);
 	addDirectoryDelimiter(szOutput);
