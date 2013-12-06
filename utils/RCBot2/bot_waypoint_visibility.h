@@ -51,6 +51,8 @@ public:
 		bWorkVisibility = false;
 		iCurFrom = 0;
 		iCurTo = 0;
+		m_iPrevPercent = 0;
+		m_fNextShowMessageTime = 0;
 	}
 
 	void workVisibility ();
@@ -63,6 +65,7 @@ public:
 		// for "concurrent" reading of 
 		// visibility throughout frames
 		bWorkVisibility = false;
+		m_fNextShowMessageTime = 0;
 		iCurFrom = 0;
 		iCurTo = 0;
 		////////////////////////////
@@ -70,6 +73,7 @@ public:
 		//create a heap...
 		m_VisTable = new unsigned char[iSize];
 
+		m_iPrevPercent = 0;
 		memset(m_VisTable,0,iSize);
 	}
 
@@ -158,6 +162,8 @@ private:
 	unsigned short int iCurTo;
 	static const int WAYPOINT_VIS_TICKS = 64;
 	unsigned char *m_VisTable;
+	float m_fNextShowMessageTime;
+	int m_iPrevPercent;
 	// use a heap of 1 byte * size to keep things simple.
 };
 #endif

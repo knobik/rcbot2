@@ -58,10 +58,17 @@ void CWaypointVisibilityTable :: workVisibility ()
 
 			if ( iTicks >= WAYPOINT_VIS_TICKS )
 			{
-				percent = (int)(((float)iCurFrom / iSize) * 100);
+				if ( m_fNextShowMessageTime < engine->Time() )
+				{
+					percent = (int)(((float)iCurFrom / iSize) * 100);
 
-				if ( (percent % 5) == 0 )
-					Msg(" *** working out visibility %d percent***\n",percent);
+					if ( m_iPrevPercent != percent )
+					{
+						Msg(" *** working out visibility %d percent***\n",percent);
+						m_fNextShowMessageTime = engine->Time() + 2.5f;
+						m_iPrevPercent = percent;
+					}
+				}
 
 				return;
 			}

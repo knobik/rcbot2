@@ -42,6 +42,7 @@
 #include "bot_waypoint.h"
 #include "bot_waypoint_locations.h"
 #include "bot_navigator.h"
+#include "bot_perceptron.h"
 //#include "vstdlib/random.h" // for random functions
 
 extern ConVar bot_beliefmulti;
@@ -111,12 +112,23 @@ void CDODBot :: init ()
 
 	m_iSelectedClass = -1;
 	m_bCheckClass = false;
-
+	m_pWantToProne = NULL;
 }
 
 void CDODBot :: setup ()
 {
 	CBot::setup();
+
+	if ( m_pWantToProne == NULL )
+		m_pWantToProne = new CPerceptron(3); // health , distance from enemy, danger out of 255
+}
+
+void CDODBot :: freeMapMemory ()
+{
+	if ( m_pWantToProne )
+		delete m_pWantToProne;
+
+	m_pWantToProne = NULL;
 }
 
 bool CDODBot::canGotoWaypoint(Vector vPrevWaypoint, CWaypoint *pWaypoint)
@@ -395,6 +407,18 @@ void CDODBot :: killed ( edict_t *pVictim, char *weapon )
 	if ( pVictim && CBotGlobals::entityIsValid(pVictim) )
 		m_pNavigator->belief(CBotGlobals::entityOrigin(pVictim),getEyePosition(),bot_beliefmulti.GetFloat(),distanceFrom(pVictim),BELIEF_SAFETY);
 
+	if ( (m_pEnemy==pVictim) )
+	{
+		ga_nn_value inputs[3] = {distanceFrom(m_pEnemy)/1000.0f,getHealthPercent(),m_fCurrentDanger/MAX_BELIEF};
+		m_pWantToProne->input(inputs);
+		m_pWantToProne->execute();
+
+		if ( m_bProne )
+			m_pWantToProne->train(1.0f);
+		else
+			m_pWantToProne->train(0.0f);
+	}
+
 	return;
 }
 
@@ -412,6 +436,18 @@ void CDODBot :: died ( edict_t *pKiller, const char *pszWeapon )
 	{
 		if ( CBotGlobals::entityIsValid(pKiller) )
 			m_pNavigator->belief(CBotGlobals::entityOrigin(pKiller),getEyePosition(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
+
+		if ( (m_pEnemy==pKiller) )
+		{
+			ga_nn_value inputs[3] = {distanceFrom(m_pEnemy)/1000.0f,getHealthPercent(),m_fCurrentDanger/MAX_BELIEF};
+			m_pWantToProne->input(inputs);
+			m_pWantToProne->execute();
+
+			if ( m_bProne )
+				m_pWantToProne->train(0.0f);
+			else
+				m_pWantToProne->train(1.0f);
+		}
 	}
 
 }
@@ -465,6 +501,18 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
 			updateCondition(CONDITION_CHANGED);
 		}
+
+		if ( (m_pEnemy==pKiller) )
+		{
+			ga_nn_value inputs[3] = {distanceFrom(m_pEnemy)/1000.0f,getHealthPercent(),m_fCurrentDanger/MAX_BELIEF};
+			m_pWantToProne->input(inputs);
+			m_pWantToProne->execute();
+
+			if ( m_bProne )
+				m_pWantToProne->train(0.0f);
+			else
+				m_pWantToProne->train(1.0f);
+		}
 	}
 }
 
@@ -493,6 +541,16 @@ void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *p
 		{
 			if ( ( getHealthPercent() < 0.1f ) && ( randomFloat(0.0,1.0) > 0.75f ) )
 				addVoiceCommand(DOD_VC_NICE_SHOT);
+
+			ga_nn_value inputs[3] = {distanceFrom(m_pEnemy)/1000.0f,getHealthPercent(),m_fCurrentDanger/MAX_BELIEF};
+			m_pWantToProne->input(inputs);
+			m_pWantToProne->execute();
+
+			if ( m_bProne )
+				m_pWantToProne->train(1.0f);
+			else
+				m_pWantToProne->train(0.0f);
+		
 		}
 
 		if ( m_pLastEnemy == pDied )
@@ -500,12 +558,15 @@ void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *p
 			m_pLastEnemy = NULL;
 			m_fLastSeeEnemy = 0;
 		}
+
 	}
 }
 
 void CDODBot :: spawnInit ()
 {
 	CBot::spawnInit();
+
+	m_fLastRunForCover = 0.0f;
 
 	m_fLastCaptureEvent = 0.0f;
 
@@ -868,8 +929,21 @@ void CDODBot :: modThink ()
 		// if rcbot_prone_enemy_only is true
 		if ( (hasSomeConditions(CONDITION_PRONE) || !rcbot_prone_enemy_only.GetBool() || ((m_pEnemy.get()!=NULL) || (m_fLastSeeEnemy + 5.0f > engine->Time()))) && (m_fCurrentDanger >= 80.0f) && !m_bProne && ( m_fProneTime < engine->Time() ))
 		{
-			m_pButtons->tap(IN_ALT1);
-			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
+			bool bProne = true;
+
+			if ( rcbot_prone_enemy_only.GetBool() && (m_pEnemy.get()!=NULL) )
+			{
+				ga_nn_value inputs[3] = {distanceFrom(m_pEnemy)/1000.0f,getHealthPercent(),m_fCurrentDanger/MAX_BELIEF};
+				m_pWantToProne->input(inputs);
+				m_pWantToProne->execute();
+				bProne = m_pWantToProne->fired();
+			}
+
+			if ( bProne )
+			{
+				m_pButtons->tap(IN_ALT1);
+				m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
+			}
 		}
 
 		setMoveSpeed(fMaxSpeed/4);
@@ -1930,7 +2004,10 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 						{
 							// go prone
 							if ( !m_bProne )
+							{
 								m_pButtons->tap(IN_ALT1);
+								m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
+							}
 
 							if ( fDist > 400.0f )
 								return true; // keep enemy but don't shoot yet

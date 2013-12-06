@@ -142,6 +142,8 @@ public:
 	void init ();
 	void setup ();
 
+	virtual void freeMapMemory ();
+
 	//Vector getAimVector ( edict_t *pEntity );
 	virtual void modAim ( edict_t *pEntity, Vector &v_origin, 
 		Vector *v_desired_offset, Vector &v_size,
@@ -256,6 +258,10 @@ private:
 	MyEHandle m_pNearestPathBomb; // blocking path bomb
 	MyEHandle m_pNearestBreakable;
 	MyEHandle m_pNearestWeapon;
+
+	CPerceptron *m_pWantToProne;
+
+	float m_fLastRunForCover;
 
 	eDODVoiceCMD m_LastHearVoiceCommand;
 
