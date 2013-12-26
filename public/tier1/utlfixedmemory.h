@@ -20,8 +20,10 @@
 #include "tier0/memalloc.h"
 #include "tier0/memdbgon.h"
 
+#ifdef _MSC_VER
 #pragma warning (disable:4100)
 #pragma warning (disable:4514)
+#endif
 
 //-----------------------------------------------------------------------------
 
@@ -121,7 +123,7 @@ public:
 	int NumAllocated() const;
 	int Count() const { return NumAllocated(); }
 
-	// Grows memory by max(num,growsize), and returns the allocation index/ptr
+	// Grows memory by MAX(num,growsize), and returns the allocation index/ptr
 	void Grow( int num = 1 );
 
 	// Makes sure we've got at least this much memory

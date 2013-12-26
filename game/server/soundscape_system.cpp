@@ -116,7 +116,7 @@ void CSoundscapeSystem::PrintDebugInfo()
 		CEnvSoundscape *currentSoundscape = m_soundscapeEntities[entityIndex];
 		Msg("- %d: %s x:%.4f y:%.4f z:%.4f\n", 
 			entityIndex, 
-			currentSoundscape->GetSoundscapeName(), 
+			STRING(currentSoundscape->GetSoundscapeName()), 
 			currentSoundscape->GetAbsOrigin().x,
 			currentSoundscape->GetAbsOrigin().y,
 			currentSoundscape->GetAbsOrigin().z
@@ -240,7 +240,7 @@ void CSoundscapeSystem::FrameUpdatePostEntityThink()
 
 		// update 2 soundscape entities each tick. (when debugging update 
 		// them all)
-		int count = soundscape_debug.GetBool() ? total : min(2, total);
+		int count = soundscape_debug.GetBool() ? total : MIN(2, total);
 		for ( int i = 0; i < count; i++ )
 		{
 			m_activeIndex++;

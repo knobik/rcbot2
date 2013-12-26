@@ -6,6 +6,7 @@
 //=============================================================================//
 
 #include "cbase.h"
+
 #include "entitylist.h"
 #include "utlvector.h"
 #include "igamesystem.h"
@@ -98,7 +99,7 @@ public:
 	int ListCount() { return m_targetList.Count(); }
 	int ListCopy( CBaseEntity *pList[], int listMax )
 	{
-		int count = min(listMax, ListCount() );
+		int count = MIN(listMax, ListCount() );
 		memcpy( pList, m_targetList.Base(), sizeof(CBaseEntity *) * count );
 		return count;
 	}
@@ -143,7 +144,7 @@ public:
 	void Clear()
 	{
 		m_simThinkList.Purge();
-		for ( int i = 0; i < ARRAYSIZE(m_entinfoIndex); i++ )
+		for ( size_t i = 0; i < ARRAYSIZE(m_entinfoIndex); i++ )
 		{
 			m_entinfoIndex[i] = 0xFFFF;
 		}
@@ -192,7 +193,7 @@ public:
 
 	int ListCopy( CBaseEntity *pList[], int listMax )
 	{
-		int count = min(listMax, ListCount());
+		int count = MIN(listMax, ListCount());
 		int out = 0;
 		for ( int i = 0; i < count; i++ )
 		{

@@ -263,7 +263,7 @@ void CBaseProp::Activate( void )
 	// Make sure mapmakers haven't used the wrong prop type.
 	if ( m_takedamage == DAMAGE_NO && m_iHealth != 0 )
 	{
-		Warning("%s has a health specified in model '%s'. Use prop_physics or prop_dynamic instead.\n", GetClassname(), GetModelName() );
+		Warning("%s has a health specified in model '%s'. Use prop_physics or prop_dynamic instead.\n", GetClassname(), STRING(GetModelName()) );
 	}
 }
 
@@ -368,7 +368,7 @@ void CBaseProp::DrawDebugGeometryOverlays( void )
 			// Remap health to green brightness
 			float flG = RemapVal( m_iHealth, 0, 100, 64, 255 );
 			flG = clamp( flG, 0, 255 );
-			NDebugOverlay::EntityBounds(this, 0, flG, 0, 0, 0 );
+			NDebugOverlay::EntityBounds(this, 0, (int)flG, 0, 0, 0 );
 		}
 	}
 }
@@ -446,7 +446,7 @@ void CBreakableProp::Ignite( float flFlameLifetime, bool bNPCOnly, float flSize,
 	}
 
 	// Frighten AIs, just in case this is an exploding thing.
-	CSoundEnt::InsertSound( SOUND_DANGER, GetAbsOrigin(), 128.0f, 1.0f, this, SOUNDENT_CHANNEL_REPEATED_DANGER );
+	CSoundEnt::InsertSound( SOUND_DANGER, GetAbsOrigin(), 128, 1.0f, this, SOUNDENT_CHANNEL_REPEATED_DANGER );
 }
 
 //-----------------------------------------------------------------------------
@@ -1104,7 +1104,7 @@ int CBreakableProp::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			float flFactor;
 			flFactor = flDist / MAX_BLAST_DIST;
 			const float MAX_BURN_TIME = 5.0f;
-			flBurnTime = max( 0.5, MAX_BURN_TIME * flFactor );
+			flBurnTime = MAX( 0.5, MAX_BURN_TIME * flFactor );
 			flBurnTime += random->RandomFloat( 0, 0.5 );
 		}
 		else
@@ -1114,7 +1114,7 @@ int CBreakableProp::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 		}
 
 		// Change my health so that I burn for flBurnTime seconds.
-		float flIdealHealth = min( m_iHealth, FLAME_DIRECT_DAMAGE_PER_SEC *  flBurnTime );
+		float flIdealHealth = fpmin( m_iHealth, FLAME_DIRECT_DAMAGE_PER_SEC *  flBurnTime );
 		float flIdealDamage = m_iHealth - flIdealHealth;
 
 		// Scale the damage to do ideal damage.
@@ -1515,7 +1515,7 @@ void CBreakableProp::OnPhysGunDrop( CBasePlayer *pPhysGunUser, PhysGunDrop_t Rea
 
 	SetPhysicsAttacker( pPhysGunUser, gpGlobals->curtime );
 
-	if( Reason == PUNTED_BY_CANNON )
+	if( Reason == static_cast<PhysGunDrop_t>(PUNTED_BY_CANNON) )
 	{
 		PlayPuntSound(); 
 	}
@@ -1691,14 +1691,14 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 	{
 		if( HasInteraction( PROPINTER_PHYSGUN_BREAK_EXPLODE ) )
 		{
-			ExplosionCreate( WorldSpaceCenter(), angles, pAttacker, m_explodeDamage, m_explodeRadius, 
+			ExplosionCreate( WorldSpaceCenter(), angles, pAttacker, (int)m_explodeDamage, (int)m_explodeRadius, 
 				SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_SURFACEONLY | SF_ENVEXPLOSION_NOSOUND,
 				0.0f, this );
 			EmitSound("PropaneTank.Burst");
 		}
 		else
 		{
-			ExplosionCreate( WorldSpaceCenter(), angles, pAttacker, m_explodeDamage, m_explodeRadius, 
+			ExplosionCreate( WorldSpaceCenter(), angles, pAttacker, (int)m_explodeDamage, (int)m_explodeRadius, 
 				SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE | SF_ENVEXPLOSION_SURFACEONLY,
 				0.0f, this );
 		}
@@ -1761,7 +1761,7 @@ void CBreakableProp::Break( CBaseEntity *pBreaker, const CTakeDamageInfo &info )
 	{
 		if ( bExploded == false )
 		{
-			ExplosionCreate( origin, angles, pAttacker, 1, m_explodeRadius, 
+			ExplosionCreate( origin, angles, pAttacker, 1, (int)m_explodeRadius, 
 				SF_ENVEXPLOSION_NOSPARKS | SF_ENVEXPLOSION_NODLIGHTS | SF_ENVEXPLOSION_NOSMOKE, 0.0f, this );			
 		}
 
@@ -3301,7 +3301,7 @@ CBaseEntity *BreakModelCreateSingle( CBaseEntity *pOwner, breakmodel_t *pModel, 
 		pEntity->m_iHealth = pModel->health;
 		if ( g_ActiveGibCount >= ACTIVE_GIB_FADE )
 		{
-			pModel->fadeTime = min( 3, pModel->fadeTime );
+			pModel->fadeTime = MIN( 3, pModel->fadeTime );
 		}
 		if ( pModel->fadeTime )
 		{
@@ -4758,14 +4758,14 @@ CPropDoorRotating::~CPropDoorRotating( void )
 void UTIL_ComputeAABBForBounds( const Vector &mins1, const Vector &maxs1, const Vector &mins2, const Vector &maxs2, Vector *destMins, Vector *destMaxs )
 {
 	// Find the minimum extents
-	(*destMins)[0] = min( mins1[0], mins2[0] );
-	(*destMins)[1] = min( mins1[1], mins2[1] );
-	(*destMins)[2] = min( mins1[2], mins2[2] );
+	(*destMins)[0] = MIN( mins1[0], mins2[0] );
+	(*destMins)[1] = MIN( mins1[1], mins2[1] );
+	(*destMins)[2] = MIN( mins1[2], mins2[2] );
 
 	// Find the maximum extents
-	(*destMaxs)[0] = max( maxs1[0], maxs2[0] );
-	(*destMaxs)[1] = max( maxs1[1], maxs2[1] );
-	(*destMaxs)[2] = max( maxs1[2], maxs2[2] );
+	(*destMaxs)[0] = MAX( maxs1[0], maxs2[0] );
+	(*destMaxs)[1] = MAX( maxs1[1], maxs2[1] );
+	(*destMaxs)[2] = MAX( maxs1[2], maxs2[2] );
 }
 
 //-----------------------------------------------------------------------------
@@ -5210,8 +5210,8 @@ void CPropDoorRotating::BeginOpening(CBaseEntity *pOpenAwayFrom)
 	Vector	volumeCenter = ((mins+maxs) * 0.5f) + GetAbsOrigin();
 
 	// Ignoring the Z
-	float volumeRadius = max( fabs(mins.x), maxs.x );
-	volumeRadius = max( volumeRadius, max( fabs(mins.y), maxs.y ) );
+	float volumeRadius = MAX( fabs(mins.x), maxs.x );
+	volumeRadius = MAX( volumeRadius, MAX( fabs(mins.y), maxs.y ) );
 
 	// Debug
 	if ( g_debug_doors.GetBool() )
@@ -5222,7 +5222,7 @@ void CPropDoorRotating::BeginOpening(CBaseEntity *pOpenAwayFrom)
 	// Make respectful entities move away from our path
 	if( !HasSpawnFlags(SF_DOOR_SILENT_TO_NPCS) )
 	{
-		CSoundEnt::InsertSound( SOUND_MOVE_AWAY, volumeCenter, volumeRadius, 0.5f, pOpenAwayFrom );
+		CSoundEnt::InsertSound( SOUND_MOVE_AWAY, volumeCenter, (int)volumeRadius, 0.5f, pOpenAwayFrom );
 	}
 
 	// Do final setup
@@ -5487,7 +5487,7 @@ class CPhysicsPropMultiplayer : public CPhysicsProp, public IMultiplayerPhysics
 	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
 
-	CPhysicsPropMultiplayer::CPhysicsPropMultiplayer()
+	CPhysicsPropMultiplayer()
 	{
 		m_iPhysicsMode = PHYSICS_MULTIPLAYER_AUTODETECT;
 		m_usingCustomCollisionBounds = false;

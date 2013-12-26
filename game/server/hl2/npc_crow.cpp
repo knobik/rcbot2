@@ -95,7 +95,7 @@ void CNPC_Crow::Spawn( void )
 	AddSpawnFlags( SF_NPC_FADE_CORPSE );
 #endif // _XBOX
 
-	char *szModel = (char *)STRING( GetModelName() );
+	const char *szModel = (char *)STRING( GetModelName() );
 	if (!szModel || !*szModel)
 	{
 		szModel = "models/crow.mdl";
@@ -1084,7 +1084,7 @@ bool CNPC_Crow::BecomeRagdollOnClient( const Vector &force )
 	{
 		float flMass = VPhysicsGetObject()->GetMass();
 		float speed = VectorNormalize( newForce );
-		speed = min( speed, (CROW_RAGDOLL_SPEED_LIMIT * flMass) );
+		speed = MIN( speed, (CROW_RAGDOLL_SPEED_LIMIT * flMass) );
 		newForce *= speed;
 	}
 
@@ -1244,6 +1244,9 @@ int CNPC_Crow::SelectSchedule( void )
 
 			// TODO: need idle flying behaviors!
 		}
+
+		default:
+			break;
 	}
 
 	return BaseClass::SelectSchedule();

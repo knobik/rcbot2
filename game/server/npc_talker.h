@@ -15,7 +15,7 @@
 #include <time.h>
 #endif
 
-#ifndef _XBOX
+#if !defined _XBOX && defined _MSC_VER 
 #pragma warning(push)
 #include <set>
 #pragma warning(pop)
@@ -23,12 +23,6 @@
 
 #ifdef _WIN32
 #pragma once
-#endif
-
-#ifdef _LINUX
-// the include <set> monkey's with the max() define, unbreak it
-#undef MINMAX_H
-#include "minmax.h"
 #endif
 
 #include "ai_playerally.h"
@@ -223,7 +217,7 @@ public:
 	int			m_nSpeak;						// number of times initiated talking
 	float		m_flNextIdleSpeechTime;
 
-	static char *m_szFriends[TLK_CFRIENDS];		// array of friend names
+	static const char *m_szFriends[TLK_CFRIENDS];		// array of friend names
 	CBaseEntity		*EnumFriends( CBaseEntity *pentPrevious, int listNumber, bool bTrace );
 
 	virtual int		FriendNumber( int arrayNumber )	{ return arrayNumber; }

@@ -882,6 +882,8 @@ void CNavArea::FinishSplitEdit( CNavArea *newArea, NavDirType ignoreEdge )
 			corner[0] = NORTH_WEST;
 			corner[1] = SOUTH_WEST;
 			break;
+		default:
+			break;
 		}
 
 		while ( !newArea->IsOverlapping( *newArea->m_node[ corner[0] ]->GetPosition(), GenerationStepSize/2 ) )
@@ -917,8 +919,8 @@ bool CNavArea::SpliceEdit( CNavArea *other )
 	if (m_extent.lo.x > other->m_extent.hi.x)
 	{
 		// 'this' is east of 'other'
-		float top = max( m_extent.lo.y, other->m_extent.lo.y );
-		float bottom = min( m_extent.hi.y, other->m_extent.hi.y );
+		float top = MAX( m_extent.lo.y, other->m_extent.lo.y );
+		float bottom = MIN( m_extent.hi.y, other->m_extent.hi.y );
 
 		nw.x = other->m_extent.hi.x;
 		nw.y = top;
@@ -947,8 +949,8 @@ bool CNavArea::SpliceEdit( CNavArea *other )
 	else if (m_extent.hi.x < other->m_extent.lo.x)
 	{
 		// 'this' is west of 'other'
-		float top = max( m_extent.lo.y, other->m_extent.lo.y );
-		float bottom = min( m_extent.hi.y, other->m_extent.hi.y );
+		float top = MAX( m_extent.lo.y, other->m_extent.lo.y );
+		float bottom = MIN( m_extent.hi.y, other->m_extent.hi.y );
 
 		nw.x = m_extent.hi.x;
 		nw.y = top;
@@ -979,8 +981,8 @@ bool CNavArea::SpliceEdit( CNavArea *other )
 		if (m_extent.lo.y > other->m_extent.hi.y)
 		{
 			// 'this' is south of 'other'
-			float left = max( m_extent.lo.x, other->m_extent.lo.x );
-			float right = min( m_extent.hi.x, other->m_extent.hi.x );
+			float left = MAX( m_extent.lo.x, other->m_extent.lo.x );
+			float right = MIN( m_extent.hi.x, other->m_extent.hi.x );
 
 			nw.x = left;
 			nw.y = other->m_extent.hi.y;
@@ -1009,8 +1011,8 @@ bool CNavArea::SpliceEdit( CNavArea *other )
 		else if (m_extent.hi.y < other->m_extent.lo.y)
 		{
 			// 'this' is north of 'other'
-			float left = max( m_extent.lo.x, other->m_extent.lo.x );
-			float right = min( m_extent.hi.x, other->m_extent.hi.x );
+			float left = MAX( m_extent.lo.x, other->m_extent.lo.x );
+			float right = MIN( m_extent.hi.x, other->m_extent.hi.x );
 
 			nw.x = left;
 			nw.y = m_extent.hi.y;
@@ -1563,8 +1565,8 @@ void CNavArea::ComputePortal( const CNavArea *to, NavDirType dir, Vector *center
 		else
 			center->y = m_extent.hi.y;
 
-		float left = max( m_extent.lo.x, to->m_extent.lo.x );
-		float right = min( m_extent.hi.x, to->m_extent.hi.x );
+		float left = MAX( m_extent.lo.x, to->m_extent.lo.x );
+		float right = MIN( m_extent.hi.x, to->m_extent.hi.x );
 
 		// clamp to our extent in case areas are disjoint
 		if (left < m_extent.lo.x)
@@ -1587,8 +1589,8 @@ void CNavArea::ComputePortal( const CNavArea *to, NavDirType dir, Vector *center
 		else
 			center->x = m_extent.hi.x;
 
-		float top = max( m_extent.lo.y, to->m_extent.lo.y );
-		float bottom = min( m_extent.hi.y, to->m_extent.hi.y );
+		float top = MAX( m_extent.lo.y, to->m_extent.lo.y );
+		float bottom = MIN( m_extent.hi.y, to->m_extent.hi.y );
 
 		// clamp to our extent in case areas are disjoint
 		if (top < m_extent.lo.y)
@@ -1621,8 +1623,8 @@ void CNavArea::ComputeClosestPointInPortal( const CNavArea *to, NavDirType dir, 
 		else
 			closePos->y = m_extent.hi.y;
 
-		float left = max( m_extent.lo.x, to->m_extent.lo.x );
-		float right = min( m_extent.hi.x, to->m_extent.hi.x );
+		float left = MAX( m_extent.lo.x, to->m_extent.lo.x );
+		float right = MIN( m_extent.hi.x, to->m_extent.hi.x );
 
 		// clamp to our extent in case areas are disjoint
 		if (left < m_extent.lo.x)
@@ -1655,8 +1657,8 @@ void CNavArea::ComputeClosestPointInPortal( const CNavArea *to, NavDirType dir, 
 		else
 			closePos->x = m_extent.hi.x;
 
-		float top = max( m_extent.lo.y, to->m_extent.lo.y );
-		float bottom = min( m_extent.hi.y, to->m_extent.hi.y );
+		float top = MAX( m_extent.lo.y, to->m_extent.lo.y );
+		float bottom = MIN( m_extent.hi.y, to->m_extent.hi.y );
 
 		// clamp to our extent in case areas are disjoint
 		if (top < m_extent.lo.y)
@@ -1751,8 +1753,8 @@ bool CNavArea::GetCornerHotspot( NavCornerType corner, Vector hotspot[NUM_CORNER
 	Vector se = GetCorner( SOUTH_EAST );
 
 	float size = 9.0f;
-	size = min( size, GetSizeX()/3 );	// make sure the hotspot doesn't extend outside small areas
-	size = min( size, GetSizeY()/3 );
+	size = MIN( size, GetSizeX()/3 );	// make sure the hotspot doesn't extend outside small areas
+	size = MIN( size, GetSizeY()/3 );
 
 	switch ( corner )
 	{
@@ -2202,8 +2204,8 @@ void CNavArea::DrawConnectedAreas( void ) const
 			{
 				adj->DrawHidingSpots();
 
-				Vector from, to;
-				Vector hookPos;
+				Vector from = Vector(0.0f, 0.0f, 0.0f), to = Vector(0.0f, 0.0f, 0.0f);
+				Vector hookPos = Vector(0.0f, 0.0f, 0.0f);
 				float halfWidth;
 				float size = 5.0f;
 				ComputePortal( adj, dir, &hookPos, &halfWidth );
@@ -2225,6 +2227,8 @@ void CNavArea::DrawConnectedAreas( void ) const
 					case WEST:
 						from = hookPos + Vector( size, 0.0f, 0.0f );
 						to = hookPos + Vector( -size, 0.0f, 0.0f );
+						break;
+					default:
 						break;
 				}
 
@@ -2508,6 +2512,8 @@ static Vector FindPositionInArea( CNavArea *area, NavCornerType corner )
 	case SOUTH_EAST:
 		multX = -1;
 		multY = -1;
+		break;
+	default:
 		break;
 	}
 
@@ -3032,6 +3038,8 @@ void CNavArea::RaiseCorner( NavCornerType corner, int amount, bool raiseAdjacent
 	case SOUTH_EAST:
 		m_extent.hi.z += amount;
 		break;
+	default:
+		break;
 	}
 
 	// Recompute the center
@@ -3088,7 +3096,7 @@ void CNavArea::RaiseCorner( NavCornerType corner, int amount, bool raiseAdjacent
 					if ( areaPos.DistTo( cornerPos ) < tolerance )
 					{
 						float heightDiff = (cornerPos.z + amount ) - areaPos.z;
-						area->RaiseCorner( NavCornerType(i), heightDiff, false );
+						area->RaiseCorner( NavCornerType(i), (int)heightDiff, false );
 					}
 				}
 			}
@@ -3205,25 +3213,25 @@ void CNavArea::PlaceOnGround( NavCornerType corner, float inset )
 	if ( corner == NORTH_WEST || corner == NUM_CORNERS )
 	{
 		float newZ = FindGroundZ( nw, ne, sw );
-		RaiseCorner( NORTH_WEST, newZ - nw.z );
+		RaiseCorner( NORTH_WEST, static_cast<int>(newZ - nw.z) );
 	}
 
 	if ( corner == NORTH_EAST || corner == NUM_CORNERS )
 	{
 		float newZ = FindGroundZ( ne, nw, se );
-		RaiseCorner( NORTH_EAST, newZ - ne.z );
+		RaiseCorner( NORTH_EAST, static_cast<int>(newZ - ne.z) );
 	}
 
 	if ( corner == SOUTH_WEST || corner == NUM_CORNERS )
 	{
 		float newZ = FindGroundZ( sw, nw, se );
-		RaiseCorner( SOUTH_WEST, newZ - sw.z );
+		RaiseCorner( SOUTH_WEST, static_cast<int>(newZ - sw.z) );
 	}
 
 	if ( corner == SOUTH_EAST || corner == NUM_CORNERS )
 	{
 		float newZ = FindGroundZ( se, ne, sw );
-		RaiseCorner( SOUTH_EAST, newZ - se.z );
+		RaiseCorner( SOUTH_EAST, static_cast<int>(newZ - se.z) );
 	}
 }
 
@@ -3356,7 +3364,7 @@ public:
 
 
 //-----------------------------------------------------------------------------------------------------
-static int GetPushawayEntsInVolume( const Vector& origin, const Vector& mins, const Vector& maxs, CBaseEntity **ents, int nMaxEnts, int PartitionMask, CNavBlockerEnumerator *enumerator )
+/*static int GetPushawayEntsInVolume( const Vector& origin, const Vector& mins, const Vector& maxs, CBaseEntity **ents, int nMaxEnts, int PartitionMask, CNavBlockerEnumerator *enumerator )
 {
 	Ray_t ray;
 	ray.Init( origin, origin, mins, maxs );
@@ -3376,7 +3384,7 @@ static int GetPushawayEntsInVolume( const Vector& origin, const Vector& mins, co
 		delete physPropEnum;
 
 	return numHit;
-}
+}*/
 
 
 //--------------------------------------------------------------------------------------------------------------
@@ -3388,8 +3396,8 @@ void CNavArea::UpdateBlocked( void )
 	Vector origin = GetCenter();
 	origin.z += HalfHumanHeight;
 
-	const float sizeX = max( 1, min( GetSizeX()/2 - 5, HalfHumanWidth ) );
-	const float sizeY = max( 1, min( GetSizeY()/2 - 5, HalfHumanWidth ) );
+	const float sizeX = MAX( 1, MIN( GetSizeX()/2 - 5, HalfHumanWidth ) );
+	const float sizeY = MAX( 1, MIN( GetSizeY()/2 - 5, HalfHumanWidth ) );
 	Vector mins( -sizeX, -sizeY, 0 );
 	Vector maxs( sizeX, sizeY, VEC_DUCK_HULL_MAX.z );
 

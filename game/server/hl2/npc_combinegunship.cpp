@@ -1003,7 +1003,7 @@ void CNPC_CombineGunship::ManageWarningBeam( void )
 					g_pEffects->EnergySplash( tr2.endpos + vDir * 8, tr2.plane.normal, true );
 				}
 
-				g_pEffects->Sparks( tr2.endpos, 3.0f - (m_flGroundAttackTime-gpGlobals->curtime), 3.5f - (m_flGroundAttackTime-gpGlobals->curtime), &tr2.plane.normal );
+				g_pEffects->Sparks( tr2.endpos, (int)(3.0f - (m_flGroundAttackTime-gpGlobals->curtime)), (int)(3.5f - (m_flGroundAttackTime-gpGlobals->curtime)), &tr2.plane.normal );
 
 			}
 		}
@@ -2007,7 +2007,7 @@ void CNPC_CombineGunship::BeginDestruct( void )
 		return;
 	}
 
-	m_hRagdoll->SetName( AllocPooledString( UTIL_VarArgs("%s_ragdoll", GetEntityName()) ) );
+	m_hRagdoll->SetName( AllocPooledString( UTIL_VarArgs("%s_ragdoll", STRING(GetEntityName())) ) );
 
 	// Tell the smoke trail to follow the ragdoll
 	CreateSmokeTrail();
@@ -2122,7 +2122,7 @@ void CNPC_CombineGunship::Flight( void )
 	}
 
 	float flCurrentSpeed = GetAbsVelocity().Length();
-	float flDist = min( flCurrentSpeed + accelRate, maxSpeed );
+	float flDist = MIN( flCurrentSpeed + accelRate, maxSpeed );
 
 	Vector deltaPos;
 	if ( m_lifeState == LIFE_DYING || m_hGroundAttackTarget )
@@ -2719,19 +2719,19 @@ bool CNPC_CombineGunship::PoseGunTowardTargetDirection( const Vector &vTargetDir
 
 	if (angles.x > m_angGun.x)
 	{
-		m_angGun.x = min( angles.x, m_angGun.x + 12 );
+		m_angGun.x = MIN( angles.x, m_angGun.x + 12 );
 	}
 	if (angles.x < m_angGun.x)
 	{
-		m_angGun.x = max( angles.x, m_angGun.x - 12 );
+		m_angGun.x = MAX( angles.x, m_angGun.x - 12 );
 	}
 	if (angles.y > m_angGun.y)
 	{
-		m_angGun.y = min( angles.y, m_angGun.y + 12 );
+		m_angGun.y = MIN( angles.y, m_angGun.y + 12 );
 	}
 	if (angles.y < m_angGun.y)
 	{
-		m_angGun.y = max( angles.y, m_angGun.y - 12 );
+		m_angGun.y = MAX( angles.y, m_angGun.y - 12 );
 	}
 
 	SetPoseParameter( m_poseWeapon_Pitch, -m_angGun.x );
@@ -2948,16 +2948,16 @@ int	CNPC_CombineGunship::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 		int iHealthIncrements = sk_gunship_health_increments.GetInt();
 		if ( g_pGameRules->IsSkillLevel( SKILL_EASY ) )
 		{
-			iHealthIncrements = ceil( iHealthIncrements * 0.5 );
+			iHealthIncrements = (int)ceil( iHealthIncrements * 0.5 );
 		}
 		else if ( g_pGameRules->IsSkillLevel( SKILL_HARD ) )
 		{
-			iHealthIncrements = floor( iHealthIncrements * 1.5 );
+			iHealthIncrements = (int)floor( iHealthIncrements * 1.5 );
 		}
 		info.SetDamage( ( GetMaxHealth() / (float)iHealthIncrements ) + 1 );
 		
 		// Find out which "stage" we're at in our health
-		int healthIncrement = iHealthIncrements - ( GetHealth() / (float)(( GetMaxHealth() / (float)iHealthIncrements )) );
+		int healthIncrement = iHealthIncrements - ( GetHealth() / (( GetMaxHealth() / iHealthIncrements )) );
 		switch ( healthIncrement )
 		{
 		case 1:

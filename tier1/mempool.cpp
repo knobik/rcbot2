@@ -4,9 +4,14 @@
 //
 //===========================================================================//
 
+#include "tier0/basetypes.h"
 #include "mempool.h"
 #include <stdio.h>
+#ifdef __APPLE__
+#include <sys/malloc.h>
+#else
 #include <malloc.h>
+#endif
 #include <memory.h>
 #include "tier0/dbg.h"
 #include <ctype.h>
@@ -40,7 +45,7 @@ CMemoryPool::CMemoryPool( int blockSize, int numElements, int growMode, const ch
 
 	m_nAlignment = ( nAlignment != 0 ) ? nAlignment : 1;
 	Assert( IsPowerOfTwo( m_nAlignment ) );
-	m_BlockSize = blockSize < sizeof(void*) ? sizeof(void*) : blockSize;
+	m_BlockSize = blockSize < (int)sizeof(void*) ? sizeof(void*) : blockSize;
 	m_BlockSize = AlignValue( m_BlockSize, m_nAlignment );
 	m_BlocksPerBlob = numElements;
 	m_PeakAlloc = 0;
@@ -222,7 +227,7 @@ void* CMemoryPool::AllocZero()
 // Purpose: Allocs a single block of memory from the pool.  
 // Input  : amount - 
 //-----------------------------------------------------------------------------
-void *CMemoryPool::Alloc( unsigned int amount )
+void *CMemoryPool::Alloc( size_t amount )
 {
 	void *returnBlock;
 
@@ -249,7 +254,7 @@ void *CMemoryPool::Alloc( unsigned int amount )
 		}
 	}
 	m_BlocksAllocated++;
-	m_PeakAlloc = max(m_PeakAlloc, m_BlocksAllocated);
+	m_PeakAlloc = MAX(m_PeakAlloc, m_BlocksAllocated);
 
 	returnBlock = m_pHeadOfFreeList;
 
@@ -263,7 +268,7 @@ void *CMemoryPool::Alloc( unsigned int amount )
 // Purpose: Allocs a single block of memory from the pool, zeroes the memory before returning
 // Input  : amount - 
 //-----------------------------------------------------------------------------
-void *CMemoryPool::AllocZero( unsigned int amount )
+void *CMemoryPool::AllocZero( size_t amount )
 {
 	void *mem = Alloc( amount );
 	if ( mem )

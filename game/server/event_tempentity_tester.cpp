@@ -30,8 +30,8 @@ CBaseEntity *CTempEntTester::Create( const Vector &vecOrigin, const QAngle &vecA
 	if ( lifetime && lifetime[0] )
 	{
 		life = atoi( lifetime );
-		life = max( 1.0, life );
-		life = min( 1000.0, life );
+		life = MAX( 1.0, life );
+		life = MIN( 1000.0, life );
 
 		life += gpGlobals->curtime;
 	}
@@ -44,7 +44,7 @@ CBaseEntity *CTempEntTester::Create( const Vector &vecOrigin, const QAngle &vecA
 	if ( single_te && single_te[0] )
 	{
 		Q_strncpy( classname, single_te ,sizeof(classname));
-		strlwr( classname );
+		Q_strlower( classname );
 	}
 	else
 	{
@@ -81,7 +81,7 @@ void CTempEntTester::Spawn( void )
 	{
 		char name[ 128 ];
 		Q_strncpy( name, m_pCurrent->GetName() ,sizeof(name));
-		strlwr( name );
+		Q_strlower( name );
 		if ( strstr( name, m_szClass ) )
 		{
 			break;

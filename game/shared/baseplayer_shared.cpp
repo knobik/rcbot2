@@ -1217,10 +1217,10 @@ void CBasePlayer::PlayerUse ( void )
 				vPushAway.z = 0;
 
 				float flDist = VectorNormalize( vPushAway );
-				flDist = max( flDist, 1 );
+				flDist = MAX( flDist, 1 );
 
 				float flForce = sv_pushaway_force.GetFloat() / flDist;
-				flForce = min( flForce, sv_pushaway_max_force.GetFloat() );
+				flForce = MIN( flForce, sv_pushaway_max_force.GetFloat() );
 
 				pObj->ApplyForceOffset( vPushAway * flForce, WorldSpaceCenter() );
 			}
@@ -1249,7 +1249,7 @@ void CBasePlayer::PlayerUse ( void )
 				if ( pTrain && !(m_nButtons & IN_JUMP) && (GetFlags() & FL_ONGROUND) && (pTrain->ObjectCaps() & FCAP_DIRECTIONAL_USE) && pTrain->OnControls(this) )
 				{
 					m_afPhysicsFlags |= PFLAG_DIROVERRIDE;
-					m_iTrain = TrainSpeed(pTrain->m_flSpeed, ((CFuncTrackTrain*)pTrain)->GetMaxSpeed());
+					m_iTrain = TrainSpeed((int)pTrain->m_flSpeed, (int)((CFuncTrackTrain*)pTrain)->GetMaxSpeed());
 					m_iTrain |= TRAIN_NEW;
 					EmitSound( "Player.UseTrain" );
 					return;
@@ -1398,7 +1398,7 @@ void CBasePlayer::SmoothViewOnStairs( Vector& eyeOrigin )
 	}
 }
 
-static bool IsWaterContents( int contents )
+/*static bool IsWaterContents( int contents )
 {
 	if ( contents & MASK_WATER )
 		return true;
@@ -1407,7 +1407,7 @@ static bool IsWaterContents( int contents )
 //		return true;
 
 	return false;
-}
+}*/
 
 void CBasePlayer::ResetObserverMode()
 {

@@ -15,7 +15,7 @@
 #include "tier0/dbg.h"
 #include "tier0/vcrmode.h"
 
-#ifdef _LINUX
+#if defined _LINUX || defined __APPLE__
 #include <pthread.h>
 #include <errno.h>
 #endif
@@ -69,7 +69,7 @@ const unsigned TT_INFINITE = 0xffffffff;
 #ifndef THREAD_LOCAL
 #ifdef _WIN32
 #define THREAD_LOCAL __declspec(thread)
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 #define THREAD_LOCAL __thread
 #endif
 #endif
@@ -117,7 +117,7 @@ inline void ThreadPause()
 {
 #if defined( _WIN32 ) && !defined( _X360 )
 	__asm pause;
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	__asm __volatile("pause");
 #elif defined( _X360 )
 #else
@@ -154,7 +154,7 @@ inline int ThreadWaitForObject( HANDLE handle, bool bWaitAll = true, unsigned ti
 
 #ifdef _WIN32
 #define NOINLINE
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 #define NOINLINE __attribute__ ((noinline))
 #endif
 
@@ -187,12 +187,12 @@ inline long ThreadInterlockedExchangeAdd( long volatile *p, long value )						{ 
 inline long ThreadInterlockedCompareExchange( long volatile *p, long value, long comperand )	{ Assert( (size_t)p % 4 == 0 ); return _InterlockedCompareExchange( p, value, comperand ); }
 inline bool ThreadInterlockedAssignIf( long volatile *p, long value, long comperand )			{ Assert( (size_t)p % 4 == 0 ); return ( _InterlockedCompareExchange( p, value, comperand ) == comperand ); }
 #else
-TT_INTERFACE long ThreadInterlockedIncrement( long volatile * ) NOINLINE;
-TT_INTERFACE long ThreadInterlockedDecrement( long volatile * ) NOINLINE;
-TT_INTERFACE long ThreadInterlockedExchange( long volatile *, long value ) NOINLINE;
-TT_INTERFACE long ThreadInterlockedExchangeAdd( long volatile *, long value ) NOINLINE;
-TT_INTERFACE long ThreadInterlockedCompareExchange( long volatile *, long value, long comperand ) NOINLINE;
-TT_INTERFACE bool ThreadInterlockedAssignIf( long volatile *, long value, long comperand ) NOINLINE;
+TT_INTERFACE long ThreadInterlockedIncrement( long volatile * );
+TT_INTERFACE long ThreadInterlockedDecrement( long volatile * );
+TT_INTERFACE long ThreadInterlockedExchange( long volatile *, long value );
+TT_INTERFACE long ThreadInterlockedExchangeAdd( long volatile *, long value );
+TT_INTERFACE long ThreadInterlockedCompareExchange( long volatile *, long value, long comperand );
+TT_INTERFACE bool ThreadInterlockedAssignIf( long volatile *, long value, long comperand );
 #endif
 
 inline unsigned ThreadInterlockedExchangeSubtract( long volatile *p, long value )	{ return ThreadInterlockedExchangeAdd( (long volatile *)p, -value ); }
@@ -203,21 +203,21 @@ inline void *ThreadInterlockedExchangePointer( void * volatile *p, void *value )
 inline void *ThreadInterlockedCompareExchangePointer( void * volatile *p, void *value, void *comperand )	{ return (void *)_InterlockedCompareExchange( reinterpret_cast<long volatile *>(p), reinterpret_cast<long>(value), reinterpret_cast<long>(comperand) ); }
 inline bool ThreadInterlockedAssignPointerIf( void * volatile *p, void *value, void *comperand )			{ return ( _InterlockedCompareExchange( reinterpret_cast<long volatile *>(p), reinterpret_cast<long>(value), reinterpret_cast<long>(comperand) ) == reinterpret_cast<long>(comperand) ); }
 #else
-TT_INTERFACE void *ThreadInterlockedExchangePointer( void * volatile *, void *value ) NOINLINE;
-TT_INTERFACE void *ThreadInterlockedCompareExchangePointer( void * volatile *, void *value, void *comperand ) NOINLINE;
-TT_INTERFACE bool ThreadInterlockedAssignPointerIf( void * volatile *, void *value, void *comperand ) NOINLINE;
+TT_INTERFACE void *ThreadInterlockedExchangePointer( void * volatile *, void *value );
+TT_INTERFACE void *ThreadInterlockedCompareExchangePointer( void * volatile *, void *value, void *comperand );
+TT_INTERFACE bool ThreadInterlockedAssignPointerIf( void * volatile *, void *value, void *comperand );
 #endif
 
 inline void const *ThreadInterlockedExchangePointerToConst( void const * volatile *p, void const *value )							{ return ThreadInterlockedExchangePointer( const_cast < void * volatile * > ( p ), const_cast < void * > ( value ) );  }
 inline void const *ThreadInterlockedCompareExchangePointerToConst( void const * volatile *p, void const *value, void const *comperand )	{ return ThreadInterlockedCompareExchangePointer( const_cast < void * volatile * > ( p ), const_cast < void * > ( value ), const_cast < void * > ( comperand ) ); }
 inline bool ThreadInterlockedAssignPointerToConstIf( void const * volatile *p, void const *value, void const *comperand )			{ return ThreadInterlockedAssignPointerIf( const_cast < void * volatile * > ( p ), const_cast < void * > ( value ), const_cast < void * > ( comperand ) ); }
 
-TT_INTERFACE int64 ThreadInterlockedIncrement64( int64 volatile * ) NOINLINE;
-TT_INTERFACE int64 ThreadInterlockedDecrement64( int64 volatile * ) NOINLINE;
-TT_INTERFACE int64 ThreadInterlockedCompareExchange64( int64 volatile *, int64 value, int64 comperand ) NOINLINE;
-TT_INTERFACE int64 ThreadInterlockedExchange64( int64 volatile *, int64 value ) NOINLINE;
-TT_INTERFACE int64 ThreadInterlockedExchangeAdd64( int64 volatile *, int64 value ) NOINLINE;
-TT_INTERFACE bool ThreadInterlockedAssignIf64(volatile int64 *pDest, int64 value, int64 comperand ) NOINLINE;
+TT_INTERFACE int64 ThreadInterlockedIncrement64( int64 volatile * );
+TT_INTERFACE int64 ThreadInterlockedDecrement64( int64 volatile * );
+TT_INTERFACE int64 ThreadInterlockedCompareExchange64( int64 volatile *, int64 value, int64 comperand );
+TT_INTERFACE int64 ThreadInterlockedExchange64( int64 volatile *, int64 value );
+TT_INTERFACE int64 ThreadInterlockedExchangeAdd64( int64 volatile *, int64 value );
+TT_INTERFACE bool ThreadInterlockedAssignIf64(volatile int64 *pDest, int64 value, int64 comperand );
 
 inline unsigned ThreadInterlockedExchangeSubtract( unsigned volatile *p, unsigned value )	{ return ThreadInterlockedExchangeAdd( (long volatile *)p, value ); }
 inline unsigned ThreadInterlockedIncrement( unsigned volatile *p )	{ return ThreadInterlockedIncrement( (long volatile *)p ); }
@@ -270,7 +270,7 @@ public:
 private:
 #ifdef _WIN32
 	uint32 m_index;
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	pthread_key_t m_index;
 #endif
 };
@@ -307,14 +307,14 @@ template <class T = int>
 class CThreadLocalInt : public CThreadLocal<T>
 {
 public:
-	operator const T() const { return Get(); }
+	operator const T() const { return CThreadLocal<T>::Get(); }
 	int	operator=( T i ) { Set( i ); return i; }
 
-	T operator++()					{ T i = Get(); Set( ++i ); return i; }
-	T operator++(int)				{ T i = Get(); Set( i + 1 ); return i; }
+	T operator++()					{ T i = CThreadLocal<T>::Get(); Set( ++i ); return i; }
+	T operator++(int)				{ T i = CThreadLocal<T>::Get(); Set( i + 1 ); return i; }
 
-	T operator--()					{ T i = Get(); Set( --i ); return i; }
-	T operator--(int)				{ T i = Get(); Set( i - 1 ); return i; }
+	T operator--()					{ T i = CThreadLocal<T>::Get(); Set( --i ); return i; }
+	T operator--(int)				{ T i = CThreadLocal<T>::Get(); Set( i - 1 ); return i; }
 };
 
 //---------------------------------------------------------
@@ -518,7 +518,7 @@ private:
 #endif // !_XBOX
 #endif // _WIN64
 	byte m_CriticalSection[TT_SIZEOF_CRITICALSECTION];
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	pthread_mutex_t m_Mutex;
 	pthread_mutexattr_t m_Attr;
 #else
@@ -812,7 +812,7 @@ protected:
 
 #ifdef _WIN32
 	HANDLE m_hSyncObject;
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	pthread_mutex_t	m_Mutex;
 	pthread_cond_t	m_Condition;
 	bool m_bInitalized;
@@ -914,7 +914,7 @@ public:
 private:
 	CThreadEvent( const CThreadEvent & );
 	CThreadEvent &operator=( const CThreadEvent & );
-#ifdef _LINUX
+#if defined _LINUX || defined __APPLE__
 	CInterlockedInt m_cSet;
 #endif
 };
@@ -931,7 +931,7 @@ public:
 
 inline int ThreadWaitForEvents( int nEvents, const CThreadEvent *pEvents, bool bWaitAll = true, unsigned timeout = TT_INFINITE )
 {
-#ifdef _LINUX
+#if defined _LINUX || defined __APPLE__
   Assert(0);
   return 0;
 #else
@@ -979,9 +979,8 @@ private:
 //-----------------------------------------------------------------------------
 
 #define TFRWL_ALIGN ALIGN8
-
-TFRWL_ALIGN 
-class TT_CLASS CThreadSpinRWLock
+ 
+class TFRWL_ALIGN TT_CLASS CThreadSpinRWLock
 {
 public:
 	CThreadSpinRWLock()	{ COMPILE_TIME_ASSERT( sizeof( LockInfo_t ) == sizeof( int64 ) ); Assert( (int)this % 8 == 0 ); memset( this, 0, sizeof( *this ) ); }
@@ -1151,7 +1150,7 @@ private:
 #ifdef _WIN32
 	HANDLE 	m_hThread;
 	ThreadId_t m_threadId;
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	pthread_t m_threadId;
 #endif
 	int		m_result;
@@ -1405,12 +1404,15 @@ inline void CThreadMutex::SetTrace( bool bTrace )
 
 //---------------------------------------------------------
 
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 
 inline CThreadMutex::CThreadMutex()
 {
 	// enable recursive locks as we need them
 	pthread_mutexattr_init( &m_Attr );
+#if defined __APPLE__
+# define PTHREAD_MUTEX_RECURSIVE_NP PTHREAD_MUTEX_RECURSIVE
+#endif
 	pthread_mutexattr_settype( &m_Attr, PTHREAD_MUTEX_RECURSIVE_NP );
 	pthread_mutex_init( &m_Mutex, &m_Attr );
 }
@@ -1449,7 +1451,7 @@ inline void CThreadMutex::SetTrace(bool fTrace)
 {
 }
 
-#endif // _LINUX
+#endif // defined _LINUX || defined __APPLE__
 
 //-----------------------------------------------------------------------------
 //

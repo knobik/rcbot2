@@ -297,6 +297,9 @@ int CNPC_VehicleDriver::SelectSchedule( void )
 			return SCHED_VEHICLEDRIVER_COMBAT_WAIT;
 		}
 		break;
+
+	default:
+		break;
 	}
 
 	return BaseClass::SelectSchedule();
@@ -690,7 +693,7 @@ bool CNPC_VehicleDriver::WaypointReached( void )
 	m_pNextWaypoint = m_Waypoints[1];
 
 	// Drop the spline marker back
-	m_flDistanceAlongSpline = max( 0, m_flDistanceAlongSpline - 1.0 );
+	m_flDistanceAlongSpline = MAX( 0, m_flDistanceAlongSpline - 1.0 );
 
 	CheckForTeleport();
 

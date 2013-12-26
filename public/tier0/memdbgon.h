@@ -11,6 +11,10 @@
 // to include this potentially multiple times (since we can deactivate debugging
 // by including memdbgoff.h)
 
+#if defined(_LINUX) || defined(__APPLE__)
+#define NO_MALLOC_OVERRIDE
+#endif
+
 #if !defined(STEAM) && !defined(NO_MALLOC_OVERRIDE)
 
 // SPECIAL NOTE #2: This must be the final include in a .cpp or .h file!!!
@@ -29,12 +33,16 @@
 #include <wchar.h>
 #endif
 #include <string.h>
+#if defined __APPLE__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 #include "commonmacros.h"
 #include "memalloc.h"
 
 #if defined(USE_MEM_DEBUG)
-	#if defined(_LINUX)
+	#if defined(_LINUX) || defined(__APPLE__)
 	
 		#define _NORMAL_BLOCK 1
 		

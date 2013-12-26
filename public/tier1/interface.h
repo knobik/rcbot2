@@ -36,14 +36,21 @@
 #pragma once
 #endif
 
-#ifdef _LINUX
+#if defined _LINUX || defined __APPLE__
 #include <dlfcn.h> // dlopen,dlclose, et al
 #include <unistd.h>
 
+#ifndef HMODULE
 #define HMODULE void *
-#define GetProcAddress dlsym
+#endif
 
+#ifndef GetProcAddress
+#define GetProcAddress dlsym
+#endif
+
+#ifndef _snprintf
 #define _snprintf snprintf
+#endif
 #endif
 
 // TODO: move interface.cpp into tier0 library.

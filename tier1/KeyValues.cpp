@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -8,7 +8,7 @@
 
 #if defined( _WIN32 ) && !defined( _X360 )
 #include <windows.h>		// for WideCharToMultiByte and MultiByteToWideChar
-#elif defined(_LINUX)
+#elif defined( _LINUX ) || defined( __APPLE__ )
 #include <wchar.h> // wcslen()
 #define _alloca alloca
 #endif
@@ -27,7 +27,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include <tier0/memdbgon.h>
 
-static char * s_LastFileLoadingFrom = "unknown"; // just needed for error messages
+static const char * s_LastFileLoadingFrom = "unknown"; // just needed for error messages
 
 #define KEYVALUES_TOKEN_SIZE	1024
 static char s_pTokenBuf[KEYVALUES_TOKEN_SIZE];
@@ -58,7 +58,7 @@ public:
 			m_errorStack[m_errorIndex] = symName;
 		}
 		m_errorIndex++;
-		m_maxErrorIndex = max( m_maxErrorIndex, (m_errorIndex-1) );
+		m_maxErrorIndex = MAX( m_maxErrorIndex, (m_errorIndex-1) );
 		return m_errorIndex-1;
 	}
 
@@ -369,7 +369,9 @@ int KeyValues::GetNameSymbol() const
 //-----------------------------------------------------------------------------
 // Purpose: Read a single token from buffer (0 terminated)
 //-----------------------------------------------------------------------------
+#ifdef _MSC_VER
 #pragma warning (disable:4706)
+#endif
 const char *KeyValues::ReadToken( CUtlBuffer &buf, bool &wasQuoted, bool &wasConditional )
 {
 	wasQuoted = false;
@@ -416,7 +418,7 @@ const char *KeyValues::ReadToken( CUtlBuffer &buf, bool &wasQuoted, bool &wasCon
 	bool bReportedError = false;
 	bool bConditionalStart = false;
 	int nCount = 0;
-	while ( c = (const char*)buf.PeekGet( sizeof(char), 0 ) )
+	while ( (c = (const char*)buf.PeekGet( sizeof(char), 0 )) )
 	{
 		// end of file
 		if ( *c == 0 )
@@ -453,8 +455,9 @@ const char *KeyValues::ReadToken( CUtlBuffer &buf, bool &wasQuoted, bool &wasCon
 	s_pTokenBuf[ nCount ] = 0;
 	return s_pTokenBuf;
 }
+#ifdef _MSC_VER
 #pragma warning (default:4706)
-
+#endif
 	
 
 //-----------------------------------------------------------------------------
@@ -472,7 +475,9 @@ void KeyValues::UsesEscapeSequences(bool state)
 bool KeyValues::LoadFromFile( IBaseFileSystem *filesystem, const char *resourceName, const char *pathID )
 {
 	Assert(filesystem);
+#ifndef _LINUX
 	Assert( IsX360() || ( IsPC() && _heapchk() == _HEAPOK ) );
+#endif
 
 	FileHandle_t f = filesystem->Open(resourceName, "rb", pathID);
 	if ( !f )
@@ -1166,8 +1171,8 @@ const char *KeyValues::GetString( const char *keyName, const char *defaultValue 
 
 const wchar_t *KeyValues::GetWString( const char *keyName, const wchar_t *defaultValue)
 {
-	KeyValues *dat = FindKey( keyName, false );
 #ifdef _WIN32
+	KeyValues *dat = FindKey( keyName, false );
 	if ( dat )
 	{
 		wchar_t wbuf[64];
@@ -1235,7 +1240,7 @@ Color KeyValues::GetColor( const char *keyName )
 		}
 		else if ( dat->m_iDataType == TYPE_FLOAT )
 		{
-			color[0] = dat->m_flValue;
+			color[0] = (unsigned char)dat->m_flValue;
 		}
 		else if ( dat->m_iDataType == TYPE_INT )
 		{
@@ -1274,11 +1279,18 @@ void KeyValues::SetColor( const char *keyName, Color value)
 
 void KeyValues::SetStringValue( char const *strValue )
 {
+	if ( m_sValue != NULL )
+	{
 	// delete the old value
 	delete [] m_sValue;
+	}
+
+	if ( m_wsValue != NULL )
+	{
 	// make sure we're not storing the WSTRING  - as we're converting over to STRING
 	delete [] m_wsValue;
 	m_wsValue = NULL;
+	}
 
 	if (!strValue)
 	{
@@ -1303,10 +1315,17 @@ void KeyValues::SetString( const char *keyName, const char *value )
 
 	if ( dat )
 	{
+		if ( dat->m_sValue != NULL )
+		{
 		// delete the old value
 		delete [] dat->m_sValue;
+		}
+
+		if ( dat->m_wsValue != NULL )
+		{
 		// make sure we're not storing the WSTRING  - as we're converting over to STRING
 		delete [] dat->m_wsValue;
+		}
 		dat->m_wsValue = NULL;
 
 		if (!value)
@@ -2335,17 +2354,21 @@ bool KeyValues::ReadAsBinary( CUtlBuffer &buffer )
 //-----------------------------------------------------------------------------
 // Purpose: memory allocator
 //-----------------------------------------------------------------------------
-void *KeyValues::operator new( unsigned int iAllocSize )
+void *KeyValues::operator new( size_t iAllocSize )
 {
 	MEM_ALLOC_CREDIT();
 	return KeyValuesSystem()->AllocKeyValuesMemory(iAllocSize);
 }
 
-void *KeyValues::operator new( unsigned int iAllocSize, int nBlockUse, const char *pFileName, int nLine )
+void *KeyValues::operator new( size_t iAllocSize, int nBlockUse, const char *pFileName, int nLine )
 {
+#ifndef NO_MALLOC_OVERRIDE
 	MemAlloc_PushAllocDbgInfo( pFileName, nLine );
+#endif
 	void *p = KeyValuesSystem()->AllocKeyValuesMemory(iAllocSize);
+#ifndef NO_MALLOC_OVERRIDE
 	MemAlloc_PopAllocDbgInfo();
+#endif
 	return p;
 }
 

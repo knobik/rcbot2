@@ -271,7 +271,7 @@ void CSprite::ComputeWorldSpaceSurroundingBox( Vector *pVecWorldMins, Vector *pV
 		// Find the height and width of the source of the sprite
 		float width = modelinfo->GetModelSpriteWidth( GetModel() );
 		float height = modelinfo->GetModelSpriteHeight( GetModel() );
-		flScale *= max( width, height );
+		flScale *= MAX( width, height );
 	}
 
 	pVecWorldMins->Init( -flScale, -flScale, -flScale );
@@ -605,19 +605,19 @@ void CSprite::InputShowSprite( inputdata_t &inputdata )
 
 void CSprite::InputColorRedValue( inputdata_t &inputdata )
 {
-	int nNewColor = clamp( inputdata.value.Float(), 0, 255 );
+	int nNewColor = clamp( inputdata.value.Int(), 0, 255 );
 	SetColor( nNewColor, m_clrRender->g, m_clrRender->b );
 }
 
 void CSprite::InputColorGreenValue( inputdata_t &inputdata )
 {
-	int nNewColor = clamp( inputdata.value.Float(), 0, 255 );
+	int nNewColor = clamp( inputdata.value.Int(), 0, 255 );
 	SetColor( m_clrRender->r, nNewColor, m_clrRender->b );
 }
 
 void CSprite::InputColorBlueValue( inputdata_t &inputdata )
 {
-	int nNewColor = clamp( inputdata.value.Float(), 0, 255 );
+	int nNewColor = clamp( inputdata.value.Int(), 0, 255 );
 	SetColor( m_clrRender->r, m_clrRender->g, nNewColor );
 }
 
@@ -669,7 +669,7 @@ void CSprite::GetRenderBounds( Vector &vecMins, Vector &vecMaxs )
 		CEngineSprite *psprite = (CEngineSprite *) modelinfo->GetModelExtraData( GetModel() );
 		if ( psprite )
 		{
-			float flSize = max( psprite->GetWidth(), psprite->GetHeight() );
+			float flSize = MAX( psprite->GetWidth(), psprite->GetHeight() );
 			flScale *= flSize;
 		}
 	}
@@ -786,7 +786,7 @@ int CSprite::DrawModel( int flags )
 	if ( m_bWorldSpaceScale )
 	{
 		CEngineSprite *psprite = ( CEngineSprite * )modelinfo->GetModelExtraData( GetModel() );
-		float flMinSize = min( psprite->GetWidth(), psprite->GetHeight() );
+		float flMinSize = MIN( psprite->GetWidth(), psprite->GetHeight() );
 		renderscale /= flMinSize;
 	}
 

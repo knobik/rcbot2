@@ -35,7 +35,7 @@ static const uint32 _sincos_inv_masks[] = { (uint32)~0x0, (uint32)0x0 };
 
 	#define _PS_CONST(Name, Val) \
 		static const __declspec(align(16)) float _ps_##Name[4] = { Val, Val, Val, Val }
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	#define _PS_EXTERN_CONST(Name, Val) \
 		const __attribute__((aligned(16))) float _ps_##Name[4] = { Val, Val, Val, Val }
 
@@ -90,7 +90,7 @@ float _SSE_Sqrt(float x)
 		sqrtss		xmm0, x
 		movss		root, xmm0
 	}
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	__asm__ __volatile__(
 		"movss %1,%%xmm2\n"
 		"sqrtss %%xmm2,%%xmm1\n"
@@ -143,7 +143,7 @@ float _SSE_RSqrtAccurate(float a)
 
 		movss   x,    xmm1;
 	}
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	__asm__ __volatile__(
 		"movss   %1, %%xmm3 \n\t"
         "movss   %2, %%xmm1 \n\t"
@@ -179,7 +179,7 @@ float _SSE_RSqrtFast(float x)
 		rsqrtss	xmm0, x
 		movss	rroot, xmm0
 	}
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	 __asm__ __volatile__(
 		"rsqrtss %1, %%xmm0 \n\t"
 		"movss %%xmm0, %0 \n\t"
@@ -202,12 +202,11 @@ float FASTCALL _SSE_VectorNormalize (Vector& vec)
 	// sice vec only has 3 floats, we can't "movaps" directly into it.
 #ifdef _WIN32
 	__declspec(align(16)) float result[4];
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	__attribute__((aligned(16))) float result[4];
 #endif
 
 	float *v = &vec[0];
-	float *r = &result[0];
 
 	float	radius = 0.f;
 	// Blah, get rid of these comparisons ... in reality, if you have all 3 as zero, it shouldn't 
@@ -215,6 +214,7 @@ float FASTCALL _SSE_VectorNormalize (Vector& vec)
 	if ( v[0] || v[1] || v[2] )
 	{
 #ifdef _WIN32
+	float *r = &result[0];
 	_asm
 		{
 			mov			eax, v
@@ -239,7 +239,7 @@ float FASTCALL _SSE_VectorNormalize (Vector& vec)
 			mulps		xmm4, xmm1			// r4 = vx * 1/radius, vy * 1/radius, vz * 1/radius, X
 			movaps		[edx], xmm4			// v = vx * 1/radius, vy * 1/radius, vz * 1/radius, X
 		}
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 		__asm__ __volatile__(
 #ifdef ALIGNED_VECTOR
             "movaps          %2, %%xmm4 \n\t"
@@ -303,11 +303,11 @@ float _SSE_InvRSquared(const float* v)
 		shufps		xmm2, xmm2, 1		// x2 = vy * vy, X, X, X
 		addss		xmm1, xmm2			// x1 = (vx * vx) + (vy * vy), X, X, X
 		addss		xmm1, xmm3			// x1 = (vx * vx) + (vy * vy) + (vz * vz), X, X, X
-		maxss		xmm1, xmm5			// x1 = max( 1.0, x1 )
-		rcpss		xmm0, xmm1			// x0 = 1 / max( 1.0, x1 )
+		maxss		xmm1, xmm5			// x1 = MAX( 1.0, x1 )
+		rcpss		xmm0, xmm1			// x0 = 1 / MAX( 1.0, x1 )
 		movss		inv_r2, xmm0		// inv_r2 = x0
 	}
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 		__asm__ __volatile__(
 #ifdef ALIGNED_VECTOR
 		"movaps          %1, %%xmm4 \n\t"
@@ -325,7 +325,7 @@ float _SSE_InvRSquared(const float* v)
         "rcpss           %%xmm1, %%xmm0 \n\t"
 		"movss           %%xmm0, %0 \n\t" 
         : "=m" (inv_r2)
-        : "m" (*v), "0" (inv_r2)
+        : "m" (*v), "m" (inv_r2)
  		);
 #else
 	#error "Not Implemented"
@@ -421,8 +421,8 @@ void _SSE_SinCos(float x, float* s, float* c)
 		movss	[eax], xmm0
 		movss	[edx], xmm4
 	}
-#elif _LINUX
-	#warning "_SSE_sincos NOT implemented!"
+#elif defined _LINUX || defined __APPLE__
+//	#warning "_SSE_sincos NOT implemented!"
 #else
 	#error "Not Implemented"
 #endif
@@ -479,8 +479,8 @@ float _SSE_cos( float x )
 		movss   x,    xmm0
 
 	}
-#elif _LINUX
-	#warning "_SSE_cos NOT implemented!"
+#elif defined _LINUX || defined __APPLE__
+//	#warning "_SSE_cos NOT implemented!"
 #else
 	#error "Not Implemented"
 #endif
@@ -569,8 +569,8 @@ void _SSE2_SinCos(float x, float* s, float* c)  // any x
 		movss	[eax], xmm0
 		movss	[edx], xmm6
 	}
-#elif _LINUX
-	#warning "_SSE2_SinCos NOT implemented!"
+#elif defined _LINUX || defined __APPLE__
+//	#warning "_SSE2_SinCos NOT implemented!"
 #else
 	#error "Not Implemented"
 #endif
@@ -624,8 +624,8 @@ float _SSE2_cos(float x)
 		mulss	xmm0, xmm1
 		movss   x,    xmm0
 	}
-#elif _LINUX
-	#warning "_SSE2_cos NOT implemented!"
+#elif defined _LINUX || defined __APPLE__
+//	#warning "_SSE2_cos NOT implemented!"
 #else
 	#error "Not Implemented"
 #endif
@@ -681,8 +681,8 @@ void VectorTransformSSE(const float *in1, const matrix3x4_t& in2, float *out1)
 		addss xmm0, [ecx+12]
 		movss [edx+8], xmm0;
 	}
-#elif _LINUX
-	#warning "VectorTransformSSE C implementation only"
+#elif defined _LINUX || defined __APPLE__
+//	#warning "VectorTransformSSE C implementation only"
 		out1[0] = DotProduct(in1, in2[0]) + in2[0][3];
 		out1[1] = DotProduct(in1, in2[1]) + in2[1][3];
 		out1[2] = DotProduct(in1, in2[2]) + in2[2][3];
@@ -735,8 +735,8 @@ void VectorRotateSSE( const float *in1, const matrix3x4_t& in2, float *out1 )
 		addss xmm0, xmm2;
 		movss [edx+8], xmm0;
 	}
-#elif _LINUX
-	#warning "VectorRotateSSE C implementation only"
+#elif defined _LINUX || defined __APPLE__
+//	#warning "VectorRotateSSE C implementation only"
 		out1[0] = DotProduct( in1, in2[0] );
 		out1[1] = DotProduct( in1, in2[1] );
 		out1[2] = DotProduct( in1, in2[2] );

@@ -259,6 +259,9 @@ int CNPC_CraneDriver::SelectSchedule( void )
 		// We can't attack him, so if we don't have anything on the crane, grab something
 		if ( m_hCrane->GetTotalMassOnCrane() == 0 )
 			return SCHED_CRANE_FIND_LARGE_OBJECT;
+
+	default:
+		break;
 	}
 
 	return BaseClass::SelectSchedule();
@@ -603,7 +606,7 @@ void CNPC_CraneDriver::DriveVehicle( void )
 	// Start slowing if we're going to hit the point soon
 	float flTurnInDeg = RAD2DEG( acos(flDotForward) );
 	float flSpeed = m_hCrane->GetMaxTurnRate() * (flTurnInDeg / 15.0);
-	flSpeed = min( m_hCrane->GetMaxTurnRate(), flSpeed );
+	flSpeed = MIN( m_hCrane->GetMaxTurnRate(), flSpeed );
 	if ( fabs(flSpeed) < 0.05 )
 	{
 		// We're approaching the target, so stop turning

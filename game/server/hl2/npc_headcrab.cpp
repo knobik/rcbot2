@@ -987,7 +987,7 @@ int CBaseHeadcrab::CalcDamageInfo( CTakeDamageInfo *pInfo )
 {
 	pInfo->Set( this, this, sk_headcrab_melee_dmg.GetFloat(), DMG_SLASH );
 	CalculateMeleeDamageForce( pInfo, GetAbsVelocity(), GetAbsOrigin() );
-	return pInfo->GetDamage();
+	return (int)pInfo->GetDamage();
 }
 
 //-----------------------------------------------------------------------------
@@ -1067,7 +1067,7 @@ void CBaseHeadcrab::PrescheduleThink( void )
 	// Are we fading in after being hidden?
 	if ( !m_bHidden && (m_nRenderMode != kRenderNormal) )
 	{
-		int iNewAlpha = min( 255, GetRenderColor().a + 120 );
+		int iNewAlpha = MIN( 255, GetRenderColor().a + 120 );
 		if ( iNewAlpha >= 255 )
 		{
 			m_nRenderMode = kRenderNormal;
@@ -1869,7 +1869,7 @@ int CBaseHeadcrab::SelectSchedule( void )
 			return SCHED_HEADCRAB_UNHIDE;
 		}
 
-		return m_bBurrowed ? SCHED_HEADCRAB_BURROW_WAIT : SCHED_IDLE_STAND;
+		return m_bBurrowed ? (int)SCHED_HEADCRAB_BURROW_WAIT : (int)SCHED_IDLE_STAND;
 	}
 
 	if ( GetSpawnFlags() & SF_HEADCRAB_START_HANGING && IsHangingFromCeiling() == false )
@@ -1943,6 +1943,9 @@ int CBaseHeadcrab::SelectSchedule( void )
 			}
 			break;
 		}
+
+		default:
+			break;
 	}
 
 	if ( HasCondition( COND_FLOATING_OFF_GROUND ) )

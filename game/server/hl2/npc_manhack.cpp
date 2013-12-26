@@ -1096,7 +1096,7 @@ void CNPC_Manhack::MaintainGroundHeight( void )
 
 	if ( tr.fraction != 1.0f )
 	{
-		float speedAdj = max( 16, (-zSpeed*0.5f) );
+		float speedAdj = MAX( 16, (-zSpeed*0.5f) );
 
 		m_vForceVelocity += Vector(0,0,1) * ( speedAdj * ( 1.0f - tr.fraction ) );
 	}
@@ -1285,7 +1285,7 @@ void CNPC_Manhack::MoveToTarget(float flInterval, const Vector &vMoveTarget)
 #else
 		myAccel	 = 400;
 #endif // _XBOX
-		myZAccel = min( 500, zDist / flInterval );
+		myZAccel = MIN( 500, zDist / flInterval );
 	}
 	else
 	{
@@ -1590,7 +1590,7 @@ void CNPC_Manhack::Bump( CBaseEntity *pHitEntity, float flInterval, trace_t &tr 
 		if (moveVec.z < 0)
 		{
 			float floorZ = GetFloorZ(GetAbsOrigin());
-			if (abs(GetAbsOrigin().z - floorZ) < 36)
+			if (fabs(GetAbsOrigin().z - floorZ) < 36.0f)
 			{
 				moveVec.z = 0;
 			}
@@ -1811,12 +1811,12 @@ void CNPC_Manhack::PlayFlySound(void)
 			int iPitch1, iPitch2;
 			float flDistFactor;
 
-			flDistFactor = min( 1.0, 1 - flEnemyDist / MANHACK_PITCH_DIST1 ); 
-			iPitch1 = MANHACK_MIN_PITCH1 + ( ( MANHACK_MAX_PITCH1 - MANHACK_MIN_PITCH1 ) * flDistFactor); 
+			flDistFactor = MIN( 1.0, 1 - flEnemyDist / MANHACK_PITCH_DIST1 ); 
+			iPitch1 = (int)(MANHACK_MIN_PITCH1 + ( ( MANHACK_MAX_PITCH1 - MANHACK_MIN_PITCH1 ) * flDistFactor)); 
 
 			// NOTE: MANHACK_PITCH_DIST2 must be < MANHACK_PITCH_DIST1
-			flDistFactor = min( 1.0, 1 - flEnemyDist / MANHACK_PITCH_DIST2 ); 
-			iPitch2 = MANHACK_MIN_PITCH2 + ( ( MANHACK_MAX_PITCH2 - MANHACK_MIN_PITCH2 ) * flDistFactor); 
+			flDistFactor = MIN( 1.0, 1 - flEnemyDist / MANHACK_PITCH_DIST2 ); 
+			iPitch2 = (int)(MANHACK_MIN_PITCH2 + ( ( MANHACK_MAX_PITCH2 - MANHACK_MIN_PITCH2 ) * flDistFactor)); 
 
 			m_nEnginePitch1 = iPitch1;
 			m_flEnginePitch1Time = gpGlobals->curtime + 0.1f;
@@ -1953,7 +1953,7 @@ void CNPC_Manhack::MoveExecute_Alive(float flInterval)
 	else if( GetWaterLevel() > 0 )
 	{
 		// Allow the manhack to lift off, but not to go deeper.
-		m_vCurrentVelocity.z = max( m_vCurrentVelocity.z, 0 );
+		m_vCurrentVelocity.z = MAX( m_vCurrentVelocity.z, 0 );
 	}
 
 	CheckCollisions(flInterval);

@@ -278,14 +278,14 @@ int CPropData::ParsePropFromKV( CBaseEntity *pProp, KeyValues *pSection, KeyValu
 	}
 
 	// Allow overriding of Block LOS
-	int iBlockLOS = pSection->GetFloat( "blockLOS", -1 );
+	int iBlockLOS = pSection->GetInt( "blockLOS", -1 );
 	if ( iBlockLOS != -1 )
 	{
 		pBreakableInterface->SetPropDataBlocksLOS( iBlockLOS != 0 );
 	}
 
 	// Set whether AI can walk on this prop
-	int iIsWalkable = pSection->GetFloat( "AIWalkable", -1 );
+	int iIsWalkable = pSection->GetInt( "AIWalkable", -1 );
 	if ( iIsWalkable != -1 )
 	{
 		pBreakableInterface->SetPropDataIsAIWalkable( iIsWalkable != 0 );
@@ -382,7 +382,7 @@ int CPropData::ParsePropFromKV( CBaseEntity *pProp, KeyValues *pSection, KeyValu
 	int iSmallest = SmallestAxis(vecSize);
 	vecSize[iSmallest] = 1;
 	float flVolume = vecSize.x * vecSize.y * vecSize.z;
-	int iMaxSize = floor( flVolume / (32.0*32.0) );
+	int iMaxSize = (int)floor( flVolume / (32.0*32.0) );
 	pBreakableInterface->SetMaxBreakableSize( iMaxSize );
 
 	// Now parse our interactions
@@ -480,7 +480,7 @@ const char *CPropData::GetRandomChunkModel( const char *pszBreakableSection, int
 	else
 	{
 		// Don't pick anything over the specified size
-		iRandom = RandomInt( 0, min(iMaxSize, m_BreakableChunks[i].iszChunkModels.Count()-1) );
+		iRandom = RandomInt( 0, MIN(iMaxSize, m_BreakableChunks[i].iszChunkModels.Count()-1) );
 	}
 
 	return STRING(m_BreakableChunks[i].iszChunkModels[iRandom]);
@@ -521,7 +521,7 @@ class CBreakParser : public IVPhysicsKeyHandler
 {
 public:
 	CBreakParser( float defaultBurstScale, int defaultCollisionGroup ) 
-		: m_defaultBurstScale(defaultBurstScale), m_defaultCollisionGroup(defaultCollisionGroup) {}
+		: m_defaultCollisionGroup(defaultCollisionGroup), m_defaultBurstScale(defaultBurstScale) {}
 
 	void ParseModelName( breakmodel_t *pModel, const char *pValue )
 	{
@@ -681,7 +681,7 @@ const char *GetMassEquivalent(float flMass)
 	static struct
 	{
 		float flMass;
-		char *sz;
+		const char *sz;
 	} masstext[] =
 	{
 		{ 5e-6,		"snowflake" },
@@ -709,7 +709,7 @@ const char *GetMassEquivalent(float flMass)
 		{ 7e24,		"really freaking heavy" },
 	};
 
-	for (int i = 0; i < sizeof(masstext) / sizeof(masstext[0]) - 1; i++)
+	for (size_t i = 0; i < sizeof(masstext) / sizeof(masstext[0]) - 1; i++)
 	{
 		if (flMass < masstext[i].flMass)
 		{
@@ -913,7 +913,7 @@ void PropBreakableCreateAll( int modelindex, IPhysicsObject *pPhysics, const bre
 	{
 		if ( iPrecomputedBreakableCount != -1 )
 		{
-			iPrecomputedBreakableCount = min( iMaxBreakCount, iPrecomputedBreakableCount );
+			iPrecomputedBreakableCount = MIN( iMaxBreakCount, iPrecomputedBreakableCount );
 		}
 		else
 		{
@@ -1299,7 +1299,7 @@ CBaseEntity *CreateGibsFromList( CUtlVector<breakmodel_t> &list, int modelindex,
 	{
 		if ( iPrecomputedBreakableCount != -1 )
 		{
-			iPrecomputedBreakableCount = min( iMaxBreakCount, iPrecomputedBreakableCount );
+			iPrecomputedBreakableCount = MIN( iMaxBreakCount, iPrecomputedBreakableCount );
 		}
 		else
 		{

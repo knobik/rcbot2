@@ -6,7 +6,9 @@
 // $NoKeywords: $
 //=============================================================================//
 
+#ifdef _MSC_VER
 #pragma warning (disable:4514)
+#endif
 
 #include "utlsymbol.h"
 #include "KeyValues.h"
@@ -207,7 +209,7 @@ CUtlSymbol CUtlSymbolTable::AddString( const char* pString )
 	if ( iPool == -1 )
 	{
 		// Add a new pool.
-		int newPoolSize = max( len, MIN_STRING_POOL_SIZE );
+		int newPoolSize = MAX( len, MIN_STRING_POOL_SIZE );
 		StringPool_t *pPool = (StringPool_t*)malloc( sizeof( StringPool_t ) + newPoolSize - 1 );
 		pPool->m_TotalLen = newPoolSize;
 		pPool->m_SpaceUsed = 0;
@@ -344,7 +346,7 @@ FileNameHandle_t CUtlFilenameSymbolTable::FindFileName( const char *pFileName )
 	handle.file = m_StringPool.FindStringHandle(filename);
 	m_lock.UnlockRead();
 
-	if ( handle.path == NULL || handle.file == NULL )
+	if ( handle.path == 0 || handle.file == 0 )
 		return NULL;
 
 	return *( FileNameHandle_t * )( &handle );

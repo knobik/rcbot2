@@ -104,7 +104,7 @@ void CPlayerResource::UpdatePlayerData( void )
 			m_bConnected.Set( i, 1 );
 			m_iTeam.Set( i, pPlayer->GetTeamNumber() );
 			m_bAlive.Set( i, pPlayer->IsAlive()?1:0 );
-			m_iHealth.Set(i, max( 0, pPlayer->GetHealth() ) );
+			m_iHealth.Set(i, MAX( 0, pPlayer->GetHealth() ) );
 
 			// Don't update ping / packetloss everytime
 
@@ -115,7 +115,7 @@ void CPlayerResource::UpdatePlayerData( void )
 				UTIL_GetPlayerConnectionInfo( i, ping, packetloss );
 				
 				// calc avg for scoreboard so it's not so jittery
-				ping = 0.8f * m_iPing.Get(i) + 0.2f * ping;
+				ping = (int)(0.8f * m_iPing.Get(i) + 0.2f * ping);
 
 				
 				m_iPing.Set( i, ping );

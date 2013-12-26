@@ -456,7 +456,7 @@ int CNPC_PoisonZombie::OnTakeDamage_Alive( const CTakeDamageInfo &inputInfo )
 	// Calculate what percentage of the creature's max health
 	// this amount of damage represents (clips at 1.0).
 	//
-	float flDamagePercent = min( 1, inputInfo.GetDamage() / m_iMaxHealth );
+	float flDamagePercent = MIN( 1, inputInfo.GetDamage() / m_iMaxHealth );
 
 	//
 	// Throw one crab for every 20% damage we take.
@@ -722,7 +722,7 @@ void CNPC_PoisonZombie::HandleAnimEvent( animevent_t *pEvent )
 		QAngle qaPunch( 45, random->RandomInt(-5, 5), random->RandomInt(-5, 5) );
 		AngleVectors( GetLocalAngles(), &forward );
 		forward = forward * 200;
-		ClawAttack( GetClawAttackRange(), sk_zombie_poison_dmg_spit.GetFloat(), qaPunch, forward, ZOMBIE_BLOOD_BITE );
+		ClawAttack( GetClawAttackRange(), sk_zombie_poison_dmg_spit.GetInt(), qaPunch, forward, ZOMBIE_BLOOD_BITE );
 		return;
 	}
 

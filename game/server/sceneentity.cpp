@@ -146,7 +146,7 @@ private:
 		CRestoreSceneSound()
 		{
 			actor = NULL;
-			soundname[ 0 ] = NULL;
+			soundname[0] = '\0';
 			soundlevel = SNDLVL_NORM;
 			time_in_past = 0.0f;
 		}
@@ -221,7 +221,7 @@ bool CopySceneFileIntoMemory( char const *pFilename, void **pBuffer, int *pSize 
 //-----------------------------------------------------------------------------
 void FreeSceneFileMemory( void *buffer )
 {
-	delete[] buffer;
+	delete[] reinterpret_cast<byte *>(buffer);
 }
 
 //-----------------------------------------------------------------------------
@@ -1756,9 +1756,9 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 			if ( m_fPitch != 1.0f )
 			{
 				if ( es.m_nPitch )
-					es.m_nPitch = static_cast<float>( es.m_nPitch ) * m_fPitch;
+					es.m_nPitch = static_cast<int>(es.m_nPitch * m_fPitch);
 				else
-					es.m_nPitch = 100.0f * m_fPitch;
+					es.m_nPitch = static_cast<int>(100.0f * m_fPitch);
 
 				es.m_nFlags |= SND_CHANGE_PITCH;
 			}
@@ -1812,7 +1812,7 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 					float durationShort = event->GetDuration();
 					float durationLong = endtime - event->GetStartTime();
 
-					float duration = max( durationShort, durationLong );
+					float duration = MAX( durationShort, durationLong );
 
 
 					byte byteflags = CLOSE_CAPTION_WARNIFMISSING; // warnifmissing
@@ -1838,7 +1838,7 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 					// Send caption and duration hint down to client
 					UserMessageBegin( filter, "CloseCaption" );
 						WRITE_STRING( lowercase );
-						WRITE_SHORT( min( 255, (int)( duration * 10.0f ) ) );
+						WRITE_SHORT( MIN( 255, (int)( duration * 10.0f ) ) );
 						WRITE_BYTE( byteflags ); // warn on missing
 					MessageEnd();
 				}
@@ -2735,7 +2735,7 @@ void CSceneEntity::PitchShiftPlayback( float fPitch )
 			CPASAttenuationFilter filter( pTestActor );
 			EmitSound_t params;
 			params.m_pSoundName = szBuff;
-			params.m_nPitch = 100.0f * fPitch;
+			params.m_nPitch = static_cast<int>(100.0f * fPitch);
 			params.m_nFlags = SND_CHANGE_PITCH;
 			pTestActor->EmitSound( filter, pTestActor->entindex(), params );
 		}
@@ -3652,11 +3652,11 @@ public:
 		if (pActor)
 		{
 			m_vecPos1 = pActor->GetAbsOrigin();
-			m_flMaxSegmentDistance = min( flMaxRadius, (m_vecPos1 - m_vecPos2).Length() + 1.0 );
+			m_flMaxSegmentDistance = MIN( flMaxRadius, (m_vecPos1 - m_vecPos2).Length() + 1.0 );
 			if (m_flMaxSegmentDistance <= 1.0)
 			{
 				// must be closest to self
-				m_flMaxSegmentDistance = min( flMaxRadius, MAX_TRACE_LENGTH );
+				m_flMaxSegmentDistance = MIN( flMaxRadius, MAX_TRACE_LENGTH );
 			}
 		}
 	}
@@ -4660,7 +4660,7 @@ void CInstancedSceneEntity::DoThink( float frametime )
 
 	if ( m_flPreDelay > 0 )
 	{
-		m_flPreDelay = max( 0, m_flPreDelay - frametime );
+		m_flPreDelay = MAX( 0, m_flPreDelay - frametime );
 		StartPlayback();
 		if ( !m_bIsPlayingBack )
 			return;
@@ -4838,7 +4838,7 @@ void CSceneManager::Think()
 	// The manager is always thinking at 20 hz
 	SetNextThink( gpGlobals->curtime + SCENE_THINK_INTERVAL );
 	float frameTime = ( gpGlobals->curtime - GetLastThink() );
-	frameTime = min( 0.1, frameTime );
+	frameTime = MIN( 0.1, frameTime );
 
 	// stop if AI is diabled
 	if (CAI_BaseNPC::m_nDebugBits & bits_debugDisableAI)
@@ -5014,7 +5014,7 @@ void CSceneManager::PauseActorsScenes( CBaseFlex *pActor, bool bInstancedOnly  )
 
 		if ( pScene->InvolvesActor( pActor ) && pScene->IsPlayingBack() )
 		{
-			LocalScene_Printf( "Pausing actor %s scripted scene: %s\n", pActor->GetDebugName(), pScene->m_iszSceneFile );
+			LocalScene_Printf( "Pausing actor %s scripted scene: %s\n", pActor->GetDebugName(), STRING(pScene->m_iszSceneFile) );
 
 			variant_t emptyVariant;
 			pScene->AcceptInput( "Pause", pScene, pScene, emptyVariant, 0 );
@@ -5071,7 +5071,7 @@ void CSceneManager::ResumeActorsScenes( CBaseFlex *pActor, bool bInstancedOnly  
 
 		if ( pScene->InvolvesActor( pActor ) && pScene->IsPlayingBack() )
 		{
-			LocalScene_Printf( "Resuming actor %s scripted scene: %s\n", pActor->GetDebugName(), pScene->m_iszSceneFile );
+			LocalScene_Printf( "Resuming actor %s scripted scene: %s\n", pActor->GetDebugName(), STRING(pScene->m_iszSceneFile) );
 
 			variant_t emptyVariant;
 			pScene->AcceptInput( "Resume", pScene, pScene, emptyVariant, 0 );

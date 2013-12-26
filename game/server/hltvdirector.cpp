@@ -232,7 +232,7 @@ void CHLTVDirector::UpdateSettings()
 		}
 	}
 
-   	m_nBroadcastTick = max( 0, newBroadcastTick );
+   	m_nBroadcastTick = MAX( 0, newBroadcastTick );
 }
 
 const char** CHLTVDirector::GetModEvents()
@@ -400,7 +400,7 @@ void CHLTVDirector::StartBestPlayerCameraShot()
 	if ( iBestCamera != -1 )
 	{
 		// view over shoulder, randomly left or right
-		StartChaseCameraShot( iBestCamera, iBestTarget, 112.0f, 20, (RandomFloat()>0.5)?20:-20, false );
+		StartChaseCameraShot( iBestCamera, iBestTarget, 112, 20, (RandomFloat()>0.5)?20:-20, false );
 	}
 	else
 	{
@@ -423,11 +423,11 @@ void CHLTVDirector::StartFixedCameraShot(int iCamera, int iTarget)
 
 	if ( shot )
 	{
-		shot->SetInt("posx", vCamPos.x );
-		shot->SetInt("posy", vCamPos.y );
-		shot->SetInt("posz", vCamPos.z );
-		shot->SetInt("theta", aViewAngle.x );
-		shot->SetInt("phi", aViewAngle.y );
+		shot->SetInt("posx", (int)vCamPos.x );
+		shot->SetInt("posy", (int)vCamPos.y );
+		shot->SetInt("posz", (int)vCamPos.z );
+		shot->SetInt("theta", (int)aViewAngle.x );
+		shot->SetInt("phi", (int)aViewAngle.y );
 		shot->SetInt("target", iTarget );
 		shot->SetFloat("fov", RandomFloat(50,110) );
 	
@@ -517,7 +517,7 @@ void CHLTVDirector::StartBestFixedCameraShot( bool bForce )
 void CHLTVDirector::StartRandomShot() 
 {
 	int toTick = m_nBroadcastTick + TIME_TO_TICKS ( DEF_SHOT_LENGTH );
-	m_nNextShotTick = min( m_nNextShotTick, toTick );
+	m_nNextShotTick = MIN( m_nNextShotTick, toTick );
 
 	if ( RandomFloat(0,1) < 0.25 && tv_allow_static_shots.GetBool() )
 	{
@@ -573,7 +573,7 @@ void CHLTVDirector::CreateShotFromEvent( CGameEvent *event )
 		}
 				
 		// shot 2 seconds after death/hurt
-		m_nNextShotTick = min( m_nNextShotTick, (event->m_Tick+TIME_TO_TICKS(2.0)) );
+		m_nNextShotTick = MIN( m_nNextShotTick, (event->m_Tick+TIME_TO_TICKS(2.0)) );
 	}
 	else if ( bRoundStart || bRoundEnd )
 	{
@@ -832,7 +832,7 @@ void CHLTVDirector::StartInstantBroadcastShot()
 void CHLTVDirector::StartNewShot()
 {
 	// we can remove all events the
-	int smallestTick = max(0, gpGlobals->tickcount - TIME_TO_TICKS(HLTV_MAX_DELAY) );
+	int smallestTick = MAX(0, gpGlobals->tickcount - TIME_TO_TICKS(HLTV_MAX_DELAY) );
     RemoveEventsFromHistory( smallestTick );
 
 	// if the delay time is to short for autodirector, just show next best thing

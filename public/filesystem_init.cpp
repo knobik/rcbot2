@@ -6,16 +6,13 @@
 
 #undef PROTECTED_THINGS_ENABLE
 #undef PROTECT_FILEIO_FUNCTIONS
-#ifndef _LINUX
-#undef fopen
-#endif
 
 #if defined( _WIN32 ) && !defined( _X360 )
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
 #include <process.h>
-#elif defined( _LINUX )
+#elif defined( _LINUX ) || defined( __APPLE__ )
 #include <unistd.h>
 #define _putenv putenv
 #define _chdir chdir
@@ -534,7 +531,7 @@ bool IsLowViolenceBuild( void )
 	return retVal;
 #elif _LINUX
 	return false;
-#elif
+#else
 	#error "Fix me"
 #endif
 }

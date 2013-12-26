@@ -27,7 +27,6 @@
 #endif
 
 #include "wchartypes.h"
-#include "basetypes.h"
 #include "tier0/valve_off.h"
 
 #ifdef _WIN32
@@ -37,19 +36,24 @@
 // feature enables
 #define NEW_SOFTWARE_LIGHTING
 
-#ifdef _LINUX
+#if defined(_LINUX) || defined(__APPLE__)
 // need this for _alloca
 #include <alloca.h>
 #endif // _LINUX
 
+#if defined __APPLE__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
+#ifdef _MSC_VER
 #include <new.h>
-
+#elif defined __GNUC__
+#include <new>
+#endif
 
 // need this for memset
 #include <string.h>
-
-#include "tier0/valve_minmax_on.h"	// GCC 4.2.2 headers screw up our min/max defs.
 
 #ifdef _RETAIL
 #define IsRetail() true
@@ -86,7 +90,7 @@
 		#define IsX360() true
 		#define IsPS3() false
 	#endif
-#elif defined(_LINUX)
+#elif defined(_LINUX) || defined(__APPLE__)
 	#define IsPC() true
 	#define IsConsole() false
 	#define IsX360() false
@@ -235,7 +239,7 @@ FIXME: Enable this when we no longer fear change =)
 #define __i386__	1
 #endif
 
-#elif _LINUX
+#elif defined(_LINUX) || defined(__APPLE__)
 typedef unsigned int DWORD;
 typedef unsigned short WORD;
 typedef void * HINSTANCE;
@@ -279,9 +283,9 @@ typedef void * HINSTANCE;
 #ifdef _WIN32
         #define DECL_ALIGN(x) __declspec(align(x))
 
-#elif _LINUX
+#elif defined(_LINUX) || defined(__APPLE__)
 	#define DECL_ALIGN(x) __attribute__((aligned(x)))
-#elif
+#else
         #define DECL_ALIGN(x) /* */
 #endif
 
@@ -293,7 +297,7 @@ typedef void * HINSTANCE;
 
 // Linux had a few areas where it didn't construct objects in the same order that Windows does.
 // So when CVProfile::CVProfile() would access g_pMemAlloc, it would crash because the allocator wasn't initalized yet.
-#ifdef _LINUX
+#if defined(_LINUX) || defined(__APPLE__)
 	#define CONSTRUCT_EARLY __attribute__((init_priority(101)))
 #else
 	#define CONSTRUCT_EARLY
@@ -301,7 +305,7 @@ typedef void * HINSTANCE;
 
 #ifdef _WIN32
 	#define SELECTANY __declspec(selectany)
-#elif _LINUX
+#elif defined(_LINUX) || defined(__APPLE__)
 	#define SELECTANY __attribute__((weak))
 #else
 	#define SELECTANY static
@@ -321,7 +325,7 @@ typedef void * HINSTANCE;
 #define  DLL_GLOBAL_EXPORT   extern __declspec( dllexport )
 #define  DLL_GLOBAL_IMPORT   extern __declspec( dllimport )
 
-#elif defined _LINUX
+#elif defined(_LINUX) || defined(__APPLE__)
 // Used for dll exporting and importing
 #define  DLL_EXPORT   extern "C" __attribute__ ((visibility("default")))
 #define  DLL_IMPORT   extern "C"
@@ -395,11 +399,11 @@ typedef void * HINSTANCE;
 #ifdef _WIN32
 // Alloca defined for this platform
 #define  stackalloc( _size ) _alloca( ALIGN_VALUE( _size, 16 ) )
-#define  stackfree( _p )   0
-#elif _LINUX
+#define  stackfree( _p )
+#elif defined(_LINUX) || defined(__APPLE__)
 // Alloca defined for this platform
 #define  stackalloc( _size ) _alloca( ALIGN_VALUE( _size, 16 ) )
-#define  stackfree( _p )   0
+#define  stackfree( _p )
 #endif
 
 #ifdef _WIN32
@@ -444,7 +448,7 @@ typedef void * HINSTANCE;
 #endif
 
 // When we port to 64 bit, we'll have to resolve the int, ptr vs size_t 32/64 bit problems...
-#if !defined( _WIN64 )
+#if !defined( _WIN64 ) && defined _MSC_VER
 #pragma warning( disable : 4267 )	// conversion from 'size_t' to 'int', possible loss of data
 #pragma warning( disable : 4311 )	// pointer truncation from 'char *' to 'int'
 #pragma warning( disable : 4312 )	// conversion from 'unsigned int' to 'memhandle_t' of greater size
@@ -665,11 +669,11 @@ inline T DWordSwapAsm( T dw )
 // The typically used methods.
 //-------------------------------------
 
-#if defined(__i386__)
+#if defined(__i386__) && !defined LITTLE_ENDIAN
 #define LITTLE_ENDIAN 1
 #endif
 
-#if defined( _SGI_SOURCE ) || defined( _X360 )
+#if (defined( _SGI_SOURCE ) || defined( _X360 )) && !defined BIG_ENDIAN
 #define	BIG_ENDIAN 1
 #endif
 
@@ -820,7 +824,17 @@ struct CPUInformation
 	tchar* m_szProcessorID;				// Processor vendor Identification.
 };
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#endif
+
 PLATFORM_INTERFACE const CPUInformation& GetCPUInformation();
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 PLATFORM_INTERFACE void GetCurrentDate( int *pDay, int *pMonth, int *pYear );
 

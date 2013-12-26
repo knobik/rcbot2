@@ -402,7 +402,7 @@ void CNPC_Barnacle::PlayerHasIlluminatedNPC( CBasePlayer *pPlayer, float flDot )
 	// Create a sound to scare friendly allies away from the base on the barnacle
 	if( IsAlive() )
 	{
- 		CSoundEnt::InsertSound( SOUND_MOVE_AWAY | SOUND_CONTEXT_ALLIES_ONLY, m_vecTip, 60.0f, FLASHLIGHT_NPC_CHECK_INTERVAL );
+ 		CSoundEnt::InsertSound( SOUND_MOVE_AWAY | SOUND_CONTEXT_ALLIES_ONLY, m_vecTip, 60, FLASHLIGHT_NPC_CHECK_INTERVAL );
 	}
 }
 
@@ -893,7 +893,7 @@ void CNPC_Barnacle::PullEnemyTorwardsMouth( bool bAdjustEnemyOrigin )
 			{
 				// get us there in a second
 				Vector desiredVelocity;
-				float distToMove = min(distFromCenter, 24.0f * dt);
+				float distToMove = MIN(distFromCenter, 24.0f * dt);
 				desiredVelocity.x = vToCenter.x * distToMove;
 				desiredVelocity.y = vToCenter.y * distToMove;
 				desiredVelocity.z = 0;
@@ -1518,7 +1518,7 @@ You can use this stanza to try to counterplace the constraint on the player's he
 	// barnacle might let go if ragdoll is separated - so increase the separation checking a bit
 	constraint_groupparams_t params;
 	pRagdoll->pGroup->GetErrorParams( &params );
-	params.minErrorTicks = min( params.minErrorTicks, 5 );
+	params.minErrorTicks = MIN( params.minErrorTicks, 5 );
 	pRagdoll->pGroup->SetErrorParams( params );
 
 	for ( int i = 0; i < pRagdoll->listCount; i++ )
@@ -1989,7 +1989,7 @@ void CNPC_Barnacle::SpawnDeathGibs( void )
 	bool bDroppedAny = false;
 
 	// Drop a random number of gibs
-	for ( int i=0; i < ARRAYSIZE(m_szGibNames); i++ )
+	for ( size_t i=0; i < ARRAYSIZE(m_szGibNames); i++ )
 	{
 		if ( random->RandomInt( 0, 1 ) )
 		{
@@ -2141,11 +2141,11 @@ void CNPC_Barnacle::WaitTillDead ( void )
 		float dt = gpGlobals->curtime - GetLastThink();
 		if ( m_flAltitude >= goalAltitude )
 		{
-			flNewAltitude = max( goalAltitude, m_flAltitude - m_flBarnaclePullSpeed * dt );
+			flNewAltitude = MAX( goalAltitude, m_flAltitude - m_flBarnaclePullSpeed * dt );
 		}
 		else
 		{
-			flNewAltitude = min( goalAltitude, m_flAltitude + m_flBarnaclePullSpeed * dt );
+			flNewAltitude = MIN( goalAltitude, m_flAltitude + m_flBarnaclePullSpeed * dt );
 		}
 		SetAltitude( flNewAltitude );
 	}
@@ -2296,7 +2296,7 @@ void CNPC_Barnacle::Precache()
 	PrecacheModel("models/barnacle.mdl");
 
 	// Precache all gibs
-	for ( int i=0; i < ARRAYSIZE(m_szGibNames); i++ )
+	for ( size_t i=0; i < ARRAYSIZE(m_szGibNames); i++ )
 	{
 		PrecacheModel( m_szGibNames[i] );
 	}
@@ -2442,7 +2442,7 @@ CBaseEntity *CNPC_Barnacle::TongueTouchEnt ( float *pflLength )
 	
 	length = fabs( GetAbsOrigin().z - tr.endpos.z );
 	// Pull it up a tad
-	length = max(8, length - m_flRestUnitsAboveGround);
+	length = MAX(8, length - m_flRestUnitsAboveGround);
 	if ( pflLength )
 	{
 		*pflLength = length;
@@ -2510,7 +2510,7 @@ CBaseEntity *CNPC_Barnacle::TongueTouchEnt ( float *pflLength )
 #ifdef HL2_EPISODIC
 				length = fabs( GetAbsOrigin().z - pTest->WorldSpaceCenter().z );
 				// Pull it up a tad
-				length = max(8, length - m_flRestUnitsAboveGround);
+				length = MAX(8, length - m_flRestUnitsAboveGround);
 				if ( pflLength )
 				{
 					*pflLength = length;
@@ -2538,7 +2538,7 @@ CBaseEntity *CNPC_Barnacle::TongueTouchEnt ( float *pflLength )
 #ifdef HL2_EPISODIC
 			length = fabs( GetAbsOrigin().z - pTest->WorldSpaceCenter().z );
 			// Pull it up a tad
-			length = max(8, length - m_flRestUnitsAboveGround);
+			length = MAX(8, length - m_flRestUnitsAboveGround);
 			if ( pflLength )
 			{
 				*pflLength = length;

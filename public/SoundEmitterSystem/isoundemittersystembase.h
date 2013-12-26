@@ -17,7 +17,6 @@
 #include "mathlib/compressed_vector.h"
 #include "appframework/IAppSystem.h"
 
-
 #define SOUNDEMITTERSYSTEM_INTERFACE_VERSION	"VSoundEmitter002"
 
 #define SOUNDGENDER_MACRO "$gender"
@@ -26,6 +25,7 @@
 typedef short HSOUNDSCRIPTHANDLE;
 #define SOUNDEMITTER_INVALID_HANDLE	(HSOUNDSCRIPTHANDLE)-1
 
+class IFileList;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -68,7 +68,7 @@ const char *VolumeToString( float volume );
 const char *PitchToString( float pitch );
 soundlevel_t TextToSoundLevel( const char *key );
 int TextToChannel( const char *name );
-
+float RandomInterval( const interval_t &interval );
 
 enum gender_t
 {
@@ -104,7 +104,7 @@ struct sound_interval_t
 	T range;
 
 	interval_t &ToInterval( interval_t &dest ) const	{ dest.start = start; dest.range = range; return dest; }
-	void FromInterval( const interval_t &from )			{ start = from.start; range = from.range; }
+	void FromInterval( const interval_t &from )			{ start = (T)from.start; range = (T)from.range; }
 	float Random() const								{ interval_t temp = { start, range }; return RandomInterval( temp ); }
 };
 
@@ -123,7 +123,7 @@ struct CSoundParametersInternal
 
 	void CopyFrom( const CSoundParametersInternal& src );
 
-	bool CSoundParametersInternal::operator == ( const CSoundParametersInternal& other ) const;
+	bool operator == ( const CSoundParametersInternal& other ) const;
 
 	const char *VolumeToString( void ) const;
 	const char *ChannelToString( void ) const;
@@ -147,8 +147,8 @@ struct CSoundParametersInternal
 
 	void		SetChannel( int newChannel )				{ channel = newChannel; }
 	void		SetVolume( float start, float range = 0.0 )	{ volume.start = start; volume.range = range; }
-	void		SetPitch( float start, float range = 0.0 )	{ pitch.start = start; pitch.range = range; }
-	void		SetSoundLevel( float start, float range = 0.0 )	{ soundlevel.start = start; soundlevel.range = range; }
+	void		SetPitch( float start, float range = 0.0 )	{ pitch.start = (uint8)start; pitch.range = (uint8)range; }
+	void		SetSoundLevel( float start, float range = 0.0 )	{ soundlevel.start = (uint16)start; soundlevel.range = (uint16)range; }
 	void		SetDelayMsec( int delay )					{ delay_msec = delay; }
 	void		SetShouldPreload( bool bShouldPreload )		{ m_bShouldPreload = bShouldPreload;	}
 	void		SetOnlyPlayToOwner( bool b )				{ play_to_owner_only = b; }
@@ -254,13 +254,15 @@ public:
 
 	// Called from both client and server (single player) or just one (server only in dedicated server and client only if connected to a remote server)
 	// Called by LevelInitPreEntity to override sound scripts for the mod with level specific overrides based on custom mapnames, etc.
-	virtual void			AddSoundOverrides( char const *scriptfile ) = 0;
+	virtual void			AddSoundOverrides( char const *scriptfile, bool bUnknown ) = 0;
 
 	// Called by either client or server in LevelShutdown to clear out custom overrides
 	virtual void			ClearSoundOverrides() = 0;
 
 	virtual bool			GetParametersForSoundEx( const char *soundname, HSOUNDSCRIPTHANDLE& handle, CSoundParameters& params, gender_t gender, bool isbeingemitted = false ) = 0;
 	virtual soundlevel_t	LookupSoundLevelByHandle( char const *soundname, HSOUNDSCRIPTHANDLE& handle ) = 0;
+
+	virtual void			ReloadSoundEntriesInList( IFileList *pFileList ) = 0;
 };
 
 #endif // ISOUNDEMITTERSYSTEMBASE_H

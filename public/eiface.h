@@ -72,6 +72,8 @@ typedef struct player_info_s player_info_t;
 
 #define INTERFACEVERSION_VENGINESERVER	"VEngineServer021"
 
+struct bbox_t;
+
 //-----------------------------------------------------------------------------
 // Purpose: Interface the engine exposes to the game DLL
 //-----------------------------------------------------------------------------
@@ -380,10 +382,37 @@ public:
 
 	// Returns the SteamID of the specified player. It'll be NULL if the player hasn't authenticated yet.
 	virtual const CSteamID	*GetClientSteamID( edict_t *pPlayerEdict ) = 0;
+	
+	// Returns the SteamID of the game server
+	virtual const CSteamID	*GetGameServerSteamID() = 0;
+
+	// Send a client command keyvalues
+	// keyvalues are deleted inside the function
+	virtual void ClientCommandKeyValues( edict_t *pEdict, KeyValues *pCommand ) = 0;
+	
+	virtual const CSteamID *GetClientSteamIDByPlayerIndex( int index ) = 0;
+	virtual int GetClusterCount() = 0;
+	virtual int GetAllClusterBounds( bbox_t *pBoxes, int maxboxes ) = 0;
+	virtual edict_t *CreateFakeClientEx( const char *netname, bool bUnknown ) = 0;
+	virtual int GetServerVersion() const = 0;
+	virtual void *GetReplay() = 0;
+};
+
+abstract_class IServerGCLobby
+{
+public:
+	virtual bool HasLobby() const = 0;
+	virtual bool SteamIDAllowedToConnect( const CSteamID &steamId ) const = 0;
+	virtual void UpdateServerDetails( void ) = 0;
+	virtual bool ShouldHibernate() = 0;
 };
 
 #define INTERFACEVERSION_SERVERGAMEDLL_VERSION_4	"ServerGameDLL004"
-#define INTERFACEVERSION_SERVERGAMEDLL				"ServerGameDLL005"
+#define INTERFACEVERSION_SERVERGAMEDLL_VERSION_5	"ServerGameDLL005"
+#define INTERFACEVERSION_SERVERGAMEDLL_VERSION_6	"ServerGameDLL006"
+#define INTERFACEVERSION_SERVERGAMEDLL_VERSION_7	"ServerGameDLL007"
+#define INTERFACEVERSION_SERVERGAMEDLL_VERSION_8	"ServerGameDLL008"
+#define INTERFACEVERSION_SERVERGAMEDLL				"ServerGameDLL009"
 
 //-----------------------------------------------------------------------------
 // Purpose: These are the interfaces that the game .dll exposes to the engine
@@ -397,7 +426,9 @@ public:
 										CreateInterfaceFn physicsFactory, 
 										CreateInterfaceFn fileSystemFactory, 
 										CGlobalVars *pGlobals) = 0;
-
+	
+	virtual bool			ReplayInit( CreateInterfaceFn replayFactory ) = 0;
+	
 	// This is called when a new game is started. (restart, map)
 	virtual bool			GameInit( void ) = 0;
 
@@ -487,6 +518,18 @@ public:
 	// iCookie is the value returned by IServerPluginHelpers::StartQueryCvarValue.
 	// Added with version 2 of the interface.
 	virtual void			OnQueryCvarValueFinished( QueryCvarCookie_t iCookie, edict_t *pPlayerEntity, EQueryCvarValueStatus eStatus, const char *pCvarName, const char *pCvarValue ) = 0;
+	
+	// Called after the steam API has been activated post-level startup
+	virtual void			GameServerSteamAPIActivated( void ) = 0;
+	
+	virtual void			GameServerSteamAPIShutdown( void ) = 0;
+
+	virtual void			SetServerHibernation( bool bHibernating ) = 0;
+
+	virtual IServerGCLobby	*GetServerGCLobby() = 0;
+
+	virtual const char		*GetServerBrowserMapOverride() = 0;
+	virtual const char		*GetServerBrowserGameData() = 0;
 };
 
 //-----------------------------------------------------------------------------
@@ -526,7 +569,7 @@ public:
 	virtual void			CheckTransmit( CCheckTransmitInfo *pInfo, const unsigned short *pEdictIndices, int nEdicts ) = 0;
 };
 
-#define INTERFACEVERSION_SERVERGAMECLIENTS		"ServerGameClients003"
+#define INTERFACEVERSION_SERVERGAMECLIENTS		"ServerGameClients004"
 
 //-----------------------------------------------------------------------------
 // Purpose: Player / Client related functions
@@ -585,6 +628,11 @@ public:
 
 	// A user has had their network id setup and validated 
 	virtual void			NetworkIDValidated( const char *pszUserName, const char *pszNetworkID ) = 0;
+	
+	// The client has submitted a keyvalues command
+	virtual void			ClientCommandKeyValues( edict_t *pEntity, KeyValues *pKeyValues ) = 0;
+	
+	virtual void			ClientSpawned( edict_t *pEntity ) = 0;
 };
 
 #define INTERFACEVERSION_UPLOADGAMESTATS		"ServerUploadGameStats001"

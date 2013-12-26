@@ -401,7 +401,7 @@ bool RagdollCreate( ragdoll_t &ragdoll, const ragdollparams_t &params, IPhysicsE
 	{
 		totalMass += ragdoll.list[i].pObject->GetMass();
 	}
-	totalMass = max(totalMass,1);
+	totalMass = MAX(totalMass,1);
 
 	// apply force to the model
 	Vector nudgeForce = params.forceVector;
@@ -609,7 +609,7 @@ void RagdollSolveSeparation( ragdoll_t &ragdoll, CBaseEntity *pEntity )
 {
 	byte needsFix[256];
 	int fixCount = 0;
-	Assert(ragdoll.listCount<=ARRAYSIZE(needsFix));
+	Assert(ragdoll.listCount <= (int)ARRAYSIZE(needsFix));
 	for ( int i = 0; i < ragdoll.listCount; i++ )
 	{
 		needsFix[i] = 0;

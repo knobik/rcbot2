@@ -717,7 +717,7 @@ bool CFourWheelVehiclePhysics::Think()
 	m_nLastSpeed = m_nSpeed;
 	m_nSpeed = ( int )carSpeed;
 	m_nRPM = ( int )carState.engineRPM;
-	m_nHasBoost = vehicleData.engine.boostDelay;	// if we have any boost delay, vehicle has boost ability
+	m_nHasBoost = (int)vehicleData.engine.boostDelay;	// if we have any boost delay, vehicle has boost ability
 
 	m_pVehicle->Update( gpGlobals->frametime, m_controls);
 
@@ -1193,7 +1193,7 @@ void CFourWheelVehiclePhysics::UpdateDriverControls( CUserCmd *cmd, float flFram
 			m_controls.throttle = 0;
 		}
 
-		float flMaxThrottle = max( 0.1, m_maxThrottle );
+		float flMaxThrottle = MAX( 0.1, m_maxThrottle );
 		if ( m_controls.steering != 0 )
 		{
 			float flThrottleReduce = 0;
@@ -1213,7 +1213,7 @@ void CFourWheelVehiclePhysics::UpdateDriverControls( CUserCmd *cmd, float flFram
 			float limit = 1.0f - (flThrottleReduce * fabs(m_controls.steering));
 			if ( limit < 0 )
 				limit = 0;
-			flMaxThrottle = min( flMaxThrottle, limit );
+			flMaxThrottle = MIN( flMaxThrottle, limit );
 		}
 
 		m_controls.throttle = Approach( flMaxThrottle * flAnalogThrottle, m_controls.throttle, flFrameTime * m_throttleRate );
@@ -1243,7 +1243,7 @@ void CFourWheelVehiclePhysics::UpdateDriverControls( CUserCmd *cmd, float flFram
 			m_controls.throttle = 0;
 		}
 
-		float flMaxThrottle = min( -0.1, m_flMaxRevThrottle  );
+		float flMaxThrottle = MIN( -0.1, m_flMaxRevThrottle  );
 		m_controls.throttle = Approach( flMaxThrottle * flAnalogBrake, m_controls.throttle, flFrameTime * m_throttleRate );
 
 		// Apply the brake.
@@ -1268,7 +1268,7 @@ void CFourWheelVehiclePhysics::UpdateDriverControls( CUserCmd *cmd, float flFram
 			m_controls.throttle = 0;
 		}
 
-		float flMaxThrottle = max( 0.1, m_maxThrottle );
+		float flMaxThrottle = MAX( 0.1, m_maxThrottle );
 
 		if ( m_controls.steering != 0 )
 		{
@@ -1289,7 +1289,7 @@ void CFourWheelVehiclePhysics::UpdateDriverControls( CUserCmd *cmd, float flFram
 			float limit = 1.0f - (flThrottleReduce * fabs(m_controls.steering));
 			if ( limit < 0 )
 				limit = 0;
-			flMaxThrottle = min( flMaxThrottle, limit );
+			flMaxThrottle = MIN( flMaxThrottle, limit );
 		}
 
 		m_controls.throttle = Approach( flMaxThrottle, m_controls.throttle, flFrameTime * m_throttleRate );
@@ -1315,7 +1315,7 @@ void CFourWheelVehiclePhysics::UpdateDriverControls( CUserCmd *cmd, float flFram
 			m_controls.throttle = 0;
 		}
 
-		float flMaxThrottle = min( -0.1, m_flMaxRevThrottle );
+		float flMaxThrottle = MIN( -0.1, m_flMaxRevThrottle );
 		m_controls.throttle = Approach( flMaxThrottle, m_controls.throttle, flFrameTime * m_throttleRate );
 
 		// Apply the brake.

@@ -16,8 +16,10 @@
 #include "tier0/vprof.h"
 //#define _VPROF_MATHLIB
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)   // "conversion from 'const int' to 'float', possible loss of data"
 #pragma warning(disable:4730)	// "mixing _m64 and floating point expressions may result in incorrect code"
+#endif
 
 #include "mathlib/mathlib.h"
 #include "mathlib/vector.h"
@@ -1665,7 +1667,7 @@ void QuaternionScale( const Quaternion &p, float t, Quaternion &q )
 	// FIXME: nick, this isn't overly sensitive to accuracy, and it may be faster to 
 	// use the cos part (w) of the quaternion (sin(omega)*N,cos(omega)) to figure the new scale.
 	float sinom = sqrt( DotProduct( &p.x, &p.x ) );
-	sinom = min( sinom, 1.f );
+	sinom = MIN( sinom, 1.f );
 
 	float sinsom = sin( asin( sinom ) * t );
 
@@ -2404,7 +2406,9 @@ void Hermite_SplineBasis( float t, float basis[4] )
 //-----------------------------------------------------------------------------
 
 // BUG: the VectorSubtract()'s calls go away if the global optimizer is enabled
+#ifdef _MSC_VER
 #pragma optimize( "g", off )
+#endif
 
 void Hermite_Spline( const Vector &p0, const Vector &p1, const Vector &p2, float t, Vector& output )
 {
@@ -2414,7 +2418,9 @@ void Hermite_Spline( const Vector &p0, const Vector &p1, const Vector &p2, float
 	Hermite_Spline( p1, p2, e10, e21, t, output );
 }
 
+#ifdef _MSC_VER
 #pragma optimize( "", on )
+#endif
 
 float Hermite_Spline( float p0, float p1, float p2,	float t )
 {
@@ -3180,13 +3186,17 @@ bool CalcLineToLineIntersectionSegment(
    return true;
 }
 
+#ifdef _MSC_VER
 #pragma optimize( "", off )
+#endif
 
 #ifndef EXCEPTION_EXECUTE_HANDLER
 #define EXCEPTION_EXECUTE_HANDLER       1
 #endif
 
+#ifdef _MSC_VER
 #pragma optimize( "", on )
+#endif
 
 static bool s_b3DNowEnabled = false;
 static bool s_bMMXEnabled = false;
@@ -3928,10 +3938,10 @@ void CalcTriangleTangentSpace( const Vector &p0, const Vector &p1, const Vector 
 //-----------------------------------------------------------------------------
 void RGBtoHSV( const Vector &rgb, Vector &hsv )
 {
-	float flMax = max( rgb.x, rgb.y );
-	flMax = max( flMax, rgb.z );
-	float flMin = min( rgb.x, rgb.y );
-	flMin = min( flMin, rgb.z );
+	float flMax = MAX( rgb.x, rgb.y );
+	flMax = MAX( flMax, rgb.z );
+	float flMin = MIN( rgb.x, rgb.y );
+	flMin = MIN( flMin, rgb.z );
 
 	// hsv.z is the value
 	hsv.z = flMax;
@@ -3992,8 +4002,8 @@ void HSVtoRGB( const Vector &hsv, Vector &rgb )
 		hue = 0.0F;
 	}
 	hue /= 60.0F;
-	int     i = hue;        // integer part
-	float32 f = hue - i;    // fractional part
+	int     i = static_cast<int>(hue);   // integer part
+	float32 f = hue - i;                 // fractional part
 	float32 p = hsv.z * (1.0F - hsv.y);
 	float32 q = hsv.z * (1.0F - hsv.y * f);
 	float32 t = hsv.z * (1.0F - hsv.y * (1.0F - f));

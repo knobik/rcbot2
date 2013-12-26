@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#ifdef _LINUX
+#if defined _LINUX || defined __APPLE__
 #define __cdecl
 #endif
 
@@ -178,6 +178,12 @@ enum SpewRetval_t
 /* type of externally defined function used to display debug spew */
 typedef SpewRetval_t (*SpewOutputFunc_t)( SpewType_t spewType, const tchar *pMsg );
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
+#endif
+
 /* Used to redirect spew output */
 DBG_INTERFACE void   SpewOutputFunc( SpewOutputFunc_t func );
 
@@ -205,6 +211,10 @@ DBG_INTERFACE bool SetupWin32ConsoleIO();
 
 // Returns true if they want to break in the debugger.
 DBG_INTERFACE bool DoNewAssertDialog( const tchar *pFile, int line, const tchar *pExpression );
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 /* Used to define macros, never use these directly. */
 
@@ -478,11 +488,22 @@ public:
 // Macro to assist in asserting constant invariants during compilation
 
 #ifdef _DEBUG
-#define COMPILE_TIME_ASSERT( pred )	switch(0){case 0:case pred:;}
-#define ASSERT_INVARIANT( pred )	static void UNIQUE_ID() { COMPILE_TIME_ASSERT( pred ) }
+	#define COMPILE_TIME_ASSERT( pred )	switch(0){case 0:case pred:;}
+	#ifdef _MSC_VER
+		#define ASSERT_INVARIANT( pred )	static void UNIQUE_ID() { COMPILE_TIME_ASSERT( pred ) }
+	#elif defined __GNUC__
+		#define ASSERT_INVARIANT( pred )	__attribute__((unused)) static void UNIQUE_ID() { COMPILE_TIME_ASSERT( pred ) }
+	#endif
 #else
-#define COMPILE_TIME_ASSERT( pred )
-#define ASSERT_INVARIANT( pred )
+	#define COMPILE_TIME_ASSERT( pred )
+	#define ASSERT_INVARIANT( pred )
+#endif
+
+// Member function pointer size
+#ifdef _MSC_VER
+	#define MFP_SIZE 4
+#elif __GNUC__
+	#define MFP_SIZE 8
 #endif
 
 #ifdef _DEBUG

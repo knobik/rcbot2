@@ -895,11 +895,11 @@ bool CAI_BaseNPC::FindCoverPos( CSound *pSound, Vector *pResult )
 {
 	if ( !GetTacticalServices()->FindCoverPos( pSound->GetSoundReactOrigin(), 
 												pSound->GetSoundReactOrigin(), 
-												min( pSound->Volume(), 120.0 ), 
+												MIN( pSound->Volume(), 120.0 ), 
 												CoverRadius(), 
 												pResult ) )
 	{
-		return GetTacticalServices()->FindLateralCover( pSound->GetSoundReactOrigin(), min( pSound->Volume(), 60.0 ), pResult );
+		return GetTacticalServices()->FindLateralCover( pSound->GetSoundReactOrigin(), MIN( pSound->Volume(), 60.0 ), pResult );
 	}
 
 	return true;
@@ -1088,7 +1088,7 @@ float CAI_BaseNPC::GetReasonableFacingDist( void )
 		if ( GetEnemy() )
 		{
 			float distEnemy = ( GetEnemy()->GetAbsOrigin().AsVector2D() - GetAbsOrigin().AsVector2D() ).Length() - 1.0; 
-			return min( distEnemy, dist );
+			return MIN( distEnemy, dist );
 		}
 
 		return dist;
@@ -1254,7 +1254,7 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		{
 			if (!GetHintNode())
 			{
-				SetHintNode( CAI_HintManager::FindHint( this, HINT_NONE, pTask->flTaskData, 2000 ) );
+				SetHintNode( CAI_HintManager::FindHint( this, HINT_NONE, (int)pTask->flTaskData, 2000 ) );
 			}
 			if (GetHintNode())
 			{
@@ -1452,7 +1452,7 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		break;
 
 	case TASK_SET_SCHEDULE:
-		if ( !SetSchedule( pTask->flTaskData ) )
+		if ( !SetSchedule( (int)pTask->flTaskData ) )
 			TaskFail(FAIL_SCHEDULE_NOT_FOUND);
 		break;
 
@@ -1862,7 +1862,7 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 				}
 				else if ( GetActiveWeapon() )
 				{
-					flRange = max( GetActiveWeapon()->m_fMaxRange1, GetActiveWeapon()->m_fMaxRange2 );
+					flRange = MAX( GetActiveWeapon()->m_fMaxRange1, GetActiveWeapon()->m_fMaxRange2 );
 				}
 				else
 				{
@@ -1905,8 +1905,8 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 			
 			if ( GetActiveWeapon() )
 			{
-				flMaxRange = max( GetActiveWeapon()->m_fMaxRange1, GetActiveWeapon()->m_fMaxRange2 );
-				flMinRange = min( GetActiveWeapon()->m_fMinRange1, GetActiveWeapon()->m_fMinRange2 );
+				flMaxRange = MAX( GetActiveWeapon()->m_fMaxRange1, GetActiveWeapon()->m_fMaxRange2 );
+				flMinRange = MIN( GetActiveWeapon()->m_fMinRange1, GetActiveWeapon()->m_fMinRange2 );
 			}
 			else if ( CapabilitiesGet() & bits_CAP_INNATE_RANGE_ATTACK1 )
 			{
@@ -2073,8 +2073,8 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 
 					if ( GetActiveWeapon() )
 					{
-						flMaxRange = max( GetActiveWeapon()->m_fMaxRange1, GetActiveWeapon()->m_fMaxRange2 );
-						flMinRange = min( GetActiveWeapon()->m_fMinRange1, GetActiveWeapon()->m_fMinRange2 );
+						flMaxRange = MAX( GetActiveWeapon()->m_fMaxRange1, GetActiveWeapon()->m_fMaxRange2 );
+						flMinRange = MIN( GetActiveWeapon()->m_fMinRange1, GetActiveWeapon()->m_fMinRange2 );
 					}
 					else if ( CapabilitiesGet() & bits_CAP_INNATE_RANGE_ATTACK1 )
 					{
@@ -2229,8 +2229,8 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		float flMinRange = 0;
 		if ( GetActiveWeapon() )
 		{
-			flMaxRange = max(GetActiveWeapon()->m_fMaxRange1,GetActiveWeapon()->m_fMaxRange2);
-			flMinRange = min(GetActiveWeapon()->m_fMinRange1,GetActiveWeapon()->m_fMinRange2);
+			flMaxRange = MAX(GetActiveWeapon()->m_fMaxRange1,GetActiveWeapon()->m_fMaxRange2);
+			flMinRange = MIN(GetActiveWeapon()->m_fMinRange1,GetActiveWeapon()->m_fMinRange2);
 		}
 		else if ( CapabilitiesGet() & bits_CAP_INNATE_RANGE_ATTACK1 )
 		{
@@ -2713,7 +2713,7 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 		}
 	case TASK_SPEAK_SENTENCE:
 		{
-			SpeakSentence(pTask->flTaskData);	
+			SpeakSentence((int)pTask->flTaskData);	
 			TaskComplete();
 			break;
 		}
@@ -3045,7 +3045,7 @@ void CAI_BaseNPC::StartTask( const Task_t *pTask )
 			{
 				int iMinDist, iMaxDist, iParameter;
 
-				iParameter = pTask->flTaskData;
+				iParameter = (int)pTask->flTaskData;
 
 				iMinDist = iParameter / 10000;
 				iMaxDist = iParameter - (iMinDist * 10000);
@@ -3584,6 +3584,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 					{
 					case ACT_WALK_AIM:	curActivity = ACT_WALK;	break;
 					case ACT_RUN_AIM:	curActivity = ACT_RUN;	break;
+					default:	break;
 					}
 
 					if ( curActivity != followActivity )
@@ -3693,7 +3694,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 #else
 					AngleVectors( ang, &move );
 #endif	//HL2_EPISODIC
-					if ( GetNavigator()->SetVectorGoal( move, (float)pTask->flTaskData, min(36,pTask->flTaskData), true ) && IsValidMoveAwayDest( GetNavigator()->GetGoalPos() ))
+					if ( GetNavigator()->SetVectorGoal( move, (float)pTask->flTaskData, MIN(36,pTask->flTaskData), true ) && IsValidMoveAwayDest( GetNavigator()->GetGoalPos() ))
 					{
 						TaskComplete();
 					}
@@ -3702,7 +3703,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 						ang.y = GetMotor()->GetIdealYaw() + 91;
 						AngleVectors( ang, &move );
 
-						if ( GetNavigator()->SetVectorGoal( move, (float)pTask->flTaskData, min(24,pTask->flTaskData), true ) && IsValidMoveAwayDest( GetNavigator()->GetGoalPos() ) )
+						if ( GetNavigator()->SetVectorGoal( move, (float)pTask->flTaskData, MIN(24,pTask->flTaskData), true ) && IsValidMoveAwayDest( GetNavigator()->GetGoalPos() ) )
 						{
 							TaskComplete();
 						}
@@ -3719,7 +3720,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 					ang.y = GetMotor()->GetIdealYaw() + 271;
 					AngleVectors( ang, &move );
 
-					if ( GetNavigator()->SetVectorGoal( move, (float)pTask->flTaskData, min(24,pTask->flTaskData), true ) && IsValidMoveAwayDest( GetNavigator()->GetGoalPos() ) )
+					if ( GetNavigator()->SetVectorGoal( move, (float)pTask->flTaskData, MIN(24,pTask->flTaskData), true ) && IsValidMoveAwayDest( GetNavigator()->GetGoalPos() ) )
 					{
 						TaskComplete();
 					}
@@ -3741,7 +3742,7 @@ void CAI_BaseNPC::RunTask( const Task_t *pTask )
 
 						AngleVectors( ang, &move );
 
-						if ( GetNavigator()->SetVectorGoal( move, (float)pTask->flTaskData, min(6,pTask->flTaskData), false ) && IsValidMoveAwayDest( GetNavigator()->GetGoalPos() ) )
+						if ( GetNavigator()->SetVectorGoal( move, (float)pTask->flTaskData, MIN(6,pTask->flTaskData), false ) && IsValidMoveAwayDest( GetNavigator()->GetGoalPos() ) )
 						{
 							TaskComplete();
 						}

@@ -227,7 +227,7 @@ void CNavNode::CheckCrouch( void )
 				float floorZ;
 				if ( TheNavMesh->GetGroundHeight( m_pos, &floorZ ) )
 				{
-					maxFloorZ = max( maxFloorZ, floorZ + 0.1f );
+					maxFloorZ = MAX( maxFloorZ, floorZ + 0.1f );
 				}
 			}
 		}
@@ -244,7 +244,7 @@ void CNavNode::CheckCrouch( void )
 #endif // DEBUG_NAV_NODES
 
 		NavCornerType corner = (NavCornerType)i;
-		Vector2D cornerVec;
+		Vector2D cornerVec = Vector2D(0.0f, 0.0f);
 		CornerToVector2D( corner, &cornerVec );
 
 		Vector actualGroundPos = groundPos; // we might need to adjust this if the tracehull failed above and we fell back to m_pos.z

@@ -361,7 +361,7 @@ void C_ClientRagdoll::OnRestore( void )
 	RagdollMoved();
 }
 
-void C_ClientRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, char *pCustomImpactName )
+void C_ClientRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCustomImpactName )
 {
 	VPROF( "C_ClientRagdoll::ImpactTrace" );
 
@@ -520,7 +520,7 @@ void C_ClientRagdoll::FadeOut( void )
 	int iAlpha = GetRenderColor().a;
 	int iFadeSpeed = ( g_RagdollLVManager.IsLowViolence() ) ? g_ragdoll_lvfadespeed.GetInt() : g_ragdoll_fadespeed.GetInt();
 
-	iAlpha = max( iAlpha - ( iFadeSpeed * gpGlobals->frametime ), 0 );
+	iAlpha = MAX( iAlpha - ( iFadeSpeed * gpGlobals->frametime ), 0 );
 
 	SetRenderMode( kRenderTransAlpha );
 	SetRenderColorA( iAlpha );
@@ -876,7 +876,7 @@ void C_BaseAnimating::LockStudioHdr()
 
 			if ( pStudioHdrContainer && pStudioHdrContainer->GetVirtualModel() )
 			{
-				MDLHandle_t hVirtualModel = (MDLHandle_t)pStudioHdrContainer->GetRenderHdr()->virtualModel;
+				MDLHandle_t hVirtualModel = (MDLHandle_t)reinterpret_cast<intptr_t>(pStudioHdrContainer->GetRenderHdr()->virtualModel);
 				mdlcache->LockStudioHdr( hVirtualModel );
 			}
 			m_pStudioHdr = pStudioHdrContainer; // must be last to ensure virtual model correctly set up
@@ -894,7 +894,7 @@ void C_BaseAnimating::UnlockStudioHdr()
 			mdlcache->UnlockStudioHdr( m_hStudioHdr );
 			if ( m_pStudioHdr->GetVirtualModel() )
 			{
-				MDLHandle_t hVirtualModel = (MDLHandle_t)m_pStudioHdr->GetRenderHdr()->virtualModel;
+				MDLHandle_t hVirtualModel = (MDLHandle_t)reinterpret_cast<intptr_t>(m_pStudioHdr->GetRenderHdr()->virtualModel);
 				mdlcache->UnlockStudioHdr( hVirtualModel );
 			}
 		}
@@ -998,7 +998,7 @@ CStudioHdr *C_BaseAnimating::OnNewModel()
 		}
 	}
 
-	int boneControllerCount = min( hdr->numbonecontrollers(), ARRAYSIZE( m_flEncodedController ) );
+	int boneControllerCount = MIN( hdr->numbonecontrollers(), ARRAYSIZE( m_flEncodedController ) );
 
 	m_iv_flEncodedController.SetMaxCount( boneControllerCount );
 
@@ -2146,7 +2146,7 @@ void C_BaseAnimating::CalculateIKLocks( float currentTime )
 				VectorMA( estGround, pTarget->est.height, up, p1 );
 				VectorMA( estGround, -pTarget->est.height, up, p2 );
 
-				float r = max( pTarget->est.radius, 1);
+				float r = MAX( pTarget->est.radius, 1);
 
 				// don't IK to other characters
 				ray.Init( p1, p2, Vector(-r,-r,0), Vector(r,r,r*2) );
@@ -4609,7 +4609,7 @@ float C_BaseAnimating::GetAnimTimeInterval( void ) const
 {
 #define MAX_ANIMTIME_INTERVAL 0.2f
 
-	float flInterval = min( gpGlobals->curtime - m_flAnimTime, MAX_ANIMTIME_INTERVAL );
+	float flInterval = MIN( gpGlobals->curtime - m_flAnimTime, MAX_ANIMTIME_INTERVAL );
 	return flInterval;
 }
 
@@ -4841,7 +4841,7 @@ float C_BaseAnimating::FrameAdvance( float flInterval )
 			addcycle = (serverAdvance + addcycle) / 2;
 
 			const float MAX_CYCLE_ADJUSTMENT = 0.1f;
-			addcycle = min( MAX_CYCLE_ADJUSTMENT, addcycle );// Don't do too big of a jump; it's too jarring as well.
+			addcycle = MIN( MAX_CYCLE_ADJUSTMENT, addcycle );// Don't do too big of a jump; it's too jarring as well.
 
 			DevMsg( 2, "(%d): Cycle latch used to correct %.2f in to %.2f instead of %.2f.\n",
 				entindex(), GetCycle(), GetCycle() + addcycle, GetCycle() + originalAdvance );

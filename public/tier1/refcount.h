@@ -348,6 +348,7 @@ public:
 //			referencing problems
 //-----------------------------------------------------------------------------
 
+#if 0
 template <class BASE_REFCOUNTED, int FINAL_REFS = 0, const char *pszName = NULL>
 class CRefDebug : public BASE_REFCOUNTED
 {
@@ -355,30 +356,31 @@ public:
 #ifdef _DEBUG
 	CRefDebug()
 	{
-		AssertMsg( GetRefCount() == 1, "Expected initial ref count of 1" );
+		AssertMsg( this->GetRefCount() == 1, "Expected initial ref count of 1" );
 		DevMsg( "%s:create 0x%x\n", ( pszName ) ? pszName : "", this );
 	}
 
 	virtual ~CRefDebug()
 	{
-		AssertDevMsg( GetRefCount() == FINAL_REFS, "Object still referenced on destroy?" );
+		AssertDevMsg( this->GetRefCount() == FINAL_REFS, "Object still referenced on destroy?" );
 		DevMsg( "%s:destroy 0x%x\n", ( pszName ) ? pszName : "", this );
 	}
 
 	int AddRef()
 	{
-		DevMsg( "%s:(0x%x)->AddRef() --> %d\n", ( pszName ) ? pszName : "", this, GetRefCount() + 1 );
+		DevMsg( "%s:(0x%x)->AddRef() --> %d\n", ( pszName ) ? pszName : "", this, this->GetRefCount() + 1 );
 		return BASE_REFCOUNTED::AddRef();
 	}
 
 	int Release()
 	{
-		DevMsg( "%s:(0x%x)->Release() --> %d\n", ( pszName ) ? pszName : "", this, GetRefCount() - 1 );
-		Assert( GetRefCount() > 0 );
+		DevMsg( "%s:(0x%x)->Release() --> %d\n", ( pszName ) ? pszName : "", this, this->GetRefCount() - 1 );
+		Assert( this->GetRefCount() > 0 );
 		return BASE_REFCOUNTED::Release();
 	}
 #endif
 };
+#endif
 
 //-----------------------------------------------------------------------------
 

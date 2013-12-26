@@ -50,7 +50,7 @@
 
 #define	SPRITE_SCALE	128.0f
 
-static const char *s_pWaitForUpgradeContext = "WaitForUpgrade";
+//static const char *s_pWaitForUpgradeContext = "WaitForUpgrade";
 
 ConVar	g_debug_physcannon( "g_debug_physcannon", "0", FCVAR_REPLICATED | FCVAR_CHEAT );
 
@@ -191,7 +191,7 @@ static QAngle AlignAngles( const QAngle &angles, float cosineAlignAngle )
 }
 
 
-static void TraceCollideAgainstBBox( const CPhysCollide *pCollide, const Vector &start, const Vector &end, const QAngle &angles, const Vector &boxOrigin, const Vector &mins, const Vector &maxs, trace_t *ptr )
+/*static void TraceCollideAgainstBBox( const CPhysCollide *pCollide, const Vector &start, const Vector &end, const QAngle &angles, const Vector &boxOrigin, const Vector &mins, const Vector &maxs, trace_t *ptr )
 {
 	physcollision->TraceBox( boxOrigin, boxOrigin + (start-end), mins, maxs, pCollide, start, angles, ptr );
 
@@ -202,7 +202,7 @@ static void TraceCollideAgainstBBox( const CPhysCollide *pCollide, const Vector 
 		ptr->plane.dist = -ptr->plane.dist;
 		ptr->plane.normal *= -1;
 	}
-}
+}*/
 
 //-----------------------------------------------------------------------------
 // Purpose: Computes a local matrix for the player clamped to valid carry ranges
@@ -1271,9 +1271,9 @@ BEGIN_NETWORK_TABLE( CWeaponPhysCannon, DT_WeaponPhysCannon )
 	SendPropBool( SENDINFO( m_bActive ) ),
 	SendPropEHandle( SENDINFO( m_hAttachedObject ) ),
 	SendPropVector(SENDINFO( m_attachedPositionObjectSpace ), -1, SPROP_COORD),
-	SendPropAngle( SENDINFO_VECTORELEM(m_attachedAnglesPlayerSpace, 0 ), 11 ),
-	SendPropAngle( SENDINFO_VECTORELEM(m_attachedAnglesPlayerSpace, 1 ), 11 ),
-	SendPropAngle( SENDINFO_VECTORELEM(m_attachedAnglesPlayerSpace, 2 ), 11 ),
+	SendPropAngle( SENDINFO_VECTORELEM2(m_attachedAnglesPlayerSpace, 0, x ), 11 ),
+	SendPropAngle( SENDINFO_VECTORELEM2(m_attachedAnglesPlayerSpace, 1, y ), 11 ),
+	SendPropAngle( SENDINFO_VECTORELEM2(m_attachedAnglesPlayerSpace, 2, z ), 11 ),
 	SendPropInt( SENDINFO( m_EffectState ) ),
 	SendPropBool( SENDINFO( m_bOpen ) ),
 #endif
@@ -1703,7 +1703,7 @@ void CWeaponPhysCannon::PuntVPhysics( CBaseEntity *pEntity, const Vector &vecFor
 			{
 				maxMass *= 2.5;	// 625 for vehicles
 			}
-			float mass = min(totalMass, maxMass); // max 250kg of additional force
+			float mass = MIN(totalMass, maxMass); // max 250kg of additional force
 
 			// Put some spin on the object
 			for ( i = 0; i < listCount; i++ )
@@ -1715,7 +1715,7 @@ void CWeaponPhysCannon::PuntVPhysics( CBaseEntity *pEntity, const Vector &vecFor
 				if ( pList[i] == pEntity->VPhysicsGetObject() )
 				{
 					ratio += hitObjectFactor;
-					ratio = min(ratio,1.0f);
+					ratio = MIN(ratio,1.0f);
 				}
 				else
 				{
@@ -1770,7 +1770,7 @@ void CWeaponPhysCannon::ApplyVelocityBasedForce( CBaseEntity *pEntity, const Vec
 	float mass = pPhysicsObject->GetMass();
 	if (mass > 100)
 	{
-		mass = min(mass, 1000);
+		mass = MIN(mass, 1000);
 		float flForceMin = physcannon_minforce.GetFloat();
 		flForce = SimpleSplineRemapVal(mass, 100, 600, flForceMax, flForceMin);
 	}

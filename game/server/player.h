@@ -218,6 +218,7 @@ public:
 	virtual void SetLastUserCommand( const CBotCmd &cmd );
 
 	virtual CBotCmd GetLastUserCommand();
+	virtual bool IsReplay();
 
 private:
 	CBasePlayer *m_pParent; 
@@ -532,7 +533,7 @@ public:
 	virtual CBaseEntity		*GetHeldObject( void );
 
 	void					CheckSuitUpdate();
-	void					SetSuitUpdate(char *name, int fgroup, int iNoRepeat);
+	void					SetSuitUpdate(const char *name, int fgroup, int iNoRepeat);
 	virtual void			UpdateGeigerCounter( void );
 	void					CheckTimeBasedDamage( void );
 

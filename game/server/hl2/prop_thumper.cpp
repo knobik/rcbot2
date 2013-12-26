@@ -88,7 +88,7 @@ END_DATADESC()
 
 void CPropThumper::Spawn( void )
 {
-	char *szModel = (char *)STRING( GetModelName() );
+	const char *szModel = (char *)STRING( GetModelName() );
 	if (!szModel || !*szModel)
 	{
 		szModel = THUMPER_MODEL_NAME;
@@ -171,11 +171,11 @@ void CPropThumper::HandleState( void )
 {
 	if ( m_bEnabled == false )
 	{
-		 m_flPlaybackRate = max( m_flPlaybackRate - STATE_CHANGE_MODIFIER, 0.0f );
+		 m_flPlaybackRate = MAX( m_flPlaybackRate - STATE_CHANGE_MODIFIER, 0.0f );
 	}
 	else
 	{
- 		 m_flPlaybackRate = min( m_flPlaybackRate + STATE_CHANGE_MODIFIER, 1.0f );
+ 		 m_flPlaybackRate = MIN( m_flPlaybackRate + STATE_CHANGE_MODIFIER, 1.0f );
 	}
 
 	(CSoundEnvelopeController::GetController()).Play( m_sndMotor, 1.0f, m_flPlaybackRate * 100 );
@@ -210,7 +210,7 @@ void CPropThumper::Thump ( void )
 	}
 
 	EmitSound( "coast.thumper_dust" );
-	CSoundEnt::InsertSound ( SOUND_THUMPER, GetAbsOrigin(), THUMPER_RADIUS * m_flPlaybackRate, THUMPER_SOUND_DURATION, this );
+	CSoundEnt::InsertSound ( SOUND_THUMPER, GetAbsOrigin(), (int)(THUMPER_RADIUS * m_flPlaybackRate), THUMPER_SOUND_DURATION, this );
 
 	if ( thumper_show_radius.GetBool() )
 	{

@@ -14,6 +14,10 @@
 #pragma once
 #endif
 
+#if defined(_LINUX) || defined(__APPLE__)
+#define NO_MALLOC_OVERRIDE
+#endif
+
 // Define this in release to get memory tracking even in release builds
 //#define USE_MEM_DEBUG 1
 
@@ -117,7 +121,7 @@ inline void *MemAlloc_AllocAligned( size_t size, size_t align )
 {
 	unsigned char *pAlloc, *pResult;
 
-	if (!IsPowerOfTwo(align))
+	if (!IsPowerOfTwo(uint(align)))
 		return NULL;
 
 	align = (align > sizeof(void *) ? align : sizeof(void *)) - 1;
@@ -135,7 +139,7 @@ inline void *MemAlloc_AllocAligned( size_t size, size_t align, const char *pszFi
 {
 	unsigned char *pAlloc, *pResult;
 
-	if (!IsPowerOfTwo(align))
+	if (!IsPowerOfTwo(uint(align)))
 		return NULL;
 
 	align = (align > sizeof(void *) ? align : sizeof(void *)) - 1;
@@ -151,7 +155,7 @@ inline void *MemAlloc_AllocAligned( size_t size, size_t align, const char *pszFi
 
 inline void *MemAlloc_ReallocAligned( void *ptr, size_t size, size_t align )
 {
-	if ( !IsPowerOfTwo( align ) )
+	if ( !IsPowerOfTwo( uint(align) ) )
 		return NULL;
 
 	// Don't change alignment between allocation + reallocation.
@@ -345,8 +349,9 @@ struct MemAllocFileLine_t
 #define MEM_ALLOC_CREDIT()	MEM_ALLOC_CREDIT_(__FILE__)
 #define MEM_ALLOC_CREDIT_CLASS()
 #define MEM_ALLOC_CLASSNAME(type) NULL
+#define MEM_ALLOC_CREDIT_FUNCTION()
 
-#endif !STEAM && NO_MALLOC_OVERRIDE
+#endif // !STEAM && NO_MALLOC_OVERRIDE
 
 //-----------------------------------------------------------------------------
 

@@ -38,7 +38,7 @@ class CGravityVortexController : public CBaseEntity
 
 public:
 	
-			CGravityVortexController( void ) : m_flEndTime( 0.0f ), m_flRadius( 256 ), m_flStrength( 256 ), m_flMass( 0.0f ) {}	
+		CGravityVortexController( void ) : m_flMass( 0.0f ), m_flEndTime( 0.0f ), m_flRadius( 256.0f ), m_flStrength( 256.0f ) {}	
 	float	GetConsumedMass( void ) const;
 
 	static CGravityVortexController *Create( const Vector &origin, float radius, float strength, float duration );
@@ -547,7 +547,7 @@ void CGrenadeHopwire::Detonate( void )
 	UTIL_TraceLine( GetAbsOrigin(), GetAbsOrigin() + Vector( 0, 0, MAX_HOP_HEIGHT*2 ), MASK_SOLID, this, COLLISION_GROUP_NONE, &tr );
 
 	// Jump half the height to the found ceiling
-	float hopHeight = min( MAX_HOP_HEIGHT, (MAX_HOP_HEIGHT*tr.fraction) );
+	float hopHeight = MIN( MAX_HOP_HEIGHT, (MAX_HOP_HEIGHT*tr.fraction) );
 
 	//Add upwards velocity for the "hop"
 	Vector hopVel( 0.0f, 0.0f, hopHeight );

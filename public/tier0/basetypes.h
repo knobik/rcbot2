@@ -8,6 +8,7 @@
 #ifndef BASETYPES_H
 #define BASETYPES_H
 
+#include "tier0/platform.h"
 #include "commonmacros.h"
 #include "wchartypes.h"
 
@@ -36,9 +37,10 @@
 #define NULL 0
 #endif
 
-
-#ifdef _LINUX
+#if defined _LINUX && !defined __APPLE__
 typedef unsigned int uintptr_t;
+#elif defined __APPLE__
+#include <stdint.h>
 #endif
 
 #define ExecuteNTimes( nTimes, x )	\
@@ -68,13 +70,32 @@ inline T AlignValue( T val, unsigned alignment )
 	( ((number) + ((boundary)-1)) / (boundary) ) * (boundary)
 
 // In case this ever changes
+#if defined M_PI
+# undef M_PI
+#endif
 #define M_PI			3.14159265358979323846
 
-#include "valve_minmax_on.h"
+// #define COMPILETIME_MAX and COMPILETIME_MIN for max/min in constant expressions
+#define COMPILETIME_MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
+#define COMPILETIME_MAX( a, b ) ( ( ( a ) > ( b ) ) ? ( a ) : ( b ) )
+#ifndef MIN
+#define MIN( a, b ) ( ( ( a ) < ( b ) ) ? ( a ) : ( b ) )
+#endif
+
+#ifndef MAX
+#define MAX( a, b ) ( ( ( a ) > ( b ) ) ? ( a ) : ( b ) )
+#endif
 
 #if !defined(_X360)
-#define fpmin min
-#define fpmax max
+FORCEINLINE float fpmin( float a, float b )
+{
+	return ( a < b ) ? a : b;
+}
+
+FORCEINLINE float fpmax( float a, float b )
+{
+	return ( a > b ) ? a : b;
+}
 #endif
 
 #ifdef __cplusplus
@@ -103,7 +124,9 @@ typedef unsigned char BYTE;
 typedef unsigned char byte;
 typedef unsigned short word;
 
+#if !defined __APPLE__
 typedef unsigned int uintptr_t;
+#endif
 
 
 enum ThreeState_t

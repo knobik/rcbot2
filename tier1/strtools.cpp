@@ -46,7 +46,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#ifdef _LINUX
+#if defined _LINUX || defined __APPLE__
 #include <ctype.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -650,7 +650,7 @@ int V_snwprintf( wchar_t *pDest, int maxLen, const wchar_t *pFormat, ... )
 	va_start( marker, pFormat );
 #ifdef _WIN32
 	int len = _snwprintf( pDest, maxLen, pFormat, marker );
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	int len = swprintf( pDest, maxLen, pFormat, marker );
 #else
 #error "define vsnwprintf type."
@@ -679,7 +679,7 @@ int V_snprintf( char *pDest, int maxLen, char const *pFormat, ... )
 	va_start( marker, pFormat );
 #ifdef _WIN32
 	int len = _vsnprintf( pDest, maxLen, pFormat, marker );
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	int len = vsnprintf( pDest, maxLen, pFormat, marker );
 #else
 	#error "define vsnprintf type."
@@ -741,7 +741,7 @@ char *V_strncat(char *pDest, const char *pSrc, size_t destBufferSize, int max_ch
 	}
 	else
 	{
-		charstocopy = (size_t)min( max_chars_to_copy, (int)srclen );
+		charstocopy = (size_t)MIN( max_chars_to_copy, (int)srclen );
 	}
 
 	if ( len + charstocopy >= destBufferSize )
@@ -801,7 +801,7 @@ char *V_pretifymem( float value, int digitsafterdecimal /*= 2*/, bool usebinaryo
 	char val[ 32 ];
 
 	// Clamp to >= 0
-	digitsafterdecimal = max( digitsafterdecimal, 0 );
+	digitsafterdecimal = MAX( digitsafterdecimal, 0 );
 
 	// If it's basically integral, don't do any decimals
 	if ( FloatMakePositive( value - (int)value ) < 0.00001 )
@@ -885,17 +885,17 @@ char *V_pretifynum( int64 value )
 	}
 
 	// Render quadrillions
-	if ( value >= 1000000000000 )
+	if ( value >= 1000000000000LL )
 	{
 		char *pchRender = out + V_strlen( out );
-		V_snprintf( pchRender, 32, "%d,", value / 1000000000000 );
+		V_snprintf( pchRender, 32, "%d,", value / 1000000000000LL );
 	}
 
 	// Render trillions
-	if ( value >= 1000000000000 )
+	if ( value >= 1000000000000LL )
 	{
 		char *pchRender = out + V_strlen( out );
-		V_snprintf( pchRender, 32, "%d,", value / 1000000000000 );
+		V_snprintf( pchRender, 32, "%d,", value / 1000000000000LL );
 	}
 
 	// Render billions
@@ -947,7 +947,7 @@ int V_UTF8ToUnicode( const char *pUTF8, wchar_t *pwchDest, int cubDestSizeInByte
 	pwchDest[0] = 0;
 #ifdef _WIN32
 	int cchResult = MultiByteToWideChar( CP_UTF8, 0, pUTF8, -1, pwchDest, cubDestSizeInBytes / sizeof(wchar_t) );
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	int cchResult = mbstowcs( pwchDest, pUTF8, cubDestSizeInBytes / sizeof(wchar_t) );
 #endif
 	pwchDest[(cubDestSizeInBytes / sizeof(wchar_t)) - 1] = 0;
@@ -965,7 +965,7 @@ int V_UnicodeToUTF8( const wchar_t *pUnicode, char *pUTF8, int cubDestSizeInByte
 	pUTF8[0] = 0;
 #ifdef _WIN32
 	int cchResult = WideCharToMultiByte( CP_UTF8, 0, pUnicode, -1, pUTF8, cubDestSizeInBytes, NULL, NULL );
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	int cchResult = wcstombs( pUTF8, pUnicode, cubDestSizeInBytes );
 #endif
 	pUTF8[cubDestSizeInBytes - 1] = 0;
@@ -1010,7 +1010,7 @@ static unsigned char V_nibble( char c )
 void V_hextobinary( char const *in, int numchars, byte *out, int maxoutputbytes )
 {
 	int len = V_strlen( in );
-	numchars = min( len, numchars );
+	numchars = MIN( len, numchars );
 	// Make sure it's even
 	numchars = ( numchars ) & ~0x1;
 
@@ -1118,7 +1118,7 @@ void V_FileBase( const char *in, char *out, int maxlen )
 	// Length of new sting
 	len = end - start + 1;
 
-	int maxcopy = min( len + 1, maxlen );
+	int maxcopy = MIN( len + 1, maxlen );
 
 	// Copy partial string
 	V_strncpy( out, &in[start], maxcopy );
@@ -1162,7 +1162,7 @@ void V_StripExtension( const char *in, char *out, int outSize )
 
 	if (end > 0 && !PATHSEPARATOR( in[end] ) && end < outSize)
 	{
-		int nChars = min( end, outSize-1 );
+		int nChars = MIN( end, outSize-1 );
 		if ( out != in )
 		{
 			memcpy( out, in, nChars );
@@ -1249,7 +1249,7 @@ void  V_StripFilename (char *path)
 #ifdef _WIN32
 #define CORRECT_PATH_SEPARATOR '\\'
 #define INCORRECT_PATH_SEPARATOR '/'
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 #define CORRECT_PATH_SEPARATOR '/'
 #define INCORRECT_PATH_SEPARATOR '\\'
 #endif
@@ -1397,7 +1397,7 @@ bool V_ExtractFilePath (const char *path, char *dest, int destSize )
 		src--;
 	}
 
-	int copysize = min( src - path, destSize - 1 );
+	int copysize = MIN( src - path, destSize - 1 );
 	memcpy( dest, path, copysize );
 	dest[copysize] = 0;
 
@@ -1413,7 +1413,7 @@ bool V_ExtractFilePath (const char *path, char *dest, int destSize )
 //-----------------------------------------------------------------------------
 void V_ExtractFileExtension( const char *path, char *dest, int destSize )
 {
-	*dest = NULL;
+	*dest = '\0';
 	const char * extension = V_GetFileExtension( path );
 	if ( NULL != extension )
 		V_strncpy( dest, extension, destSize );
@@ -1781,7 +1781,7 @@ char* AllocString( const char *pStr, int nMaxChars )
 	if ( nMaxChars == -1 )
 		allocLen = strlen( pStr ) + 1;
 	else
-		allocLen = min( (int)strlen(pStr), nMaxChars ) + 1;
+		allocLen = MIN( (int)strlen(pStr), nMaxChars ) + 1;
 
 	char *pOut = new char[allocLen];
 	V_strncpy( pOut, pStr, allocLen );
@@ -1839,7 +1839,7 @@ void V_SplitString( const char *pString, const char *pSeparator, CUtlVector<char
 
 bool V_GetCurrentDirectory( char *pOut, int maxLen )
 {
-#ifdef LINUX
+#if defined _LINUX || defined __APPLE__
 	return getcwd( pOut, maxLen ) == pOut;
 #else
 	return _getcwd( pOut, maxLen ) == pOut;
@@ -1849,7 +1849,7 @@ bool V_GetCurrentDirectory( char *pOut, int maxLen )
 
 bool V_SetCurrentDirectory( const char *pDirName )
 {
-#ifdef LINUX
+#if defined _LINUX || defined __APPLE__
 	return chdir( pDirName ) == 0;
 #else
 	return _chdir( pDirName ) == 0;
@@ -1945,7 +1945,7 @@ void V_strtowcs( const char *pString, int nInSize, wchar_t *pWString, int nOutSi
 	{
 		*pWString = L'\0';
 	}
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	if ( mbstowcs( pWString, pString, nOutSize / sizeof(wchar_t) ) <= 0 )
 	{
 		*pWString = 0;
@@ -1960,7 +1960,7 @@ void V_wcstostr( const wchar_t *pWString, int nInSize, char *pString, int nOutSi
 	{
 		*pString = '\0';
 	}
-#elif _LINUX
+#elif defined _LINUX || defined __APPLE__
 	if ( wcstombs( pString, pWString, nOutSize ) <= 0 )
 	{
 		*pString = '\0';

@@ -790,7 +790,7 @@ static void CalcZeroframeData( const CStudioHdr *pStudioHdr, const studiohdr_t *
 	else
 	{
 		float s1;
-		int index = fFrame / animdesc.zeroframespan;
+		int index = (int)(fFrame / animdesc.zeroframespan);
 		if (index >= animdesc.zeroframecount - 1)
 		{
 			index = animdesc.zeroframecount - 2;
@@ -800,9 +800,9 @@ static void CalcZeroframeData( const CStudioHdr *pStudioHdr, const studiohdr_t *
 		{
 			s1 = clamp( (fFrame - index * animdesc.zeroframespan) / animdesc.zeroframespan, 0.0f, 1.0f );
 		}
-		int i0 = max( index - 1, 0 );
+		int i0 = MAX( index - 1, 0 );
 		int i1 = index;
-		int i2 = min( index + 1, animdesc.zeroframecount - 1 );
+		int i2 = MIN( index + 1, animdesc.zeroframecount - 1 );
 		for (j = 0; j < pAnimStudioHdr->numbones; j++)
 		{
 			if (pAnimGroup)
@@ -2710,8 +2710,8 @@ bool Studio_SolveIK( int iThigh, int iKnee, int iFoot, Vector &targetFoot, Vecto
 
 	// exaggerate knee targets for legs that are nearly straight
 	// FIXME: should be configurable, and the ikKnee should be from the original animation, not modifed
-	float d = (targetFoot-worldThigh).Length() - min( l1, l2 );
-	d = max( l1 + l2, d );
+	float d = (targetFoot-worldThigh).Length() - MIN( l1, l2 );
+	d = MAX( l1 + l2, d );
 	// FIXME: too short knee directions cause trouble
 	d = d * 100;
 
@@ -2731,7 +2731,7 @@ bool Studio_SolveIK( int iThigh, int iKnee, int iFoot, Vector &targetFoot, Vecto
 
 	// too close?
 	// limit distance to about an 80 degree knee bend
-	float minDist = max( fabs(l1 - l2) * 1.15, min( l1, l2 ) * 0.15 );
+	float minDist = MAX( fabs(l1 - l2) * 1.15, MIN( l1, l2 ) * 0.15 );
 	if (ikFoot.Length() < minDist)
 	{
 		// too close to get an accurate vector, just use original vector
@@ -3195,7 +3195,7 @@ void CIKContext::AddDependencies( mstudioseqdesc_t &seqdesc, int iSequence, floa
 		}
 		else
 		{
-			flCycle = max( 0.0, min( flCycle, 0.9999 ) );
+			flCycle = MAX( 0.0, MIN( flCycle, 0.9999 ) );
 		}
 	}
 
@@ -3689,7 +3689,7 @@ void CIKContext::UpdateTargets( Vector pos[], Quaternion q[], matrix3x4_t boneTo
 						pTarget->est.floor = Lerp( pRule->flRuleWeight, pTarget->est.floor, pRule->floor );
 						pTarget->est.radius = Lerp( pRule->flRuleWeight, pTarget->est.radius, pRule->radius );
 						//pTarget->est.latched = Lerp( pRule->flRuleWeight, pTarget->est.latched, pRule->latched );
-						pTarget->est.latched = min( pTarget->est.latched, pRule->latched );
+						pTarget->est.latched = MIN( pTarget->est.latched, pRule->latched );
 						pTarget->est.release = Lerp( pRule->flRuleWeight, pTarget->est.release, pRule->release );
 						pTarget->est.flWeight = Lerp( pRule->flRuleWeight, pTarget->est.flWeight, pRule->flWeight );
 					}
@@ -3707,7 +3707,7 @@ void CIKContext::UpdateTargets( Vector pos[], Quaternion q[], matrix3x4_t boneTo
 					if (pRule->latched > 0.0)
 						pTarget->est.latched = 0.0;
 					else
-						pTarget->est.latched = min( pTarget->est.latched, 1.0f - pRule->flWeight );
+						pTarget->est.latched = MIN( pTarget->est.latched, 1.0f - pRule->flWeight );
 				}
 				break;
 			case IK_RELEASE:
@@ -3716,7 +3716,7 @@ void CIKContext::UpdateTargets( Vector pos[], Quaternion q[], matrix3x4_t boneTo
 					if (pRule->latched > 0.0)
 						pTarget->est.latched = 0.0;
 					else
-						pTarget->est.latched = min( pTarget->est.latched, 1.0f - pRule->flWeight );
+						pTarget->est.latched = MIN( pTarget->est.latched, 1.0f - pRule->flWeight );
 
 					pTarget->est.flWeight = (pTarget->est.flWeight) * (1 - pRule->flWeight * pRule->flRuleWeight);
 				}
@@ -3882,23 +3882,40 @@ void CIKContext::AutoIKRelease( void )
 			float ft = m_flTime - pTarget->error.flErrorTime;
 			if (dt < 0.25)
 			{
-				pTarget->error.ramp = min( pTarget->error.ramp + ft * 4.0, 1.0 );
+				pTarget->error.ramp = MIN( pTarget->error.ramp + ft * 4.0, 1.0 );
 			}
 			else
 			{
-				pTarget->error.ramp = max( pTarget->error.ramp - ft * 4.0, 0.0 );
+				pTarget->error.ramp = MAX( pTarget->error.ramp - ft * 4.0, 0.0 );
 			}
 			if (pTarget->error.ramp > 0.0)
 			{
 				ikcontextikrule_t ikrule;
 
+				ikrule.index = -1;
 				ikrule.chain = pTarget->chain;
 				ikrule.bone = 0;
 				ikrule.type = IK_RELEASE;
 				ikrule.slot = i;
+				ikrule.height = 0.0f;
+				ikrule.radius = 0.0f;
+				ikrule.floor = 0.0f;
+				ikrule.pos = Vector(0.0f, 0.0f, 0.0f);
+				ikrule.q = Quaternion(0.0f, 0.0f, 0.0f, 0.0f);
+				ikrule.start = 0.0f;
+				ikrule.peak = 0.0f;
+				ikrule.tail = 0.0f;
+				ikrule.end = 0.0f;
+				ikrule.top = 0.0f;
+				ikrule.drop = 0.0f;
+				ikrule.commit = 0.0f;
+				ikrule.release = 0.0f;
 				ikrule.flWeight = SimpleSpline( pTarget->error.ramp );
 				ikrule.flRuleWeight = 1.0;
 				ikrule.latched = dt < 0.25 ? 0.0 : ikrule.flWeight;
+				ikrule.szLabel = NULL;
+				ikrule.kneeDir = Vector(0.0f, 0.0f, 0.0f);
+				ikrule.kneePos = Vector(0.0f, 0.0f, 0.0f);
 
 				// don't bother with AutoIKRelease if the bone isn't going to be calculated
 				// this code is crashing for some unknown reason.
@@ -4630,7 +4647,7 @@ void DoQuatInterpBone(
 			// FIXME: a fast acos should be acceptable
 			dot = clamp( dot, -1, 1 );
 			weight[i] = 1 - (2 * acos( dot ) * pProc->pTrigger( i )->inv_tolerance );
-			weight[i] = max( 0, weight[i] );
+			weight[i] = MAX( 0, weight[i] );
 			scale += weight[i];
 		}
 
@@ -5017,9 +5034,9 @@ float Studio_GetPoseParameter( const CStudioHdr *pStudioHdr, int iParameter, flo
 	return ctlValue * (PoseParam.end - PoseParam.start) + PoseParam.start;
 }
 
-
+#ifdef _MSC_VER
 #pragma warning (disable : 4701)
-
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -5112,8 +5129,9 @@ static int ClipRayToHitbox( const Ray_t &ray, mstudiobbox_t *pbox, matrix3x4_t& 
 	return hitside;
 }
 
+#ifdef _MSC_VER
 #pragma warning (default : 4701)
-
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -5312,7 +5330,7 @@ int Studio_MaxFrame( const CStudioHdr *pStudioHdr, int iSequence, const float po
 	
 
 	// FIXME: why does the weights sometimes not exactly add it 1.0 and this sometimes rounds down?
-	return (maxFrame + 0.01);
+	return static_cast<int>(maxFrame + 0.01);
 }
 
 

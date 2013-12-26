@@ -150,7 +150,7 @@ void CBitWrite::WriteBytes( const void *pBuf, int nBytes )
 void CBitWrite::WriteBitCoord (const float f)
 {
 	int		signbit = (f <= -COORD_RESOLUTION);
-	int		intval = (int)abs(f);
+	int		intval = (int)fabs(f);
 	int		fractval = abs((int)(f*COORD_DENOMINATOR)) & (COORD_DENOMINATOR-1);
 
 
@@ -182,7 +182,7 @@ void CBitWrite::WriteBitCoord (const float f)
 void CBitWrite::WriteBitCoordMP (const float f, bool bIntegral, bool bLowPrecision )
 {
 	int		signbit = (f <= -( bLowPrecision ? COORD_RESOLUTION_LOWPRECISION : COORD_RESOLUTION ));
-	int		intval = (int)abs(f);
+	int		intval = (int)fabs(f);
 	int		fractval = bLowPrecision ? 
 		( abs((int)(f*COORD_DENOMINATOR_LOWPRECISION)) & (COORD_DENOMINATOR_LOWPRECISION-1) ) :
 		( abs((int)(f*COORD_DENOMINATOR)) & (COORD_DENOMINATOR-1) );
@@ -381,7 +381,7 @@ bool CBitRead::Seek( int nPosition )
 			m_nBitsAvail = 1;
 		}
 		m_nInBufWord >>= ( nAdjPosition & 31 );
-		m_nBitsAvail = min( m_nBitsAvail, 32 - ( nAdjPosition & 31 ) );	// in case grabnextdword overflowed
+		m_nBitsAvail = MIN( m_nBitsAvail, 32 - ( nAdjPosition & 31 ) );	// in case grabnextdword overflowed
 	}
 	return bSucc;
 }

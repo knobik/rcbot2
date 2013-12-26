@@ -491,7 +491,7 @@ bool CBaseHelicopter::DoWashPush( washentity_t *pWash, const Vector &vecWashOrig
 	// This used to be mass independent, which is a bad idea because it blows 200kg engine blocks
 	// as much as it blows cardboard and soda cans. Make this force mass-independent, but clamp at
 	// 30kg. 
-	flMass = min( flMass, 30.0f );
+	flMass = MIN( flMass, 30.0f );
 
 	Vector vecForce = (0.015f / 0.1f) * flWashAmount * flMass * vecToSpot * phys_pushscale.GetFloat();
 	pEntity->VPhysicsTakeDamage( CTakeDamageInfo( this, this, vecForce, vecWashOrigin, flWashAmount, DMG_BLAST ) );
@@ -682,7 +682,7 @@ void CBaseHelicopter::UpdateEnemy()
 	// be sure and change my prevseen/lastseen timers.
 	if( m_lifeState == LIFE_ALIVE )
 	{
-		GetSenses()->Look( EnemySearchDistance() );
+		GetSenses()->Look( (int)EnemySearchDistance() );
 
 		GetEnemies()->RefreshMemories();
 		ChooseEnemy();
@@ -842,7 +842,7 @@ void CBaseHelicopter::UpdatePlayerDopplerShift( )
 			float velReceiver = DotProduct( pPlayer->GetAbsVelocity(), dir );
 			float velTransmitter = -DotProduct( GetAbsVelocity(), dir );
 			// speed of sound == 13049in/s
-			int iPitch = 100 * ((1 - velReceiver / 13049) / (1 + velTransmitter / 13049));
+			int iPitch = (int)(100 * ((1 - velReceiver / 13049) / (1 + velTransmitter / 13049)));
 #else
 			// This is a bogus doppler shift, but I like it better
 			float relV = DotProduct( GetAbsVelocity() - pPlayer->GetAbsVelocity(), dir );

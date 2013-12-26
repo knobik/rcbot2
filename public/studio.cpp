@@ -516,7 +516,7 @@ void studiohdr_t::SetAttachmentBone( int iAttachment, int iBone )
 // Purpose:
 //-----------------------------------------------------------------------------
 
-char *studiohdr_t::pszNodeName( int iNode ) const
+const char *studiohdr_t::pszNodeName( int iNode ) const
 {
 	if (numincludemodels == 0)
 	{
@@ -575,7 +575,7 @@ int	studiohdr_t::GetActivityListVersion( void ) const
 
 		Assert( pStudioHdr );
 
-		version = min( version, pStudioHdr->activitylistversion );
+		version = MIN( version, pStudioHdr->activitylistversion );
 	}
 
 	return version;
@@ -799,7 +799,9 @@ const virtualmodel_t * CStudioHdr::ResetVModel( const virtualmodel_t *pVModel ) 
 	if (pVModel != NULL)
 	{
 		m_pVModel = (virtualmodel_t *)pVModel;
+	#if defined(_WIN32) && !defined(THREAD_PROFILER)
 		Assert( !pVModel->m_Lock.GetOwnerId() );
+	#endif
 		m_pStudioHdrCache.SetCount( m_pVModel->m_group.Count() );
 
 		int i;
@@ -847,7 +849,9 @@ const studiohdr_t *CStudioHdr::GroupStudioHdr( int i ) const
 
 	if (pStudioHdr == NULL)
 	{
+	#if defined(_WIN32) && !defined(THREAD_PROFILER)
 		Assert( !m_pVModel->m_Lock.GetOwnerId() );
+	#endif
 		virtualgroup_t *pGroup = &m_pVModel->m_group[ i ];
 		pStudioHdr = pGroup->GetStudioHdr();
 		m_pStudioHdrCache[ i ] = pStudioHdr;
@@ -1149,7 +1153,7 @@ void CStudioHdr::SetAttachmentBone( int iAttachment, int iBone )
 // Purpose:
 //-----------------------------------------------------------------------------
 
-char *CStudioHdr::pszNodeName( int iNode ) const
+const char *CStudioHdr::pszNodeName( int iNode ) const
 {
 	if (m_pVModel == NULL)
 	{
@@ -1204,7 +1208,7 @@ int	CStudioHdr::GetActivityListVersion( void ) const
 	{
 		const studiohdr_t *pStudioHdr = GroupStudioHdr( i );
 		Assert( pStudioHdr );
-		version = min( version, pStudioHdr->activitylistversion );
+		version = MIN( version, pStudioHdr->activitylistversion );
 	}
 
 	return version;
@@ -1247,7 +1251,7 @@ int	CStudioHdr::GetEventListVersion( void ) const
 	{
 		const studiohdr_t *pStudioHdr = GroupStudioHdr( i );
 		Assert( pStudioHdr );
-		version = min( version, pStudioHdr->eventsindexed );
+		version = MIN( version, pStudioHdr->eventsindexed );
 	}
 
 	return version;
@@ -1412,8 +1416,8 @@ void CStudioHdr::RunFlexRules( const float *src, float *dest )
 				k--; 
 				break;
 			case STUDIO_NEG: stack[k-1] = -stack[k-1]; break;
-			case STUDIO_MAX: stack[k-2] = max( stack[k-2], stack[k-1] ); k--; break;
-			case STUDIO_MIN: stack[k-2] = min( stack[k-2], stack[k-1] ); k--; break;
+			case STUDIO_MAX: stack[k-2] = MAX( stack[k-2], stack[k-1] ); k--; break;
+			case STUDIO_MIN: stack[k-2] = MIN( stack[k-2], stack[k-1] ); k--; break;
 			case STUDIO_CONST: stack[k] = pops->d.value; k++; break;
 			case STUDIO_FETCH1: 
 				{ 
@@ -1678,7 +1682,7 @@ void CStudioHdr::CActivityToSequenceMapping::Initialize( CStudioHdr * __restrict
 		HashValueType &element = m_ActToSeqHash[handle];
 		element.startingIdx = sequenceCount;
 		sequenceCount += element.count;
-		topActivity = max(topActivity, element.activityIdx);
+		topActivity = MAX(topActivity, element.activityIdx);
 	}
 	
 

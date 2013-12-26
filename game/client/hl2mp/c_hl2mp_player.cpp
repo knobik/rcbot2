@@ -536,7 +536,7 @@ float C_HL2MP_Player::GetFOV( void )
 	int min_fov = GetMinFOV();
 	
 	// Don't let it go too low
-	flFOVOffset = max( min_fov, flFOVOffset );
+	flFOVOffset = MAX( min_fov, flFOVOffset );
 
 	return flFOVOffset;
 }
@@ -798,7 +798,7 @@ void C_HL2MPRagdoll::Interp_Copy( C_BaseAnimatingOverlay *pSourceEntity )
 	}
 }
 
-void C_HL2MPRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, char *pCustomImpactName )
+void C_HL2MPRagdoll::ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCustomImpactName )
 {
 	IPhysicsObject *pPhysicsObject = VPhysicsGetObject();
 

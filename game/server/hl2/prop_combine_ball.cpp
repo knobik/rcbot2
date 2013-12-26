@@ -25,7 +25,7 @@
 #include "hl2_player.h"
 #include "eventqueue.h"
 #include "physics_collisionevent.h"
-#include "gamestats.h"
+#include "GameStats.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1100,7 +1100,7 @@ void CPropCombineBall::DoExplosion( )
 
 	if( hl2_episodic.GetBool() )
 	{
-		CSoundEnt::InsertSound( SOUND_COMBAT | SOUND_CONTEXT_EXPLOSION, WorldSpaceCenter(), 180.0f, 0.25, this );
+		CSoundEnt::InsertSound( SOUND_COMBAT | SOUND_CONTEXT_EXPLOSION, WorldSpaceCenter(), 180, 0.25, this );
 	}
 
 	// Turn us off and wait because we need our trails to finish up properly
@@ -1777,7 +1777,7 @@ void CFuncCombineBallSpawner::Spawn()
 
 	float flWidth = CollisionProp()->OBBSize().x;
 	float flHeight = CollisionProp()->OBBSize().y;
-	m_flRadius = min( flWidth, flHeight ) * 0.5f;
+	m_flRadius = MIN( flWidth, flHeight ) * 0.5f;
 	if ( m_flRadius <= 0.0f && m_bShooter == false )
 	{
 		Warning("Zero dimension func_combine_ball_spawner! Removing...\n");
