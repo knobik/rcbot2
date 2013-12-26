@@ -723,6 +723,14 @@ void CBot :: think ()
 	m_iLookPriority = 0;
 	m_iMovePriority = 0;
 	m_iMoveSpeedPriority = 0;
+	
+	//if ( !CBotGlobals::entityIsValid(m_pEdict) || m_pPlayerInfo == NULL )
+	//{
+	//	m_pPlayerInfo = playerinfomanager->GetPlayerInfo(m_pEdict);
+	//	CBotGlobals::botMessage(NULL,0,"%s : m_pPlayerInfo = NULL; Waiting for player info...",m_szBotName);
+	//	return;
+	//}
+
 #ifdef _DEBUG
 	if ( rcbot_debug_iglev.GetInt() != 1 )
 	{

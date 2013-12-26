@@ -129,6 +129,8 @@ class CDODBot : public CBot
 {
 public:
 
+	CDODBot();
+
 	bool isDOD () { return true; }
 
 	bool withinTeammate ( );
@@ -139,7 +141,7 @@ public:
 
 	void modThink ();
 
-	void init ();
+	virtual void init (bool bVarInit=false);
 	void setup ();
 
 	virtual void freeMapMemory ();

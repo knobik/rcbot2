@@ -106,9 +106,15 @@ void CDODBot :: bombEvent ( int iEvent, int iCP, int iTeam )
 	}
 }
 
-void CDODBot :: init ()
+CDODBot :: CDODBot()
 {
-	CBot::init();
+	CBot();
+	init(true);
+}
+
+void CDODBot :: init (bool bVarInit)
+{
+	CBot::init(bVarInit);
 
 	m_iSelectedClass = -1;
 	m_bCheckClass = false;
@@ -129,6 +135,8 @@ void CDODBot :: freeMapMemory ()
 		delete m_pWantToProne;
 
 	m_pWantToProne = NULL;
+
+	CBot::freeMapMemory();
 }
 
 bool CDODBot::canGotoWaypoint(Vector vPrevWaypoint, CWaypoint *pWaypoint)
