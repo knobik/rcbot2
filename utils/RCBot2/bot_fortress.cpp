@@ -676,7 +676,7 @@ void CBotFortress :: detectedAsSpy( edict_t *pDetector, bool bDisguiseComprimise
 		if ( !m_pSchedules->hasSchedule(SCHED_GOOD_HIDE_SPOT) )
 		{
 			m_pSchedules->freeMemory();
-			m_pSchedules->addFront(new CGotoHideSpotSched(m_pAvoidEntity)); 
+			m_pSchedules->addFront(new CGotoHideSpotSched(this,m_pAvoidEntity)); 
 		}
 	}
 }
@@ -1312,7 +1312,7 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 				else
 				{
 					m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-					m_pSchedules->addFront(new CGotoHideSpotSched(m_vHurtOrigin));
+					m_pSchedules->addFront(new CGotoHideSpotSched(this,m_vHurtOrigin));
 				}
 			}
 

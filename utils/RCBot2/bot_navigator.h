@@ -86,6 +86,9 @@ public:
 
 	virtual bool canGetTo ( Vector vOrigin ) = 0;
 
+	virtual int getCurrentFlags () { return 0; }
+	virtual int getPathFlags ( int iPath ) { return 0; }
+
 	virtual float distanceTo ( Vector vOrigin ) = 0;
 
 	virtual float distanceTo ( CWaypoint *pWaypoint ) = 0;
@@ -443,6 +446,9 @@ public:
 	{
 		return m_iGoalWaypoint;
 	}
+
+	int getCurrentFlags ();
+	int getPathFlags ( int iPath );
 
 private:
 	CBot *m_pBot;

@@ -328,6 +328,14 @@ Vector CWaypointNavigator :: getPath ( int pathid )
 	 return CWaypoints::getWaypoint(CWaypoints::getWaypoint(m_iCurrentWaypoint)->getPath(pathid))->getOrigin();
 }
 
+
+int CWaypointNavigator ::  getPathFlags ( int iPath )
+{
+	CWaypoint *pWpt = CWaypoints::getWaypoint(m_iCurrentWaypoint);
+
+	return CWaypoints::getWaypoint(pWpt->getPath(iPath))->getFlags();
+}
+
 bool CWaypointNavigator :: nextPointIsOnLadder ()
 {
 	if ( m_iCurrentWaypoint != -1 )
@@ -606,6 +614,14 @@ void CWaypointNavigator :: belief ( Vector vOrigin, Vector vOther, float fBelief
 	m_iInvisibles.Destroy();
 
 	m_bBeliefChanged = true;
+}
+
+int CWaypointNavigator :: getCurrentFlags ()
+{
+	if ( m_iCurrentWaypoint != -1 )
+		return CWaypoints::getWaypoint(m_iCurrentWaypoint)->getFlags();
+
+	return 0;
 }
 
 float CWaypointNavigator :: getCurrentBelief ( )
@@ -1102,7 +1118,7 @@ void CWaypointNavigator :: updatePosition ()
 
 				if ( m_pBot->getSchedule()->isCurrentSchedule(SCHED_RUN_FOR_COVER) ||
 					m_pBot->getSchedule()->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT))
-					m_pBot->reachedCoverSpot();
+					m_pBot->reachedCoverSpot(pWaypoint->getFlags());
 			}
 			else
 			{

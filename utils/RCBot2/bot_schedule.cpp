@@ -426,7 +426,7 @@ void CBotRemoveSapperSched :: init ()
 	setID(SCHED_REMOVESAPPER);
 }
 ///////////
-CGotoHideSpotSched :: CGotoHideSpotSched ( edict_t *pEdict )
+CGotoHideSpotSched :: CGotoHideSpotSched ( CBot *pBot, edict_t *pEdict )
 {
 	// run at flank while shooting	
 	CFindPathTask *pHideGoalPoint = new CFindPathTask();
@@ -435,12 +435,12 @@ CGotoHideSpotSched :: CGotoHideSpotSched ( edict_t *pEdict )
 	pHideGoalPoint->setNoInterruptions();
 	// get vector from good hide spot task
 	pHideGoalPoint->getPassedVector();
-	
+	pBot->setCoverFrom(pEdict);
 	addTask(new CFindGoodHideSpot(pEdict));
 	addTask(pHideGoalPoint);
 }
 
-CGotoHideSpotSched :: CGotoHideSpotSched ( Vector vOrigin )
+CGotoHideSpotSched :: CGotoHideSpotSched (CBot *pBot, Vector vOrigin )
 {
 	// run at flank while shooting	
 	CFindPathTask *pHideGoalPoint = new CFindPathTask();
@@ -449,7 +449,7 @@ CGotoHideSpotSched :: CGotoHideSpotSched ( Vector vOrigin )
 	pHideGoalPoint->setNoInterruptions();
 	// get vector from good hide spot task
 	pHideGoalPoint->getPassedVector();
-	
+	pBot->setCoverFrom(NULL);
 	addTask(new CFindGoodHideSpot(vOrigin));
 	addTask(pHideGoalPoint);
 }

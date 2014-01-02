@@ -630,7 +630,8 @@ void CClient :: think ()
 				
 				if ( (m_iLastJumpWaypointIndex==-1) && bCheckDistance && ((vPlayerOrigin - m_vLastAutoWaypointPlacePos).Length() > 200) )
 				{
-					int iNearestWpt = CWaypointLocations::NearestWaypoint(vPlayerOrigin, 150.0, -1, true, false, false, NULL);
+					extern ConVar rcbot_autowaypoint_dist;
+					int iNearestWpt = CWaypointLocations::NearestWaypoint(vPlayerOrigin, rcbot_autowaypoint_dist.GetFloat(), -1, true, false, false, NULL);
 					
 					if ( iNearestWpt == -1 )
 						CWaypoints::addWaypoint(this,"","","","");

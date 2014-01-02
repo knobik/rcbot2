@@ -732,7 +732,7 @@ public:
 
 	inline CBotSchedules *getSchedule () { return m_pSchedules; }
 
-	virtual void reachedCoverSpot ();
+	virtual void reachedCoverSpot (int flags);
 
 	virtual bool wantToFollowEnemy ();
 
@@ -842,6 +842,8 @@ public:
 	virtual void debugBot ( char *msg );
 
 	virtual bool walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset );
+
+	void setCoverFrom ( edict_t *pCoverFrom ) { m_pLastCoverFrom = MyEHandle(pCoverFrom); }
 
 protected:
 
@@ -1012,6 +1014,7 @@ protected:
 	Vector m_vListenPosition; // listening player position, heard someone shoot
 	bool m_bListenPositionValid;
 	float m_fListenTime;
+	float m_fWantToListenTime;
 	bool m_bOpenFire;
 	unsigned int m_iPrevWeaponSelectFailed;
 
@@ -1041,6 +1044,12 @@ protected:
 
 	float m_fTotalAimFactor;
 	Vector m_vAimOffset;
+	MyEHandle m_pLastCoverFrom;
+
+	short int m_iTeamMatesInRange;
+	short int m_iEnemiesInRange;
+	short int m_iEnemiesVisible;
+	short int m_iTeamMatesVisible;
 };
 
 class CBots
@@ -1120,6 +1129,7 @@ private:
 	static float m_flAddKickBotTime;
 
 	static queue<edict_t*> m_ControlQueue;
+
 };
 
 void DrawLine ( const Vector &origin, const Vector &target, int r, int g, int b, bool noDepthTest, float duration );

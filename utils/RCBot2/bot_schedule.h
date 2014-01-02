@@ -83,6 +83,7 @@ typedef enum
 	SCHED_HELP_PLAYER,
 	SCHED_BOMB,
 	SCHED_TF_SPYCHECK,
+	SCHED_FOLLOW,
 	SCHED_MAX
 	//SCHED_HIDE_FROM_ENEMY
 }eBotSchedule;
@@ -570,9 +571,9 @@ class CGotoHideSpotSched : public CBotSchedule
 public:
 	// find a hide spot
 	// hide from an enemy (pEdict)
-	CGotoHideSpotSched ( edict_t *pEdict );
+	CGotoHideSpotSched ( CBot *pBot, edict_t *pEdict );
 	// hide from a Vector
-	CGotoHideSpotSched ( Vector vOrigin );
+	CGotoHideSpotSched ( CBot *pBot, Vector vOrigin );
 
 	void init ();
 };

@@ -2724,6 +2724,61 @@ void CFindLastEnemy::execute ( CBot *pBot, CBotSchedule *pSchedule )
 	if ( m_fTime < engine->Time() )
 		complete();
 }
+////////////////////////
+CFollowTask :: CFollowTask ( edict_t *pFollow ) 
+{
+	m_pFollow = pFollow;
+	m_fFollowTime = 0;
+	m_vLastSeeVector = CBotGlobals::entityOrigin(pFollow);
+	CClassInterface::getVelocity(pFollow,&m_vLastSeeVelocity);
+}
+
+void CFollowTask :: init ()
+{
+
+}
+
+void CFollowTask::execute ( CBot *pBot, CBotSchedule *pSchedule )
+{
+	if ( m_pFollow.get() == NULL )
+	{
+		fail();
+		return;
+	}
+
+	if ( !CBotGlobals::entityIsAlive(m_pFollow.get()) )
+	{
+		fail();
+		return;
+	}
+
+	pBot->setLookVector(m_vLastSeeVector);
+	pBot->setLookAtTask(LOOK_VECTOR);
+
+	if ( pBot->isVisible(m_pFollow) )
+	{
+		m_vLastSeeVector = CBotGlobals::entityOrigin(m_pFollow);
+
+		if ( pBot->distanceFrom(m_pFollow) > 150.0f )
+			pBot->setMoveTo(m_vLastSeeVector);
+		else
+			pBot->stopMoving();
+
+		CClassInterface::getVelocity(m_pFollow,&m_vLastSeeVelocity);
+
+		m_vLastSeeVector = m_vLastSeeVector + m_vLastSeeVelocity;
+
+		m_fFollowTime = engine->Time() + 1.0f;
+	}
+
+	if ( m_fFollowTime < engine->Time() )
+		complete();
+}
+
+void CFollowTask::debugString ( char *string )
+{
+	sprintf(string,"CFollowTask\nm_pFollow =(%s)",engine->GetPlayerNetworkIDString(m_pFollow));
+}
 ////////////////////////////////////////////
 CCrouchHideTask :: CCrouchHideTask( edict_t *pHideFrom )
 {
@@ -2743,7 +2798,7 @@ void CCrouchHideTask :: init ()
 
 void CCrouchHideTask :: debugString ( char *string )
 {
-	sprintf(string,"CHideTask\nm_pHideFrom =(%x)",(int)m_pHideFrom.get());
+	sprintf(string,"CCrouchHideTask\nm_pHideFrom =(%s)",engine->GetPlayerNetworkIDString(m_pHideFrom));
 }
 
 void CCrouchHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
@@ -2753,7 +2808,7 @@ void CCrouchHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		complete();
 		return;
 	}
-	if ( CBotGlobals::entityIsAlive(m_pHideFrom) )
+	if ( !CBotGlobals::entityIsAlive(m_pHideFrom) )
 	{
 		complete();
 		return;

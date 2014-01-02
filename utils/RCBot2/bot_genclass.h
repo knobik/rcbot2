@@ -643,21 +643,41 @@ class dataUnconstArray
 		{
 			if ( array.size() == 0  )
 				return;
+#ifdef _DEBUG
+			//SAFE REMOVE - SLOW
+			vector<T> newVec;
 
-#ifndef __linux__
+			for ( unsigned int i = 0; i < array.size(); i ++ )
+			{
+				if ( array[i] != obj )
+					newVec.push_back(array[i]);
+			}
+
+			array.clear();
+			array = newVec;
+#endif
+
+#if defined(__linux__) && !defined(_DEBUG)
             vector<T> ::iterator it;
-#else
+#endif
+
+#if defined(_WIN32) && !defined(_DEBUG)
             typename vector<T> ::iterator it;
 #endif
 
-			for ( it = array.begin(); it != array.end(); ++ it )
+#ifndef _DEBUG
+
+			for ( it = array.begin(); it != array.end(); )
 			{
-				if ( *it == obj )
+				if ( it == obj )
 				{
-					array.erase(it);
+					it = array.erase(it);
 					return;
 				}
+				else
+					++ it;
 			}
+#endif
 		}
 
 		inline void Destroy (void)

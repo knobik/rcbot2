@@ -312,10 +312,12 @@ void CClassInterfaceValue :: findOffset ( )
 	if ( m_offset > 0 )
 		m_offset += m_preoffset;
 }
-
+/* Find and save all offsets at load to save CPU */
 void CClassInterface:: init ()
 {
+	//	DEFINE_GETPROP			ID						Class			Variable	Offset
 		DEFINE_GETPROP(GETPROP_TF2MINIBUILDING,"CObjectSentryGun","m_bMiniBuilding",0);
+
 		DEFINE_GETPROP(GETPROP_TF2SCORE,"CTFPlayerResource","m_iTotalScore",0);
 		DEFINE_GETPROP(GETPROP_ENTITY_FLAGS,"CBaseEntity","m_iEffectFlags",0);
 		DEFINE_GETPROP(GETPROP_TEAM,"CBaseEntity","m_iTeamNum",0);

@@ -188,7 +188,7 @@ public:
 
 	void handleWeapons ();
 
-	void reachedCoverSpot ();
+	void reachedCoverSpot (int flags);
 
 	void touchedWpt ( CWaypoint *pWaypoint );
 
@@ -268,6 +268,8 @@ private:
 	eDODVoiceCMD m_LastHearVoiceCommand;
 
 	float m_fLastCaptureEvent;
+
+	float m_fNextCheckAlone; // to see if bot should tell others to stick together
 	// blah blah
 };
 

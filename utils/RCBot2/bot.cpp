@@ -614,7 +614,7 @@ bool CBot :: canAvoid ( edict_t *pEntity )
 	return false;
 }
 
-void CBot :: reachedCoverSpot ()
+void CBot :: reachedCoverSpot (int flags)
 {
 
 }
@@ -840,7 +840,7 @@ void CBot :: think ()
 	if ( rcbot_debug_iglev.GetInt() != 6 )
 	{
 #endif
-	if ( m_bWantToListen && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	if ( m_bWantToListen && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && (m_fWantToListenTime<engine->Time()) )
 		listenForPlayers();
 	else if ( m_fListenTime > engine->Time() )
 	{
@@ -1166,7 +1166,13 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	m_fWantToListenTime = 0;
+	m_iTeamMatesInRange = 0;
+	m_iEnemiesInRange = 0;
+	m_iEnemiesVisible = 0;
+	m_iTeamMatesVisible = 0;
 	resetTouchDistance(48.0f);
+	m_pLastCoverFrom = MyEHandle(NULL);
 
 	m_vAimOffset = Vector(1.0f,1.0f,1.0f);
 
@@ -1408,7 +1414,7 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 		if ( !bDontHide )
 		{
 			m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-			m_pSchedules->addFront(new CGotoHideSpotSched(m_vHurtOrigin));
+			m_pSchedules->addFront(new CGotoHideSpotSched(this,m_vHurtOrigin));
 		}
 
 		m_iAccumulatedDamage = 0;
@@ -1658,6 +1664,8 @@ void CBot :: listenForPlayers ()
 
 	float fMinDist = 1024.0f;
 	float fDist;
+	bool bIsEnemy;
+	bool bIsVisible;
 
 	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
@@ -1672,6 +1680,11 @@ void CBot :: listenForPlayers ()
 	}
 
 	m_bListenPositionValid = false;
+
+	m_iTeamMatesInRange = 0;
+	m_iEnemiesInRange = 0;
+	m_iEnemiesVisible = 0;
+	m_iTeamMatesVisible = 0;
 
 	for ( register short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
@@ -1700,35 +1713,62 @@ void CBot :: listenForPlayers ()
 			continue;
 
 		fDist = distanceFrom(pPlayer);
+		bIsVisible = isVisible(pPlayer);
+		bIsEnemy = isEnemy(pPlayer);
 
-		if ( fDist < fMinDist )
+		if ( !bIsEnemy && bIsVisible )
 		{
-			fMinDist = fDist;
-			pListenNearest = pPlayer;
+			m_iTeamMatesVisible++;
+		}
+		else if ( bIsVisible )
+			m_iEnemiesVisible++;
 
-			// look at enemy
-			if ( !isVisible(pPlayer) || isEnemy(pPlayer) )
+		if ( fDist < 1024.0f )
+		{
+			if ( fDist < 256.0f )
 			{
-				m_vListenPosition = p->GetAbsOrigin();
-
-				//if ( !isEnemy(pPlayer) )
-				//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
-			}
-			else
-			{
-				QAngle angle = p->GetAbsAngles();
-				Vector forward;
-
-				AngleVectors( angle, &forward );
-
-				// look where team mate is shooting
-				m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);
+				if ( !bIsEnemy )
+				{
+					m_iTeamMatesInRange ++;
+				}
+				else
+				{
+					m_iEnemiesInRange ++;
+				}
 			}
 
-			m_bListenPositionValid = true;
-			m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
-			setLookAtTask(LOOK_NOISE);
-			m_fLookSetTime = m_fListenTime;
+			if ( fDist < fMinDist )
+			{
+				fMinDist = fDist;
+				pListenNearest = pPlayer;
+
+				// look at possible enemy
+				if ( !bIsVisible || bIsEnemy )
+				{
+					m_vListenPosition = p->GetAbsOrigin();
+
+					//if ( !isEnemy(pPlayer) )
+					//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
+				}
+				else
+				{
+					QAngle angle = p->GetAbsAngles();
+					Vector forward;
+
+					AngleVectors( angle, &forward );
+
+					// look where team mate is shooting
+					m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);			
+				}
+
+				m_bListenPositionValid = true;
+				m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
+				setLookAtTask(LOOK_NOISE);
+				m_fLookSetTime = m_fListenTime;
+
+				if ( bIsVisible || bIsEnemy ) // certain
+					m_fWantToListenTime = engine->Time() + 1.0f;
+			}
 		}
 	}
 }
@@ -1834,7 +1874,6 @@ void CBot :: doMove ()
 		fAngle = CBotGlobals::yawAngleFromEdict(m_pEdict,m_vMoveTo);
 		fDist = (getOrigin()-m_vMoveTo).Length2D();
 
-		/////////
 		radians = DEG_TO_RAD(fAngle);
 		//radians = fAngle * 3.141592f / 180.0f; // degrees to radians
         // fl Move is percentage (0 to 1) of forward speed,
@@ -1842,22 +1881,11 @@ void CBot :: doMove ()
 		
 		// quicker
 		SinCos(radians,&move.y,&move.x);
-		//move.x = TableCos(radians);
-		//move.y = TableSin(radians);
-		/*
-		move.x = cos(radians);
-		move.y = sin(radians);
-*/
+
 		move = move / move.Length();
 
 		flMove = move.x;
 		flSide = move.y;
-
-		/*if ( m_bThinkStuck )
-		{
-			m_vVelocity
-			m_fSideSpeed = h;
-		}*/
 
 		m_fForwardSpeed = m_fIdealMoveSpeed * flMove;
 
@@ -1901,13 +1929,10 @@ void CBot :: doMove ()
 		}
 
 
-		//if ( isUnderWater() )
-		//{
-			if ( m_vMoveTo.z > (getOrigin().z + 32.0) )
-				m_fUpSpeed = m_fIdealMoveSpeed;
-			else if ( m_vMoveTo.z < (getOrigin().z - 32.0) )
-				m_fUpSpeed = -m_fIdealMoveSpeed;
-		//}d
+		if ( m_vMoveTo.z > (getOrigin().z + 32.0) )
+			m_fUpSpeed = m_fIdealMoveSpeed;
+		else if ( m_vMoveTo.z < (getOrigin().z - 32.0) )
+			m_fUpSpeed = -m_fIdealMoveSpeed;
 	}
 	else
 	{	
@@ -1947,8 +1972,6 @@ float CBot :: DotProductFromOrigin ( Vector pOrigin )
 	flDot = DotProduct (vecLOS , vForward );
 	
 	return flDot; 
-
-	//return m_pBaseEdict->FInViewCone(CBaseEntity::Instance(pEntity));
 }
 
 Vector CBot::getAimVector ( edict_t *pEntity )
@@ -2065,108 +2088,11 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	v_desired_offset->z += randomFloat(-vel.z,vel.z);
 
 }
-// preaim : cbot aim
-// modaim : add offsets based on 
-// postaim : modify the 
-/*
-Vector CBot :: getAimVector ( edict_t *pEntity )
-{
-	static Vector v_right;
 
-	static float fSensFactor;
-	//static Vector v_max,v_min;
-	static Vector v_org;
-	static Vector v_size;
-	static Vector myvel;
-	static Vector enemyvel;
-	static Vector vel; // realtive velocity
-	extern ConVar bot_general_difficulty;
-
-	if ( m_fNextUpdateAimVector > engine->Time() )
-	{
-		return m_vAimVector;
-	}
-
-	fSensitivity = (float)m_pProfile->m_iSensitivity/20;
-	fHeadOffset = 0;
-
-	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
-	{
-		// aim for head
-		if ( hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) )
-			fHeadOffset = v_size.z;
-	}
-
-	myvel = Vector(0,0,0);
-	enemyvel = Vector(0,0,0);
-
-	v_size = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
-	v_size = v_size * 0.5f;
-
-	v_org = CBotGlobals::entityOrigin(pEntity);
-
-	//v_change = m_vAimVector - v_org;
-
-	// change in velocity
-	if ( CClassInterface::getVelocity(pEntity,&enemyvel) && CClassInterface::getVelocity(m_pEdict,&myvel) )
-	{
-		vel = (enemyvel - myvel); // relative velocity
-
-		fVelocityFactor = exp(-1.0f + ((vel.Length() * 0.003125f)*2)); // divide by max speed
-
-		//m_vAimVector = m_vAimVector + (fDistFactor * Vector(
-		//	randomFloat(-v_size.x,v_size.x)*vel.x,
-		//	randomFloat(-v_size.y,v_size.y)*vel.y,
-		//	randomFloat(-v_size.z,v_size.z)*vel.z));
-	}
-	else
-	{
-		vel = Vector(0.5f,0.5f,0.5f);
-		fVelocityFactor = 1.0f;
-	}
-
-	fDistFactor = 1.0f + (distanceFrom(pEntity)*0.000125f)*(m_fFov/90.0f);
-	//fAimSkillFactor = ( 1.0f + (m_pProfile->m_fAimSkill - bot_general_difficulty.GetFloat()) );// add skill factor
-	fSensFactor = 1.0f + ((float)m_pProfile->m_iSensitivity * 0.05f);
-
-	fTotalFactor = 1.0f;
-	fTotalFactor *= fSensFactor;
-	fTotalFactor *= fVelocityFactor;
-	fTotalFactor *= fDistFactor;
-	//fTotalFactor *= fAimSkillFactor;
-
-	m_fTotalAimFactor = (m_fTotalAimFactor*m_pProfile->m_fAimSkill) + fTotalFactor*(1.0f-m_pProfile->m_fAimSkill);
-
-	//fDistFactor *= (v_change/v_size).Length(); // change in aiming
-
-    //v_right = (v_org-getOrigin()).Cross(Vector(0,0,1)); 
-
-	//if ( v_right.Length() > 0 )
-	//	v_right = v_right / v_right.Length(); 
-
-	// add randomised offset based on size and distance
-	//m_vAimVector = v_org + (m_fTotalAimFactor*Vector(randomFloat(-v_size.x,v_size.x),randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));
-	
-	m_vAimOffset.x = ((1.0f-fSensitivity)*m_vAimOffset.x) + fSensitivity*m_fTotalAimFactor*randomFloat(-v_size.x,v_size.x);
-	m_vAimOffset.y = ((1.0f-fSensitivity)*m_vAimOffset.y) + fSensitivity*m_fTotalAimFactor*randomFloat(-v_size.y,v_size.y);
-	m_vAimOffset.z = ((1.0f-fSensitivity)*m_vAimOffset.z) + fSensitivity*m_fTotalAimFactor*randomFloat(-v_size.z,v_size.z+fHeadOffset);
-	// add another offset based on distance
-	//m_vAimVector = m_vAimVector + (fDistFactor*Vector(v_right.x*randomFloat(-v_size.x,v_size.x),v_right.y*randomFloat(-v_size.y,v_size.y),randomFloat(-v_size.z,v_size.z)));
-
-	m_vAimVector = v_org + m_vAimOffset;
-
-
-	m_fNextUpdateAimVector = engine->Time() + (1.0f-m_pProfile->m_fAimSkill)*0.2f;
-
-	return m_vAimVector;///BOTUTIL_SmoothAim(m_vAimVector,distanceFrom(m_vAimVector),eyeAngles());
-
-}
-*/
 void CBot :: grenadeThrown ()
 {
 
 }
-
 
 void CBot :: checkCanPickup ( edict_t *pPickup )
 {
@@ -2385,8 +2311,6 @@ void CBot :: getLookAtVector ()
 					
 				m_fLookAroundTime = engine->Time() + randomFloat(2.0f,3.0f);
 				m_vLookAroundOffset = m_vLookAroundOffset + Vector(randomFloat(-128,128),randomFloat(-128,128),randomFloat(-16,16));
-			//setLookAt();
-			//setLookAt(...);
 			}
 
 			setLookAt(m_vLookAroundOffset);
@@ -2489,12 +2413,9 @@ bool CBot :: select_CWeapon ( CWeapon *pWeapon )
 
 void CBot :: doLook ()
 {
-	//static float fSigmoid[] = {0.1,0.3,0.4,0.5,0.4,0.3,0.1};
 	// what do we want to look at
 	getLookAtVector();
 
-	// temporary measure for bot to face listen server client
-	//setLookAt(CBotGlobals::entityOrigin(INDEXENT(1)));
 
 	// looking at something?
     if ( lookAtIsValid () )
@@ -2502,8 +2423,6 @@ void CBot :: doLook ()
 		float fSensitivity = (float)m_pProfile->m_iSensitivity;
 		QAngle requiredAngles;
 
-		//extern ConVar bot_anglespeed;
-		
 		VectorAngles(m_vLookAt-getEyePosition(),requiredAngles);
 		CBotGlobals::fixFloatAngle(&requiredAngles.x);
 		CBotGlobals::fixFloatAngle(&requiredAngles.y);
@@ -2517,7 +2436,7 @@ void CBot :: doLook ()
 
 		if ( onLadder() ) // snap to ladder
 		{
-			fSensitivity = 14.0f;
+			fSensitivity = 15.0f;
 		}
 
 		changeAngles(fSensitivity,&requiredAngles.x,&m_vViewAngles.x,NULL);
@@ -2537,8 +2456,6 @@ void CBot :: doLook ()
 		//else if ( m_vViewAngles.x < -180.0f )
 		//	m_vViewAngles.x = -180.0f;
 	}
-
-	//m_pController->SetLocalAngles(m_vViewAngles);
 }
 
 void CBot :: doButtons ()
@@ -2637,23 +2554,6 @@ bool CBot::wantToFollowEnemy ()
 ////////////////////////////
 void CBot :: getTasks (unsigned int iIgnore)
 {
-	// look for tasks
-	/*if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
-	{		
-		if ( !m_pSchedules->isCurrentSchedule(SCHED_ATTACK) && !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
-		{
-			m_pSchedules->removeSchedule(SCHED_ATTACK);
-			m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-
-			m_pSchedules->addFront(new CBotAttackSched(m_pEnemy));
-			m_pSchedules->addFront(new CGotoHideSpotSched(m_pEnemy));
-
-			return;
-		}
-
-		m_bLookedForEnemyLast = false;
-	}
-	else*/
 	if ( !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsAlive(m_pLastEnemy) )
 	{
 		if ( wantToFollowEnemy() )
