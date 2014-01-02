@@ -983,15 +983,15 @@ void CDODBot :: modThink ()
 		m_pButtons->tap(IN_RELOAD);
 	}
 
-	if ( !m_bProne )
+	if ( !m_bProne && m_bStatsCanUse )
 	{
 		if ( m_pSchedules->isEmpty() || (!m_pSchedules->getCurrentSchedule()->isID(SCHED_FOLLOW) && !m_pSchedules->getCurrentSchedule()->isID(SCHED_SNIPE)) )
 		{
 			if ( m_fNextCheckAlone < engine->Time() )
 			{
-				m_fNextCheckAlone = engine->Time() + 5.0f;
+				m_fNextCheckAlone = engine->Time() + 2.5f;
 
-				if ( (m_iTeamMatesInRange < 1) && (m_iTeamMatesVisible > 1) )
+				if ( (m_Stats.stats.m_iTeamMatesInRange < 1) && (m_Stats.stats.m_iTeamMatesVisible > 1) )
 					addVoiceCommand(DOD_VC_STICK_TOGETHER);
 			}
 		}

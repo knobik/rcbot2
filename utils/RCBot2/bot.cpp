@@ -911,6 +911,18 @@ void CBot :: think ()
 	}
 #endif
 
+#ifdef _DEBUG
+	if ( rcbot_debug_iglev.GetInt() != 11 )
+	{
+#endif
+		if ( m_fStatsTime < engine->Time() )
+		{
+			updateStatistics();
+			m_fStatsTime = engine->Time() + 0.15f;
+		}
+#ifdef _DEBUG
+	}
+#endif
 	
 	setMoveLookPriority(MOVELOOK_ATTACK);
 
@@ -1166,11 +1178,14 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	m_bStatsCanUse = false;
+	m_StatsCanUse.data = 0;
+	m_Stats.data = 0;
+	m_iStatsIndex = 0;
+	m_fStatsTime = 0;
+
 	m_fWantToListenTime = 0;
-	m_iTeamMatesInRange = 0;
-	m_iEnemiesInRange = 0;
-	m_iEnemiesVisible = 0;
-	m_iTeamMatesVisible = 0;
+
 	resetTouchDistance(48.0f);
 	m_pLastCoverFrom = MyEHandle(NULL);
 
@@ -1651,6 +1666,61 @@ void CBot :: freeMapMemory ()
 	/////////////////////////////////
 	init();
 }
+
+void CBot :: updateStatistics ()
+{
+	bool bVisible;
+	bool bIsEnemy;
+
+	extern ConVar rcbot_stats_inrange_dist;
+
+	if ( (m_iStatsIndex == 0) || ( m_iStatsIndex > gpGlobals->maxClients ) )
+	{
+		if ( m_iStatsIndex != 0 )
+			m_bStatsCanUse = true;
+
+		m_StatsCanUse.data = m_Stats.data;
+		m_Stats.data = 0;
+		m_iStatsIndex = 0; // reset to be sure in case of m_iStatsIndex > gpGlobals->maxClients
+	}
+
+	CClient *pClient = CClients::get(m_iStatsIndex++);
+
+	if ( !pClient->isUsed() )
+		return;
+
+	edict_t *pPlayer = pClient->getPlayer();
+
+	if ( pPlayer == m_pEdict )
+		return; // don't listen to self
+
+	IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+	// 05/07/09 fix crash bug
+	if ( !p || !p->IsConnected() || p->IsDead() || p->IsObserver() || !p->IsPlayer() )
+		return;
+
+	bVisible = isVisible(pPlayer);
+	bIsEnemy = isEnemy(pPlayer);
+
+	if ( bIsEnemy )
+	{
+		if ( bVisible )
+			m_Stats.stats.m_iEnemiesVisible++;
+
+		if ( distanceFrom(pPlayer) < rcbot_stats_inrange_dist.GetFloat() )
+			m_Stats.stats.m_iEnemiesInRange++;
+	}
+	else
+	{
+		// team-mate
+		if ( bVisible )
+			m_Stats.stats.m_iTeamMatesVisible++;
+
+		if ( distanceFrom(pPlayer) < rcbot_stats_inrange_dist.GetFloat() )
+			m_Stats.stats.m_iTeamMatesInRange++;
+	}
+}
 // Listen for players who are shooting
 void CBot :: listenForPlayers ()
 {
@@ -1681,10 +1751,7 @@ void CBot :: listenForPlayers ()
 
 	m_bListenPositionValid = false;
 
-	m_iTeamMatesInRange = 0;
-	m_iEnemiesInRange = 0;
-	m_iEnemiesVisible = 0;
-	m_iTeamMatesVisible = 0;
+	m_fWantToListenTime = engine->Time() + 0.25f;
 
 	for ( register short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
@@ -1713,61 +1780,42 @@ void CBot :: listenForPlayers ()
 			continue;
 
 		fDist = distanceFrom(pPlayer);
-		bIsVisible = isVisible(pPlayer);
-		bIsEnemy = isEnemy(pPlayer);
 
-		if ( !bIsEnemy && bIsVisible )
+		if ( fDist < fMinDist )
 		{
-			m_iTeamMatesVisible++;
-		}
-		else if ( bIsVisible )
-			m_iEnemiesVisible++;
+			fMinDist = fDist;
+			pListenNearest = pPlayer;
 
-		if ( fDist < 1024.0f )
-		{
-			if ( fDist < 256.0f )
+			bIsVisible = isVisible(pPlayer);
+			bIsEnemy = isEnemy(pPlayer);
+
+			// look at possible enemy
+			if ( !bIsVisible || bIsEnemy )
 			{
-				if ( !bIsEnemy )
-				{
-					m_iTeamMatesInRange ++;
-				}
-				else
-				{
-					m_iEnemiesInRange ++;
-				}
+				m_vListenPosition = p->GetAbsOrigin();
+
+				//if ( !isEnemy(pPlayer) )
+				//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
+			}
+			else
+			{
+				QAngle angle = p->GetAbsAngles();
+				Vector forward;
+
+				AngleVectors( angle, &forward );
+
+				// look where team mate is shooting
+				m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);			
 			}
 
-			if ( fDist < fMinDist )
-			{
-				fMinDist = fDist;
-				pListenNearest = pPlayer;
+			m_bListenPositionValid = true;
+			m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
+			setLookAtTask(LOOK_NOISE);
+			m_fLookSetTime = m_fListenTime;
 
-				// look at possible enemy
-				if ( !bIsVisible || bIsEnemy )
-				{
-					m_vListenPosition = p->GetAbsOrigin();
-
-					//if ( !isEnemy(pPlayer) )
-					//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
-				}
-				else
-				{
-					QAngle angle = p->GetAbsAngles();
-					Vector forward;
-
-					AngleVectors( angle, &forward );
-
-					// look where team mate is shooting
-					m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);			
-				}
-
-				m_bListenPositionValid = true;
-				m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
-				setLookAtTask(LOOK_NOISE);
-				m_fLookSetTime = m_fListenTime;
-
-				if ( bIsVisible || bIsEnemy ) // certain
-					m_fWantToListenTime = engine->Time() + 1.0f;
+			if ( bIsVisible || bIsEnemy ) 
+			{// certain where noise is coming from -- don't listen elsewhere for another second
+				m_fWantToListenTime = engine->Time() + 1.0f;
 			}
 		}
 	}

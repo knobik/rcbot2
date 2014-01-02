@@ -429,6 +429,19 @@ private:
 	Vector m_vLastSeeVel; // velocity
 };
 
+typedef union bot_statistics_t 
+{
+  int data;
+  struct 
+  {
+    byte m_iTeamMatesInRange;
+	byte m_iEnemiesInRange;
+	byte m_iEnemiesVisible;
+	byte m_iTeamMatesVisible;
+  } stats;
+} bot_statistics_s;
+
+
 class CBot 
 {
 public:
@@ -793,6 +806,7 @@ public:
 
 	inline float getSpeed () { return m_vVelocity.Length2D(); }
 
+	void updateStatistics (); // updates number of teammates/enemies nearby/visible
 	virtual void listenForPlayers ();
 	virtual bool wantToListenToPlayer ( edict_t *pPlayer ) { return true; }
 
@@ -1046,11 +1060,14 @@ protected:
 	Vector m_vAimOffset;
 	MyEHandle m_pLastCoverFrom;
 
-	short int m_iTeamMatesInRange;
-	short int m_iEnemiesInRange;
-	short int m_iEnemiesVisible;
-	short int m_iTeamMatesVisible;
+	bot_statistics_t m_Stats; // this updates progressively
+	bot_statistics_t m_StatsCanUse; // this updates fully every 5 seconds max
+	bool m_bStatsCanUse;
+	float m_fStatsTime;
+	short int m_iStatsIndex;
 };
+
+
 
 class CBots
 {
