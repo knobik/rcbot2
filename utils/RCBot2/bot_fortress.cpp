@@ -3583,6 +3583,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		fDefendFlagUtility = bot_defrate.GetFloat() - randomFloat(0.0f,fDefendFlagUtility);
 	else if ( m_iClass == TF_CLASS_MEDIC )
 		fDefendFlagUtility = fGetFlagUtility;
+	else if ( m_iClass == TF_CLASS_SPY )
+		fDefendFlagUtility = 0.0f;
 
 	if ( hasSomeConditions(CONDITION_PUSH) || CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) )
 	{
@@ -5233,7 +5235,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 
 		vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
 // enemy below me!
-		if ( pWeapon->isMelee() && (vEnemyOrigin.z < (getOrigin().z - 8)) && (vEnemyOrigin.z > (getOrigin().z-128))  )
+		if ( pWeapon->isMelee() && (distanceFrom2D(pEnemy)<64.0f) && (vEnemyOrigin.z < getOrigin().z) && (vEnemyOrigin.z > (getOrigin().z-128))  )
 			duck();
 
 		if ( pWeapon->outOfAmmo(this) )

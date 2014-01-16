@@ -45,6 +45,7 @@
 #include "bot_getprop.h"
 #include "bot_dod_bot.h"
 #include "bot_script.h"
+#include "bot_squads.h"
 
 extern ConVar *sv_gravity;
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -2836,7 +2837,10 @@ void CCrouchHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	}
 
 	if ( m_bCrouching )
+	{
 		pBot->duck(true);
+		pBot->wantToShoot(false);
+	}
 
 	if ( m_fHideTime < engine->Time() )
 		complete();
@@ -3399,6 +3403,89 @@ CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float f
 	m_z = z; // z = ground level
 	m_iWaypointType = iWaypointType;
 }
+// TO DO
+void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	edict_t *pSquadLeader; 
+	float fDist;
+
+	if ( !pBot->inSquad(m_pSquad) )
+	{
+		fail();
+		return;
+	}
+
+	pSquadLeader = m_pSquad->GetLeader();
+
+	if ( pSquadLeader == pBot->getEdict() )
+	{
+		fail();
+		return;
+	}
+
+	if ( CClassInterface::getMoveType(pSquadLeader) == MOVETYPE_LADDER )
+	{
+		pBot->stopMoving();
+
+		if ( (m_fIdleTime + 2.0f) < engine->Time() )
+		{
+			complete();
+			return;
+		}
+	}
+
+	if ( (m_fVisibleTime > 0.0f) && !pBot->hasEnemy() && !pBot->isVisible(pSquadLeader) )
+	{
+		// haven't seen leader for five seconds
+		if ( (engine->Time() - m_fVisibleTime) > 0.2f )
+		{
+			complete();
+			return;
+		}
+	}
+	else
+		m_fVisibleTime = engine->Time();
+	
+	if ( pBot->hasSomeConditions(CONDITION_SQUAD_IDLE) )
+	{
+		// squad leader idle for 3 seconds. see what else i can do
+		complete();
+		return;
+	}
+
+	if ( m_fUpdateMovePosTime < engine->Time() )
+	{
+		float fRand;
+		float fSpeed = 0.0f;
+
+		fRand = randomFloat(1.0f,2.0f);
+
+		CClient *pClient = CClients::get(pSquadLeader);
+
+		if ( pClient )
+			fSpeed = pClient->getSpeed();
+
+		m_fUpdateMovePosTime = engine->Time() + (fRand * (1.0f-(fSpeed/320)));
+		m_vPos = m_pSquad->GetFormationVector(pBot->getEdict());
+	}
+
+	fDist = pBot->distanceFrom(m_vPos); // More than reachable range
+
+	if ( fDist > 400.0f )
+	{
+		fail(); // find a path instead
+		return;
+	}
+	else if ( fDist > m_pSquad->GetSpread() )
+	{
+		pBot->setMoveTo(m_vPos);
+	}
+	else
+		pBot->stopMoving();
+
+	pBot->lookAtEdict(pSquadLeader);
+	pBot->setLookAtTask(LOOK_EDICT);
+}
 
 void CBotDODSnipe :: debugString ( char *string )
 {
@@ -3706,7 +3793,7 @@ eTaskState CBotTask :: isInterrupted (CBot *pBot)
 {
 	if ( m_iCompleteInterruptConditionsHave )
 	{
-		if ( pBot->hasSomeConditions(m_iCompleteInterruptConditionsHave) )
+		if ( pBot->hasAllConditions(m_iCompleteInterruptConditionsHave) )
 			return STATE_COMPLETE;
 	}
 
@@ -3718,7 +3805,7 @@ eTaskState CBotTask :: isInterrupted (CBot *pBot)
 
 	if ( m_iFailInterruptConditionsHave )
 	{
-		if ( pBot->hasSomeConditions(m_iFailInterruptConditionsHave) )
+		if ( pBot->hasAllConditions(m_iFailInterruptConditionsHave) )
 			return STATE_FAIL;
 	}
 

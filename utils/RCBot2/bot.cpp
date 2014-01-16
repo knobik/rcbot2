@@ -84,6 +84,7 @@
 #include "bot_profile.h"
 #include "bot_waypoint_locations.h"
 #include "bot_waypoint.h"
+#include "bot_squads.h"
 
 #include "bot_mtrand.h"
 //#include "vstdlib/random.h" // for random functions
@@ -809,7 +810,11 @@ void CBot :: think ()
 	if ( rcbot_debug_iglev.GetInt() != 4 )
 	{
 #endif
-	checkStuck();
+		if ( checkStuck() )
+		{
+			// look in the direction I'm going to see what I'm stuck on
+			setLookAtTask(LOOK_WAYPOINT,randomFloat(2.0f,4.0f));
+		}
 #ifdef _DEBUG
 	}
 #endif
@@ -1024,6 +1029,7 @@ void CBot :: init (bool bVarInit)
 	m_fIdealMoveSpeed = 320;
 	m_fFov = BOT_DEFAULT_FOV;
 	m_bOpenFire = true;
+	m_pSquad = NULL;
 
 	cmd.command_number = 0;
 
@@ -1074,6 +1080,47 @@ void CBot :: updateConditions ()
 		removeCondition(CONDITION_ENEMY_OBSCURED);
 		removeCondition(CONDITION_ENEMY_DEAD);
 		removeCondition(CONDITION_SEE_ENEMY_HEAD);
+	}
+
+	if ( inSquad() )
+	{
+		edict_t *pLeader = m_pSquad->GetLeader();
+
+		if ( CBotGlobals::entityIsValid(pLeader) && CBotGlobals::entityIsAlive(pLeader) )
+		{
+			extern ConVar rcbot_squad_idle_time;
+
+			removeCondition(CONDITION_SQUAD_LEADER_DEAD);
+
+			if ( distanceFrom(pLeader) <= 400.0f )
+				updateCondition(CONDITION_SQUAD_LEADER_INRANGE);
+			else
+				removeCondition(CONDITION_SQUAD_LEADER_INRANGE);
+
+			if ( isVisible(pLeader) )
+				updateCondition(CONDITION_SEE_SQUAD_LEADER);
+			else
+				removeCondition(CONDITION_SEE_SQUAD_LEADER);
+
+			float fSpeed = 0.0f;
+			CClient *pClient = CClients::get(pLeader);
+
+			if ( pClient )
+				fSpeed = pClient->getSpeed();
+
+			// update squad idle condition. If squad is idle, bot can move around a small radius 
+			// around the leader and do what they want, e.g. defend or snipe
+			if ( hasEnemy() || ((fSpeed > 10.0f) && ( CClassInterface::getMoveType(pLeader) != MOVETYPE_LADDER )) )
+			{
+				setSquadIdleTime(engine->Time());
+				removeCondition(CONDITION_SQUAD_IDLE);
+			}
+			else if ( (engine->Time() - m_fSquadIdleTime) > rcbot_squad_idle_time.GetFloat() )
+				updateCondition(CONDITION_SQUAD_IDLE);
+
+		}
+		else
+			updateCondition(CONDITION_SQUAD_LEADER_DEAD);
 	}
 
 	if ( m_pLastEnemy )
@@ -1374,6 +1421,13 @@ void CBot :: setup ()
 void CBot :: died ( edict_t *pKiller, const char *pszWeapon )
 {	
 	spawnInit();
+
+	if ( m_pSquad != NULL )
+	{
+		// died
+		CBotSquads::removeSquadMember(m_pSquad,m_pEdict);
+	}
+
 	m_vLastDiedOrigin = getOrigin();
 }
 
@@ -1521,7 +1575,10 @@ const char *pszConditionsDebugStrings[CONDITION_MAX_BITS+1] =
 "CONDITION_NEED_BOMB",
 "CONDITION_SEE_ENEMY_HEAD",
 "CONDITION_PRONE",
-"CONDITION_PARANOID"};
+"CONDITION_PARANOID",
+"CONDITION_SEE_SQUAD_LEADER",
+"CONDITION_SQUAD_LEADER_DEAD",
+"CONDITION_SQUAD_LEADER_INRANGE"};
 
 void CBot ::debugBot(char *msg)
 {

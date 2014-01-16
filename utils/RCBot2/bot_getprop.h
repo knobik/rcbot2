@@ -3,6 +3,12 @@
 
 typedef enum
 {
+	TELE_ENTRANCE = 0,
+	TELE_EXIT
+}eTeleMode;
+
+typedef enum
+{
 	GETPROP_UNDEF = -1,
 	GETPROP_TF2SCORE = 0,
 	GETPROP_ENTITY_FLAGS,

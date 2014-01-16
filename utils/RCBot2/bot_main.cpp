@@ -76,6 +76,7 @@
 #include "bot_mods.h"
 #include "bot_profiling.h"
 #include "bot_menu.h"
+#include "bot_squads.h"
 #include "vstdlib/random.h" // for random  seed 
 
 #include "bot_wpt_dist.h"
@@ -170,8 +171,8 @@ ConVar rcbot_prone_enemy_only("rcbot_prone_enemy_only","1",0,"if 1 bots only pro
 ConVar rcbot_menu_update_time1("rcbot_menu_update_time1","0.04",0,"time to update menus [displaying message]");
 ConVar rcbot_menu_update_time2("rcbot_menu_update_time2","0.2",0,"time to update menus [interval]");
 ConVar rcbot_autowaypoint_dist("rcbot_autowpt_dist","150.0",0,"distance for autowaypoints to be placed");
-ConVar rcbot_stats_inrange_dist("rcbot_stats_inrange_dist","320.0",0,"distance for autowaypoints to be placed");
-
+ConVar rcbot_stats_inrange_dist("rcbot_stats_inrange_dist","320.0",0,"distance for bots to realise they have other players in range (for particular radio commands in DOD:S)");
+ConVar rcbot_squad_idle_time("rcbot_squad_idle_time","3.0",0,"time for bots to do other things if squad leader is idle for a short time");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 
@@ -816,6 +817,8 @@ void CRCBotPlugin::LevelInit( char const *pMapName )
 	
 	if ( pMod )
 		pMod->mapInit();
+
+	CBotSquads::FreeMemory();
 
 	CClients::setListenServerClient(NULL);
 }

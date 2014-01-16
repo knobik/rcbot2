@@ -81,12 +81,6 @@ typedef enum
 
 extern const char *g_szLookTaskToString[LOOK_MAX];
 
-typedef enum
-{
-	TELE_ENTRANCE = 0,
-	TELE_EXIT
-}eTeleMode;
-
 #define BOT_CONFIG_FOLDER "config"
 #define BOT_MOD_FILE "bot_mods"
 #define BOT_ACCESS_CLIENT_FILE "accessclients"
@@ -170,8 +164,12 @@ typedef enum
 #define CONDITION_SEE_ENEMY_HEAD		524288 // bit 19
 #define CONDITION_PRONE					1048576 // bit 20
 #define CONDITION_PARANOID				2097152 // bit 21
-#define CONDITION_MAX					CONDITION_PARANOID
-#define CONDITION_MAX_BITS				21
+#define CONDITION_SEE_SQUAD_LEADER		4194304 // bit 22 
+#define CONDITION_SQUAD_LEADER_DEAD		8388608 // bit 23
+#define CONDITION_SQUAD_LEADER_INRANGE	16777216 // bit 24
+#define CONDITION_SQUAD_IDLE			33554432 // bit 25
+#define CONDITION_MAX					CONDITION_SQUAD_IDLE
+#define CONDITION_MAX_BITS				25
 
 ////////////////////////
 #define BLAST_RADIUS 200

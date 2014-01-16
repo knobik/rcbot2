@@ -62,6 +62,7 @@
 
 #include "bot_utility.h"
 #include "bot_const.h"
+#include "bot_ehandle.h"
 #include <queue>
 using namespace std;
 
@@ -89,6 +90,8 @@ extern CGlobalVars *gpGlobals;
 #define GET_AMMO   2
 
 #define T_OFFSETMAX  3
+
+class CBotSquad;
 
 bool BotFunc_BreakableIsEnemy ( edict_t *pBreakable, edict_t *pEdict );
 
@@ -232,79 +235,6 @@ typedef union
 	 byte voicecmd;
 }u_VOICECMD;
 
-////// entity handling in network
-class MyEHandle 
-{
-public:
-	MyEHandle ()
-	{
-		m_pEnt = NULL;
-		m_iSerialNumber = 0;
-	}
-
-    MyEHandle ( edict_t *pent )
-	{
-		m_pEnt = pent;
-
-		if ( pent )
-			m_iSerialNumber = pent->m_NetworkSerialNumber;
-	}
-
-	inline edict_t *get ()
-	{
-		if ( m_pEnt )
-		{
-			if ( !m_pEnt->IsFree() && (m_iSerialNumber == m_pEnt->m_NetworkSerialNumber) )
-				return m_pEnt;
-		}
-
-		return NULL;
-	}
-
-	inline edict_t *get_old ()
-	{
-		return m_pEnt;
-	}
-
-	inline operator edict_t * const ()
-	{ // same as get function (inlined for speed)
-		if ( m_pEnt )
-		{
-			if ( !m_pEnt->IsFree() && (m_iSerialNumber == m_pEnt->m_NetworkSerialNumber) )
-				return m_pEnt;
-		}
-
-		return NULL;
-	}
-
-	inline bool operator == ( int a )
-	{
-		return ((int)get() == a);
-	}
-
-	inline bool operator == ( edict_t *pent )
-	{
-		return (get() == pent);
-	}
-
-	inline bool operator == ( MyEHandle &other )
-	{
-		return (get() == other.get());
-	}
-
-	inline edict_t * operator = ( edict_t *pent )
-	{
-		m_pEnt = pent;
-
-		if ( pent )
-			m_iSerialNumber = pent->m_NetworkSerialNumber;
-
-		return m_pEnt;
-	}
-private:
-	int m_iSerialNumber;
-	edict_t *m_pEnt;
-};
 // events
 class CRCBotEventListener : public IGameEventListener2
 {
@@ -442,6 +372,68 @@ typedef union bot_statistics_t
 } bot_statistics_s;
 
 
+/*
+class CBotSquads 
+{
+public:
+	CBotSquads ()
+	{
+	}
+
+	void freeMapMemory()
+	{
+		unsigned int i;
+
+		for ( i = 0; i < m_theSquads.size(); i ++ )
+			m_theSquads[i].freeMapMemory();
+
+		m_theSquads.clear();
+	}
+private:
+	vector<CBotSquad> m_theSquads;
+}
+
+class CBotSquad
+{
+public:
+	CBotSquad ( edict_t *pLeader )
+	{
+		m_Leader = pLeader;
+		m_Members.clear();
+	}
+
+	void addMember ( edict_t *pMember )
+	{
+		m_Members.push_back(MyEHandle(pMember));
+	}
+
+	void think ()
+	{
+		if ( !CBotGlobals::entityIsValid(m_Leader) || CBotGlobals::entityIsAlive(m_Leader) )
+		{
+			m_Leader = NULL;
+
+			// find a new leader
+			unsigned int i;
+
+			for ( i = 0; i < m_Members.size(); i ++ )
+			{
+				if ( m_Members[i].get() )
+				break;
+			}
+		}
+	}
+
+	bool killme()
+	{
+		return (m_Leader.get() == NULL) && (m_Members.size() == 0);
+	}
+
+private:
+	MyEHandle m_Leader;
+	vector<MyEHandle> m_Members;
+};
+*/
 class CBot 
 {
 public:
@@ -464,6 +456,12 @@ public:
 	inline float distanceFrom(edict_t *pEntity)
 	{
 		return (pEntity->GetCollideable()->GetCollisionOrigin()-m_pController->GetLocalOrigin()).Length();
+	//return distanceFrom(CBotGlobals::entityOrigin(pEntity));
+	}
+
+	inline float distanceFrom2D(edict_t *pEntity)
+	{
+		return (pEntity->GetCollideable()->GetCollisionOrigin()-m_pController->GetLocalOrigin()).Length2D();
 	//return distanceFrom(CBotGlobals::entityOrigin(pEntity));
 	}
 	// return distance from this origin
@@ -859,6 +857,31 @@ public:
 
 	void setCoverFrom ( edict_t *pCoverFrom ) { m_pLastCoverFrom = MyEHandle(pCoverFrom); }
 
+	inline bool inSquad ( CBotSquad *pSquad )
+	{
+		return m_pSquad == pSquad;
+	}
+
+	inline bool inSquad ( void )
+	{
+		return m_pSquad != NULL;
+	}
+
+	inline void setSquadIdleTime ( float fTime )
+	{
+		m_fSquadIdleTime = fTime;
+	}
+
+	inline void clearSquad ()
+	{
+		m_pSquad = NULL;
+	}
+
+	inline void setSquad ( CBotSquad *pSquad )
+	{
+		m_pSquad = pSquad;
+	}
+
 protected:
 
 	inline void setLookAt ( Vector vNew )
@@ -1065,6 +1088,9 @@ protected:
 	bool m_bStatsCanUse;
 	float m_fStatsTime;
 	short int m_iStatsIndex;
+
+	CBotSquad *m_pSquad;
+	float m_fSquadIdleTime;
 };
 
 

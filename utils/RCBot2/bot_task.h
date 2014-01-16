@@ -32,6 +32,7 @@
 #define __RCBOT_TASK_H__
 
 class CBot;
+class CBotSquad;
 class CBotSchedule;
 struct edict_t;
 
@@ -334,6 +335,34 @@ private:
 	float m_fTime;
 	MyEHandle pEnemy;
 };
+
+class CBotFollowSquadLeader : public CBotTask
+{
+public:
+
+	CBotFollowSquadLeader ( CBotSquad *pSquad )
+	{
+		m_pSquad = pSquad;
+		m_fVisibleTime = 0.0f;
+		m_fUpdateMovePosTime = 0.0f;
+		m_vPos = Vector(0,0,0);
+		m_fIdleTime = 0.0f;
+	}
+
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotFollowSquadLeader");
+	}
+private:
+	CBotSquad *m_pSquad;
+	float m_fVisibleTime;
+	float m_fUpdateMovePosTime;
+	float m_fIdleTime;
+	Vector m_vPos;
+};
+
 
 class CBotNest : public CBotTask
 {
