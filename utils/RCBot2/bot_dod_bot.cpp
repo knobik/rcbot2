@@ -79,7 +79,7 @@ float CDODBot :: getEnemyFactor ( edict_t *pEnemy )
 {
 	float fPreFactor = CBot::getEnemyFactor(pEnemy);
 
-	// not a player
+	// not a player (breakable)
 	if ( ENTINDEX(pEnemy) > gpGlobals->maxClients )
 		fPreFactor += 1024.0f;
 		

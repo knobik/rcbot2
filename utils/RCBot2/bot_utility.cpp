@@ -130,7 +130,9 @@ const char *g_szUtils[BOT_UTIL_MAX+1] =
  "BOT_UTIL_PLACE_BUILDING",
  "BOT_UTIL_SPYCHECK_AIR",
  "BOT_UTIL_FIND_MEDIC_FOR_HEALTH",
-	"BOT_UTIL_MAX"
+ "BOT_UTIL_FIND_SQUAD_LEADER",
+ "BOT_UTIL_FOLLOW_SQUAD_LEADER",
+"BOT_UTIL_MAX"
 };
 
 CBotUtility :: CBotUtility ( CBot *pBot, eBotAction id, bool bCanDo, float fUtil, CBotWeapon *pWeapon, int iData, Vector vec )
