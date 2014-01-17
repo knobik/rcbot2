@@ -992,7 +992,7 @@ void CDODBot :: modThink ()
 			{
 				m_fNextCheckAlone = engine->Time() + 2.5f;
 
-				if ( (m_Stats.stats.m_iTeamMatesInRange < 1) && (m_Stats.stats.m_iTeamMatesVisible > 1) )
+				if ( !inSquad() && (m_Stats.stats.m_iTeamMatesInRange < 1) && (m_Stats.stats.m_iTeamMatesVisible > 1) )
 					addVoiceCommand(DOD_VC_STICK_TOGETHER);
 			}
 		}
@@ -1194,6 +1194,15 @@ void CDODBot ::voiceCommand ( int cmd )
 	helpers->ClientCommand(m_pEdict,scmd);
 }
 
+void CDODBot ::signal ( const char *signal )
+{
+	char scmd[64];
+
+	sprintf(scmd,"signal_%s",signal);
+
+	helpers->ClientCommand(m_pEdict,scmd);
+}
+
 void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 {
 	switch ( cmd )
@@ -1245,6 +1254,9 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 
 			if ( randomFloat(0.0f,1.0f) > 0.25f )
 				addVoiceCommand(DOD_VC_YES);
+
+			updateCondition(CONDITION_DEFENSIVE);
+			updateCondition(CONDITION_CHANGED);
 		}
 		else if ( isVisible(pPlayer) )
 		{
@@ -1285,53 +1297,87 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 		}
 		break;
 	case DOD_VC_STICK_TOGETHER:
-		if ( inSquad() && (m_pSquad->GetLeader() == pPlayer) )
 		{
-			m_pSquad->ReturnAllToFormation();
-		}
-		else if ( !inSquad() && isVisible(pPlayer) && (distanceFrom(pPlayer)<512) )
-		{
-			// probablity of joining someone is based on their score and class
-			float fProb = 0.5f;
-			int iClass = CClassInterface::getPlayerClassDOD(pPlayer);
+			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
 
-			if ( iClass == DOD_CLASS_SNIPER )
-				fProb = 0.2f;
-			else if ( iClass == DOD_CLASS_MACHINEGUNNER )
-				fProb = 0.3f;
-			else
-				fProb = 0.5f;
-
-			if ( randomFloat(0.0f,1.0f) < fProb )
+			if ( inSquad() && (m_pSquad->GetLeader() == pPlayer) )
 			{
-				m_pSquad = CBotSquads::AddSquadMember(pPlayer,m_pEdict);
+				removeCondition(CONDITION_PUSH);
+				removeCondition(CONDITION_COVERT);
+				removeCondition(CONDITION_DEFENSIVE);
+				updateCondition(CONDITION_CHANGED);
+				setSquadIdleTime(0.0f);
+			}
+			else if ( !inSquad() && isVisible(pPlayer) )
+			{
+				// probablity of joining someone is based on their score and class
+				float fProb = 0.5f;
+				int iClass = CClassInterface::getPlayerClassDOD(pPlayer);
 
-				if ( m_pSquad )
+				if ( iClass == DOD_CLASS_SNIPER )
+					fProb = 0.2f;
+				else if ( iClass == DOD_CLASS_MACHINEGUNNER )
+					fProb = 0.3f;
+				else if ( p->IsPlayer() && !p->IsFakeClient() )
+					fProb = 1.0f;
+
+				if ( randomFloat(0.0f,1.0f) <= fProb )
 				{
-					updateCondition(CONDITION_PUSH);
-					updateCondition(CONDITION_RUN);
-					updateCondition(CONDITION_CHANGED);
+					m_pSquad = CBotSquads::AddSquadMember(pPlayer,m_pEdict);
 
-					addVoiceCommand(DOD_VC_YES);
+					if ( m_pSquad )
+					{
+						updateCondition(CONDITION_PUSH);
+						updateCondition(CONDITION_RUN);
+						updateCondition(CONDITION_CHANGED);
+
+						addVoiceCommand(DOD_VC_YES);
+					}
+				}
+				else
+				{
+					if ( randomFloat(0.0f,1.0f) > 0.25f )
+						addVoiceCommand(DOD_VC_NO);
 				}
 			}
-			else
+			else if ( ( p->IsPlayer() && !p->IsFakeClient() ) || (randomFloat(0.0f,1.0f) > 0.75f) ) // already in a squad
 			{
-				if ( randomFloat(0.0f,1.0f) > 0.25f )
+				if ( inSquad() && (!hasSomeConditions(CONDITION_SEE_SQUAD_LEADER) || !hasSomeConditions(CONDITION_SQUAD_LEADER_INRANGE)) )
+				{
+					m_pSquad->removeMember(m_pEdict);
+					clearSquad();
+
+					m_pSquad = CBotSquads::AddSquadMember(pPlayer,m_pEdict);
+
+					if ( m_pSquad )
+					{
+						updateCondition(CONDITION_PUSH);
+						updateCondition(CONDITION_RUN);
+						updateCondition(CONDITION_CHANGED);
+
+						addVoiceCommand(DOD_VC_YES);
+					}
+				}
+				else 
 					addVoiceCommand(DOD_VC_NO);
 			}
+			else if (randomFloat(0.0f,1.0f) > 0.75f) 
+					addVoiceCommand(DOD_VC_NO);
 		}
-		else if ( randomFloat(0.0f,1.0f) > 0.75f )
-			addVoiceCommand(DOD_VC_NO);
-
 		break;
 	case DOD_VC_GRENADE2:
 	case DOD_VC_BAZOOKA:
 		// if I don't see anythign but I see the player calling this, hide!
 		if ( !m_pEnemyGrenade && !m_pEnemyRocket && ((inSquad()&&(m_pSquad->GetLeader()==pPlayer))||isVisible(pPlayer)) && !m_pSchedules->isCurrentSchedule(SCHED_GOOD_HIDE_SPOT) )
 		{
+			float fDist = distanceFrom(pPlayer);
 			updateCondition(CONDITION_COVERT);
 			updateCondition(CONDITION_RUN);
+
+			if ( fDist < BLAST_RADIUS )
+				m_fCurrentDanger += 50.0f;
+			else
+				m_fCurrentDanger += 10.0f;
 
 			// don't interrupt current shedule, just add to front
 			m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
@@ -1347,34 +1393,42 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 
 			if ( (vPoint - vPlayer).Length() < 250 )
 			{
-					CBotSchedule *attack = new CBotSchedule();
+				CBotSchedule *attack = new CBotSchedule();
 
-					updateCondition(CONDITION_RUN);
+				updateCondition(CONDITION_RUN);
 
-					if ( CDODMod::isBombMap() )
-					{
-						CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(vPoint,vPlayer,1000.0,-1,true,false,true,false,m_iTeam,true));
+				if ( CDODMod::isBombMap() )
+				{
+					CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(vPoint,vPlayer,1000.0,-1,true,false,true,false,m_iTeam,true));
 
-						attack->setID(SCHED_DEFENDPOINT);
-						attack->addTask(new CFindPathTask(pWpt->getOrigin()));
-						attack->addTask(new CBotDefendTask(pWpt->getOrigin(),randomFloat(6.0f,12.0f),0,true,vPoint,LOOK_SNIPE,pWpt->getFlags()));
-						// add defend task
-						m_pSchedules->freeMemory();
-						m_pSchedules->add(attack);
-					}
-					else
-					{
-						attack->setID(SCHED_ATTACKPOINT);
-						attack->addTask(new CFindPathTask(vPoint));
-						attack->addTask(new CBotDODAttackPoint(CDODMod::m_Flags.getFlagID(m_pNearestFlag),vPoint,150.0f));
-						// add defend task
-						m_pSchedules->freeMemory();
-						m_pSchedules->add(attack);
+					attack->setID(SCHED_DEFENDPOINT);
+					attack->addTask(new CFindPathTask(pWpt->getOrigin()));
+					attack->addTask(new CBotDefendTask(pWpt->getOrigin(),randomFloat(6.0f,12.0f),0,true,vPoint,LOOK_SNIPE,pWpt->getFlags()));
 
-					}
+					if ( inSquad() && isSquadLeader() )
+						attack->addTask(new CBotJoinSquad(pPlayer));
 
-					if ( randomFloat(0.0f,1.0f) > 0.75f )
-						addVoiceCommand(DOD_VC_YES);
+					// add defend task
+					m_pSchedules->freeMemory();
+					m_pSchedules->add(attack);
+				}
+				else
+				{
+					attack->setID(SCHED_ATTACKPOINT);
+					attack->addTask(new CFindPathTask(vPoint));
+					attack->addTask(new CBotDODAttackPoint(CDODMod::m_Flags.getFlagID(m_pNearestFlag),vPoint,150.0f));
+
+					if ( inSquad() && isSquadLeader() )
+						attack->addTask(new CBotJoinSquad(pPlayer));
+
+					// add defend task
+					m_pSchedules->freeMemory();
+					m_pSchedules->add(attack);
+
+				}
+
+				if ( randomFloat(0.0f,1.0f) > 0.75f )
+					addVoiceCommand(DOD_VC_YES);
 			}
 		}
 		break;
@@ -1387,6 +1441,21 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 	// don't say the same command for a second or two
 	if ( cmd < MAX_VOICE_CMDS )
 		m_fLastVoiceCommand[cmd] = engine->Time() + randomFloat(1.0f,3.0f);
+}
+
+void CDODBot :: sayInPosition ( )
+{
+	signal("yes");
+}
+
+void CDODBot :: sayMoveOut ()
+{
+	signal("moveout");
+	// forced squad leader to do something rather than just lark about
+	removeCondition(CONDITION_DEFENSIVE);
+	updateCondition(CONDITION_PUSH);
+	updateCondition(CONDITION_RUN);
+	updateCondition(CONDITION_CHANGED);
 }
 
 bool CDODBot :: withinTeammate ( )
@@ -1488,9 +1557,9 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 			vGoal = util->getVectorData();
 
-			if ( inSquad() )
+			if ( inSquad() && !isSquadLeader() )
 			{
-				if ( (m_pSquad->GetFormationVector(m_pEdict)-vGoal).Length() > 250.0f )
+				if ( (m_pSquad->GetFormationVector(m_pEdict)-vGoal).Length() > 400.0f )
 					return false;
 			}
 
@@ -1510,7 +1579,6 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 			if ( pWaypoint )
 			{
-
 				if ( randomFloat(0.0f,1.0f) > 0.9f )
 					addVoiceCommand(DOD_VC_ENEMY_BEHIND);
 				
@@ -1548,9 +1616,9 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			if ( iWaypointGoal == -1 )
 				return false;
 
-			if ( inSquad() )
+			if ( inSquad() && !isSquadLeader() )
 			{
-				if ( (m_pSquad->GetFormationVector(m_pEdict)-vGoal).Length() > 250.0f )
+				if ( (m_pSquad->GetFormationVector(m_pEdict)-vGoal).Length() > 400.0f )
 					return false;
 			}
 
@@ -1584,9 +1652,19 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			else
 				iWaypointType = CWaypointTypes::W_FL_SNIPER;
 
-			if ( inSquad() )
+			if ( inSquad() && !isSquadLeader() )
 			{
-				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_pSquad->GetFormationVector(m_pEdict),250.0f,-1,false,false,false,NULL,false,m_iTeam,false,false,Vector(0,0,0),iWaypointType));
+				edict_t *pSquadLeader = m_pSquad->GetLeader();
+				Vector vSquadLeaderOrigin = CBotGlobals::entityOrigin(pSquadLeader);
+
+				iFlagID = CDODMod::m_Flags.findNearestObjective(vSquadLeaderOrigin);
+
+				if ( iFlagID == -1 )
+				{
+					pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_pSquad->GetFormationVector(m_pEdict),250.0f,-1,false,false,false,NULL,false,m_iTeam,false,false,Vector(0,0,0),iWaypointType));					
+				}
+				else
+					pWaypoint = CWaypoints::randomWaypointGoal(iWaypointType,m_iTeam,iFlagID,true,this);
 			}
 			else
 			{
@@ -2221,8 +2299,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 	//squads
 
-	ADD_UTILITY(BOT_UTIL_FOLLOW_SQUAD_LEADER,hasSomeConditions(CONDITION_SQUAD_LEADER_INRANGE) && inSquad() && (m_pSquad->GetLeader()!=m_pEdict) && hasSomeConditions(CONDITION_SEE_SQUAD_LEADER),hasSomeConditions(CONDITION_SQUAD_IDLE)?0.1f:2.0f);
-	ADD_UTILITY(BOT_UTIL_FIND_SQUAD_LEADER,inSquad() && (m_pSquad->GetLeader()!=m_pEdict) && (!hasSomeConditions(CONDITION_SEE_SQUAD_LEADER) || !hasSomeConditions(CONDITION_SQUAD_LEADER_INRANGE)),hasSomeConditions(CONDITION_SQUAD_IDLE)?0.1f:2.0f);
+	ADD_UTILITY(BOT_UTIL_FOLLOW_SQUAD_LEADER,!hasSomeConditions(CONDITION_DEFENSIVE) && hasSomeConditions(CONDITION_SQUAD_LEADER_INRANGE) && inSquad() && (m_pSquad->GetLeader()!=m_pEdict) && hasSomeConditions(CONDITION_SEE_SQUAD_LEADER),hasSomeConditions(CONDITION_SQUAD_IDLE)?0.1f:2.0f);
+	ADD_UTILITY(BOT_UTIL_FIND_SQUAD_LEADER,!hasSomeConditions(CONDITION_DEFENSIVE) && inSquad() && (m_pSquad->GetLeader()!=m_pEdict) && (!hasSomeConditions(CONDITION_SEE_SQUAD_LEADER) || !hasSomeConditions(CONDITION_SQUAD_LEADER_INRANGE)),hasSomeConditions(CONDITION_SQUAD_IDLE)?0.1f:2.0f);
 
 	bCheckCurrent = true;
 	m_iTeam = getTeam(); // update team
@@ -2239,7 +2317,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	removeCondition(CONDITION_CHANGED);
 
 	// always able to roam around -- low utility
-	ADD_UTILITY(BOT_UTIL_ROAM,!inSquad(),0.01f);
+	ADD_UTILITY(BOT_UTIL_ROAM,true,0.01f);
 
 	// I had an enemy a minute ago
 	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.81f);
@@ -2251,15 +2329,29 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 		bCanMessAround = false;
 
+		if ( inSquad() && !isSquadLeader() && hasSomeConditions(CONDITION_DEFENSIVE) )
+		{			
+			iFlagID = CDODMod::m_Flags.findNearestObjective(m_pSquad->GetFormationPosition(m_pEdict));
+
+			CWaypoint *pWaypoint = CWaypoints::getWaypoint(CDODMod::m_Flags.getWaypointAtFlag(iFlagID));
+
+			if ( pWaypoint )
+			{
+				// just following orders
+				ADD_UTILITY_DATA_VECTOR(BOT_UTIL_DEFEND_NEAREST_POINT,true,1.5f,iFlagID,pWaypoint->getOrigin());
+			}
+		}
+
 		if ( m_pNearestFlag )
 		{
 			iFlagID = CDODMod::m_Flags.getFlagID(m_pNearestFlag);
+
 			bAttackNearestFlag = !CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) && ((CDODMod::m_Flags.numCappersRequired(iFlagID,m_iTeam)-CDODMod::m_Flags.numFriendliesAtCap(iFlagID,m_iTeam))>0);
 		}
 
 		if ( (m_pNearestFlag==NULL) || !bAttackNearestFlag )
 		{
-			if ( CDODMod::shouldAttack(m_iTeam) )
+			if ( !hasSomeConditions(CONDITION_DEFENSIVE) && CDODMod::shouldAttack(m_iTeam) )
 			{
 				fAttackUtil = 0.6f;
 				fDefendUtil = 0.3f;
@@ -2272,6 +2364,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 			if ( hasSomeConditions(CONDITION_PUSH) )
 				fAttackUtil *= 2;
+			if ( hasSomeConditions(CONDITION_DEFENSIVE) )
+				fDefendUtil *= 2;
 
 			// if we see a flag and we own it, don't worry about it
 			ADD_UTILITY(BOT_UTIL_ATTACK_POINT,true,fAttackUtil);
@@ -2287,7 +2381,6 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			ADD_UTILITY_DATA_VECTOR(BOT_UTIL_DEFEND_NEAREST_POINT,
 				CDODMod::m_Flags.ownsFlag(iFlagID,m_iTeam) && ((CDODMod::m_Flags.numEnemiesAtCap(iFlagID,m_iTeam)>0)||hasEnemy()),
 				(iFlagsOwned == 1) ? 0.9f : 0.75f,iFlagID,CBotGlobals::entityOrigin(m_pNearestFlag));
-
 		}
 
 		if ( CDODMod::mapHasBombs() )
@@ -2340,6 +2433,12 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			fDefuseBombUtil *= 2.0f;
 			fDefendBombUtil *= 0.75f;
 			fDefendUtil *= 0.75f;
+		}
+
+		if ( hasSomeConditions(CONDITION_DEFENSIVE) )
+		{
+			fDefendBombUtil *= 2.0f;
+			fDefendUtil *= 2.0f;
 		}
 
 		ADD_UTILITY(BOT_UTIL_PLANT_BOMB,m_bHasBomb && (iNumBombsToPlant>0),fPlantUtil );
@@ -2396,7 +2495,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			pWeapon = m_pWeapons->hasWeapon(DOD_WEAPON_K98_SCOPED) ? m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_K98_SCOPED)) : m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_SPRING));
 
 			if ( pWeapon )
-				ADD_UTILITY_WEAPON_DATA(BOT_UTIL_SNIPE,pWeapon->getAmmo(this)>0,getHealthPercent() * randomFloat(0.75f,1.0f),pWeapon,fAttackUtil>fDefendUtil);
+				ADD_UTILITY_WEAPON_DATA(BOT_UTIL_SNIPE,pWeapon->getAmmo(this)>0,hasSomeConditions(CONDITION_DEFENSIVE) ? 1.6f : (getHealthPercent() * randomFloat(0.75f,1.0f)),pWeapon,hasSomeConditions(CONDITION_DEFENSIVE) ? false : (fAttackUtil>fDefendUtil));
 		}
 		break;
 	case DOD_CLASS_MACHINEGUNNER:
@@ -2404,7 +2503,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			pWeapon = m_pWeapons->hasWeapon(DOD_WEAPON_20CAL) ? m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_20CAL)) : m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_MG42));
 
 			if ( pWeapon )
-				ADD_UTILITY_WEAPON_DATA(BOT_UTIL_SNIPE,pWeapon->getAmmo(this)>0,getHealthPercent(),pWeapon,fAttackUtil>fDefendUtil);
+				ADD_UTILITY_WEAPON_DATA(BOT_UTIL_SNIPE,pWeapon->getAmmo(this)>0,hasSomeConditions(CONDITION_DEFENSIVE) ? 1.6f : (getHealthPercent()),pWeapon,hasSomeConditions(CONDITION_DEFENSIVE) ? false : (fAttackUtil>fDefendUtil));
 		}
 		break;
 	}
@@ -2461,6 +2560,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		if ( executeAction(next) )
 		{
 			m_CurrentUtil = next->getId();
+
+			removeCondition(CONDITION_DEFENSIVE);
 
 			if ( m_fUtilTimes[next->getId()] < engine->Time() )
 				m_fUtilTimes[next->getId()] = engine->Time() + randomFloat(0.1f,2.0f); // saves problems with consistent failing

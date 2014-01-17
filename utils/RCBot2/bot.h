@@ -235,6 +235,18 @@ typedef union
 	 byte voicecmd;
 }u_VOICECMD;
 
+typedef union
+{
+	 struct
+	 {
+		  unsigned said_in_position:1; 
+		  unsigned said_move_out:1;
+		  unsigned unused:6;
+	 }b1;
+
+	 byte dat;
+}squad_u;
+
 // events
 class CRCBotEventListener : public IGameEventListener2
 {
@@ -867,20 +879,23 @@ public:
 		return m_pSquad != NULL;
 	}
 
+	bool isSquadLeader ( void );
+
 	inline void setSquadIdleTime ( float fTime )
 	{
 		m_fSquadIdleTime = fTime;
 	}
 
-	inline void clearSquad ()
-	{
-		m_pSquad = NULL;
-	}
+	void clearSquad ();
 
 	inline void setSquad ( CBotSquad *pSquad )
 	{
 		m_pSquad = pSquad;
 	}
+
+	void SquadInPosition ( );
+	virtual void sayInPosition() { }
+	virtual void sayMoveOut() { }
 
 protected:
 
@@ -1091,6 +1106,7 @@ protected:
 
 	CBotSquad *m_pSquad;
 	float m_fSquadIdleTime;
+	squad_u m_uSquadDetail;
 };
 
 

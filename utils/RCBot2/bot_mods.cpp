@@ -1517,6 +1517,29 @@ bool CDODFlags::isTeamMatePlanting ( edict_t *pIgnore, int iTeam, int id )
 
 	return false;
 }
+
+int CDODFlags::findNearestObjective ( Vector vOrigin )
+{
+	float fNearest = 1024.0f;
+	float fDistance;
+	int iNearest = -1;
+	
+	for ( short int i = 0; i < m_iNumControlPoints; i ++ )
+	{
+		if ( m_iWaypoint[i] != -1 )
+		{
+			if ( (fDistance = (CWaypoints::getWaypoint(m_iWaypoint[i])->getOrigin()-vOrigin).Length()) < fNearest )
+			{
+				fNearest = fDistance;
+				iNearest = i;
+			}
+		}
+	}
+
+	return iNearest;
+
+}
+
 // return the flag with the least danger (randomly)
 bool CDODFlags::getRandomEnemyControlledFlag ( CBot *pBot, Vector *position, int iTeam, int *id )
 {

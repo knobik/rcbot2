@@ -39,6 +39,7 @@
 #include "bot_weapons.h"
 #include "bot_getprop.h"
 #include "bot_dod_bot.h"
+#include "bot_squads.h"
 
 vector<CBotEvent*> CBotEvents :: m_theEvents;
 extern ConVar bot_use_vc_commands;
@@ -165,6 +166,7 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 	const char *weapon = pEvent->getString("weapon",NULL);
+	CBotSquad *pPrevSquadLeadersSquad = NULL;
 
 	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
 	
@@ -246,6 +248,11 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 
 		CBots::botFunction(&func1);
 		CBots::botFunction(&func2);
+	}
+
+	if ( (pPrevSquadLeadersSquad = CBotSquads::FindSquadByLeader (m_pActivator)) != NULL )
+	{
+		CBotSquads::ChangeLeader(pPrevSquadLeadersSquad);
 	}
 }
 

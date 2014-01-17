@@ -223,6 +223,8 @@ public:
 	bool getRandomBombToPlant ( CBot *pBot, Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
 	bool getRandomBombToDefend ( CBot *pBot, Vector *position, int iTeam, edict_t **pBombTarget, int *id = NULL );
 
+	int findNearestObjective ( Vector vOrigin );
+
 	inline int getWaypointAtFlag ( int iFlagId )
 	{
 		return m_iWaypoint[iFlagId];

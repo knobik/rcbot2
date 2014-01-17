@@ -212,6 +212,12 @@ public:
 
 	bool walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset );
 
+	void signal ( const char *signal );
+
+	void sayInPosition ();
+
+	void sayMoveOut ();
+
 private:
 
 	int m_iSelectedClass;

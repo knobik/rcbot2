@@ -3403,7 +3403,15 @@ CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float f
 	m_z = z; // z = ground level
 	m_iWaypointType = iWaypointType;
 }
-// TO DO
+/////////////////////////////////////////////
+
+void CBotJoinSquad:: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( pBot->inSquad() && pBot->isSquadLeader() )
+		CBotSquads::AddSquadMember(m_pPlayer,pBot->getEdict());
+		//CBotSquads::SquadJoin(pBot->getEdict(),m_pPlayer);
+}
+
 void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	edict_t *pSquadLeader; 
@@ -3426,12 +3434,7 @@ void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( CClassInterface::getMoveType(pSquadLeader) == MOVETYPE_LADDER )
 	{
 		pBot->stopMoving();
-
-		if ( (m_fIdleTime + 2.0f) < engine->Time() )
-		{
-			complete();
-			return;
-		}
+		return;
 	}
 
 	if ( (m_fVisibleTime > 0.0f) && !pBot->hasEnemy() && !pBot->isVisible(pSquadLeader) )
@@ -3456,17 +3459,16 @@ void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fUpdateMovePosTime < engine->Time() )
 	{
 		float fRand;
-		float fSpeed = 0.0f;
+		Vector vVelocity;
 
 		fRand = randomFloat(1.0f,2.0f);
 
-		CClient *pClient = CClients::get(pSquadLeader);
+		CClassInterface::getVelocity(pSquadLeader,&vVelocity);
 
-		if ( pClient )
-			fSpeed = pClient->getSpeed();
-
-		m_fUpdateMovePosTime = engine->Time() + (fRand * (1.0f-(fSpeed/320)));
+		m_fUpdateMovePosTime = engine->Time() + (fRand * (1.0f-(vVelocity.Length()/320)));
 		m_vPos = m_pSquad->GetFormationVector(pBot->getEdict());
+		
+		m_vForward = m_vPos+vVelocity;
 	}
 
 	fDist = pBot->distanceFrom(m_vPos); // More than reachable range
@@ -3479,12 +3481,17 @@ void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	else if ( fDist > m_pSquad->GetSpread() )
 	{
 		pBot->setMoveTo(m_vPos);
+		pBot->setSquadIdleTime(engine->Time());
 	}
 	else
+	{
+		// idle
 		pBot->stopMoving();
+		pBot->SquadInPosition();
+	}
 
-	pBot->lookAtEdict(pSquadLeader);
-	pBot->setLookAtTask(LOOK_EDICT);
+	pBot->setLookVector(m_vForward);
+	pBot->setLookAtTask(LOOK_VECTOR);
 }
 
 void CBotDODSnipe :: debugString ( char *string )

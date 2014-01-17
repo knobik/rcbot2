@@ -701,6 +701,16 @@ void CBot :: debugMsg ( int iLev, const char *szMsg )
 	}
 }
 
+void CBot::SquadInPosition ()
+{
+	if ( m_uSquadDetail.b1.said_in_position == false )
+	{
+		// say something here
+		sayInPosition();
+		m_uSquadDetail.b1.said_in_position = true;
+	}
+}
+
 void CBot :: kill ()
 {
 	helpers->ClientCommand(m_pEdict,"kill\n");
@@ -1042,6 +1052,11 @@ edict_t *CBot :: getEdict ()
 	return m_pEdict;
 }
 
+bool CBot :: isSquadLeader ( void )
+{
+	return (m_pSquad->GetLeader() == m_pEdict);
+}
+
 void CBot :: updateConditions ()
 {
 	if ( m_pEnemy.get() != NULL )
@@ -1084,43 +1099,54 @@ void CBot :: updateConditions ()
 
 	if ( inSquad() )
 	{
-		edict_t *pLeader = m_pSquad->GetLeader();
-
-		if ( CBotGlobals::entityIsValid(pLeader) && CBotGlobals::entityIsAlive(pLeader) )
+		if ( isSquadLeader() )
 		{
-			extern ConVar rcbot_squad_idle_time;
-
-			removeCondition(CONDITION_SQUAD_LEADER_DEAD);
-
-			if ( distanceFrom(pLeader) <= 400.0f )
-				updateCondition(CONDITION_SQUAD_LEADER_INRANGE);
-			else
-				removeCondition(CONDITION_SQUAD_LEADER_INRANGE);
-
-			if ( isVisible(pLeader) )
-				updateCondition(CONDITION_SEE_SQUAD_LEADER);
-			else
-				removeCondition(CONDITION_SEE_SQUAD_LEADER);
-
-			float fSpeed = 0.0f;
-			CClient *pClient = CClients::get(pLeader);
-
-			if ( pClient )
-				fSpeed = pClient->getSpeed();
-
-			// update squad idle condition. If squad is idle, bot can move around a small radius 
-			// around the leader and do what they want, e.g. defend or snipe
-			if ( hasEnemy() || ((fSpeed > 10.0f) && ( CClassInterface::getMoveType(pLeader) != MOVETYPE_LADDER )) )
+			if ( m_uSquadDetail.b1.said_move_out == false )
 			{
-				setSquadIdleTime(engine->Time());
-				removeCondition(CONDITION_SQUAD_IDLE);
+				sayMoveOut();
+				m_uSquadDetail.b1.said_move_out = true;
 			}
-			else if ( (engine->Time() - m_fSquadIdleTime) > rcbot_squad_idle_time.GetFloat() )
-				updateCondition(CONDITION_SQUAD_IDLE);
-
 		}
 		else
-			updateCondition(CONDITION_SQUAD_LEADER_DEAD);
+		{
+			edict_t *pLeader = m_pSquad->GetLeader();
+
+			if ( CBotGlobals::entityIsValid(pLeader) && CBotGlobals::entityIsAlive(pLeader) )
+			{
+				extern ConVar rcbot_squad_idle_time;
+
+				removeCondition(CONDITION_SQUAD_LEADER_DEAD);
+
+				if ( distanceFrom(pLeader) <= 400.0f )
+					updateCondition(CONDITION_SQUAD_LEADER_INRANGE);
+				else
+					removeCondition(CONDITION_SQUAD_LEADER_INRANGE);
+
+				if ( isVisible(pLeader) )
+					updateCondition(CONDITION_SEE_SQUAD_LEADER);
+				else
+					removeCondition(CONDITION_SEE_SQUAD_LEADER);
+
+				float fSpeed = 0.0f;
+				CClient *pClient = CClients::get(pLeader);
+
+				if ( pClient )
+					fSpeed = pClient->getSpeed();
+
+				// update squad idle condition. If squad is idle, bot can move around a small radius 
+				// around the leader and do what they want, e.g. defend or snipe
+				if ( (hasEnemy() || ((fSpeed > 10.0f) && ( CClassInterface::getMoveType(pLeader) != MOVETYPE_LADDER ))) )
+				{
+					setSquadIdleTime(engine->Time());
+					removeCondition(CONDITION_SQUAD_IDLE);
+				}
+				else if ( (engine->Time() - m_fSquadIdleTime) > rcbot_squad_idle_time.GetFloat() )
+					updateCondition(CONDITION_SQUAD_IDLE);
+
+			}
+			else
+				updateCondition(CONDITION_SQUAD_LEADER_DEAD);
+		}
 	}
 
 	if ( m_pLastEnemy )
@@ -1225,6 +1251,7 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	m_uSquadDetail.dat = 0;
 	m_bStatsCanUse = false;
 	m_StatsCanUse.data = 0;
 	m_Stats.data = 0;
@@ -1578,7 +1605,18 @@ const char *pszConditionsDebugStrings[CONDITION_MAX_BITS+1] =
 "CONDITION_PARANOID",
 "CONDITION_SEE_SQUAD_LEADER",
 "CONDITION_SQUAD_LEADER_DEAD",
-"CONDITION_SQUAD_LEADER_INRANGE"};
+"CONDITION_SQUAD_LEADER_INRANGE",
+"CONDITION_SQUAD_IDLE",
+"CONDITION_DEFENSIVE"};
+
+void CBot :: clearSquad ()
+{
+	//causes stack overflow
+	//if ( m_pSquad != NULL )
+	//	CBotSquads::removeSquadMember(m_pSquad,m_pEdict);
+
+	m_pSquad = NULL;
+}
 
 void CBot ::debugBot(char *msg)
 {

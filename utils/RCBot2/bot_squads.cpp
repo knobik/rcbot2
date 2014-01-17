@@ -62,6 +62,23 @@ void CBotSquads::removeSquadMember ( CBotSquad *pSquad, edict_t *pMember )
 	}
 }
 
+edict_t *CBotSquad::getMember ( int iMember )
+{
+	int i = 0;
+	dataStack<MyEHandle> tempStack = m_theSquad;
+	edict_t *pPlayer;
+
+	while ( !tempStack.IsEmpty() )
+	{
+		pPlayer = tempStack.ChooseFromStack();
+
+		if ( i == iMember )
+			return pPlayer;
+	}
+
+	return NULL;
+}
+
 // AddSquadMember can have many effects
 // 1. scenario: squad leader exists as squad leader
 //              assign bot to squad
@@ -123,6 +140,53 @@ CBotSquad *CBotSquads::AddSquadMember ( edict_t *pLeader, edict_t *pMember )
 			pBot->setSquad(theSquad);
 	}
 	
+	return theSquad;
+}
+// SquadJoin 
+// join two possile squads together if pMember is a leader of another squad
+//
+CBotSquad *CBotSquads::SquadJoin ( edict_t *pLeader, edict_t *pMember )
+{
+	dataStack<CBotSquad*> tempStack = m_theSquads;
+	CBotSquad *theSquad;
+	CBotSquad *joinSquad;
+
+	//char msg[120];
+
+	if ( !pLeader )
+		return NULL;
+
+	if ( CClassInterface::getTeam(pLeader) != CClassInterface::getTeam(pMember) )
+		return NULL;
+
+	// no squad with leader, make pMember join SquadLeader
+	theSquad = FindSquadByLeader(pMember);
+
+	if ( theSquad != NULL )
+	{
+		theSquad->AddMember(pMember);
+
+		joinSquad = FindSquadByLeader(pLeader);
+
+		if ( joinSquad )
+		{
+			for ( int i = 0; i < joinSquad->numMembers(); i ++ )
+			{
+				theSquad->AddMember(joinSquad->getMember(i));				
+			}
+
+			RemoveSquad(joinSquad);
+		}
+		else
+			return NULL;
+	}
+	
+	// no squad with leader, make pMember join SquadLeader
+	theSquad = FindSquadByLeader(pLeader);
+
+	if ( theSquad != NULL )
+		theSquad->AddMember(pMember);
+
 	return theSquad;
 }
 
@@ -213,6 +277,24 @@ void CBotSquad::Init ()
 	{
 		IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pLeader);
 		m_vLeaderAngle = p->GetLastUserCommand().viewangles;
+	}
+}
+
+// Change a leader of a squad, this can cause lots of effects
+void CBotSquads :: ChangeLeader ( CBotSquad *theSquad )
+{
+	// first change leader to next squad member
+	theSquad->ChangeLeader();
+
+	// if no leader anymore/no members in group
+	if ( theSquad->IsLeader(NULL) )
+	{
+		CRemoveBotFromSquad *func = new CRemoveBotFromSquad(theSquad);
+
+		CBots::botFunction(func);
+			
+		// must also remove from stack of available squads.
+		m_theSquads.Remove(theSquad);
 	}
 }
 
@@ -367,10 +449,17 @@ void CBotSquad::AddMember ( edict_t *pEdict )
 	if ( !IsMember(pEdict) )
 	{
 		MyEHandle newh;
+		//CBot *pBot;
 
 		newh = pEdict;
 
 		m_theSquad.Push(newh);
+
+		/*if ( (pBot=CBots::getBotPointer(pEdict))!=NULL )
+		{
+			pBot->clearSquad();
+			pBot->setSquad(this);
+		}*/
 	}
 }
 

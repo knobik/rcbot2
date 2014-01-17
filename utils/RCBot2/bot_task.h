@@ -336,6 +336,25 @@ private:
 	MyEHandle pEnemy;
 };
 
+class CBotJoinSquad : public CBotTask
+{
+public:
+
+	CBotJoinSquad ( edict_t *pPlayerToJoin )
+	{
+		m_pPlayer = pPlayerToJoin;
+	}
+
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotFollowSquadLeader");
+	}
+private:
+	edict_t *m_pPlayer;
+};
+
 class CBotFollowSquadLeader : public CBotTask
 {
 public:
@@ -346,7 +365,7 @@ public:
 		m_fVisibleTime = 0.0f;
 		m_fUpdateMovePosTime = 0.0f;
 		m_vPos = Vector(0,0,0);
-		m_fIdleTime = 0.0f;
+		m_vForward = Vector(0,0,0);
 	}
 
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
@@ -359,8 +378,8 @@ private:
 	CBotSquad *m_pSquad;
 	float m_fVisibleTime;
 	float m_fUpdateMovePosTime;
-	float m_fIdleTime;
 	Vector m_vPos;
+	Vector m_vForward;
 };
 
 

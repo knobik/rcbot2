@@ -53,6 +53,8 @@ public:
 		m_pLeader = pLeader;
 	}
 
+	edict_t *getMember ( int iMember );
+
 	void ToggleFireMode ( void )
 	{
 		bCanFire = !bCanFire;
@@ -196,6 +198,8 @@ public:
 	//              make a new squad
 	static CBotSquad *AddSquadMember ( edict_t *pLeader, edict_t *pMember );
 
+	static CBotSquad *SquadJoin ( edict_t *pLeader, edict_t *pMember );
+
 	static CBotSquad *FindSquadByLeader ( edict_t *pLeader );
 
 	static void RemoveSquad ( CBotSquad *pSquad );
@@ -207,6 +211,38 @@ public:
 private:
 	static dataStack<CBotSquad*> m_theSquads;
 };
+/*
+class CBotSquadE
+{
+public:
+	CBotSquadE ()
+	{
+		m_fIdleTime = 0.0f;
+		m_bIsIdle = false;
+	}
 
+	addMember ( edict_t *pEdict )
+	{
+	}
 
+	void think ()
+	{
+
+	}
+
+private:
+	edict_t 
+	float m_fIdleTime;
+	bool m_bIsIdle;
+	int m_uMembers;
+}
+
+class CBotSquadsE
+{
+public:
+	void think ();
+private:
+	static dataStack<CBotSquad*> m_theSquads;
+}
+*/
 #endif
