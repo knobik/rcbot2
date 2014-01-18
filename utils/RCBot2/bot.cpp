@@ -1777,6 +1777,15 @@ void CBot :: updateStatistics ()
 		m_StatsCanUse.data = m_Stats.data;
 		m_Stats.data = 0;
 		m_iStatsIndex = 0; // reset to be sure in case of m_iStatsIndex > gpGlobals->maxClients
+
+
+		if ( !m_uSquadDetail.b1.said_area_clear && (m_StatsCanUse.stats.m_iEnemiesInRange == 0) && (m_StatsCanUse.stats.m_iEnemiesVisible == 0) && (m_StatsCanUse.stats.m_iTeamMatesInRange > 0))
+		{
+			if ( !inSquad() || isSquadLeader() )
+				areaClear();
+
+			m_uSquadDetail.b1.said_area_clear = true;
+		}
 	}
 
 	CClient *pClient = CClients::get(m_iStatsIndex++);

@@ -514,7 +514,10 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 	else if ( m_fAttackTime == 0 )
+	{
 		m_fAttackTime = engine->Time() + randomFloat(30.0,60.0);
+		pBot->resetAreaClear();
+	}
 	else if ( m_fAttackTime < engine->Time() )
 	{
 		complete();
@@ -561,9 +564,6 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			}
 
 			pBot->setLookAtTask((LOOK_AROUND));
-
-			if ( ((CBotTF2*)pBot)->checkAttackPoint() )
-				complete();
 		}
 	}
 }

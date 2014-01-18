@@ -218,6 +218,8 @@ public:
 
 	void sayMoveOut ();
 
+	void areaClear();
+
 private:
 
 	int m_iSelectedClass;

@@ -241,7 +241,8 @@ typedef union
 	 {
 		  unsigned said_in_position:1; 
 		  unsigned said_move_out:1;
-		  unsigned unused:6;
+		  unsigned said_area_clear:1;
+		  unsigned unused:5;
 	 }b1;
 
 	 byte dat;
@@ -868,6 +869,11 @@ public:
 	virtual bool walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset );
 
 	void setCoverFrom ( edict_t *pCoverFrom ) { m_pLastCoverFrom = MyEHandle(pCoverFrom); }
+
+	virtual void areaClear( ) { }
+
+	inline void resetAreaClear () { m_uSquadDetail.b1.said_area_clear = false; }
+
 
 	inline bool inSquad ( CBotSquad *pSquad )
 	{

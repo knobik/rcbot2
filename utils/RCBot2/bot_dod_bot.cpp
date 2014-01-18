@@ -575,6 +575,8 @@ void CDODBot :: spawnInit ()
 {
 	CBot::spawnInit();
 
+	m_uSquadDetail.b1.said_area_clear = true;
+
 	m_fLastRunForCover = 0.0f;
 
 	m_fLastCaptureEvent = 0.0f;
@@ -1207,6 +1209,15 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 {
 	switch ( cmd )
 	{
+	case DOD_VC_AREA_CLEAR:
+		if ( (inSquad() && (m_pSquad->GetLeader()==pPlayer)) || isVisible(pPlayer) )
+		{
+			// reduce danger
+			m_fCurrentDanger = 0.0f;
+			removeCondition(CONDITION_DEFENSIVE);
+			removeCondition(CONDITION_COVERT);
+		}
+		break;
 	case DOD_VC_DISPLACE:
 		// leave squad
 		if ( inSquad() && (m_pSquad->GetLeader()==pPlayer) )
@@ -1494,6 +1505,11 @@ bool CDODBot :: withinTeammate ( )
 	}
 
 	return false;
+}
+
+void CDODBot::areaClear()
+{
+	addVoiceCommand(DOD_VC_AREA_CLEAR);
 }
 
 // Successful actions must return true
@@ -2016,13 +2032,13 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				attack->addTask(new CBotDODAttackPoint(iFlagID,vGoal,150.0f));
 				// add defend task
 				m_pSchedules->add(attack);
-
+				
 				// last flag
 				//if ( CDODMod::m_Flags.getNumFlagsOwned(m_iTeam) == (CDODMod::m_Flags.getNumFlags()-1) )
 				//	addVoiceCommand(DOD_VC_GOGOGO);
 
 				removeCondition(CONDITION_PUSH);
-				
+
 				return true;
 		
 			}
@@ -2552,7 +2568,10 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			if ( m_CurrentUtil != next->getId() )
 				m_pSchedules->freeMemory();
 			else
+			{
+				removeCondition(CONDITION_DEFENSIVE);
 				break;
+			}
 		} 
 
 		bCheckCurrent = false;
