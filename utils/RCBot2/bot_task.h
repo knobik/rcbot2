@@ -99,6 +99,7 @@ public:
 		m_pEdict = NULL;
 		m_LookTask = LOOK_WAYPOINT;
 		m_iWaypointId = -1;
+		m_bCompleteSeeTaskEdict = false;
 	}
 
 	CFindPathTask ( Vector vOrigin, eLookTask looktask = LOOK_WAYPOINT )
@@ -107,6 +108,7 @@ public:
 		m_pEdict = NULL; // no edict
 		m_LookTask = looktask;
 		m_iWaypointId = -1;
+		m_bCompleteSeeTaskEdict = false;
 	}
 
 	// having this constructor saves us trying to find the goal waypoint again if we
@@ -121,6 +123,8 @@ public:
 
 	void execute ( CBot *pBot, CBotSchedule *pSchedule );
 
+	void completeIfSeeTaskEdict () { m_bCompleteSeeTaskEdict = true; }
+
 	void init ();
 
 	virtual void debugString ( char *string );
@@ -134,6 +138,7 @@ private:
 	eLookTask m_LookTask;
 	int m_iInt;
 	int m_iWaypointId;
+	bool m_bCompleteSeeTaskEdict;
 };
 
 #define TASK_TF2_DEMO_STATE_LAY_BOMB 0
@@ -570,6 +575,24 @@ private:
 	float m_fNextUpdateAngle;
 	Vector m_vAimingVector;
 	int m_iArea;
+};
+
+
+class CDODDropAmmoTask : public CBotTask
+{
+public:
+	CDODDropAmmoTask ( edict_t *pPlayer )
+	{
+		m_fTime = 0.0f;
+		m_pPlayer = pPlayer;
+	}
+
+	virtual void debugString ( char *string );
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+private:
+	MyEHandle m_pPlayer;
+	float m_fTime;
 };
 
 class CDODWaitForBombTask : public CBotTask

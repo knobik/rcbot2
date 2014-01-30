@@ -927,7 +927,7 @@ void CBotHL2DMUseButton :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->setMoveTo(vOrigin);
 	}
-	else if ( pBot->DotProductFromOrigin(vOrigin) > 0.97f )
+	else if ( pBot->isFacing(vOrigin) )
 	{
 		pBot->use();
 		complete();
@@ -969,7 +969,7 @@ void CBotHL2DMUseCharger :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->setMoveTo(vOrigin);
 	}
-	else if ( pBot->DotProductFromOrigin(vOrigin) > 0.965925f )
+	else if ( pBot->isFacing(vOrigin) )
 	{
 		pBot->use();
 	}
@@ -1034,7 +1034,7 @@ void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
 	pBot->setLookAtTask(LOOK_VECTOR);
 	pBot->setMoveLookPriority(MOVELOOK_TASK);
 
-	if ( pBot->DotProductFromOrigin(vOrigin) > 0.965925f )
+	if ( pBot->isFacing(vOrigin) )
 	{
 		edict_t *pPhys = CClassInterface::gravityGunObject(m_Weapon);
 
@@ -1606,7 +1606,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pBot->setLookAtTask(LOOK_VECTOR);
 	pBot->setLookVector(m_vAimingVector);
 
-	bAimingOk = pBot->DotProductFromOrigin(pBot->getLookVector()) > 0.965925f; // 15 degrees
+	bAimingOk = pBot->isFacing(pBot->getLookVector()); // 15 degrees
 
 	if ( pBot->distanceFrom(m_vOrigin) > 100 )
 	{
@@ -1675,7 +1675,7 @@ void CFindPathTask :: init ()
 	m_bNoInterruptions = false;
 	m_bGetPassedVector = false;
 	m_iInt = 0;
-	
+	m_bCompleteSeeTaskEdict = false;
 	//setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
 }
 
@@ -1685,6 +1685,7 @@ CFindPathTask :: CFindPathTask ( edict_t *pEdict )
 	m_pEdict = pEdict;
 	m_vVector = CBotGlobals::entityOrigin(pEdict);
 	m_LookTask = LOOK_WAYPOINT;
+	m_bCompleteSeeTaskEdict = false;
 }
 
 void CFindPathTask :: debugString ( char *string )
@@ -1722,7 +1723,8 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 							   &bFail,
 							   (m_iInt==0),
 							   m_bNoInterruptions, 
-							   m_iWaypointId ) )
+							   m_iWaypointId,
+							   pBot->getConditions() ) )
 		{
 			pBot->m_fWaypointStuckTime = engine->Time() + randomFloat(10.0f,15.0f);
 			pBot->moveFailed(); // reset
@@ -1789,6 +1791,15 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 			//if ( !pBot->hasEnemy() && !pBot->hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 			
 			pBot->setLookAtTask(m_LookTask);
+		}
+	}
+
+	if ( m_pEdict.get() != NULL ) // task edict
+	{
+		if ( m_bCompleteSeeTaskEdict )
+		{
+			if ( pBot->isVisible(m_pEdict.get()) && (pBot->distanceFrom(CBotGlobals::entityOrigin(m_pEdict)) < CWaypointLocations::REACHABLE_RANGE) )
+				complete();
 		}
 	}
 }
@@ -2666,7 +2677,7 @@ void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 		pBot->setLookVector(m_vLoc);
 		pBot->setLookAtTask(LOOK_VECTOR);
 
-		if ( pBot->DotProductFromOrigin(m_vLoc) > 0.98 )
+		if ( pBot->isFacing(m_vLoc) )
 		{
 			if ( randomInt(0,1) )
 				pBot->primaryAttack();
@@ -2780,6 +2791,52 @@ void CFollowTask::debugString ( char *string )
 {
 	sprintf(string,"CFollowTask\nm_pFollow =(%s)",engine->GetPlayerNetworkIDString(m_pFollow));
 }
+////////////////////////////////////////////////
+
+void CDODDropAmmoTask :: debugString ( char *string )
+{
+	sprintf(string,"CDODDropAmmoTask");
+}
+
+void CDODDropAmmoTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	Vector vOrigin = CBotGlobals::entityOrigin(m_pPlayer.get());
+
+	if ( m_pPlayer.get() == NULL )
+	{
+		fail();
+		return;
+	}
+
+	if ( !CBotGlobals::entityIsAlive(m_pPlayer) )
+	{
+		fail();
+		return;
+	}
+
+	pBot->setLookAtTask(LOOK_VECTOR);
+	pBot->setLookVector(vOrigin);
+	pBot->setMoveTo(vOrigin);
+
+	if ( pBot->isFacing(vOrigin) )
+	{
+		if ( !pBot->isVisible(m_pPlayer) )
+		{
+			fail();
+			return;
+		}
+	}
+
+	if ( (pBot->distanceFrom(m_pPlayer) < 200.0f) && pBot->isFacing(vOrigin) )
+	{
+		CDODBot *pDODBot = ((CDODBot*)pBot);
+		pDODBot->dropAmmo();
+		complete();
+		return;
+	}
+		
+}
+
 ////////////////////////////////////////////
 CCrouchHideTask :: CCrouchHideTask( edict_t *pHideFrom )
 {
@@ -2819,7 +2876,7 @@ void CCrouchHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		m_fHideTime = engine->Time() + randomFloat(7.0f,14.0f);
 
 	if ( m_fChangeTime == 0.0f )
-		m_fChangeTime = engine->Time() + randomFloat(1.0f,3.0f);
+		m_fChangeTime = engine->Time() + randomFloat(0.9f,2.9f);
 
 	pBot->stopMoving();	
 
@@ -2841,6 +2898,10 @@ void CCrouchHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		pBot->duck(true);
 		pBot->wantToShoot(false);
 	}
+
+	// refrain from proning
+	pBot->updateCondition(CONDITION_RUN);
+	pBot->removeCondition(CONDITION_PRONE);
 
 	if ( m_fHideTime < engine->Time() )
 		complete();
@@ -3386,23 +3447,7 @@ CBotNest::CBotNest()
 ////////////////////////////////////////////////
 
 
-////////////////////////////////////////////////////
 
-CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw, bool bUseZ, float z, int iWaypointType )
-{
-	QAngle angle;
-	m_fEnemyTime = 0.0f;
-	m_fTime = 0.0f;
-	angle = QAngle(0,fYaw,0);
-	AngleVectors(angle,&m_vAim);
-	m_vAim = vOrigin + (m_vAim*1024);
-	m_vOrigin = vOrigin;
-	m_pWeaponToUse = pWeaponToUse;
-	m_fScopeTime = 0;
-	m_bUseZ = bUseZ;
-	m_z = z; // z = ground level
-	m_iWaypointType = iWaypointType;
-}
 /////////////////////////////////////////////
 
 void CBotJoinSquad:: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -3492,6 +3537,23 @@ void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	pBot->setLookVector(m_vForward);
 	pBot->setLookAtTask(LOOK_VECTOR);
+}
+////////////////////////////////////////////////////
+
+CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float fYaw, bool bUseZ, float z, int iWaypointType )
+{
+	QAngle angle;
+	m_fEnemyTime = 0.0f;
+	m_fTime = 0.0f;
+	angle = QAngle(0,fYaw,0);
+	AngleVectors(angle,&m_vAim);
+	m_vAim = vOrigin + (m_vAim*1024);
+	m_vOrigin = vOrigin;
+	m_pWeaponToUse = pWeaponToUse;
+	m_fScopeTime = 0;
+	m_bUseZ = bUseZ;
+	m_z = z; // z = ground level
+	m_iWaypointType = iWaypointType;
 }
 
 void CBotDODSnipe :: debugString ( char *string )

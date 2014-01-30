@@ -323,7 +323,7 @@ edict_t *CWeapons :: findWeapon ( edict_t *pPlayer, const char *pszWeaponName )
 	return NULL;
 }
 
-void CBotWeapons ::update ( bool bOverrideAllFromEngine )
+bool CBotWeapons ::update ( bool bOverrideAllFromEngine )
 {
 	// create mask of weapons data
 	short int i = 0;
@@ -336,6 +336,7 @@ void CBotWeapons ::update ( bool bOverrideAllFromEngine )
 
 	for ( i = 0; i < MAX_WEAPONS; i ++ )
 	{
+		// create a 'hash' of current weapons
 		pWeapon = (m_Weapon_iter==NULL) ? NULL : INDEXENT(m_Weapon_iter->GetEntryIndex());
 		iWeaponsSignature += ((unsigned int)pWeapon) + ((pWeapon == NULL) ? 0 : (unsigned int)CClassInterface::getWeaponState(pWeapon));
 		m_Weapon_iter++;
@@ -344,7 +345,6 @@ void CBotWeapons ::update ( bool bOverrideAllFromEngine )
 	// if weapons have changed this will be different
 	if ( iWeaponsSignature != m_iWeaponsSignature ) // m_fUpdateWeaponsTime < engine->Time() )
 	{
-
 		int iWeaponState;
 		register unsigned short int i,j;
 		bool bFound;
@@ -394,10 +394,15 @@ void CBotWeapons ::update ( bool bOverrideAllFromEngine )
 			m_BotWeapon_iter++;
 		}
 
+		// check again in 1 second
 		m_fUpdateWeaponsTime = engine->Time() + 1.0f;
 
 		m_iWeaponsSignature = iWeaponsSignature;
+
+		return true; // change
 	}
+
+	return false;
 }
 
 CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bool bAllowMeleeFallback, bool bMeleeOnly, bool bExplosivesOnly )
@@ -549,8 +554,29 @@ CBotWeapon *CBotWeapons :: getWeapon ( CWeapon *pWeapon )
 
 void CBotWeapons :: clearWeapons ()
 {
-	for ( register unsigned int i = 0; i < MAX_WEAPONS; i ++ )
+	for ( register unsigned short i = 0; i < MAX_WEAPONS; i ++ )
 		m_theWeapons[i].setHasWeapon(false);	
+}
+
+// returns weapon with highest priority even if no ammo
+CBotWeapon *CBotWeapons :: getPrimaryWeapon ()
+{
+	CBotWeapon *pBest = NULL;
+
+	for ( register unsigned short i = 0; i < MAX_WEAPONS; i ++ )
+	{
+		CBotWeapon *pWeap = &(m_theWeapons[i]);
+
+		if ( !pWeap->hasWeapon() )
+			continue;
+
+		if ( (pBest == NULL) || (pBest->getPreference() < pWeap->getPreference() ) )
+		{
+			pBest = pWeap;
+		}
+	}
+
+	return pBest;
 }
 
 CBotWeapon *CBotWeapons :: getActiveWeapon ( const char *szWeaponName )

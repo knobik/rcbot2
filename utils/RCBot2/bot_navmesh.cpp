@@ -34,7 +34,7 @@
 
 //#include "nav_mesh.h"
 
-bool CNavMeshNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart, bool bNoInterruptions, int iGoalId )
+bool CNavMeshNavigator :: workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart, bool bNoInterruptions, int iGoalId, int iConditions )
 {
 	return true;
 }

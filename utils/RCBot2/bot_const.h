@@ -155,6 +155,7 @@ typedef enum
 #define CONDITION_PUSH					1024 // bit 10
 #define CONDITION_LIFT					2048 // bit 11
 #define CONDITION_SEE_HEAL				4096 // bit 12
+#define CONDITION_SEE_PLAYERTOHELP		4096 // same thing as heal for other mods
 #define CONDITION_SEE_LAST_ENEMY_POS	8192 // bit 13
 #define CONDITION_CHANGED				16384 // bit 14
 #define CONDITION_COVERT				32768 // bit 15

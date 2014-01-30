@@ -679,7 +679,10 @@ public:
 
 	bool hasExplosives ( void );
 
-	void update ( bool bOverrideAllFromEngine = true ); // update from sendprop
+	// returns true if there is a change to the weapons
+	bool update ( bool bOverrideAllFromEngine = true ); // update from sendprop
+
+	CBotWeapon *getPrimaryWeapon (); // return the most important weapon bot is holding if if out o ammo
 
 private:
 	// bot that has these weapons

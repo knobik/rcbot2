@@ -170,6 +170,8 @@ public:
 
 	bool executeAction ( CBotUtility *util );
 
+	void updateConditions ();
+
 	void selectedClass ( int iClass );
 
 	bool setVisible ( edict_t *pEntity, bool bVisible );
@@ -219,6 +221,8 @@ public:
 	void sayMoveOut ();
 
 	void areaClear();
+
+	void dropAmmo ();
 
 private:
 
@@ -276,8 +280,11 @@ private:
 	eDODVoiceCMD m_LastHearVoiceCommand;
 
 	float m_fLastCaptureEvent;
-
+	float m_fNextCheckNeedAmmo;
 	float m_fNextCheckAlone; // to see if bot should tell others to stick together
+
+	bool m_bDroppedAmmoThisRound;
+	edict_t *m_pPlayerToHelp;
 	// blah blah
 };
 

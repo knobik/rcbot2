@@ -731,7 +731,8 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 									  bool *bFail, 
 									  bool bRestart, 
 									  bool bNoInterruptions, 
-									  int iGoalId )
+									  int iGoalId,
+									  int iConditions )
 {
 	extern ConVar bot_pathrevs;
 
@@ -839,6 +840,11 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 
 	int iLastNode = -1;
 
+	float fBeliefSensitivity = 1.5f;
+
+	if ( iConditions & CONDITION_COVERT )
+		fBeliefSensitivity = 2.0f;
+
 	while ( !bFoundGoal && !m_theOpenList.empty() && (iLoops < iMaxLoops) )
 	{
 		iLoops ++;
@@ -899,7 +905,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 			succ->unClose();
 
 			succ->setParent(iCurrentNode);
-			succ->setCost(fCost+(m_fBelief[iSucc]*(1.5f-m_pBot->getProfile()->m_fBraveness)));	
+			succ->setCost(fCost+(m_fBelief[iSucc]*(fBeliefSensitivity-m_pBot->getProfile()->m_fBraveness)));	
 			succ->setWaypoint(iSucc);
 
 			if ( !succ->heuristicSet() )		

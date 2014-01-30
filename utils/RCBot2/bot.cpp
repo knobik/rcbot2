@@ -793,7 +793,10 @@ void CBot :: think ()
 	if ( m_pWeapons )
 	{
 		// update carried weapons
-		m_pWeapons->update(overrideAmmoTypes());
+		if ( m_pWeapons->update(overrideAmmoTypes()) )
+		{
+			m_pPrimaryWeapon = m_pWeapons->getPrimaryWeapon();
+		}
 	}
 
 	/////////////////////////////
@@ -1251,6 +1254,7 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	m_pPrimaryWeapon = NULL;
 	m_uSquadDetail.dat = 0;
 	m_bStatsCanUse = false;
 	m_StatsCanUse.data = 0;
@@ -1618,6 +1622,11 @@ void CBot :: clearSquad ()
 	m_pSquad = NULL;
 }
 
+bool CBot :: isFacing ( Vector vOrigin )
+{
+	return (DotProductFromOrigin(vOrigin) > 0.97f);
+}
+
 void CBot ::debugBot(char *msg)
 {
 	bool hastask = m_pSchedules->getCurrentTask()!=NULL;
@@ -1778,10 +1787,9 @@ void CBot :: updateStatistics ()
 		m_Stats.data = 0;
 		m_iStatsIndex = 0; // reset to be sure in case of m_iStatsIndex > gpGlobals->maxClients
 
-
 		if ( !m_uSquadDetail.b1.said_area_clear && (m_StatsCanUse.stats.m_iEnemiesInRange == 0) && (m_StatsCanUse.stats.m_iEnemiesVisible == 0) && (m_StatsCanUse.stats.m_iTeamMatesInRange > 0))
 		{
-			if ( !inSquad() || isSquadLeader() )
+			if ( !inSquad() || isSquadLeader() && (m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0f)<engine->Time())) )
 				areaClear();
 
 			m_uSquadDetail.b1.said_area_clear = true;

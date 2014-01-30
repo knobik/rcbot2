@@ -447,6 +447,7 @@ private:
 	vector<MyEHandle> m_Members;
 };
 */
+
 class CBot 
 {
 public:
@@ -539,6 +540,11 @@ public:
 		m_pEnemy = pEnemy;
 	}
 
+	inline int getConditions ()
+	{
+		return m_iConditions;
+	}
+
 	inline bool hasAllConditions ( int iConditions )
 	{
 		return (m_iConditions & iConditions) == iConditions;
@@ -623,7 +629,7 @@ public:
 
 	void setAvoidEntity ( edict_t *pEntity ) { m_pAvoidEntity = pEntity; }
 
-	void updateConditions ();
+	virtual void updateConditions ();
 
 	virtual bool canAvoid ( edict_t *pEntity );
 
@@ -827,6 +833,8 @@ public:
 	inline void wantToChangeWeapon ( bool bSet ) { m_bWantToChangeWeapon = bSet; }
 
 	int nearbyFriendlies (float fDistance);
+	
+	bool isFacing ( Vector vOrigin );
 
 	bool isOnLift (void);
 
@@ -902,6 +910,7 @@ public:
 	void SquadInPosition ( );
 	virtual void sayInPosition() { }
 	virtual void sayMoveOut() { }
+
 
 protected:
 
@@ -1113,6 +1122,7 @@ protected:
 	CBotSquad *m_pSquad;
 	float m_fSquadIdleTime;
 	squad_u m_uSquadDetail;
+	CBotWeapon *m_pPrimaryWeapon;
 };
 
 

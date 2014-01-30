@@ -490,7 +490,9 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 					addVoiceCommand(DOD_VC_MGAHEAD);
 
 				updateCondition(CONDITION_COVERT);
-				m_fCurrentDanger += 100.0f; // machine gun danger
+				m_pNavigator->belief(CBotGlobals::entityOrigin(pDied),CBotGlobals::entityOrigin(pKiller),100.0f,512.0f,BELIEF_DANGER);
+				updateCondition(CONDITION_CHANGED);
+				m_fCurrentDanger = MAX_BELIEF; // machine gun danger
 			}
 			else
 				m_fCurrentDanger += 20.0f;
@@ -535,6 +537,9 @@ void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *p
 	{
 		if ( pWeapon )
 		{
+			DOD_Class pclass = (DOD_Class)CClassInterface::getPlayerClassDOD(pTeamMate);
+			//DOD_Class pclassdead = (DOD_Class)CClassInterface::getPlayerClassDOD(pDied);
+
 			pCurrentWeapon = getCurrentWeapon();
 
 			if ( pCurrentWeapon && (pWeapon->getID() == pCurrentWeapon->getID()) )
@@ -544,6 +549,14 @@ void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *p
 
 			if ( m_fCurrentDanger < 0 )
 				m_fCurrentDanger = 0;
+
+			if ( (pclass == DOD_CLASS_MACHINEGUNNER) && pWeapon->isDeployable() )
+			{
+				removeCondition(CONDITION_COVERT);
+				m_pNavigator->belief(CBotGlobals::entityOrigin(pTeamMate),CBotGlobals::entityOrigin(pDied),MAX_BELIEF,512.0f,BELIEF_SAFETY);
+				updateCondition(CONDITION_CHANGED);
+				m_fCurrentDanger = 10; // machine gun danger
+			}
 		}
 
 		if ( pDied == m_pEnemy )
@@ -571,9 +584,20 @@ void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *p
 	}
 }
 
+void CDODBot :: dropAmmo ()
+{
+	m_bDroppedAmmoThisRound = true;
+	helpers->ClientCommand(m_pEdict,"dropammo");
+}
+
 void CDODBot :: spawnInit ()
 {
 	CBot::spawnInit();
+
+	m_bDroppedAmmoThisRound = false;
+
+	m_fNextCheckAlone = 0.0f;
+	m_fNextCheckNeedAmmo = 0.0f;
 
 	m_uSquadDetail.b1.said_area_clear = true;
 
@@ -1021,6 +1045,13 @@ void CDODBot :: modThink ()
 		}
 	}
 
+	// need ammo and see a teammate nearby
+	if ( hasSomeConditions(CONDITION_NEED_AMMO) && (m_fNextCheckNeedAmmo < engine->Time()) && (m_StatsCanUse.stats.m_iTeamMatesVisible>0) && (m_StatsCanUse.stats.m_iTeamMatesInRange>0) )
+	{
+		addVoiceCommand(DOD_VC_NEED_AMMO);
+		m_fNextCheckNeedAmmo = engine->Time() + randomFloat(30.0f,60.0f);
+	}
+
 	if ( m_pEnemyGrenade )
 	{
 		m_fShoutGrenade = m_fShoutGrenade/2 + 0.5f;
@@ -1307,6 +1338,69 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 			m_fCurrentDanger += 50.0f;
 		}
 		break;
+	case DOD_VC_NEED_AMMO:
+		// Todo: go to team mate and drop ammo
+		// should drop ammo to this person?
+
+		if ( !m_bDroppedAmmoThisRound )
+		{
+			// if this player is in my squad , do it
+			// if this player is not in my squad ill only do it if I see him and he's nearby
+			if ( (!inSquad() && (distanceFrom(pPlayer)<512.0f) && isVisible(pPlayer)) || (inSquad()&&m_pSquad->IsMember(pPlayer)) )
+			{
+				if ( !m_pSchedules->isCurrentSchedule(SCHED_DOD_DROPAMMO) )
+				{
+					if ( m_pSchedules->hasSchedule(SCHED_DOD_DROPAMMO) )
+						m_pSchedules->removeSchedule(SCHED_DOD_DROPAMMO);
+
+					CBotSchedule *pSched = new CBotSchedule();
+
+					pSched->setID(SCHED_DOD_DROPAMMO);
+
+					if ( !isVisible(pPlayer) || (distanceFrom(pPlayer)>200.0f) )
+					{				
+						CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(pPlayer),200.0f,-1));
+
+						if ( pWpt )
+						{
+							CFindPathTask *findpathtask = new CFindPathTask(pPlayer);
+							findpathtask->completeIfSeeTaskEdict();
+							pSched->addTask(findpathtask);
+						}
+						else
+						{
+							if ( randomFloat(0.0f,1.0f) > 0.25f )
+							{
+								addVoiceCommand(DOD_VC_NO);
+							}
+
+							delete pSched;
+							return; // can't find the player
+						}
+					}
+
+					CBotTask *pTask = new CDODDropAmmoTask(pPlayer);
+					pSched->addTask(pTask);
+
+					m_pSchedules->addFront(pSched);
+
+					if ( randomFloat(0.0f,1.0f) > (inSquad()?0.25f:0.75f) )
+					{
+						addVoiceCommand(DOD_VC_YES);
+					}
+				}
+
+			}
+			else if ( randomFloat(0.0f,1.0f) > 0.75f )
+			{
+				addVoiceCommand(DOD_VC_NO);
+			}
+		}
+		else if ( randomFloat(0.0f,1.0f) > 0.75f )
+		{
+			addVoiceCommand(DOD_VC_NO);
+		}
+		break;
 	case DOD_VC_STICK_TOGETHER:
 		{
 			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
@@ -1324,13 +1418,13 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 				// probablity of joining someone is based on their score and class
 				float fProb = 0.5f;
 				int iClass = CClassInterface::getPlayerClassDOD(pPlayer);
-
-				if ( iClass == DOD_CLASS_SNIPER )
+				// always join a squad if the leader is human
+				if ( p->IsPlayer() && !p->IsFakeClient() )
+					fProb = 1.0f;
+				else if ( iClass == DOD_CLASS_SNIPER )
 					fProb = 0.2f;
 				else if ( iClass == DOD_CLASS_MACHINEGUNNER )
 					fProb = 0.3f;
-				else if ( p->IsPlayer() && !p->IsFakeClient() )
-					fProb = 1.0f;
 
 				if ( randomFloat(0.0f,1.0f) <= fProb )
 				{
@@ -1523,6 +1617,9 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 	switch ( util->getId() )
 	{
+	case BOT_UTIL_PICKUP_WEAPON:
+		m_pSchedules->add(new CBotPickupSched(m_pNearestWeapon.get()));
+		return true;
 	case BOT_UTIL_MESSAROUND:
 		{
 			// find a nearby friendly
@@ -2499,8 +2596,15 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		ADD_UTILITY(BOT_UTIL_MESSAROUND,(getHealthPercent()>0.75f), fAttackUtil );
 	}
 
-	if ( (m_pNearestWeapon != NULL) && hasSomeConditions(CONDITION_NEED_AMMO) )
+	if ( (m_pNearestWeapon.get() != NULL) && hasSomeConditions(CONDITION_NEED_AMMO) )
 	{
+		CWeapon *pNearestWeapon = CWeapons::getWeapon(m_pNearestWeapon.get()->GetClassName());
+		CBotWeapon *pHaveWeapon = (pNearestWeapon==NULL)?NULL:(m_pWeapons->getWeapon(pNearestWeapon));
+
+		if ( pNearestWeapon && (!pHaveWeapon || !pHaveWeapon->hasWeapon() || pHaveWeapon->outOfAmmo(this) ) )
+		{
+			ADD_UTILITY(BOT_UTIL_PICKUP_WEAPON, true, 0.6f + pNearestWeapon->getPreference()*0.1f);
+		}
 		//BOT_UTIL_DOD_PICKUP_OBJ
 	}
 	// sniping or machinegunning
@@ -2625,6 +2729,19 @@ bool CDODBot :: selectBotWeapon ( CBotWeapon *pBotWeapon )
 		failWeaponSelect();
 
 	return false;
+}
+
+void CDODBot :: updateConditions ()
+{
+	CBot::updateConditions();
+
+	if ( m_pPrimaryWeapon != NULL )
+	{
+		if ( m_pPrimaryWeapon->outOfAmmo(this) )
+		{
+			updateCondition(CONDITION_NEED_AMMO);
+		}
+	}
 }
 
 bool CDODBot :: walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset )
