@@ -511,12 +511,20 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( CDODMod::m_Flags.ownsFlag(m_iFlagID,iTeam) )
 	{
 		complete();
+
+		pBot->resetAreaClear();
+
+		if ( pBot->inSquad() && pBot->isSquadLeader() )
+		{
+			pBot->addVoiceCommand(DOD_VC_HOLD);
+			pBot->updateCondition(CONDITION_DEFENSIVE);
+		}
+
 		return;
 	}
 	else if ( m_fAttackTime == 0 )
 	{
 		m_fAttackTime = engine->Time() + randomFloat(30.0,60.0);
-		pBot->resetAreaClear();
 	}
 	else if ( m_fAttackTime < engine->Time() )
 	{
@@ -1432,7 +1440,11 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_fTime == 0 )
 	{
-		if ( m_fMaxTime > 0 )
+		if ( pBot->inSquad() && pBot->isSquadLeader() )
+		{
+			m_fTime = engine->Time() + randomFloat(15.0f,45.0f);
+		} 
+		else if ( m_fMaxTime > 0 )
 			m_fTime = engine->Time() + m_fMaxTime;
 		else
 			m_fTime = engine->Time() + randomFloat(20.0f,90.0f);
@@ -1473,7 +1485,12 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	if ( m_fTime < engine->Time() )
+	{
+		if ( pBot->inSquad() && pBot->isSquadLeader() )
+			pBot->addVoiceCommand(DOD_VC_GOGOGO);
+
 		complete();
+	}
 }
 
 //////////////////////
@@ -2898,6 +2915,10 @@ void CCrouchHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		pBot->duck(true);
 		pBot->wantToShoot(false);
 	}
+	else if ( pBot->hasEnemy() )
+	{
+		m_fHideTime = engine->Time() + 10.0f;
+	}
 
 	// refrain from proning
 	pBot->updateCondition(CONDITION_RUN);
@@ -3452,8 +3473,11 @@ CBotNest::CBotNest()
 
 void CBotJoinSquad:: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
-	if ( pBot->inSquad() && pBot->isSquadLeader() )
-		CBotSquads::AddSquadMember(m_pPlayer,pBot->getEdict());
+	if ( !pBot->inSquad()  )
+	{
+		pBot->setSquad(CBotSquads::AddSquadMember(m_pPlayer,pBot->getEdict()));
+		complete();
+	}
 		//CBotSquads::SquadJoin(pBot->getEdict(),m_pPlayer);
 }
 
@@ -3510,6 +3534,8 @@ void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		CClassInterface::getVelocity(pSquadLeader,&vVelocity);
 
+		m_fLeaderSpeed = (m_fLeaderSpeed*0.5f) + (vVelocity.Length()*0.5f);
+
 		m_fUpdateMovePosTime = engine->Time() + (fRand * (1.0f-(vVelocity.Length()/320)));
 		m_vPos = m_pSquad->GetFormationVector(pBot->getEdict());
 		
@@ -3527,6 +3553,7 @@ void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->setMoveTo(m_vPos);
 		pBot->setSquadIdleTime(engine->Time());
+		pBot->setMoveSpeed(m_fLeaderSpeed);
 	}
 	else
 	{
@@ -3576,8 +3603,8 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( m_fTime == 0.0f )
 	{
-		m_fEnemyTime = engine->Time();
-		m_fTime = m_fEnemyTime + randomFloat(20.0f,40.0f);
+		m_fEnemyTime = 0.0f;
+		m_fTime = engine->Time() + randomFloat(20.0f,40.0f);
 		pBot->resetLookAroundTime();
 	}
 
@@ -3652,7 +3679,7 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else
 	{
-		pBot->setLookAtTask(LOOK_SNIPE);
+		pBot->setLookAtTask(LOOK_VECTOR);
 		pBot->setLookVector(pBot->snipe(m_vAim));
 	}
 

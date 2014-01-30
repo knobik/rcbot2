@@ -39,7 +39,7 @@
 #include "bot_globals.h"
 #include "bot_getprop.h"
 ////////////////////////////////////
-
+// these must match the SCHED IDs
 const char *szSchedules[SCHED_MAX+1] = 
 {
 	"SCHED_NONE",
@@ -79,6 +79,8 @@ const char *szSchedules[SCHED_MAX+1] =
 	"SCHED_HELP_PLAYER",
 	"SCHED_BOMB",
 	"SCHED_TF_SPYCHECK",
+	"SCHED_FOLLOW",
+	"SCHED_DOD_DROPAMMO",
 	"SCHED_MAX"
 };
 ////////////////////// unused
@@ -371,6 +373,18 @@ CBotPickupSched::CBotPickupSched( edict_t *pEdict )
 }
 
 void CBotPickupSched :: init ()
+{
+	setID(SCHED_PICKUP);
+}
+
+CBotPickupSchedUse::CBotPickupSchedUse( edict_t *pEdict )
+{
+	addTask(new CFindPathTask(pEdict));	
+	addTask(new CMoveToTask(pEdict));
+	addTask(new CBotHL2DMUseButton(pEdict));
+}
+
+void CBotPickupSchedUse :: init ()
 {
 	setID(SCHED_PICKUP);
 }

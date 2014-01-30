@@ -2268,13 +2268,16 @@ Vector CBot::snipe (Vector &vAiming )
 			float fTime;
 			Vector vOrigin = getOrigin();
 
-			trace_t *tr = CBotGlobals::getTraceResult();
+			//trace_t *tr = CBotGlobals::getTraceResult();
 
 			m_vLookAroundOffset = Vector(randomFloat(-64.0f,64.0f),randomFloat(-64.0f,64.0f),randomFloat(-64.0f,32.0f));
 			// forward
-			CBotGlobals::traceLine(vOrigin,m_vWaypointAim+m_vLookAroundOffset,MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);	
+			//CBotGlobals::traceLine(vOrigin,m_vWaypointAim+m_vLookAroundOffset,MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);	
 
-			fTime = 1.0f + (tr->fraction * randomFloat(3.0f,7.0f));
+			if ( m_fLookAroundTime == 0.0f )
+				fTime = 0.1f;
+			else
+				fTime = randomFloat(3.0f,7.0f);
 
 			m_fLookAroundTime = engine->Time() + fTime;
 #ifndef __linux__

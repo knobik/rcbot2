@@ -164,6 +164,10 @@ public:
 
 	void UpdateAngles ( void );
 
+	bool isDefensive () { return m_bDefensive; }
+
+	void setDefensive ( bool bDefensive ) { m_bDefensive = bDefensive; }
+
 private:
 	// use 'EHandles' for squads
 	// as players might leave and stuff...
@@ -177,6 +181,7 @@ private:
 	eCombatType m_CombatType;
 
 	QAngle m_vLeaderAngle;
+	bool m_bDefensive;
 };
 
 //-------------------

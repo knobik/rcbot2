@@ -537,6 +537,14 @@ public:
 	void init ();
 };
 
+class CBotPickupSchedUse : public CBotSchedule
+{
+public:
+	CBotPickupSchedUse ( edict_t *pEdict );
+
+	void init ();
+};
+
 class CBotGotoOriginSched : public CBotSchedule
 {
 public:

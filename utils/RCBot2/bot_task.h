@@ -366,6 +366,7 @@ public:
 
 	CBotFollowSquadLeader ( CBotSquad *pSquad )
 	{
+		m_fLeaderSpeed = 0.0f;
 		m_pSquad = pSquad;
 		m_fVisibleTime = 0.0f;
 		m_fUpdateMovePosTime = 0.0f;
@@ -383,6 +384,7 @@ private:
 	CBotSquad *m_pSquad;
 	float m_fVisibleTime;
 	float m_fUpdateMovePosTime;
+	float m_fLeaderSpeed;
 	Vector m_vPos;
 	Vector m_vForward;
 };

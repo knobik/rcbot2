@@ -1403,6 +1403,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 		break;
 	case DOD_VC_STICK_TOGETHER:
 		{
+			extern ConVar rcbot_bots_form_squads;
 			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
 
 			if ( inSquad() && (m_pSquad->GetLeader() == pPlayer) )
@@ -1415,16 +1416,24 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 			}
 			else if ( !inSquad() && isVisible(pPlayer) )
 			{
+				int iClass = CClassInterface::getPlayerClassDOD(pPlayer);
 				// probablity of joining someone is based on their score and class
 				float fProb = 0.5f;
-				int iClass = CClassInterface::getPlayerClassDOD(pPlayer);
+								
 				// always join a squad if the leader is human
 				if ( p->IsPlayer() && !p->IsFakeClient() )
 					fProb = 1.0f;
-				else if ( iClass == DOD_CLASS_SNIPER )
-					fProb = 0.2f;
-				else if ( iClass == DOD_CLASS_MACHINEGUNNER )
-					fProb = 0.3f;
+				else if ( rcbot_bots_form_squads.GetBool() )
+				{
+					fProb = 0.5f;
+
+					if ( iClass == DOD_CLASS_SNIPER )
+						fProb = 0.2f;
+					else if ( iClass == DOD_CLASS_MACHINEGUNNER )
+						fProb = 0.3f;
+				}
+				else
+					fProb = 0.0f;
 
 				if ( randomFloat(0.0f,1.0f) <= fProb )
 				{
@@ -1445,8 +1454,9 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 						addVoiceCommand(DOD_VC_NO);
 				}
 			}
-			else if ( ( p->IsPlayer() && !p->IsFakeClient() ) || (randomFloat(0.0f,1.0f) > 0.75f) ) // already in a squad
+			else if ( ( p->IsPlayer() && !p->IsFakeClient() ) || ((randomFloat(0.0f,1.0f) > 0.75f)&&rcbot_bots_form_squads.GetBool() ) ) // already in a squad
 			{
+				// decide to change squad leader here
 				if ( inSquad() && (!hasSomeConditions(CONDITION_SEE_SQUAD_LEADER) || !hasSomeConditions(CONDITION_SQUAD_LEADER_INRANGE)) )
 				{
 					m_pSquad->removeMember(m_pEdict);
@@ -1493,6 +1503,8 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 	case DOD_VC_NEED_BACKUP:
 		if ( (!inSquad() ||( m_pSquad->GetLeader()==m_pEdict)) && m_pNearestFlag && isVisible(pPlayer) && !rcbot_nocapturing.GetBool() )
 		{
+			extern ConVar rcbot_bots_form_squads;
+
 			Vector vPoint = CBotGlobals::entityOrigin(m_pNearestFlag);
 			Vector vPlayer = CBotGlobals::entityOrigin(pPlayer);
 
@@ -1510,7 +1522,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 					attack->addTask(new CFindPathTask(pWpt->getOrigin()));
 					attack->addTask(new CBotDefendTask(pWpt->getOrigin(),randomFloat(6.0f,12.0f),0,true,vPoint,LOOK_SNIPE,pWpt->getFlags()));
 
-					if ( inSquad() && isSquadLeader() )
+					if ( !inSquad() && rcbot_bots_form_squads.GetBool() )
 						attack->addTask(new CBotJoinSquad(pPlayer));
 
 					// add defend task
@@ -1523,7 +1535,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 					attack->addTask(new CFindPathTask(vPoint));
 					attack->addTask(new CBotDODAttackPoint(CDODMod::m_Flags.getFlagID(m_pNearestFlag),vPoint,150.0f));
 
-					if ( inSquad() && isSquadLeader() )
+					if ( !inSquad() && rcbot_bots_form_squads.GetBool() )
 						attack->addTask(new CBotJoinSquad(pPlayer));
 
 					// add defend task
@@ -1618,7 +1630,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 	switch ( util->getId() )
 	{
 	case BOT_UTIL_PICKUP_WEAPON:
-		m_pSchedules->add(new CBotPickupSched(m_pNearestWeapon.get()));
+		m_pSchedules->add(new CBotPickupSchedUse(m_pNearestWeapon.get()));
 		return true;
 	case BOT_UTIL_MESSAROUND:
 		{
@@ -2442,7 +2454,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 
 		bCanMessAround = false;
 
-		if ( inSquad() && !isSquadLeader() && hasSomeConditions(CONDITION_DEFENSIVE) )
+		if ( inSquad() && hasSomeConditions(CONDITION_DEFENSIVE) )
 		{			
 			iFlagID = CDODMod::m_Flags.findNearestObjective(m_pSquad->GetFormationPosition(m_pEdict));
 
