@@ -491,7 +491,7 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 
 				updateCondition(CONDITION_COVERT);
 				m_pNavigator->belief(CBotGlobals::entityOrigin(pDied),CBotGlobals::entityOrigin(pKiller),100.0f,512.0f,BELIEF_DANGER);
-				updateCondition(CONDITION_CHANGED);
+				//updateCondition(CONDITION_CHANGED);
 				m_fCurrentDanger = MAX_BELIEF; // machine gun danger
 			}
 			else
@@ -511,6 +511,23 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 		{
 			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
 			updateCondition(CONDITION_CHANGED);
+		}
+		else if ( !hasEnemy() )
+		{
+			m_vListenPosition = CBotGlobals::entityOrigin(pKiller);
+
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && (randomFloat(0.0f,1.0f) < m_pProfile->m_fBraveness) )
+			{
+				m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
+				m_pSchedules->addFront(new CBotInvestigateNoiseSched(CBotGlobals::entityOrigin(pDied),m_vListenPosition));
+			}
+
+			m_bListenPositionValid = true;
+			m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
+			setLookAtTask(LOOK_NOISE);
+			m_fLookSetTime = m_fListenTime;
+
+			//listenToPlayer(pDied);
 		}
 
 		if ( (m_pEnemy==pKiller) )
@@ -1297,6 +1314,9 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 			if ( randomFloat(0.0f,1.0f) > 0.25f )
 				addVoiceCommand(DOD_VC_YES);
 
+			// to improve
+			m_pSquad->setTactic(TACTIC_DEFEND);
+
 			updateCondition(CONDITION_DEFENSIVE);
 			updateCondition(CONDITION_CHANGED);
 		}
@@ -1987,7 +2007,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 			if ( pWaypoint && (iBombType == DOD_BOMB_PLANT) && (randomFloat(0.0f,200.0f) < m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint))) )
 			{
 				attack->addTask(new CFindPathTask(pWaypoint->getOrigin()));//,LOOK_AROUND));
-				attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
+				attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,Vector(0,0,0),false,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
 			}
 			attack->addTask(new CFindPathTask(iWptGoal));
 			attack->addTask(new CBotDODBomb(iBombType,id,pBombTarget,vGoal,-1));
@@ -2133,7 +2153,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				if ( pWaypoint && (randomFloat(0.0f,MAX_BELIEF) < m_pNavigator->getBelief(iGoalWaypoint)) )
 				{
 					attack->addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint)));//,LOOK_AROUND));
-					attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
+					attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,Vector(0,0,0),false,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
 				}
 
 

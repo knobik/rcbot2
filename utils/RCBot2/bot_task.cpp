@@ -516,8 +516,16 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( pBot->inSquad() && pBot->isSquadLeader() )
 		{
-			pBot->addVoiceCommand(DOD_VC_HOLD);
-			pBot->updateCondition(CONDITION_DEFENSIVE);
+			float fDanger = MAX_BELIEF;
+			IBotNavigator *pNav = pBot->getNavigator();
+
+			fDanger = pNav->getBelief(CDODMod::m_Flags.getWaypointAtFlag(m_iFlagID));
+
+			if ( randomFloat(0.0f,MAX_BELIEF) < fDanger )
+			{
+				pBot->addVoiceCommand(DOD_VC_HOLD);
+				pBot->updateCondition(CONDITION_DEFENSIVE);
+			}
 		}
 
 		return;
@@ -1429,7 +1437,14 @@ void CBotInvestigateTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	// walk
 	pBot->setMoveSpeed(CClassInterface::getMaxSpeed(pBot->getEdict())/8);
 	//pBot->setLookVector();
-	pBot->setLookAtTask(LOOK_AROUND);
+
+	if ( m_bHasPOV )
+	{
+		pBot->setLookVector(m_vPOV);
+		pBot->setLookAtTask(LOOK_VECTOR);
+	}
+	else
+		pBot->setLookAtTask(LOOK_AROUND);
 
 }
 ///////////////////
@@ -3553,7 +3568,9 @@ void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		pBot->setMoveTo(m_vPos);
 		pBot->setSquadIdleTime(engine->Time());
-		pBot->setMoveSpeed(m_fLeaderSpeed);
+
+		if ( pBot->isVisible(pSquadLeader) )
+			pBot->setMoveSpeed(m_fLeaderSpeed);
 	}
 	else
 	{

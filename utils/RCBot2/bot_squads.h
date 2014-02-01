@@ -27,6 +27,14 @@ typedef enum eCombatType
 	COMBAT_PRONE
 };
 
+typedef enum eTacticType
+{
+	TACTIC_FREE = 0,
+	TACTIC_IDLE,
+	TACTIC_DEFEND,
+	TACTIC_ATTACK
+};
+
 class CBotSquad
 {
 public:
@@ -164,9 +172,9 @@ public:
 
 	void UpdateAngles ( void );
 
-	bool isDefensive () { return m_bDefensive; }
+	bool isDefensive () { return m_Tactics == TACTIC_DEFEND; }
 
-	void setDefensive ( bool bDefensive ) { m_bDefensive = bDefensive; }
+	void setTactic ( eTacticType iTactics ) { m_Tactics = iTactics; }
 
 private:
 	// use 'EHandles' for squads
@@ -181,7 +189,7 @@ private:
 	eCombatType m_CombatType;
 
 	QAngle m_vLeaderAngle;
-	bool m_bDefensive;
+	eTacticType m_Tactics;
 };
 
 //-------------------

@@ -825,6 +825,8 @@ public:
 
 	void updateStatistics (); // updates number of teammates/enemies nearby/visible
 	virtual void listenForPlayers ();
+	// listens to this player
+	void listenToPlayer (edict_t *pListenTo); 
 	virtual bool wantToListenToPlayer ( edict_t *pPlayer ) { return true; }
 
 	inline bool wantToShoot ( void ) { return m_bOpenFire; }

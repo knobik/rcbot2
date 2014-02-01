@@ -942,6 +942,23 @@ void CBot :: think ()
 	}
 #endif
 	
+
+#ifdef _DEBUG
+	if ( rcbot_debug_iglev.GetInt() != 12 )
+	{
+#endif
+		if ( inSquad() && !isSquadLeader() )
+		{
+			if ( m_pSquad->IsCrouchMode() )
+				duck();
+			else if ( m_pSquad->IsProneMode() )
+				updateCondition(CONDITION_PRONE);
+			else if ( m_pSquad->IsStealthMode() )
+				updateCondition(CONDITION_COVERT);
+		}
+#ifdef _DEBUG
+	}
+#endif
 	setMoveLookPriority(MOVELOOK_ATTACK);
 
 	handleWeapons();
@@ -1846,8 +1863,6 @@ void CBot :: listenForPlayers ()
 
 	float fMinDist = 1024.0f;
 	float fDist;
-	bool bIsEnemy;
-	bool bIsVisible;
 
 	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
@@ -1865,17 +1880,20 @@ void CBot :: listenForPlayers ()
 
 	m_fWantToListenTime = engine->Time() + 0.25f;
 
-	for ( register short int i = 0; i < MAX_PLAYERS; i ++ )
+	for ( register short int i = 1; i < gpGlobals->maxClients; i ++ )
 	{
-		pClient = CClients::get(i);
-
-		if ( !pClient->isUsed() )
-			continue;
-
-		pPlayer = pClient->getPlayer();
+		pPlayer = INDEXENT(i);
 
 		if ( pPlayer == m_pEdict )
 			continue; // don't listen to self
+
+		if ( pPlayer->IsFree() )
+			continue;
+
+		pClient = CClients::get(pPlayer);
+
+		if ( !pClient->isUsed() )
+			continue;
 
 		p = playerinfomanager->GetPlayerInfo(pPlayer);
 
@@ -1897,39 +1915,71 @@ void CBot :: listenForPlayers ()
 		{
 			fMinDist = fDist;
 			pListenNearest = pPlayer;
+		}
+	}
 
-			bIsVisible = isVisible(pPlayer);
-			bIsEnemy = isEnemy(pPlayer);
+	if ( pListenNearest != NULL )
+	{
+		listenToPlayer(pListenNearest);
+	}
+}
 
-			// look at possible enemy
-			if ( !bIsVisible || bIsEnemy )
+void CBot :: listenToPlayer ( edict_t *pPlayer )
+{
+	IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+	bool bIsVisible = isVisible(pPlayer);
+	bool bIsEnemy = isEnemy(pPlayer);
+			 
+	// look at possible enemy
+	if ( !bIsVisible || bIsEnemy )
+	{
+		m_vListenPosition = p->GetAbsOrigin();
+	}
+	else
+	{
+		if ( !bIsEnemy )
+		{
+			QAngle angle = p->GetAbsAngles();
+			Vector forward;
+
+			AngleVectors( angle, &forward );
+
+			// look where team mate is shooting
+			m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);		
+
+			// not investigating any noise right now -- depending on my braveness I will check it out
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && (randomFloat(0.0f,1.0f) < m_pProfile->m_fBraveness) )
 			{
-				m_vListenPosition = p->GetAbsOrigin();
+				trace_t *TraceResult = CBotGlobals::getTraceResult();
+					
+				Vector vAttackerOrigin = CBotGlobals::entityOrigin(pPlayer);
+					
+				// check exactly where teammate is firing
+				CBotGlobals::quickTraceline(pPlayer,vAttackerOrigin,m_vListenPosition);
 
-				//if ( !isEnemy(pPlayer) )
-				//	m_fListenTime = engine->Time() + randomFloat(0.75f,2.0f);
-			}
-			else
-			{
-				QAngle angle = p->GetAbsAngles();
-				Vector forward;
+				// update the wall or player teammate is shooting
+				m_vListenPosition = TraceResult->endpos; 
 
-				AngleVectors( angle, &forward );
+				CBotGlobals::quickTraceline(m_pEdict,getOrigin(),m_vListenPosition);
 
-				// look where team mate is shooting
-				m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);			
-			}
-
-			m_bListenPositionValid = true;
-			m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
-			setLookAtTask(LOOK_NOISE);
-			m_fLookSetTime = m_fListenTime;
-
-			if ( bIsVisible || bIsEnemy ) 
-			{// certain where noise is coming from -- don't listen elsewhere for another second
-				m_fWantToListenTime = engine->Time() + 1.0f;
+				// can't see what my teammate is shooting -- go there
+				if ( (TraceResult->fraction < 1.0f) && (TraceResult->m_pEnt != m_pEdict->GetIServerEntity()->GetBaseEntity() ) )
+				{
+					m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
+					m_pSchedules->addFront(new CBotInvestigateNoiseSched(vAttackerOrigin,m_vListenPosition));
+				}
 			}
 		}
+	}
+
+	m_bListenPositionValid = true;
+	m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
+	setLookAtTask(LOOK_NOISE);
+	m_fLookSetTime = m_fListenTime;
+
+	if ( bIsVisible || !bIsEnemy ) 
+	{// certain where noise is coming from -- don't listen elsewhere for another second
+		m_fWantToListenTime = engine->Time() + 1.0f;
 	}
 }
 

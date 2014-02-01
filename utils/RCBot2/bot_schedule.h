@@ -85,6 +85,7 @@ typedef enum
 	SCHED_TF_SPYCHECK,
 	SCHED_FOLLOW,
 	SCHED_DOD_DROPAMMO,
+	SCHED_INVESTIGATE_NOISE,
 	SCHED_MAX
 	//SCHED_HIDE_FROM_ENEMY
 }eBotSchedule;
@@ -573,6 +574,14 @@ public:
 	{
 		setID(SCHED_RUN_FOR_COVER);
 	}
+};
+
+class CBotInvestigateNoiseSched : public CBotSchedule
+{
+public:
+	CBotInvestigateNoiseSched ( Vector vSource, Vector vAttackPoint );
+
+	void init ();
 };
 
 class CGotoHideSpotSched : public CBotSchedule

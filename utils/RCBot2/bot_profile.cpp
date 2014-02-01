@@ -110,7 +110,7 @@ void CBotProfiles :: setupProfiles ()
 
 	// Setup Default profile
 	m_pDefaultProfile = new CBotProfile(
-		"RCBot", // name
+		DEFAULT_BOT_NAME, // name
 		"default", // model (team in HL2DM)
 		-1, // iTeam
 		CBotVisibles::DEFAULT_MAX_TICKS, // vis ticks
@@ -140,7 +140,7 @@ void CBotProfiles :: setupProfiles ()
 
 			CBotGlobals::botMessage(NULL,0,"Reading bot profile \"%s\"",filename);
 
-			pKVL->parseFile(fp);		
+			pKVL->parseFile(fp);
 
 			READ_PROFILE_INT("team",m_iTeam);
 			READ_PROFILE_STRING("model",m_szModel);
