@@ -571,6 +571,7 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			if ( fdist < m_fRadius )
 			{
 				pBot->stopMoving();
+				pBot->setLookAtTask(LOOK_AROUND);
 			}
 			else if ( fdist > 400 )
 				fail();
@@ -578,8 +579,6 @@ void CBotDODAttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			{				
 				pBot->setMoveTo(m_vMoveTo);
 			}
-
-			pBot->setLookAtTask((LOOK_AROUND));
 		}
 	}
 }
@@ -1700,6 +1699,8 @@ CFindPathTask :: CFindPathTask ( int iWaypointId, eLookTask looktask )
 	m_iWaypointId = iWaypointId;
 	m_LookTask = looktask;
 	m_vVector = CWaypoints::getWaypoint(iWaypointId)->getOrigin();
+	m_bFailTaskEdictDied = false;
+	m_bCompleteSeeTaskEdict = false;
 }
 
 void CFindPathTask :: init ()
@@ -1708,6 +1709,7 @@ void CFindPathTask :: init ()
 	m_bGetPassedVector = false;
 	m_iInt = 0;
 	m_bCompleteSeeTaskEdict = false;
+	m_bFailTaskEdictDied = false;
 	//setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
 }
 
@@ -1832,6 +1834,14 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		{
 			if ( pBot->isVisible(m_pEdict.get()) && (pBot->distanceFrom(CBotGlobals::entityOrigin(m_pEdict)) < CWaypointLocations::REACHABLE_RANGE) )
 				complete();
+		}
+
+		if ( m_bFailTaskEdictDied )
+		{
+			if ( !CBotGlobals::entityIsAlive(m_pEdict) )
+			{
+				fail();
+			}
 		}
 	}
 }
@@ -2893,6 +2903,8 @@ void CCrouchHideTask :: debugString ( char *string )
 
 void CCrouchHideTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 {
+	pBot->wantToListen(false);
+
 	if ( m_pHideFrom.get() == NULL )
 	{
 		complete();

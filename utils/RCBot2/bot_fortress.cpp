@@ -2648,7 +2648,7 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 	return false;
 }
 
-bool CBotTF2:: wantToListenToPlayer ( edict_t *pPlayer )
+bool CBotTF2:: wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID )
 {
 	static edict_t *pWeapon;
 	static const char *szWeaponClassname;

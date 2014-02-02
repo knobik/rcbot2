@@ -858,14 +858,18 @@ void CBot :: think ()
 	if ( rcbot_debug_iglev.GetInt() != 6 )
 	{
 #endif
-	if ( m_bWantToListen && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && (m_fWantToListenTime<engine->Time()) )
+	if ( m_bWantToListen && !hasEnemy() && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && (m_fWantToListenTime<engine->Time()) )
+	{
+		setMoveLookPriority(MOVELOOK_LISTEN);
 		listenForPlayers();
-	else if ( m_fListenTime > engine->Time() )
+		setMoveLookPriority(MOVELOOK_THINK);
+	}
+	/*else if ( hasEnemy() && (m_fListenTime > engine->Time()) )
 	{
 		// got an enemy -- reset 
 		m_fLookSetTime = 0.0f;
 		m_fListenTime = 0.0f;
-	}
+	}*/
 #ifdef _DEBUG
 	}
 
@@ -1341,7 +1345,7 @@ void CBot :: spawnInit ()
 	m_fNextUpdateAimVector = 0;
 	m_vAimVector = Vector(0,0,0);
 
-	m_fLookSetTime = 0;
+	m_fLookSetTime = 0.0f;
 	m_vHurtOrigin = Vector(0,0,0);
 
 	m_pOldEnemy = NULL;
@@ -1850,6 +1854,11 @@ void CBot :: updateStatistics ()
 			m_Stats.stats.m_iTeamMatesInRange++;
 	}
 }
+
+bool CBot :: wantToListen ()
+{
+	return (m_bWantToListen && (m_fWantToListenTime < engine->Time()));
+}
 // Listen for players who are shooting
 void CBot :: listenForPlayers ()
 {
@@ -1877,8 +1886,6 @@ void CBot :: listenForPlayers ()
 	}
 
 	m_bListenPositionValid = false;
-
-	m_fWantToListenTime = engine->Time() + 0.25f;
 
 	for ( register short int i = 1; i < gpGlobals->maxClients; i ++ )
 	{
@@ -1922,6 +1929,12 @@ void CBot :: listenForPlayers ()
 	{
 		listenToPlayer(pListenNearest);
 	}
+}
+
+void CBot :: hearPlayerAttack( edict_t *pAttacker, int iWeaponID )
+{
+	if ( m_fListenTime < engine->Time() ) // already listening to something ?
+		listenToPlayer(pAttacker);
 }
 
 void CBot :: listenToPlayer ( edict_t *pPlayer )
@@ -1981,6 +1994,9 @@ void CBot :: listenToPlayer ( edict_t *pPlayer )
 	{// certain where noise is coming from -- don't listen elsewhere for another second
 		m_fWantToListenTime = engine->Time() + 1.0f;
 	}
+	else
+		m_fWantToListenTime = engine->Time() + 0.25f;
+
 }
 
 bool CBot :: onLadder ()
@@ -2441,9 +2457,9 @@ void CBot :: getLookAtVector ()
 				m_pNavigator->getNextRoutePoint(&vLook);
 				setLookAt(vLook);
 			}
-			else if ( m_pLastEnemy && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && (m_fLastSeeEnemy>0) )
+			else if ( (m_pLastEnemy.get()!=NULL) && ((m_fLastSeeEnemy + 5.0f) > engine->Time()) )
 				setLookAt(m_vLastSeeEnemy);
-			else if ( (m_fCurrentDanger >= 15.0f) && m_pNavigator->getDangerPoint(&vLook) )
+			else if ( (m_fCurrentDanger >= 20.0f) && m_pNavigator->getDangerPoint(&vLook) )
 				setLookAt(vLook);
 			else if ( m_pNavigator->getNextRoutePoint(&vLook) )
 				setLookAt(vLook);				

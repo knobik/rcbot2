@@ -436,6 +436,23 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+	/*
+	[RCBot] [DEBUG GAME_EVENT] [BEGIN "dod_stats_weapon_attack"]
+	[RCBot] [DEBUG GAME_EVENT] 	attacker = 5
+	[RCBot] [DEBUG GAME_EVENT] 	weapon = 14
+	[RCBot] [DEBUG GAME_EVENT] [END "dod_stats_weapon_attack"]*/
+class CDODFireWeaponEvent : public CBotEvent
+{
+public:
+	CDODFireWeaponEvent()
+	{
+		setType("dod_stats_weapon_attack");
+		setMod(MOD_DOD);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CDODBombExploded : public CBotEvent
 {
 public:

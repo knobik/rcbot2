@@ -212,7 +212,11 @@ public:
 
 	void setNearestBomb ( edict_t *pBomb ) { m_pNearestBomb = pBomb; }
 
+	bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1);
+
 	bool walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset );
+
+	void listenForPlayers ();
 
 	void signal ( const char *signal );
 

@@ -335,8 +335,9 @@ class CTrainingSet;
 #define MOVELOOK_THINK 1
 #define MOVELOOK_MODTHINK 2
 #define MOVELOOK_TASK 3
-#define MOVELOOK_ATTACK 4
+#define MOVELOOK_LISTEN 4
 #define MOVELOOK_EVENT 5
+#define MOVELOOK_ATTACK 6
 #define MOVELOOK_OVERRIDE 6
 
 class CBotLastSee
@@ -827,11 +828,12 @@ public:
 	virtual void listenForPlayers ();
 	// listens to this player
 	void listenToPlayer (edict_t *pListenTo); 
-	virtual bool wantToListenToPlayer ( edict_t *pPlayer ) { return true; }
+	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 ) { return true; }
 
 	inline bool wantToShoot ( void ) { return m_bOpenFire; }
 	inline void wantToShoot ( bool bSet ) { m_bOpenFire = bSet; }
 	inline void wantToListen ( bool bSet ) { m_bWantToListen = bSet; }
+	bool wantToListen ();
 	inline void wantToChangeWeapon ( bool bSet ) { m_bWantToChangeWeapon = bSet; }
 
 	int nearbyFriendlies (float fDistance);
@@ -913,6 +915,9 @@ public:
 	virtual void sayInPosition() { }
 	virtual void sayMoveOut() { }
 
+	bot_statistics_t *getStats() { if ( m_bStatsCanUse ) return &m_StatsCanUse; return NULL; }
+
+	virtual void hearPlayerAttack( edict_t *pAttacker, int iWeaponID );
 
 protected:
 

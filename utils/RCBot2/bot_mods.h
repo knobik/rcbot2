@@ -421,6 +421,14 @@ public:
 		return (iTeam == TEAM_ALLIES) ? (m_iNumAxis[iFlag]) : (m_iNumAllies[iFlag]);
 	}
 
+	inline edict_t *getFlagByID ( int id )
+	{
+		if ( (id >= 0) && (id < m_iNumControlPoints) )
+			return m_pFlags[id];
+
+		return NULL;
+	}
+
 	inline int getFlagID ( edict_t *pent )
 	{
 		for ( short int i = 0; i < m_iNumControlPoints; i ++ )

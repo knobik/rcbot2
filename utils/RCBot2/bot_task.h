@@ -100,6 +100,7 @@ public:
 		m_LookTask = LOOK_WAYPOINT;
 		m_iWaypointId = -1;
 		m_bCompleteSeeTaskEdict = false;
+		m_bFailTaskEdictDied = false;
 	}
 
 	CFindPathTask ( Vector vOrigin, eLookTask looktask = LOOK_WAYPOINT )
@@ -109,6 +110,7 @@ public:
 		m_LookTask = looktask;
 		m_iWaypointId = -1;
 		m_bCompleteSeeTaskEdict = false;
+		m_bFailTaskEdictDied = false;
 	}
 
 	// having this constructor saves us trying to find the goal waypoint again if we
@@ -125,6 +127,8 @@ public:
 
 	void completeIfSeeTaskEdict () { m_bCompleteSeeTaskEdict = true; }
 
+	void failIfTaskEdictDead () { m_bFailTaskEdictDied = true; }
+
 	void init ();
 
 	virtual void debugString ( char *string );
@@ -139,6 +143,7 @@ private:
 	int m_iInt;
 	int m_iWaypointId;
 	bool m_bCompleteSeeTaskEdict;
+	bool m_bFailTaskEdictDied;
 };
 
 #define TASK_TF2_DEMO_STATE_LAY_BOMB 0

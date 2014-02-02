@@ -174,6 +174,7 @@ ConVar rcbot_autowaypoint_dist("rcbot_autowpt_dist","150.0",0,"distance for auto
 ConVar rcbot_stats_inrange_dist("rcbot_stats_inrange_dist","320.0",0,"distance for bots to realise they have other players in range (for particular radio commands in DOD:S)");
 ConVar rcbot_squad_idle_time("rcbot_squad_idle_time","3.0",0,"time for bots to do other things if squad leader is idle for a short time");
 ConVar rcbot_bots_form_squads("rcbot_bots_form_squads","1",0,"if 1, bots will form their own squads via voice commands");
+ConVar rcbot_listen_dist("rcbot_listen_dist","512",0,"the distance for bots to hear things");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 
@@ -643,26 +644,30 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	sv_tags = cvar->FindVar("sv_tags");
 	puppet_bot_cmd = cvar->FindVar("bot");
 
-	if ( puppet_bot_cmd )
+	// Attempt to make puppet bot command cheat free --- doesn't work!
+	if ( puppet_bot_cmd != NULL )
 	{
 		if ( bot_cmd_nocheats.GetBool() )
 		{
-			int *flags = (int*)((unsigned long)&puppet_bot_cmd + 16);
+			int *flags = (int*)((unsigned long)&puppet_bot_cmd + 16); // 16 is offset to flags
 			
 			*flags &= ~FCVAR_CHEAT;
 		}
 	}
 
-	char sv_tags_str[512];
+	if ( sv_tags != NULL )
+	{
+		char sv_tags_str[512];
 	
-	strcpy(sv_tags_str,sv_tags->GetString());
+		strcpy(sv_tags_str,sv_tags->GetString());
 
-	if ( sv_tags_str[0] == 0 )
-		strcat(sv_tags_str,"rcbot2");
-	else
-		strcat(sv_tags_str,",rcbot2");
+		if ( sv_tags_str[0] == 0 )
+			strcat(sv_tags_str,"rcbot2");
+		else
+			strcat(sv_tags_str,",rcbot2");
 
-	sv_tags->SetValue(sv_tags_str);
+		sv_tags->SetValue(sv_tags_str);
+	}
 
 	bInitialised = true;
 	

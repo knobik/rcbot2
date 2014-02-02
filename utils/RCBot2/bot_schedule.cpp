@@ -81,6 +81,7 @@ const char *szSchedules[SCHED_MAX+1] =
 	"SCHED_TF_SPYCHECK",
 	"SCHED_FOLLOW",
 	"SCHED_DOD_DROPAMMO",
+	"SCHED_INVESTIGATE_NOISE",
 	"SCHED_MAX"
 };
 ////////////////////// unused

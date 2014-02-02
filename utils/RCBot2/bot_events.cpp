@@ -122,6 +122,34 @@ private:
 	CWeapon *m_pWeapon;
 };
 
+class CBotHearPlayerAttack : public IBotFunction
+{
+public:
+	CBotHearPlayerAttack ( edict_t *pAttacker, int iWeaponID )
+	{
+		m_pAttacker = pAttacker;
+		m_iWeaponID = iWeaponID;
+	}
+
+	void execute ( CBot *pBot )
+	{
+		extern ConVar rcbot_listen_dist;
+
+		if ( !pBot->hasEnemy() && pBot->wantToListen() && pBot->wantToListenToPlayer(m_pAttacker,m_iWeaponID) )
+		{
+			float fDistance = pBot->distanceFrom(m_pAttacker);
+
+			// add some fuzz based on distance
+			if ( randomFloat(0.0f,rcbot_listen_dist.GetFloat()) > fDistance )
+				pBot->hearPlayerAttack(m_pAttacker,m_iWeaponID);
+		}
+	}
+private:
+	edict_t *m_pAttacker;
+	int m_iWeaponID;
+};
+
+
 ////////////////////////////////////////////////
 
 
@@ -888,6 +916,25 @@ void CDODChangeClass :: execute ( IBotEventInterface *pEvent )
 		}
 	}
 }
+
+/*
+[RCBot] [DEBUG GAME_EVENT] [BEGIN "dod_stats_weapon_attack"]
+[RCBot] [DEBUG GAME_EVENT] 	attacker = 5
+[RCBot] [DEBUG GAME_EVENT] 	weapon = 14
+[RCBot] [DEBUG GAME_EVENT] [END "dod_stats_weapon_attack"]*/
+
+void CDODFireWeaponEvent :: execute ( IBotEventInterface *pEvent )
+{
+	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker",NULL));
+	int iWeaponID = pEvent->getInt("weapon",-1);
+
+	CBotHearPlayerAttack *func = new CBotHearPlayerAttack(pAttacker,iWeaponID);
+
+	CBots::botFunction(func);
+
+	delete func;
+}
+
 ///////////////////////////////////////////////////////
 
 void CBotEvent :: setType ( char *szType )
@@ -938,6 +985,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CDODBombExploded());
 	addEvent(new CDODBombDefused());
 	addEvent(new CDODPointCaptured());
+	addEvent(new CDODFireWeaponEvent());
 	
 /*
 pumpkin_lord_summoned 

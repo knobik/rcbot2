@@ -380,7 +380,7 @@ public:
 	void teamFlagDropped ( Vector vOrigin );
 	void teamFlagPickup ();
 
-	virtual bool wantToListenToPlayer ( edict_t *pPlayer ) { return true; }
+	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 ) { return true; }
 
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
 	inline void teamFlagReset () { m_fLastKnownTeamFlagTime = 0.0f; }
@@ -568,7 +568,7 @@ public:
 
 	void checkDependantEntities ();
 
-	virtual bool wantToListenToPlayer ( edict_t *pPlayer );
+	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 );
 
 	void getDefendArea ( vector<int> *m_iAreas );
 

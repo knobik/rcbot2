@@ -1108,7 +1108,21 @@ void CWaypointNavigator :: updatePosition ()
 
 		if ( bTouched )
 		{
-			fPrevBelief = getBelief(CWaypoints::getWaypointIndex(pWaypoint));
+			int iWaypointID = CWaypoints::getWaypointIndex(pWaypoint);
+
+			fPrevBelief = getBelief(iWaypointID);
+
+			// Bot passed into this waypoint safely, update belief
+
+			bot_statistics_t *stats = m_pBot->getStats();
+
+			if ( stats )
+			{
+				if ( (stats->stats.m_iEnemiesVisible > stats->stats.m_iTeamMatesVisible) && (stats->stats.m_iEnemiesInRange>0) )
+					beliefOne(iWaypointID,BELIEF_DANGER,100.0f);
+				else if ( (stats->stats.m_iTeamMatesVisible > 0) && (stats->stats.m_iTeamMatesInRange > 0) )
+					beliefOne(iWaypointID,BELIEF_SAFETY,100.0f);
+			}
 
 			m_bOffsetApplied = false;
 
@@ -1140,8 +1154,6 @@ void CWaypointNavigator :: updatePosition ()
 
 				fBelief = getBelief(m_iCurrentWaypoint);
 			}
-
-			
 		}
 	}
 	else
@@ -1336,8 +1348,6 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 		// draw area
 		if ( pEdict )
 		{
-			
-
 			if ( distanceFrom(CBotGlobals::entityOrigin(pEdict)) < fDistance )
 			{
 				CWaypointTypes::printInfo(this,pEdict,1.0);
@@ -1346,9 +1356,9 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 				if ( m_iFlags )
 				{
 					if ( CPoints::isValidArea(m_iArea) )
-						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+16.0f),0,1,255,255,255,255,"%d",m_iArea);	
+						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+4.0f),0,1,255,255,255,255,"%d",m_iArea);	
 					else
-						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+16.0f),0,1,255,0,0,255,"%d",m_iArea);
+						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+4.0f),0,1,255,0,0,255,"%d",m_iArea);
 				}
 
 				if ( CClients::clientsDebugging() )
@@ -1361,7 +1371,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 						if ( pBot )
 						{
-							debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+32.0f),0,1,0,0,255,255,"%0.4f",pBot->getNavigator()->getBelief(CWaypoints::getWaypointIndex(this)));
+							debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+8.0f),0,1,0,0,255,255,"%0.4f",pBot->getNavigator()->getBelief(CWaypoints::getWaypointIndex(this)));
 						}
 
 					}

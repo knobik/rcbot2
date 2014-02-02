@@ -86,29 +86,13 @@ void CWaypointLocations :: getMinMaxs ( int iLoc, int jLoc, int kLoc,
 	*iMinLock = kLoc-1;
 	*iMaxLock = kLoc+1;
 
-	//*iMinLoci = *iMinLoci < 0 ? 0 : ;
-
 	CLAMP_TO_ZERO(*iMinLoci);
 	CLAMP_TO_ZERO(*iMinLocj);
 	CLAMP_TO_ZERO(*iMinLock);
-	/*
-	if ( *iMinLoci < 0 )
-		*iMinLoci = 0;
-	if ( *iMinLocj < 0 )
-		*iMinLocj = 0;
-	if ( *iMinLock < 0 )
-		*iMinLock = 0;
-*/
+
 	CLAMP_TO(*iMaxLoci,iMaxLoc);
 	CLAMP_TO(*iMaxLocj,iMaxLoc);
 	CLAMP_TO(*iMaxLock,iMaxLoc);
-	/*
-	if ( *iMaxLoci > iMaxLoc )
-		*iMaxLoci = iMaxLoc;
-	if ( *iMaxLocj > iMaxLoc )
-		*iMaxLocj = iMaxLoc;
-	if ( *iMaxLock > iMaxLoc )
-		*iMaxLock = iMaxLoc;*/
 
 }
 ///////////////
@@ -391,52 +375,7 @@ void CWaypointLocations :: FindNearestCoverWaypointInBucket ( int i, int j, int 
 		}
 	}
 }
-/*
-void CWaypointLocations :: FindCoverWaypointInBucket ( int i, int j, int k, const Vector &vOrigin, float *pfMinDist, int *piIndex, dataUnconstArray<int> *iIgnoreWpts, int iCoverFromWpt, Vector *vGoalOrigin, int iTeam )
-// Search for the nearest waypoint : I.e.
-// Find the waypoint that is closest to vOrigin from the distance pfMinDist
-// And set the piIndex to the waypoint index if closer.
-{
-	//dataStack <int> tempStack = m_iLocations[i][j][k];
-	
-	CWaypoint *curr_wpt;
-	int iSelectedIndex;
-	float fDist;
-	
-	for ( int l = 0; l < m_iLocations[i][j][k].Size(); l ++ )
-	//while ( !tempStack.IsEmpty() )
-	{
-		iSelectedIndex = m_iLocations[i][j][k][l];//tempStack.ChooseFromStack();
 
-		if ( iCoverFromWpt == iSelectedIndex )
-			continue;
-		if ( g_iFailedWaypoints[iSelectedIndex] )
-		    continue;
-
-		curr_wpt = CWaypoints::getWaypoint(iSelectedIndex);
-
-		if ( !curr_wpt->isUsed() )
-			continue; 
-		if ( curr_wpt->hasFlag(CWaypointTypes::W_FL_UNREACHABLE) )
-			continue;
-		if ( !curr_wpt->forTeam(iTeam) )
-			continue;
-		if ( CWaypoints::getVisiblity()->GetVisibilityFromTo(iCoverFromWpt,iSelectedIndex) )
-			continue;
-
-
-		(fDist = curr_wpt->distanceFrom(vOrigin));
-
-		if ( vGoalOrigin != NULL )
-			fDist += curr_wpt->distanceFrom(*vGoalOrigin);
-
-		if ( fDist < *pfMinDist )
-		{
-			*piIndex = iSelectedIndex;
-			*pfMinDist = fDist;			
-		}
-	}
-}*/
 ////////////////////////////////////////////////
 /////////////////////////////
 // get the nearest waypoint INDEX from an origin
