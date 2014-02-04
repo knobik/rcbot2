@@ -919,6 +919,11 @@ public:
 
 	virtual void hearPlayerAttack( edict_t *pAttacker, int iWeaponID );
 
+	inline bool isListeningToPlayer ( edict_t *pPlayer ) 
+	{
+		return (m_PlayerListeningTo.get() == pPlayer);
+	}
+
 protected:
 
 	inline void setLookAt ( Vector vNew )
@@ -1088,6 +1093,7 @@ protected:
 	Vector m_vListenPosition; // listening player position, heard someone shoot
 	bool m_bListenPositionValid;
 	float m_fListenTime;
+	MyEHandle m_PlayerListeningTo;
 	float m_fWantToListenTime;
 	bool m_bOpenFire;
 	unsigned int m_iPrevWeaponSelectFailed;

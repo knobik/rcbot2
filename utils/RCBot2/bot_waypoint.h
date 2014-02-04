@@ -55,7 +55,7 @@ public:
 
 typedef struct
 {
-	edict_t *pEdict;
+	MyEHandle pEdict; // MyEHandle fixes problems with reused edict slots
 	CWaypoint *pWaypoint;
 	Vector v_ground;
 }edict_wpt_pair_t;

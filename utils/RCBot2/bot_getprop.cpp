@@ -446,6 +446,7 @@ edict_t *CClassInterface::FindEntityByClassnameNearest(Vector vstart, const char
 	edict_t *current;
 	edict_t *pfound = NULL;
 	float fDist;
+	const char *pszClassname;
 	// speed up loop by by using smaller ints in register
 	register short int max = (short int)gpGlobals->maxEntities;
 
@@ -465,7 +466,9 @@ edict_t *CClassInterface::FindEntityByClassnameNearest(Vector vstart, const char
 				continue;
 		}
 
-		if (strcmp(classname, current->GetClassName() ) == 0)
+		pszClassname = current->GetClassName(); // For Debugging purposes
+
+		if (strcmp(classname, pszClassname) == 0)
 		{
 			fDist = (vstart - CBotGlobals::entityOrigin(current)).Length();
 

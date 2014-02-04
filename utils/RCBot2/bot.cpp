@@ -864,12 +864,14 @@ void CBot :: think ()
 		listenForPlayers();
 		setMoveLookPriority(MOVELOOK_THINK);
 	}
-	/*else if ( hasEnemy() && (m_fListenTime > engine->Time()) )
+	else if ( hasEnemy() )
 	{
 		// got an enemy -- reset 
+		m_PlayerListeningTo = MyEHandle(NULL);
 		m_fLookSetTime = 0.0f;
 		m_fListenTime = 0.0f;
-	}*/
+	}
+
 #ifdef _DEBUG
 	}
 
@@ -1275,6 +1277,7 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	m_PlayerListeningTo = NULL;
 	m_pPrimaryWeapon = NULL;
 	m_uSquadDetail.dat = 0;
 	m_bStatsCanUse = false;
@@ -1857,7 +1860,7 @@ void CBot :: updateStatistics ()
 
 bool CBot :: wantToListen ()
 {
-	return (m_bWantToListen && (m_fWantToListenTime < engine->Time()));
+	return (m_bWantToListen && (m_fWantToListenTime < engine->Time()) && ((m_fLastSeeEnemy+2.5f) < engine->Time()));
 }
 // Listen for players who are shooting
 void CBot :: listenForPlayers ()
@@ -1961,30 +1964,52 @@ void CBot :: listenToPlayer ( edict_t *pPlayer )
 			m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);		
 
 			// not investigating any noise right now -- depending on my braveness I will check it out
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && (randomFloat(0.0f,1.0f) < m_pProfile->m_fBraveness) )
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && (randomFloat(0.0f,0.5f) < m_pProfile->m_fBraveness) )
 			{
 				trace_t *TraceResult = CBotGlobals::getTraceResult();
 					
 				Vector vAttackerOrigin = CBotGlobals::entityOrigin(pPlayer);
-					
-				// check exactly where teammate is firing
-				CBotGlobals::quickTraceline(pPlayer,vAttackerOrigin,m_vListenPosition);
 
-				// update the wall or player teammate is shooting
-				m_vListenPosition = TraceResult->endpos; 
-
-				CBotGlobals::quickTraceline(m_pEdict,getOrigin(),m_vListenPosition);
-
-				// can't see what my teammate is shooting -- go there
-				if ( (TraceResult->fraction < 1.0f) && (TraceResult->m_pEnt != m_pEdict->GetIServerEntity()->GetBaseEntity() ) )
+				if ( distanceFrom(vAttackerOrigin) > 96.0f )
 				{
-					m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
-					m_pSchedules->addFront(new CBotInvestigateNoiseSched(vAttackerOrigin,m_vListenPosition));
+					// check exactly where teammate is firing
+					CBotGlobals::quickTraceline(pPlayer,vAttackerOrigin,m_vListenPosition);
+
+					// update the wall or player teammate is shooting
+					m_vListenPosition = TraceResult->endpos; 
+
+					CBotGlobals::quickTraceline(m_pEdict,getOrigin(),m_vListenPosition);
+
+					// can't see what my teammate is shooting -- go there
+					if ( (TraceResult->fraction < 1.0f) && (TraceResult->m_pEnt != m_pEdict->GetIServerEntity()->GetBaseEntity() ) )
+					{
+						m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
+						
+						Vector vecLOS;
+						float flDot;
+
+						vecLOS = getOrigin() - vAttackerOrigin;
+						vecLOS = vecLOS/vecLOS.Length();
+	
+						flDot = DotProduct (vecLOS , forward );
+
+						if ( flDot > 0.5f )
+						{
+							// Facing my direction
+							m_pSchedules->addFront(new CBotInvestigateNoiseSched(m_vListenPosition,m_vListenPosition));
+						}
+						else
+						{
+							// Not facing my direction
+							m_pSchedules->addFront(new CBotInvestigateNoiseSched(vAttackerOrigin,m_vListenPosition));
+						}						
+					}
 				}
 			}
 		}
 	}
 
+	m_PlayerListeningTo = pPlayer;
 	m_bListenPositionValid = true;
 	m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
 	setLookAtTask(LOOK_NOISE);

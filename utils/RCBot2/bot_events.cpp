@@ -135,7 +135,7 @@ public:
 	{
 		extern ConVar rcbot_listen_dist;
 
-		if ( !pBot->hasEnemy() && pBot->wantToListen() && pBot->wantToListenToPlayer(m_pAttacker,m_iWeaponID) )
+		if ( !pBot->hasEnemy() && (pBot->wantToListen()||pBot->isListeningToPlayer(m_pAttacker)) && pBot->wantToListenToPlayer(m_pAttacker,m_iWeaponID) )
 		{
 			float fDistance = pBot->distanceFrom(m_pAttacker);
 

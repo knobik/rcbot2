@@ -1731,6 +1731,9 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 {	
 	bool bFail = false;
 
+	if ( m_LookTask == LOOK_NOISE )
+		pBot->wantToListen(false); // vector already set before find path task
+
 	if ( pSchedule->hasPassVector() )
 	{
 		m_vVector = pSchedule->passedVector();

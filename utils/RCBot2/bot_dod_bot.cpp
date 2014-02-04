@@ -510,11 +510,13 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 		if ( pWpt )
 		{
 			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
-			updateCondition(CONDITION_CHANGED);
 		}
-		else if ( !hasEnemy() )
+
+		bool bFollow = false;
+		
+		if ( !hasEnemy() )
 		{
-			bool bFollow = (randomFloat(0.0f,1.0f) < m_pProfile->m_fBraveness);
+			bFollow = (randomFloat(0.0f,0.5f) < m_pProfile->m_fBraveness);
 			m_vListenPosition = CBotGlobals::entityOrigin(pKiller);
 
 			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && bFollow )
@@ -522,15 +524,18 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 				m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
 				m_pSchedules->addFront(new CBotInvestigateNoiseSched(CBotGlobals::entityOrigin(pDied),m_vListenPosition));
 			}
-			else if ( !bFollow && (m_iLookTask != LOOK_NOISE) )
-			{
-				m_bListenPositionValid = true;
-				m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
-				setLookAtTask(LOOK_NOISE);
-				m_fLookSetTime = m_fListenTime;
-			}
+			
+			
+			m_bListenPositionValid = true;
+			m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
+			setLookAtTask(LOOK_NOISE);
+			m_fLookSetTime = m_fListenTime;
+			
 			//listenToPlayer(pDied);
 		}
+
+		if ( !bFollow )
+			updateCondition(CONDITION_CHANGED);
 
 		if ( (m_pEnemy==pKiller) )
 		{
@@ -692,19 +697,34 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 {
 	extern ConVar rcbot_notarget;
 	int entity_index = ENTINDEX(pEdict);
+//#ifdef _DEBUG
+	const char *pszClassname = pEdict->GetClassName();
 
-	if ( !entity_index || (entity_index > gpGlobals->maxClients) )
+//#endif
+
+	if ( entity_index == 0 )
+		return false; // worldspawn
+
+	if ( entity_index > gpGlobals->maxClients )
 	{
 		bool bRegisteredBreakable = CDODMod::isBreakableRegistered(pEdict, m_iTeam);
 
 		if ( !CBotGlobals::isBreakableOpen(pEdict) && ((pEdict == m_pNearestBreakable) || bRegisteredBreakable) )
 		{
+
+			/*if ( strcmp("dod_ragdoll",pszClassname) == 0 )
+			{
+				// break;
+				return false;
+			}*/
+
 			if ( rcbot_shoot_breakables.GetBool() )
 			{ 
 				if ( bRegisteredBreakable )  // this breakable is registered as explosive only
 				{
 					return (distanceFrom(pEdict) > BLAST_RADIUS) && m_pWeapons->hasExplosives();
 				}
+				//else if ( (m_fLastSeeEnemy + 5.0f) > engine->Time() )
 				else if ( DotProductFromOrigin(CBotGlobals::entityOrigin(pEdict)) > rcbot_shoot_breakable_cos.GetFloat() )
 					return (distanceFrom(pEdict) < rcbot_shoot_breakable_dist.GetFloat()) && (CClassInterface::getPlayerHealth(pEdict) > 0);
 			}
