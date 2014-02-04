@@ -196,6 +196,11 @@ public:
 
 	bool checkStuck ();
 
+	bool hasMG ();
+	CBotWeapon *getMG();
+	CBotWeapon *getSniperRifle ();
+	bool hasSniperRifle ();
+
 	void voiceCommand ( int cmd );
 
 	virtual unsigned int maxEntityIndex ( ) { return gpGlobals->maxEntities; }
@@ -248,8 +253,8 @@ private:
 	int m_iTeam; // either 2 / 3 TEAM_ALLIES/TEAM_AXIS
 	int m_iEnemyTeam; // is the opposite of m_iTeam to check for enemy things
 
-	edict_t *m_pNearestFlag;
-	edict_t *m_pGoalFlag;
+	MyEHandle m_pNearestFlag;
+	MyEHandle m_pGoalFlag;
 
 	DOD_Class m_iClass;
 	float m_fShootTime;
@@ -288,8 +293,8 @@ private:
 	float m_fNextCheckAlone; // to see if bot should tell others to stick together
 
 	bool m_bDroppedAmmoThisRound;
-	edict_t *m_pPlayerToHelp;
-	// blah blah
+
+	MyEHandle m_pNearestDeadTeamMate;
 };
 
 #endif

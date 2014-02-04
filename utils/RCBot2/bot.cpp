@@ -629,7 +629,7 @@ bool CBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		if ( canAvoid(pEntity) )
 		{
-			if ( !m_pAvoidEntity || (distanceFrom(pEntity) < distanceFrom(m_pAvoidEntity)) )
+			if ( (m_pAvoidEntity.get()==NULL) || (distanceFrom(pEntity) < distanceFrom(m_pAvoidEntity)) )
 					m_pAvoidEntity = pEntity;
 		}
 	}

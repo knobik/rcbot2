@@ -1138,8 +1138,6 @@ protected:
 	CBotWeapon *m_pPrimaryWeapon;
 };
 
-
-
 class CBots
 {
 public:
