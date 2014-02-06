@@ -62,6 +62,7 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	CBotTF2 *pBotTF2;
 
 	pBot->wantToShoot(false);
+	pBot->wantToListen(false);
 
 	if ( !pBot->isTF2() )
 	{
@@ -1910,6 +1911,8 @@ void CBotTFRocketJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CBotWeapon *pBotWeapon;
 	CWeapon *pWeapon;
 
+	pBot->wantToListen(false);
+
 	pBotWeapon = pBot->getCurrentWeapon();
 
 	if ( !pBotWeapon )
@@ -1970,6 +1973,8 @@ CBotTFDoubleJump :: CBotTFDoubleJump ()
 
 void CBotTFDoubleJump ::execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	pBot->wantToListen(false);
+
 	if ( m_fTime == 0.0f )
 	{
 		pBot->tapButton(IN_JUMP);
@@ -2076,6 +2081,9 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 			if ( pBot->isVisible(pPlayer) )
 			{
+				if ( CTeamFortress2Mod::isFlagCarrier(pPlayer) )
+					continue; // spies can't hold flag unless not disguised
+
 				if ( !(seenlist & (1<<(i-1))) )
 				{
 					m_pUnseenBefore = pPlayer;
@@ -3005,6 +3013,8 @@ CBotTF2DemomanPipeJump :: CBotTF2DemomanPipeJump ( CBot *pBot, Vector vWaypointG
 
 void CBotTF2DemomanPipeJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	pBot->wantToListen(false);
+
 	if ( m_fTime == 0 )
 	{
 		// init

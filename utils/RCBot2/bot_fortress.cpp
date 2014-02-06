@@ -3313,7 +3313,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	// if in setup time this will tell bot not to shoot yet
 	wantToShoot(CTeamFortress2Mod::hasRoundStarted());
-	m_bWantToListen = CTeamFortress2Mod::hasRoundStarted();
+	wantToListen(CTeamFortress2Mod::hasRoundStarted());
 
 	if ( !hasSomeConditions(CONDITION_CHANGED) && !m_pSchedules->isEmpty() )
 		return;

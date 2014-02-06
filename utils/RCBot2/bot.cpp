@@ -187,9 +187,13 @@ void CBroadcastVoiceCommand :: execute ( CBot *pBot )
 		return;
 
 	if ( pBot->isEnemy(m_pPlayer,false) )
-		return;
-
-	pBot->hearVoiceCommand(m_pPlayer,m_VoiceCmd);
+	{
+		// listen to enemy voice commands if they are nearby
+		if ( pBot->wantToListen() && pBot->wantToListenToPlayer(m_pPlayer) && (pBot->distanceFrom(m_pPlayer) < CWaypointLocations::REACHABLE_RANGE) )
+			pBot->listenToPlayer(m_pPlayer,true);
+	}
+	else
+		pBot->hearVoiceCommand(m_pPlayer,m_VoiceCmd);
 }
 ///////////////////////////////////////
 void CBot :: runPlayerMove()
@@ -788,7 +792,7 @@ void CBot :: think ()
 
 	m_pButtons->letGoAllButtons(false);
 
-	m_fNextThink = fTime + 0.04;
+	m_fNextThink = fTime + 0.04f;
 
 	if ( m_pWeapons )
 	{
@@ -1872,9 +1876,14 @@ void CBot :: listenForPlayers ()
 	edict_t *pPlayer;
 	CBotCmd cmd;
 	IPlayerInfo *p;
-
-	float fMinDist = 1024.0f;
+	float fFactor = 0;
+	float fMaxFactor = 0;
+	//float fMinDist = 1024.0f;
 	float fDist;
+	float fVelocity;
+	Vector vVelocity;
+	extern ConVar rcbot_listen_dist;
+	bool bIsNearestAttacking = false;
 
 	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
 	{
@@ -1911,47 +1920,67 @@ void CBot :: listenForPlayers ()
 		if ( !p || !p->IsConnected() || p->IsDead() || p->IsObserver() || !p->IsPlayer() )
 			continue;
 
-		cmd = p->GetLastUserCommand();
-
-		if ( !(cmd.buttons & IN_ATTACK) )
-			continue; //not holding attack
-
-		if ( !wantToListenToPlayer(pPlayer) )
-			continue;
-
 		fDist = distanceFrom(pPlayer);
 
-		if ( fDist < fMinDist )
+		if ( fDist > rcbot_listen_dist.GetFloat() )
+			continue;
+
+		fFactor += (rcbot_listen_dist.GetFloat() - fDist);
+
+		cmd = p->GetLastUserCommand();
+
+		if ( (cmd.buttons & IN_ATTACK) )
+		{
+			if ( wantToListenToPlayer(pPlayer) )
+				fFactor += 1000.0f;
+		}
+		
+		CClassInterface::getVelocity(pPlayer,&vVelocity);
+		
+		fVelocity = vVelocity.Length();
+
+		if ( fVelocity > 250.0f )
+			fFactor += vVelocity.Length();
+
+		if ( (fFactor > 300.0f) && (fFactor > fMaxFactor) )
+		{
+			fMaxFactor = fFactor;
+			pListenNearest = pPlayer;
+			bIsNearestAttacking = (cmd.buttons & IN_ATTACK);
+		}
+		/*if ( fDist < fMinDist )
 		{
 			fMinDist = fDist;
 			pListenNearest = pPlayer;
-		}
+		}*/
 	}
 
 	if ( pListenNearest != NULL )
 	{
-		listenToPlayer(pListenNearest);
+		listenToPlayer(pListenNearest,false,bIsNearestAttacking);
 	}
 }
 
 void CBot :: hearPlayerAttack( edict_t *pAttacker, int iWeaponID )
 {
 	if ( m_fListenTime < engine->Time() ) // already listening to something ?
-		listenToPlayer(pAttacker);
+		listenToPlayer(pAttacker,false,true);
 }
 
-void CBot :: listenToPlayer ( edict_t *pPlayer )
+void CBot :: listenToPlayer ( edict_t *pPlayer, bool bIsEnemy, bool bIsAttacking )
 {
 	IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
 	bool bIsVisible = isVisible(pPlayer);
-	bool bIsEnemy = isEnemy(pPlayer);
+
+	if ( bIsEnemy == false )
+		bIsEnemy = isEnemy(pPlayer);
 			 
 	// look at possible enemy
 	if ( !bIsVisible || bIsEnemy )
 	{
 		m_vListenPosition = p->GetAbsOrigin();
 	}
-	else
+	else if ( bIsAttacking )
 	{
 		if ( !bIsEnemy )
 		{
@@ -1964,7 +1993,7 @@ void CBot :: listenToPlayer ( edict_t *pPlayer )
 			m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);		
 
 			// not investigating any noise right now -- depending on my braveness I will check it out
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && (randomFloat(0.0f,0.5f) < m_pProfile->m_fBraveness) )
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && (randomFloat(0.0f,0.75f) < m_pProfile->m_fBraveness) )
 			{
 				trace_t *TraceResult = CBotGlobals::getTraceResult();
 					

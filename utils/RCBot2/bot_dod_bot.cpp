@@ -1717,6 +1717,9 @@ void CDODBot :: listenForPlayers ()
 		setLookAtTask(LOOK_NOISE);
 		return;
 	}
+
+	// check for footsteps
+
 }
 
 // Successful actions must return true
@@ -2310,7 +2313,13 @@ void CDODBot :: reachedCoverSpot (int flags)
 	removeCondition(CONDITION_RUN);
 
 	if ( !m_pEnemy.get() && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
+	{
+		// Allow bots to crouch when reloading to take cover
+		if ( flags & (CWaypointTypes::W_FL_CROUCH | CWaypointTypes::W_FL_MACHINEGUN) )
+			m_pButtons->duck(randomFloat(2.0f,3.5f),engine->Time());
+
 		m_pButtons->tap(IN_RELOAD);
+	}
 
 
 	//m_fFixWeaponTime = engine->Time() + 1.0f;
@@ -2583,7 +2592,6 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		return;
 
 	//squads
-
 	ADD_UTILITY(BOT_UTIL_FOLLOW_SQUAD_LEADER,!hasSomeConditions(CONDITION_DEFENSIVE) && hasSomeConditions(CONDITION_SQUAD_LEADER_INRANGE) && inSquad() && (m_pSquad->GetLeader()!=m_pEdict) && hasSomeConditions(CONDITION_SEE_SQUAD_LEADER),hasSomeConditions(CONDITION_SQUAD_IDLE)?0.1f:2.0f);
 	ADD_UTILITY(BOT_UTIL_FIND_SQUAD_LEADER,!hasSomeConditions(CONDITION_DEFENSIVE) && inSquad() && (m_pSquad->GetLeader()!=m_pEdict) && (!hasSomeConditions(CONDITION_SEE_SQUAD_LEADER) || !hasSomeConditions(CONDITION_SQUAD_LEADER_INRANGE)),hasSomeConditions(CONDITION_SQUAD_IDLE)?0.1f:2.0f);
 
@@ -2605,7 +2613,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.01f);
 
 	// I had an enemy a minute ago
-	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && m_pLastEnemy && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.82f);
+	ADD_UTILITY(BOT_UTIL_FIND_LAST_ENEMY,wantToFollowEnemy() && !m_bLookedForEnemyLast && (m_pLastEnemy.get()!=NULL) && CBotGlobals::entityIsValid(m_pLastEnemy) && CBotGlobals::entityIsAlive(m_pLastEnemy),getHealthPercent()*0.89f);
 
 	// flag capture map
 	if ( CDODMod::isFlagMap() && (CDODMod::m_Flags.getNumFlags() > 0) && !rcbot_nocapturing.GetBool() )
