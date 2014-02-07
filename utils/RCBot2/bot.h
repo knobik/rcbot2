@@ -829,6 +829,7 @@ public:
 	// listens to this player
 	void listenToPlayer (edict_t *pListenTo, bool bIsEnemy = false, bool bIsAttacking = false ); 
 	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 ) { return true; }
+	virtual bool wantToInvestigateSound () { return true; }
 
 	inline bool wantToShoot ( void ) { return m_bOpenFire; }
 	inline void wantToShoot ( bool bSet ) { m_bOpenFire = bSet; }
@@ -1099,6 +1100,7 @@ protected:
 	unsigned int m_iPrevWeaponSelectFailed;
 
 	bool m_bWantToListen;
+	float m_fListenFactor; // the current weight of bots listening vector (higher = better)
 	float m_fUseRouteTime;
 
 	bool m_bWantToChangeWeapon;

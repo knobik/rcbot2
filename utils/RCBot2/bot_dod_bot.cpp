@@ -1719,7 +1719,77 @@ void CDODBot :: listenForPlayers ()
 	}
 
 	// check for footsteps
+		//m_fNextListenTime = engine->Time() + randomFloat(0.5f,2.0f);
+	edict_t *pListenNearest = NULL;
+	CClient *pClient;
+	edict_t *pPlayer;
+	IPlayerInfo *p;
+	float fFactor = 0;
+	float fMaxFactor = 0;
+	//float fMinDist = 1024.0f;
+	float fDist;
+	float fVelocity;
+	Vector vVelocity;
+	extern ConVar rcbot_listen_dist;
+	extern ConVar rcbot_footstep_speed;
 
+	m_bListenPositionValid = false;
+
+	for ( register short int i = 1; i <= gpGlobals->maxClients; i ++ )
+	{
+		pPlayer = INDEXENT(i);
+
+		if ( pPlayer == m_pEdict )
+			continue; // don't listen to self
+
+		if ( pPlayer->IsFree() )
+			continue;
+
+		// get client network info
+		pClient = CClients::get(pPlayer);
+
+		if ( !pClient->isUsed() )
+			continue;
+
+		p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+		// 05/07/09 fix crash bug
+		if ( !p || !p->IsConnected() || p->IsDead() || p->IsObserver() || !p->IsPlayer() )
+			continue;
+
+		if ( isVisible(pPlayer) )
+			continue; // only listen to footsteps / don't care about people I can already see
+
+		fDist = distanceFrom(pPlayer);
+
+		if ( fDist > rcbot_listen_dist.GetFloat() )
+			continue;
+
+		fFactor = (rcbot_listen_dist.GetFloat() - fDist);
+
+		cmd = p->GetLastUserCommand();
+		
+		CClassInterface::getVelocity(pPlayer,&vVelocity);
+		
+		fVelocity = vVelocity.Length();
+
+		if (  fVelocity > rcbot_footstep_speed.GetFloat() )
+			fFactor += vVelocity.Length();
+		else
+			continue; // not going fast enough to hear -- can't hear, move on
+
+		if ( fFactor > fMaxFactor )
+		{
+			fMaxFactor = fFactor;
+			pListenNearest = pPlayer;
+		}
+	}
+
+	if ( pListenNearest != NULL )
+	{
+		m_fListenFactor = fMaxFactor;
+		listenToPlayer(pListenNearest,false,false);
+	}
 }
 
 // Successful actions must return true

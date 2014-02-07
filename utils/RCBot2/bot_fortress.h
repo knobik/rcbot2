@@ -381,6 +381,7 @@ public:
 	void teamFlagPickup ();
 
 	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 ) { return true; }
+	virtual bool wantToInvestigateSound () { return true; }
 
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
 	inline void teamFlagReset () { m_fLastKnownTeamFlagTime = 0.0f; }
@@ -569,6 +570,7 @@ public:
 	void checkDependantEntities ();
 
 	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 );
+	bool wantToInvestigateSound ();
 
 	void getDefendArea ( vector<int> *m_iAreas );
 

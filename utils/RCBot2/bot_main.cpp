@@ -175,6 +175,7 @@ ConVar rcbot_stats_inrange_dist("rcbot_stats_inrange_dist","320.0",0,"distance f
 ConVar rcbot_squad_idle_time("rcbot_squad_idle_time","3.0",0,"time for bots to do other things if squad leader is idle for a short time");
 ConVar rcbot_bots_form_squads("rcbot_bots_form_squads","1",0,"if 1, bots will form their own squads via voice commands");
 ConVar rcbot_listen_dist("rcbot_listen_dist","512",0,"the distance for bots to hear things");
+ConVar rcbot_footstep_speed("rcbot_footstep_speed","250",0,"the speed players can go when you first hear them make footsteps");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 

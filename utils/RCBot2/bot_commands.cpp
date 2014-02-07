@@ -1874,3 +1874,10 @@ void CBotCommandContainer :: printHelp ( edict_t *pPrintTo )
 	printCommand(pPrintTo);
 	return;
 }
+
+
+eBotCommandResult CTestCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	// for developers
+	return COMMAND_NOT_FOUND;
+}

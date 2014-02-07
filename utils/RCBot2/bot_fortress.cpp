@@ -2300,7 +2300,8 @@ void CBotTF2 :: modThink ()
 		
 		bRevMiniGun = false;
 
-		if ( wantToShoot() )
+		// hwguys dont rev minigun if they have the flag
+		if ( wantToShoot() && !m_bHasFlag )
 		{
 			CBotWeapon *pWeapon = getCurrentWeapon();
 
@@ -2648,6 +2649,11 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 	return false;
 }
 
+bool CBotTF2 :: wantToInvestigateSound ()
+{
+	return !m_bHasFlag;
+}
+
 bool CBotTF2:: wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID )
 {
 	static edict_t *pWeapon;
@@ -2683,6 +2689,8 @@ bool CBotTF2:: wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID )
 				// don't listen to cloaked spies
 				if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pPlayer) )
 					return false;
+				if ( !strcmp("knife",&szWeaponClassname[10]) )
+					return hasSomeConditions(CONDITION_PARANOID); // only hear spy knives if they know there are spies around
 			}
 			break;
 

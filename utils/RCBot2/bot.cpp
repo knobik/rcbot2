@@ -862,19 +862,20 @@ void CBot :: think ()
 	if ( rcbot_debug_iglev.GetInt() != 6 )
 	{
 #endif
-	if ( m_bWantToListen && !hasEnemy() && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && (m_fWantToListenTime<engine->Time()) )
-	{
-		setMoveLookPriority(MOVELOOK_LISTEN);
-		listenForPlayers();
-		setMoveLookPriority(MOVELOOK_THINK);
-	}
-	else if ( hasEnemy() )
-	{
-		// got an enemy -- reset 
-		m_PlayerListeningTo = MyEHandle(NULL);
-		m_fLookSetTime = 0.0f;
-		m_fListenTime = 0.0f;
-	}
+		if ( m_bWantToListen && !hasEnemy() && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && (m_fWantToListenTime<engine->Time()) )
+		{
+			setMoveLookPriority(MOVELOOK_LISTEN);
+			listenForPlayers();
+			setMoveLookPriority(MOVELOOK_THINK);
+		}
+		else if ( hasEnemy() )
+		{
+			// got an enemy -- reset 
+			m_PlayerListeningTo = MyEHandle(NULL);
+			m_fLookSetTime = 0.0f;
+			m_fListenTime = 0.0f;
+			m_bListenPositionValid = false;
+		}
 
 #ifdef _DEBUG
 	}
@@ -1883,15 +1884,10 @@ void CBot :: listenForPlayers ()
 	float fVelocity;
 	Vector vVelocity;
 	extern ConVar rcbot_listen_dist;
+	extern ConVar rcbot_footstep_speed;
 	bool bIsNearestAttacking = false;
 
-	if ( m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
-	{
-		m_bListenPositionValid = false;
-		return;
-	}
-
-	if ( m_fListenTime > engine->Time() ) // already listening to something ?
+	if ( m_bListenPositionValid && (m_fListenTime > engine->Time()) ) // already listening to something ?
 	{
 		setLookAtTask(LOOK_NOISE);
 		return;
@@ -1899,7 +1895,7 @@ void CBot :: listenForPlayers ()
 
 	m_bListenPositionValid = false;
 
-	for ( register short int i = 1; i < gpGlobals->maxClients; i ++ )
+	for ( register short int i = 1; i <= gpGlobals->maxClients; i ++ )
 	{
 		pPlayer = INDEXENT(i);
 
@@ -1924,8 +1920,8 @@ void CBot :: listenForPlayers ()
 
 		if ( fDist > rcbot_listen_dist.GetFloat() )
 			continue;
-
-		fFactor += (rcbot_listen_dist.GetFloat() - fDist);
+		
+		fFactor = 0.0f;
 
 		cmd = p->GetLastUserCommand();
 
@@ -1935,24 +1931,28 @@ void CBot :: listenForPlayers ()
 				fFactor += 1000.0f;
 		}
 		
-		CClassInterface::getVelocity(pPlayer,&vVelocity);
+		if ( !isVisible(pPlayer) )
+		{
+			CClassInterface::getVelocity(pPlayer,&vVelocity);
 		
-		fVelocity = vVelocity.Length();
+			fVelocity = vVelocity.Length();
 
-		if ( fVelocity > 250.0f )
-			fFactor += vVelocity.Length();
+			if ( fVelocity > rcbot_footstep_speed.GetFloat() )
+				fFactor += vVelocity.Length();
+		}
 
-		if ( (fFactor > 300.0f) && (fFactor > fMaxFactor) )
+		if ( fFactor == 0.0f )
+			continue;
+
+		// add inverted distance to the factor (i.e. closer = better)
+		fFactor += (rcbot_listen_dist.GetFloat() - fDist);
+
+		if ( fFactor > fMaxFactor )
 		{
 			fMaxFactor = fFactor;
 			pListenNearest = pPlayer;
 			bIsNearestAttacking = (cmd.buttons & IN_ATTACK);
 		}
-		/*if ( fDist < fMinDist )
-		{
-			fMinDist = fDist;
-			pListenNearest = pPlayer;
-		}*/
 	}
 
 	if ( pListenNearest != NULL )
@@ -1982,7 +1982,7 @@ void CBot :: listenToPlayer ( edict_t *pPlayer, bool bIsEnemy, bool bIsAttacking
 	}
 	else if ( bIsAttacking )
 	{
-		if ( !bIsEnemy )
+		if ( !bIsEnemy && wantToInvestigateSound() )
 		{
 			QAngle angle = p->GetAbsAngles();
 			Vector forward;
