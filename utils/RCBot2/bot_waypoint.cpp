@@ -1342,6 +1342,30 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 	switch ( iDrawType )
 	{
+	case DRAWTYPE_BELIEF:
+		{
+			if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
+			{
+				CClient *pClient = CClients::get(pEdict);
+
+				if ( pClient )
+				{
+					CBot *pBot = pClient->getDebugBot();
+
+					if ( pBot )
+					{					
+						char belief = (char)((int)pBot->getNavigator()->getBelief(CWaypoints::getWaypointIndex(this)));
+
+						// show danger - red = dangerous / blue = safe
+						r = belief;
+						b = MAX_BELIEF-belief;
+						g = 0;
+						a = 255;
+					}
+
+				}
+			}
+		}
 	case DRAWTYPE_DEBUGENGINE3:
 		fDistance = 72.0f;
 	case DRAWTYPE_DEBUGENGINE2:
@@ -1381,6 +1405,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 			}
 		}
+		// this will drop down -- don't break
 	case DRAWTYPE_DEBUGENGINE:
 
 #ifndef __linux__
@@ -1408,6 +1433,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 			1, WAYPOINT_WIDTH/2, WAYPOINT_WIDTH/2, 255, 
 			1, r, g, b, a, 10);//*/
 		break;
+
 	}
 
 	/*
