@@ -1718,6 +1718,9 @@ void CDODBot :: listenForPlayers ()
 		return;
 	}
 
+	if ( !m_bStatsCanUse || (m_StatsCanUse.stats.m_iTeamMatesVisible>0) /*|| (m_fSeeTeamMateTime ... )*/ )
+		return; // not very interested in listening to footsteps with other team-mates around.
+
 	// check for footsteps
 		//m_fNextListenTime = engine->Time() + randomFloat(0.5f,2.0f);
 	edict_t *pListenNearest = NULL;
@@ -2864,6 +2867,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	// sniping or machinegunning
 	if ( hasSniperRifle() )
 	{
+		// perturbation = (numberofclassonteam/numberofplayersonteam)
+
 		pWeapon = getSniperRifle();
 
 		if ( pWeapon )

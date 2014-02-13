@@ -532,6 +532,7 @@ private:
 	bool m_bUseZ;
 	float m_z; // z = ground level
 	int m_iWaypointType;
+	float m_fTimeout;
 };
 
 class CBotHL2DMSnipe : public CBotTask

@@ -568,6 +568,10 @@ public:
 	// the ground might change
 	static Vector getGround ( CWaypoint *pWaypoint );
 
+	//to do for snipers and machine gunners
+	/*static unsigned short int getNumberOfClassOnTeam ( int iClass );
+	static unsigned short int getNumberOfPlayersOnTeam ( int iClass );*/
+
 protected:
 
 	void initMod ();

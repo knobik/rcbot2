@@ -190,7 +190,7 @@ void CBroadcastVoiceCommand :: execute ( CBot *pBot )
 	{
 		// listen to enemy voice commands if they are nearby
 		if ( pBot->wantToListen() && pBot->wantToListenToPlayer(m_pPlayer) && (pBot->distanceFrom(m_pPlayer) < CWaypointLocations::REACHABLE_RANGE) )
-			pBot->listenToPlayer(m_pPlayer,true);
+			pBot->listenToPlayer(m_pPlayer,true,false);
 	}
 	else
 		pBot->hearVoiceCommand(m_pPlayer,m_VoiceCmd);
@@ -1931,7 +1931,8 @@ void CBot :: listenForPlayers ()
 				fFactor += 1000.0f;
 		}
 		
-		if ( !isVisible(pPlayer) )
+		// can't see this player and I'm on my own
+		if ( !isVisible(pPlayer) && ( m_bStatsCanUse && ((m_StatsCanUse.stats.m_iTeamMatesVisible==0)/* && (m_fSeeTeamMateTime ...) */)) )
 		{
 			CClassInterface::getVelocity(pPlayer,&vVelocity);
 		
@@ -3414,7 +3415,8 @@ void CBots :: handleAutomaticControl ()
 
 		IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pEdict);
 
-		if ( p )
+		// wait until fake client flag is set
+		if ( p && p->IsFakeClient() )
 		{
 			// until it has an 'unknown' remove from queue and create bot
 			if ( pEdict->GetUnknown() )

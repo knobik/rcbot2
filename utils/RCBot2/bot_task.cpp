@@ -3623,6 +3623,7 @@ CBotDODSnipe :: CBotDODSnipe ( CBotWeapon *pWeaponToUse, Vector vOrigin, float f
 	m_bUseZ = bUseZ;
 	m_z = z; // z = ground level
 	m_iWaypointType = iWaypointType;
+	m_fTimeout = 0.0f;
 }
 
 void CBotDODSnipe :: debugString ( char *string )
@@ -3687,7 +3688,14 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			if ( !bDeployedOrZoomed )
 			{
 				pBot->secondaryAttack();
+				
+				if ( m_fTimeout == 0.0f )
+					m_fTimeout = engine->Time();
+				else if ( (m_fTimeout + 3.0f) < engine->Time() )
+					fail();
 			}
+			else
+				m_fTimeout = 0.0f;
 
 			m_fScopeTime = engine->Time() + randomFloat(0.5f,1.0f);
 		}
