@@ -685,7 +685,7 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 				}
 				//else if ( (m_fLastSeeEnemy + 5.0f) > engine->Time() )
 				else if ( DotProductFromOrigin(CBotGlobals::entityOrigin(pEdict)) > rcbot_shoot_breakable_cos.GetFloat() )
-					return (distanceFrom(pEdict) < rcbot_shoot_breakable_dist.GetFloat()) && (CClassInterface::getPlayerHealth(pEdict) > 0);
+					return ((m_fLastSeeEnemyPlayer+3.0f) < engine->Time()) && (distanceFrom(pEdict) < rcbot_shoot_breakable_dist.GetFloat()) && (CClassInterface::getPlayerHealth(pEdict) > 0);
 			}
 		}
 
@@ -1507,25 +1507,25 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 			}
 			else if ( !inSquad() && isVisible(pPlayer) )
 			{
-				int iClass = CClassInterface::getPlayerClassDOD(pPlayer);
+				//int iClass = CClassInterface::getPlayerClassDOD(pPlayer);
 				// probablity of joining someone is based on their score and class
-				float fProb = 0.5f;
+				float fProb = 0.0f;
 								
 				// always join a squad if the leader is human
 				if ( p->IsPlayer() && !p->IsFakeClient() )
 					fProb = 1.0f;
 				else if ( rcbot_bots_form_squads.GetBool() )
 				{
-					fProb = 0.5f;
+					extern ConVar rcbot_bot_squads_percent;
 
-					if ( iClass == DOD_CLASS_SNIPER )
+					fProb = rcbot_bot_squads_percent.GetFloat()/100;
+
+					/*if ( iClass == DOD_CLASS_SNIPER )
 						fProb = 0.2f;
 					else if ( iClass == DOD_CLASS_MACHINEGUNNER )
-						fProb = 0.3f;
+						fProb = 0.3f;*/
 				}
-				else
-					fProb = 0.0f;
-
+				
 				if ( randomFloat(0.0f,1.0f) <= fProb )
 				{
 					m_pSquad = CBotSquads::AddSquadMember(pPlayer,m_pEdict);

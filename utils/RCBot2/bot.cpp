@@ -875,6 +875,10 @@ void CBot :: think ()
 			m_fLookSetTime = 0.0f;
 			m_fListenTime = 0.0f;
 			m_bListenPositionValid = false;
+
+			// is player
+			if ( ENTINDEX(m_pEnemy.get()) <= gpGlobals->maxClients )
+				m_fLastSeeEnemyPlayer = engine->Time();
 		}
 
 #ifdef _DEBUG
@@ -1282,6 +1286,7 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	m_fLastSeeEnemyPlayer = 0.0f;
 	m_PlayerListeningTo = NULL;
 	m_pPrimaryWeapon = NULL;
 	m_uSquadDetail.dat = 0;

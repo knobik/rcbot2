@@ -1138,6 +1138,7 @@ protected:
 	float m_fSquadIdleTime;
 	squad_u m_uSquadDetail;
 	CBotWeapon *m_pPrimaryWeapon;
+	float m_fLastSeeEnemyPlayer;
 };
 
 class CBots
