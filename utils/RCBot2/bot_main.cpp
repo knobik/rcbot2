@@ -64,6 +64,7 @@
 #include "ndebugoverlay.h"
 #include "server_class.h"
 #include "time.h"
+#include "irecipientfilter.h"
 #include "bot.h"
 #include "bot_commands.h"
 #include "bot_client.h"
@@ -442,14 +443,56 @@ void CRCBotPlugin::OnEdictFreed( const edict_t *edict  )
 	}
 #endif*/
 }
+class CBotRecipientFilter : public IRecipientFilter
+{
+public:
+	CBotRecipientFilter ( edict_t *pPlayer )
+	{
+		m_iPlayerSlot = ENTINDEX(pPlayer);
+	}
 
+	bool IsReliable( void ) const { return false; }
+	bool IsInitMessage( void ) const { return false; }
 
+	int	GetRecipientCount( void ) const { return 1; }
+	int	GetRecipientIndex( int slot ) const { return m_iPlayerSlot; }
 
-///////////////
+private:
+	int m_iPlayerSlot;
+};///////////////
 // hud message
 
 void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMessage, Color colour, int level, int time )
 {
+	int msgid = 0;
+	int imsgsize = 0;
+	char msgbuf[64];
+	bool bOK;
+
+	while ( (bOK=servergamedll->GetUserMessageInfo(msgid,msgbuf,63,imsgsize))==true )
+	{
+		if ( strcmp(msgbuf,"HintText") == 0 )
+			break;
+		else
+			msgid++;
+	}
+
+	if ( msgid == 0 )
+		return;
+	if ( !bOK )
+		return;
+
+	CBotRecipientFilter *filter = new CBotRecipientFilter(pEntity);
+
+	bf_write *buf = engine->UserMessageBegin(filter,msgid);
+
+	buf->WriteString(szMessage);
+	
+	engine->MessageEnd();
+
+	delete filter;
+
+	/*
 	KeyValues *kv = new KeyValues( "msg" );
 	kv->SetString( "title", szMessage );
 	kv->SetString( "msg", "This is the msg" );
@@ -460,7 +503,7 @@ void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMessage, Color c
 //DIALOG_TEXT
 	helpers->CreateMessage( pEntity, DIALOG_MSG, kv, &g_RCBOTServerPlugin );
 
-	kv->deleteThis();
+	kv->deleteThis();*/
 }
 
 #ifdef __linux__

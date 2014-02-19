@@ -224,14 +224,17 @@ void CClient :: think ()
 
 				if ( CWaypoints::hasAuthor() )
 				{
-					giveMessage(CStrings::getString("RCBot Waypoints by..."),5.0f);
-					giveMessage(CWaypoints::getAuthor(),5.0f);
+					char szMessage[128];
+
+					sprintf(szMessage,"RCBot Waypoints by %s",CWaypoints::getAuthor());
 
 					if ( CWaypoints::isModified() )
 					{
-						giveMessage(CStrings::getString("modified by..."),5.0f);
-						giveMessage(CWaypoints::getModifier(),5.0f);
+						strcat(szMessage," modified by ");
+						strcat(szMessage,CWaypoints::getModifier());
 					}
+
+					giveMessage(CStrings::getString(szMessage),5.0f);
 				}
 			}
 		}
