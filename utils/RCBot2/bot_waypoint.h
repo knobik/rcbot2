@@ -43,6 +43,14 @@
 class CWaypointVisibilityTable;
 class CClient;
 
+
+class CWaypointAuthorInfo
+{
+public:
+	char szAuthor[32];
+	char szModifiedBy[32];
+};
+
 class CWaypointHeader
 {
 public:
@@ -351,11 +359,11 @@ class CWaypoints
 {
 public:
 	static const int MAX_WAYPOINTS = 1024;
-	static const int WAYPOINT_VERSION = 3;
+	static const int WAYPOINT_VERSION = 4; // waypoint version 4 add author information
 
 	static const int W_FILE_FL_VISIBILITY = 1;
 
-	static void init ();
+	static void init (const char *pszAuthor = NULL, const char *pszModifiedBy = NULL);
 
 	static inline int getWaypointIndex ( CWaypoint *pWpt )
 	{
@@ -424,12 +432,18 @@ public:
 	static CWaypoint *getNestWaypoint ( int iTeam, int iArea, bool bForceArea = false, CBot *pBot = NULL );
 
 	static void updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int iWptFlag, const char *szClassname );
+	static bool hasAuthor () { return (m_szAuthor[0]!=0); }
+	static char *getAuthor() { return m_szAuthor; }
+	static bool isModified () { return (m_szModifiedBy[0]!=0); }
+	static char *getModifier() { return m_szModifiedBy; }
 private:
 	static CWaypoint m_theWaypoints[MAX_WAYPOINTS];	
 	static int m_iNumWaypoints;
 	static float m_fNextDrawWaypoints;
 	static int m_iWaypointTexture;
 	static CWaypointVisibilityTable *m_pVisibilityTable;
+	static char m_szAuthor[32];
+	static char m_szModifiedBy[32];
 };
 
 

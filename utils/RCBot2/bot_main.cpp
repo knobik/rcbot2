@@ -177,6 +177,7 @@ ConVar rcbot_bots_form_squads("rcbot_bots_form_squads","1",0,"if 1, bots will fo
 ConVar rcbot_listen_dist("rcbot_listen_dist","512",0,"the distance for bots to hear things");
 ConVar rcbot_footstep_speed("rcbot_footstep_speed","250",0,"the speed players can go when you first hear them make footsteps");
 ConVar rcbot_bot_squads_percent("rcbot_bot_squads_percent","50",0,"the percentage of time bots make squads with other bots");
+ConVar rcbot_tooltips("rcbot_tooltips","1",0,"Enables/disables help tooltips");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 
@@ -447,10 +448,11 @@ void CRCBotPlugin::OnEdictFreed( const edict_t *edict  )
 ///////////////
 // hud message
 
-void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMsgName, char *szTitle, char *szMessage, Color colour, int level, int time )
+void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMessage, Color colour, int level, int time )
 {
-	KeyValues *kv = new KeyValues( "menu" );
+	KeyValues *kv = new KeyValues( "msg" );
 	kv->SetString( "title", szMessage );
+	kv->SetString( "msg", "This is the msg" );
 	
 	kv->SetColor( "color", colour);
 	kv->SetInt( "level", level);
@@ -791,6 +793,7 @@ const char *CRCBotPlugin::GetPluginDescription( void )
 //---------------------------------------------------------------------------------
 void CRCBotPlugin::LevelInit( char const *pMapName )
 {
+	//CClients::initall();
 	// Must set this
 	CBotGlobals::setMapName(pMapName);
 

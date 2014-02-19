@@ -35,6 +35,7 @@
 using namespace std;
 
 #include "bot_const.h"
+//#include "bot_ehandle.h"
 
 #define MAX_STORED_AUTOWAYPOINT 5
 
@@ -137,6 +138,10 @@ public:
 		m_vAutoEventWaypointOrigin = Vector(0,0,0);
 		m_bAutoEventWaypointAutoType = false;
 		m_iAutoEventWaypointArea = 0;
+		m_fNextBotServerMessage = 0;
+		m_bSentWaypointMessage = false;
+		m_fSpeed = 0;
+		m_fUpdatePos = 0;
 	}
 
 	void init ();
@@ -244,6 +249,7 @@ public:
 	}
 	inline bool autoWaypointOn () { return m_bAutoWaypoint; }
 	void autoEventWaypoint ( int iType, float fRadius, bool bAtOtherOrigin = false, int iTeam = 0, Vector vOrigin = Vector(0,0,0), bool bIgnoreTeam = false, bool bAutoType = false );
+	void giveMessage(char*msg, float fTime=0.1f);
 private:
 	edict_t *m_pPlayer;
 	// steam id
@@ -327,6 +333,9 @@ private:
 	int m_iAutoEventWaypointTeam; // the player's team of the waypoint to add
 	int m_iAutoEventWaypointArea;
 	bool m_bAutoEventWaypointAutoType;
+	float m_fNextBotServerMessage;
+	queue<char*> m_NextMessage;
+	bool m_bSentWaypointMessage;
 };
 
 class CClients
@@ -350,8 +359,10 @@ public:
 	static void clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot = NULL );
 	static void clientDebugMsg(CBot *pBot, int iLev, const char *fmt, ... );
 	static CClient *findClientBySteamID ( char *szSteamID );
+	static edict_t *getListenServerClient() { return m_pListenServerClient->getPlayer(); }
 
 	static void initall () { for ( int i = 0; i < MAX_PLAYERS; i ++ ) { m_Clients[i].init(); } }
+	static void giveMessage (char *msg, float fTime = 0.1, edict_t *pPlayer = NULL );// NULL to everyone
 private:
 	static CClient m_Clients[MAX_PLAYERS];
 	static CClient *m_pListenServerClient;

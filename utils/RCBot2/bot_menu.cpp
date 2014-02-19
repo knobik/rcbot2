@@ -39,11 +39,11 @@
 
 #include "ndebugoverlay.h"
 
-#include "bot_client.h"
 #include "bot_waypoint.h"
 #include "bot_menu.h"
 #include "bot_wpt_color.h"
 #include "bot_globals.h"
+#include "bot_client.h"
 
 extern IVDebugOverlay *debugoverlay;
 

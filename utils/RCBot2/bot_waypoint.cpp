@@ -67,6 +67,8 @@ float CWaypoints::m_fNextDrawWaypoints = 0;
 int CWaypoints::m_iWaypointTexture = 0;
 CWaypointVisibilityTable * CWaypoints::m_pVisibilityTable = NULL;
 vector<CWaypointType*> CWaypointTypes::m_Types;
+char CWaypoints::m_szAuthor[32];
+char CWaypoints::m_szModifiedBy[32];
 
 const WptColor WptColor::white = WptColor(255,255,255,255) ;
 
@@ -1499,6 +1501,9 @@ void CWaypoints :: updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int i
 bool CWaypoints :: save ( bool bVisiblityMade )
 {
 	char filename[1024];
+	char szAuthorName[32];
+
+	edict_t *pListenServerClient = CClients::getListenServerClient();
 
 	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_EXTENSION,true);
 
@@ -1514,6 +1519,7 @@ bool CWaypoints :: save ( bool bVisiblityMade )
 	// write header
 	// ----
 	CWaypointHeader header;
+	CWaypointAuthorInfo authorinfo;
 
 	int flags = 0;
 
@@ -1524,11 +1530,42 @@ bool CWaypoints :: save ( bool bVisiblityMade )
 	header.iFlags = flags;
 	header.iNumWaypoints = iSize;
 	header.iVersion = WAYPOINT_VERSION;
+
+	strncpy(authorinfo.szAuthor,CWaypoints::getAuthor(),31);
+	authorinfo.szAuthor[31] = 0;
+	strncpy(authorinfo.szModifiedBy,CWaypoints::getModifier(),31);
+	authorinfo.szModifiedBy[31] = 0;
+
+	if ( !bVisiblityMade )
+	{
+		strcpy(szAuthorName,"(unknown)");
+
+		if ( pListenServerClient != NULL )
+		{
+			strcpy(szAuthorName,CClients::get(pListenServerClient)->getName());
+		}
+
+		if ( authorinfo.szAuthor[0] == 0 ) // no author
+		{
+			strncpy(authorinfo.szAuthor,szAuthorName,31);
+			authorinfo.szAuthor[31] = 0;
+
+			memset(authorinfo.szModifiedBy,0,32);
+		}
+		else if ( strcmp(szAuthorName,authorinfo.szAuthor) )
+		{
+			// modified
+			strncpy(authorinfo.szModifiedBy,szAuthorName,31);
+			authorinfo.szModifiedBy[31] = 0;
+		}
+	}
+
 	strcpy(header.szFileType,BOT_WAYPOINT_FILE_TYPE);
 	strcpy(header.szMapName,CBotGlobals::getMapName());
 	//////////////////////////////////////////////
 
 	fwrite(&header,sizeof(CWaypointHeader),1,bfp);
+	fwrite(&authorinfo,sizeof(CWaypointAuthorInfo),1,bfp);
 
 	for ( int i = 0; i < iSize; i ++ )
 	{
@@ -1566,6 +1603,10 @@ bool CWaypoints :: load (const char *szMapName)
 	}
 
 	CWaypointHeader header;
+	CWaypointAuthorInfo authorinfo;
+
+	memset(authorinfo.szAuthor,0,31);
+	memset(authorinfo.szModifiedBy,0,31);
 
 	// read header
 	// -----------
@@ -1601,12 +1642,18 @@ bool CWaypoints :: load (const char *szMapName)
 		return false;
 	}
 
+	if ( header.iVersion > 3 )
+	{
+		// load author information
+		fread(&authorinfo,sizeof(CWaypointAuthorInfo),1,bfp);
+	}
+
 	int iSize = header.iNumWaypoints;
 
 	// ok lets read the waypoints
 	// initialize
 	
-	CWaypoints::init();
+	CWaypoints::init(authorinfo.szAuthor,authorinfo.szModifiedBy);
 
 	m_iNumWaypoints = iSize;
 
@@ -1745,8 +1792,24 @@ void CWaypoints :: drawWaypoints( CClient *pClient )
 	}
 }
 
-void CWaypoints :: init ()
+void CWaypoints :: init (const char *pszAuthor, const char *pszModifiedBy)
 {
+	if ( pszAuthor != NULL )
+	{
+		strncpy(m_szAuthor,pszAuthor,31);
+		m_szAuthor[31] = 0;
+	}
+	else
+		m_szAuthor[0] = 0;
+
+	if ( pszModifiedBy != NULL )
+	{
+		strncpy(m_szModifiedBy,pszModifiedBy,31);
+		m_szModifiedBy[31] = 0;
+	}
+	else
+		m_szModifiedBy[0] = 0;
+
 	m_iNumWaypoints = 0;
 	m_fNextDrawWaypoints = 0;
 

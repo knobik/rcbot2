@@ -93,6 +93,32 @@ extern const char *g_szLookTaskToString[LOOK_MAX];
 #define BOT_WAYPOINT_FILE_TYPE "RCBot2\0" // for waypoint file header
 
 #define BOT_TAG "[RCBot] " // for printing messages
+/*
+// Engine player info, no game related infos here
+// If you change this, change the two byteswap defintions: 
+// cdll_client_int.cpp and cdll_engine_int.cpp
+typedef struct player_info_s
+{
+	DECLARE_BYTESWAP_DATADESC();
+	// scoreboard information
+	char			name[MAX_PLAYER_NAME_LENGTH];
+	// local server user ID, unique while server is running
+	int				userID;
+	// global unique player identifer
+	char			guid[SIGNED_GUID_LEN + 1];
+	// friends identification number
+	uint32			friendsID;
+	// friends name
+	char			friendsName[MAX_PLAYER_NAME_LENGTH];
+	// true, if player is a bot controlled by game.dll
+	bool			fakeplayer;
+	// true if player is the HLTV proxy
+	bool			ishltv;
+	// custom files CRC for this player
+	CRC32_t			customFiles[MAX_CUSTOM_FILES];
+	// this counter increases each time the server downloaded a new file
+	unsigned char	filesDownloaded;
+} player_info_t;*/
 
 typedef enum
 {

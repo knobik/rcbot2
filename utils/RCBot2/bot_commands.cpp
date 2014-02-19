@@ -627,7 +627,10 @@ eBotCommandResult CWaypointDrawTypeCommand :: execute ( CClient *pClient, const 
 eBotCommandResult CWaypointOnCommand:: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( pClient )
+	{
 		pClient->setWaypointOn(true);
+		pClient->giveMessage("Waypoints On");
+	}
 
 	return COMMAND_ACCESSED;
 }
@@ -724,6 +727,7 @@ eBotCommandResult CWaypointClearCommand :: execute ( CClient *pClient, const cha
 eBotCommandResult CWaypointOffCommand:: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	pClient->setWaypointOn(false);
+	pClient->giveMessage("Waypoints Off");
 	CBotGlobals::botMessage(pClient->getPlayer(),0,"waypoints off");
 
 	return COMMAND_ACCESSED;
@@ -760,11 +764,13 @@ eBotCommandResult CWaypointDeleteCommand :: execute ( CClient *pClient, const ch
 			CBotGlobals::botMessage(pClient->getPlayer(),0,"waypoint %d deleted",pClient->currentWaypoint());
 			pClient->updateCurrentWaypoint(); // waypoint deleted so get a new one
 			pClient->playSound("buttons/combine_button_locked");
+			pClient->giveMessage("Waypoint deleted");
 		}
 		else
 		{
 			CBotGlobals::botMessage(pClient->getPlayer(),0,"no waypoint nearby to delete");
 			pClient->playSound("weapons/wpn_denyselect");
+			pClient->giveMessage("No Waypoint");
 		}
 	}
 
@@ -1022,6 +1028,7 @@ CPathWaypointOnCommand :: CPathWaypointOnCommand()
 eBotCommandResult CPathWaypointOnCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	pClient->setPathWaypoint(true);
+	pClient->giveMessage("Pathwaypoints visible");
 	return COMMAND_ACCESSED;
 }
 
@@ -1034,6 +1041,7 @@ CPathWaypointOffCommand :: CPathWaypointOffCommand()
 eBotCommandResult CPathWaypointOffCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	pClient->setPathWaypoint(false);
+	pClient->giveMessage("Pathwaypoints hidden");
 	return COMMAND_ACCESSED;
 }
 
@@ -1317,7 +1325,10 @@ eBotCommandResult CWaypointInfoCommand :: execute ( CClient *pClient, const char
 eBotCommandResult CWaypointSaveCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( CWaypoints::save(false) )
+	{
 		CBotGlobals::botMessage(NULL,0,"waypoints saved");
+		pClient->giveMessage("Waypoints Saved");
+	}
 	else
 		CBotGlobals::botMessage(NULL,0,"error: could not save waypoints");
 

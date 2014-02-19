@@ -75,6 +75,14 @@ void CClient :: init ()
 	m_pMenu = NULL;
 	m_iMenuCommand = -1;
 	m_fNextUpdateMenuTime = 0.0f;
+
+	while ( !m_NextMessage.empty() )
+		m_NextMessage.pop();
+
+	m_fNextBotServerMessage = 0;
+	m_bSentWaypointMessage = false;
+	m_fSpeed = 0;
+	m_fUpdatePos = 0;
 }
 
 bool CClient :: needToRenderMenu () 
@@ -171,6 +179,13 @@ void CClient :: think ()
 {
 	extern ConVar bot_cmd_enable_wpt_sounds;
 
+	/*if ( m_pPlayer.get() == NULL )
+	{
+		clientDisconnected();
+		return;
+	}
+	*/
+
 	if ( m_szSoundToPlay[0] != 0 )
 	{
 		if ( bot_cmd_enable_wpt_sounds.GetBool() )
@@ -197,10 +212,31 @@ void CClient :: think ()
 
 	if ( m_fUpdatePos < engine->Time() )
 	{
-		m_fUpdatePos = engine->Time() + 1.0f;
 		m_vVelocity = (getOrigin()-m_vLastPos);
 		m_fSpeed = m_vVelocity.Length();
 		m_vLastPos = getOrigin();
+
+		if ( (m_fUpdatePos > 0) && (m_fSpeed > 0) )
+		{
+			if ( !m_bSentWaypointMessage )
+			{
+				m_bSentWaypointMessage = true;
+
+				if ( CWaypoints::hasAuthor() )
+				{
+					giveMessage(CStrings::getString("RCBot Waypoints by..."),5.0f);
+					giveMessage(CWaypoints::getAuthor(),5.0f);
+
+					if ( CWaypoints::isModified() )
+					{
+						giveMessage(CStrings::getString("modified by..."),5.0f);
+						giveMessage(CWaypoints::getModifier(),5.0f);
+					}
+				}
+			}
+		}
+
+		m_fUpdatePos = engine->Time() + 1.0f;
 	}
 
 	if ( isDebugging() )
@@ -276,6 +312,24 @@ void CClient :: think ()
 			//this->cm_pDebugBot->getTaskDebug();
 		//m_pDebugBot->canAvoid();
 	}
+
+	if ( m_fNextBotServerMessage < engine->Time() )
+	{
+		if ( !m_NextMessage.empty() )
+		{
+			char *msg = m_NextMessage.front();
+			int level = 5-m_NextMessage.size();
+			CRCBotPlugin::HudTextMessage(m_pPlayer,msg,Color(0,255,255,255),level,5);			
+			//engine->ClientPrintf(m_pPlayer,msg);
+
+			m_NextMessage.pop();
+
+			m_fNextBotServerMessage = engine->Time() + 11.0f;
+		}
+		else
+			m_fNextBotServerMessage = engine->Time() + 1.0f;
+	}
+
 
 	/***** Autowaypoint stuff below borrowed and converted from RCBot1 *****/
 	
@@ -764,6 +818,42 @@ void CClient :: think ()
 	}
 }
 
+void CClient::giveMessage(char *msg,float fTime)
+{
+	extern ConVar rcbot_tooltips;
+
+	if ( rcbot_tooltips.GetBool() )
+	{
+		m_NextMessage.push(msg);
+		m_fNextBotServerMessage = engine->Time() + fTime;
+	}
+}
+
+void CClients::giveMessage(char *msg,float fTime, edict_t *pPlayer )
+{
+	CClient *pClient;
+
+	if ( pPlayer != NULL )
+	{
+		pClient = get(pPlayer);
+		
+		if ( pClient )
+			pClient->giveMessage(msg,fTime);
+	}
+	else
+	{
+		for ( int i = 0; i < 32; i ++ )
+		{
+			pClient = get(i);
+
+			if ( pClient )
+			{
+				pClient->giveMessage(msg,fTime);
+			}
+		}
+	}
+}
+
 const char *CClient :: getName ()
 {
 	IPlayerInfo *playerinfo = playerinfomanager->GetPlayerInfo( m_pPlayer );
@@ -810,8 +900,11 @@ void CClient :: clientDisconnected ()
 
 	if ( pBot != NULL )
 	{
-		// free bots memory and other stuff
-		pBot->freeAllMemory();
+		if ( pBot->inUse() )
+		{
+			// free bots memory and other stuff
+			pBot->freeAllMemory();
+		}
 	}
 
 	if ( !engine->IsDedicatedServer() )
