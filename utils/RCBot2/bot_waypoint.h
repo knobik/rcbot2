@@ -433,9 +433,10 @@ public:
 
 	static void updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int iWptFlag, const char *szClassname );
 	static bool hasAuthor () { return (m_szAuthor[0]!=0); }
-	static char *getAuthor() { return m_szAuthor; }
+	static const char *getAuthor() { return m_szAuthor; }
 	static bool isModified () { return (m_szModifiedBy[0]!=0); }
-	static char *getModifier() { return m_szModifiedBy; }
+	static const char *getModifier() { return m_szModifiedBy; }
+	static const char *getWelcomeMessage () { return m_szWelcomeMessage; }
 private:
 	static CWaypoint m_theWaypoints[MAX_WAYPOINTS];	
 	static int m_iNumWaypoints;
@@ -444,6 +445,7 @@ private:
 	static CWaypointVisibilityTable *m_pVisibilityTable;
 	static char m_szAuthor[32];
 	static char m_szModifiedBy[32];
+	static char m_szWelcomeMessage[128];
 };
 
 

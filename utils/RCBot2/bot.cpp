@@ -164,7 +164,7 @@ bool BotFunc_BreakableIsEnemy ( edict_t *pBreakable, edict_t *pEdict )
 			// models/props_c17/oildrum001_explosive.mdl
 			const char *model = pBreakable->GetIServerEntity()->GetModelName().ToCStr();
 
-			if ( (model[17] == 'o') && (model[28]== 'e') ) // explosive
+			if ( (model[13] == 'c') && (model[17] == 'o') && (model[20] == 'd') && (model[28]== 'e') ) // explosive
 				return false;
 			// Only shoot breakables that are bigger than me (crouch size)
 			// or that target something...
@@ -449,6 +449,8 @@ bool CBot :: checkStuck ()
 		return false;
 	if ( rcbot_dont_move.GetBool() ) // bots not moving
 		return false;
+	if ( hasEnemy() )
+		return false;
 
 	fTime = engine->Time();
 
@@ -484,7 +486,7 @@ bool CBot :: checkStuck ()
 	if ( m_fCheckStuckTime > fTime )
 		return m_bThinkStuck;
 
-	if ( hasSomeConditions(CONDITION_LIFT) )//fabs(m_vMoveTo.z - getOrigin().z) > 48 )
+	if ( hasSomeConditions(CONDITION_LIFT) || (onLadder() ))//fabs(m_vMoveTo.z - getOrigin().z) > 48 )
 	{
 		if ( m_vVelocity.z != 0.0f )
 			return false;

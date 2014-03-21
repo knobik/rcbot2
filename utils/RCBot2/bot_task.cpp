@@ -3574,7 +3574,7 @@ void CBotFollowSquadLeader :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		CClassInterface::getVelocity(pSquadLeader,&vVelocity);
 
-		m_fLeaderSpeed = (m_fLeaderSpeed*0.5f) + (vVelocity.Length()*0.5f);
+		m_fLeaderSpeed = (MIN(m_fLeaderSpeed,100.0f)*0.5f) + (vVelocity.Length()*0.5f);
 
 		m_fUpdateMovePosTime = engine->Time() + (fRand * (1.0f-(vVelocity.Length()/320)));
 		m_vPos = m_pSquad->GetFormationVector(pBot->getEdict());
@@ -3745,6 +3745,9 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else
 	{
+
+		bool unprone = false;
+
 		pBot->stopMoving();
 
 		if ( m_iWaypointType & CWaypointTypes::W_FL_PRONE )
@@ -3752,6 +3755,7 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			//pBot->updateDanger(MAX_BELIEF);
 			pBot->removeCondition(CONDITION_RUN);
 			pBot->updateCondition(CONDITION_PRONE);
+
 		}
 		else
 		{
@@ -3760,6 +3764,18 @@ void CBotDODSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			// refrain from proning
 			pBot->updateCondition(CONDITION_RUN);
 			pBot->removeCondition(CONDITION_PRONE);
+			unprone = true;
+			
+		}
+
+		if ( unprone )
+		{
+			CClassInterface::getPlayerInfoDOD(pBot->getEdict(),&unprone,NULL);
+			if ( unprone )
+			{
+				CDODBot *pDODBot = (CDODBot *)pBot;
+				pDODBot->unProne();
+			}
 		}
 
 		// no enemy for a while

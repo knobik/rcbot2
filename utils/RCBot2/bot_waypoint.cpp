@@ -69,7 +69,7 @@ CWaypointVisibilityTable * CWaypoints::m_pVisibilityTable = NULL;
 vector<CWaypointType*> CWaypointTypes::m_Types;
 char CWaypoints::m_szAuthor[32];
 char CWaypoints::m_szModifiedBy[32];
-
+char CWaypoints::m_szWelcomeMessage[128];
 const WptColor WptColor::white = WptColor(255,255,255,255) ;
 
 extern IVDebugOverlay *debugoverlay;
@@ -1589,6 +1589,8 @@ bool CWaypoints :: load (const char *szMapName)
 {
 	char filename[1024];	
 
+	strcpy(m_szWelcomeMessage,"No waypoints for this map");
+
 	// open explicit map name waypoints
 	if ( szMapName == NULL )
 		CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_EXTENSION,true);
@@ -1646,7 +1648,17 @@ bool CWaypoints :: load (const char *szMapName)
 	{
 		// load author information
 		fread(&authorinfo,sizeof(CWaypointAuthorInfo),1,bfp);
+
+		sprintf(m_szWelcomeMessage,"Waypoints by %s",authorinfo.szAuthor);
+
+		if ( authorinfo.szModifiedBy[0] != 0 )
+		{
+			strcat(m_szWelcomeMessage," modified by ");
+			strcat(m_szWelcomeMessage,authorinfo.szModifiedBy);
+		}
 	}
+	else
+		sprintf(m_szWelcomeMessage,"Waypoints Loaded");
 
 	int iSize = header.iNumWaypoints;
 

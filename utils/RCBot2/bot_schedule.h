@@ -86,6 +86,8 @@ typedef enum
 	SCHED_FOLLOW,
 	SCHED_DOD_DROPAMMO,
 	SCHED_INVESTIGATE_NOISE,
+	SCHED_CROUCH_AND_HIDE,
+	SCHED_DEPLOY_MACHINE_GUN,
 	SCHED_MAX
 	//SCHED_HIDE_FROM_ENEMY
 }eBotSchedule;
@@ -605,5 +607,29 @@ public:
 
 	void init ();
 };
+
+class CCrouchHideSched : public CBotSchedule
+{
+public:
+	// iWaypoint = the waypoint number the bot will go to (to nest)
+	// if iWaypoint is -1 it will find a random, suitable nest
+	CCrouchHideSched ( edict_t *pCoverFrom );
+
+	void init ();
+};
+
+class CDeployMachineGunSched : public CBotSchedule
+{
+public:
+	// iWaypoint = the waypoint number the bot will go to (to nest)
+	// if iWaypoint is -1 it will find a random, suitable nest
+	CDeployMachineGunSched ( CBotWeapon *pWeapon, CWaypoint *pWaypoint, Vector vEnemy );
+
+	void init ()
+	{
+		setID(SCHED_DEPLOY_MACHINE_GUN);
+	}
+};
+
 
 #endif

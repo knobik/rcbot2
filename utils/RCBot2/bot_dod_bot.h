@@ -216,6 +216,8 @@ public:
 	void changeClass(); // uses m_iDesiredClass
 
 	void setNearestBomb ( edict_t *pBomb ) { m_pNearestBomb = pBomb; }
+	void prone ();
+	void unProne();
 
 	bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1);
 

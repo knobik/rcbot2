@@ -748,7 +748,7 @@ void CHLDMBot :: handleWeapons ()
 	{
 		CBotWeapon *pWeapon;
 
-		pWeapon = getBestWeapon(m_pEnemy,true,true,(m_pEnemy==m_NearestBreakable)||rcbot_melee_only.GetBool());
+		pWeapon = getBestWeapon(m_pEnemy,true,true,(m_pEnemy==m_NearestBreakable)&&!rcbot_melee_only.GetBool());
 
 		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 		{

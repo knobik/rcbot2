@@ -118,6 +118,21 @@ private:
 	int m_iFlags;
 };
 
+class CToolTip
+{
+public:
+	CToolTip ( const char *pszMessage, const char *pszSound = NULL )
+	{
+		m_pszMessage = pszMessage;
+		m_pszSound = pszSound;
+	}
+
+	void send(edict_t *pPlayer);
+private:
+	const char *m_pszMessage;
+	const char *m_pszSound;
+};
+
 class CClient
 {
 public:
@@ -139,7 +154,7 @@ public:
 		m_bAutoEventWaypointAutoType = false;
 		m_iAutoEventWaypointArea = 0;
 		m_fNextBotServerMessage = 0;
-		m_bSentWaypointMessage = false;
+		m_bSentWelcomeMessage = false;
 		m_fSpeed = 0;
 		m_fUpdatePos = 0;
 	}
@@ -334,8 +349,8 @@ private:
 	int m_iAutoEventWaypointArea;
 	bool m_bAutoEventWaypointAutoType;
 	float m_fNextBotServerMessage;
-	queue<char*> m_NextMessage;
-	bool m_bSentWaypointMessage;
+	queue<CToolTip*> m_NextTooltip;
+	bool m_bSentWelcomeMessage;
 };
 
 class CClients

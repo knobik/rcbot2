@@ -82,6 +82,7 @@ const char *szSchedules[SCHED_MAX+1] =
 	"SCHED_FOLLOW",
 	"SCHED_DOD_DROPAMMO",
 	"SCHED_INVESTIGATE_NOISE",
+	"SCHED_CROUCH_AND_HIDE",
 	"SCHED_MAX"
 };
 ////////////////////// unused
@@ -497,6 +498,18 @@ void CGotoNestSched :: init ()
 	setID(SCHED_GOTONEST);
 }
 
+//////////////
+CCrouchHideSched :: CCrouchHideSched ( edict_t *pCoverFrom )
+{
+	addTask(new CCrouchHideTask(pCoverFrom));
+}
+
+void CCrouchHideSched :: init ()
+{
+	setID(SCHED_CROUCH_AND_HIDE);
+}
+
+
 /////////////
 CBotAttackSched :: CBotAttackSched ( edict_t *pEdict )
 {
@@ -584,7 +597,12 @@ void CBotTF2ShootLastEnemyPos::init()
 	setID(SCHED_SHOOT_LAST_ENEMY_POS);
 }
 
-
+///////////////////////////////
+CDeployMachineGunSched :: CDeployMachineGunSched ( CBotWeapon *pWeapon, CWaypoint *pWaypoint, Vector vEnemy )
+{
+	addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint),LOOK_LAST_ENEMY));
+	addTask(new CBotDODSnipe(pWeapon,pWaypoint->getOrigin(),pWaypoint->getAimYaw(),true,vEnemy.z,pWaypoint->getFlags()));
+}
 //////////////////////////////////////////////////
 CBotDefendPointSched ::	CBotDefendPointSched ( Vector vPoint, int iRadius, int iArea )
 {

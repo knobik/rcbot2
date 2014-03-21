@@ -322,6 +322,11 @@ public:
 		return hasAllFlags(WEAP_FL_MELEE);
 	}
 
+	inline bool isMeleeSecondary ()
+	{
+		return hasAllFlags(WEAP_FL_MELEE_SEC_ATT);
+	}
+
 	inline bool needsDeployedOrZoomed ()
 	{
 		return hasAllFlags(WEAP_FL_CANTFIRE_NORM);
@@ -566,6 +571,11 @@ public:
 	inline bool isMelee ()
 	{
 		return m_pWeaponInfo->isMelee();
+	}
+
+	inline bool isMeleeSecondary () 
+	{
+		return m_pWeaponInfo->isMeleeSecondary();
 	}
 
 	inline bool secondaryInRange ( float fDistance )

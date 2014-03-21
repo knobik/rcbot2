@@ -76,11 +76,11 @@ void CClient :: init ()
 	m_iMenuCommand = -1;
 	m_fNextUpdateMenuTime = 0.0f;
 
-	while ( !m_NextMessage.empty() )
-		m_NextMessage.pop();
+	while ( !m_NextTooltip.empty() )
+		m_NextTooltip.pop();
 
 	m_fNextBotServerMessage = 0;
-	m_bSentWaypointMessage = false;
+	m_bSentWelcomeMessage = false;
 	m_fSpeed = 0;
 	m_fUpdatePos = 0;
 }
@@ -218,24 +218,12 @@ void CClient :: think ()
 
 		if ( (m_fUpdatePos > 0) && (m_fSpeed > 0) )
 		{
-			if ( !m_bSentWaypointMessage )
+			if ( !m_bSentWelcomeMessage )
 			{
-				m_bSentWaypointMessage = true;
+				m_bSentWelcomeMessage = true;
 
-				if ( CWaypoints::hasAuthor() )
-				{
-					char szMessage[128];
-
-					sprintf(szMessage,"RCBot Waypoints by %s",CWaypoints::getAuthor());
-
-					if ( CWaypoints::isModified() )
-					{
-						strcat(szMessage," modified by ");
-						strcat(szMessage,CWaypoints::getModifier());
-					}
-
-					giveMessage(CStrings::getString(szMessage),5.0f);
-				}
+				giveMessage(CStrings::getString(BOT_WELCOME_MESSAGE));
+				giveMessage(CStrings::getString(CWaypoints::getWelcomeMessage()),5.0f);
 			}
 		}
 
@@ -318,14 +306,15 @@ void CClient :: think ()
 
 	if ( m_fNextBotServerMessage < engine->Time() )
 	{
-		if ( !m_NextMessage.empty() )
+		if ( !m_NextTooltip.empty() )
 		{
-			char *msg = m_NextMessage.front();
-			int level = 5-m_NextMessage.size();
-			CRCBotPlugin::HudTextMessage(m_pPlayer,msg,Color(0,255,255,255),level,5);			
-			//engine->ClientPrintf(m_pPlayer,msg);
+			CToolTip *pTooltip = m_NextTooltip.front();
+			
+			pTooltip->send(m_pPlayer);
 
-			m_NextMessage.pop();
+			m_NextTooltip.pop();
+
+			delete pTooltip;
 
 			m_fNextBotServerMessage = engine->Time() + 11.0f;
 		}
@@ -827,7 +816,7 @@ void CClient::giveMessage(char *msg,float fTime)
 
 	if ( rcbot_tooltips.GetBool() )
 	{
-		m_NextMessage.push(msg);
+		m_NextTooltip.push(new CToolTip(msg,NULL));
 		m_fNextBotServerMessage = engine->Time() + fTime;
 	}
 }

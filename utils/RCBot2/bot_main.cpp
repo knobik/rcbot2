@@ -102,7 +102,7 @@ bool bInitialised = false;
 void UnhookPlayerRunCommand ();
 
 ConVar rcbot_projectile_tweak("rcbot_projtweak","0.04",0,"Tweaks the bots knowledge of projectiles and gravity");
-ConVar bot_sv_cheat_warning("rcbot_sv_cheats_warning","1",0,"If disabled, bots will try to spawn even if sv_cheats is 1 - use only with admin cvar plugin");
+ConVar bot_sv_cheat_warning("rcbot_sv_cheats_warning","1",0,"If disabled, bots will try to spawn even if sv_cheats is 0 - use only with admin cvar plugin");
 ConVar bot_cmd_enable_wpt_sounds("rcbot_enable_wpt_sounds","1",0,"Enable/disable sound effects when editing waypoints");
 ConVar bot_cmd_nocheats("rcbot_botcmd_nocheats","1",0,"If 1 bots don't need cheats to play");
 ConVar bot_general_difficulty("rcbot_skill","0.6",0,"General difficulty of the bots. 0.5 = stock, < 0.5 easier, > 0.5 = harder");
@@ -199,7 +199,7 @@ ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");
 ConVar *mp_teamplay = NULL;
 ConVar *sv_tags = NULL;
-ConVar *puppet_bot_cmd = NULL;
+ConCommandBase *puppet_bot_cmd = NULL;
 
 // Interfaces from the engine*/
 IVEngineServer *engine = NULL;  // helper functions (messaging clients, loading content, making entities, running commands, etc)
@@ -462,7 +462,15 @@ private:
 };///////////////
 // hud message
 
-void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, char *szMessage, Color colour, int level, int time )
+void CToolTip::send(edict_t *pPlayer)
+{
+	CRCBotPlugin::HudTextMessage(pPlayer,m_pszMessage);
+
+	if ( m_pszSound )
+		engine->ClientCommand(pPlayer,"play %s",m_pszSound);
+}
+
+void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, const char *szMessage )
 {
 	int msgid = 0;
 	int imsgsize = 0;
@@ -689,16 +697,16 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	sv_cheats = cvar->FindVar("sv_cheats");
 	sv_gravity = cvar->FindVar("sv_gravity");
 	sv_tags = cvar->FindVar("sv_tags");
-	puppet_bot_cmd = cvar->FindVar("bot");
+	puppet_bot_cmd = cvar->FindCommand("bot");
 
 	// Attempt to make puppet bot command cheat free --- doesn't work!
 	if ( puppet_bot_cmd != NULL )
 	{
 		if ( bot_cmd_nocheats.GetBool() )
 		{
-			int *flags = (int*)((unsigned long)&puppet_bot_cmd + 16); // 16 is offset to flags
+			int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + 20); // 20 is offset to flags
 			
-			*flags &= ~FCVAR_CHEAT;
+			*m_nFlags &= ~FCVAR_CHEAT;
 		}
 	}
 

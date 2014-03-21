@@ -327,7 +327,8 @@ public:
 	inline static void getPlayerInfoDOD(edict_t *player, bool *m_bProne, float *m_flStamina)
 	{
 		*m_bProne = g_GetProps[GETPROP_DOD_PRONE].getBool(player,false);
-		*m_flStamina = g_GetProps[GETPROP_DOD_STAMINA].getFloat(player,0);
+		if ( m_flStamina )
+			*m_flStamina = g_GetProps[GETPROP_DOD_STAMINA].getFloat(player,0);
 	}
 
 	inline static float getAnimCycle ( edict_t *edict) 

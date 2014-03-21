@@ -33,6 +33,12 @@
 
 #include "shareddefs.h"
 
+#ifndef __linux__
+#define BOT_WELCOME_MESSAGE "Welcome to RCBot by Cheeseh"
+#else
+#define BOT_WELCOME_MESSAGE "Welcome to RCBot by Cheeseh. Linux/MacOSx compiled by Ted"
+#endif
+
 #define BOT_DEFAULT_FOV 75.0f
 
 #define to_lower(a) (((a)>='A')&&((a)<='Z'))?('a'+((a)-'A')):(a)

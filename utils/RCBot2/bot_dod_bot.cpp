@@ -44,6 +44,7 @@
 #include "bot_waypoint_locations.h"
 #include "bot_navigator.h"
 #include "bot_perceptron.h"
+#include "bot_waypoint_visibility.h"
 //#include "vstdlib/random.h" // for random functions
 
 extern ConVar bot_beliefmulti;
@@ -423,9 +424,12 @@ void CDODBot :: died ( edict_t *pKiller, const char *pszWeapon )
 void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon )
 {
 	static CWaypoint *pWpt;
+	extern ConVar rcbot_melee_only;
 
 	if ( (pKiller != m_pEdict) && pKiller && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && isEnemy(pKiller,false) )
 	{
+		bool bFollow = true;
+		
 		if ( pWeapon )
 		{
 			DOD_Class pclass = (DOD_Class)CClassInterface::getPlayerClassDOD(pKiller);
@@ -455,6 +459,20 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 			}
 			else
 				m_fCurrentDanger += 20.0f;
+
+			if ( isVisible(pKiller) )
+			{
+				CWaypointVisibilityTable *pTable = CWaypoints::getVisiblity();
+				int iCurrentWaypoint = m_pNavigator->getCurrentWaypointID();
+				int iEnemyWaypoint = CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(pKiller),100.0f,-1,true,true);
+
+				if ( (iCurrentWaypoint!=-1) && (iEnemyWaypoint!=-1) && !pTable->GetVisibilityFromTo(iCurrentWaypoint,iEnemyWaypoint) )
+				{
+					m_pSchedules->removeSchedule(SCHED_CROUCH_AND_HIDE);
+					m_pSchedules->addFront(new CCrouchHideSched(pKiller));
+					bFollow = false;
+				}
+			}
 		}
 
 		// encourage bots to snoop out enemy or throw grenades
@@ -471,20 +489,53 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
 		}
 
-		bool bFollow = false;
-		
 		if ( !hasEnemy() )
 		{
-			bFollow = (randomFloat(0.0f,0.5f) < m_pProfile->m_fBraveness);
 			m_vListenPosition = CBotGlobals::entityOrigin(pKiller);
+			CBotWeapon *pMachineGun = getMG();
+
+			// move up MG
+			if ( !rcbot_melee_only.GetBool() && pMachineGun && (m_iClass == DOD_CLASS_MACHINEGUNNER) && !pMachineGun->outOfAmmo(this) && pMachineGun->isDeployable() )
+			{
+				CWaypoint *pWaypoint;
+
+				if ( m_pSchedules->hasSchedule(SCHED_DEPLOY_MACHINE_GUN) )
+				{
+					bFollow = false;
+				}
+				else
+				{
+					Vector vSearchForMachineGunPointOrigin = m_vListenPosition-getOrigin();
+
+					vSearchForMachineGunPointOrigin = vSearchForMachineGunPointOrigin/vSearchForMachineGunPointOrigin.Length();
+
+					vSearchForMachineGunPointOrigin = getOrigin() + (vSearchForMachineGunPointOrigin*CWaypointLocations::REACHABLE_RANGE);
+
+						if ( (pWaypoint = CWaypoints::getWaypoint(
+						CWaypointLocations::NearestWaypoint(
+						vSearchForMachineGunPointOrigin,
+						CWaypointLocations::REACHABLE_RANGE,
+						-1,
+						false,false,
+						false,NULL,
+						false,m_iTeam,
+						false,false,
+						Vector(0,0,0),
+						CWaypointTypes::W_FL_MACHINEGUN))) != NULL)
+						{					
+							m_pSchedules->add(new CDeployMachineGunSched(pMachineGun,pWaypoint,m_vListenPosition));
+
+							bFollow = false;
+						}
+				}
+			}
 
 			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && bFollow )
 			{
 				m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
 				m_pSchedules->addFront(new CBotInvestigateNoiseSched(CBotGlobals::entityOrigin(pDied),m_vListenPosition));
 			}
-			
-			
+
 			m_bListenPositionValid = true;
 			m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
 			setLookAtTask(LOOK_NOISE);
@@ -730,7 +781,7 @@ bool CDODBot :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 void CDODBot :: handleWeapons ()
 {
-	//
+	//	
 	// Handle attacking at this point
 	//
 	if ( m_pEnemy && !hasSomeConditions(CONDITION_ENEMY_DEAD) && 
@@ -739,7 +790,16 @@ void CDODBot :: handleWeapons ()
 	{
 		CBotWeapon *pWeapon;
 
-		pWeapon = getBestWeapon(m_pEnemy,true,true,rcbot_melee_only.GetBool(),((m_pEnemy == m_pNearestBreakable) || CDODMod::isBreakableRegistered(m_pEnemy,m_iTeam)));
+		pWeapon = getCurrentWeapon();
+
+
+		if ( !rcbot_melee_only.GetBool() && pWeapon && pWeapon->isDeployable() && !pWeapon->outOfAmmo(this) && CClassInterface::isMachineGunDeployed(pWeapon->getWeaponEntity()))
+		{
+			; // keep current weapon on
+		}
+		else 
+			pWeapon = getBestWeapon(m_pEnemy,true,true,rcbot_melee_only.GetBool(),!rcbot_melee_only.GetBool() && (((m_pEnemy == m_pNearestBreakable) || CDODMod::isBreakableRegistered(m_pEnemy,m_iTeam))));
+
 
 		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 		{
@@ -893,6 +953,23 @@ void CDODBot :: chooseClass ( bool bIsChangingClass )
 
 }
 
+void CDODBot :: prone ()
+{
+		if ( !m_bProne && (m_fProneTime < engine->Time()) )
+		{
+			m_pButtons->tap(IN_ALT1);
+			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
+		}
+}
+void CDODBot :: unProne()
+{
+		if ( m_bProne && (m_fProneTime < engine->Time()) )
+		{
+			m_pButtons->tap(IN_ALT1);
+			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
+		}
+}
+
 void CDODBot :: modThink ()
 {
 	static float fMaxSpeed;
@@ -1017,8 +1094,7 @@ void CDODBot :: modThink ()
 
 			if ( bProne )
 			{
-				m_pButtons->tap(IN_ALT1);
-				m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
+				prone();
 			}
 		}
 
@@ -1029,11 +1105,9 @@ void CDODBot :: modThink ()
 	else if ( hasSomeConditions(CONDITION_RUN) || ((m_fCurrentDanger >= 20.0f) && (m_flStamina >= 5.0f ) && (m_flSprintTime < engine->Time())) )
 	{
 		// unprone
-		if ( m_bProne && ( m_fProneTime < engine->Time() ))
-		{
-			m_pButtons->tap(IN_ALT1);
-			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
-		}
+		
+		unProne();
+		
 
 		setMoveSpeed(fMaxSpeed*1.1f); 
 		m_pButtons->holdButton(IN_SPEED,0,1,0);
@@ -2397,7 +2471,7 @@ void CDODBot :: reachedCoverSpot (int flags)
 
 	//m_fFixWeaponTime = engine->Time() + 1.0f;
 	//}
-	CBotWeapon *pWeapon = getCurrentWeapon();
+	CBotWeapon *pWeapon = getMG();
 
 	if ( pWeapon != NULL )
 	{
@@ -2429,7 +2503,10 @@ void CDODBot :: reachedCoverSpot (int flags)
 			if ( CBotGlobals::entityIsAlive(m_pLastCoverFrom) )
 			{
 				if ( flags & (CWaypointTypes::W_FL_CROUCH|CWaypointTypes::W_FL_MACHINEGUN|CWaypointTypes::W_FL_COVER_RELOAD) )
-					m_pSchedules->addFront(new CBotSchedule(new CCrouchHideTask(m_pLastCoverFrom)));
+				{
+					m_pSchedules->removeSchedule(SCHED_CROUCH_AND_HIDE);
+					m_pSchedules->addFront(new CCrouchHideSched(m_pLastCoverFrom));
+				}
 			}
 		}
 	}
@@ -2463,6 +2540,7 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	static bool bAttack;
 	static float fDelay; // delay to reduce recoil
 	static float fDist;
+	extern ConVar rcbot_melee_only;
 
 	bAttack = true;
 	fDelay = 0;
@@ -2480,11 +2558,11 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 
 		clearFailedWeaponSelect();
 
-		if ( pWeapon->isMelee() )
+		if ( pWeapon->isMelee() || (pWeapon->isMeleeSecondary()&&(pWeapon->outOfAmmo(this)||rcbot_melee_only.GetBool())) )
 		{
 			setMoveTo(CBotGlobals::entityOrigin(pEnemy));
 			//setLookAt(m_vAimVector);
-			setLookAtTask((LOOK_ENEMY));
+			setLookAtTask(LOOK_ENEMY);
 			// dontAvoid my enemy
 			m_fAvoidTime = engine->Time() + 1.0f;
 			fDelay = 0;
@@ -2570,11 +2648,7 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 						if ( !hasSomeConditions(CONDITION_RUN) && (m_fDeployMachineGunTime + 1.0f) < engine->Time() )
 						{
 							// go prone
-							if ( !m_bProne )
-							{
-								m_pButtons->tap(IN_ALT1);
-								m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
-							}
+							prone();
 
 							if ( fDist > 400.0f )
 								return true; // keep enemy but don't shoot yet
@@ -2600,7 +2674,11 @@ bool CDODBot :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 
 		if ( bAttack && (m_fShootTime < engine->Time()) )
 		{
-			primaryAttack(); // shoot
+			if ( pWeapon->isMeleeSecondary()&&(pWeapon->outOfAmmo(this)||rcbot_melee_only.GetBool()) )
+				secondaryAttack();
+			else
+				primaryAttack(); // shoot
+
 			m_fShootTime = engine->Time() + fDelay;
 		}
 	}
@@ -2660,6 +2738,8 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	static float fPlantUtil; 
 	static int iEnemyTeam;
 	static bool bCanMessAround;
+
+	extern ConVar rcbot_melee_only;
 	// if condition has changed or no tasks
 	if ( !hasSomeConditions(CONDITION_CHANGED) && !m_pSchedules->isEmpty() )
 		return;
@@ -2853,7 +2933,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		ADD_UTILITY(BOT_UTIL_MESSAROUND,(getHealthPercent()>0.75f), fAttackUtil );
 	}
 
-	if ( (m_pNearestWeapon.get() != NULL) && hasSomeConditions(CONDITION_NEED_AMMO) )
+	if ( !rcbot_melee_only.GetBool() && (m_pNearestWeapon.get() != NULL) && hasSomeConditions(CONDITION_NEED_AMMO) )
 	{
 		CWeapon *pNearestWeapon = CWeapons::getWeapon(m_pNearestWeapon.get()->GetClassName());
 		CBotWeapon *pHaveWeapon = (pNearestWeapon==NULL)?NULL:(m_pWeapons->getWeapon(pNearestWeapon));
@@ -2865,7 +2945,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		//BOT_UTIL_DOD_PICKUP_OBJ
 	}
 	// sniping or machinegunning
-	if ( hasSniperRifle() )
+	if ( !rcbot_melee_only.GetBool() && hasSniperRifle() )
 	{
 		// perturbation = (numberofclassonteam/numberofplayersonteam)
 
@@ -2874,7 +2954,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 		if ( pWeapon )
 			ADD_UTILITY_WEAPON_DATA(BOT_UTIL_SNIPE,pWeapon->getAmmo(this)>0,hasSomeConditions(CONDITION_DEFENSIVE) ? 1.6f : (getHealthPercent() * randomFloat(0.75f,1.0f)),pWeapon,hasSomeConditions(CONDITION_DEFENSIVE) ? false : (fAttackUtil>fDefendUtil));
 	}
-	else if ( hasMG() )
+	else if ( !rcbot_melee_only.GetBool() && hasMG() )
 	{
 		pWeapon = getMG();
 
@@ -2883,7 +2963,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 	}
 
 	// grenades
-	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && 
+	if ( !rcbot_melee_only.GetBool() && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && hasSomeConditions(CONDITION_SEE_LAST_ENEMY_POS) && m_pLastEnemy && m_fLastSeeEnemy && ((m_fLastSeeEnemy + 10.0) > engine->Time()) && 
 		(m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US) || m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) || m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) || m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_GER)) )
 	{
 		float fDistance = distanceFrom(m_vLastSeeEnemyBlastWaypoint);

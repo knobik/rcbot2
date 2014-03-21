@@ -294,7 +294,7 @@ public:
 
 	virtual int GetCommandIndex() { return m_iClientCommandIndex; }
 
-	static void HudTextMessage ( edict_t *pEntity, char *szMessage, Color colour = Color( 255, 0, 0, 255 ), int level = 5, int time = 6 );
+	static void HudTextMessage ( edict_t *pEntity, const char *szMessage );
 
 	static void ShowLicense ( void );
 
