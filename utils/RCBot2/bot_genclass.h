@@ -669,7 +669,7 @@ class dataUnconstArray
 
 			for ( it = array.begin(); it != array.end(); )
 			{
-				if ( it == obj )
+				if ( *it == obj )
 				{
 					it = array.erase(it);
 					return;

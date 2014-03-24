@@ -2998,6 +2998,20 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 		extern ConVar bot_sv_cheats_auto;
 		char cmd[128];
 
+		extern ConCommandBase *puppet_bot_cmd;
+		extern ConVar bot_cmd_nocheats;
+
+		// Attempt to make puppet bot command cheat free
+		if ( puppet_bot_cmd != NULL )
+		{
+			if ( bot_cmd_nocheats.GetBool() && puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
+			{
+				int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + 20); // 20 is offset to flags
+			
+				*m_nFlags &= ~FCVAR_CHEAT;
+			}
+		}
+
 		//if ( pBotProfile->getTeam() >= 1 )
 		// fix : dedicated server  - The_Shadow
 		sprintf(cmd,"%s -name \"%s\"\n",BOT_ADD_PUPPET_COMMAND,szOVName);
@@ -3041,6 +3055,17 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 			if ( bot_sv_cheats_auto.GetBool() )
 				engine->ServerCommand("sv_cheats 0\n");
 
+		}
+
+		// Reset Cheat Flag
+		if ( puppet_bot_cmd != NULL )
+		{
+			if ( bot_cmd_nocheats.GetBool() && !puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
+			{
+				int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + 20); // 20 is offset to flags
+			
+				*m_nFlags |= FCVAR_CHEAT;
+			}
 		}
 
 		return true;

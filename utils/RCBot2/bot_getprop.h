@@ -92,6 +92,7 @@ typedef enum
 	GETPROP_DOD_BOMB_TEAM,
 	GETPROP_DOD_CP_VISIBLE,
 	GETPROP_GROUND_ENTITY,
+	GETPROP_ORIGIN,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -349,6 +350,11 @@ public:
 		return g_GetProps[GETPROP_DOD_CP_NUMCAPS].getInt(pResource,0);
 	}
 
+	inline static Vector *getOrigin ( edict_t *pPlayer )
+	{
+		return g_GetProps[GETPROP_ORIGIN].getVectorPointer(pPlayer);
+	}
+
 	inline static Vector *getDODCP_Positions ( edict_t *pResource )
 	{
 		return g_GetProps[GETPROP_DOD_CP_POSITIONS].getVectorPointer(pResource);
@@ -385,6 +391,11 @@ public:
 	inline static int getMoveType ( edict_t *pent )
 	{
 		return (g_GetProps[GETPROP_MOVETYPE].getInt(pent,0) & 15);
+	}
+
+	inline static int *getMoveTypePointer ( edict_t *pent )
+	{
+		return (g_GetProps[GETPROP_MOVETYPE].getIntPointer(pent));
 	}
 
 	inline static edict_t *getGrenadeThrower ( edict_t *gren )

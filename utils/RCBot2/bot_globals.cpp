@@ -915,4 +915,84 @@ float CBotGlobals :: yawAngleFromEdict (edict_t *pEntity,Vector vOrigin)
 
 }
 
+void teleportPlayer ( edict_t *pPlayer, Vector v_dest )
+{
+	Vector *v_origin = CClassInterface::getOrigin(pPlayer);
 
+	//int *pMoveType = CClassInterface::getMoveTypePointer(pPlayer);
+
+	//*pMoveType |= W_FL_FLY;
+
+	*v_origin = v_dest;
+
+}
+/*
+
+static void TeleportEntity( CBaseEntity *pSourceEntity, TeleportListEntry_t &entry, const Vector *newPosition, const QAngle *newAngles, const Vector *newVelocity )
+{
+	CBaseEntity *pTeleport = entry.pEntity;
+	Vector prevOrigin = entry.prevAbsOrigin;
+	QAngle prevAngles = entry.prevAbsAngles;
+
+	int nSolidFlags = pTeleport->GetSolidFlags();
+	pTeleport->AddSolidFlags( FSOLID_NOT_SOLID );
+
+	// I'm teleporting myself
+	if ( pSourceEntity == pTeleport )
+	{
+		if ( newAngles )
+		{
+			pTeleport->SetLocalAngles( *newAngles );
+			if ( pTeleport->IsPlayer() )
+			{
+				CBasePlayer *pPlayer = (CBasePlayer *)pTeleport;
+				pPlayer->SnapEyeAngles( *newAngles );
+			}
+		}
+
+		if ( newVelocity )
+		{
+			pTeleport->SetAbsVelocity( *newVelocity );
+			pTeleport->SetBaseVelocity( vec3_origin );
+		}
+
+		if ( newPosition )
+		{
+			pTeleport->AddEffects( EF_NOINTERP );
+			UTIL_SetOrigin( pTeleport, *newPosition );
+		}
+	}
+	else
+	{
+		// My parent is teleporting, just update my position & physics
+		pTeleport->CalcAbsolutePosition();
+	}
+	IPhysicsObject *pPhys = pTeleport->VPhysicsGetObject();
+	bool rotatePhysics = false;
+
+	// handle physics objects / shadows
+	if ( pPhys )
+	{
+		if ( newVelocity )
+		{
+			pPhys->SetVelocity( newVelocity, NULL );
+		}
+		const QAngle *rotAngles = &pTeleport->GetAbsAngles();
+		// don't rotate physics on players or bbox entities
+		if (pTeleport->IsPlayer() || pTeleport->GetSolid() == SOLID_BBOX )
+		{
+			rotAngles = &vec3_angle;
+		}
+		else
+		{
+			rotatePhysics = true;
+		}
+
+		pPhys->SetPosition( pTeleport->GetAbsOrigin(), *rotAngles, true );
+	}
+
+	g_pNotify->ReportTeleportEvent( pTeleport, prevOrigin, prevAngles, rotatePhysics );
+
+	pTeleport->SetSolidFlags( nSolidFlags );
+}
+*/

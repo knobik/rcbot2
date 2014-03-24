@@ -68,6 +68,8 @@ public:
 
 	static bool walkableFromTo (edict_t *pPlayer,Vector v_src, Vector v_dest);
 
+	static void teleportPlayer ( edict_t *pPlayer, Vector v_dest );
+
 	static float yawAngleFromEdict(edict_t *pEntity,Vector vOrigin);
 	//static float getAvoidAngle(edict_t *pEdict,Vector origin);
 
