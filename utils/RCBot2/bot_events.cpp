@@ -162,7 +162,21 @@ void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 	edict_t *pAttacker = CBotGlobals::playerByUserId(pEvent->getInt("attacker"));
+/*
+	if ( m_pActivator )
+	{
+		int *flags;
 
+		if ( (flags=CClassInterface::getPlayerFlagsPointer(m_pActivator)) != NULL )
+		{
+			if ( *flags & FL_GODMODE )
+			{
+				pEvent->setInt("damage",0);
+				pEvent->setInt("health",100);
+			}
+		}
+	}
+*/
 	if ( m_pActivator != pAttacker )
 	{
 		if ( pAttacker && (!pAttacker->m_pNetworkable || !pAttacker->m_NetworkSerialNumber) )

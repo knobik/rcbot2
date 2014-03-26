@@ -1498,12 +1498,11 @@ void CWaypoints :: updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int i
 }
 /////////////////////////////////////////////////////////////////////////////////////
 // save waypoints (visibilitymade saves having to work out visibility again)
-bool CWaypoints :: save ( bool bVisiblityMade )
+// pPlayer is the person who called the command to save, NULL if automatic
+bool CWaypoints :: save ( bool bVisiblityMade, edict_t *pPlayer )
 {
 	char filename[1024];
 	char szAuthorName[32];
-
-	edict_t *pListenServerClient = CClients::getListenServerClient();
 
 	CBotGlobals::buildFileName(filename,CBotGlobals::getMapName(),BOT_WAYPOINT_FOLDER,BOT_WAYPOINT_EXTENSION,true);
 
@@ -1540,9 +1539,9 @@ bool CWaypoints :: save ( bool bVisiblityMade )
 	{
 		strcpy(szAuthorName,"(unknown)");
 
-		if ( pListenServerClient != NULL )
+		if ( pPlayer != NULL )
 		{
-			strcpy(szAuthorName,CClients::get(pListenServerClient)->getName());
+			strcpy(szAuthorName,CClients::get(pPlayer)->getName());
 		}
 
 		if ( authorinfo.szAuthor[0] == 0 ) // no author

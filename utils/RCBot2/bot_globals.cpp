@@ -481,6 +481,24 @@ inline Vector CBotGlobals :: entityOrigin ( edict_t *pEntity )
 	return vOrigin;
 }*/
 
+void CBotGlobals :: serverSay ( char *fmt, ... )
+{
+	va_list argptr; 
+	static char string[1024];
+
+	va_start (argptr, fmt);
+	
+	strcpy(string,"say \"");
+
+	vsprintf (&string[5], fmt, argptr); 
+
+	va_end (argptr); 
+
+	strcat(string,"\"");
+
+	engine->ServerCommand(string);
+}
+
 // TO DO :: put into CClient
 bool CBotGlobals :: setWaypointDisplayType ( int iType )
 {
@@ -915,7 +933,7 @@ float CBotGlobals :: yawAngleFromEdict (edict_t *pEntity,Vector vOrigin)
 
 }
 
-void teleportPlayer ( edict_t *pPlayer, Vector v_dest )
+void CBotGlobals::teleportPlayer ( edict_t *pPlayer, Vector v_dest )
 {
 	Vector *v_origin = CClassInterface::getOrigin(pPlayer);
 

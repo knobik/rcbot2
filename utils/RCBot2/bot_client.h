@@ -157,12 +157,17 @@ public:
 		m_bSentWelcomeMessage = false;
 		m_fSpeed = 0;
 		m_fUpdatePos = 0;
+		m_bTeleportVectorValid = false;
+		m_vTeleportVector = Vector(0,0,0);
 	}
 
 	void init ();
 
 	void setupMenuCommands ();
 	void resetMenuCommands ();
+
+	void setTeleportVector ();
+	Vector *getTeleportVector () { if ( m_bTeleportVectorValid ) return &m_vTeleportVector; return NULL; }
 
 	inline bool isUsingMenu () { return (m_pMenu != NULL); }
 	inline void setCurrentMenu ( CBotMenu *pMenu ) 
@@ -351,6 +356,9 @@ private:
 	float m_fNextBotServerMessage;
 	queue<CToolTip*> m_NextTooltip;
 	bool m_bSentWelcomeMessage;
+
+	bool m_bTeleportVectorValid;
+	Vector m_vTeleportVector;
 };
 
 class CClients

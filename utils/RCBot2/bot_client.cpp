@@ -856,6 +856,12 @@ const char *CClient :: getName ()
 	return NULL;
 }
 
+void CClient ::setTeleportVector()
+{
+	m_vTeleportVector = getOrigin();
+	m_bTeleportVectorValid = true;
+}
+
 void CClient :: clientActive ()
 {
 	// get steam id

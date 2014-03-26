@@ -174,6 +174,20 @@ public:
 };
 ///////////////////////
 // command
+
+class CFindProp : public CBotCommand
+{
+public:
+	CFindProp()
+	{
+		setName("findprop");
+		setHelp("Usage: findprop <propname>");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 class CFindClass : public CBotCommand
 {
 public:
@@ -643,6 +657,58 @@ public:
 		setName("task");
 		setHelp("usage \"task 1 or 0, 1 on, 0 off\" : shows task output");
 		setAccessLevel(CMD_ACCESS_DEBUG);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+class CGodModeUtilCommand : public CBotCommand
+{
+public:
+	CGodModeUtilCommand ()
+	{
+		setName("god");
+		setHelp("usage: toggle for invulnerability!");
+		setAccessLevel(CMD_ACCESS_UTIL);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+class CSetTeleportUtilCommand : public CBotCommand
+{
+public:
+	CSetTeleportUtilCommand ()
+	{
+		setName("set_teleport");
+		setHelp("usage: remembers where you want to teleport");
+		setAccessLevel(CMD_ACCESS_UTIL);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+class CTeleportUtilCommand : public CBotCommand
+{
+public:
+	CTeleportUtilCommand ()
+	{
+		setName("teleport");
+		setHelp("usage: first use set_teleport, then this command to go there");
+		setAccessLevel(CMD_ACCESS_UTIL);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+class CNoClipCommand : public CBotCommand
+{
+public:
+	CNoClipCommand ()
+	{
+		setName("noclip");
+		setHelp("fly through walls , yeah!");
+		setAccessLevel(CMD_ACCESS_UTIL);
 	}
 
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );

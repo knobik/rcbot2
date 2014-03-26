@@ -468,6 +468,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_squads.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_strings.cpp"
 				>
 			</File>
@@ -565,6 +569,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_ehandle.h"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_event.h"
 				>
 			</File>
@@ -650,6 +658,10 @@
 			</File>
 			<File
 				RelativePath=".\bot_som.h"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_squads.h"
 				>
 			</File>
 			<File

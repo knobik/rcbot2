@@ -252,6 +252,18 @@ eBotCommandResult CGetProp :: execute ( CClient *pClient, const char *pcmd, cons
 
 	return COMMAND_ERROR;
 }
+//////////////////////////////
+eBotCommandResult CFindProp :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pcmd && *pcmd )
+	{
+		UTIL_FindPropPrint(pcmd);
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
+
 ////////////////////////////////
 eBotCommandResult CFindClass :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
@@ -594,6 +606,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CPrintProps());
 	add(new CGetProp());
 	add(new CFindClass());
+	add(new CFindProp());
 
 }
 /////////////////////
@@ -1324,7 +1337,7 @@ eBotCommandResult CWaypointInfoCommand :: execute ( CClient *pClient, const char
 
 eBotCommandResult CWaypointSaveCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
-	if ( CWaypoints::save(false) )
+	if ( CWaypoints::save(false,(pClient!=NULL)?pClient->getPlayer():NULL) )
 	{
 		CBotGlobals::botMessage(NULL,0,"waypoints saved");
 		pClient->giveMessage("Waypoints Saved");
@@ -1445,6 +1458,122 @@ eBotCommandResult CDebugTaskCommand :: execute ( CClient *pClient, const char *p
 	return COMMAND_ACCESSED;
 }
 
+eBotCommandResult CGodModeUtilCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		edict_t *pEntity = pClient->getPlayer();
+
+		if ( pEntity )
+		{
+			int *playerflags = CClassInterface::getPlayerFlagsPointer(pEntity);
+
+			if ( playerflags )
+			{
+				char msg[256];
+
+				if ( *playerflags & FL_GODMODE )
+					*playerflags &= ~FL_GODMODE;
+				else
+					*playerflags |= FL_GODMODE;
+
+				sprintf(msg,"god mode %s",(*playerflags & FL_GODMODE)?"enabled":"disabled");
+				
+				CRCBotPlugin::HudTextMessage(pEntity,msg);
+
+				return COMMAND_ACCESSED;
+
+			}
+			/*byte *m_takedamage = CClassInterface::getTakeDamagePointer(pEntity);
+
+			if ( m_takedamage )
+			{
+				char msg[256];
+
+				if ( *m_takedamage == DAMAGE_NO )
+					*m_takedamage = DAMAGE_YES;
+				else 
+					*m_takedamage = DAMAGE_NO;
+
+				sprintf(msg,"god mode %s",(*m_takedamage==DAMAGE_NO)?"enabled":"disabled");
+				
+				CRCBotPlugin::HudTextMessage(pEntity,msg);
+
+				return COMMAND_ACCESSED;
+			}*/
+		}
+	}
+
+	return COMMAND_ERROR;
+}
+
+eBotCommandResult CSetTeleportUtilCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		pClient->setTeleportVector();
+		engine->ClientPrintf(pClient->getPlayer(),"Teleport Position Remembered!");
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
+
+eBotCommandResult CTeleportUtilCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		Vector *vTeleport;
+
+		vTeleport = pClient->getTeleportVector();
+
+		if ( vTeleport != NULL )
+		{
+			CBotGlobals::teleportPlayer(pClient->getPlayer(),*vTeleport);
+			CRCBotPlugin::HudTextMessage(pClient->getPlayer(),"teleported to your remembered location");
+			return COMMAND_ACCESSED;
+		}
+	}
+
+	return COMMAND_ERROR;
+}
+
+eBotCommandResult CNoClipCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+
+	edict_t *pEntity = NULL;
+
+	if ( pClient )
+		pEntity = pClient->getPlayer();
+
+	if ( pEntity )
+    {
+		char msg[256];
+		byte *movetype = CClassInterface::getMoveTypePointer(pEntity);
+
+		
+       if ( (*movetype & 15) != MOVETYPE_NOCLIP )
+	   {
+           *movetype &= ~15;
+		   *movetype |= MOVETYPE_NOCLIP;
+	   }
+       else
+	   {
+		   *movetype &= ~15;
+		   *movetype |= MOVETYPE_WALK;
+	   }
+
+	   sprintf(msg,"%s used no_clip %d on self\n",pClient->getName(),((*movetype & 15) == MOVETYPE_NOCLIP));
+           
+	   CRCBotPlugin::HudTextMessage(pEntity,msg);
+
+	   return COMMAND_ACCESSED;
+    }
+
+	return COMMAND_ERROR;
+}
+
+
 eBotCommandResult CDebugUtilCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( !pcmd || !*pcmd )
@@ -1533,6 +1662,10 @@ CUtilCommand :: CUtilCommand()
 {
 	setName("util");
 	add(new CSearchCommand());
+	add(new CSetTeleportUtilCommand());
+	add(new CTeleportUtilCommand());
+	add(new CNoClipCommand());
+	add(new CGodModeUtilCommand());
 }
 
 CConfigCommand :: CConfigCommand()

@@ -101,6 +101,8 @@ public:
 		//return ( !FNullEnt(pEntity) && !pEntity->IsFree() && pEntity->GetNetworkable() && pEntity->GetIServerEntity() && pEntity->GetCollideable() );
 	}
 
+	static void serverSay ( char *fmt, ... );
+
 	static bool isAlivePlayer ( edict_t *pEntity );
 
 	static bool setWaypointDisplayType ( int iType );

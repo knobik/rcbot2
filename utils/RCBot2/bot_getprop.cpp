@@ -299,6 +299,36 @@ void CClassInterfaceValue :: init ( char *key, char *value, unsigned int preoffs
 	m_offset = 0;
 }
 
+void UTIL_FindPropPrint(const char *prop_name)
+{
+	bool bInterfaceErr = false;
+
+	unsigned int offset;
+
+	try
+	{
+		ServerClass *pClass = servergamedll->GetAllServerClasses();
+
+		while (pClass)
+		{
+			offset = 0;
+
+			UTIL_FindSendPropInfo(pClass,prop_name,&offset);
+
+			if ( offset != 0 )
+			{
+				CBotGlobals::botMessage(NULL,0,"found in %s : offset %d",pClass->m_pNetworkName, offset);
+				//break;
+			}
+			pClass = pClass->m_pNext;
+		}
+	}
+	catch (...)
+	{
+		bInterfaceErr = true;
+	}
+}
+
 void CClassInterfaceValue :: findOffset ( )
 {
 	//if (!m_offset)
@@ -408,6 +438,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_ALL_ENTOWNER,"CBaseEntity","m_hOwnerEntity",0);
 		DEFINE_GETPROP(GETPROP_GROUND_ENTITY,"CBasePlayer","m_hGroundEntity",0);
 		DEFINE_GETPROP(GETPROP_ORIGIN,"CBasePlayer","m_vecOrigin",0);
+		DEFINE_GETPROP(GETPROP_TAKEDAMAGE,"CBaseEntity","m_takedamage",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

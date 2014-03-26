@@ -93,12 +93,14 @@ typedef enum
 	GETPROP_DOD_CP_VISIBLE,
 	GETPROP_GROUND_ENTITY,
 	GETPROP_ORIGIN,
+	GETPROP_TAKEDAMAGE,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
 bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int *offset);
 ServerClass *UTIL_FindServerClass(const char *name);
 void UTIL_FindServerClassPrint(const char*name_cmd);
+void UTIL_FindPropPrint(const char *prop_name);
 
 class CClassInterfaceValue
 {
@@ -227,6 +229,13 @@ public:
 		return (int*)m_data; 
 	}
 
+	inline byte *getBytePointer ( edict_t *edict ) 
+	{ 
+		getData(edict); 
+
+		return (byte*)m_data; 
+	}
+
 	inline float getFloatFromInt ( edict_t *edict, float defaultvalue )
 	{
 		getData(edict); 
@@ -344,6 +353,7 @@ public:
 	}
 
 	inline static int getPlayerFlags (edict_t *player) { return g_GetProps[GETPROP_ENTITYFLAGS].getInt(player,0);}
+	inline static int *getPlayerFlagsPointer (edict_t *player) { return g_GetProps[GETPROP_ENTITYFLAGS].getIntPointer(player);}
 
 	inline static int getDODNumControlPoints ( edict_t *pResource )
 	{
@@ -388,14 +398,24 @@ public:
 		return ((g_GetProps[GETPROP_MOVETYPE].getInt(pent,0) & 15) == movetype);
 	}
 
+	inline static byte getTakeDamage ( edict_t *pent )
+	{
+		return (byte)(g_GetProps[GETPROP_TAKEDAMAGE].getInt(pent,0));
+	}
+
+	inline static byte *getTakeDamagePointer ( edict_t *pent )
+	{
+		return (g_GetProps[GETPROP_TAKEDAMAGE].getBytePointer(pent));
+	}
+
 	inline static int getMoveType ( edict_t *pent )
 	{
 		return (g_GetProps[GETPROP_MOVETYPE].getInt(pent,0) & 15);
 	}
 
-	inline static int *getMoveTypePointer ( edict_t *pent )
+	inline static byte *getMoveTypePointer ( edict_t *pent )
 	{
-		return (g_GetProps[GETPROP_MOVETYPE].getIntPointer(pent));
+		return (g_GetProps[GETPROP_MOVETYPE].getBytePointer(pent));
 	}
 
 	inline static edict_t *getGrenadeThrower ( edict_t *gren )

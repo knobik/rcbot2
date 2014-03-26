@@ -574,6 +574,7 @@ public:
 	virtual int getInt ( const char *keyName = 0, int defaultValue = 0 ) = 0;
 	virtual const char *getString ( const char *keyName = 0, const char *defaultValue = 0 ) = 0;
 	virtual const char *getName () = 0;
+	virtual void setInt ( const char *keyName, int value ) = 0;
 };
 
 class CGameEventInterface1 : public IBotEventInterface
@@ -591,6 +592,10 @@ public:
 	int getInt ( const char *keyName = 0, int defaultValue = 0 )
 	{
 		return m_pEvent->GetInt(keyName,defaultValue);
+	}
+	void setInt ( const char *keyName, int value )
+	{
+		m_pEvent->SetInt(keyName,value);
 	}
 	const char *getString ( const char *keyName = 0, const char *defaultValue = 0 )
 	{
@@ -620,6 +625,10 @@ public:
 	int getInt ( const char *keyName = 0, int defaultValue = 0 )
 	{
 		return m_pEvent->GetInt(keyName,defaultValue);
+	}
+	void setInt ( const char *keyName, int value )
+	{
+		m_pEvent->SetInt(keyName,value);
 	}
 	const char *getString ( const char *keyName = 0, const char *defaultValue = 0 )
 	{
