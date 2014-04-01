@@ -229,6 +229,8 @@ public:
 	inline int getPathFrom () { return m_iPathFrom; }
 	inline int getPathTo () { return m_iPathTo; }
 
+	void teleportTo ( Vector vOrigin );
+
 	inline const char *getSteamID () { return m_szSteamID; }
 	const char *getName ();
 
@@ -359,6 +361,9 @@ private:
 
 	bool m_bTeleportVectorValid;
 	Vector m_vTeleportVector;
+
+	bool m_bIsTeleporting;
+	float m_fTeleportTime;
 };
 
 class CClients

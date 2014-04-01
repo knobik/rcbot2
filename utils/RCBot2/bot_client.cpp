@@ -173,6 +173,25 @@ void CClient :: autoEventWaypoint ( int iType, float fRadius, bool bAtOtherOrigi
 	}	
 }
 
+void CClient :: teleportTo (Vector vOrigin)
+{
+	m_bIsTeleporting = true;
+	m_fTeleportTime = engine->Time()+0.1f;
+
+	Vector *v_origin = CClassInterface::getOrigin(m_pPlayer);
+
+	byte *pMoveType = CClassInterface::getMoveTypePointer(m_pPlayer);
+	int *pPlayerFlags = CClassInterface::getPlayerFlagsPointer(m_pPlayer);
+
+	*pMoveType &= ~15;
+	*pMoveType |= MOVETYPE_FLYGRAVITY;
+
+	*pPlayerFlags &= ~FL_ONGROUND;
+	*pPlayerFlags |= FL_FLY;
+
+	*v_origin = vOrigin;
+}
+
 
 // called each frame
 void CClient :: think ()
@@ -192,6 +211,24 @@ void CClient :: think ()
 			engine->ClientCommand(m_pPlayer,m_szSoundToPlay);
 
 		m_szSoundToPlay[0] = 0;
+	}
+
+	if ( m_bIsTeleporting )
+	{
+		if ( m_fTeleportTime < engine->Time() )
+		{
+			m_bIsTeleporting = false;
+			m_fTeleportTime = 0;
+			//reset movetypes
+			byte *pMoveType = CClassInterface::getMoveTypePointer(m_pPlayer);
+			int *pPlayerFlags = CClassInterface::getPlayerFlagsPointer(m_pPlayer);
+
+			*pMoveType &= ~15;
+			*pMoveType |= MOVETYPE_WALK;
+
+			*pPlayerFlags &= ~FL_FLY;
+			*pPlayerFlags |= FL_ONGROUND;
+		}
 	}
 
 	if ( m_bShowMenu )
@@ -669,7 +706,7 @@ void CClient :: think ()
 					iFlags |= CWaypointTypes::W_FL_CROUCH;  // crouching waypoint
 				}
 				
-				if (iMoveType == MOVETYPE_FLY)
+				if (iMoveType == MOVETYPE_LADDER)
 					iFlags |= CWaypointTypes::W_FL_LADDER;  // waypoint on a ladder
 
 				m_vLastAutoWaypointCheckPos[last].SetPoint(vPlayerOrigin,iFlags);

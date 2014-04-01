@@ -935,14 +935,10 @@ float CBotGlobals :: yawAngleFromEdict (edict_t *pEntity,Vector vOrigin)
 
 void CBotGlobals::teleportPlayer ( edict_t *pPlayer, Vector v_dest )
 {
-	Vector *v_origin = CClassInterface::getOrigin(pPlayer);
-
-	//int *pMoveType = CClassInterface::getMoveTypePointer(pPlayer);
-
-	//*pMoveType |= W_FL_FLY;
-
-	*v_origin = v_dest;
-
+	CClient *pClient = CClients::get(pPlayer);
+	
+	if ( pClient )
+		pClient->teleportTo(v_dest);
 }
 /*
 

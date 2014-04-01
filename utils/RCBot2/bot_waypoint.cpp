@@ -889,7 +889,12 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 			if ( (iSucc != m_iGoalWaypoint) && !m_pBot->canGotoWaypoint(vOrigin,succWpt) )
 				continue;
 
-			fCost = curr->getCost()+(succWpt->distanceFrom(vOrigin));
+			if ( currWpt->hasFlag(CWaypointTypes::W_FL_TELEPORT_CHEAT) )
+				fCost = curr->getCost();
+			else if ( succWpt->hasFlag(CWaypointTypes::W_FL_TELEPORT_CHEAT) )
+				fCost = succWpt->distanceFrom(vOrigin);
+			else 
+				fCost = curr->getCost()+(succWpt->distanceFrom(vOrigin));
 
 			if ( succ->isOpen() || succ->isClosed() )
 			{
@@ -1111,6 +1116,7 @@ void CWaypointNavigator :: updatePosition ()
 		if ( bTouched )
 		{
 			int iWaypointID = CWaypoints::getWaypointIndex(pWaypoint);
+			int iWaypointFlagsPrev = 0;
 
 			fPrevBelief = getBelief(iWaypointID);
 
@@ -1144,11 +1150,19 @@ void CWaypointNavigator :: updatePosition ()
 			}
 			else
 			{
+				iWaypointFlagsPrev = CWaypoints::getWaypoint(m_iCurrentWaypoint)->getFlags();
+
 				m_vPreviousPoint = m_pBot->getOrigin();
 				m_iCurrentWaypoint = m_currentRoute.Pop();
+
 				// fix : update pWaypoint as Current Waypoint
 				pWaypoint = CWaypoints::getWaypoint(m_iCurrentWaypoint);
 
+				if ( pWaypoint )
+				{
+					if ( iWaypointFlagsPrev & CWaypointTypes::W_FL_TELEPORT_CHEAT )
+						CBotGlobals::teleportPlayer(m_pBot->getEdict(),pWaypoint->getOrigin()-(CWaypoint::WAYPOINT_HEIGHT/2));
+				}
 				if ( m_iCurrentWaypoint != -1 )
 				{ // random point, but more chance of choosing the most dangerous point
 					m_bDangerPoint = randomDangerPath(&m_vDangerPoint);
@@ -1271,6 +1285,9 @@ bool CWaypoint :: touched ( Vector vOrigin, Vector vOffset, float fTouchDist, bo
 	extern ConVar rcbot_ladder_offs;
 
 	v_dynamic = m_vOrigin+vOffset;
+
+	if ( hasFlag(CWaypointTypes::W_FL_TELEPORT_CHEAT) )
+		return ((vOrigin - getOrigin()).Length()) < (MAX(fTouchDist,getRadius()));
 
 	// on ground or ladder
 	if ( onground )
@@ -2587,6 +2604,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_LIFT,"lift","bot needs to wait on a lift here",WptColor(50,80,180)));
 
 	addType(new CWaypointType(W_FL_SPRINT,"sprint","bots will sprint here",WptColor(255,255,190),((1<<MOD_DOD)|(1<<MOD_HLDM2))));
+	addType(new CWaypointType(W_FL_TELEPORT_CHEAT,"teleport","bots will teleport to the next waypoint (cheat)",WptColor(255,255,255)));
 }
 
 void CWaypointTypes :: freeMemory ()
