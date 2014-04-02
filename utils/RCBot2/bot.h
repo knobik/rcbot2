@@ -925,6 +925,11 @@ public:
 		return (m_PlayerListeningTo.get() == pPlayer);
 	}
 
+	inline IBotController *getController () const 
+	{
+		return m_pController;
+	}
+
 protected:
 
 	inline void setLookAt ( Vector vNew )
@@ -1139,6 +1144,9 @@ protected:
 	squad_u m_uSquadDetail;
 	CBotWeapon *m_pPrimaryWeapon;
 	float m_fLastSeeEnemyPlayer;
+	// if bot's profile sensitivity is too small it may not complete tasks
+	// this is true during tasks that need high sensitivity e.g. rocket jumping
+	bool m_bIncreaseSensitivity; 
 };
 
 class CBots

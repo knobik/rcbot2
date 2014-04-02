@@ -919,6 +919,8 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 					*fTime = engine->Time() + randomFloat(0.5,1.0);
 					*iTries = *iTries + 1;
 					*iState = 1;
+
+					return 3;
 				}
 			}
 		}
@@ -1056,6 +1058,9 @@ void CBotFortress :: modThink ()
 	m_iClass = (TF_Class)CClassInterface::getTF2Class(m_pEdict);
 	m_iTeam = getTeam();
 	//updateClass();
+
+	if ( m_iClass == TF_CLASS_SPY )
+		updateCondition(CONDITION_COVERT);
 
 	if ( needHealth() )
 		updateCondition(CONDITION_NEED_HEALTH);
@@ -2223,21 +2228,14 @@ void CBotTF2 :: modThink ()
 
 				if ( m_iClass == TF_CLASS_ENGINEER )
 				{
-					if ( m_pSentryGun || (m_pTeleEntrance&&m_pTeleExit) )
-					{
-						//engineer bot is credit to team
-						if ( CTeamFortress2Mod::isAttackDefendMap() )
-						{
-							if ( getTeam() == TF2_TEAM_BLUE )
-							{
-								scoreValue *= 1.25f;
-							}
-							else
-								scoreValue *= 1.5f;
-						}
-						else
-							scoreValue *= 1.5f; // less chance of changing class if bot has these up
-					}
+					if ( m_pSentryGun.get() )
+						scoreValue *= 2.0f;
+					if ( m_pTeleEntrance.get() && m_pTeleExit.get() )
+						scoreValue *= CTeamFortress2Mod::isAttackDefendMap()?2.0f:1.5f;
+					if ( m_pDispenser.get() )
+						scoreValue *= 1.25f;
+					 // less chance of changing class if bot has these up
+					
 				}
 
 				// if I think I could do better
@@ -5122,7 +5120,8 @@ eBotFuncState CBotTF2 :: rocketJump(int *iState,float *fTime)
 {
 	extern ConVar bot_rj;
 
-	setLookAtTask((LOOK_GROUND));
+	setLookAtTask(LOOK_GROUND);
+	m_bIncreaseSensitivity = true;
 
 	switch ( *iState )
 	{
@@ -5244,7 +5243,9 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
 // enemy below me!
 		if ( pWeapon->isMelee() && (distanceFrom2D(pEnemy)<64.0f) && (vEnemyOrigin.z < getOrigin().z) && (vEnemyOrigin.z > (getOrigin().z-128))  )
+		{
 			duck();
+		}
 
 		if ( pWeapon->outOfAmmo(this) )
 			return false; // change weapon/enemy

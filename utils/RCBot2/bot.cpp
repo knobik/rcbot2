@@ -1288,6 +1288,7 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	m_bIncreaseSensitivity = false;
 	m_fLastSeeEnemyPlayer = 0.0f;
 	m_PlayerListeningTo = NULL;
 	m_pPrimaryWeapon = NULL;
@@ -2301,6 +2302,9 @@ Vector CBot::getAimVector ( edict_t *pEntity )
 		m_vAimOffset = Vector(1.0f,1.0f,1.0f);
 	}
 
+	if ( pEntity == CClassInterface::getGroundEntity(m_pEdict) )
+		m_vAimOffset.z -= 32.0f;
+
 	m_vAimVector = v_origin + m_vAimOffset;
 
 	m_fNextUpdateAimVector = engine->Time() + (1.0f-m_pProfile->m_fAimSkill)*0.2f;
@@ -2707,11 +2711,16 @@ void CBot :: doLook ()
 	// what do we want to look at
 	getLookAtVector();
 
-
 	// looking at something?
     if ( lookAtIsValid () )
 	{	
-		float fSensitivity = (float)m_pProfile->m_iSensitivity;
+		float fSensitivity;
+		
+		if ( m_bIncreaseSensitivity || onLadder() )
+			fSensitivity = 15.0f;
+		else
+			fSensitivity = (float)m_pProfile->m_iSensitivity;
+
 		QAngle requiredAngles;
 
 		VectorAngles(m_vLookAt-getEyePosition(),requiredAngles);
@@ -2724,11 +2733,6 @@ void CBot :: doLook ()
 		CBotCmd cmd = m_pPlayerInfo->GetLastUserCommand();
 
 		m_vViewAngles = cmd.viewangles;
-
-		if ( onLadder() ) // snap to ladder
-		{
-			fSensitivity = 15.0f;
-		}
 
 		changeAngles(fSensitivity,&requiredAngles.x,&m_vViewAngles.x,NULL);
 		changeAngles(fSensitivity,&requiredAngles.y,&m_vViewAngles.y,NULL);
@@ -2747,6 +2751,8 @@ void CBot :: doLook ()
 		//else if ( m_vViewAngles.x < -180.0f )
 		//	m_vViewAngles.x = -180.0f;
 	}
+
+	m_bIncreaseSensitivity = false;
 }
 
 void CBot :: doButtons ()

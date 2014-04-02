@@ -1645,7 +1645,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( !CBotGlobals::isVisible(pBot->getEdict(),pBot->getEyePosition(),m_vOrigin) )
 			fail();
 		else
-			pBot->setMoveTo((m_vOrigin));
+			pBot->setMoveTo(m_vOrigin);
 	}
 	else if ( bAimingOk || (m_iTries > 1) )
 	{
@@ -1655,6 +1655,19 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			complete();
 		else if ( state == 0 )
 			fail();
+		else if ( state == 3 ) // failed , try again 
+		{
+			IBotController *pController = pBot->getController();
+
+			Vector forward,right,up;
+			
+			AngleVectors(pController->GetLocalAngles(),&forward,&right,&up);
+
+			if ( randomInt(0,1) )
+				m_vOrigin = m_vOrigin + right*randomFloat(16.0f,48.0f);
+			else 
+				m_vOrigin = m_vOrigin - right*randomFloat(16.0f,48.0f);
+		}
 	}
 }
 
@@ -2006,6 +2019,7 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		// record the number of people I see now
 		int i;
 		edict_t *pPlayer;
+		IPlayerInfo *p;
 /*		edict_t *pDisguised;
 
 		int iClass;
@@ -2025,18 +2039,17 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 			if ( !CBotGlobals::entityIsValid(pPlayer) )
 				continue;
 
-			//if ( CClassInterface::getTeam(pPlayer) != pBot->getTeam() )
-			//{
-				if ( CClassInterface::getTF2Class(pPlayer) == TF_CLASS_SPY )
-				{
-					//CClassInterface::getTF2SpyDisguised(pPlayer,&iClass,&iTeam,&iIndex,&iHealth);
+			p = playerinfomanager->GetPlayerInfo(pPlayer);
 
-					//if ( (iIndex > 0) && (iIndex <= gpGlobals->maxClients) )
+			if ( p->IsDead() || p->IsObserver() )
+				continue;
 
-					if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pPlayer) )
-						continue; // can't see
-				}
-			//}
+			if ( CClassInterface::getTF2Class(pPlayer) == TF_CLASS_SPY )
+			{
+
+				if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pPlayer) )
+					continue; // can't see
+			}
 
 			if ( pBot->isVisible(pPlayer) )
 				seenlist |= (1<<(i-1));
@@ -2056,6 +2069,7 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	{
 		int i;
 		edict_t *pPlayer;
+		IPlayerInfo *p;
 
 		seenlist = 0;
 
@@ -2067,6 +2081,11 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 				continue;
 
 			if ( !CBotGlobals::entityIsValid(pPlayer) )
+				continue;
+
+			p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+			if ( p->IsDead() || p->IsObserver() )
 				continue;
 
 			if ( CClassInterface::getTF2Class(pPlayer) == TF_CLASS_SPY )
