@@ -49,6 +49,8 @@
 
 #define DEFAULT_BOT_NAME "RCBot"
 
+#define BOT_CONVAR_FLAGS_OFFSET 20
+
 #define BOT_WPT_TOUCH_DIST 72 // distance for bot to touch waypoint
 
 #define BOT_DEBUG_GAME_EVENT	0 
@@ -161,9 +163,9 @@ typedef enum
 #define BUILDNUM "365"*/
 #define BOT_NAME "RCBot"
 #ifdef __linux__
-#define BOT_VER "TF2/HL2DM/DOD:S 0.79 BETA linux 365 (BUILD " __DATE__ "-" __TIME__ ")" //bir3yk
+#define BOT_VER "TF2/HL2DM/DOD:S 0.79 BETA linux 370 (BUILD " __DATE__ "-" __TIME__ ")" //bir3yk
 #else
-#define BOT_VER "TF2/HL2DM/DOD:S 0.79 BETA win32 365 (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
+#define BOT_VER "TF2/HL2DM/DOD:S 0.79 BETA win32 370 (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
 #endif
 #define BOT_NAME_VER "RCbot version"
 #define BOT_VER_CVAR "rcbot_ver"

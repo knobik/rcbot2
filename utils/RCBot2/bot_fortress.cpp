@@ -65,7 +65,7 @@ extern ConVar rcbot_tf2_spy_kill_on_cap_dist;
 extern ConVar rcbot_speed_boost;
 extern ConVar rcbot_projectile_tweak;
 
-#define TF2_SPY_CLOAK_BELIEF 38
+#define TF2_SPY_CLOAK_BELIEF 40
 #define TF2_HWGUY_REV_BELIEF 60
 //extern float g_fBotUtilityPerturb [TF_CLASS_MAX][BOT_UTIL_MAX];
 
@@ -1058,9 +1058,6 @@ void CBotFortress :: modThink ()
 	m_iClass = (TF_Class)CClassInterface::getTF2Class(m_pEdict);
 	m_iTeam = getTeam();
 	//updateClass();
-
-	if ( m_iClass == TF_CLASS_SPY )
-		updateCondition(CONDITION_COVERT);
 
 	if ( needHealth() )
 		updateCondition(CONDITION_NEED_HEALTH);
@@ -2292,6 +2289,9 @@ void CBotTF2 :: modThink ()
 	else
 		removeCondition(CONDITION_PARANOID);
 
+	if ( hasFlag() )
+		removeCondition(CONDITION_COVERT);
+
 	if ( m_iClass == TF_CLASS_HWGUY )
 	{
 		static bool bRevMiniGun;
@@ -2381,6 +2381,7 @@ void CBotTF2 :: modThink ()
 	{
 		if ( !hasFlag() )
 		{
+
 			if ( m_fSpyDisguiseTime < engine->Time() )
 			{
 				// if previously detected or isn't disguised
@@ -2395,7 +2396,7 @@ void CBotTF2 :: modThink ()
 			}
 
 			bIsCloaked = CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict);
-
+			
 			if ( bIsCloaked && wantToUnCloak() )
 			{
 				spyUnCloak();
@@ -2403,6 +2404,10 @@ void CBotTF2 :: modThink ()
 			else if ( !bIsCloaked && wantToCloak() )
 			{
 				spyCloak();
+			}
+			else if ( bIsCloaked || isDisguised() && !hasEnemy() )
+			{
+				updateCondition(CONDITION_COVERT);
 			}
 			/*else if ( bIsCloaked && m_pEnemy && )
 			{

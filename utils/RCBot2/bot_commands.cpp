@@ -833,12 +833,12 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 	if ( pClient )
 		pEntity = pClient->getPlayer();
 
-	extern ConVar *sv_cheats;
-	extern ConVar bot_sv_cheats_auto;
-	extern ConVar bot_sv_cheat_warning;
+	//extern ConVar *sv_cheats;
+	//extern ConVar bot_sv_cheats_auto;
+	//extern ConVar bot_sv_cheat_warning;
 
-	if ( !bot_sv_cheat_warning.GetBool() || bot_sv_cheats_auto.GetBool() || !CBots::controlBots() || (!sv_cheats || sv_cheats->GetBool()) )
-	{
+	//if ( !bot_sv_cheat_warning.GetBool() || bot_sv_cheats_auto.GetBool() || !CBots::controlBots() || (!sv_cheats || sv_cheats->GetBool()) )
+	//{
 		//if ( !pcmd || !*pcmd )
 		//	bOkay = CBots::createBot();
 		//else
@@ -848,9 +848,9 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 			CBotGlobals::botMessage(pEntity,0,"bot added");
 		else
 			CBotGlobals::botMessage(pEntity,0,"error: couldn't create bot! (Check maxplayers)");
-	}
-	else
-		CBotGlobals::botMessage(pEntity,0,"error: sv_cheats must be 1 to add bots");
+	//}
+	//else
+	//	CBotGlobals::botMessage(pEntity,0,"error: sv_cheats must be 1 to add bots");
 
 	return COMMAND_ACCESSED;
 }

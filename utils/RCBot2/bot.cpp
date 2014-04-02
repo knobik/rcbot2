@@ -3005,14 +3005,14 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 		char cmd[128];
 
 		extern ConCommandBase *puppet_bot_cmd;
-		extern ConVar bot_cmd_nocheats;
+		//extern ConVar bot_cmd_nocheats;
 
 		// Attempt to make puppet bot command cheat free
 		if ( puppet_bot_cmd != NULL )
 		{
-			if ( bot_cmd_nocheats.GetBool() && puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
+			if ( /*bot_cmd_nocheats.GetBool() &&*/ puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
 			{
-				int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + 20); // 20 is offset to flags
+				int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + BOT_CONVAR_FLAGS_OFFSET); // 20 is offset to flags
 			
 				*m_nFlags &= ~FCVAR_CHEAT;
 			}
@@ -3020,7 +3020,32 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 
 		//if ( pBotProfile->getTeam() >= 1 )
 		// fix : dedicated server  - The_Shadow
+
+		extern ConVar *sv_cheats;
+	
+		const char *pparg[1];
+
+		pparg[0] = cmd;
+
 		sprintf(cmd,"%s -name \"%s\"\n",BOT_ADD_PUPPET_COMMAND,szOVName);
+
+		CCommand *com = new CCommand(1,pparg);
+
+		int *m_nFlags = (int*)((unsigned long)sv_cheats + BOT_CONVAR_FLAGS_OFFSET); // 20 is offset to flags
+
+		if ( sv_cheats->IsFlagSet(FCVAR_NOTIFY) )
+			*m_nFlags &= ~FCVAR_NOTIFY;
+
+		sv_cheats->SetValue(1);
+		m_bControlNext = true;
+		((ConCommand*)puppet_bot_cmd)->Dispatch(*com);
+		sv_cheats->SetValue(0);
+
+		*m_nFlags |= FCVAR_NOTIFY;
+
+		///sv_cheats->
+
+		delete com;
 /*
 		if ( szTeam && *szTeam )
 		{
@@ -3037,9 +3062,9 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 		//strcat(cmd,"\n");
 
 		// control next bot that joins server
-		m_bControlNext = true;
+		
 
-
+		/*
 		if ( CClients::get(0)->getPlayer() && !engine->IsDedicatedServer()) // The_Shadow
 		{
 			if ( bot_sv_cheats_auto.GetBool() )
@@ -3061,7 +3086,7 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 			if ( bot_sv_cheats_auto.GetBool() )
 				engine->ServerCommand("sv_cheats 0\n");
 
-		}
+		}*/
 
 		return true;
 	}
@@ -3422,7 +3447,9 @@ void CBots :: kickRandomBotOnTeam ( int team )
 
 bool CBots :: handlePlayerJoin ( edict_t *pEdict, const char *name )
 {
-	if ( m_bControlNext && ((strcmp(&name[strlen(name)-strlen(m_szNextName)],m_szNextName) == 0) || (strncmp(name,"Bot",3) == 0)) )
+	static int botnum;
+
+	if ( m_bControlNext && ((strcmp(&name[strlen(name)-strlen(m_szNextName)],m_szNextName) == 0)) || (sscanf(name,"Bot%d",&botnum) == 1) )
 	{
 		m_ControlQueue.push(pEdict);
 		m_bControlNext = false;
@@ -3459,14 +3486,14 @@ void CBots :: handleAutomaticControl ()
 				m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,m_pNextProfile);
 
 				extern ConCommandBase *puppet_bot_cmd;
-				extern ConVar bot_cmd_nocheats;
+				//extern ConVar bot_cmd_nocheats;
 				
 				// Reset Cheat Flag
 				if ( puppet_bot_cmd != NULL )
 				{
-					if ( bot_cmd_nocheats.GetBool() && !puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
+					if ( !puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
 					{
-						int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + 20); // 20 is offset to flags
+						int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + BOT_CONVAR_FLAGS_OFFSET); // 20 is offset to flags
 			
 						*m_nFlags |= FCVAR_CHEAT;
 					}

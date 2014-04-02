@@ -912,11 +912,25 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 			succ->unClose();
 
 			succ->setParent(iCurrentNode);
-			succ->setCost(fCost+(m_fBelief[iSucc]*(fBeliefSensitivity-m_pBot->getProfile()->m_fBraveness)));	
+
+			if ( fBeliefSensitivity > 1.6f )
+			{
+				succ->setCost(m_fBelief[iSucc]);
+				//succ->setCost(fCost-(MAX_BELIEF-m_fBelief[iSucc]));
+				//succ->setCost(fCost-((MAX_BELIEF*fBeliefSensitivity)-(m_fBelief[iSucc]*(fBeliefSensitivity-m_pBot->getProfile()->m_fBraveness))));	
+			}
+			else
+				succ->setCost(fCost+(m_fBelief[iSucc]*(fBeliefSensitivity-m_pBot->getProfile()->m_fBraveness)));	
+
 			succ->setWaypoint(iSucc);
 
 			if ( !succ->heuristicSet() )		
-				succ->setHeuristic(m_pBot->distanceFrom(succWpt->getOrigin())+succWpt->distanceFrom(vTo));		
+			{
+				if ( fBeliefSensitivity > 1.6f )
+					succ->setHeuristic(m_pBot->distanceFrom(succWpt->getOrigin())+succWpt->distanceFrom(vTo)+(m_fBelief[iSucc]*2));	
+				else 
+					succ->setHeuristic(m_pBot->distanceFrom(succWpt->getOrigin())+succWpt->distanceFrom(vTo));		
+			}
 
 			// Fix: do this AFTER setting heuristic and cost!!!!
 			if ( !succ->isOpen() )
