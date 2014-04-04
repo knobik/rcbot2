@@ -1037,7 +1037,7 @@ private:
 class CSpyCheckAir : public CBotTask
 {
 public:
-	CSpyCheckAir () { m_fTime = 0.0f; m_pUnseenBefore = NULL; }
+	CSpyCheckAir () { m_fTime = 0.0f; m_pUnseenBefore = NULL; m_bHitPlayer = false; }
 
 	void execute ( CBot *pBot, CBotSchedule *pSchedule );
 
@@ -1047,6 +1047,7 @@ private:
 	int seenlist;
 	float m_fNextCheckUnseen;
 	float m_fTime;
+	bool m_bHitPlayer;
 };
 
 class CTaskVoiceCommand : public CBotTask

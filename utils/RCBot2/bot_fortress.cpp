@@ -32,6 +32,9 @@
  */
 
 #include "bot.h"
+
+#include "ndebugoverlay.h"
+
 #include "bot_fortress.h"
 #include "bot_buttons.h"
 #include "bot_globals.h"
@@ -64,6 +67,8 @@ extern ConVar rcbot_tf2_protect_cap_percent;
 extern ConVar rcbot_tf2_spy_kill_on_cap_dist;
 extern ConVar rcbot_speed_boost;
 extern ConVar rcbot_projectile_tweak;
+
+extern IVDebugOverlay *debugoverlay;
 
 #define TF2_SPY_CLOAK_BELIEF 40
 #define TF2_HWGUY_REV_BELIEF 60
@@ -685,6 +690,10 @@ void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
 
+		
+	m_fWaitTurnSentry = 0.0f;
+
+
 	m_pLastSeeMedic.reset();
 
 	memset(m_fSpyList,0,sizeof(float)*MAX_PLAYERS);
@@ -725,8 +734,26 @@ void CBotFortress :: spawnInit ()
 	
 }
 
+bool CBotFortress :: isBuilding ( edict_t *pBuilding )
+{
+	return (pBuilding == m_pSentryGun.get()) || (pBuilding == m_pDispenser.get());
+}
+
+// return 0 : fail
+// return 1 : built ok
+// return 2 : next state
+// return 3 : another try -- restart
 int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTime, int *iTries )
 {
+	// can't build while standing on my building!
+	if ( isBuilding(CClassInterface::getGroundEntity(m_pEdict)) )
+	{
+		return 0;
+	}
+
+	if ( m_fWaitTurnSentry > engine->Time() )
+		return 2;
+
 	switch ( *iState )
 	{
 	case 0:
@@ -747,19 +774,24 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			QAngle turn;
 			Vector forward;
 			Vector building;
+			Vector vchosen;
+			Vector v_right,v_up,v_left;
+			Vector v_src = getEyePosition();
 			// find best place to turn it to
 			trace_t *tr = CBotGlobals::getTraceResult();
 			int iNextState = 2;
 
 			float bestfraction = 0.0f;			
 
+			m_fWaitTurnSentry = 0.0f;
 			// unselect current weapon
 			selectWeapon(0);
 			engineerBuild(iObject,ENGI_BUILD);
 
-			AngleVectors(eyes,&forward);
 			iNextState = 8;
-			building = getEyePosition() + (forward*100);
+			eyes.x = 0; // nullify pitch / we want yaw only
+			AngleVectors(eyes,&forward,&v_right,&v_up);
+			building = v_src + (forward*100);
 			//////////////////////////////////////////
 
 			// forward
@@ -769,52 +801,49 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			bestfraction = tr->fraction;
 
 			////////////////////////////////////////
-			turn = eyes;
-			turn.y = turn.y - 90.0f;
-			CBotGlobals::fixFloatAngle(&turn.y);
 
-			AngleVectors(turn,&forward);
+			v_left = -v_right;
 
 			// left
-			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+			CBotGlobals::traceLine(building,building - v_right*4096.0,MASK_SOLID_BRUSHONLY,&filter);
 
 			if ( tr->fraction > bestfraction )
 			{
 				iNextState = 6;
 				bestfraction = tr->fraction;
+				vchosen = building + v_right*4096.0;
 			}
 			////////////////////////////////////////
-			turn = eyes;
-			turn.y = turn.y + 180.0f;
-			CBotGlobals::fixFloatAngle(&turn.y);
-
-			AngleVectors(turn,&forward);
-
 			// back
-			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+			CBotGlobals::traceLine(building,building - forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
 
 			if ( tr->fraction > bestfraction )
 			{
 				iNextState = 4;
 				bestfraction = tr->fraction;
+				vchosen = building - forward*4096.0;
 			}
 			///////////////////////////////////
-			turn = eyes;
-			turn.y = turn.y + 90.0f;
-			CBotGlobals::fixFloatAngle(&turn.y);
-
-			AngleVectors(turn,&forward);
-
 			// right
-			CBotGlobals::traceLine(building,building + forward*4096.0,MASK_SOLID_BRUSHONLY,&filter);
+			CBotGlobals::traceLine(building,building + v_right*4096.0,MASK_SOLID_BRUSHONLY,&filter);
 
 			if ( tr->fraction > bestfraction )
 			{
 				iNextState = 2;
 				bestfraction = tr->fraction;
+				vchosen = building + v_right*4096.0;
 			}
 			////////////////////////////////////
 			*iState = iNextState;
+
+#ifndef __linux__
+			if ( CClients::clientsDebugging(BOT_DEBUG_THINK) && !engine->IsDedicatedServer() )
+			{
+				debugoverlay->AddTriangleOverlay(v_src-v_left*32.0f,v_src+v_left*32.0f,v_src+(building-v_src),255,50,50,255,false,60.0f);
+				debugoverlay->AddLineOverlay(building,vchosen,255,50,50,false,60.0f);
+				debugoverlay->AddTextOverlayRGB(building+Vector(0,0,25),0,60.0f,255,255,255,255,"Chosen State: %d",iNextState);
+			}
+#endif
 		}
 	case 2:
 		{
@@ -827,6 +856,8 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 		{
 			tapButton(IN_ATTACK2);
 			*iState = *iState + 1;
+			m_fWaitTurnSentry = engine->Time() + 0.33f;
+			*fTime = *fTime + 0.33f;
 		}
 		break;
 	case 4:
@@ -840,6 +871,8 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 		{
 			tapButton(IN_ATTACK2);
 			*iState = *iState + 1;
+			m_fWaitTurnSentry = engine->Time() + 0.33f;
+			*fTime = *fTime + 0.33f;
 		}
 		break;
 	case 6:
@@ -854,6 +887,8 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 		{
 			tapButton(IN_ATTACK2);
 			*iState = *iState + 1;
+			m_fWaitTurnSentry = engine->Time() + 0.33f;
+			*fTime = *fTime + 0.33f;
 		}
 		break;
 	case 8:
@@ -868,7 +903,6 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			tapButton(IN_ATTACK);
 
 			*fTime = engine->Time() + randomFloat(0.5f,1.0f);
-
 			*iState = *iState + 1;
 		}
 		break;
@@ -900,6 +934,7 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 						else if ( iObject == ENGI_EXIT )
 							m_bTeleportExitVectorValid = false;
 
+						removeCondition(CONDITION_COVERT);
 						return 1;
 					}
 				}
@@ -930,6 +965,7 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 			// whack it for a while
 			if ( *fTime < engine->Time() )
 			{
+				removeCondition(CONDITION_COVERT);
 				return 1;
 			}
 			else
@@ -3650,7 +3686,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		CBotGlobals::entityIsAlive(m_pLastHeal) && wantToHeal(m_pLastHeal),0.99f); 
 
 	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) &&
-		!hasFlag() && (((m_iClass == TF_CLASS_MEDIC) && !m_pHeal) || 
+		!hasFlag() && !CTeamFortress2Mod::isFlagCarrier(m_pEnemy) && (((m_iClass == TF_CLASS_MEDIC) && !m_pHeal) || 
 		CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEnemy)),1.0f);
 
 	ADD_UTILITY(BOT_UTIL_MEDIC_FINDPLAYER,(m_iClass == TF_CLASS_MEDIC) && 
@@ -4257,6 +4293,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				m_bTeleportExitVectorValid = true;
 				m_vTeleportExit = pWaypoint->getOrigin()+pWaypoint->applyRadius();
+				updateCondition(CONDITION_COVERT); // sneak around to get there
 				m_pSchedules->add(new CBotTFEngiBuild(ENGI_EXIT,m_vTeleportExit,getAiming(),pWaypoint->getArea()));
 				m_iTeleExitArea = pWaypoint->getArea();
 				return true;
@@ -4271,13 +4308,14 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vSentryGun,150,-1,true,false,true,NULL,false,getTeam(),true));
 			else
 			{
-				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam(),0,false,this);
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SENTRY,getTeam(),0,false,this,true,WPT_SEARCH_AVOID_SENTRIES);
 			}
 
 			if ( pWaypoint )
 			{
 				m_vSentryGun = pWaypoint->getOrigin()+pWaypoint->applyRadius();
 				m_bSentryGunVectorValid = true;
+				updateCondition(CONDITION_COVERT); // sneak around to get there
 				m_pSchedules->add(new CBotTFEngiBuild(ENGI_SENTRY,m_vSentryGun,getAiming(),pWaypoint->getArea()));
 				m_iSentryArea = pWaypoint->getArea();
 				return true;
@@ -4336,6 +4374,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 			{
 				m_vDispenser = pWaypoint->getOrigin();
 				m_bDispenserVectorValid = true;
+				updateCondition(CONDITION_COVERT);
 				m_pSchedules->add(new CBotTFEngiBuild(ENGI_DISP,m_vDispenser+Vector(randomFloat(-96,96),randomFloat(-96,96),0),getAiming(),pWaypoint->getArea()));
 				m_iDispenserArea = pWaypoint->getArea();
 				return true;
@@ -4419,6 +4458,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vSentry) > rcbot_move_dist.GetFloat()) )
 				{
+					updateCondition(CONDITION_COVERT);
 					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pSentryGun.get(),ENGI_SENTRY,pWaypoint->getOrigin(),m_bIsCarryingSentry));
 					m_iSentryArea = pWaypoint->getArea();
 					return true;
@@ -4471,6 +4511,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vDisp) > rcbot_move_dist.GetFloat()) )
 				{
+					updateCondition(CONDITION_COVERT);
 					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pDispenser.get(),ENGI_DISP,pWaypoint->getOrigin(),m_bIsCarryingDisp));
 					m_iDispenserArea = pWaypoint->getArea();
 					return true;
@@ -4486,6 +4527,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint &&  ( pWaypoint->distanceFrom(vTele) > rcbot_move_dist.GetFloat() ) )
 				{
+					updateCondition(CONDITION_COVERT);
 					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pTeleEntrance.get(),ENGI_ENTRANCE, pWaypoint->getOrigin(),m_bIsCarryingTeleEnt));
 					m_iTeleEntranceArea = pWaypoint->getArea();
 					return true;
@@ -4502,6 +4544,7 @@ bool CBotTF2 :: executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWa
 
 				if ( pWaypoint && (pWaypoint->distanceFrom(vTele) > rcbot_move_dist.GetFloat()) )
 				{
+					updateCondition(CONDITION_COVERT);
 					m_pSchedules->add(new CBotEngiMoveBuilding(m_pEdict,m_pTeleExit.get(),ENGI_EXIT,pWaypoint->getOrigin(),m_bIsCarryingTeleExit));
 					m_iTeleExitArea = pWaypoint->getArea();
 					return true;

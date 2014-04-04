@@ -1623,7 +1623,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		VectorAngles(vforward,angles);
 
-		angles.y += 22.5f; // yaw
+		angles.y += randomFloat(-60.0f,60.0f); // yaw
 		CBotGlobals::fixFloatAngle(&angles.y);
 
 		AngleVectors(angles,&vforward);
@@ -2028,6 +2028,7 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		int iHealth;
 */
 		seenlist = 0;		
+		m_bHitPlayer = false;
 
 		for ( i = 1; i <= gpGlobals->maxClients; i ++ )
 		{
@@ -2192,7 +2193,19 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	else
 	{
 		if ( randomInt(0,100) < iAttackProb )
+		{
 			pBot->primaryAttack();
+
+			if ( m_pUnseenBefore != NULL )
+			{
+				if ( !m_bHitPlayer && (pBot->distanceFrom(CBotGlobals::entityOrigin(m_pUnseenBefore)) < 80.0f) )
+				{
+					m_bHitPlayer = true;
+					m_fTime = engine->Time()+randomFloat(0.5f,1.5f);
+				}
+			}
+			
+		}
 	}
 	
 }
@@ -2221,7 +2234,10 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pBot->wantToChangeWeapon(false);
 
 	if ( m_fTime == 0.0f )
+	{
 		m_fTime = engine->Time() + randomFloat(8.0f,12.0f);
+		pBot->removeCondition(CONDITION_COVERT);
+	}
 
 	pBuilding = m_pBuilding.get();
 

@@ -349,6 +349,8 @@ bool operator<( const AStarNode * A, const AStarNode * B )
     return A->betterCost(B);
 }*/
 
+#define WPT_SEARCH_AVOID_SENTRIES 1
+
 class CWaypointNavigator : public IBotNavigator
 {
 public:
@@ -365,7 +367,7 @@ public:
 
 	void init ();
 
-	CWaypoint *chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger = false );
+	CWaypoint *chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger = false, int iSearchFlags = 0);
 	CWaypoint *chooseBestFromBeliefBetweenAreas ( dataUnconstArray<AStarNode*> *goals, bool bHighDanger = false );
 
 	float getNextYaw ();

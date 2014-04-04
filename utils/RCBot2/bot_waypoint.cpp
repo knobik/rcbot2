@@ -412,7 +412,7 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBeliefBetweenAreas ( dataUnconstA
 }
 
 // best waypoints are those with lowest danger
-CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger )
+CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger, int iSearchFlags )
 {
 	int i;
 	CWaypoint *pWpt = NULL;
@@ -420,6 +420,7 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 
 	float fBelief = 0;
 	float fSelect;
+	float bBeliefFactor = 1.0f;
 
 	// simple checks
 	switch ( goals->Size() )
@@ -430,10 +431,32 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 		{
 			for ( i = 0; i < goals->Size(); i ++ )
 			{
+				bBeliefFactor = 1.0f;
+
+				if ( iSearchFlags & WPT_SEARCH_AVOID_SENTRIES )
+				{
+					for ( int j = 0; j < MAX_PLAYERS; j ++ )
+					{
+						edict_t *pSentry = CTeamFortress2Mod::getSentryGun(j);
+
+						if ( pSentry != NULL )
+						{
+							if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pSentry)) < 200.0f )
+							{
+								bBeliefFactor *= 0.5f;
+							}
+						}
+					}
+				}
+
 				if ( bHighDanger )
-					fBelief += m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
+				{
+					fBelief += bBeliefFactor * (1.0f + (m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])]));	
+				}
 				else
-					fBelief += MAX_BELIEF - m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])];
+				{
+					fBelief += bBeliefFactor * (1.0f + (MAX_BELIEF - (m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])])));
+				}
 			}
 
 			fSelect = randomFloat(0,fBelief);
@@ -444,10 +467,32 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 			{
 				pCheck = goals->ReturnValueFromIndex(i);
 
+				bBeliefFactor = 1.0f;
+
+				if ( iSearchFlags & WPT_SEARCH_AVOID_SENTRIES )
+				{
+					for ( int j = 0; j < MAX_PLAYERS; j ++ )
+					{
+						edict_t *pSentry = CTeamFortress2Mod::getSentryGun(j);
+
+						if ( pSentry != NULL )
+						{
+							if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pSentry)) < 200.0f )
+							{
+								bBeliefFactor *= 0.5f;
+							}
+						}
+					}
+				}
+
 				if ( bHighDanger )
-					fBelief += m_fBelief[CWaypoints::getWaypointIndex(pCheck)];
+				{
+					fBelief += bBeliefFactor * (1.0f + (m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])]));	
+				}
 				else
-					fBelief += MAX_BELIEF -m_fBelief[CWaypoints::getWaypointIndex(pCheck)];
+				{
+					fBelief += bBeliefFactor * (1.0f + (MAX_BELIEF - (m_fBelief[CWaypoints::getWaypointIndex((*goals)[i])])));
+				}
 
 				if ( fSelect <= fBelief )
 				{
@@ -915,7 +960,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 
 			if ( fBeliefSensitivity > 1.6f )
 			{
-				succ->setCost(m_fBelief[iSucc]);
+				succ->setCost(fCost+(m_fBelief[iSucc]*2));
 				//succ->setCost(fCost-(MAX_BELIEF-m_fBelief[iSucc]));
 				//succ->setCost(fCost-((MAX_BELIEF*fBeliefSensitivity)-(m_fBelief[iSucc]*(fBeliefSensitivity-m_pBot->getProfile()->m_fBraveness))));	
 			}
@@ -2381,7 +2426,7 @@ CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, 
 	return pWpt;
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger )
+CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, int iSearchFlags )
 {
 	register short int i;
 	static short int size; 
@@ -2416,10 +2461,10 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, 
 		if ( pBot )
 		{
 			CWaypointNavigator *pNav;
-		
+
 			pNav = (CWaypointNavigator*)pBot->getNavigator();
 
-			pWpt = pNav->chooseBestFromBelief(&goals,bHighDanger);
+			pWpt = pNav->chooseBestFromBelief(&goals,bHighDanger,iSearchFlags);
 		}
 		else
 			pWpt = goals.Random();

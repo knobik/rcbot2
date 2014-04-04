@@ -287,6 +287,8 @@ public:
 
 	virtual void modThink ();
 
+	bool isBuilding ( edict_t *pBuilding );
+
 	bool wantToHeal ( edict_t *pPlayer );
 
 	virtual bool wantToFollowEnemy ();
@@ -544,6 +546,8 @@ protected:
 
 	int m_iTeam;
 
+		
+	float m_fWaitTurnSentry;
 };
 //
 //
@@ -769,6 +773,7 @@ private:
 	float m_fCarryTime;
 
 	float m_fCheckNextCarrying;
+
 
 };
 
