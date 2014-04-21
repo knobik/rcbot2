@@ -876,9 +876,10 @@ eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd,
 				// 83
 				if ( !strcmp(pcmd,"pipe") )
 				{
+					CBotUtility util = CBotUtility(pBot,BOT_UTIL_PIPE_LAST_ENEMY,true,1.0f);
 					pBot->setLastEnemy(pClient->getPlayer());
 					pBot->getSchedule()->freeMemory();
-					((CBotTF2*)pBot)->executeAction(BOT_UTIL_PIPE_LAST_ENEMY,NULL,NULL,NULL);
+					((CBotTF2*)pBot)->executeAction(&util);
 				}
 				// 71
 				else if ( !strcmp(pcmd,"gren") )
@@ -969,7 +970,20 @@ eBotCommandResult CBotGoto :: execute ( CClient *pClient, const char *pcmd, cons
 
 		if ( pBot->inUse() )
 		{
-			pBot->forceGotoWaypoint(pClient->currentWaypoint());
+			int iWpt;
+
+			if ( pcmd && *pcmd )
+			{
+				iWpt = atoi(pcmd);
+
+				if ( (iWpt < 0) || (iWpt >= CWaypoints::numWaypoints()) )
+					iWpt = -1;
+			}
+			else
+				iWpt = pClient->currentWaypoint();
+
+			if ( iWpt != -1 )
+				pBot->forceGotoWaypoint(iWpt);
 		}
 	}
 
@@ -1815,9 +1829,17 @@ eBotCommandResult CSearchCommand :: execute ( CClient *pClient, const char *pcmd
 				{				
 					if ( (fDistance=(CBotGlobals::entityOrigin(pEdict) - CBotGlobals::entityOrigin(pPlayer)).Length()) < 128 )
 					{
+						float fVelocity;
+						Vector v;
+
+						if ( CClassInterface::getVelocity(pEdict,&v) )
+							fVelocity = v.Length();
+						else
+							fVelocity = 0;
+
 						model = pEdict->GetIServerEntity()->GetModelName();
 				
-						CBotGlobals::botMessage(pPlayer,0,"(%d) D:%0.2f C:'%s', Mid:%d, Mn:'%s' Health=%d, Tm:%d, Fl:%d",i,fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr(),(int)CClassInterface::getPlayerHealth(pEdict),(int)CClassInterface::getTeam(pEdict),pEdict->m_fStateFlags );
+						CBotGlobals::botMessage(pPlayer,0,"(%d) D:%0.2f C:'%s', Mid:%d, Mn:'%s' Health=%d, Tm:%d, Fl:%d, Spd=%0.2f",i,fDistance,pEdict->GetClassName(),pEdict->GetIServerEntity()->GetModelIndex(),model.ToCStr(),(int)CClassInterface::getPlayerHealth(pEdict),(int)CClassInterface::getTeam(pEdict),pEdict->m_fStateFlags,fVelocity );
 					}
 				}
 			}

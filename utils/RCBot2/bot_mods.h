@@ -1068,6 +1068,8 @@ public:
 
 	static bool isFlagAtDefaultState () { return bFlagStateDefault; }
 	static void resetFlagStateToDefault() { bFlagStateDefault = true; }
+	static void setDontClearPoints ( bool bClear ) { m_bDontClearPoints = bClear; }
+	static bool dontClearPoints () { return m_bDontClearPoints; }
 
 private:
 
@@ -1104,7 +1106,7 @@ private:
 	static bool bFlagStateDefault;
 
 	static MyEHandle pMediGuns[MAX_PLAYERS];
-
+	static bool m_bDontClearPoints;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

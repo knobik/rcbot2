@@ -595,6 +595,8 @@ public:
 
 	void think ();
 
+	virtual void friendlyFire( edict_t *pEdict ) { };
+
 	virtual void freeMapMemory ();
 
 	virtual void freeAllMemory ();
@@ -730,7 +732,7 @@ public:
 	Vector getAimVector ( edict_t *pEntity );
 	virtual void modAim ( edict_t *pEntity, Vector &v_origin, 
 		Vector *v_desired_offset, Vector &v_size,
-		float fDist);
+		float fDist, float fDist2D);
 
 	inline Vector *getGoalOrigin ()
 	{

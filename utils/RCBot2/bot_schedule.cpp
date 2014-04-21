@@ -125,10 +125,10 @@ void CBotTF2HealSched::init()
 
 /////////////////////////////////////////////
 
-CBotTFEngiBuild :: CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea )
+CBotTFEngiBuild :: CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea, float fRadius )
 {
 	addTask(new CFindPathTask(vOrigin)); // first
-	addTask(new CBotTFEngiBuildTask(iObject,vOrigin,vAiming,iArea)); // second
+	addTask(new CBotTFEngiBuildTask(iObject,vOrigin,vAiming,iArea,fRadius)); // second
 }
 
 void CBotTFEngiBuild :: init ()
@@ -455,18 +455,30 @@ void CBotRemoveSapperSched :: init ()
 	setID(SCHED_REMOVESAPPER);
 }
 ///////////
-CGotoHideSpotSched :: CGotoHideSpotSched ( CBot *pBot, edict_t *pEdict )
+CGotoHideSpotSched :: CGotoHideSpotSched ( CBot *pBot, edict_t *pEdict, bool bIsGrenade )
 {
 	// run at flank while shooting	
-	CFindPathTask *pHideGoalPoint = new CFindPathTask();
-	
+	CFindPathTask *pHideGoalPoint = new CFindPathTask(pEdict);
+
+	pBot->setCoverFrom(pEdict);
+	addTask(new CFindGoodHideSpot(pEdict));
+	addTask(pHideGoalPoint);
+	if ( bIsGrenade )
+		addTask(new CDODWaitForGrenadeTask(pEdict));
+
+	// don't need to hide if the player we're hiding from died while we're running away
+	pHideGoalPoint->failIfTaskEdictDead();
+	pHideGoalPoint->setLookTask(LOOK_WAYPOINT);
 	// no interrupts, should be a quick waypoint path anyway
 	pHideGoalPoint->setNoInterruptions();
 	// get vector from good hide spot task
 	pHideGoalPoint->getPassedVector();
-	pBot->setCoverFrom(pEdict);
-	addTask(new CFindGoodHideSpot(pEdict));
-	addTask(pHideGoalPoint);
+	pHideGoalPoint->dontGoToEdict();
+	if ( bIsGrenade )
+	{
+		pHideGoalPoint->setRange(BLAST_RADIUS+100.0f);
+		pHideGoalPoint->completeOutOfRangeFromEdict();
+	}
 }
 
 CGotoHideSpotSched :: CGotoHideSpotSched (CBot *pBot, Vector vOrigin )
@@ -474,13 +486,14 @@ CGotoHideSpotSched :: CGotoHideSpotSched (CBot *pBot, Vector vOrigin )
 	// run at flank while shooting	
 	CFindPathTask *pHideGoalPoint = new CFindPathTask();
 	
+	pBot->setCoverFrom(NULL);
+	addTask(new CFindGoodHideSpot(vOrigin));
+	addTask(pHideGoalPoint);
+
 	// no interrupts, should be a quick waypoint path anyway
 	pHideGoalPoint->setNoInterruptions();
 	// get vector from good hide spot task
 	pHideGoalPoint->getPassedVector();
-	pBot->setCoverFrom(NULL);
-	addTask(new CFindGoodHideSpot(vOrigin));
-	addTask(pHideGoalPoint);
 }
 
 void CGotoHideSpotSched :: init ()
@@ -509,6 +522,19 @@ void CCrouchHideSched :: init ()
 	setID(SCHED_CROUCH_AND_HIDE);
 }
 
+/////////////
+CBotTF2AttackSentryGun::CBotTF2AttackSentryGun( edict_t *pSentry, CBotWeapon *pWeapon )
+{
+	CFindPathTask *path = new CFindPathTask(CBotGlobals::entityOrigin(pSentry));
+
+	addTask(path);
+	addTask(new CBotTF2AttackSentryGunTask(pSentry,pWeapon));
+
+	path->completeInRangeFromEdict();
+	path->completeIfSeeTaskEdict();
+
+	path->setRange(TF2_MAX_SENTRYGUN_RANGE+100.0f);
+}
 
 /////////////
 CBotAttackSched :: CBotAttackSched ( edict_t *pEdict )

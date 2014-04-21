@@ -63,10 +63,13 @@ bool CTeamFortress2Mod::m_bAttackDefendMap = false;
 //float g_fBotUtilityPerturb [TF_CLASS_MAX][BOT_UTIL_MAX];
 int CTeamFortress2Mod::m_Cappers[MAX_CAP_POINTS];
 bool CTeamFortress2Mod::m_bHasRoundStarted = true;
+bool CTeamFortress2Mod::m_bDontClearPoints = false;
 int CTeamFortress2Mod::m_iFlagCarrierTeam = 0;
 MyEHandle CTeamFortress2Mod::m_pBoss = MyEHandle(NULL);
 bool CTeamFortress2Mod::m_bBossSummoned = false;
 MyEHandle CTeamFortress2Mod::pMediGuns[MAX_PLAYERS];
+
+
 edict_t *CDODMod::m_pResourceEntity = NULL;
 CDODFlags CDODMod::m_Flags;
 edict_t * CDODMod::m_pPlayerResourceEntity = NULL;
@@ -1035,8 +1038,8 @@ int CTeamFortress2Mod ::numClassOnTeam( int iTeam, int iClass )
 
 edict_t *CTeamFortress2Mod :: findResourceEntity()
 {
-	if ( !m_pResourceEntity )
-		m_pResourceEntity = CClassInterface::FindEntityByNetClass(-1, "CTFPlayerResource");
+	if ( !m_pResourceEntity ) // crash fix
+		m_pResourceEntity = CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1, "CTFPlayerResource");
 
 	return m_pResourceEntity;
 }
@@ -1282,6 +1285,7 @@ void CTeamFortress2Mod :: mapInit ()
 	m_pFlagCarrierRed = NULL;
 	m_pFlagCarrierBlue = NULL;
 	m_iFlagCarrierTeam = 0;
+	m_bDontClearPoints = false;
 
 	for ( i = 0; i < MAX_PLAYERS; i ++ )
 	{

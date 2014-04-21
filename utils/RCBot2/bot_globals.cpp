@@ -83,7 +83,7 @@ public:
 
 	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
 	{ 
-		if ( pServerEntity == (IHandleEntity*)m_pPlayer->GetIServerEntity() )
+		if ( m_pPlayer && (pServerEntity == (IHandleEntity*)m_pPlayer->GetIServerEntity()) )
 			return false;
 
 		if ( m_pHit && (pServerEntity == (IHandleEntity*)m_pHit->GetIServerEntity()) )
@@ -162,6 +162,47 @@ int CBotGlobals ::numPlayersOnTeam(int iTeam, bool bAliveOnly)
 	return num;
 }
 
+float CBotGlobals :: grenadeWillLand ( Vector vOrigin, Vector vEnemy, float fProjSpeed, float fGrenadePrimeTime, float *fAngle )
+{
+	static float g;
+	extern ConVar *sv_gravity;
+	Vector v_comp = vEnemy-vOrigin;
+	float fDistance = v_comp.Length();
+
+	v_comp = v_comp/fDistance;
+
+	g = sv_gravity->GetFloat();
+
+	if ( fAngle == NULL )
+	{
+
+		return false;
+	}
+	else
+	{
+		// use angle -- work out time
+				// work out angle
+		float vhorz;
+		float vvert;
+
+		SinCos(DEG2RAD(*fAngle),&vvert,&vhorz);
+
+		vhorz *= fProjSpeed;
+		vvert *= fProjSpeed;
+
+		float t = fDistance/vhorz;
+
+		// within one second of going off
+		if ( fabs(t-fGrenadePrimeTime) < 1.0f )
+		{
+			float ffinaly =  vOrigin.z + (vvert*t) - ((g*0.5)*(t*t));
+
+			return ( fabs(ffinaly - vEnemy.z) < BLAST_RADIUS ); // ok why not
+		}
+	}
+
+	return false;
+}
 
 // TO DO :: put in CClients ?
 edict_t *CBotGlobals :: findPlayerByTruncName ( const char *name )
@@ -296,6 +337,17 @@ bool CBotGlobals :: isVisible ( edict_t *pPlayer, Vector vSrc, edict_t *pDest )
 	CTraceFilterWorldAndPropsOnly filter;
 
 	traceLine (vSrc,entityOrigin(pDest),MASK_SOLID_BRUSHONLY|CONTENTS_OPAQUE,&filter);
+
+	return (traceVisible(pDest));
+}
+
+bool CBotGlobals :: isShotVisible ( edict_t *pPlayer, Vector vSrc, edict_t *pDest )
+{
+	//CTraceFilterWorldAndPropsOnly filter;//	CTraceFilterHitAll filter;
+
+	CTraceFilterVis filter = CTraceFilterVis(pPlayer,pDest);
+
+	traceLine (vSrc,entityOrigin(pDest),MASK_SHOT,&filter);
 
 	return (traceVisible(pDest));
 }

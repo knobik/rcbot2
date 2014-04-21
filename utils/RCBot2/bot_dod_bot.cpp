@@ -202,6 +202,11 @@ bool CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 	static bool bNoDraw;
 	static bool bValid;
 	static float fSmokeTime;
+	extern ConVar *mp_friendlyfire;
+
+	static bool bFriendlyFire;
+
+	bFriendlyFire = (mp_friendlyfire!=NULL)?mp_friendlyfire->GetBool():false;
 
 	bValid = CBot::setVisible(pEntity,bVisible);
 
@@ -232,7 +237,7 @@ bool CDODBot :: setVisible ( edict_t *pEntity, bool bVisible )
 		// don't run away from smoke grenades
 		else if ( (pEntity!=m_pEnemyGrenade) && (szClassname[8]!='s') && (strncmp(szClassname,"grenade",7) == 0 ) && 
 			((CClassInterface::getGrenadeThrower(pEntity) == m_pEdict) || 
-			 (CClassInterface::getTeam(pEntity) == m_iEnemyTeam)))
+			 ((CClassInterface::getTeam(pEntity) == m_iEnemyTeam)||bFriendlyFire)))
 		{
 			UPDATE_VISIBLE_OBJECT(m_pEnemyGrenade,pEntity);
 		}
@@ -955,19 +960,19 @@ void CDODBot :: chooseClass ( bool bIsChangingClass )
 
 void CDODBot :: prone ()
 {
-		if ( !m_bProne && (m_fProneTime < engine->Time()) )
-		{
-			m_pButtons->tap(IN_ALT1);
-			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
-		}
+	if ( !hasSomeConditions(CONDITION_RUN) && !m_bProne && (m_fProneTime < engine->Time()) )
+	{
+		m_pButtons->tap(IN_ALT1);
+		m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
+	}
 }
 void CDODBot :: unProne()
 {
-		if ( m_bProne && (m_fProneTime < engine->Time()) )
-		{
-			m_pButtons->tap(IN_ALT1);
-			m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
-		}
+	if ( m_bProne && (hasSomeConditions(CONDITION_RUN) || (m_fProneTime < engine->Time())) )
+	{
+		m_pButtons->tap(IN_ALT1);
+		m_fProneTime = engine->Time() + randomFloat(4.0f,8.0f);
+	}
 }
 
 void CDODBot :: modThink ()
@@ -1155,7 +1160,7 @@ void CDODBot :: modThink ()
 			{
 				// don't interrupt current shedule, just add to front
 				m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-				m_pSchedules->addFront(new CGotoHideSpotSched(this,m_pEnemyRocket));
+				m_pSchedules->addFront(new CGotoHideSpotSched(this,m_pEnemyRocket,true));
 			}
 		}
 	}
@@ -1187,7 +1192,7 @@ void CDODBot :: modThink ()
 				{
 					// don't interrupt current shedule, just add to front
 					m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-					m_pSchedules->addFront(new CGotoHideSpotSched(this,m_pEnemyGrenade));
+					m_pSchedules->addFront(new CGotoHideSpotSched(this,m_pEnemyGrenade,true));
 				}
 			}
 		}
@@ -1351,12 +1356,32 @@ void CDODBot ::signal ( const char *signal )
 	helpers->ClientCommand(m_pEdict,scmd);
 }
 
+void CDODBot :: friendlyFire ( edict_t *pEdict )
+{
+	if ( isVisible(pEdict) )
+	{
+		addVoiceCommand(DOD_VC_CEASEFIRE);
+	}
+}
+
 #define IF_WANT_TO_LISTEN if ( isVisible(pPlayer) || (inSquad() && (m_pSquad->GetLeader()==pPlayer)) )
 
 void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 {
 	switch ( cmd )
 	{
+	case DOD_VC_CEASEFIRE:
+		IF_WANT_TO_LISTEN
+		{
+			extern ConVar *mp_friendlyfire;
+
+			if ( mp_friendlyfire && mp_friendlyfire->GetBool() )
+			{
+				wantToShoot(false);  // don't shoot this frame
+				m_pButtons->letGo(IN_ATTACK);
+			}
+		}
+		break;
 	case DOD_VC_AREA_CLEAR:
 		IF_WANT_TO_LISTEN
 		{
@@ -1528,9 +1553,11 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 						if ( pWpt )
 						{
 							CFindPathTask *findpathtask = new CFindPathTask(pPlayer);
+
+							pSched->addTask(findpathtask);
+
 							findpathtask->completeIfSeeTaskEdict();
 							findpathtask->failIfTaskEdictDead();
-							pSched->addTask(findpathtask);
 						}
 						else
 						{
@@ -1661,7 +1688,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 
 			// don't interrupt current shedule, just add to front
 			m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-			m_pSchedules->addFront(new CGotoHideSpotSched(this,pPlayer));
+			m_pSchedules->addFront(new CGotoHideSpotSched(this,pPlayer,false));
 		}
 
 		break;
@@ -2343,10 +2370,10 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				CBotSchedule *pSched = new CBotSchedule();
 				CFindPathTask *pathtask = new CFindPathTask(pWaypoint->getOrigin());
 
-				pathtask->setNoInterruptions();
-
 				pSched->addTask(new CThrowGrenadeTask(pWeapon,getAmmo(pWeapon->getWeaponInfo()->getAmmoIndex1()),m_vLastSeeEnemyBlastWaypoint)); // first - throw
 				pSched->addTask(pathtask); // 2nd -- hide
+
+				pathtask->setNoInterruptions();
 
 				m_pSchedules->add(pSched);
 
@@ -2980,7 +3007,7 @@ void CDODBot :: getTasks (unsigned int iIgnore)
 			pBotWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(DOD_WEAPON_FRAG_GER));
 				
 		// if within throw distance and outside balst radius, I can throw it
-		if ( pBotWeapon && (!pBotWeapon->isExplosive() || (fDistance > BLAST_RADIUS)) && ( fDistance < 1500 ) )
+		if ( pBotWeapon && (!pBotWeapon->isExplosive() || (fDistance > BLAST_RADIUS)) && ( fDistance < (MAX_GREN_THROW_DIST+BLAST_RADIUS) ) )
 		{
 			ADD_UTILITY_WEAPON(BOT_UTIL_THROW_GRENADE, pBotWeapon && (pBotWeapon->getAmmo(this) > 0) ,hasSomeConditions(CONDITION_GREN) ? fGrenUtil*2 : fGrenUtil,pBotWeapon);
 		}
@@ -3102,9 +3129,10 @@ bool CDODBot :: walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetAppl
 	return false;
 }
 
+
 void CDODBot :: modAim ( edict_t *pEntity, Vector &v_origin, 
 						Vector *v_desired_offset, Vector &v_size, 
-						float fDist )
+						float fDist, float fDist2D )
 {
 	//static Vector vAim;
 	static short int iSlot;
@@ -3120,7 +3148,7 @@ void CDODBot :: modAim ( edict_t *pEntity, Vector &v_origin,
 
 	bAddHeadHeight = false;
 
-	CBot::modAim(pEntity,v_origin,v_desired_offset,v_size,fDist);
+	CBot::modAim(pEntity,v_origin,v_desired_offset,v_size,fDist,fDist2D);
 
 	pWp = getCurrentWeapon();
 
@@ -3165,9 +3193,9 @@ void CDODBot :: modAim ( edict_t *pEntity, Vector &v_origin,
 
 				if ( sv_gravity != NULL )
 				{
-					float fTime = fDist/pWp->getProjectileSpeed();
-					// add gravity height
-					v_desired_offset->z += (pow(2,fTime)*(sv_gravity->GetFloat()*rcbot_projectile_tweak.GetFloat()));// - (getOrigin().z - v_origin.z);
+					float fTime = fDist2D/pWp->getProjectileSpeed();
+
+					v_desired_offset->z = (pow(2,fTime)*(sv_gravity->GetFloat()*rcbot_projectile_tweak.GetFloat()));// - (getOrigin().z - v_origin.z);
 				}
 			}
 			//v_desired_offset->z += (distanceFrom(pEntity) * (randomFloat(0.05,0.15)*m_pProfile->m_fAimSkill));

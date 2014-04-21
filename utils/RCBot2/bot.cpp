@@ -726,6 +726,8 @@ void CBot :: think ()
 {
 	static float fTime;
 	extern ConVar rcbot_debug_iglev;
+	extern ConVar rcbot_debug_dont_shoot;
+	extern ConVar rcbot_debug_notasks;
 	//static bool debug;
 	//static bool battack;
 
@@ -844,11 +846,14 @@ void CBot :: think ()
 
 
 	//
+	if ( !rcbot_debug_notasks.GetBool() )
+	{
 #ifdef _DEBUG
 	if ( rcbot_debug_iglev.GetInt() != 5 )
 	{
 #endif
 	getTasks();	
+	}
 #ifdef _DEBUG
 	}
 
@@ -978,7 +983,8 @@ void CBot :: think ()
 #endif
 	setMoveLookPriority(MOVELOOK_ATTACK);
 
-	handleWeapons();
+	if ( !rcbot_debug_dont_shoot.GetBool() )
+		handleWeapons();
 
 	// deal with voice commands bot wants to say,
 	// incase that he wants to use it in between frames (e.g. during an event call)
@@ -1524,6 +1530,9 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	if ( !pAttacker )
 		return false;
 
+	if ( CClassInterface::getTeam(pAttacker) == getTeam() )
+		friendlyFire(pAttacker);
+
 	m_vHurtOrigin = CBotGlobals::entityOrigin(pAttacker);
 
 	if ( !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) )
@@ -1850,7 +1859,7 @@ void CBot :: updateStatistics ()
 		return;
 
 	bVisible = isVisible(pPlayer);
-	bIsEnemy = isEnemy(pPlayer);
+	bIsEnemy = isEnemy(pPlayer,false);
 
 	if ( bIsEnemy )
 	{
@@ -2270,6 +2279,7 @@ Vector CBot::getAimVector ( edict_t *pEntity )
 	static float fSensitivity;
 	static Vector v_size;
 	static float fDist;
+	static float fDist2D;
 
 	if ( m_fNextUpdateAimVector > engine->Time() )
 	{
@@ -2277,6 +2287,7 @@ Vector CBot::getAimVector ( edict_t *pEntity )
 	}
 
 	fDist = distanceFrom(pEntity);
+	fDist2D = distanceFrom2D(pEntity);
 
 	v_size = pEntity->GetCollideable()->OBBMaxs() - pEntity->GetCollideable()->OBBMins();
 	v_size = v_size * 0.5f;
@@ -2285,7 +2296,7 @@ Vector CBot::getAimVector ( edict_t *pEntity )
 
 	v_origin = CBotGlobals::entityOrigin(pEntity);
 
-	modAim(pEntity,v_origin,&v_desired_offset,v_size,fDist);
+	modAim(pEntity,v_origin,&v_desired_offset,v_size,fDist,fDist2D);
 
 	// post aim
 	// update 
@@ -2326,21 +2337,26 @@ Vector CBot::getAimVector ( edict_t *pEntity )
 		}
 	}
 #endif
-
+	
 	return m_vAimVector;
 }
 
-void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset, Vector &v_size, float fDist )
+void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset, Vector &v_size, float fDist, float fDist2D )
 {
 	static Vector vel;
 	static Vector myvel;
 	static Vector enemyvel;
 	static float fDistFactor;
 	static float fHeadOffset;
+	static float fDistance;
 
+	fDistance = distanceFrom(pEntity);
 	fHeadOffset = 0;
 
-	fDistFactor = (1.0f - m_pProfile->m_fAimSkill) + (distanceFrom(pEntity)*0.000125f)*(m_fFov/90.0f);
+	if ( fDistance < 100.0f ) // melee distance
+		fDistFactor = (1.0f - m_pProfile->m_fAimSkill) + (fDistance*0.000125f)*(m_fFov/90.0f);
+	else
+		fDistFactor = (1.0f - m_pProfile->m_fAimSkill)*(fDistance/100);
 
 	// origin is always the bottom part of the entity
 	// add body height
@@ -2356,6 +2372,8 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	myvel = Vector(0,0,0);
 	enemyvel = Vector(0,0,0);
 
+	v_size = v_size / 2;
+
 	v_desired_offset->x = fDistFactor*randomFloat(-v_size.x,v_size.x);
 	v_desired_offset->y = fDistFactor*randomFloat(-v_size.y,v_size.y);
 	v_desired_offset->z = fDistFactor*randomFloat(-v_size.z,v_size.z);
@@ -2366,6 +2384,8 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	{
 		vel = (enemyvel - myvel); // relative velocity
 
+		vel = vel * 0.003125f;
+
 		//fVelocityFactor = exp(-1.0f + ((vel.Length() * 0.003125f)*2)); // divide by max speed
 	}
 	else
@@ -2375,9 +2395,9 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	}
 
 	// velocity
-	v_desired_offset->x += randomFloat(-vel.x,vel.x);
-	v_desired_offset->y += randomFloat(-vel.y,vel.y);
-	v_desired_offset->z += randomFloat(-vel.z,vel.z);
+	v_desired_offset->x += randomFloat(-vel.x,vel.x)*fDistFactor*v_size.x;
+	v_desired_offset->y += randomFloat(-vel.y,vel.y)*fDistFactor*v_size.y;
+	v_desired_offset->z += randomFloat(-vel.z,vel.z)*fDistFactor*v_size.z;
 
 }
 

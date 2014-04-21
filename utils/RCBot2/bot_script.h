@@ -39,7 +39,9 @@ typedef enum
 {
 	POINT_NONE,
 	POINT_DEFEND,
-	POINT_ATTACK
+	POINT_ATTACK,
+	POINT_STOP_DEFEND,
+	POINT_STOP_ATTACK
 }ePointStyle;
 
 
@@ -99,6 +101,9 @@ private:
 class CPoints
 {
 public:
+
+
+	static void toBits ( vector<int> *point_array, int *iBits );
 	
 	static void pointCaptured ( int iTeamCaptured, const char *szName );
 

@@ -88,6 +88,7 @@ typedef enum
 	SCHED_INVESTIGATE_NOISE,
 	SCHED_CROUCH_AND_HIDE,
 	SCHED_DEPLOY_MACHINE_GUN,
+	SCHED_ATTACK_SENTRY_GUN,
 	SCHED_MAX
 	//SCHED_HIDE_FROM_ENEMY
 }eBotSchedule;
@@ -430,7 +431,7 @@ public:
 class CBotTFEngiBuild : public CBotSchedule
 {
 public:
-	CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0 );
+	CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0, float fRadius = 0 );
 
 	void init ();
 };
@@ -498,6 +499,17 @@ public:
 	CBotTF2SnipeSched ( Vector vOrigin, float fYaw, int iArea = 0 );
 
 	void init ();
+};
+
+class CBotTF2AttackSentryGun : public CBotSchedule 
+{
+public:
+	CBotTF2AttackSentryGun( edict_t *pSentry, CBotWeapon *pWeapon );
+
+	void init ()
+	{
+		setID(SCHED_ATTACK_SENTRY_GUN);
+	}
 };
 
 class CBotTF2GetAmmoSched : public CBotSchedule
@@ -591,7 +603,7 @@ class CGotoHideSpotSched : public CBotSchedule
 public:
 	// find a hide spot
 	// hide from an enemy (pEdict)
-	CGotoHideSpotSched ( CBot *pBot, edict_t *pEdict );
+	CGotoHideSpotSched ( CBot *pBot, edict_t *pEdict, bool bIsGrenade = false );
 	// hide from a Vector
 	CGotoHideSpotSched ( CBot *pBot, Vector vOrigin );
 

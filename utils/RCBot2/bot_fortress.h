@@ -37,6 +37,8 @@
 
 #define TF2_ROCKETSPEED   1100
 #define TF2_GRENADESPEED  1065 // TF2 wiki
+#define TF2_MAX_SENTRYGUN_RANGE 1024
+#define TF2_STICKYGRENADE_MAX_DISTANCE 1600
 
 class CBotWeapon;
 class CWaypoint;
@@ -262,9 +264,9 @@ public:
 
 	//virtual Vector getAimVector ( edict_t *pEntity ) { return CBot::getAimVector(pEntity); }
 
-	virtual void modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset, Vector &v_size, float fDist )
+	virtual void modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset, Vector &v_size, float fDist, float fDist2D )
 	{
-		CBot::modAim(pEntity,v_origin,v_desired_offset,v_size,fDist);
+		CBot::modAim(pEntity,v_origin,v_desired_offset,v_size,fDist,fDist2D);
 	}
 
 	virtual void touchedWpt ( CWaypoint *pWaypoint ) { CBot::touchedWpt(pWaypoint); }
@@ -546,8 +548,10 @@ protected:
 
 	int m_iTeam;
 
-		
-	float m_fWaitTurnSentry;
+	float m_fWaitTurnSentry;			// amount of time to wait before engineer turns their sentry before building
+
+	// currently unused
+	float m_fCallMedicTime[MAX_PLAYERS]; // for every player ID is kept the last time they called medic
 };
 //
 //
@@ -601,13 +605,13 @@ public:
 	//Vector getAimVector ( edict_t *pEntity );
 	virtual void modAim ( edict_t *pEntity, Vector &v_origin, 
 		Vector *v_desired_offset, Vector &v_size,
-		float fDist);
+		float fDist, float fDist2D);
 
 	void modThink ();
 
 	bool isCloaked ();
 
-	bool executeAction ( eBotAction id, CWaypoint *pWaypointResupply, CWaypoint *pWaypointHealth, CWaypoint *pWaypointAmmo );
+	bool executeAction ( CBotUtility *util );//eBotAction id, CWaypoint *pWaypointResupply, CWaypoint *pWaypointHealth, CWaypoint *pWaypointAmmo );
 
 	void setClass ( TF_Class _class );
 
@@ -773,8 +777,6 @@ private:
 	float m_fCarryTime;
 
 	float m_fCheckNextCarrying;
-
-
 };
 
 class CBotFF : public CBotFortress

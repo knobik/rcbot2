@@ -94,6 +94,7 @@ typedef enum
 	GETPROP_GROUND_ENTITY,
 	GETPROP_ORIGIN,
 	GETPROP_TAKEDAMAGE,
+	GETPROP_SENTRY_ENEMY,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -299,6 +300,7 @@ public:
 	}
 	inline static bool getMedigunHealing ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MEDIGUN_HEALING].getBool(edict,false); }
 	inline static edict_t *getMedigunTarget ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MEDIGUN_TARGETTING].getEntity(edict); }
+	inline static edict_t *getSentryEnemy ( edict_t *edict ) { return g_GetProps[GETPROP_SENTRY_ENEMY].getEntity(edict); }
 	inline static edict_t *getOwner ( edict_t *edict ) { return g_GetProps[GETPROP_ALL_ENTOWNER].getEntity(edict); }
 	inline static bool isMedigunTargetting ( edict_t *pgun, edict_t *ptarget) { return (g_GetProps[GETPROP_TF2MEDIGUN_TARGETTING].getEntity(pgun) == ptarget); }
 	//static void setTickBase ( edict_t *edict, int tickbase ) { return ;

@@ -782,6 +782,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 									  int iConditions )
 {
 	extern ConVar bot_pathrevs;
+	extern ConVar rcbot_debug_show_route;
 
 	if ( bRestart )
 	{
@@ -931,6 +932,16 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 			succ = &paths[iSucc];
 			succWpt = CWaypoints::getWaypoint(iSucc);
 
+			if ( rcbot_debug_show_route.GetBool() )
+			{
+				edict_t *pListenEdict;
+
+				if ( !engine->IsDedicatedServer() && ((pListenEdict = CClients::getListenServerClient())!=NULL) )
+				{
+					debugoverlay->AddLineOverlayAlpha(succWpt->getOrigin(),currWpt->getOrigin(),255,0,0,255,false,5.0f);
+				}
+			}
+
 			if ( (iSucc != m_iGoalWaypoint) && !m_pBot->canGotoWaypoint(vOrigin,succWpt) )
 				continue;
 
@@ -960,7 +971,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 
 			if ( fBeliefSensitivity > 1.6f )
 			{
-				succ->setCost(fCost+(m_fBelief[iSucc]*2));
+				succ->setCost(fCost+(m_fBelief[iSucc]*fBeliefSensitivity));
 				//succ->setCost(fCost-(MAX_BELIEF-m_fBelief[iSucc]));
 				//succ->setCost(fCost-((MAX_BELIEF*fBeliefSensitivity)-(m_fBelief[iSucc]*(fBeliefSensitivity-m_pBot->getProfile()->m_fBraveness))));	
 			}
@@ -1039,6 +1050,16 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 		// crash bug fix
 		if ( iParent != -1 )
 			fDistance += (CWaypoints::getWaypoint(iCurrentNode)->getOrigin() - CWaypoints::getWaypoint(iParent)->getOrigin()).Length();
+		
+		if ( rcbot_debug_show_route.GetBool() )
+		{
+			edict_t *pListenEdict;
+
+			if ( !engine->IsDedicatedServer() && ((pListenEdict = CClients::getListenServerClient())!=NULL) )
+			{
+				debugoverlay->AddLineOverlayAlpha(CWaypoints::getWaypoint(iCurrentNode)->getOrigin()+Vector(0,0,8.0f),CWaypoints::getWaypoint(iParent)->getOrigin()+Vector(0,0,8.0f),255,255,255,255,false,5.0f);
+			}
+		}
 
 		iCurrentNode = iParent;
 	}

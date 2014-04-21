@@ -95,12 +95,11 @@ class CFindPathTask : public CBotTask
 public:
 	CFindPathTask ()
 	{
-		m_bGetPassedVector = false;
 		m_pEdict = NULL;
 		m_LookTask = LOOK_WAYPOINT;
 		m_iWaypointId = -1;
-		m_bCompleteSeeTaskEdict = false;
-		m_bFailTaskEdictDied = false;
+		m_flags.m_data = 0;
+		m_fRange = 0;
 	}
 
 	CFindPathTask ( Vector vOrigin, eLookTask looktask = LOOK_WAYPOINT )
@@ -109,8 +108,8 @@ public:
 		m_pEdict = NULL; // no edict
 		m_LookTask = looktask;
 		m_iWaypointId = -1;
-		m_bCompleteSeeTaskEdict = false;
-		m_bFailTaskEdictDied = false;
+		m_flags.m_data = 0;
+		m_fRange = 0;
 	}
 
 	// having this constructor saves us trying to find the goal waypoint again if we
@@ -119,31 +118,82 @@ public:
 
 	CFindPathTask ( edict_t *pEdict );
 
-	void getPassedVector () { m_bGetPassedVector = true; }
+	void setRange ( float fRange ) { m_fRange = fRange; }
 
-	void setNoInterruptions () { clearFailInterrupts(); m_bNoInterruptions = true; }
+	void getPassedVector () { m_flags.bits.m_bGetPassedVector = true; }
+
+	void dontGoToEdict () { m_flags.bits.m_bDontGoToEdict = true; }
+
+	void setNoInterruptions () { clearFailInterrupts(); m_flags.bits.m_bNoInterruptions = true; }
 
 	void execute ( CBot *pBot, CBotSchedule *pSchedule );
 
-	void completeIfSeeTaskEdict () { m_bCompleteSeeTaskEdict = true; }
+	void completeOutOfRangeFromEdict () { m_flags.bits.m_bCompleteOutOfRangeEdict = true; }
 
-	void failIfTaskEdictDead () { m_bFailTaskEdictDied = true; }
+	void completeInRangeFromEdict () { m_flags.bits.m_bCompleteInRangeOfEdict = true; }
+
+	void completeIfSeeTaskEdict () { m_flags.bits.m_bCompleteSeeTaskEdict = true; }
+
+	void failIfTaskEdictDead () { m_flags.bits.m_bFailTaskEdictDied = true; }
 
 	void init ();
+
+	void setLookTask ( eLookTask task ) { m_LookTask = task; }
 
 	virtual void debugString ( char *string );
 private:
 
-	bool m_bNoInterruptions;
-	bool m_bGetPassedVector;
-	bool m_bDontLookAtWaypoints;
+
 	Vector m_vVector;
 	MyEHandle m_pEdict;
 	eLookTask m_LookTask;
 	int m_iInt;
 	int m_iWaypointId;
-	bool m_bCompleteSeeTaskEdict;
-	bool m_bFailTaskEdictDied;
+	float m_fRange;
+
+	union
+	{
+		byte m_data;
+
+		struct
+		{
+		bool m_bNoInterruptions:1;	// quick path finding - non concurrent
+		bool m_bGetPassedVector:1;  // receive vector from previous task
+		bool m_bDontLookAtWaypoints:1; 
+		bool m_bCompleteSeeTaskEdict:1; // complete when see the edict
+		bool m_bFailTaskEdictDied:1; // fail if the edict no longer exists or dead
+		bool m_bDontGoToEdict:1; // don't complete if nearby edict
+		bool m_bCompleteOutOfRangeEdict:1; // complete if outside of m_fRange from edict (grenades)
+		bool m_bCompleteInRangeOfEdict:1;
+		}bits;
+	}m_flags;
+	
+	//bool m_bWaitUntilReached;
+};
+
+class CBotTF2AttackSentryGunTask : public CBotTask
+{
+public:
+	CBotTF2AttackSentryGunTask ( edict_t *pSentryGun, CBotWeapon *pWeapon );
+
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void init ()
+	{
+		m_fTime = 0.0f;
+	}
+
+	void debugString ( char *string );
+private:
+	
+	MyEHandle m_pSentryGun;
+	CBotWeapon *m_pWeapon;
+	int m_iStartingWaypoint;
+	int m_iSentryWaypoint;
+	Vector m_vStart;
+	Vector m_vHide;
+	float m_fDist;
+	float m_fTime;
 };
 
 #define TASK_TF2_DEMO_STATE_LAY_BOMB 0
@@ -572,7 +622,7 @@ public:
 class CBotTFEngiBuildTask : public CBotTask
 {
 public:
-	CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0 );
+	CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0, float fRadius = 0 );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -587,6 +637,8 @@ private:
 	float m_fNextUpdateAngle;
 	Vector m_vAimingVector;
 	int m_iArea;
+	Vector m_vBaseOrigin;
+	float m_fRadius;
 };
 
 
@@ -604,6 +656,23 @@ public:
 
 private:
 	MyEHandle m_pPlayer;
+	float m_fTime;
+};
+
+class CDODWaitForGrenadeTask : public CBotTask
+{
+public:
+	CDODWaitForGrenadeTask ( edict_t *pGrenade )
+	{
+		m_pGrenade = pGrenade;
+		m_fTime = 0.0f;
+	}
+
+	virtual void debugString ( char *string );
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+private:
+	MyEHandle m_pGrenade;
 	float m_fTime;
 };
 

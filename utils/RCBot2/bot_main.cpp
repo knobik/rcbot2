@@ -179,6 +179,10 @@ ConVar rcbot_listen_dist("rcbot_listen_dist","512",0,"the distance for bots to h
 ConVar rcbot_footstep_speed("rcbot_footstep_speed","250",0,"the speed players can go when you first hear them make footsteps");
 ConVar rcbot_bot_squads_percent("rcbot_bot_squads_percent","50",0,"the percentage of time bots make squads with other bots");
 ConVar rcbot_tooltips("rcbot_tooltips","1",0,"Enables/disables help tooltips");
+ConVar rcbot_debug_notasks("rcbot_debug_notasks","0",0,"Debug command, stops bots from doing tasks by themselves");
+ConVar rcbot_debug_dont_shoot("rcbot_debug_dont_shoot","0",0,"Debug command, stops bots from shooting everyone");
+ConVar rcbot_debug_show_route("rcbot_debug_show_route","0",0,"Debug command, shows waypoint route to host");
+//ConVar rcbot_util_learning("rcbot_util_learning","0",0,"Experimental");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 
@@ -194,11 +198,12 @@ CON_COMMAND( maptime, "get map time" )
 	Msg("gpGlobals->realtime = %f\n",gpGlobals->realtime);
 	Msg("gpGlobals->curtime = %f\n",gpGlobals->curtime);
 }*/
-//ConVar rcbot_override("rcbot_override","1",0,"if 1 the plugin will override other bots runplayer functions");
+
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");
 ConVar *mp_teamplay = NULL;
 ConVar *sv_tags = NULL;
+ConVar *mp_friendlyfire = NULL;
 ConCommandBase *puppet_bot_cmd = NULL;
 
 // Interfaces from the engine*/
@@ -696,6 +701,7 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 
 	sv_cheats = cvar->FindVar("sv_cheats");
 	sv_gravity = cvar->FindVar("sv_gravity");
+	mp_friendlyfire = cvar->FindVar("mp_friendlyfire");
 	sv_tags = cvar->FindVar("sv_tags");
 	puppet_bot_cmd = cvar->FindCommand("bot");
 

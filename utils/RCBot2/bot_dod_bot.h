@@ -139,6 +139,8 @@ public:
 	void removeBomb () { m_bHasBomb = false; }
 	void bombEvent ( int iEvent, int iCP, int iTeam );
 
+	void friendlyFire ( edict_t *pEdict );
+
 	void modThink ();
 
 	virtual void init (bool bVarInit=false);
@@ -149,7 +151,7 @@ public:
 	//Vector getAimVector ( edict_t *pEntity );
 	virtual void modAim ( edict_t *pEntity, Vector &v_origin, 
 		Vector *v_desired_offset, Vector &v_size,
-		float fDist);
+		float fDist, float fDist2D);
 
 	bool startGame ();
 

@@ -46,8 +46,67 @@
 #include "bot_dod_bot.h"
 #include "bot_script.h"
 #include "bot_squads.h"
+#include "bot_waypoint_visibility.h"
 
 extern ConVar *sv_gravity;
+// desx and desy must be normalized
+// desx = distance (should be 2d)
+// desy = height offset
+void getGrenadeAngle ( float v, float g, float desx, float desy, float *fa1, float *fa2 )
+{
+	//normalize
+	float fmax = MAX(v,MAX(g,MAX(desx,desy)));
+
+	v /= fmax;
+	g /= fmax;
+	desx /= fmax;
+	desy /= fmax;
+	double vsquared = v*v;
+	double vfourth = vsquared * vsquared;
+	double x2 = desx * desx;
+	double gx2 = g * x2;
+	double twoyv2 = 2*desy*vsquared;
+	double fourabplusa = vfourth - g*(gx2+twoyv2);
+	double topplus = vsquared + sqrt(fourabplusa);
+	double topminus = vsquared - sqrt(fourabplusa);
+	double bottom = g*desx;
+
+	*fa1 = (float)atan(topplus / bottom);
+	*fa2 = (float)atan(topminus / bottom);
+
+	*fa1 = RAD2DEG(*fa1);
+	*fa2 = RAD2DEG(*fa2);
+
+	return;
+}
+
+float getGrenadeZ ( edict_t *pShooter, edict_t *pTarget, Vector vOrigin, Vector vTarget, float fInitialSpeed ) 
+{
+	float fAngle1,fAngle2;
+
+	Vector vForward;
+	QAngle angles;
+
+	Vector v_comp = (vTarget-vOrigin);
+
+	float fDist2D = v_comp.Length2D();
+	float fDist3D = v_comp.Length();
+
+	getGrenadeAngle(fInitialSpeed,sv_gravity->GetFloat(),fDist2D,vTarget.z-vOrigin.z,&fAngle1,&fAngle2);
+
+	angles = QAngle(0,0,0);
+	// do a quick traceline to check which angle to choose (minimum angle = straight)
+
+	if (CBotGlobals::isShotVisible(pShooter,vOrigin,pTarget))
+		angles.x = -MIN(fAngle1,fAngle2);
+	else
+		angles.x = -MAX(fAngle1,fAngle2);
+
+	AngleVectors(angles,&vForward);
+	
+	// add gravity height
+	return (vOrigin + (vForward*fDist3D)).z;
+}
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Tasks
 
@@ -427,7 +486,38 @@ void CBotDODBomb :: debugString ( char *string )
 }
 
 //////
+void CDODWaitForGrenadeTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
 
+	if ( m_pGrenade.get() == NULL )
+	{
+		complete();
+	}
+	else if ( !CBotGlobals::entityIsAlive(m_pGrenade) )
+		complete();
+	else if ( m_fTime == 0 )
+	{
+		CDODBot *pDODBot = (CDODBot*)pBot;
+
+		m_fTime = engine->Time() + randomFloat(3.0f,5.0f);
+
+		pDODBot->prone();
+	}
+	else if ( m_fTime < engine->Time() )
+	{
+		CDODBot *pDODBot = (CDODBot*)pBot;
+
+		complete();
+
+		pDODBot->unProne();
+	}
+}
+
+void CDODWaitForGrenadeTask :: debugString ( char *string )
+{
+	sprintf(string,"CDODWaitForGrenadeTask");
+}
+//////////
 
 void CDODWaitForBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
@@ -821,7 +911,7 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	while ( (i < areas.size()) && !found )
 	{
-		found = areas[i] == m_iArea;
+		found = (areas[i] == m_iArea);
 		i++;
 	}
 
@@ -1528,7 +1618,7 @@ void CBotTF2EngiLookAfter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 }
 
 ////////////////////////
-CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea )
+CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea, float fRadius )
 {
 	m_iObject = iObject;
 	m_vOrigin = vOrigin;
@@ -1538,6 +1628,8 @@ CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin,
 	m_fNextUpdateAngle = 0.0f;
 	m_vAimingVector = vAiming;
 	m_iArea = iArea;
+	m_vBaseOrigin = vOrigin;
+	m_fRadius = fRadius;
 }
 	
 void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -1574,7 +1666,16 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		pBot->resetLookAroundTime();
 
 		if ( CTeamFortress2Mod::buildingNearby(pBot->getTeam(),m_vOrigin) )
-			m_vOrigin = m_vOrigin + Vector(randomFloat(-200.0f,200.0f),randomFloat(-200.0f,200.0f),0);
+		{
+			if (m_fRadius > 0.0f)
+				m_vOrigin = m_vBaseOrigin + Vector(randomFloat(-m_fRadius,m_fRadius),randomFloat(-m_fRadius,m_fRadius),0);
+			else
+			{
+				// can't build here
+				fail();
+				return; 
+			}
+		}
 
 		m_fTime = engine->Time() + randomFloat(4.0f,8.0f);
 
@@ -1657,16 +1758,14 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			fail();
 		else if ( state == 3 ) // failed , try again 
 		{
-			IBotController *pController = pBot->getController();
-
-			Vector forward,right,up;
-			
-			AngleVectors(pController->GetLocalAngles(),&forward,&right,&up);
-
-			if ( randomInt(0,1) )
-				m_vOrigin = m_vOrigin + right*randomFloat(16.0f,48.0f);
-			else 
-				m_vOrigin = m_vOrigin - right*randomFloat(16.0f,48.0f);
+			if (m_fRadius > 0.0f)
+				m_vOrigin = m_vBaseOrigin + Vector(randomFloat(-m_fRadius,m_fRadius),randomFloat(-m_fRadius,m_fRadius),0);
+			else
+			{
+				// can't build here
+				fail();
+				return; 
+			}
 		}
 	}
 }
@@ -1713,17 +1812,15 @@ CFindPathTask :: CFindPathTask ( int iWaypointId, eLookTask looktask )
 	m_iWaypointId = iWaypointId;
 	m_LookTask = looktask;
 	m_vVector = CWaypoints::getWaypoint(iWaypointId)->getOrigin();
-	m_bFailTaskEdictDied = false;
-	m_bCompleteSeeTaskEdict = false;
+	m_flags.m_data = 0;
+	m_fRange = 0.0f;
 }
 
 void CFindPathTask :: init ()
 {
-	m_bNoInterruptions = false;
-	m_bGetPassedVector = false;
+	m_flags.m_data = 0;
 	m_iInt = 0;
-	m_bCompleteSeeTaskEdict = false;
-	m_bFailTaskEdictDied = false;
+	m_fRange = 0.0f;
 	//setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
 }
 
@@ -1733,7 +1830,8 @@ CFindPathTask :: CFindPathTask ( edict_t *pEdict )
 	m_pEdict = pEdict;
 	m_vVector = CBotGlobals::entityOrigin(pEdict);
 	m_LookTask = LOOK_WAYPOINT;
-	m_bCompleteSeeTaskEdict = false;
+	m_flags.m_data = 0;
+	m_fRange = 0.0f;
 }
 
 void CFindPathTask :: debugString ( char *string )
@@ -1773,7 +1871,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 			                   m_vVector,
 							   &bFail,
 							   (m_iInt==0),
-							   m_bNoInterruptions, 
+							   m_flags.bits.m_bNoInterruptions, 
 							   m_iWaypointId,
 							   pBot->getConditions() ) )
 		{
@@ -1804,11 +1902,11 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( pBot->m_fWaypointStuckTime == 0 )
 			pBot->m_fWaypointStuckTime = engine->Time() + randomFloat(5.0f,10.0f);
 
-		if ( m_bNoInterruptions )
-		{
-			pBot->debugMsg(BOT_DEBUG_NAV,"Found route");
-			complete(); // ~fin~
-		}
+		//if ( m_bNoInterruptions )
+		//{
+			//pBot->debugMsg(BOT_DEBUG_NAV,"Found route");
+			//complete(); // ~fin~
+		//}
 
 		if ( !pBot->getNavigator()->hasNextPoint() )
 		{
@@ -1828,11 +1926,23 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 			{
 				if ( CBotGlobals::entityIsValid(m_pEdict) )
 				{
-					if ( pBot->isVisible(m_pEdict) )
+					pBot->lookAtEdict(m_pEdict);
+
+					if ( m_flags.bits.m_bCompleteInRangeOfEdict && m_flags.bits.m_bCompleteSeeTaskEdict )
+					{
+						// complete if inrange AND see edict
+						if ( ( m_flags.bits.m_bCompleteInRangeOfEdict && (pBot->distanceFrom(m_pEdict)<m_fRange)) && pBot->isVisible(m_pEdict) )
+							complete();
+					}
+					else if ( !m_flags.bits.m_bDontGoToEdict && pBot->isVisible(m_pEdict) )
 					{
 						if ( pBot->distanceFrom(m_pEdict) < pBot->distanceFrom(pBot->getNavigator()->getNextPoint()) )
 							complete();
-					}
+					} 
+					else if ( m_flags.bits.m_bCompleteOutOfRangeEdict && (pBot->distanceFrom(m_pEdict)>m_fRange) )
+						complete();
+					else if ( m_flags.bits.m_bCompleteInRangeOfEdict && (pBot->distanceFrom(m_pEdict)<m_fRange))
+						complete();
 				}
 				else
 					fail();
@@ -1847,13 +1957,13 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 	if ( m_pEdict.get() != NULL ) // task edict
 	{
-		if ( m_bCompleteSeeTaskEdict )
+		if ( m_flags.bits.m_bCompleteSeeTaskEdict )
 		{
 			if ( pBot->isVisible(m_pEdict.get()) && (pBot->distanceFrom(CBotGlobals::entityOrigin(m_pEdict)) < CWaypointLocations::REACHABLE_RANGE) )
 				complete();
 		}
 
-		if ( m_bFailTaskEdictDied )
+		if ( m_flags.bits.m_bFailTaskEdictDied )
 		{
 			if ( !CBotGlobals::entityIsAlive(m_pEdict) )
 			{
@@ -1861,6 +1971,8 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 			}
 		}
 	}
+	else if ( m_flags.bits.m_bFailTaskEdictDied )
+		fail();
 }
 
 void CMoveToTask :: init () 
@@ -2516,7 +2628,7 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	// time out
 	if ( m_fTime < engine->Time() )
 		fail();
-	else if ( weapon->getID() != TF2_WEAPON_BUILDER )
+	else if ( !weapon || (weapon->getID() != TF2_WEAPON_BUILDER) )
 	{
 		helpers->ClientCommand(pBot->getEdict(),"build 3 0");
 	}
@@ -2709,10 +2821,12 @@ void CThrowGrenadeTask ::init()
 	m_fTime = 0;
 }
 
+
 void CThrowGrenadeTask::debugString(char *string)
 {
 	sprintf(string,"CThrowGrenadeTask\nm_vLoc =(%0.4f,%0.4f,%0.4f)\nfTime = %0.4f",m_vLoc.x,m_vLoc.y,m_vLoc.z,m_fTime);	
 }
+
 void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	if ( m_fTime == 0 )
@@ -2722,7 +2836,7 @@ void CThrowGrenadeTask ::execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( sv_gravity )
 		{
 			float fFraction = pBot->distanceFrom(m_vLoc)/MAX_GREN_THROW_DIST;
-
+			//m_vLoc.z = m_vLoc.z + getGrenadeZ(pBot->getOrigin(),m_vLoc,m_pWeapon->getProjectileSpeed());
 			m_vLoc.z = m_vLoc.z + (sv_gravity->GetFloat() * randomFloat(1.5f,2.5f) * fFraction);
 		}
 	}
@@ -3231,6 +3345,12 @@ CBotTF2DemomanPipeEnemy :: CBotTF2DemomanPipeEnemy ( Vector vStand, Vector vBlas
 
 void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	if ( m_pEnemy.get() == NULL )
+	{
+		fail();
+		return;
+	}
+
 	if ( pBot->distanceFrom(m_vStand) > 200 )
 		fail();
 
@@ -3240,9 +3360,9 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		if ( sv_gravity )
 		{
-			float fFraction = pBot->distanceFrom(m_vEnemy)/TF2_GRENADESPEED;
+			//float fFraction = pBot->distanceFrom(m_vEnemy)/TF2_GRENADESPEED;
 
-			m_vAim.z = m_vEnemy.z + (sv_gravity->GetFloat() * randomFloat(0.9f,1.1f) * fFraction);
+			m_vAim.z = m_vEnemy.z + getGrenadeZ(pBot->getEdict(),m_pEnemy,pBot->getOrigin(),m_vEnemy,TF2_GRENADESPEED);//();//(sv_gravity->GetFloat() * randomFloat(0.9f,1.1f) * fFraction);
 
 			//fFraction = sv_gravity->GetFloat() / TF2_GRENADESPEED;
 		}
@@ -3486,6 +3606,105 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 			complete();
 	}
 
+}
+
+
+///////////
+
+CBotTF2AttackSentryGunTask::CBotTF2AttackSentryGunTask ( edict_t *pSentryGun, CBotWeapon *pWeapon )
+{
+	m_pSentryGun = pSentryGun;
+	m_pWeapon = pWeapon;
+}
+
+void CBotTF2AttackSentryGunTask::execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	if ( m_pSentryGun.get() == NULL )
+	{
+		fail();
+		return;
+	}
+
+	if ( m_fTime == 0.0f )
+	{
+		float fMinDist = 9999;
+		float fDist;
+
+		CWaypointVisibilityTable *table = CWaypoints::getVisiblity();
+
+		m_fTime = engine->Time() + randomFloat(8.0f,14.0f);
+
+		m_iSentryWaypoint = CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),200.0f,-1);
+
+		m_iStartingWaypoint = pBot->getNavigator()->getCurrentWaypointID();
+
+		m_vStart = pBot->getOrigin();
+		m_vHide = m_vStart;
+
+		CWaypoint *pWpt = CWaypoints::getWaypoint(m_iStartingWaypoint);
+
+		for ( int i = 0; i < pWpt->numPaths(); i ++ )
+		{
+			if ( table->GetVisibilityFromTo(pWpt->getPath(i),m_iSentryWaypoint) == false )
+			{
+				CWaypoint *pPath = CWaypoints::getWaypoint(pWpt->getPath(i));
+
+				if ( (fDist = pPath->distanceFrom(m_vStart)) < fMinDist )
+				{
+					fMinDist = fDist;
+					m_vHide = pPath->getOrigin();
+				}
+			}
+
+			pWpt->getPath(i);
+		}
+
+		// hide waypoint = 
+	}
+	else if ( m_fTime < engine->Time() )
+	{
+		complete();
+	}
+
+	if ( pBot->getCurrentWeapon() != m_pWeapon )
+	{
+		pBot->selectBotWeapon(m_pWeapon);
+		return;
+	}
+
+	if ( m_pWeapon->outOfAmmo(pBot) )
+		complete();
+
+	pBot->lookAtEdict(m_pSentryGun);
+	pBot->setLookAtTask(LOOK_EDICT);
+
+	if ( m_pWeapon->needToReload(pBot) || (CClassInterface::getSentryEnemy(m_pSentryGun) == pBot->getEdict()) )
+	{
+		if ( pBot->distanceFrom(m_vHide) > 80.0f ) 
+			pBot->setMoveTo(m_vHide);
+		else
+		{
+			if ( m_pWeapon->needToReload(pBot) )
+			{
+				if ( randomInt(0,1) ) 
+					pBot->reload();
+			}
+			pBot->stopMoving();
+		}
+	}
+
+	if ( pBot->isVisible(m_pSentryGun) )
+	{
+		// use this shooting method below
+		pBot->wantToShoot(false);
+		// attack
+		pBot->handleAttack(m_pWeapon,m_pSentryGun);
+	}
+}
+
+void CBotTF2AttackSentryGunTask::debugString ( char *string )
+{
+	sprintf(string,"CBotTF2AttackSentryGunTask");
 }
 
 /////////////

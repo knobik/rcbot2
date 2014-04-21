@@ -171,11 +171,16 @@ void CPoints :: pointCaptured ( int iTeamCaptured, const char *szName )
 {
 	CResetPoint *p = CPoints::getPoint(szName);
 
-	m_BlueAttack.clear(); 
-	m_RedAttack.clear(); 
-	m_BlueDefend.clear(); 
-	m_RedDefend.clear(); 
+	if ( !CTeamFortress2Mod::dontClearPoints() )
+	{
+		m_BlueAttack.clear(); 
+		m_RedAttack.clear(); 
+		m_BlueDefend.clear(); 
+		m_RedDefend.clear(); 
+	}
+
 	m_iValidAreas = 0;
+
 	//m_ValidAreas.clear();
 
 	if ( p )
@@ -196,6 +201,28 @@ void CPoints :: pointCaptured ( int iTeamCaptured, const char *szName )
 					m_BlueDefend.push_back((*points)[i].getArea());
 				else if ( (*points)[i].getStyle () == POINT_ATTACK )
 					m_BlueAttack.push_back((*points)[i].getArea());
+				else if ( (*points)[i].getStyle () == POINT_STOP_ATTACK )
+				{
+					for ( unsigned int j = 0; j < m_BlueAttack.size(); j ++ )
+					{
+						if ( m_BlueAttack[j] == (*points)[i].getArea() )						
+						{
+							m_BlueAttack.erase(m_BlueAttack.begin()+j);
+							break;
+						}
+					}
+				}
+				else if ( (*points)[i].getStyle () == POINT_STOP_DEFEND )
+				{
+					for ( unsigned int j = 0; j < m_BlueDefend.size(); j ++ )
+					{
+						if ( m_BlueDefend[j] == (*points)[i].getArea() )						
+						{
+							m_BlueAttack.erase(m_BlueDefend.begin()+j);
+							break;
+						}
+					}
+				}
 			}
 		}
 
@@ -211,6 +238,28 @@ void CPoints :: pointCaptured ( int iTeamCaptured, const char *szName )
 					m_RedDefend.push_back((*points)[i].getArea());
 				else if ( (*points)[i].getStyle () == POINT_ATTACK )
 					m_RedAttack.push_back((*points)[i].getArea());
+				else if ( (*points)[i].getStyle () == POINT_STOP_ATTACK )
+				{
+					for ( unsigned int j = 0; j < m_RedAttack.size(); j ++ )
+					{
+						if ( m_RedAttack[j] == (*points)[i].getArea() )						
+						{
+							m_RedAttack.erase(m_RedAttack.begin()+j);
+							break;
+						}
+					}
+				}
+				else if ( (*points)[i].getStyle () == POINT_STOP_DEFEND )
+				{
+					for ( unsigned int j = 0; j < m_RedDefend.size(); j ++ )
+					{
+						if ( m_RedDefend[j] == (*points)[i].getArea() )						
+						{
+							m_RedDefend.erase(m_RedDefend.begin()+j);
+							break;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -266,13 +315,23 @@ void CPoints :: resetPoints()
 	}
 }
 
+void CPoints :: toBits ( vector<int> *point_array, int *iBits )
+{
+	*iBits = 0;
+	
+	for ( unsigned int i = 0; i < point_array->size(); i ++ )
+	{
+		*iBits |= (1<<((*point_array)[i]));
+	}
+}
 // TODO : convert to [vector] input
 void CPoints :: getAreas( int iTeam, int *iDefend, int *iAttack )
 {
 	if ( m_points.size() )
-	{
+	{		
 		if ( iTeam == TF2_TEAM_BLUE )
 		{
+			//*iAttack = toBits(m_BlueAttack
 			if ( m_BlueAttack.size() )
 				*iAttack = m_BlueAttack[0];
 			if ( m_BlueDefend.size() )
@@ -363,6 +422,10 @@ void CPoints :: loadMapScript ( )
 				{
 					CTeamFortress2Mod::setPointOpenTime(atoi(&line[18]));
 				}
+				else if ( strncmp(&line[1],"dont_clear_points:",18) == 0 )
+				{
+					CTeamFortress2Mod::setDontClearPoints(line[19]=='1');
+				}
 				else if ( strncmp(&line[1],"attack_defend_map:",18) == 0 )
 				{
 					CTeamFortress2Mod::setAttackDefendMap(line[19]=='1');
@@ -450,6 +513,10 @@ void CPoints :: loadMapScript ( )
 					style = POINT_ATTACK;
 				else if ( strncmp("defend:",&line[i],7) == 0 )
 					style = POINT_DEFEND;
+				else if ( strncmp("stop_defending:",&line[i],15) == 0 )
+					style = POINT_STOP_DEFEND;
+				else if ( strncmp("stop_attacking:",&line[i],15) == 0 )
+					style = POINT_STOP_ATTACK;
 				else
 				{
 					CBotGlobals::botMessage(NULL,0,"SCRIPT Syntax Error line : %d, missing attack/defend",linenum);
