@@ -149,7 +149,23 @@ private:
 	int m_iWeaponID;
 };
 
+class CTF2BroadcastRoundWin : public IBotFunction
+{
+public:
+	CTF2BroadcastRoundWin ( int iTeamWon, bool bFullRound )
+	{
+		m_iTeam = iTeamWon;
+		m_bFullRound = bFullRound;
+	}
 
+	void execute ( CBot *pBot )
+	{
+		((CBotTF2*)pBot)->roundWon(m_iTeam,m_bFullRound);
+	}
+private:
+	int m_iTeam;
+	bool m_bFullRound;
+};
 ////////////////////////////////////////////////
 
 
@@ -524,6 +540,16 @@ void CTF2UpgradeObjectEvent :: execute ( IBotEventInterface *pEvent )
 	}
 }
 
+void CTF2RoundWinEvent :: execute (IBotEventInterface *pEvent )
+{
+	CTF2BroadcastRoundWin *function = new CTF2BroadcastRoundWin(pEvent->getInt("team"),pEvent->getInt("full_round") == 1);
+
+	CBots::botFunction(function);
+
+	delete function;
+}
+
+
 void CTF2SetupFinished ::execute(IBotEventInterface *pEvent )
 {
 	CTeamFortress2Mod::roundStarted();
@@ -661,7 +687,7 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 		}
 	}
 
-	CPoints::pointBeingCaptured(capteam,cpname);
+	CPoints::pointBeingCaptured(capteam,cpname,cappers[0]);
 
 	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(capteam,Vector(0,0,0),EVENT_CAPPOINT);
 
@@ -1000,6 +1026,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CDODBombDefused());
 	addEvent(new CDODPointCaptured());
 	addEvent(new CDODFireWeaponEvent());
+	addEvent(new CTF2RoundWinEvent());
 	
 /*
 pumpkin_lord_summoned 

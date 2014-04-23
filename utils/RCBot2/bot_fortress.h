@@ -254,6 +254,8 @@ public:
 
 	virtual void enemyLost (edict_t *pEnemy);
 
+	virtual void updateConditions();
+
 	virtual void shot ( edict_t *pEnemy );
 
 	virtual int engiBuildObject ( int *iState, eEngiBuild iObject, float *fTime, int *iTries );
@@ -469,6 +471,7 @@ protected:
 	MyEHandle m_pNearestEnemySentry;
 	MyEHandle m_pNearestAllySentry;
 	MyEHandle m_pNearestEnemyTeleporter;
+	MyEHandle m_pNearestEnemyDisp;
 	MyEHandle m_pNearestTeleEntrance;
 
 	MyEHandle m_pFlag;
@@ -552,6 +555,8 @@ protected:
 
 	// currently unused
 	float m_fCallMedicTime[MAX_PLAYERS]; // for every player ID is kept the last time they called medic
+
+	int m_iLastFailSentryWpt;
 };
 //
 //
@@ -650,6 +655,10 @@ public:
 	void pointCaptured ();
 
 	void waitRemoveSap ();
+	
+	void roundWon ( int iTeam, bool bFullRound );
+
+	void changeClass ();
 
 	virtual bool needAmmo();
 

@@ -40,6 +40,23 @@ struct edict_t;
 #include "bot_const.h"
 #include "bot_fortress.h"
 
+class IBotTaskInterrupt
+{
+public:
+	virtual bool isInterrupted ( CBot *pBot, bool *bFailed, bool *bCompleted ) = 0;
+};
+
+class CBotTF2EngineerInterrupt
+{
+public:
+	CBotTF2EngineerInterrupt( CBot *pBot );
+
+	bool isInterrupted ( CBot *pBot, bool *bFailed, bool *bCompleted );
+private:
+	float m_fPrevSentryHealth;
+	MyEHandle m_pSentryGun;
+};
+
 class CBotTask
 {
 public:	
@@ -58,6 +75,7 @@ public:
 	//void setEdict ( edict_t *pEdict );
 	void setFailInterrupt ( int iInterruptHave, int iInterruptDontHave = 0 );
 	void setCompleteInterrupt ( int iInterruptHave, int iInterruptDontHave = 0 );
+	void setInterruptFunction ( IBotTaskInterrupt *func ) { m_pInterruptFunc = func; }
 	virtual eTaskState isInterrupted (CBot *pBot);
 	void fail ();
 	void complete ();
@@ -70,6 +88,7 @@ public:
 
 protected:
 
+	IBotTaskInterrupt *m_pInterruptFunc;
 	//void setID();
 	// flags
 	int m_iFlags;
@@ -100,6 +119,7 @@ public:
 		m_iWaypointId = -1;
 		m_flags.m_data = 0;
 		m_fRange = 0;
+		m_iDangerPoint = -1;
 	}
 
 	CFindPathTask ( Vector vOrigin, eLookTask looktask = LOOK_WAYPOINT )
@@ -110,6 +130,7 @@ public:
 		m_iWaypointId = -1;
 		m_flags.m_data = 0;
 		m_fRange = 0;
+		m_iDangerPoint = -1;
 	}
 
 	// having this constructor saves us trying to find the goal waypoint again if we
@@ -119,6 +140,8 @@ public:
 	CFindPathTask ( edict_t *pEdict );
 
 	void setRange ( float fRange ) { m_fRange = fRange; }
+
+	void setDangerPoint ( int iWpt ) { m_iDangerPoint = iWpt; }
 
 	void getPassedVector () { m_flags.bits.m_bGetPassedVector = true; }
 
@@ -149,6 +172,7 @@ private:
 	eLookTask m_LookTask;
 	int m_iInt;
 	int m_iWaypointId;
+	int m_iDangerPoint;
 	float m_fRange;
 
 	union
@@ -194,6 +218,32 @@ private:
 	Vector m_vHide;
 	float m_fDist;
 	float m_fTime;
+};
+
+//defensive technique
+class CBotTF2Spam : public CBotTask
+{
+public:
+	CBotTF2Spam ( Vector vStart, Vector vTarget, CBotWeapon *pWeapon );
+
+	CBotTF2Spam ( CBot *pBot, Vector vStart, int iYaw, CBotWeapon *pWeapon );
+
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"CBotTF2Spam");
+	}
+
+	float getDistance ();
+private:
+	
+	Vector m_vTarget;
+	Vector m_vStart;
+	CBotWeapon *m_pWeapon;
+	float m_fTime;
+
+	float m_fNextAttack;
 };
 
 #define TASK_TF2_DEMO_STATE_LAY_BOMB 0

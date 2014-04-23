@@ -38,6 +38,7 @@
 #include "bot_weapons.h"
 #include "bot_globals.h"
 #include "bot_getprop.h"
+#include "bot_waypoint_locations.h"
 ////////////////////////////////////
 // these must match the SCHED IDs
 const char *szSchedules[SCHED_MAX+1] = 
@@ -352,8 +353,12 @@ void CBotSpySapBuildingSched :: init ()
 
 CBotSpySapBuildingSched :: CBotSpySapBuildingSched ( edict_t *pBuilding, eEngiBuild id )
 {
-	addTask(new CFindPathTask(pBuilding)); // first
+	CFindPathTask *findpath = new CFindPathTask(pBuilding);
+
+	addTask(findpath); // first
 	addTask(new CBotTF2SpySap(pBuilding,id)); // second
+
+	findpath->setDangerPoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(pBuilding),200.0f,-1));
 }
 
 ///////////////////////////////////////////

@@ -779,7 +779,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 									  bool bRestart, 
 									  bool bNoInterruptions, 
 									  int iGoalId,
-									  int iConditions )
+									  int iConditions, int iDangerId )
 {
 	extern ConVar bot_pathrevs;
 	extern ConVar rcbot_debug_show_route;
@@ -876,6 +876,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 
 	CWaypoint *currWpt;
 	CWaypoint *succWpt;
+	CWaypointVisibilityTable *pVisTable = CWaypoints::getVisiblity();
 
 	float fCost;
 	float fOldCost;
@@ -971,7 +972,15 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 
 			if ( fBeliefSensitivity > 1.6f )
 			{
-				succ->setCost(fCost+(m_fBelief[iSucc]*fBeliefSensitivity));
+				if ( iDangerId != -1 )
+				{
+					if ( !pVisTable->GetVisibilityFromTo(iDangerId,iSucc) )
+						succ->setCost(fCost);
+					else
+						succ->setCost(fCost+(m_fBelief[iSucc]*fBeliefSensitivity*2));
+				}
+				else
+					succ->setCost(fCost+(m_fBelief[iSucc]*fBeliefSensitivity));
 				//succ->setCost(fCost-(MAX_BELIEF-m_fBelief[iSucc]));
 				//succ->setCost(fCost-((MAX_BELIEF*fBeliefSensitivity)-(m_fBelief[iSucc]*(fBeliefSensitivity-m_pBot->getProfile()->m_fBraveness))));	
 			}
@@ -2447,7 +2456,7 @@ CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, 
 	return pWpt;
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, int iSearchFlags )
+CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, int iSearchFlags, int iIgnore )
 {
 	register short int i;
 	static short int size; 
@@ -2459,6 +2468,9 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, 
 
 	for ( i = 0; i < size; i ++ )
 	{
+		if ( iIgnore == i )
+			continue;
+
 		pWpt = &m_theWaypoints[i];
 
 		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) )// && (pWpt->getArea() == iArea) )
@@ -2469,7 +2481,7 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, 
 					continue;
 				else if ( bForceArea && (pWpt->getArea() != iArea) )
 					continue;
-			
+
 				goals.Add(pWpt);
 			}
 		}

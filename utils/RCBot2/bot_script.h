@@ -107,7 +107,7 @@ public:
 	
 	static void pointCaptured ( int iTeamCaptured, const char *szName );
 
-	static void pointBeingCaptured ( int iTeam, const char *szName );
+	static void pointBeingCaptured ( int iTeam, const char *szName, int capper );
 
 	static float getPointCaptureTime ( unsigned int id );
 

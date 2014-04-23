@@ -341,13 +341,13 @@ bool CBotGlobals :: isVisible ( edict_t *pPlayer, Vector vSrc, edict_t *pDest )
 	return (traceVisible(pDest));
 }
 
-bool CBotGlobals :: isShotVisible ( edict_t *pPlayer, Vector vSrc, edict_t *pDest )
+bool CBotGlobals :: isShotVisible ( edict_t *pPlayer, Vector vSrc, Vector vDest, edict_t *pDest )
 {
 	//CTraceFilterWorldAndPropsOnly filter;//	CTraceFilterHitAll filter;
 
 	CTraceFilterVis filter = CTraceFilterVis(pPlayer,pDest);
 
-	traceLine (vSrc,entityOrigin(pDest),MASK_SHOT,&filter);
+	traceLine (vSrc,vDest,MASK_SHOT,&filter);
 
 	return (traceVisible(pDest));
 }

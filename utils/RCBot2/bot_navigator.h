@@ -62,7 +62,7 @@ public:
 	virtual void init () = 0;
 
 	// returns true when working out route finishes, not if successful
-	virtual bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false, int iGoalId = -1, int iConditions = 0 ) = 0;
+	virtual bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false, int iGoalId = -1, int iConditions = 0, int iDangerId = -1 ) = 0;
 
 	virtual void rollBackPosition () = 0;
 
@@ -372,7 +372,7 @@ public:
 
 	float getNextYaw ();
 
-	bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false, int iGoalId = -1, int iConditions = 0  );
+	bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false, int iGoalId = -1, int iConditions = 0, int iDangerId = -1 );
 
 	bool getNextRoutePoint ( Vector *vPoint );
 
@@ -486,7 +486,7 @@ private:
 class CNavMeshNavigator : public IBotNavigator
 {
 public:
-	virtual bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false, int iGoalId = -1, int iConditions = 0  );
+	virtual bool workRoute ( Vector vFrom, Vector vTo, bool *bFail, bool bRestart = true, bool bNoInterruptions = false, int iGoalId = -1, int iConditions = 0, int iDangerId = -1  );
 
 	virtual Vector getNextPoint ();
 

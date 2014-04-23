@@ -1174,8 +1174,6 @@ bool CTeamFortress2Mod :: isTeleporter ( edict_t *pEntity, int iTeam )
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter")==0);
 }
 
-
-
 bool CTeamFortress2Mod :: isTeleporterEntrance ( edict_t *pEntity, int iTeam )
 {
 	return isTeleporter(pEntity,iTeam) && CClassInterface::isTeleporterMode(pEntity,TELE_ENTRANCE);

@@ -104,6 +104,18 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2RoundWinEvent : public CBotEvent
+{
+public:
+	CTF2RoundWinEvent()
+	{
+		setType("teamplay_round_win");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CPlayerHurtEvent : public CBotEvent
 {
 public:

@@ -36,6 +36,7 @@ typedef enum
 	GETPROP_TF2TELEPORTERHEALTH,
 	GETPROP_TF2OBJECTCARRIED,
 	GETPROP_TF2OBJECTUPGRADELEVEL,
+	GETPROP_TF2OBJECTUPGRADEMETAL,
 	GETPROP_TF2OBJECTMAXHEALTH,
 	GETPROP_TF2DISPMETAL,
 	GETPROP_TF2MINIBUILDING,
@@ -313,6 +314,8 @@ public:
 	inline static float getTeleporterHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2TELEPORTERHEALTH].getFloatFromInt(edict,100); }
 	inline static bool isObjectCarried ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTCARRIED].getBool(edict,false); }
 	inline static int getTF2UpgradeLevel ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTUPGRADELEVEL].getInt(edict,0); }
+	inline static int getTF2SentryUpgradeMetal ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTUPGRADEMETAL].getInt(edict,0); }
+
 	inline static int getTF2GetBuildingMaxHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTMAXHEALTH].getInt(edict,0); }
 	inline static int getTF2DispMetal ( edict_t *edict ) { return g_GetProps[GETPROP_TF2DISPMETAL].getInt(edict,0); }
 	inline static bool getTF2BuildingIsMini ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MINIBUILDING].getBool(edict,false); }
