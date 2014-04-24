@@ -1331,7 +1331,7 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	pBot->setLookVector(m_vOrigin);
-	pBot->setLookAtTask((LOOK_VECTOR));
+	pBot->setLookAtTask(LOOK_VECTOR);
 
 	((CBotTF2*)pBot)->updateCarrying();
 
@@ -1462,7 +1462,7 @@ void CBotBackstab ::execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( pBot->distanceFrom(vrear) > 40 ) 
 	{
-		pBot->setMoveTo((vrear));
+		pBot->setMoveTo(vrear);
 	}
 	else
 	{

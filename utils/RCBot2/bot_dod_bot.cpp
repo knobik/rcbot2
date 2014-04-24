@@ -1000,7 +1000,7 @@ void CDODBot :: modThink ()
 	}
 
 	m_fFov = BOT_DEFAULT_FOV;
-	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict)*0.9f;//*rcbot_speed_boost.GetFloat();
+	fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict);//*rcbot_speed_boost.GetFloat();
 
 	setMoveSpeed(fMaxSpeed);
 	

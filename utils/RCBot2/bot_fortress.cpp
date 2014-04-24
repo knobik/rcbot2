@@ -1195,7 +1195,7 @@ bool CBotFortress :: isTeleporterUseful ( edict_t *pTele )
 
 	if ( pExit )
 	{
-		if ( !CClassInterface::isObjectBeingBuilt(pExit) && !CClassInterface::isObjectBeingBuilt(pTele) && !CClassInterface::isObjectCarried(pExit) && !CClassInterface::isObjectCarried(pTele) )
+		if ( !CTeamFortress2Mod::isTeleporterSapped(pTele) && !CTeamFortress2Mod::isTeleporterSapped(pExit) && !CClassInterface::isObjectBeingBuilt(pExit) && !CClassInterface::isObjectBeingBuilt(pTele) && !CClassInterface::isObjectCarried(pExit) && !CClassInterface::isObjectCarried(pTele) )
 		{
 			if ( ((m_vGoal - CBotGlobals::entityOrigin(pExit)).Length()+distanceFrom(pTele)) < distanceFrom(m_vGoal) )
 				return true;
@@ -1786,9 +1786,7 @@ edict_t *CBotTF2 :: findEngineerBuiltObject ( eEngiBuild iBuilding, int index )
 
 void CBotTF2 :: died ( edict_t *pKiller, const char *pszWeapon  )
 {
-	CBot::died(pKiller,pszWeapon);
-
-	droppedFlag();
+	CBotFortress::died(pKiller,pszWeapon);
 
 	if ( pKiller )
 	{
@@ -1796,12 +1794,10 @@ void CBotTF2 :: died ( edict_t *pKiller, const char *pszWeapon  )
 		{
 			m_pNavigator->belief(CBotGlobals::entityOrigin(pKiller),getEyePosition(),bot_beliefmulti.GetFloat(),distanceFrom(pKiller),BELIEF_DANGER);
 
-			if ( !strcmp(pszWeapon,"obj_sentrygun") )
+			if ( !strncmp(pszWeapon,"obj_sentrygun",13) ||  !strncmp(pszWeapon,"obj_minisentry",14) )
 				m_pLastEnemySentry = CTeamFortress2Mod::getMySentryGun(pKiller);
 		}
 	}
-
-	m_bCheckClass = true;
 }
 
 void CBotTF2 :: killed ( edict_t *pVictim, char *weapon )
@@ -2724,7 +2720,7 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 
 bool CBotTF2 :: wantToInvestigateSound ()
 {
-	return !m_bHasFlag && ( (m_iClass!=TF_CLASS_ENGINEER) || 
+	return (m_fLastSeeEnemy + 8.0f < engine->Time()) && !m_bHasFlag && ( (m_iClass!=TF_CLASS_ENGINEER) || 
 		(!this->m_bIsCarryingObj && (m_pSentryGun.get()!=NULL) && ((CTeamFortress2Mod::getSentryLevel(m_pSentryGun)>2)&&(CClassInterface::getSentryHealth(m_pSentryGun)>90))));
 }
 
@@ -3266,7 +3262,7 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 		}
 		else if ( CTeamFortress2Mod::TF2_IsPlayerInvuln(pEnemy) )
 		{
-			// dont shoot ubered player unlesss he's the only thing around for 1000 units
+			// dont shoot ubered player unlesss he's the only thing around for 2000 units
 			fPreFactor = 2000;
 		}
 		else
@@ -3276,22 +3272,27 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 			if ( iclass == TF_CLASS_MEDIC )
 			{
 				// shoot medic even if 250 units further from nearest enemy (approx. healing range)
-				fPreFactor = -250;
+				fPreFactor = -260;
 			}
 			else if ( iclass == TF_CLASS_SPY ) 
 			{
 				// shoot spy even if a little further from nearest enemy
-				fPreFactor = -200;
+				fPreFactor = -400;
 			}
 			else if ( iclass == TF_CLASS_SNIPER )
 			{
 				// I'm a spy, and I can see a sniper
-				if ( m_iClass == TF_CLASS_SPY )
-					fPreFactor = -600;
+			//	if ( m_iClass == TF_CLASS_SPY )
+			//		fPreFactor = -600;
+			//	else
+				if ( m_iClass == TF_CLASS_SNIPER )
+					fPreFactor = -2048.0f;
+				else 
+					fPreFactor = -1124.0f;
 			}
 			else if ( iclass == TF_CLASS_ENGINEER )
 			{
-				// I'm an engineer and I can see a spy
+				// I'm a spy and I'm attacking an engineer!
 				if ( m_iClass == TF_CLASS_SPY )
 					fPreFactor = -450;
 			}
@@ -3301,7 +3302,7 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 	{
 		if ( CTeamFortress2Mod::isSentry(pEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
-			fPreFactor = -800.0f;
+			fPreFactor = -1124.0f;
 		}
 		else if ( CTeamFortress2Mod::isBoss(pEnemy) )
 		{
@@ -3627,7 +3628,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		ADD_UTILITY(BOT_UTIL_REMOVE_SENTRY_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pSentryGun!=NULL) && CTeamFortress2Mod::isMySentrySapped(m_pEdict),1000.0f);
 		ADD_UTILITY(BOT_UTIL_REMOVE_DISP_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pDispenser!=NULL) && CTeamFortress2Mod::isMyDispenserSapped(m_pEdict),1000.0f);
 
-		ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
+		ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
 		ADD_UTILITY_DATA(BOT_UTIL_FIND_NEAREST_AMMO,!m_bIsCarryingObj && !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,400.0f/fAmmoDist,CWaypoints::getWaypointIndex(pWaypointAmmo)); // only if close
 
 		ADD_UTILITY(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,!m_bIsCarryingObj && (m_pSentryGun!=NULL) && (iSentryLevel>2) && (m_fLookAfterSentryTime<engine->Time()),fGetFlagUtility+0.01f);
@@ -3654,11 +3655,11 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			ADD_UTILITY(BOT_UTIL_FIND_SQUAD_LEADER,!hasSomeConditions(CONDITION_DEFENSIVE) && inSquad() && (m_pSquad->GetLeader()!=m_pEdict) && (!hasSomeConditions(CONDITION_SEE_SQUAD_LEADER) || !hasSomeConditions(CONDITION_SQUAD_LEADER_INRANGE)),hasSomeConditions(CONDITION_SQUAD_IDLE)?0.1f:2.0f);
 		}
 
-		ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
+		ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
 		ADD_UTILITY_DATA(BOT_UTIL_FIND_NEAREST_AMMO, !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,400.0f/fAmmoDist,CWaypoints::getWaypointIndex(pWaypointAmmo));
 
 		if ( m_pNearestDisp )
-			ADD_UTILITY(BOT_UTIL_GOTODISP,m_pNearestDisp && !CClassInterface::isObjectBeingBuilt(m_pNearestDisp) && (bNeedAmmo || bNeedHealth),1000.0f/distanceFrom(m_pNearestDisp));
+			ADD_UTILITY(BOT_UTIL_GOTODISP,m_pNearestDisp && !CClassInterface::isObjectBeingBuilt(m_pNearestDisp) && !CTeamFortress2Mod::isDispenserSapped(m_pNearestDisp) && (bNeedAmmo || bNeedHealth),1000.0f/distanceFrom(m_pNearestDisp));
 	}
 
 	fGetFlagUtility = 0.2+randomFloat(0.0f,0.2f);
@@ -3688,7 +3689,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	}
 
 	
-	ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
+	ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
 
 	ADD_UTILITY(BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0);
 	ADD_UTILITY(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0);
@@ -3810,7 +3811,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 										fGetFlagUtility+(getHealthPercent()/7));
 
 		ADD_UTILITY(BOT_UTIL_SAP_NEAREST_DISP,m_pNearestEnemyDisp && 
-			!CTeamFortress2Mod::isDispenserSapped(m_pNearestEnemyTeleporter),
+			!CTeamFortress2Mod::isDispenserSapped(m_pNearestEnemyDisp),
 			fGetFlagUtility+(getHealthPercent()/7));
 
 		ADD_UTILITY(BOT_UTIL_SAP_LASTENEMY_DISP,
@@ -3916,7 +3917,16 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 			if ( CClients::clientsDebugging(BOT_DEBUG_UTIL) )
 			{
-				CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[next->getId()],this);
+				int i = 0;
+
+				CClients::clientDebugMsg(this,BOT_DEBUG_UTIL,"-------- getTasks(%s) --------",m_szBotName);
+
+				do
+				{
+					CClients::clientDebugMsg(this,BOT_DEBUG_UTIL,"%s = %0.3f",g_szUtils[next->getId()],next->getUtility(),this);
+				}while ( (++i<10) && ((next = utils.nextBest()) != NULL) );
+
+				CClients::clientDebugMsg(this,BOT_DEBUG_UTIL,"----END---- getTasks(%s) ----END----",m_szBotName);
 			}
 
 			utils.freeMemory();
@@ -4949,6 +4959,8 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 						m_pSchedules->add(pipesched);
 
+						findpath->setEdict(pEnemy);
+						findpath->completeIfSeeTaskEdict();
 						findpath->setDangerPoint(CWaypointLocations::NearestWaypoint(vEnemy,200.0f,-1));
 
 						return true;

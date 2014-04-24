@@ -2227,11 +2227,13 @@ void CBot :: doMove ()
 			m_fSideSpeed = 0.0f;
 		}
 
-
-		if ( m_vMoveTo.z > (getOrigin().z + 32.0) )
-			m_fUpSpeed = m_fIdealMoveSpeed;
-		else if ( m_vMoveTo.z < (getOrigin().z - 32.0) )
-			m_fUpSpeed = -m_fIdealMoveSpeed;
+		if ( isUnderWater() || onLadder() )
+		{
+			if ( m_vMoveTo.z > (getOrigin().z + 32.0) )
+				m_fUpSpeed = m_fIdealMoveSpeed;
+			else if ( m_vMoveTo.z < (getOrigin().z - 32.0) )
+				m_fUpSpeed = -m_fIdealMoveSpeed;
+		}
 	}
 	else
 	{	
@@ -2350,6 +2352,7 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	static float fDistFactor;
 	static float fHeadOffset;
 	static float fDistance;
+	int iPlayerFlags = CClassInterface::getPlayerFlags(pEntity);
 
 	fDistance = distanceFrom(pEntity);
 	fHeadOffset = 0;
@@ -2366,19 +2369,19 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
 	{
 		// aim for head
-		if ( hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) && (m_fFov < BOT_DEFAULT_FOV) )
+		if ( !(iPlayerFlags & FL_DUCKING) && hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) && (m_fFov < BOT_DEFAULT_FOV) )
 			fHeadOffset += v_size.z;
 	}
 
 	myvel = Vector(0,0,0);
 	enemyvel = Vector(0,0,0);
 
-	v_size = v_size / 2;
+	//v_size = v_size / 2;
 
-	v_desired_offset->x = fDistFactor*randomFloat(-v_size.x,v_size.x);
+	/*v_desired_offset->x = fDistFactor*randomFloat(-v_size.x,v_size.x);
 	v_desired_offset->y = fDistFactor*randomFloat(-v_size.y,v_size.y);
-	v_desired_offset->z = fDistFactor*randomFloat(-v_size.z,v_size.z);
-	v_desired_offset->z += fHeadOffset;
+	v_desired_offset->z = fDistFactor*randomFloat(-v_size.z,v_size.z);*/
+	
 
 	// change in velocity
 	if ( CClassInterface::getVelocity(pEntity,&enemyvel) && CClassInterface::getVelocity(m_pEdict,&myvel) )
@@ -2396,9 +2399,12 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	}
 
 	// velocity
-	v_desired_offset->x += randomFloat(-vel.x,vel.x)*fDistFactor*v_size.x;
-	v_desired_offset->y += randomFloat(-vel.y,vel.y)*fDistFactor*v_size.y;
-	v_desired_offset->z += randomFloat(-vel.z,vel.z)*fDistFactor*v_size.z;
+	v_desired_offset->x = randomFloat(-vel.x,vel.x)*fDistFactor*v_size.x;
+	v_desired_offset->y = randomFloat(-vel.y,vel.y)*fDistFactor*v_size.y;
+	v_desired_offset->z = randomFloat(-vel.z,vel.z)*fDistFactor*v_size.z;
+
+	// target
+	v_desired_offset->z += fHeadOffset;
 
 }
 

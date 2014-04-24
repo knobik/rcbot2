@@ -141,6 +141,8 @@ public:
 
 	void setRange ( float fRange ) { m_fRange = fRange; }
 
+	void setEdict ( edict_t *pEdict ) { m_pEdict = pEdict; }
+
 	void setDangerPoint ( int iWpt ) { m_iDangerPoint = iWpt; }
 
 	void getPassedVector () { m_flags.bits.m_bGetPassedVector = true; }
