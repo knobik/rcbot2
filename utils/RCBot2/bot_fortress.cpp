@@ -3288,7 +3288,12 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 				if ( m_iClass == TF_CLASS_SNIPER )
 					fPreFactor = -2048.0f;
 				else 
-					fPreFactor = -1124.0f;
+				{
+					if ( CBotGlobals::DotProductFromOrigin(pEnemy,getOrigin()) > 0.95 ) //15 deg
+						fPreFactor = -1124.0f;
+					else
+						fPreFactor = -200.0f;
+				}
 			}
 			else if ( iclass == TF_CLASS_ENGINEER )
 			{
@@ -3302,13 +3307,27 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 	{
 		if ( CTeamFortress2Mod::isSentry(pEnemy,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
-			fPreFactor = -1124.0f;
+			edict_t *pOwner = CTeamFortress2Mod::getBuildingOwner(ENGI_SENTRY,ENTINDEX(pEnemy));
+
+			if ( pOwner && isVisible(pOwner) )
+			{
+				// owner probably repairing it -- maybe make use of others around me
+				fPreFactor = -512.0f;
+			}
+			else if ( CClassInterface::getSentryEnemy(pEnemy) != m_pEdict )
+				fPreFactor = -1124.0f;
+			else
+				fPreFactor = -768.0f;
 		}
 		else if ( CTeamFortress2Mod::isBoss(pEnemy) )
 		{
 			extern ConVar bot_bossattackfactor;
 
 			fPreFactor = -1500.0f * bot_bossattackfactor.GetFloat();
+		}
+		else if ( CTeamFortress2Mod::isPipeBomb(pEnemy,CTeamFortress2Mod::getEnemyTeam(m_iTeam)) )
+		{
+			fPreFactor = 320.0f;
 		}
 	}
 
@@ -3615,14 +3634,30 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!m_bIsCarryingObj && !bHasFlag&&m_pSentryGun&&(iSentryLevel>1)&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9));
 		}
 
+		if ( (m_fSpawnTime + 1.0f) > engine->Time() )
+		{
+			if ( pWaypointResupply == NULL )
+			{
+				dataUnconstArray<int> *failed;
+				Vector vOrigin = getOrigin();
+
+				m_pNavigator->getFailedGoals(&failed);
+
+				failedlist = CWaypointLocations :: resetFailedWaypoints ( failed );
+
+				pWaypointResupply = CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,vOrigin,iTeam,&fResupplyDist,failedlist));
+			}
+
+			ADD_UTILITY_DATA(BOT_UTIL_BUILDTELENT_SPAWN,!m_bIsCarryingObj && pWaypointResupply && !bHasFlag&&!m_pTeleEntrance&&(iMetal>=125),0.95f,CWaypoints::getWaypointIndex(pWaypointResupply));
+		}
 		// to do -- split into two
 		ADD_UTILITY(BOT_UTIL_UPGSENTRY,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag &&( m_pSentryGun.get()!=NULL) && !CClassInterface::getTF2BuildingIsMini(m_pSentryGun) && (iMetal>=(200-CClassInterface::getTF2SentryUpgradeMetal(m_pSentryGun))) && ((iSentryLevel<3)||(fSentryHealthPercent<1.0f)),0.8+((1.0f-fSentryHealthPercent)*0.2));
 
-		ADD_UTILITY(BOT_UTIL_GETAMMODISP,!m_bIsCarryingObj && m_pDispenser && isVisible(m_pDispenser) && (iMetal<200),fUseDispFactor);
+		ADD_UTILITY(BOT_UTIL_GETAMMODISP,!m_bIsCarryingObj && m_pDispenser && !CClassInterface::isObjectBeingBuilt(m_pDispenser) && isVisible(m_pDispenser) && (iMetal<200),fUseDispFactor);
 
-		ADD_UTILITY(BOT_UTIL_UPGTELENT,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pTeleEntrance!=NULL && (iMetal>=(200-CClassInterface::getTF2SentryUpgradeMetal(m_pTeleEntrance))) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5)));
-		ADD_UTILITY(BOT_UTIL_UPGTELEXT,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pTeleExit!=NULL && (iMetal>=(200-CClassInterface::getTF2SentryUpgradeMetal(m_pTeleExit))) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.51) + ((0.5-fTeleporterExitHealthPercent)*0.5));
-		ADD_UTILITY(BOT_UTIL_UPGDISP,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pDispenser!=NULL && (iMetal>=(200-CClassInterface::getTF2SentryUpgradeMetal(m_pDispenser))) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3));
+		ADD_UTILITY(BOT_UTIL_UPGTELENT,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pTeleEntrance!=NULL && !CClassInterface::isObjectBeingBuilt(m_pTeleEntrance) && (iMetal>=(200-CClassInterface::getTF2SentryUpgradeMetal(m_pTeleEntrance))) &&  (fTeleporterEntranceHealthPercent<1.0f),((fEntranceDist<fExitDist)) * 0.51 + (0.5-(fTeleporterEntranceHealthPercent*0.5)));
+		ADD_UTILITY(BOT_UTIL_UPGTELEXT,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pTeleExit!=NULL && !CClassInterface::isObjectBeingBuilt(m_pTeleExit) && (iMetal>=(200-CClassInterface::getTF2SentryUpgradeMetal(m_pTeleExit))) &&  (fTeleporterExitHealthPercent<1.0f),((fExitDist<fEntranceDist) * 0.51) + ((0.5-fTeleporterExitHealthPercent)*0.5));
+		ADD_UTILITY(BOT_UTIL_UPGDISP,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pDispenser!=NULL && !CClassInterface::isObjectBeingBuilt(m_pDispenser) && (iMetal>=(200-CClassInterface::getTF2SentryUpgradeMetal(m_pDispenser))) && ((iDispenserLevel<3)||(fDispenserHealthPercent<1.0f)),0.7+((1.0f-fDispenserHealthPercent)*0.3));
 
 		// remove sappers
 		ADD_UTILITY(BOT_UTIL_REMOVE_SENTRY_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pSentryGun!=NULL) && CTeamFortress2Mod::isMySentrySapped(m_pEdict),1000.0f);
@@ -4386,6 +4421,31 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				Vector vBuild = m_vTeleportEntrance+pWaypoint->applyRadius();
 
 				m_pSchedules->add(new CBotTFEngiBuild(ENGI_ENTRANCE,vBuild,getAiming(),pWaypoint->getArea(),pWaypoint->getRadius()));
+				m_iTeleEntranceArea = pWaypoint->getArea();
+				return true;
+			}
+			
+			break;
+		case BOT_UTIL_BUILDTELENT_SPAWN:
+			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(getOrigin(),512.0f,-1,true,false,true,NULL,false,getTeam(),true));
+
+			if ( pWaypoint )
+			{
+				Vector vBuild = m_vTeleportEntrance+pWaypoint->applyRadius();
+				QAngle angle = QAngle(0,pWaypoint->getAimYaw(),0);
+				Vector vFwd;
+
+				AngleVectors(angle,&vFwd);
+				CBotTFEngiBuildTask *buildtask = new CBotTFEngiBuildTask(ENGI_ENTRANCE,vBuild,vBuild+vFwd*128,pWaypoint->getArea(),pWaypoint->getRadius());
+
+				CBotSchedule *newSched = new CBotSchedule();
+
+				newSched->addTask(new CFindPathTask(vBuild)); // first
+				newSched->addTask(buildtask);
+				newSched->addTask(new CFindPathTask(util->getIntData()));
+				buildtask->oneTryOnly();
+
+				m_pSchedules->add(newSched);
 				m_iTeleEntranceArea = pWaypoint->getArea();
 				return true;
 			}

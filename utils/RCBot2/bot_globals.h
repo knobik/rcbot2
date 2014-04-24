@@ -86,6 +86,8 @@ public:
 	
 	static void fixFloatAngle ( float *fAngle );
 
+	static float DotProductFromOrigin ( edict_t *pEnemy, Vector pOrigin );
+
 	static int numPlayersOnTeam(int iTeam, bool bAliveOnly);
 	static void setMapName ( const char *szMapName );
 	static char *getMapName (); 

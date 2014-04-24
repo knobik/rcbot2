@@ -311,7 +311,7 @@ void CBot :: setEdict ( edict_t *pEdict)
 
 bool CBot :: isUnderWater ()
 {
-	return m_pController->IsEFlagSet(EFL_TOUCHING_FLUID);
+	return CClassInterface::getWaterLevel(m_pEdict) > 1; //m_pController->IsEFlagSet(EFL_TOUCHING_FLUID);
 }
 
 // return false if there is a problem
@@ -1294,6 +1294,7 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	m_fSpawnTime = engine->Time();
 	m_bIncreaseSensitivity = false;
 	m_fLastSeeEnemyPlayer = 0.0f;
 	m_PlayerListeningTo = NULL;

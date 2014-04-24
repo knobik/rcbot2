@@ -442,6 +442,7 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TAKEDAMAGE,"CBaseEntity","m_takedamage",0);
 
 		DEFINE_GETPROP(GETPROP_SENTRY_ENEMY,"CObjectSentrygun","m_hEnemy",0);
+		DEFINE_GETPROP(GETPROP_WATERLEVEL,"CBasePlayer","m_nWaterLevel",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

@@ -680,6 +680,8 @@ public:
 
 	virtual void debugString ( char *string );
 
+	void oneTryOnly () { m_iTries = 2; }
+
 private:
 	Vector m_vOrigin;
 	eEngiBuild m_iObject;

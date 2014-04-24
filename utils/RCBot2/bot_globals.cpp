@@ -380,6 +380,33 @@ float CBotGlobals :: quickTraceline (edict_t *pIgnore,Vector vSrc, Vector vDest)
 	return m_TraceResult.fraction;
 }
 
+float CBotGlobals :: DotProductFromOrigin ( edict_t *pEnemy, Vector pOrigin )
+{
+	static Vector vecLOS;
+	static float flDot;
+	IPlayerInfo *p;
+	
+	Vector vForward;
+	QAngle eyes;
+
+	p = playerinfomanager->GetPlayerInfo(pEnemy);
+
+	if (!p )
+		return 0;
+
+	eyes = p->GetAbsAngles();
+
+	// in fov? Check angle to edict
+	AngleVectors(eyes,&vForward);
+	
+	vecLOS = pOrigin - CBotGlobals::entityOrigin(pEnemy);
+	vecLOS = vecLOS/vecLOS.Length();
+	
+	flDot = DotProduct (vecLOS , vForward );
+	
+	return flDot; 
+}
+
 bool CBotGlobals :: traceVisible (edict_t *pEnt)
 {
 	return (m_TraceResult.fraction >= 1.0)||(m_TraceResult.m_pEnt && pEnt && (m_TraceResult.m_pEnt==pEnt->GetUnknown()->GetBaseEntity()));
