@@ -831,8 +831,9 @@ public:
 	// listens to this player
 	void listenToPlayer (edict_t *pListenTo, bool bIsEnemy = false, bool bIsAttacking = false ); 
 	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 ) { return true; }
-	virtual bool wantToInvestigateSound () { return true; }
 
+	virtual bool wantToInvestigateSound () { return m_bWantToInvestigateSound; }
+	inline void wantToInvestigateSound ( bool bSet ) { m_bWantToInvestigateSound = bSet; }
 	inline bool wantToShoot ( void ) { return m_bOpenFire; }
 	inline void wantToShoot ( bool bSet ) { m_bOpenFire = bSet; }
 	inline void wantToListen ( bool bSet ) { m_bWantToListen = bSet; }
@@ -1150,6 +1151,7 @@ protected:
 	// this is true during tasks that need high sensitivity e.g. rocket jumping
 	bool m_bIncreaseSensitivity; 
 	float m_fSpawnTime;
+	bool m_bWantToInvestigateSound;
 };
 
 class CBots

@@ -860,6 +860,7 @@ void CBot :: think ()
 	if ( rcbot_debug_iglev.GetInt() != 7 )
 	{
 #endif
+	wantToInvestigateSound(true);
 	setMoveLookPriority(MOVELOOK_TASK);
 	m_pSchedules->execute(this);
 	setMoveLookPriority(MOVELOOK_THINK);
@@ -1294,6 +1295,7 @@ edict_t *CBot :: getVisibleSpecial ()
 
 void CBot :: spawnInit ()
 {
+	m_bWantToInvestigateSound = true;
 	m_fSpawnTime = engine->Time();
 	m_bIncreaseSensitivity = false;
 	m_fLastSeeEnemyPlayer = 0.0f;

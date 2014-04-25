@@ -697,6 +697,7 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	bool found = false;
 	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
 
+	pBot->wantToInvestigateSound(false);
 	pTF2Bot->getAttackArea(&areas);
 	
 	i = 0;
@@ -965,6 +966,7 @@ CBotTF2UpgradeBuilding :: CBotTF2UpgradeBuilding ( edict_t *pBuilding )
 void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	pBot->wantToShoot(false);
+	pBot->wantToInvestigateSound(false);
 
 	if (!m_fTime )
 		m_fTime = engine->Time() + randomFloat(9.0f,11.0f);
@@ -1321,6 +1323,8 @@ CBotTaskEngiPlaceBuilding :: CBotTaskEngiPlaceBuilding ( eEngiBuild iObject, Vec
 // unused
 void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	pBot->wantToInvestigateSound(false);
+
 	if ( m_fTime == 0.0f )
 	{
 		m_fTime = engine->Time() + 6.0f;
@@ -1636,6 +1640,8 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CBotFortress *tfBot;
 
 	bool bAimingOk = true;
+
+	pBot->wantToInvestigateSound(false);
 
 	//if ( !pBot->isTF() ) // shouldn't happen ever
 	//	fail();
@@ -4289,22 +4295,31 @@ void CBotHL2DMSnipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 CBotTF2EngineerInterrupt :: CBotTF2EngineerInterrupt( CBot *pBot )
 {
 	m_pSentryGun = CTeamFortress2Mod::getMySentryGun(pBot->getEdict());
-	
+
 	if ( m_pSentryGun.get() != NULL )
+	{
 		m_fPrevSentryHealth = CClassInterface::getSentryHealth(m_pSentryGun);
+	}
+	else
+		m_fPrevSentryHealth = 0;
 }
 
 bool CBotTF2EngineerInterrupt :: isInterrupted ( CBot *pBot, bool *bFailed, bool *bCompleted )
 {
-	if ( m_pSentryGun.get() == NULL )
+	if ( m_pSentryGun.get() != NULL )
 	{
-		*bFailed = true;
-		return true;
-	}
-	else if ( CClassInterface::getSentryHealth(m_pSentryGun) < 125 )
-	{
-		*bFailed = true;
-		return true;
+		if ( !CClassInterface::getTF2BuildingIsMini(m_pSentryGun) )
+		{
+			float m_fCurrentHealth = CClassInterface::getSentryHealth(m_pSentryGun);
+
+			if ( (((CBotFortress*)pBot)->getMetal()>75) && (m_fCurrentHealth < m_fPrevSentryHealth) )
+			{
+				*bFailed = true;
+				return true;
+			}
+
+			m_fPrevSentryHealth = m_fCurrentHealth;
+		}
 	}
 
 	return false;

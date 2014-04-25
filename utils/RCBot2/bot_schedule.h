@@ -406,7 +406,7 @@ public:
 class CBotUseDispSched : public CBotSchedule
 {
 public:
-	CBotUseDispSched ( edict_t *pDisp );
+	CBotUseDispSched ( CBot *pBot, edict_t *pDisp );
 
 	void init ();
 }; 
@@ -415,7 +415,7 @@ public:
 class CBotTFEngiUpgrade : public CBotSchedule
 {
 public:
-	CBotTFEngiUpgrade ( edict_t *pBuilding );
+	CBotTFEngiUpgrade ( CBot *pBot, edict_t *pBuilding );
 
 	void init ();
 };
@@ -431,7 +431,7 @@ public:
 class CBotTFEngiBuild : public CBotSchedule
 {
 public:
-	CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0, float fRadius = 0 );
+	CBotTFEngiBuild ( CBot *pBot, eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0, float fRadius = 0 );
 
 	void init ();
 };

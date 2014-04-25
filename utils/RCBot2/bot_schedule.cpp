@@ -126,9 +126,13 @@ void CBotTF2HealSched::init()
 
 /////////////////////////////////////////////
 
-CBotTFEngiBuild :: CBotTFEngiBuild ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea, float fRadius )
+CBotTFEngiBuild :: CBotTFEngiBuild ( CBot *pBot, eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea, float fRadius )
 {
-	addTask(new CFindPathTask(vOrigin)); // first
+	CFindPathTask *pathtask = new CFindPathTask(vOrigin);
+	addTask(pathtask); // first
+
+	pathtask->setInterruptFunction(new CBotTF2EngineerInterrupt(pBot));
+
 	addTask(new CBotTFEngiBuildTask(iObject,vOrigin,vAiming,iArea,fRadius)); // second
 }
 
@@ -204,10 +208,25 @@ void CBotTF2DefendPayloadBombSched :: init ()
 
 //////////////////////////////////////////////
 
-CBotTFEngiUpgrade :: CBotTFEngiUpgrade ( edict_t *pBuilding )
+CBotTFEngiUpgrade :: CBotTFEngiUpgrade ( CBot *pBot, edict_t *pBuilding )
 {
-	addTask(new CFindPathTask(pBuilding));
-	addTask(new CBotTF2UpgradeBuilding(pBuilding));
+	if ( !CTeamFortress2Mod::isSentryGun(pBuilding) )
+	{
+		CFindPathTask *pathtask = new CFindPathTask(pBuilding);
+		addTask(pathtask);
+		pathtask->setInterruptFunction(new CBotTF2EngineerInterrupt(pBot));
+
+		CBotTF2UpgradeBuilding *upgbuilding = new CBotTF2UpgradeBuilding(pBuilding);
+		addTask(upgbuilding);
+		upgbuilding->setInterruptFunction(new CBotTF2EngineerInterrupt(pBot));
+
+	}
+	else
+	{
+		addTask(new CFindPathTask(pBuilding));
+
+		addTask(new CBotTF2UpgradeBuilding(pBuilding));
+	}
 }
 
 void CBotTFEngiUpgrade :: init ()
@@ -330,10 +349,15 @@ void CBotUseTeleSched :: init ()
 }
 //////////////////////////////////////////
 
-CBotUseDispSched :: CBotUseDispSched ( edict_t *pDisp )//, bool bNest )
+CBotUseDispSched :: CBotUseDispSched ( CBot *pBot, edict_t *pDisp )//, bool bNest )
 {
-	addTask(new CFindPathTask(pDisp)); // first
-	addTask(new CBotTF2WaitHealthTask(CBotGlobals::entityOrigin(pDisp))); // second
+	CFindPathTask *pathtask = new CFindPathTask(pDisp);
+	CBotTF2WaitHealthTask *gethealth = new CBotTF2WaitHealthTask(CBotGlobals::entityOrigin(pDisp));
+	addTask(pathtask);
+	pathtask->setInterruptFunction(new CBotTF2EngineerInterrupt(pBot));
+
+	addTask(gethealth); // second
+	gethealth->setInterruptFunction(new CBotTF2EngineerInterrupt(pBot));
 
 	//if ( bNest )
 	//	addTask(new CBotNest()); // third

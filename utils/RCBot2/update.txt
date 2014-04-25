@@ -1,3 +1,81 @@
+0.85
+====
+all: fixed player speed
+all: improved aiming
+all: fixed aiming for head when enemy was crouched
+all: new debug commands "rcbot_debug_notasks" and "rcbot_debug_dont_shoot"
+all: fixed random waypoint selection if on new map
+all: you can now force a bot to go to a waypoint id with bot_goto <id> command
+all: added more cost for visible waypoints to an enemy in some situations
+all: fixed printing on console jumbled up
+tf2: fixed engineers sentry orientation
+tf2: engineers place entrance when they spawn
+tf2: medics don't run for cover from flag carriers now , they chase them
+tf2: engineers try not to place sentries next to each other
+tf2: fixed spy checking for too long
+tf2: fixed bots shouting "spy" at spawn
+tf2: fixed demomen not piping sentries
+tf2: improved demomen mortar
+tf2: fixed spy crash
+tf2: fixed another crash when bots want to change classes
+tf2: engineers dont attack an enemy if their sentry is attacking the same enemy
+tf2: bots dont hear spy knives as often
+tf2: added sentry attacking and hiding from a distance
+tf2: engineers dont spy check if their building is sapped
+tf2: bots change class after round
+tf2: automatic capture point detection if no script (e.g. tc_hydro)
+tf2: engineers refrain from reusing same sentry point they tried to build last time
+tf2: engineers have better chance building nearby others and in other locations
+tf2: spies now sap dispensers
+tf2: engineers dont investigate sounds unless they have a sentry up and they aren't carrying anything
+tf2: engineers upgrade buildings if they have enough metal instead of trying to get full metal
+tf2: demoman pipe/spam task added - untested
+tf2: bots don't try to use teleporters or disps if they are sapped
+tf2: fixed bots forgetting the last sentry that killed them
+tf2: bots don't investigate sounds unless they haven't seen an enemy for a while
+tf2: ubered bots don't go back to resupply for ammo
+tf2: snipers and sentries have higher enemy factor
+dod:s - bots run from friendly fire grenades
+dod:s - improved escaping from grenades
+dod:s - bots say "cease fire" if under friendly fire
+
+0.80
+===
+all: bots don't need sv_cheats!
+all: deleted rcbot_sv_cheats_warning command and other cheat related commands as they are not needed now
+all: waypoint version now 4 : Waypoints made in this version won't work in older versions!
+all: added rcbot welcome message (tool tip)
+all: waypoint author and modifier info saved in new waypoint
+all: added welcome message showing author and modifier of waypoints, author is only saved once
+all: fixed far away squad members stopping when leader stops moving
+all: new cvar to allow tooltips
+all: tooltips for waypoints
+all: new squad cvar to increase/reduce frequency of bot squads
+all: player joining crash fix (teds suggestion)
+all: added 'rcbot util teleport' command
+all: added 'rcbot util set_teleport' command
+all: added 'rcbot util god' command
+all: added 'rcbot util noclip' command
+all: added waypoint type 'teleport' (cheat) makes bots teleport from the teleport waypoint to the next waypoint
+all: rcbot waypoint drawtype 4 will show automatically generated danger (red = dangerous) waypoints of a bots team, rcbot debug nav 1 and rcbot debug bot must be used first.
+dod:s added timeout for snipers and machine gunners if they cant deploy or zoom
+dod:s allow bots to crouch when reloading at crouch or machinegun waypoints
+dod:s All bot classes can snipe or deploy mg if they pickup an mg or sniper rifles
+dod:s bots respond to need mg voice command
+dod:s bots try to use secondary melee weapon in dod:s
+dod:s MGs move up after 'move up mg' voice command
+dod:s MGs move up when they see friendly killed
+dod:s bots shoot breakables only if not seen enemy for a short time
+tf2: hwguys don't rev minigun if they have the flag
+tf2: bots don't investigate sounds in tf2 if they have the flag
+tf2: bots can't hear spies attacking with knife behind them unless they know there are spies nearby
+tf2: bots listen to footsteps and investigate teammates attacking
+tf2: fixed bots spychecking observers
+tf2: engineers less probability of changing class when they die if they have many buildings
+tf2: spies try more alternative routes
+tf2: engineers are more successful at building nearby teammates buildings
+tf2: fixed some soldiers not rocket jumping
+
 0.76
 ====
 convar rcbot_sv_cheats_warning: If disabled, bots will try to spawn even if sv_cheats is 1 - use only with admin cvar plugin

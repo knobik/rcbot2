@@ -46,7 +46,7 @@ public:
 	virtual bool isInterrupted ( CBot *pBot, bool *bFailed, bool *bCompleted ) = 0;
 };
 
-class CBotTF2EngineerInterrupt
+class CBotTF2EngineerInterrupt : public IBotTaskInterrupt
 {
 public:
 	CBotTF2EngineerInterrupt( CBot *pBot );
@@ -55,12 +55,21 @@ public:
 private:
 	float m_fPrevSentryHealth;
 	MyEHandle m_pSentryGun;
+	CBotWeapon *pWrench;
 };
 
 class CBotTask
 {
 public:	
 	CBotTask();	
+	~CBotTask()
+	{
+		if ( m_pInterruptFunc!=NULL )
+		{
+			delete m_pInterruptFunc;
+			m_pInterruptFunc = NULL;
+		}
+	}
 	void _init();
 	virtual void init ();
 	virtual void execute ( CBot *pBot, CBotSchedule *pSchedule );

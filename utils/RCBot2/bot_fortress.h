@@ -264,6 +264,8 @@ public:
 
 	virtual void checkDependantEntities();
 
+	int getMetal ();
+
 	//virtual Vector getAimVector ( edict_t *pEntity ) { return CBot::getAimVector(pEntity); }
 
 	virtual void modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset, Vector &v_size, float fDist, float fDist2D )
