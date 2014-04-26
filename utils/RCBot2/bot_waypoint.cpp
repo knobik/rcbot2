@@ -972,7 +972,20 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 
 			if ( fBeliefSensitivity > 1.6f )
 			{
-				if ( iDangerId != -1 )
+				if ( (m_pBot->getEnemy() != NULL) && (m_pBot->FVisible(m_pBot->getEnemy())) )
+				{
+					if ( CBotGlobals::DotProductFromOrigin(m_pBot->getEnemy(),succWpt->getOrigin()) > 0.96f )
+						succ->setCost(fCost+CWaypointLocations::REACHABLE_RANGE);
+					else
+						succ->setCost(fCost);
+
+					if ( iDangerId != -1 )
+					{
+						if ( pVisTable->GetVisibilityFromTo(iDangerId,iSucc) )
+							succ->setCost(succ->getCost()+(m_fBelief[iSucc]*fBeliefSensitivity*2));
+					}
+				}
+				else if ( iDangerId != -1 )
 				{
 					if ( !pVisTable->GetVisibilityFromTo(iDangerId,iSucc) )
 						succ->setCost(fCost);

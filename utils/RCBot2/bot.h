@@ -637,7 +637,7 @@ public:
 	virtual bool canAvoid ( edict_t *pEntity );
 
 	inline bool hasEnemy () { return m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY); }
-	edict_t *getEnemy () { return m_pEnemy; }
+	inline edict_t *getEnemy () { return m_pEnemy; }
 
 
 	inline void setMoveTo ( Vector vNew )
