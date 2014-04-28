@@ -847,7 +847,7 @@ public:
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 	virtual void debugString ( char *string );
 private:
-	edict_t * m_pPayloadBomb;
+	MyEHandle m_pPayloadBomb;
 	Vector m_vMoveTo;
 	Vector m_vRandomOffset;
 	float m_fPushTime;
@@ -863,7 +863,7 @@ public:
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 	virtual void debugString ( char *string );
 private:
-	edict_t * m_pPayloadBomb;
+	MyEHandle m_pPayloadBomb;
 	Vector m_vMoveTo;
 	Vector m_vRandomOffset;
 	float m_fDefendTime;

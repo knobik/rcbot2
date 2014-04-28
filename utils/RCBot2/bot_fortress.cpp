@@ -5473,8 +5473,6 @@ Vector CBotTF2 :: getAimVector ( edict_t *pEntity )
 void CBotTF2 :: checkDependantEntities ()
 {
 	CBotFortress::checkDependantEntities();
-	checkEntity(&m_pRedPayloadBomb);
-	checkEntity(&m_pBluePayloadBomb);
 }
 
 eBotFuncState CBotTF2 :: rocketJump(int *iState,float *fTime)

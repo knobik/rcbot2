@@ -739,10 +739,10 @@ private:
 	//bool m_bBlockPushing;
 	//float m_fBlockPushTime;
 	//
-	edict_t *m_pDefendPayloadBomb;
-	edict_t *m_pPushPayloadBomb;
-	edict_t *m_pRedPayloadBomb;
-	edict_t *m_pBluePayloadBomb;
+	MyEHandle m_pDefendPayloadBomb;
+	MyEHandle m_pPushPayloadBomb;
+	MyEHandle m_pRedPayloadBomb;
+	MyEHandle m_pBluePayloadBomb;
 	//
 	bool m_bFixWeapons;
 	// if demoman has already deployed stickies this is true

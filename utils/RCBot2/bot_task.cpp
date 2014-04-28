@@ -797,6 +797,8 @@ CBotTF2PushPayloadBombTask :: CBotTF2PushPayloadBombTask (edict_t * pPayloadBomb
 
 void CBotTF2PushPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	pBot->wantToInvestigateSound(false);
+
 	if ( m_fPushTime == 0 )
 	{
 		m_fPushTime = engine->Time() + randomFloat(10.0,30.0);
@@ -806,12 +808,12 @@ void CBotTF2PushPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		complete();
 	}
-	else if(m_pPayloadBomb == NULL)
+	else if(m_pPayloadBomb.get() == NULL)
 	{
 		complete();
 		return;
 	}
-	else if(CBotGlobals::entityIsValid(m_pPayloadBomb) && CBotGlobals::entityIsAlive(m_pPayloadBomb))
+	else 
 	{
 
 		m_vOrigin = CBotGlobals::entityOrigin(m_pPayloadBomb);
@@ -827,12 +829,10 @@ void CBotTF2PushPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		}
 		else
-			pBot->setMoveTo((m_vMoveTo));
+			pBot->setMoveTo(m_vMoveTo);
 
-		pBot->setLookAtTask((LOOK_AROUND));
+		pBot->setLookAtTask(LOOK_AROUND);
 	}
-	else
-		complete();
 
 }
 
@@ -861,28 +861,25 @@ void CBotTF2DefendPayloadBombTask :: execute (CBot *pBot,CBotSchedule *pSchedule
 	{
 		complete();
 	}
-	else if(m_pPayloadBomb == NULL)
+	else if(m_pPayloadBomb.get() == NULL)
 	{
 		complete();
 		return;
 	}
-	else if(CBotGlobals::entityIsValid(m_pPayloadBomb) && CBotGlobals::entityIsAlive(m_pPayloadBomb))
+	else
 	{
 		m_vOrigin = CBotGlobals::entityOrigin(m_pPayloadBomb);
 		m_vMoveTo = m_vOrigin + m_vRandomOffset;
 
 		if ( pBot->distanceFrom(m_vMoveTo) > 200 )
-			pBot->setMoveTo((m_vMoveTo));
+			pBot->setMoveTo(m_vMoveTo);
 		else
 			pBot->stopMoving();
 
-		pBot->setLookAtTask((LOOK_EDICT));
+		pBot->setLookAtTask(LOOK_EDICT);
 		pBot->lookAtEdict(m_pPayloadBomb);
 	}
-	else
-	{
-		complete();
-	}
+
 }
 
 void CBotTF2DefendPayloadBombTask :: debugString ( char *string )
