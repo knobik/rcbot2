@@ -953,6 +953,9 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 			else 
 				fCost = curr->getCost()+(succWpt->distanceFrom(vOrigin));
 
+			if ( !CWaypointDistances::isSet(m_iCurrentWaypoint,iSucc) || (CWaypointDistances::getDistance(m_iCurrentWaypoint,iSucc) > fCost) )
+				CWaypointDistances::setDistance(m_iCurrentWaypoint,iSucc,fCost);
+
 			if ( succ->isOpen() || succ->isClosed() )
 			{
 				if ( succ->getParent() != -1 )
@@ -1087,6 +1090,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 	}
 
 	CWaypointDistances::setDistance(m_iCurrentWaypoint,m_iGoalWaypoint,fDistance);
+	m_fGoalDistance = fDistance;
 
 	// erh??
 	if ( iLoops > iNumWaypoints )
@@ -1098,7 +1102,9 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 		*bFail = true;
 	}
 	else
+	{
 		m_vGoal = CWaypoints::getWaypoint(m_iGoalWaypoint)->getOrigin();
+	}
 
     return true; 
 }
@@ -1471,7 +1477,8 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 				if ( pClient )
 				{
-					CBot *pBot = pClient->getDebugBot();
+					edict_t *pEdict = pClient->getDebugBot();
+					CBot *pBot = CBots::getBotPointer(pEdict);
 
 					if ( pBot )
 					{					
@@ -1512,7 +1519,8 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 					if ( pClient )
 					{
-						CBot *pBot = pClient->getDebugBot();
+						edict_t *pEdict = pClient->getDebugBot();
+						CBot *pBot = CBots::getBotPointer(pEdict);
 
 						if ( pBot )
 						{
@@ -1695,7 +1703,7 @@ bool CWaypoints :: save ( bool bVisiblityMade, edict_t *pPlayer )
 
 	fclose(bfp);
 
-	CWaypointDistances::reset();
+	//CWaypointDistances::reset();
 
 	CWaypointDistances::save();
 

@@ -136,11 +136,13 @@ public:
 
 	bool wantToLoadBelief () { return m_bLoadBelief; }
 	virtual bool wantToSaveBelief () { return false; }
+	float getGoalDistance () { return m_fGoalDistance; }
 
 	static const int MAX_PATH_TICKS = 200;
 
 protected:
 	Vector m_vGoal;
+	float m_fGoalDistance;
 	Vector m_vPreviousPoint;
 	Vector m_vDangerPoint;
 	bool m_bDangerPoint;
@@ -439,12 +441,12 @@ public:
 
 	bool wantToSaveBelief ();
 
-	int getCurrentWaypointID ()
+	inline int getCurrentWaypointID ()
 	{
 		return m_iCurrentWaypoint;
 	}
 
-	int getCurrentGoalID ()
+	inline int getCurrentGoalID ()
 	{
 		return m_iGoalWaypoint;
 	}

@@ -475,6 +475,38 @@ void CBotGlobals :: levelInit ()
 
 }
 
+int CBotGlobals :: countTeamMatesNearOrigin ( Vector vOrigin, float fRange, int iTeam, edict_t *pIgnore )
+{
+	int iCount = 0;
+	IPlayerInfo *p;
+
+	for ( int i = 1; i <= CBotGlobals::maxClients(); i ++ )
+	{
+		edict_t *pEdict = INDEXENT(i);
+
+		if ( pEdict->IsFree() )
+			continue;
+
+		if ( pEdict == pIgnore )
+			continue;
+
+		p = playerinfomanager->GetPlayerInfo(pEdict);
+
+		if ( !p || !p->IsConnected() || p->IsDead() || p->IsObserver() || !p->IsPlayer() )
+			continue;
+
+		if ( CClassInterface::getTeam(pEdict) == iTeam )
+		{
+			Vector vPlayer = entityOrigin(pEdict);
+
+			if ( (vOrigin - vPlayer).Length() <= fRange )
+				iCount++;
+		}
+	}
+
+	return iCount;
+}
+
 int CBotGlobals :: numClients ()
 {
 	int iCount = 0;

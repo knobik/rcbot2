@@ -305,6 +305,8 @@ void CTeamFortress2Mod :: teleporterBuilt ( edict_t *pOwner, eEngiBuild type, ed
 		m_Teleporters[iIndex].exit = MyEHandle(pBuilding);
 
 	m_Teleporters[iIndex].sapper = MyEHandle();
+	m_Teleporters[iIndex].m_fLastTeleported = 0.0f;
+	m_Teleporters[iIndex].m_iWaypoint = CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(pBuilding),400.0f,-1,true);
 }
 // used for changing class if I'm doing badly in my team
 int CTeamFortress2Mod ::getHighestScore ()
@@ -380,6 +382,29 @@ bool CTeamFortress2Mod::buildingNearby ( int iTeam, Vector vOrigin )
 		}
 
 		return false;
+}
+
+//get the building
+edict_t *CTeamFortress2Mod::getBuilding (eEngiBuild object, edict_t *pOwner)
+{
+	static short int i;
+	static tf_tele_t *tele;
+
+	i = ENTINDEX(pOwner)+1;
+
+	switch ( object )
+	{
+	case ENGI_DISP:
+		return m_Dispensers[i].disp.get();
+	case ENGI_SENTRY:
+		return m_SentryGuns[i].sentry.get();
+	case ENGI_TELE:
+		if ( m_Teleporters[i].entrance.get() != NULL )
+			return m_Teleporters[i].entrance.get();
+		return m_Teleporters[i].exit.get();
+	}
+
+	return NULL;
 }
 
 // get the owner of 
@@ -1164,6 +1189,17 @@ bool CTeamFortress2Mod ::isBoss ( edict_t *pEntity )
 	return false;
 }
 
+
+void CTeamFortress2Mod :: updateTeleportTime ( edict_t *pOwner )
+{
+	m_Teleporters[ENTINDEX(pOwner)-1].m_fLastTeleported = engine->Time();
+}
+
+float CTeamFortress2Mod :: getTeleportTime ( edict_t *pOwner )
+{
+	return m_Teleporters[ENTINDEX(pOwner)-1].m_fLastTeleported;
+}
+
 bool CTeamFortress2Mod :: isSentry ( edict_t *pEntity, int iTeam )
 {
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_sentrygun")==0);
@@ -1287,6 +1323,8 @@ void CTeamFortress2Mod :: mapInit ()
 
 	for ( i = 0; i < MAX_PLAYERS; i ++ )
 	{
+		m_Teleporters[i].m_iWaypoint = -1;
+		m_Teleporters[i].m_fLastTeleported = 0.0f;
 		m_Teleporters[i].entrance = MyEHandle(NULL);
 		m_Teleporters[i].exit = MyEHandle(NULL);
 		m_Teleporters[i].sapper = MyEHandle(NULL);
@@ -1306,6 +1344,18 @@ void CTeamFortress2Mod :: mapInit ()
 
 }
 
+int CTeamFortress2Mod :: getTeleporterWaypoint ( edict_t *pTele )
+{
+	int i;
+
+	for ( i = 0; i < MAX_PLAYERS; i ++ )
+	{
+		if ( m_Teleporters[i].exit.get() == pTele )
+			return m_Teleporters[i].m_iWaypoint; 
+	}
+
+	return -1;
+}
 bool CDODMod :: shouldAttack ( int iTeam )
 // uses the perceptron to return probability of attack
 {

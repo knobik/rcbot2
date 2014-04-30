@@ -742,6 +742,8 @@ typedef struct
 	MyEHandle entrance;
 	MyEHandle exit;
 	MyEHandle sapper;
+	float m_fLastTeleported;
+	int m_iWaypoint;
 //	short builder;
 }tf_tele_t;
 
@@ -791,6 +793,8 @@ public:
 
 	static bool isPayloadBomb ( edict_t *pEntity, int iTeam );
 
+	static int getTeleporterWaypoint ( edict_t *pTele );
+
 	static bool isHealthKit ( edict_t *pEntity );
 
 	static bool isAmmo ( edict_t *pEntity );
@@ -802,6 +806,9 @@ public:
 	static bool isSentry ( edict_t *pEntity, int iTeam );
 
 	static bool isTeleporter ( edict_t *pEntity, int iTeam );
+
+	static void updateTeleportTime ( edict_t *pOwner );
+	static float getTeleportTime ( edict_t *pOwner );
 
 	static bool isTeleporterEntrance ( edict_t *pEntity, int iTeam );
 
@@ -1053,6 +1060,7 @@ public:
 	static bool canTeamPickupFlag_SD(int iTeam,bool bGetUnknown);
 
 	static edict_t *getBuildingOwner (eEngiBuild object, short index);
+	static edict_t *getBuilding (eEngiBuild object, edict_t *pOwner);
 
 	static bool isBoss ( edict_t *pEntity );
 

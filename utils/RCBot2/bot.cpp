@@ -189,7 +189,7 @@ void CBroadcastVoiceCommand :: execute ( CBot *pBot )
 	if ( pBot->isEnemy(m_pPlayer,false) )
 	{
 		// listen to enemy voice commands if they are nearby
-		if ( pBot->wantToListen() && pBot->wantToListenToPlayer(m_pPlayer) && (pBot->distanceFrom(m_pPlayer) < CWaypointLocations::REACHABLE_RANGE) )
+		if ( pBot->wantToListen() && pBot->wantToListenToPlayerAttack(m_pPlayer) && (pBot->distanceFrom(m_pPlayer) < CWaypointLocations::REACHABLE_RANGE) )
 			pBot->listenToPlayer(m_pPlayer,true,false);
 	}
 	else
@@ -883,6 +883,7 @@ void CBot :: think ()
 			m_fLookSetTime = 0.0f;
 			m_fListenTime = 0.0f;
 			m_bListenPositionValid = false;
+			m_fWantToListenTime = engine->Time() + 1.0f;
 
 			// is player
 			if ( ENTINDEX(m_pEnemy.get()) <= gpGlobals->maxClients )
@@ -1948,12 +1949,12 @@ void CBot :: listenForPlayers ()
 
 		if ( (cmd.buttons & IN_ATTACK) )
 		{
-			if ( wantToListenToPlayer(pPlayer) )
+			if ( wantToListenToPlayerAttack(pPlayer) )
 				fFactor += 1000.0f;
 		}
 		
 		// can't see this player and I'm on my own
-		if ( !isVisible(pPlayer) && ( m_bStatsCanUse && ((m_StatsCanUse.stats.m_iTeamMatesVisible==0)/* && (m_fSeeTeamMateTime ...) */)) )
+		if ( wantToListenToPlayerFootsteps(pPlayer) && !isVisible(pPlayer) && ( m_bStatsCanUse && ((m_StatsCanUse.stats.m_iTeamMatesVisible==0)/* && (m_fSeeTeamMateTime ...) */)) )
 		{
 			CClassInterface::getVelocity(pPlayer,&vVelocity);
 		
@@ -2329,7 +2330,7 @@ Vector CBot::getAimVector ( edict_t *pEntity )
 #ifndef __linux__
 	if ( CClients::clientsDebugging(BOT_DEBUG_AIM) && CClients::isListenServerClient(CClients::get(0)) )
 	{
-		if ( CClients::get(0)->getDebugBot() == this )
+		if ( CClients::get(0)->getDebugBot() == getEdict() )
 		{
 			int line = 0;
 			float ftime = m_fNextUpdateAimVector-engine->Time();

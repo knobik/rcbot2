@@ -168,8 +168,8 @@ public:
 	}
 	static int getTeam ( edict_t *pEntity );
 	static bool entityIsAlive ( edict_t *pEntity );
+	static int countTeamMatesNearOrigin ( Vector vOrigin, float fRange, int iTeam, edict_t *pIgnore = NULL );
 	static int numClients ();
-
 	static void levelInit();
 
 	static inline void setClientMax ( int iMaxClients ) { m_iMaxClients = iMaxClients; }

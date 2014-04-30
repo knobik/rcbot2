@@ -243,9 +243,9 @@ public:
 	void clearDebug ( ) { m_iDebugLevels = 0; }
 	bool isDebugging () { return (m_iDebugLevels != 0); }
 
-	inline void setDebugBot ( CBot *pBot ) { m_pDebugBot = pBot; }	
-	inline bool isDebuggingBot ( CBot *pBot ) { return m_pDebugBot == pBot; }
-	inline CBot *getDebugBot () { return m_pDebugBot; }
+	inline void setDebugBot ( edict_t *pBot ) { m_pDebugBot = pBot; }	
+	inline bool isDebuggingBot ( edict_t *pBot ) { return m_pDebugBot == pBot; }
+	inline edict_t *getDebugBot () { return m_pDebugBot; }
 
 	void think ();
 
@@ -300,7 +300,7 @@ private:
 
 	IPlayerInfo *m_pPlayerInfo;
 
-	CBot *m_pDebugBot;
+	MyEHandle m_pDebugBot;
 
 	float m_fSpeed;
 	Vector m_vVelocity;

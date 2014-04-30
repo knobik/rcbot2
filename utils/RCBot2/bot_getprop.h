@@ -97,6 +97,10 @@ typedef enum
 	GETPROP_TAKEDAMAGE,
 	GETPROP_SENTRY_ENEMY,
 	GETPROP_WATERLEVEL,
+	GETPROP_TF2OBJECTSHELLS,
+	GETPROP_TF2OBJECTROCKETS,
+	GETPROP_TF2_TELEPORT_RECHARGETIME,
+	GETPROP_TF2_TELEPORT_RECHARGEDURATION,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -317,6 +321,12 @@ public:
 	inline static bool isObjectCarried ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTCARRIED].getBool(edict,false); }
 	inline static int getTF2UpgradeLevel ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTUPGRADELEVEL].getInt(edict,0); }
 	inline static int getTF2SentryUpgradeMetal ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTUPGRADEMETAL].getInt(edict,0); }
+	inline static int getTF2SentryShells ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTSHELLS].getInt(edict,0); }
+	inline static int getTF2SentryRockets ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTROCKETS].getInt(edict,0); }
+	
+
+	inline static float getTF2TeleRechargeTime(edict_t *edict) { return g_GetProps[GETPROP_TF2_TELEPORT_RECHARGETIME].getFloat(edict,0); } 
+	inline static float getTF2TeleRechargeDuration(edict_t *edict) { return g_GetProps[GETPROP_TF2_TELEPORT_RECHARGEDURATION].getFloat(edict,0); } 
 
 	inline static int getTF2GetBuildingMaxHealth ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTMAXHEALTH].getInt(edict,0); }
 	inline static int getTF2DispMetal ( edict_t *edict ) { return g_GetProps[GETPROP_TF2DISPMETAL].getInt(edict,0); }

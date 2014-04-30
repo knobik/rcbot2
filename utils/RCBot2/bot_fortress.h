@@ -389,6 +389,7 @@ public:
 	void teamFlagPickup ();
 
 	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 ) { return true; }
+	virtual bool wantToListenToPlayerFootsteps ( edict_t *pPlayer ) { return true; }
 	virtual bool wantToInvestigateSound () { return true; }
 
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
@@ -434,6 +435,7 @@ public:
 	virtual void handleWeapons () { CBot::handleWeapons(); }
 
 	virtual void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon ) { CBot::seeFriendlyDie(pDied,pKiller,pWeapon); }
+	virtual void seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *pWeapon ) { CBot::seeFriendlyKill(pTeamMate,pDied,pWeapon); }
 
 	virtual void voiceCommand ( int cmd ) { };
 
@@ -559,6 +561,10 @@ protected:
 	float m_fCallMedicTime[MAX_PLAYERS]; // for every player ID is kept the last time they called medic
 
 	int m_iLastFailSentryWpt;
+
+	MyEHandle m_pHealer;
+
+	float m_fHealingMoveTime;
 };
 //
 //
@@ -584,14 +590,21 @@ public:
 
 	void checkDependantEntities ();
 
-	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 );
+	virtual bool wantToListenToPlayerAttack ( edict_t *pPlayer, int iWeaponID = -1 );
+	virtual bool wantToListenToPlayerFootsteps ( edict_t *pPlayer );
+
 	bool wantToInvestigateSound ();
 
 	void getDefendArea ( vector<int> *m_iAreas );
 
 	void getAttackArea ( vector <int> *m_iAreas );
 
+	int getCurrentAttackArea () { return m_iCurrentAttackArea; }
+	int getCurrentDefendArea () { return m_iCurrentDefendArea; }
+
 	eBotFuncState rocketJump(int *iState,float *fTime);
+
+	void resetCloakTime () { m_fSpyCloakTime = 0.0f; }
 
 	float getEnemyFactor ( edict_t *pEnemy );
 
@@ -692,6 +705,7 @@ public:
 	bool thinkSpyIsEnemy ( edict_t *pEdict, TF_Class iDisguise );
 
 	void seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon );
+	void seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *pWeapon );
 
 	void voiceCommand ( int cmd );
 

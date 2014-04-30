@@ -964,6 +964,7 @@ void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	pBot->wantToShoot(false);
 	pBot->wantToInvestigateSound(false);
+	pBot->wantToListen(false);
 
 	if (!m_fTime )
 		m_fTime = engine->Time() + randomFloat(9.0f,11.0f);
@@ -1609,11 +1610,60 @@ void CBotTF2EngiLookAfter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		m_fHitSentry = engine->Time() + randomFloat(1.0f,3.0f);
 	}
 	else if ( m_fTime < engine->Time() )
-		complete();
-	else if ( tfBot->lookAfterBuildings(&m_fHitSentry) )
 	{
 		tfBot->nextLookAfterSentryTime(engine->Time()+randomFloat(20.0f,50.0f));
 		complete();
+	}
+	else 
+	{
+		CBotWeapon *pWeapon = pBot->getCurrentWeapon();
+		edict_t *pSentry = m_pSentry.get();
+
+		pBot->wantToListen(false);
+
+		pBot->setLookAtTask(LOOK_AROUND);
+
+		if ( !pWeapon )
+		{
+			fail();
+			return;
+		}
+		else if ( pWeapon->getID() != TF2_WEAPON_WRENCH )
+		{
+			if ( !pBot->select_CWeapon(CWeapons::getWeapon(TF2_WEAPON_WRENCH)) )
+			{
+				fail();
+				return;
+			}
+		}
+
+		if ( pSentry != NULL )
+		{
+			if ( pBot->distanceFrom(pSentry) > 100 )
+				pBot->setMoveTo(CBotGlobals::entityOrigin(pSentry));
+			else
+			{
+				pBot->stopMoving();
+					
+				if ( (CClassInterface::getSentryEnemy(pSentry)!=NULL) || 
+					(CClassInterface::getSentryHealth(pSentry) < CClassInterface::getTF2GetBuildingMaxHealth(pSentry) ) || 
+					(CClassInterface::getTF2SentryRockets(pSentry)<20) || 
+					(CClassInterface::getTF2SentryShells(pSentry)<150))
+				{
+					pBot->primaryAttack();
+				}
+
+			
+				pBot->duck(true); // crouch too
+
+			}
+
+			pBot->lookAtEdict(pSentry);
+			pBot->setLookAtTask(LOOK_EDICT); // LOOK_EDICT fix engineers not looking at their sentry
+
+		}
+		else
+			fail();
 	}
 }
 
@@ -1970,7 +2020,7 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 
 		if ( m_flags.bits.m_bFailTaskEdictDied )
 		{
-			if ( !CBotGlobals::entityIsAlive(m_pEdict) )
+			if ( (m_pEdict == NULL) || !CBotGlobals::entityIsAlive(m_pEdict) )
 			{
 				fail();
 			}
@@ -2468,6 +2518,19 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	if ( !CPoints::isValidArea(m_iArea) )
 		fail(); // move up
+	else if ( CTeamFortress2Mod::isAttackDefendMap() )
+	{
+		CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
+
+		if ( pBotTF2->getTeam() == TF_TEAM_BLUE )
+		{
+			if ( m_iArea != pBotTF2->getCurrentAttackArea() )
+				fail();
+		}
+		else if ( m_iArea != pBotTF2->getCurrentDefendArea() )
+			fail();
+
+	}
 
 	pBot->wantToShoot(false);
 	pBot->wantToListen(false);
@@ -2582,6 +2645,7 @@ CBotTF2SpySap :: CBotTF2SpySap ( edict_t *pBuilding, eEngiBuild id )
 void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	edict_t *pBuilding;
+	CBotTF2 *tf2Bot = (CBotTF2*)pBot;
 
 	if ( !pBot->isTF() )
 	{
@@ -2589,10 +2653,13 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-	if ( !m_fTime )
+	if ( m_fTime == 0.0f )
+	{
 		m_fTime = engine->Time() + randomFloat(4.0f,6.0f);
+		tf2Bot->resetCloakTime();
+	}
 
-	CBotTF2 *tf2Bot = (CBotTF2*)pBot;
+
 	CBotWeapon *weapon;
 	pBot->wantToShoot(false);
 
@@ -2650,8 +2717,7 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		{
 			if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pBot->getEdict()) )
 			{
-				pBot->secondaryAttack();
-				tf2Bot->waitCloak();
+				tf2Bot->spyUnCloak();
 			}
 			else if ( randomInt(0,1) )
 				pBot->tapButton(IN_ATTACK);
@@ -2717,7 +2783,7 @@ void CBotTFUseTeleporter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		{
 			Vector vTele = CBotGlobals::entityOrigin(m_pTele);		
 
-			if ( pBot->distanceFrom(vTele) > 48 )
+			if ( (pBot->distanceFrom(vTele) > 48) || (CClassInterface::getGroundEntity(pBot->getEdict())!=m_pTele.get()) )
 			{
 				pBot->setMoveTo((vTele));		
 				

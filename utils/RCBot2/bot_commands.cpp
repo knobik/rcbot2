@@ -861,7 +861,8 @@ eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd,
 {
 	if ( pClient && pClient->getDebugBot()!=NULL )
 	{
-		CBot *pBot = pClient->getDebugBot();
+		edict_t *pEdict = pClient->getDebugBot();
+		CBot *pBot = CBots::getBotPointer(pEdict);
 
 		if ( pBot->inUse() )
 		{
@@ -900,10 +901,17 @@ eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd,
 				{
 					if ( pClient )
 					{
+						
 						CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_SNIPER,pClient->getOrigin(),200.0f,pBot->getTeam()));
 					
 						if ( pWaypoint )
 						{
+							if ( CBotGlobals::isMod(MOD_TF2) )
+							{
+								//if ( CClassInterface::getTF2Class() )
+							}
+							else
+							{
 							CBotWeapon *pWeapon;
 							CBotWeapons *m_pWeapons;
 							CBotSchedule *snipe = new CBotSchedule();
@@ -930,6 +938,7 @@ eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd,
 							}
 							else
 								CBotGlobals::botMessage(NULL,0,"Bot is not a sniper");
+							}
 						}
 						else
 							CBotGlobals::botMessage(NULL,0,"Sniper waypoint not found");
@@ -950,7 +959,8 @@ eBotCommandResult CBotFlush :: execute ( CClient *pClient, const char *pcmd, con
 {
 	if ( pClient && pClient->getDebugBot()!=NULL )
 	{
-		CBot *pBot = pClient->getDebugBot();
+		edict_t *pEdict = pClient->getDebugBot();
+		CBot *pBot = CBots::getBotPointer(pEdict);
 
 		if ( pBot->inUse() )
 		{
@@ -966,7 +976,8 @@ eBotCommandResult CBotGoto :: execute ( CClient *pClient, const char *pcmd, cons
 {
 	if ( pClient && pClient->getDebugBot()!=NULL )
 	{
-		CBot *pBot = pClient->getDebugBot();
+		edict_t *pEdict = pClient->getDebugBot();
+		CBot *pBot = CBots::getBotPointer(pEdict);
 
 		if ( pBot->inUse() )
 		{
@@ -1664,7 +1675,7 @@ eBotCommandResult CDebugBotCommand :: execute ( CClient *pClient, const char *pc
 		return COMMAND_ERROR;
 	}
 
-	pClient->setDebugBot(pBot);	
+	pClient->setDebugBot(pBot->getEdict());	
 
 	return COMMAND_ACCESSED;
 }

@@ -830,7 +830,8 @@ public:
 	virtual void listenForPlayers ();
 	// listens to this player
 	void listenToPlayer (edict_t *pListenTo, bool bIsEnemy = false, bool bIsAttacking = false ); 
-	virtual bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1 ) { return true; }
+	virtual bool wantToListenToPlayerAttack ( edict_t *pPlayer, int iWeaponID = -1 ) { return true; }
+	virtual bool wantToListenToPlayerFootsteps ( edict_t *pPlayer ) { return true; }
 
 	virtual bool wantToInvestigateSound () { return m_bWantToInvestigateSound; }
 	inline void wantToInvestigateSound ( bool bSet ) { m_bWantToInvestigateSound = bSet; }

@@ -210,10 +210,16 @@ void CBotTF2DefendPayloadBombSched :: init ()
 
 CBotTFEngiUpgrade :: CBotTFEngiUpgrade ( CBot *pBot, edict_t *pBuilding )
 {
+	CFindPathTask *pathtask = new CFindPathTask(pBuilding);
+
+	addTask(pathtask);
+
+	pathtask->completeInRangeFromEdict();
+	pathtask->failIfTaskEdictDead();
+	pathtask->setRange(150.0f);
+
 	if ( !CTeamFortress2Mod::isSentryGun(pBuilding) )
 	{
-		CFindPathTask *pathtask = new CFindPathTask(pBuilding);
-		addTask(pathtask);
 		pathtask->setInterruptFunction(new CBotTF2EngineerInterrupt(pBot));
 
 		CBotTF2UpgradeBuilding *upgbuilding = new CBotTF2UpgradeBuilding(pBuilding);
@@ -223,8 +229,6 @@ CBotTFEngiUpgrade :: CBotTFEngiUpgrade ( CBot *pBot, edict_t *pBuilding )
 	}
 	else
 	{
-		addTask(new CFindPathTask(pBuilding));
-
 		addTask(new CBotTF2UpgradeBuilding(pBuilding));
 	}
 }
@@ -274,7 +278,7 @@ void CBotTF2SnipeSched :: init ()
 CBotTFEngiLookAfterSentry :: CBotTFEngiLookAfterSentry ( edict_t *pSentry )
 {
 	addTask(new CFindPathTask(pSentry)); // first
-	addTask(new CBotTF2EngiLookAfter()); // second
+	addTask(new CBotTF2EngiLookAfter(pSentry)); // second
 }
 
 void CBotTFEngiLookAfterSentry :: init ()
@@ -475,7 +479,10 @@ void CBotDefendSched :: init ()
 
 CBotRemoveSapperSched :: CBotRemoveSapperSched ( edict_t *pBuilding, eEngiBuild id )
 {
-	addTask(new CFindPathTask(pBuilding));
+	CFindPathTask *pathtask = new CFindPathTask(pBuilding);
+	addTask(pathtask);
+	pathtask->completeInRangeFromEdict();
+	pathtask->setRange(150.0f);
 	addTask(new CBotRemoveSapper(pBuilding,id));
 }
 

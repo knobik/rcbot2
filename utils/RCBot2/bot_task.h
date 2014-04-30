@@ -589,7 +589,7 @@ private:
 class CBotTF2EngiLookAfter : public CBotTask
 {
 public:
-	CBotTF2EngiLookAfter (  ) { m_fTime = 0; m_fHitSentry = 0; }
+	CBotTF2EngiLookAfter ( edict_t *pSentry ) { m_pSentry = pSentry; m_fTime = 0; m_fHitSentry = 0; }
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -600,6 +600,7 @@ public:
 private:
 	float m_fTime;
 	float m_fHitSentry;
+	MyEHandle m_pSentry;
 };
 
 class CBotTF2Snipe : public CBotTask

@@ -221,7 +221,7 @@ public:
 	void prone ();
 	void unProne();
 
-	bool wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID = -1);
+	bool wantToListenToPlayerAttack ( edict_t *pPlayer, int iWeaponID = -1);
 
 	bool walkingTowardsWaypoint ( CWaypoint *pWaypoint, bool *bOffsetApplied, Vector &vOffset );
 

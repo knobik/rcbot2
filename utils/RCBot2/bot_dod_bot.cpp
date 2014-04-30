@@ -632,7 +632,7 @@ void CDODBot :: dropAmmo ()
 }
 
 // use weapon ID later, use getCurrentWeapon for now
-bool CDODBot :: wantToListenToPlayer ( edict_t *pPlayer, int iWeaponID )
+bool CDODBot :: wantToListenToPlayerAttack ( edict_t *pPlayer, int iWeaponID )
 {
 	edict_t *pentWeapon = CClassInterface::getCurrentWeapon(pPlayer);
 

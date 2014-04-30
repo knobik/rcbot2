@@ -17,6 +17,11 @@ public:
 
 	static float getDistance ( int iFrom, int iTo );
 
+	static inline bool isSet ( int iFrom, int iTo )
+	{
+		return m_Distances[iFrom][iTo] >= 0;
+	}
+
 	static inline void setDistance ( int iFrom, int iTo, float fDist )
 	{
 		m_Distances[iFrom][iTo] = (int)fDist;

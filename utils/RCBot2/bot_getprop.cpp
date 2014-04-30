@@ -375,6 +375,8 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2OBJECTUPGRADELEVEL,"CObjectSentrygun","m_iUpgradeLevel",0);
 		DEFINE_GETPROP(GETPROP_TF2OBJECTUPGRADEMETAL,"CObjectSentrygun","m_iUpgradeMetal",0);
 		DEFINE_GETPROP(GETPROP_TF2OBJECTMAXHEALTH,"CObjectSentrygun","m_iMaxHealth",0);
+		DEFINE_GETPROP(GETPROP_TF2OBJECTSHELLS,"CObjectSentrygun","m_iAmmoShells",0);
+		DEFINE_GETPROP(GETPROP_TF2OBJECTROCKETS,"CObjectSentrygun","m_iAmmoRockets",0);
 		DEFINE_GETPROP(GETPROP_TF2DISPMETAL,"CObjectDispenser","m_iAmmoMetal",0);
 		DEFINE_GETPROP(GETPROP_MAXSPEED,"CBasePlayer","m_flMaxspeed",0);
 		DEFINE_GETPROP(GETPROP_CONSTRAINT_SPEED,"CTFPlayer","m_flConstraintSpeedFactor",0);
@@ -443,6 +445,9 @@ void CClassInterface:: init ()
 
 		DEFINE_GETPROP(GETPROP_SENTRY_ENEMY,"CObjectSentrygun","m_hEnemy",0);
 		DEFINE_GETPROP(GETPROP_WATERLEVEL,"CBasePlayer","m_nWaterLevel",0);
+
+		DEFINE_GETPROP(GETPROP_TF2_TELEPORT_RECHARGETIME,"CObjectTeleporter","m_flRechargeTime",0);
+		DEFINE_GETPROP(GETPROP_TF2_TELEPORT_RECHARGEDURATION,"CObjectTeleporter","m_flCurrentRechargeDuration",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

@@ -135,7 +135,7 @@ public:
 	{
 		extern ConVar rcbot_listen_dist;
 
-		if ( !pBot->hasEnemy() && (pBot->wantToListen()||pBot->isListeningToPlayer(m_pAttacker)) && pBot->wantToListenToPlayer(m_pAttacker,m_iWeaponID) )
+		if ( !pBot->hasEnemy() && (pBot->wantToListen()||pBot->isListeningToPlayer(m_pAttacker)) && pBot->wantToListenToPlayerAttack(m_pAttacker,m_iWeaponID) )
 		{
 			float fDistance = pBot->distanceFrom(m_pAttacker);
 
@@ -417,13 +417,16 @@ void CBossKilledEvent :: execute ( IBotEventInterface *pEvent )
 void CPlayerTeleported ::execute(IBotEventInterface *pEvent)
 {
 	int builderid = pEvent->getInt("builderid");
+	edict_t *pPlayer = CBotGlobals::playerByUserId(builderid);
 
-	CBot *pBot = CBots::getBotPointer(CBotGlobals::playerByUserId(builderid));
+	CBot *pBot = CBots::getBotPointer(pPlayer);
 
 	if ( pBot )
 	{
 		((CBotTF2*)pBot)->teleportedPlayer();
 	}
+
+	CTeamFortress2Mod::updateTeleportTime(pPlayer);
 }
 
 void CPlayerHealed ::execute(IBotEventInterface *pEvent)

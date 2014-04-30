@@ -295,6 +295,7 @@ void CClient :: think ()
 			if ( m_fNextPrintDebugInfo < engine->Time() )
 			{
 				char msg[1024];
+				CBot *pBot = CBots::getBotPointer(m_pDebugBot);
 
 				QAngle eyes = p->GetLastUserCommand().viewangles;
 				Vector vForward;
@@ -309,14 +310,14 @@ void CClient :: think ()
 				vDisplay = vDisplay - vLeft*300.0f;
 
 				// get debug message
-				m_pDebugBot->debugBot(msg);
+				pBot->debugBot(msg);
 
 #ifndef __linux__
 				int i = 0; 
 				int n = 0;
 				char line[256];
 				int linenum = 0;
-				int iIndex = ENTINDEX(m_pDebugBot->getEdict());
+				int iIndex = ENTINDEX(m_pDebugBot);
 
 				do
 				{
@@ -1088,7 +1089,7 @@ void CClients :: clientDebugMsg ( int iLev, const char *szMsg, CBot *pBot )
 			continue;
 		if ( !pClient->isDebugOn(iLev) )
 			continue;		
-		if ( pBot && !pClient->isDebuggingBot(pBot) )
+		if ( pBot && !pClient->isDebuggingBot(pBot->getEdict()) )
 			continue;
 
 		CBotGlobals::botMessage(pClient->getPlayer(),0,"[DEBUG %s] %s",g_szDebugTags[iLev],szMsg);
