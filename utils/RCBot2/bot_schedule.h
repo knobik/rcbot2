@@ -89,6 +89,7 @@ typedef enum
 	SCHED_CROUCH_AND_HIDE,
 	SCHED_DEPLOY_MACHINE_GUN,
 	SCHED_ATTACK_SENTRY_GUN,
+	SCHED_RETURN_TO_INTEL,
 	SCHED_MAX
 	//SCHED_HIDE_FROM_ENEMY
 }eBotSchedule;
@@ -496,7 +497,7 @@ public:
 class CBotTF2SnipeSched : public CBotSchedule
 {
 public:
-	CBotTF2SnipeSched ( Vector vOrigin, float fYaw, int iArea = 0 );
+	CBotTF2SnipeSched ( Vector vOrigin, int iWpt );
 
 	void init ();
 };

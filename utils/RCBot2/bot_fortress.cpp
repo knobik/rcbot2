@@ -356,13 +356,16 @@ void CBotFortress :: checkHealingValid ()
 
 bool CBotFortress :: wantToHeal ( edict_t *pPlayer )
 {
+
 	IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
 	TF_Class iclass = (TF_Class)CClassInterface::getTF2Class(pPlayer);
-
-	if ( ( iclass == TF_CLASS_SPY ) || (iclass == TF_CLASS_SNIPER ) || (iclass == TF_CLASS_MEDIC) || (iclass == TF_CLASS_ENGINEER) || (iclass == TF_CLASS_SCOUT) )
-		return (ENTINDEX(pPlayer) <= gpGlobals->maxClients) && CBotGlobals::entityIsAlive(pPlayer) && (p->GetHealth() < p->GetMaxHealth());
 	
-	return (ENTINDEX(pPlayer) <= gpGlobals->maxClients) && CBotGlobals::entityIsAlive(pPlayer);
+	// Heal normal classes till full health
+	if ( (CClassInterface::getTF2NumHealers(pPlayer) < 2) && ( iclass == TF_CLASS_SPY ) || (iclass == TF_CLASS_SNIPER ) || (iclass == TF_CLASS_MEDIC) || (iclass == TF_CLASS_ENGINEER) || (iclass == TF_CLASS_SCOUT) )
+		return CBotGlobals::entityIsAlive(pPlayer) && (p->GetHealth() < p->GetMaxHealth());
+	
+	// overheal HWGUY/SOLDIER/DEMOMAN
+	return (CClassInterface::getTF2NumHealers(pPlayer) < 2) && CBotGlobals::entityIsAlive(pPlayer);
 }
 
 
@@ -381,7 +384,7 @@ bool CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	{
 		if ( bValid && bVisible )
 		{
-			if ( ENTINDEX(pEntity) && (ENTINDEX(pEntity) <= gpGlobals->maxClients) ) // player
+			if ( CBotGlobals::isPlayer(pEntity) ) // player
 			{
 				if ( CBotGlobals::getTeam(pEntity) == getTeam() )
 				{
@@ -706,6 +709,8 @@ void CBotFortress :: detectedAsSpy( edict_t *pDetector, bool bDisguiseComprimise
 void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
+
+	//m_bWantToZoom = false;
 
 	memset(m_fCallMedicTime,0,sizeof(float)*MAX_PLAYERS);
 	m_fWaitTurnSentry = 0.0f;
@@ -2081,19 +2086,24 @@ bool CBotTF2 :: hasEngineerBuilt ( eEngiBuild iBuilding )
 	return false;
 }
 
+// ENEMY Flag dropped
 void CBotFortress :: flagDropped ( Vector vOrigin )
 { 
 	m_vLastKnownFlagPoint = vOrigin; 
 	m_fLastKnownFlagTime = engine->Time() + 60.0f;
 
-	if ( m_pSchedules->hasSchedule(SCHED_TF2_GET_FLAG) )
-		m_pSchedules->removeSchedule(SCHED_TF2_GET_FLAG);
+	if ( m_pSchedules->hasSchedule(SCHED_RETURN_TO_INTEL) )
+		m_pSchedules->removeSchedule(SCHED_RETURN_TO_INTEL);
 }
 
 void CBotFortress :: teamFlagDropped ( Vector vOrigin )
 {
 	m_vLastKnownTeamFlagPoint = vOrigin; 
 	m_fLastKnownTeamFlagTime = engine->Time() + 60.0f;
+
+	// FIX
+	if ( m_pSchedules->hasSchedule(SCHED_TF2_GET_FLAG) )
+		m_pSchedules->removeSchedule(SCHED_TF2_GET_FLAG);
 }
 
 void CBotFortress :: callMedic ()
@@ -2533,9 +2543,19 @@ void CBotTF2 :: modThink ()
 	else if ( m_iClass == TF_CLASS_SNIPER )
 	{
 		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
+		{
 			m_fFov = 20.0f; // Jagger
+
+			//if ( !wantToZoom() )
+
+			if ( moveToIsValid() && !hasEnemy() )
+				secondaryAttack();
+		}
 		else
 			m_fFov = BOT_DEFAULT_FOV;
+
+		
+
 	}
 	else if ( m_iClass == TF_CLASS_HWGUY )
 	{
@@ -2759,6 +2779,16 @@ void CBotTF2::enemyFound (edict_t *pEnemy)
 {
 	CBotFortress::enemyFound(pEnemy);
 	m_fRevMiniGunTime = 0.0f;
+
+	if ( m_pNearestEnemySentry == pEnemy )
+	{
+		CBotWeapon *pWeapon = m_pWeapons->getPrimaryWeapon();
+
+		if ( (pWeapon != NULL) && (m_iClass != TF_CLASS_SPY) && !pWeapon->outOfAmmo(this) && pWeapon->primaryGreaterThanRange(TF2_MAX_SENTRYGUN_RANGE+32.0f) )
+		{
+			updateCondition(CONDITION_CHANGED);
+		}
+	}
 }
 
 bool CBotFortress :: canAvoid ( edict_t *pEntity )
@@ -3111,6 +3141,31 @@ int CBotFortress :: getSpyDisguiseClass ( int iTeam )
 	return m_classes.Random();
 }
 
+bool CBotFortress :: incomingRocket ( float fRange )
+{
+	edict_t *pRocket = m_NearestEnemyRocket;
+
+	if ( pRocket != NULL )
+	{
+		Vector vel;
+		Vector vorg = CBotGlobals::entityOrigin(pRocket);
+		Vector vcomp;
+		float fDist = distanceFrom(pRocket);
+
+		if ( fDist < fRange )
+		{
+			CClassInterface::getVelocity(pRocket,&vel);
+
+			vel = vel/vel.Length();
+			vcomp = vorg + vel*fDist;
+
+			return ( distanceFrom(vcomp) < BLAST_RADIUS );
+		}
+	}
+
+	return false;
+}
+
 void CBotFortress :: enemyLost(edict_t *pEnemy)
 {
 	if ( CBotGlobals::isPlayer(pEnemy) && (CClassInterface::getTF2Class(pEnemy) == TF_CLASS_SPY) )
@@ -3128,14 +3183,24 @@ bool CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 
 	if ( bValid && bVisible )
 	{
-		if ( CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_RED) )
+		if ( (m_pRedPayloadBomb.get() != pEntity) && CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_RED) )
 		{
 			m_pRedPayloadBomb = pEntity;
 		}
-		else if ( CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_BLUE) )
+		else if ( (m_pBluePayloadBomb.get() != pEntity) && CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_BLUE) )
 		{
 			m_pBluePayloadBomb = pEntity;
 		}
+		else if ( (m_NearestEnemyRocket.get() != pEntity) && CTeamFortress2Mod::isRocket ( pEntity, CTeamFortress2Mod::getEnemyTeam(m_iTeam) ) )
+		{
+			if ( ( m_NearestEnemyRocket.get() == NULL ) || (distanceFrom(pEntity) < distanceFrom(m_NearestEnemyRocket)) )
+				m_NearestEnemyRocket = pEntity;
+		}
+	}
+	else 
+	{
+		if ( pEntity == m_NearestEnemyRocket.get() )
+			m_NearestEnemyRocket = NULL;
 	}
 
 	if ( (ENTINDEX(pEntity)<=gpGlobals->maxClients) && (ENTINDEX(pEntity)>0) )
@@ -3908,7 +3973,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	{
 		CBotWeapon *pWeapon = m_pWeapons->getPrimaryWeapon();
 
-		ADD_UTILITY_DATA(BOT_UTIL_ATTACK_SENTRY,(m_iClass!=TF_CLASS_SPY)&& pWeapon && !pWeapon->outOfAmmo(this) && pWeapon->primaryInRange(TF2_MAX_SENTRYGUN_RANGE+110),0.7f,ENTINDEX(m_pNearestEnemySentry.get()));
+		ADD_UTILITY_DATA(BOT_UTIL_ATTACK_SENTRY,(m_iClass!=TF_CLASS_SPY)&& pWeapon && !pWeapon->outOfAmmo(this) && pWeapon->primaryGreaterThanRange(TF2_MAX_SENTRYGUN_RANGE+32.0f),0.7f,ENTINDEX(m_pNearestEnemySentry.get()));
 	}
 	// only attack if attack area is > 0
 	ADD_UTILITY(BOT_UTIL_ATTACK_POINT,(m_fAttackPointTime<engine->Time()) && 
@@ -3933,7 +3998,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	ADD_UTILITY(BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && 
 		CBotGlobals::entityIsAlive(m_pLastHeal) && wantToHeal(m_pLastHeal),0.99f); 
 
-	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) &&
+	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) &&
 		!hasFlag() && !CTeamFortress2Mod::isFlagCarrier(m_pEnemy) && (((m_iClass == TF_CLASS_MEDIC) && !m_pHeal) || 
 		CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEnemy)),1.0f);
 
@@ -5264,7 +5329,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 			if ( pWaypoint )
 			{
-				m_pSchedules->add(new CBotTF2SnipeSched(pWaypoint->getOrigin(),pWaypoint->getAimYaw(),pWaypoint->getArea()));
+				m_pSchedules->add(new CBotTF2SnipeSched(pWaypoint->getOrigin(),CWaypoints::getWaypointIndex(pWaypoint)));
 				return true;
 			}
 			break;
@@ -6065,13 +6130,13 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 					if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pEdict) ) // if he is cloaked -- can't see him
 					{
 						bValid = false;
-
-						if ( CTeamFortress2Mod::TF2_IsPlayerOnFire(pEdict) ) // if he is on fire and cloaked I can see him
+						// out of cloak charge or on fire -- i will see him move 
+						if ( ( CClassInterface::getTF2SpyCloakMeter(pEdict) == 0.0f ) || CTeamFortress2Mod::TF2_IsPlayerOnFire(pEdict) ) // if he is on fire and cloaked I can see him
 						{
 							// if I saw my team mate shoot him within the last 5 seconds, he's a spy!
 							// or no spies on team that can do this!
 							bValid = (fSpyAttackTime < 5.0f) || !isClassOnTeam(TF_CLASS_SPY,getTeam());
-						}	
+						}
 					}
 					else if ( dteam == 0 ) // not disguised
 					{
@@ -6277,8 +6342,10 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 
 		if ( pWpt )
 		{
+			CBotSchedule *newSched = new CBotGotoOriginSched(pWpt->getOrigin());
 			m_pSchedules->freeMemory();
-			m_pSchedules->add(new CBotGotoOriginSched(pWpt->getOrigin()));
+			m_pSchedules->add(newSched);
+			newSched->setID(SCHED_RETURN_TO_INTEL);
 			m_fDefendTime = engine->Time() + randomFloat(10.0f,20.0f);
 		}
 	}

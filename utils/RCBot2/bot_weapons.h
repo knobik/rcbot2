@@ -272,6 +272,16 @@ public:
 		return (fDistance>m_fPrimMinWeaponShootDist)&&(fDistance<m_fPrimMaxWeaponShootDist);
 	}
 
+	inline bool primaryGreaterThanRange ( float fDistance )
+	{
+		return (fDistance<m_fPrimMaxWeaponShootDist);
+	}
+	
+	inline float primaryMaxRange ( )
+	{
+		return (m_fPrimMaxWeaponShootDist);
+	}
+
 	inline bool hasHighRecoil ()
 	{
 		return hasAllFlags(WEAP_FL_HIGH_RECOIL);
@@ -492,6 +502,11 @@ public:
 		return m_pWeaponInfo->primaryInRange(fDistance);
 	}
 
+	inline bool primaryGreaterThanRange ( float fDistance )
+	{
+		return m_pWeaponInfo->primaryGreaterThanRange(fDistance); 
+	}
+
 	inline bool needsDeployedOrZoomed ()
 	{
 		return m_pWeaponInfo->needsDeployedOrZoomed();
@@ -531,6 +546,11 @@ public:
 	inline bool isSpecial ()
 	{
 		return m_pWeaponInfo->isSpecial();
+	}
+
+	inline float primaryMaxRange ( )
+	{
+		return (m_pWeaponInfo->primaryMaxRange());
 	}
 
 	inline bool isDeployable ()

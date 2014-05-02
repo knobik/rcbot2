@@ -252,6 +252,10 @@ public:
 
 	CBotFortress();
 
+	//virtual bool wantToZoom () { return m_bWantToZoom; }
+
+	//virtual void wantToZoom ( bool bSet ) { m_bWantToZoom = bSet; }
+
 	virtual void enemyLost (edict_t *pEnemy);
 
 	virtual void updateConditions();
@@ -440,7 +444,8 @@ public:
 	virtual void voiceCommand ( int cmd ) { };
 
 	virtual void seeFriendlyHurtEnemy ( edict_t *pTeammate, edict_t *pEnemy, CWeapon *pWeapon );
-
+	
+	bool incomingRocket ( float fRange );
 protected:
 	virtual void selectTeam ();
 
@@ -565,6 +570,11 @@ protected:
 	MyEHandle m_pHealer;
 
 	float m_fHealingMoveTime;
+
+	MyEHandle m_NearestEnemyRocket;
+	MyEHandle m_NearestEnemyGrenade;
+
+	//bool m_bWantToZoom;
 };
 //
 //

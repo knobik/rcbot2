@@ -946,13 +946,14 @@ void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const ch
 
 #ifdef HOMEFOLDER
 	strcat(szOutput,home);
+	addDirectoryDelimiter(szOutput);
 #endif
 
-#ifndef HOMEFOLDER
+/*#ifndef HOMEFOLDER
 	strcat(szOutput,"..");
-#endif HOMEFOLDER
+#endif HOMEFOLDER*/
 
-	addDirectoryDelimiter(szOutput);
+	
 	strcat(szOutput,BOT_FOLDER);
 	addDirectoryDelimiter(szOutput);
 

@@ -83,7 +83,10 @@ const char *szSchedules[SCHED_MAX+1] =
 	"SCHED_FOLLOW",
 	"SCHED_DOD_DROPAMMO",
 	"SCHED_INVESTIGATE_NOISE",
-	"SCHED_CROUCH_AND_HIDE",
+	"SCHED_CROUCH_AND_HIDE",	
+	"SCHED_DEPLOY_MACHINE_GUN",
+	"SCHED_ATTACK_SENTRY_GUN",
+	"SCHED_RETURN_TO_INTEL",
 	"SCHED_MAX"
 };
 ////////////////////// unused
@@ -258,16 +261,17 @@ void CBotBackstabSched :: init ()
 
 ///////////
 
-CBotTF2SnipeSched :: CBotTF2SnipeSched ( Vector vOrigin, float fYaw, int iArea )
+CBotTF2SnipeSched :: CBotTF2SnipeSched ( Vector vOrigin, int iWpt )
 {
-	CBotTask *pFindPath = new CFindPathTask(vOrigin);
-	CBotTask *pSnipeTask = new CBotTF2Snipe(vOrigin,fYaw,iArea);
+	CBotTask *pFindPath = new CFindPathTask(iWpt);
+	CBotTask *pSnipeTask = new CBotTF2Snipe(vOrigin,iWpt);
+
+	addTask(pFindPath); // first
+	addTask(pSnipeTask); // second
 
 	pFindPath->setFailInterrupt(CONDITION_PARANOID);
 	pSnipeTask->setFailInterrupt(CONDITION_PARANOID);
 
-	addTask(pFindPath); // first
-	addTask(pSnipeTask); // second
 }
 void CBotTF2SnipeSched :: init ()
 {
@@ -561,7 +565,7 @@ void CCrouchHideSched :: init ()
 /////////////
 CBotTF2AttackSentryGun::CBotTF2AttackSentryGun( edict_t *pSentry, CBotWeapon *pWeapon )
 {
-	CFindPathTask *path = new CFindPathTask(CBotGlobals::entityOrigin(pSentry));
+	CFindPathTask *path = new CFindPathTask(pSentry);
 
 	addTask(path);
 	addTask(new CBotTF2AttackSentryGunTask(pSentry,pWeapon));
@@ -569,7 +573,7 @@ CBotTF2AttackSentryGun::CBotTF2AttackSentryGun( edict_t *pSentry, CBotWeapon *pW
 	path->completeInRangeFromEdict();
 	path->completeIfSeeTaskEdict();
 
-	path->setRange(TF2_MAX_SENTRYGUN_RANGE+100.0f);
+	path->setRange(pWeapon->primaryMaxRange()-100);
 }
 
 /////////////

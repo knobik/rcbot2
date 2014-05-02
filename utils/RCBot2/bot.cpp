@@ -905,8 +905,8 @@ void CBot :: think ()
 	else
 	{
 		m_fWaypointStuckTime = 0.0f;
-		stopMoving();
-		setLookAtTask((LOOK_AROUND));
+		stopMoving();		
+		setLookAtTask(LOOK_AROUND);
 	}
 #ifdef _DEBUG
 	}
@@ -2361,20 +2361,20 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	fDistance = distanceFrom(pEntity);
 	fHeadOffset = 0;
 
-	if ( fDistance < 100.0f ) // melee distance
+	if ( fDistance > 100.0f ) // melee distance
 		fDistFactor = (1.0f - m_pProfile->m_fAimSkill) + (fDistance*0.000125f)*(m_fFov/90.0f);
 	else
-		fDistFactor = (1.0f - m_pProfile->m_fAimSkill)*(fDistance/100);
+		fDistFactor = fDistance*0.002f;
 
 	// origin is always the bottom part of the entity
 	// add body height
-	fHeadOffset += v_size.z;
+	fHeadOffset += v_size.z-1;
 
 	if ( ENTINDEX(pEntity) <= gpGlobals->maxClients ) // add body height
 	{
 		// aim for head
 		if ( !(iPlayerFlags & FL_DUCKING) && hasSomeConditions(CONDITION_SEE_ENEMY_HEAD) && (m_fFov < BOT_DEFAULT_FOV) )
-			fHeadOffset += v_size.z;
+			fHeadOffset += v_size.z-1;
 	}
 
 	myvel = Vector(0,0,0);
@@ -2408,7 +2408,7 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	v_desired_offset->z = randomFloat(-vel.z,vel.z)*fDistFactor*v_size.z;
 
 	// target
-	v_desired_offset->z += fHeadOffset;
+	v_desired_offset->z += (fHeadOffset * m_pProfile->m_fAimSkill) + (randomFloat(0.0,1.0f-m_pProfile->m_fAimSkill)*fHeadOffset);
 
 }
 
