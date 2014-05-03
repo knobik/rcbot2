@@ -384,6 +384,8 @@ public:
 
 	static int numWaypoints ();
 
+	static CWaypoint *nearestPipeWaypoint ( Vector vTarget, Vector vOrigin, int *iAiming );
+
 	static int freeWaypointIndex ();
 
 	static void deletePathsTo ( int iWpt );

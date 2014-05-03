@@ -1867,6 +1867,7 @@ CFindPathTask :: CFindPathTask ( int iWaypointId, eLookTask looktask )
 	m_flags.m_data = 0;
 	m_fRange = 0.0f;
 	m_iDangerPoint = -1;
+	m_bGetPassedIntAsWaypointId = false;
 }
 
 void CFindPathTask :: init ()
@@ -1875,6 +1876,7 @@ void CFindPathTask :: init ()
 	m_iInt = 0;
 	m_fRange = 0.0f;
 	m_iDangerPoint = -1;
+	m_bGetPassedIntAsWaypointId = false;
 	//setFailInterrupt(CONDITION_SEE_CUR_ENEMY);
 }
 
@@ -1887,6 +1889,7 @@ CFindPathTask :: CFindPathTask ( edict_t *pEdict )
 	m_flags.m_data = 0;
 	m_fRange = 0.0f;
 	m_iDangerPoint = -1;
+	m_bGetPassedIntAsWaypointId = false;
 }
 
 void CFindPathTask :: debugString ( char *string )
@@ -1901,7 +1904,19 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	if ( m_LookTask == LOOK_NOISE )
 		pBot->wantToListen(false); // vector already set before find path task
 
-	if ( pSchedule->hasPassVector() )
+	if ( m_bGetPassedIntAsWaypointId )
+	{
+		m_iWaypointId = pSchedule->passedInt();
+
+		if ( m_iWaypointId == -1 )
+		{
+			fail();
+			return;
+		}
+
+		m_vVector = CWaypoints::getWaypoint(m_iWaypointId)->getOrigin();
+	}
+	else if ( pSchedule->hasPassVector() )
 	{
 		m_vVector = pSchedule->passedVector();
 		pSchedule->clearPass();
@@ -2028,6 +2043,128 @@ void CFindPathTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	}
 	else if ( m_flags.bits.m_bFailTaskEdictDied )
 		fail();
+}
+
+CBotTF2FindPipeWaypoint:: CBotTF2FindPipeWaypoint ( Vector vOrigin, Vector vTarget )
+{
+	m_vOrigin = vOrigin;
+	m_vTarget = vTarget;
+
+	m_i = 0;
+	m_j = 0;
+	m_iters = 0;
+	m_iNearesti = -1;
+	m_iNearestj = -1;
+	m_fNearesti = 2048.0f;
+	m_fNearestj = 4096.0f;
+	m_iTargetWaypoint = (short int)CWaypointLocations::NearestWaypoint(m_vTarget,BLAST_RADIUS,-1,true,true);
+		
+	m_pTable = CWaypoints::getVisiblity();	
+
+	if ( m_iTargetWaypoint != -1 )
+		m_pTarget = CWaypoints::getWaypoint(m_iTargetWaypoint);
+}
+
+void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
+{
+	register short int numwaypoints = (short int)CWaypoints::numWaypoints();
+	CWaypoint *pTempi,*pTempj;
+	float fidist,fjdist;
+
+	// push!
+	if( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
+		fail();
+
+
+	pBot->setLookAtTask(LOOK_AROUND);
+	pBot->stopMoving();
+
+	if ( m_pTarget == NULL )
+	{
+		fail();
+		return;
+	}
+
+	m_iters = 0;
+
+	while ((m_i < numwaypoints)&&(m_iters<100))
+	{		
+		if ( m_iTargetWaypoint == m_i )
+		{
+			m_i++;
+			continue;
+		}
+
+		pTempi = CWaypoints::getWaypoint(m_i);
+		fidist = m_pTarget->distanceFrom(pTempi->getOrigin());
+			
+		if ( fidist > m_fNearesti )
+		{
+			m_i++;
+			m_iters++;
+			continue;
+		}
+
+		if ( m_pTable->GetVisibilityFromTo((int)m_iTargetWaypoint,(int)m_i) )
+		{		
+			while ((m_j < numwaypoints)&&(m_iters<100))
+			{
+				if ( m_j == m_i )
+				{
+					m_j++;
+					continue;
+				}
+				if ( m_j == m_iTargetWaypoint )
+				{
+					m_j++;
+					continue;
+				}
+
+				pTempj = CWaypoints::getWaypoint(m_j);
+
+				fjdist = pTempj->distanceFrom(m_vOrigin) + pTempj->distanceFrom(pTempi->getOrigin());
+
+				if ( fjdist > m_fNearestj )
+				{
+					m_j++;
+					m_iters++;
+					continue;
+				}
+
+				if ( m_pTable->GetVisibilityFromTo((int)m_i,(int)m_j) && !m_pTable->GetVisibilityFromTo((int)m_iTargetWaypoint,(int)m_j) )
+				{			
+					m_fNearesti = fidist;
+					m_fNearestj = fjdist;
+					m_iNearesti = m_i;
+					m_iNearestj = m_j;
+				}
+
+				m_iters++;
+				m_j++;
+
+			}
+			
+
+			if ( m_j == numwaypoints )
+				m_i++;
+		}
+		else 
+			m_i++;
+
+	}
+
+	if ( m_i == numwaypoints )
+	{		
+		if ( m_iNearesti == -1 )
+			fail();
+		else
+		{
+			pSchedule->passInt(m_iNearestj);
+			pSchedule->passVector(CWaypoints::getWaypoint(m_iNearesti)->getOrigin());
+
+			complete();
+		}
+	}
 }
 
 void CMoveToTask :: init () 
@@ -3537,14 +3674,13 @@ void CBotTF2DemomanPipeJump :: execute (CBot *pBot,CBotSchedule *pSchedule)
 }
 
 //////////////////////////////////////////
-CBotTF2DemomanPipeEnemy :: CBotTF2DemomanPipeEnemy ( Vector vStand, Vector vBlastPoint, CBotWeapon *pPipeLauncher, Vector vEnemy, edict_t *pEnemy )
+CBotTF2DemomanPipeEnemy :: CBotTF2DemomanPipeEnemy ( CBotWeapon *pPipeLauncher, Vector vEnemy, edict_t *pEnemy )
 {
 	m_vEnemy = vEnemy;
 	m_pEnemy = MyEHandle(pEnemy);
 	m_fTime = 0.0f;
-	m_vAim = vBlastPoint;
+	m_vAim = vEnemy;
 	m_pPipeLauncher = pPipeLauncher;
-	m_vStand = vStand;
 	m_fHoldAttackTime = 0.0f;
 	m_fHeldAttackTime = 0.0f;
 }
@@ -3557,28 +3693,34 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
-	if ( pBot->distanceFrom(m_vStand) > 200 )
+	if( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
 		fail();
+
+
 
 	if ( m_fTime == 0 )
 	{
-		m_vAim = (m_vEnemy - pBot->getOrigin())/2;
 
-		if ( sv_gravity )
+		m_vStand = CWaypoints::getWaypoint(pSchedule->passedInt())->getOrigin();
+		Vector vOtherWaypoint = pSchedule->passedVector();
+		((CBotTF2*)pBot)->setStickyTrapType(m_vEnemy,TF_TRAP_TYPE_ENEMY);
+
+		// Need to Lob my pipes
+		if ( vOtherWaypoint.z > (m_vEnemy.z+32.0f) )
 		{
-			//float fFraction = pBot->distanceFrom(m_vEnemy)/TF2_GRENADESPEED;
-
+			m_vAim = m_vEnemy; //(m_vEnemy - pBot->getOrigin())/2;
 			m_vAim.z = m_vEnemy.z + getGrenadeZ(pBot->getEdict(),m_pEnemy,pBot->getOrigin(),m_vEnemy,TF2_GRENADESPEED);//();//(sv_gravity->GetFloat() * randomFloat(0.9f,1.1f) * fFraction);
-
-			//fFraction = sv_gravity->GetFloat() / TF2_GRENADESPEED;
+		}
+		else
+		{
+			// otherwise just aim at the closest waypoint
+			m_vAim = (vOtherWaypoint+m_vEnemy)/2;
 		}
 
 		m_fHoldAttackTime = (pBot->distanceFrom(m_vEnemy)/512.0f) - 1.0f;
 
 		if ( m_fHoldAttackTime < 0.0f )
 			m_fHoldAttackTime = 0.0f;
-
-		m_vAim = m_vStand + m_vAim;
 
 		/*
 		if ( sv_gravity )
@@ -3591,11 +3733,15 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
 	}
 
+	if ( pBot->distanceFrom(m_vStand) > 200 )
+		fail();
+
+
 	if ( !CBotGlobals::entityIsValid(m_pEnemy) || !CBotGlobals::entityIsAlive(m_pEnemy) || (m_fTime < engine->Time()) )
 	{
 		// blow up any grens before we finish
 		//if ( m_pEnemy.get() && pBot->isVisible(m_pEnemy.get()) )
-		((CBotTF2*)pBot)->detonateStickies();
+		((CBotTF2*)pBot)->detonateStickies(true);
 
 		complete();
 	}
@@ -3606,7 +3752,7 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( (m_pPipeLauncher->getAmmo(pBot) + m_pPipeLauncher->getClip1(pBot)) == 0 )
 	{
 		if ( pBot->isVisible(m_pEnemy.get()) )
-			((CBotTF2*)pBot)->detonateStickies();
+			((CBotTF2*)pBot)->detonateStickies(true);
 
 		complete();
 	}
@@ -3854,6 +4000,9 @@ void CBotTF2Spam :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pBot->wantToShoot(false);
 	pBot->wantToListen(false);
 
+	if( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
+		fail();
+
 	if ( m_fTime == 0.0f )
 	{
 		if ( m_pWeapon->getID() == TF2_WEAPON_GRENADELAUNCHER )
@@ -3863,7 +4012,14 @@ void CBotTF2Spam :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		m_fTime = engine->Time() + randomFloat(12.0f,24.0f);
 	}
 	else if ( m_fTime < engine->Time() )
+	{
 		complete();
+
+		// prevent bot from keeping doing this
+		pBot->updateUtilTime(BOT_UTIL_SPAM_NEAREST_SENTRY);
+		pBot->updateUtilTime(BOT_UTIL_SPAM_LAST_ENEMY);
+		pBot->updateUtilTime(BOT_UTIL_SPAM_LAST_ENEMY_SENTRY);
+	}
 
 	if ( pBot->distanceFrom(m_vStart) > 100 )
 		pBot->setMoveTo(m_vStart);

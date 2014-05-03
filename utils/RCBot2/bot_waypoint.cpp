@@ -2413,6 +2413,70 @@ CWaypoint *CWaypoints::getNextCoverPoint ( CBot *pBot, CWaypoint *pCurrent, CWay
 	return CWaypoints::getWaypoint(iMaxDist);
 }
 
+CWaypoint *CWaypoints :: nearestPipeWaypoint ( Vector vTarget, Vector vOrigin, int *iAiming )
+{
+	// 1 : find nearest waypoint to vTarget
+	// 2 : loop through waypoints find visible waypoints to vTarget
+	// 3 : loop through visible waypoints find another waypoint invisible to vTarget but visible to waypoint 2
+
+	short int iTarget = (short int)CWaypointLocations::NearestWaypoint(vTarget,BLAST_RADIUS,-1,true,true);
+	CWaypoint *pTarget = CWaypoints::getWaypoint(iTarget);
+	//vector<short int> waypointlist;
+	int inearest = -1;
+
+	if ( pTarget == NULL )
+		return NULL;
+
+	CWaypointVisibilityTable *pTable = CWaypoints::getVisiblity();	
+
+	register short int numwaypoints = (short int)numWaypoints();
+
+	float finearestdist = 9999.0f;
+	float fjnearestdist = 9999.0f;
+	float fidist;
+	float fjdist;
+
+	CWaypoint *pTempi,*pTempj; 
+	
+	for ( register short int i = 0; i < numwaypoints; i ++ )
+	{
+		if ( iTarget == i )
+			continue;
+
+		pTempi = CWaypoints::getWaypoint(i);
+
+		if ( (fidist=pTarget->distanceFrom(pTempi->getOrigin())) > finearestdist )
+			continue;
+
+		if ( pTable->GetVisibilityFromTo((int)iTarget,(int)i) )
+		{
+			for ( register short int j = 0; j < numwaypoints; j ++ )
+			{				
+				if ( j == i )
+					continue;
+				if ( j == iTarget )
+					continue;
+
+				pTempj = CWaypoints::getWaypoint(j);
+
+				if ( (fjdist=pTempj->distanceFrom(vOrigin)) > fjnearestdist )
+					continue;
+
+				if ( pTable->GetVisibilityFromTo((int)i,(int)j) && !pTable->GetVisibilityFromTo((int)iTarget,(int)j) )
+				{					
+					finearestdist = fidist;
+					fjnearestdist = fjdist;
+					inearest = j;
+					*iAiming = i;
+				}
+			}
+		}
+	}
+
+	return CWaypoints::getWaypoint(inearest);
+
+}
+
 CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *org1, Vector *org2 )
 {
 	register short int i;

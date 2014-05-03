@@ -934,6 +934,8 @@ public:
 		return m_pController;
 	}
 
+	void updateUtilTime ( int util );
+
 protected:
 
 	inline void setLookAt ( Vector vNew )
@@ -1121,8 +1123,9 @@ protected:
 	unsigned int m_iSpecialVisibleId;
 	float m_fCurrentDanger;
 
-	float m_fUtilTimes[BOT_UTIL_MAX];
 
+	float m_fUtilTimes[BOT_UTIL_MAX];	
+	
 	float m_fWaypointTouchDistance;
 
 	eBotAction m_CurrentUtil;

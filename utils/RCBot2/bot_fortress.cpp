@@ -4011,7 +4011,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		!m_pHeal && !m_pLastCalledMedic && m_bEntranceVectorValid && (numplayersonteam>1) && 
 		((!CTeamFortress2Mod::isAttackDefendMap() && !CTeamFortress2Mod::hasRoundStarted()) || (numplayersonteam_alive < numplayersonteam)),0.94f);
 
-	if ( (m_iClass==TF_CLASS_DEMOMAN) && !hasEnemy() )
+	if ( (m_iClass==TF_CLASS_DEMOMAN) && !hasEnemy() && !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) )
 	{
 		CBotWeapon *pPipe = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS));
 		CBotWeapon *pGren = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_GRENADELAUNCHER));
@@ -5208,12 +5208,12 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 				vLoc = getOrigin();
 
-				if ( id == BOT_UTIL_PIPE_NEAREST_SENTRY )
+				if ( id == BOT_UTIL_SPAM_NEAREST_SENTRY )
 				{
 					pEnemy = m_pNearestEnemySentry;
 					vEnemy = CBotGlobals::entityOrigin(m_pNearestEnemySentry);
 				}
-				else if ( id == BOT_UTIL_PIPE_LAST_ENEMY_SENTRY )
+				else if ( id == BOT_UTIL_SPAM_LAST_ENEMY_SENTRY )
 				{
 					pEnemy = m_pLastEnemySentry;
 					vEnemy = CBotGlobals::entityOrigin(m_pLastEnemySentry);
@@ -5225,30 +5225,39 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 					vEnemy = m_vLastSeeEnemy;
 				}
 
+				/*
+
 				CWaypoint *pWptBlast = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(vEnemy,vLoc,4096.0,-1,true,true,false,false,getTeam(),false));
 
 				if ( pWptBlast )
 				{
 					CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(vLoc,pWptBlast->getOrigin(),4096.0,CWaypoints::getWaypointIndex(pWptBlast),true,false,true,false,getTeam(),true,1024.0f));
+					*/
+				int iAiming;
+				CWaypoint *pWpt = CWaypoints::nearestPipeWaypoint(vEnemy,getOrigin(),&iAiming);
 
 					if ( pWpt )
 					{
 
-						CFindPathTask *findpath = new CFindPathTask(CWaypoints::getWaypointIndex(pWpt));
+						CFindPathTask *findpath = new CFindPathTask(pEnemy);
 						CBotTask *pipetask = new CBotTF2Spam(pWpt->getOrigin(),vEnemy,util->getWeaponChoice());
 						CBotSchedule *pipesched = new CBotSchedule();
 
+						pipesched->addTask(new CBotTF2FindPipeWaypoint(getOrigin(),vEnemy));
 						pipesched->addTask(findpath);
 						pipesched->addTask(pipetask);
 
 						m_pSchedules->add(pipesched);
 
+						findpath->getPassedIntAsWaypointId ();
+						findpath->completeIfSeeTaskEdict();
+						findpath->dontGoToEdict();
 						findpath->setDangerPoint(CWaypointLocations::NearestWaypoint(vEnemy,200.0f,-1));
 
 
 						return true;
 					}
-				}
+				//}
 			}
 			break;
 		case BOT_UTIL_PIPE_NEAREST_SENTRY:
@@ -5278,34 +5287,30 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 					vEnemy = m_vLastSeeEnemy;
 				}
 
-				CWaypoint *pWptBlast = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(CBotGlobals::entityOrigin(pEnemy),vLoc,4096.0,-1,true,true,false,false,getTeam(),false));
-
-				if ( pWptBlast )
-				{
-					CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestBlastWaypoint(vLoc,pWptBlast->getOrigin(),4096.0,CWaypoints::getWaypointIndex(pWptBlast),true,false,true,false,getTeam(),true,1024.0f));
+				int iAiming;
+				CWaypoint *pWpt = CWaypoints::nearestPipeWaypoint(vEnemy,getOrigin(),&iAiming);
 
 					if ( pWpt )
 					{
 				
-						CFindPathTask *findpath = new CFindPathTask(CWaypoints::getWaypointIndex(pWpt));
-						CBotTask *pipetask = new CBotTF2DemomanPipeEnemy(
-							pWpt->getOrigin(),pWptBlast->getOrigin(),
-							getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)),
-							vEnemy,pEnemy);
+
+						CFindPathTask *findpath = new CFindPathTask(pEnemy);
+						CBotTask *pipetask = new CBotTF2DemomanPipeEnemy(getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)),vEnemy,pEnemy);
 						CBotSchedule *pipesched = new CBotSchedule();
 
+						pipesched->addTask(new CBotTF2FindPipeWaypoint(getOrigin(),vEnemy));
 						pipesched->addTask(findpath);
 						pipesched->addTask(pipetask);
 
 						m_pSchedules->add(pipesched);
 
-						findpath->setEdict(pEnemy);
-						findpath->completeIfSeeTaskEdict();
+						findpath->getPassedIntAsWaypointId ();
 						findpath->setDangerPoint(CWaypointLocations::NearestWaypoint(vEnemy,200.0f,-1));
+						findpath->completeIfSeeTaskEdict();
+						findpath->dontGoToEdict();
 
 						return true;
 					}
-				}
 			}
 			break;
 		case BOT_UTIL_GETAMMOKIT:

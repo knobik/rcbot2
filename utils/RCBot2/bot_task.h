@@ -40,6 +40,8 @@ struct edict_t;
 #include "bot_const.h"
 #include "bot_fortress.h"
 
+class CWaypointVisibilityTable;
+
 class IBotTaskInterrupt
 {
 public:
@@ -129,6 +131,7 @@ public:
 		m_flags.m_data = 0;
 		m_fRange = 0;
 		m_iDangerPoint = -1;
+		m_bGetPassedIntAsWaypointId = false;
 	}
 
 	CFindPathTask ( Vector vOrigin, eLookTask looktask = LOOK_WAYPOINT )
@@ -140,6 +143,7 @@ public:
 		m_flags.m_data = 0;
 		m_fRange = 0;
 		m_iDangerPoint = -1;
+		m_bGetPassedIntAsWaypointId = false;
 	}
 
 	// having this constructor saves us trying to find the goal waypoint again if we
@@ -155,6 +159,8 @@ public:
 	void setDangerPoint ( int iWpt ) { m_iDangerPoint = iWpt; }
 
 	void getPassedVector () { m_flags.bits.m_bGetPassedVector = true; }
+
+	void getPassedIntAsWaypointId () { m_bGetPassedIntAsWaypointId = true; }
 
 	void dontGoToEdict () { m_flags.bits.m_bDontGoToEdict = true; }
 
@@ -203,6 +209,7 @@ private:
 		}bits;
 	}m_flags;
 	
+	bool m_bGetPassedIntAsWaypointId;
 	//bool m_bWaitUntilReached;
 };
 
@@ -290,8 +297,8 @@ private:
 class CBotTF2DemomanPipeEnemy : public CBotTask 
 {
 public:
-	CBotTF2DemomanPipeEnemy ( Vector vStand, Vector vBlastPoint, CBotWeapon *pPipeLauncher, Vector vEnemy, edict_t *pEnemy );
-
+	//CBotTF2DemomanPipeEnemy ( Vector vStand, Vector vBlastPoint, CBotWeapon *pPipeLauncher, Vector vEnemy, edict_t *pEnemy );
+	CBotTF2DemomanPipeEnemy ( CBotWeapon *pPipeLauncher, Vector vEnemy, edict_t *pEnemy );
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
 	void debugString ( char *string )
@@ -334,6 +341,34 @@ private:
 	int m_iStickies;
 	bool m_bAutoDetonate;
 
+};
+
+
+class CBotTF2FindPipeWaypoint : public CBotTask
+{
+public:
+	CBotTF2FindPipeWaypoint ( Vector vOrigin, Vector vTarget );
+	
+	void execute (CBot *pBot,CBotSchedule *pSchedule);
+
+	void debugString ( char *string )
+	{
+		sprintf(string,"Finding Pipe Waypoint");
+	}
+private:
+	int m_iters;
+	short int m_i;
+	short int m_j;
+	Vector m_vOrigin;
+	Vector m_vTarget;
+	short int m_iTargetWaypoint;
+	float m_fNearesti;
+	float m_fNearestj;
+	short int m_iNearesti;
+	short int m_iNearestj;
+
+	CWaypointVisibilityTable *m_pTable;
+	CWaypoint *m_pTarget;
 };
 
 

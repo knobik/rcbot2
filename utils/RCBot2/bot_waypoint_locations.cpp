@@ -375,45 +375,6 @@ void CWaypointLocations :: FindNearestCoverWaypointInBucket ( int i, int j, int 
 		}
 	}
 }
-/*
-////////////////////////////////////////////////
-/////////////////////////////
-// get the nearest waypoint INDEX from an origin
-int CWaypointLocations :: NearestGrenadeWaypoint ( const Vector &vSrc, const Vector &vTarget, int iTeam, bool bCheckArea, float fBlastRadius )
-{
-	int iNearestIndex = -1;
-	int iLoc;
-	int jLoc;
-	int kLoc;
-	int i,j,k;
-
-	vTarget
-
-	vMid = (vMid / vMid.Length());
-	vMid = (vMid*((vSrc-vOrigin).Length()/2));
-	vMid = vOrigin + vMid;
-
-	iLoc = READ_LOC(vMid.x);
-	jLoc = READ_LOC(vMid.y);
-	kLoc = READ_LOC(vMid.z);
-
-	int iMinLoci,iMaxLoci,iMinLocj,iMaxLocj,iMinLock,iMaxLock;
-
-	getMinMaxs(iLoc,jLoc,kLoc,&iMinLoci,&iMinLocj,&iMinLock,&iMaxLoci,&iMaxLocj,&iMaxLock);
-
-	for ( i = iMinLoci; i <= iMaxLoci; i++ )
-	{
-		for ( j = iMinLocj; j <= iMaxLocj; j++ )
-		{
-			for ( k = iMinLock; k <= iMaxLock; k++ )
-			{
-				FindNearestBlastInBucket(i,j,k,vOrigin,vSrc,&fNearestDist,&iNearestIndex,iIgnoreWpt,bGetVisible,bGetUnReachable,bIsBot,bNearestAimingOnly,iTeam,bCheckArea,fBlastRadius);
-			}
-		}
-	}
-
-	return iNearestIndex;
-}*/
 
 ////////////////////////////////////
 ////////////////////////////////////////////////

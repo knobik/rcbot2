@@ -2279,6 +2279,11 @@ float CBot :: DotProductFromOrigin ( Vector pOrigin )
 	return flDot; 
 }
 
+void CBot :: updateUtilTime ( int util )
+{
+	m_fUtilTimes[util] = engine->Time() + 0.5f;	
+}
+
 Vector CBot::getAimVector ( edict_t *pEntity )
 {
 	static Vector v_desired_offset;
