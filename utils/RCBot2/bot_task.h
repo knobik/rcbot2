@@ -248,6 +248,8 @@ public:
 
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
+	Vector getTarget () { return m_vTarget; }
+
 	void debugString ( char *string )
 	{
 		sprintf(string,"CBotTF2Spam");
@@ -357,8 +359,8 @@ public:
 	}
 private:
 	int m_iters;
-	short int m_i;
-	short int m_j;
+	unsigned short int m_i;
+	unsigned short int m_j;
 	Vector m_vOrigin;
 	Vector m_vTarget;
 	short int m_iTargetWaypoint;
@@ -369,6 +371,8 @@ private:
 
 	CWaypointVisibilityTable *m_pTable;
 	CWaypoint *m_pTarget;
+	vector<int> m_WaypointsI;
+	vector<int> m_WaypointsJ;
 };
 
 

@@ -833,7 +833,7 @@ public:
 	virtual bool wantToListenToPlayerAttack ( edict_t *pPlayer, int iWeaponID = -1 ) { return true; }
 	virtual bool wantToListenToPlayerFootsteps ( edict_t *pPlayer ) { return true; }
 
-	virtual bool wantToInvestigateSound () { return m_bWantToInvestigateSound; }
+	virtual bool wantToInvestigateSound ();
 	inline void wantToInvestigateSound ( bool bSet ) { m_bWantToInvestigateSound = bSet; }
 	inline bool wantToShoot ( void ) { return m_bOpenFire; }
 	inline void wantToShoot ( bool bSet ) { m_bOpenFire = bSet; }

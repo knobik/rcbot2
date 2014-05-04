@@ -125,6 +125,52 @@ void CWaypointLocations :: AutoPath ( edict_t *pPlayer, int iWpt )
 		}
 	}
 }
+
+// @param iFrom waypoint number from a and b within distance
+void CWaypointLocations :: GetAllInArea ( Vector &vOrigin, vector <int> *pWaypointList, int iVisibleTo )
+{
+	CWaypoint *pWpt;
+	int iLoc = READ_LOC(vOrigin.x);
+	int jLoc = READ_LOC(vOrigin.y);
+	int kLoc = READ_LOC(vOrigin.z);
+
+	static dataUnconstArray<int> *arr;
+
+	int i,j,k;
+	int iWpt;
+
+	CWaypointVisibilityTable *pTable = CWaypoints::getVisiblity();
+
+	int iMinLoci,iMaxLoci,iMinLocj,iMaxLocj,iMinLock,iMaxLock;
+
+	getMinMaxs(iLoc,jLoc,kLoc,&iMinLoci,&iMinLocj,&iMinLock,&iMaxLoci,&iMaxLocj,&iMaxLock);
+
+	for ( i = iMinLoci; i <= iMaxLoci; i++ )
+	{
+		for ( j = iMinLocj; j <= iMaxLocj; j++ )	
+		{			
+			for ( k = iMinLock; k <= iMaxLock; k++ )
+			{		
+				//dataStack <int> tempStack = m_iLocations[i][j][k];
+
+				arr = &(m_iLocations[i][j][k]);
+				//while ( !tempStack.IsEmpty() )
+				for (  int l = 0; l < m_iLocations[i][j][k].Size(); l ++ )
+				{
+					iWpt = arr->ReturnValueFromIndex(l);
+
+					if ( iWpt == iVisibleTo )
+						continue;
+
+					if ( pTable->GetVisibilityFromTo(iWpt,iVisibleTo) )
+						pWaypointList->push_back(iWpt);
+				}
+			}
+		}
+	}
+}
+
+
 // @param iFrom waypoint number from a and b within distance
 void CWaypointLocations :: GetAllVisible ( int iFrom, int iOther, Vector &vOrigin, 
 										  Vector &vOther, float fEDist, dataUnconstArray<int> *iVisible, 

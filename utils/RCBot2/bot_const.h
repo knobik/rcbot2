@@ -208,8 +208,9 @@ typedef enum
 #define CONDITION_SQUAD_IDLE			33554432 // bit 25 - bots squad isn't doing anything fun
 #define CONDITION_DEFENSIVE				67108864 // bit 26 - bot leader told me to defend
 #define CONDITION_BUILDING_SAPPED		134217728 // bit 27 - one of engineers buildings sapped
-#define CONDITION_MAX					CONDITION_BUILDING_SAPPED
-#define CONDITION_MAX_BITS				27
+#define CONDITION_SEE_ENEMY_GROUND		268435456 // bit 28 - can see enemy ground so aim for it if i have explosive
+#define CONDITION_MAX					CONDITION_SEE_ENEMY_GROUND
+#define CONDITION_MAX_BITS				28
 
 ////////////////////////
 #define BLAST_RADIUS 200

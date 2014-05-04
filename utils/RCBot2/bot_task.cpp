@@ -2062,18 +2062,28 @@ CBotTF2FindPipeWaypoint:: CBotTF2FindPipeWaypoint ( Vector vOrigin, Vector vTarg
 	m_pTable = CWaypoints::getVisiblity();	
 
 	if ( m_iTargetWaypoint != -1 )
+	{
+		Vector vComp = (vOrigin - vTarget);
+		vComp = vComp/vComp.Length();
+		vComp = vTarget + vComp*256; // get into a better area
 		m_pTarget = CWaypoints::getWaypoint(m_iTargetWaypoint);
+		CWaypointLocations::GetAllInArea(vComp,&m_WaypointsI,m_iTargetWaypoint);
+	}
+
+	
 }
 
 void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
-	register short int numwaypoints = (short int)CWaypoints::numWaypoints();
 	CWaypoint *pTempi,*pTempj;
 	float fidist,fjdist;
+	int maxiters = 100;
 
 	// push!
 	if( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
 		fail();
+	else if ( CTeamFortress2Mod::TF2_IsPlayerKrits(pBot->getEdict()) )
+		maxiters = 200; // speed up search
 
 
 	pBot->setLookAtTask(LOOK_AROUND);
@@ -2087,15 +2097,10 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	m_iters = 0;
 
-	while ((m_i < numwaypoints)&&(m_iters<100))
-	{		
-		if ( m_iTargetWaypoint == m_i )
-		{
-			m_i++;
-			continue;
-		}
+	while ((m_i < m_WaypointsI.size())&&(m_iters<maxiters))
+	{	
 
-		pTempi = CWaypoints::getWaypoint(m_i);
+		pTempi = CWaypoints::getWaypoint(m_WaypointsI[m_i]);
 		fidist = m_pTarget->distanceFrom(pTempi->getOrigin());
 			
 		if ( fidist > m_fNearesti )
@@ -2105,22 +2110,19 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			continue;
 		}
 
-		if ( m_pTable->GetVisibilityFromTo((int)m_iTargetWaypoint,(int)m_i) )
-		{		
-			while ((m_j < numwaypoints)&&(m_iters<100))
+		CWaypointLocations::GetAllInArea(pTempi->getOrigin(),&m_WaypointsJ,m_WaypointsI[m_i]);
+
+		//if ( m_pTable->GetVisibilityFromTo((int)m_iTargetWaypoint,(int)m_i) )
+		//{		
+			while ((m_j < m_WaypointsJ.size())&&(m_iters<maxiters))
 			{
-				if ( m_j == m_i )
-				{
-					m_j++;
-					continue;
-				}
-				if ( m_j == m_iTargetWaypoint )
+				if ( m_WaypointsJ[m_j] == m_iTargetWaypoint )
 				{
 					m_j++;
 					continue;
 				}
 
-				pTempj = CWaypoints::getWaypoint(m_j);
+				pTempj = CWaypoints::getWaypoint(m_WaypointsJ[m_j]);
 
 				fjdist = pTempj->distanceFrom(m_vOrigin) + pTempj->distanceFrom(pTempi->getOrigin());
 
@@ -2131,12 +2133,12 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 					continue;
 				}
 
-				if ( m_pTable->GetVisibilityFromTo((int)m_i,(int)m_j) && !m_pTable->GetVisibilityFromTo((int)m_iTargetWaypoint,(int)m_j) )
+				if ( !m_pTable->GetVisibilityFromTo((int)m_iTargetWaypoint,(int)m_WaypointsJ[m_j]) )
 				{			
 					m_fNearesti = fidist;
 					m_fNearestj = fjdist;
-					m_iNearesti = m_i;
-					m_iNearestj = m_j;
+					m_iNearesti = m_WaypointsI[m_i];
+					m_iNearestj = m_WaypointsJ[m_j];
 				}
 
 				m_iters++;
@@ -2145,15 +2147,15 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			}
 			
 
-			if ( m_j == numwaypoints )
+			if ( m_j == m_WaypointsJ.size() )
 				m_i++;
-		}
-		else 
-			m_i++;
+		//}
+		//else 
+		//	m_i++;
 
 	}
 
-	if ( m_i == numwaypoints )
+	if ( m_i == m_WaypointsI.size() )
 	{		
 		if ( m_iNearesti == -1 )
 			fail();
@@ -2512,6 +2514,18 @@ void CSpyCheckAir :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 				}
 			}
 			
+		}
+
+		if ( m_pUnseenBefore && pBot->isVisible(m_pUnseenBefore) )
+		{
+			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(m_pUnseenBefore);
+
+			// stop if I see the player im hitting attacking
+			if ( p->GetLastUserCommand().buttons & IN_ATTACK )
+			{
+				complete();
+				return;
+			}
 		}
 	}
 	
@@ -4006,7 +4020,14 @@ void CBotTF2Spam :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if ( m_fTime == 0.0f )
 	{
 		if ( m_pWeapon->getID() == TF2_WEAPON_GRENADELAUNCHER )
-			m_vTarget.z += getGrenadeZ(pBot->getEdict(),NULL,pBot->getOrigin(),m_vTarget,m_pWeapon->getProjectileSpeed());
+		{
+			Vector vVisibleWaypoint = pSchedule->passedVector();
+
+			if ( vVisibleWaypoint.z > (m_vTarget.z + 32.0f) ) // need to lob grenade
+				m_vTarget.z += getGrenadeZ(pBot->getEdict(),NULL,pBot->getOrigin(),m_vTarget,m_pWeapon->getProjectileSpeed());
+			else // mid point between waypoint and target as I won't see target
+				m_vTarget = (m_vTarget + vVisibleWaypoint) / 2;
+		}
 
 		m_fNextAttack = engine->Time() + randomFloat(0.2f,1.0f);
 		m_fTime = engine->Time() + randomFloat(12.0f,24.0f);

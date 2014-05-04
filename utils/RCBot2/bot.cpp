@@ -382,7 +382,7 @@ bool CBot :: FVisible ( edict_t *pEdict, bool bCheckHead )
 
 	// use special hit traceline for players so bots dont shoot through things 
 	// For players -- do two tracelines -- one at the origin and one at the head (for headshots)
-	if ( bCheckHead || (ENTINDEX(pEdict) <= gpGlobals->maxClients) )
+	if ( bCheckHead || (pEdict == m_pEnemy) || CBotGlobals::isPlayer(pEdict) )
 	{
 		Vector vOrigin;
 		Vector vHead;
@@ -394,7 +394,14 @@ bool CBot :: FVisible ( edict_t *pEdict, bool bCheckHead )
 		if ( FVisible(vHead,pEdict) )
 		{
 			if ( m_pEnemy == pEdict )
+			{
 				updateCondition(CONDITION_SEE_ENEMY_HEAD);
+
+				if ( FVisible(vOrigin,pEdict) )
+					updateCondition(CONDITION_SEE_ENEMY_GROUND);
+				else
+					removeCondition(CONDITION_SEE_ENEMY_GROUND);
+			}
 
 			return true;
 		}
@@ -411,7 +418,18 @@ bool CBot :: FVisible ( edict_t *pEdict, bool bCheckHead )
 		}
 #endif */
 		if ( m_pEnemy == pEdict )
-			removeCondition(CONDITION_SEE_ENEMY_HEAD);
+		{
+			if ( FVisible(vOrigin,pEdict) )
+			{
+				updateCondition(CONDITION_SEE_ENEMY_GROUND);
+				return true;
+			}
+			else
+			{
+				removeCondition(CONDITION_SEE_ENEMY_GROUND);
+				return false;
+			}
+		}
 
 		return FVisible(vOrigin,pEdict);
 	}
@@ -1294,6 +1312,11 @@ edict_t *CBot :: getVisibleSpecial ()
 	return NULL;
 }
 
+bool CBot::wantToInvestigateSound () 
+{ 
+	return ((m_fSpawnTime + 10.0f) < engine->Time()) && !hasEnemy() && m_bWantToInvestigateSound; 
+}
+
 void CBot :: spawnInit ()
 {
 	m_bWantToInvestigateSound = true;
@@ -1662,7 +1685,8 @@ const char *pszConditionsDebugStrings[CONDITION_MAX_BITS+1] =
 "CONDITION_SQUAD_LEADER_INRANGE",
 "CONDITION_SQUAD_IDLE",
 "CONDITION_DEFENSIVE",
-"CONDITION_BUILDING_SAPPED"};
+"CONDITION_BUILDING_SAPPED",
+"CONDITION_SEE_ENEMY_GROUND"};
 
 void CBot :: clearSquad ()
 {

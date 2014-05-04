@@ -2876,6 +2876,10 @@ bool CBotTF2 :: wantToInvestigateSound ()
 
 bool CBotTF2 :: wantToListenToPlayerFootsteps ( edict_t *pPlayer )
 {
+	extern ConVar rcbot_notarget;
+	if ( rcbot_notarget.GetBool() && (CClients::isListenServerClient(CClients::get(pPlayer)) ) )
+		return false;
+
 	switch ( CClassInterface::getTF2Class(pPlayer) )
 	{
 		case TF_CLASS_MEDIC:
@@ -4600,6 +4604,8 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 								
 									CBotSchedule *newSched = new CBotSchedule();
 
+									newSched->passVector(spam->getTarget());
+
 									newSched->addTask(path);
 									newSched->addTask(spam);
 									return true;
@@ -5238,7 +5244,6 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 					if ( pWpt )
 					{
-
 						CFindPathTask *findpath = new CFindPathTask(pEnemy);
 						CBotTask *pipetask = new CBotTF2Spam(pWpt->getOrigin(),vEnemy,util->getWeaponChoice());
 						CBotSchedule *pipesched = new CBotSchedule();
@@ -5602,13 +5607,8 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 			switch ( pWp->getID() )
 			{
 				case TF2_WEAPON_ROCKETLAUNCHER:
-				{
-					//iSpeed = TF2_ROCKETSPEED;
-
-					if ( v_origin.z <= getOrigin().z )
-						v_desired_offset->z -= randomFloat(8.0f,24.0f);
-				}
 				// fall through
+
 				case TF2_WEAPON_GRENADELAUNCHER:
 				{
 					extern ConVar *sv_gravity;
@@ -5634,12 +5634,20 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 
 						if ( pWp->getProjectileSpeed() > 0 )
 						{
-							fTime = fDist2D/(pWp->getProjectileSpeed()*0.707);
+							if ( (pWp->getID() == TF2_WEAPON_GRENADELAUNCHER) )
+								fTime = fDist2D/(pWp->getProjectileSpeed()*0.707);
+							else
+								fTime = fDist/(pWp->getProjectileSpeed());
 
 							*v_desired_offset = *v_desired_offset + ((vVelocity*fTime)*m_pProfile->m_fAimSkill );
 						
 							if ( (sv_gravity != NULL) && (pWp->getID() == TF2_WEAPON_GRENADELAUNCHER) )
-								v_desired_offset->z += -32.0f + ((pow(2,fTime)-1.0f)*(sv_gravity->GetFloat()*0.1f));// - (getOrigin().z - v_origin.z);
+								v_desired_offset->z += ((pow(2,fTime)-1.0f)*(sv_gravity->GetFloat()*0.1f));// - (getOrigin().z - v_origin.z);
+
+							if ( hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
+								v_desired_offset->z -= 32.0f;
+							else if ( (pWp->getID() == TF2_WEAPON_ROCKETLAUNCHER) || (v_origin.z > (getOrigin().z+16.0f)) )
+								v_desired_offset->z += 32.0f;
 						}
 				}
 			break;
@@ -6367,14 +6375,19 @@ void CBotTF2 :: buildingSapped ( eEngiBuild building, edict_t *pSapper, edict_t 
 	{
 		foundSpy(pSpy,CTeamFortress2Mod::getSpyDisguise(pSpy));
 	}
-
-	pBuilding = CTeamFortress2Mod::getBuilding(building,m_pEdict);
-
-	if ( pBuilding )
+	else
 	{
-		if ( distanceFrom(pBuilding) < 320 )
-			updateCondition(CONDITION_PARANOID);
+		pBuilding = CTeamFortress2Mod::getBuilding(building,m_pEdict);
+
+		if ( pBuilding )
+		{
+			m_vLastSeeSpy = CBotGlobals::entityOrigin(pBuilding);
+		}
+		m_fLastSeeSpyTime = engine->Time();
+		//m_pPrevSpy = pSpy;
+		
 	}
+
 
 }
 

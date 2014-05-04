@@ -123,6 +123,8 @@ public:
 		}
 	}
 
+	static void CWaypointLocations :: GetAllInArea ( Vector &vOrigin, vector <int> *pWaypointList, int iVisibleTo );
+		
 	static void getMinMaxs ( int iLoc, int jLoc, int kLoc, 
 									    int *iMinLoc, int *jMinLoc, int *kMinLoc,
 									    int *iMaxLoc, int *jMaxLoc, int *kMaxLoc );

@@ -1654,8 +1654,38 @@ eBotCommandResult CDebugBotCommand :: execute ( CClient *pClient, const char *pc
 {
 	if ( !pcmd || !*pcmd )
 	{
+		extern IServerGameEnts *servergameents;
+		// do a traceline in front of player
+		
+		Vector vOrigin = pClient->getOrigin();
+		QAngle angles = CBotGlobals::entityEyeAngles(pClient->getPlayer());
+		Vector forward;
+
+		AngleVectors(angles,&forward);
+
+		CBotGlobals::quickTraceline(pClient->getPlayer(),vOrigin,vOrigin+forward*1024.0f);
+		CBaseEntity *pEntity;
+
+		if ( (pEntity = CBotGlobals::getTraceResult()->m_pEnt) != NULL )
+		{
+			edict_t *pEdict = servergameents->BaseEntityToEdict(pEntity);
+			if ( CBots::getBotPointer(pEdict) != NULL )
+			{
+				pClient->setDebugBot(pEdict);
+				CBotGlobals::botMessage(pClient->getPlayer(),0,"debug bot set to bot you are looking at");
+				return COMMAND_ACCESSED;
+			}
+			else
+			{
+			pClient->setDebugBot(NULL);
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"debug bot cleared");
+			}
+		}
+		else
+		{
 		pClient->setDebugBot(NULL);
 		CBotGlobals::botMessage(pClient->getPlayer(),0,"debug bot cleared");
+		}
 		return COMMAND_ERROR;
 	}
 	
