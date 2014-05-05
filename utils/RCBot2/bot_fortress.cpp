@@ -82,6 +82,7 @@ extern IVDebugOverlay *debugoverlay;
 
 void CBroadcastOvertime ::execute (CBot*pBot)
 {
+	pBot->updateCondition(CONDITION_CHANGED);
 	pBot->updateCondition(CONDITION_PUSH);
 }
 void CBroadcastCapturedPoint :: execute ( CBot *pBot )
@@ -5580,7 +5581,14 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 
 	if ( pWp )
 	{
-		if ( m_iClass == TF_CLASS_MEDIC )
+		if ( m_iClass == TF_CLASS_SNIPER )
+		{
+			if ( (v_desired_offset->z < 64.0f) && !hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
+			{
+				v_desired_offset->z += randomFloat(0.0f,16.0f);
+			}
+		}
+		else if ( m_iClass == TF_CLASS_MEDIC )
 		{
 			if ( pWp->getID() == TF2_WEAPON_SYRINGEGUN )
 				v_desired_offset->z += sqrt(fDist)*2;
@@ -5650,10 +5658,10 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 							if ( (sv_gravity != NULL) && (pWp->getID() == TF2_WEAPON_GRENADELAUNCHER) )
 								v_desired_offset->z += ((pow(2,fTime)-1.0f)*(sv_gravity->GetFloat()*0.1f));// - (getOrigin().z - v_origin.z);
 
-							if ( (pWp->getID() == TF2_WEAPON_GRENADELAUNCHER) && hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
-								v_desired_offset->z -= 32.0f; // aim for ground - with grenade launcher
+							if ( hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
+								v_desired_offset->z -= randomFloat(8.0f,32.0f); // aim for ground - with grenade launcher
 							else if ( (pWp->getID() == TF2_WEAPON_ROCKETLAUNCHER) || (v_origin.z > (getOrigin().z+16.0f)) )
-								v_desired_offset->z += 32.0f; // aim for body, not ground
+								v_desired_offset->z += randomFloat(8.0f,32.0f); // aim for body, not ground
 						}
 				}
 			break;

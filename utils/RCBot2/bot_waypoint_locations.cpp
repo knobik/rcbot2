@@ -129,7 +129,6 @@ void CWaypointLocations :: AutoPath ( edict_t *pPlayer, int iWpt )
 // @param iFrom waypoint number from a and b within distance
 void CWaypointLocations :: GetAllInArea ( Vector &vOrigin, vector <int> *pWaypointList, int iVisibleTo )
 {
-	CWaypoint *pWpt;
 	int iLoc = READ_LOC(vOrigin.x);
 	int jLoc = READ_LOC(vOrigin.y);
 	int kLoc = READ_LOC(vOrigin.z);

@@ -263,6 +263,23 @@ eBotCommandResult CFindProp :: execute ( CClient *pClient, const char *pcmd, con
 
 	return COMMAND_ERROR;
 }
+///////////////////////////
+eBotCommandResult CFindClassname :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+
+		if ( pcmd && *pcmd )
+		{
+			UTIL_FindServerClassnamePrint(pcmd);
+		}
+
+
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
 
 ////////////////////////////////
 eBotCommandResult CFindClass :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
@@ -606,6 +623,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CPrintProps());
 	add(new CGetProp());
 	add(new CFindClass());
+	add(new CFindClassname());
 	add(new CFindProp());
 
 }

@@ -107,6 +107,7 @@ typedef enum
 bool UTIL_FindSendPropInfo(ServerClass *pInfo, const char *szType, unsigned int *offset);
 ServerClass *UTIL_FindServerClass(const char *name);
 void UTIL_FindServerClassPrint(const char*name_cmd);
+void UTIL_FindServerClassnamePrint(const char *name_cmd);
 void UTIL_FindPropPrint(const char *prop_name);
 
 class CClassInterfaceValue
