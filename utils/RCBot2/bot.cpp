@@ -1251,7 +1251,7 @@ bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint )
 
 	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_OPENS_LATER) )
 	{
-		if ( !CBotGlobals::checkOpensLater(vPrevWaypoint,pWaypoint->getOrigin()) )
+		if ( (vPrevWaypoint != pWaypoint->getOrigin()) && !CBotGlobals::checkOpensLater(vPrevWaypoint,pWaypoint->getOrigin()) )
 			return false;
 	}
 

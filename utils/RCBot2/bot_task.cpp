@@ -2063,6 +2063,7 @@ CBotTF2FindPipeWaypoint:: CBotTF2FindPipeWaypoint ( Vector vOrigin, Vector vTarg
 
 	if ( m_iTargetWaypoint != -1 )
 	{
+		// first find the waypoint nearest the target
 		Vector vComp = (vOrigin - vTarget);
 		vComp = vComp/vComp.Length();
 		vComp = vTarget + vComp*256; // get into a better area
@@ -2072,18 +2073,18 @@ CBotTF2FindPipeWaypoint:: CBotTF2FindPipeWaypoint ( Vector vOrigin, Vector vTarg
 
 	
 }
-
+// a concurrentish pipe waypoint search
 void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	CWaypoint *pTempi,*pTempj;
 	float fidist,fjdist;
-	int maxiters = 100;
+	int maxiters = 128;
 
 	// push!
 	if( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
 		fail();
 	else if ( CTeamFortress2Mod::TF2_IsPlayerKrits(pBot->getEdict()) )
-		maxiters = 200; // speed up search
+		maxiters = 256; // speed up search
 
 
 	pBot->setLookAtTask(LOOK_AROUND);
@@ -2097,6 +2098,7 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	m_iters = 0;
 
+	// loop through every visible waypoint to target (can be unreachable)
 	while ((m_i < m_WaypointsI.size())&&(m_iters<maxiters))
 	{	
 
@@ -2112,8 +2114,7 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		CWaypointLocations::GetAllInArea(pTempi->getOrigin(),&m_WaypointsJ,m_WaypointsI[m_i]);
 
-		//if ( m_pTable->GetVisibilityFromTo((int)m_iTargetWaypoint,(int)m_i) )
-		//{		
+		// loop through every visible waypoint to intermediatery waypoint (cannot be unreachable)
 			while ((m_j < m_WaypointsJ.size())&&(m_iters<maxiters))
 			{
 				if ( m_WaypointsJ[m_j] == m_iTargetWaypoint )
@@ -2124,6 +2125,14 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 				pTempj = CWaypoints::getWaypoint(m_WaypointsJ[m_j]);
 
+				// must be reachable as I want to go here
+				if ( !pBot->canGotoWaypoint(pTempj->getOrigin(),pTempj) )
+				{
+					m_j++;
+					continue;
+				}
+
+				// only remember the nearest waypoints - the nearest is updated when both I and J are found
 				fjdist = pTempj->distanceFrom(m_vOrigin) + pTempj->distanceFrom(pTempi->getOrigin());
 
 				if ( fjdist > m_fNearestj )
@@ -2133,6 +2142,7 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 					continue;
 				}
 
+				// If this waypoint is NOT visible to target it is good
 				if ( !m_pTable->GetVisibilityFromTo((int)m_iTargetWaypoint,(int)m_WaypointsJ[m_j]) )
 				{			
 					m_fNearesti = fidist;
@@ -2149,9 +2159,6 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 			if ( m_j == m_WaypointsJ.size() )
 				m_i++;
-		//}
-		//else 
-		//	m_i++;
 
 	}
 

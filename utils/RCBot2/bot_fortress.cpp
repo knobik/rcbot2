@@ -2299,9 +2299,15 @@ void CBotFortress::chooseClass()
 	{
 		if ( getTeam() == TF2_TEAM_BLUE )
 		{
-			fClassFitness[TF_CLASS_ENGINEER] *= 0.5;
-			fClassFitness[TF_CLASS_SPY] *= 1.2;
+			fClassFitness[TF_CLASS_ENGINEER] *= 0.75;
+			fClassFitness[TF_CLASS_SPY] *= 1.25;
 			fClassFitness[TF_CLASS_SCOUT] *= 1.05;
+
+			if ( m_pLastEnemySentry.get() != NULL )
+			{
+				fClassFitness[TF_CLASS_SPY] *= 1.25;
+				fClassFitness[TF_CLASS_DEMOMAN] *= 1.3;
+			}
 		}
 		else
 		{
@@ -3516,8 +3522,8 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 					fPreFactor = -2048.0f;
 				else 
 				{
-					if ( CBotGlobals::DotProductFromOrigin(pEnemy,getOrigin()) > 0.95 ) //15 deg
-						fPreFactor = -1124.0f;
+					if ( CBotGlobals::DotProductFromOrigin(pEnemy,getOrigin()) > 0.98 ) //10 deg
+						fPreFactor = -1024.0f;
 					else
 						fPreFactor = -200.0f;
 				}
@@ -5644,10 +5650,10 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 							if ( (sv_gravity != NULL) && (pWp->getID() == TF2_WEAPON_GRENADELAUNCHER) )
 								v_desired_offset->z += ((pow(2,fTime)-1.0f)*(sv_gravity->GetFloat()*0.1f));// - (getOrigin().z - v_origin.z);
 
-							if ( hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
-								v_desired_offset->z -= 32.0f;
+							if ( (pWp->getID() == TF2_WEAPON_GRENADELAUNCHER) && hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
+								v_desired_offset->z -= 32.0f; // aim for ground - with grenade launcher
 							else if ( (pWp->getID() == TF2_WEAPON_ROCKETLAUNCHER) || (v_origin.z > (getOrigin().z+16.0f)) )
-								v_desired_offset->z += 32.0f;
+								v_desired_offset->z += 32.0f; // aim for body, not ground
 						}
 				}
 			break;

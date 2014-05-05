@@ -571,6 +571,7 @@ protected:
 
 	float m_fHealingMoveTime;
 
+	MyEHandle m_pLastEnemySentry;
 	MyEHandle m_NearestEnemyRocket;
 	MyEHandle m_NearestEnemyGrenade;
 
@@ -784,7 +785,6 @@ private:
 	
 	//
 	MyEHandle m_pCloakedSpy;
-	MyEHandle m_pLastEnemySentry;
 
 	float m_fAttackPointTime; // used in cart maps
 
