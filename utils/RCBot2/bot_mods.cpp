@@ -46,6 +46,7 @@
 #include "bot_waypoint.h"
 #include "bot_waypoint_locations.h"
 #include "bot_perceptron.h"
+#include "bot_tf2_points.h"
 
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
@@ -68,8 +69,10 @@ int CTeamFortress2Mod::m_iFlagCarrierTeam = 0;
 MyEHandle CTeamFortress2Mod::m_pBoss = MyEHandle(NULL);
 bool CTeamFortress2Mod::m_bBossSummoned = false;
 MyEHandle CTeamFortress2Mod::pMediGuns[MAX_PLAYERS];
-
-
+CTFObjectiveResource CTeamFortress2Mod::m_ObjectiveResource = CTFObjectiveResource();
+CTeamControlPointMaster *CTeamFortress2Mod::m_PointMaster = NULL;
+MyEHandle CTeamFortress2Mod::m_PointMasterResource = MyEHandle(NULL);
+CTeamControlPointRound *CTeamFortress2Mod::m_pCurrentRound = NULL;
 edict_t *CDODMod::m_pResourceEntity = NULL;
 CDODFlags CDODMod::m_Flags;
 edict_t * CDODMod::m_pPlayerResourceEntity = NULL;
@@ -135,7 +138,7 @@ void CTeamFortress2Mod :: findMediGun ( edict_t *pPlayer )
 
 	vOrigin = CBotGlobals::entityOrigin(pPlayer);
 
-	for ( i = (gpGlobals->maxClients+1); i <= gpGlobals->maxEntities; i ++ )
+	for ( i = (gpGlobals->maxClients+1); i < gpGlobals->maxEntities; i ++ )
 	{
 		pEnt = INDEXENT(i);
 
@@ -523,7 +526,8 @@ void CTeamFortress2Mod:: addWaypointFlags (edict_t *pPlayer, edict_t *pEdict, in
 	}*/
 	else if ( strcmp(pEdict->GetClassName(),"team_control_point") == 0 )
 	{
-		*iFlags |= CWaypointTypes::W_FL_CAPPOINT;	
+		*iFlags |= CWaypointTypes::W_FL_CAPPOINT;
+		*iArea = m_ObjectiveResource.getControlPointArea(pEdict);
 		*fMaxDistance = 100;
 	}
 }
@@ -551,6 +555,49 @@ void CTeamFortress2Mod::sapperDestroyed(edict_t *pOwner,eEngiBuild type, edict_t
 				m_SentryGuns[index].sapper = MyEHandle();
 		}
 	}
+}
+
+void CTeamFortress2Mod::updatePointMaster()
+{
+	if ( m_PointMasterResource.get() == NULL )
+	{
+		edict_t *pMaster = CClassInterface::FindEntityByClassnameNearest(Vector(0,0,0),"team_control_point_master",65535);
+
+		if ( pMaster )
+		{
+			extern ConVar rcbot_const_point_master_offset;
+			CBaseEntity *pent = pMaster->GetUnknown()->GetBaseEntity();
+			unsigned long mempoint = ((unsigned long)pent)+rcbot_const_point_master_offset.GetInt();
+
+			m_PointMaster = (CTeamControlPointMaster*)mempoint;
+
+			m_PointMasterResource = pMaster;
+		}
+	}
+
+	if ( m_PointMaster != NULL )
+	{
+		m_pCurrentRound =  m_PointMaster->getCurrentRound();
+	}
+}
+
+void CTeamFortress2Mod :: roundReset ()
+{
+	if ( m_ObjectiveResource.m_ObjectiveResource.get() == NULL )
+	{
+		m_ObjectiveResource.m_ObjectiveResource = CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1, "CTFObjectiveResource");
+		
+		if ( m_ObjectiveResource.m_ObjectiveResource.get() != NULL )
+		{
+			CClassInterface::getTF2ObjectiveResource(&m_ObjectiveResource);
+			m_ObjectiveResource.setup();
+		}
+	}
+
+	updatePointMaster();
+
+	m_bHasRoundStarted = false;
+	m_iFlagCarrierTeam = 0;
 }
 
 void CTeamFortress2Mod::sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
@@ -1285,6 +1332,10 @@ void CTeamFortress2Mod :: mapInit ()
 	const char *szmapname = mapname.ToCStr();
 
 	m_pResourceEntity = NULL;
+	m_ObjectiveResource.m_ObjectiveResource = NULL;
+	m_PointMaster = NULL;
+	m_PointMasterResource = NULL;
+	m_pCurrentRound = NULL;
 	bFlagStateDefault = true;
 
 	if ( strncmp(szmapname,"ctf_",4) == 0 )
@@ -1340,7 +1391,7 @@ void CTeamFortress2Mod :: mapInit ()
 	m_bBossSummoned = false;
 
 	resetCappers();
-	CPoints::loadMapScript();
+	//CPoints::loadMapScript();
 
 }
 
@@ -2277,4 +2328,338 @@ void CDODMod :: getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff )
 	}
 
 
+}
+
+///////////////////////////
+
+void CTFObjectiveResource::setup ()
+{
+	memset(m_pControlPoints,0,sizeof(edict_t*)*8);
+	memset(m_iControlPointWpt,0xFF,sizeof(int)*8);
+	// Find control point entities
+
+	edict_t *pent;
+
+	Vector vOrigin;
+
+	int i = gpGlobals->maxClients;
+
+	// find visible flags -- with a model
+	while ( ++i < gpGlobals->maxEntities )
+	{
+		pent = INDEXENT(i);
+
+		if ( !pent || pent->IsFree() )
+			continue;
+			
+		if ( strcmp(pent->GetClassName(),"team_control_point") == 0 )
+		{
+			vOrigin = CBotGlobals::entityOrigin(pent);
+
+			for ( int j = 0; j < *m_iNumControlPoints; j ++ )
+			{
+				if ( m_pControlPoints[j] != NULL )
+					continue;
+
+				if ( vOrigin == m_vCPPositions[j] )
+				{
+					m_pControlPoints[j] = pent;
+				}
+			}
+		}
+	}
+
+	for ( int j = 0; j < *m_iNumControlPoints; j ++ )
+	{
+		vOrigin = m_vCPPositions[j];
+
+		if ( m_iControlPointWpt[j] == -1 )
+			m_iControlPointWpt[j] = CWaypointLocations::NearestWaypoint(vOrigin,1024.0f,-1,false,false,false,NULL,false,0,false,false,Vector(0,0,0),CWaypointTypes::W_FL_CAPPOINT);
+	}
+	
+
+}
+
+int CTFObjectiveResource :: getControlPointArea ( edict_t *pPoint )
+{
+	for ( int j = 0; j < *m_iNumControlPoints; j ++ )
+	{
+		if ( m_pControlPoints[j] == pPoint )
+			return (j+1); // return waypoint area (+1)
+	}
+
+	return 0;
+}
+void CTFObjectiveResource::	debugprint ( void )
+{
+	edict_t *pEdict = CClients::getListenServerClient();
+
+	CBotGlobals::botMessage(pEdict,0,"m_iNumControlPoints = %d",*m_iNumControlPoints);
+	CBotGlobals::botMessage(pEdict,0,"m_bBlocked[8]\t[%s,%s,%s,%s,%s,%s,%s,%s]",m_bBlocked[0]?"Y":"N",m_bBlocked[1]?"Y":"N",m_bBlocked[2]?"Y":"N",m_bBlocked[3]?"Y":"N",m_bBlocked[4]?"Y":"N",m_bBlocked[5]?"Y":"N",m_bBlocked[6]?"Y":"N",m_bBlocked[7]?"Y":"N");
+	CBotGlobals::botMessage(pEdict,0,"m_bCPLocked[byte]\t[%d]",*m_bCPLocked);
+	CBotGlobals::botMessage(pEdict,0,"m_bCPLocked[8]\t[%s,%s,%s,%s,%s,%s,%s,%s]",m_bCPLocked[0]?"Y":"N",m_bCPLocked[1]?"Y":"N",m_bCPLocked[2]?"Y":"N",m_bCPLocked[3]?"Y":"N",m_bCPLocked[4]?"Y":"N",m_bCPLocked[5]?"Y":"N",m_bCPLocked[6]?"Y":"N",m_bCPLocked[7]?"Y":"N");
+	CBotGlobals::botMessage(pEdict,0,"m_bCPIsVisible[8]\t[%s,%s,%s,%s,%s,%s,%s,%s]",m_bCPIsVisible[0]?"Y":"N",m_bCPIsVisible[1]?"Y":"N",m_bCPIsVisible[2]?"Y":"N",m_bCPIsVisible[3]?"Y":"N",m_bCPIsVisible[4]?"Y":"N",m_bCPIsVisible[5]?"Y":"N",m_bCPIsVisible[6]?"Y":"N",m_bCPIsVisible[7]?"Y":"N");
+	CBotGlobals::botMessage(pEdict,0,"m_iOwner[8]\t[%s,%s,%s,%s,%s,%s,%s,%s]",(m_iOwner[0]==2)?"red":((m_iOwner[0]==3)?"blue":"unassigned"),(m_iOwner[1]==2)?"red":((m_iOwner[1]==3)?"blue":"unassigned"),(m_iOwner[2]==2)?"red":((m_iOwner[2]==3)?"blue":"unassigned"),(m_iOwner[3]==2)?"red":((m_iOwner[3]==3)?"blue":"unassigned"),(m_iOwner[4]==2)?"red":((m_iOwner[4]==3)?"blue":"unassigned"),(m_iOwner[5]==2)?"red":((m_iOwner[5]==3)?"blue":"unassigned"),(m_iOwner[6]==2)?"red":((m_iOwner[6]==3)?"blue":"unassigned"),(m_iOwner[7]==2)?"red":((m_iOwner[7]==3)?"blue":"unassigned"));
+}
+
+int CTFObjectiveResource::NearestArea ( Vector vOrigin )
+{
+	int iNearest = -1;
+	float fNearest = 1024.0f;
+	float fDist;
+
+	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+	{
+		if ( (fDist = (m_vCPPositions[i]-vOrigin).Length()) < fNearest )
+		{
+			fNearest = fDist;
+			iNearest = i;
+		}
+	}
+
+	// Add one for waypoint area
+	return iNearest+1;
+}
+
+int CTFObjectiveResource :: GetCurrentDefendPoint ( int team, bool updatevalidpoints )
+{
+	/*int other = (team==2)?3:2;
+
+	return GetCurrentAttackPoint(other);
+	*/
+	
+	int other;
+	int prev;
+	vector<int> points;
+
+	CTeamControlPointRound *pRound = CTeamFortress2Mod::getCurrentRound();
+
+	if ( m_ObjectiveResource.get() == NULL ) // not set up yet
+		return 0;
+	if ( team == 0 ) // invalid team
+		return 0;
+
+	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+	{
+		// not visible
+		if ( m_bCPIsVisible[i] == 0 )
+			continue;
+		// not unlocked
+		if ( m_flUnlockTimes[i] > engine->Time() )
+			continue;
+		// not in round
+		if ( m_pControlPoints[i] && pRound && !pRound->isPointInRound(i) )
+			continue;
+
+		// We own this point
+		if ( GetOwningTeam(i) == team )
+		{
+			// The other team can capture
+			other = (team==2)?3:2;
+
+			if ( TeamCanCapPoint(i,other) )
+			{
+				// if the other team has capture the previous points
+				if ( (prev = GetPreviousPointForPoint(i,other,0)) != -1 )
+				{
+					if ( prev == i )
+					{
+						points.push_back(i);
+						continue;
+					}
+					else
+					{
+						// This point needs previous points to be captured first
+						int j;
+
+						for ( j = 0; j < 3; j ++ )
+						{
+							prev = GetPreviousPointForPoint(i,other,j);
+
+							if ( prev == -1 )
+								continue;
+							else if ( GetOwningTeam(prev) != other )
+								break;
+						}
+
+						// other team has captured previous points
+						if ( j == 3 )
+						{
+							points.push_back(i);
+							continue;
+						}
+						else
+							continue;
+					}						
+				}
+				else
+				{
+					points.push_back(i);
+					continue;
+				}
+			}
+		}
+	}
+
+	if ( updatevalidpoints )
+	{
+		for ( unsigned int i = 0; i < points.size(); i ++ )
+			validpoints[points[i]] = 1;
+	}
+
+	if ( points.size() > 0 )
+	{
+		int index = points[randomInt(0,points.size()-1)];
+
+		CWaypoint *pWaypoint = CWaypoints::getWaypoint(m_iControlPointWpt[index]);
+
+		if ( pWaypoint != NULL )
+			return pWaypoint->getArea();
+
+		return points[randomInt(0,points.size()-1)]+1;
+	}
+
+	return 0;
+}
+void CTFObjectiveResource :: updateCaptureTime(int index)
+{
+	m_fLastCaptureTime[index] = engine->Time();
+}
+
+float CTFObjectiveResource :: getLastCaptureTime(int index)
+{
+	return m_fLastCaptureTime[index];
+}
+int CTFObjectiveResource :: GetCurrentAttackPoint ( int team, bool updatevalidpoints )
+{
+	
+	int prev;
+	vector<int> points;
+	CTeamControlPointRound *pRound = CTeamFortress2Mod::getCurrentRound();
+
+	if ( m_ObjectiveResource.get() == NULL ) // not set up yet
+		return 0;
+	if ( team == 0 ) // invalid team
+		return 0;
+
+	if ( (team == TF2_TEAM_RED) && (CTeamFortress2Mod::isAttackDefendMap()) )
+	{
+		// no attacking for red on this map
+		return 0;
+	}
+
+	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+	{
+		// not visible
+		if ( m_bCPIsVisible[i] == 0 )
+			continue;
+		// not unlocked
+		if ( m_flUnlockTimes[i] > engine->Time() )
+			continue;
+		// not in round
+		if ( m_pControlPoints[i] && pRound && !pRound->isPointInRound(i) )
+			continue;
+
+		// We don't own this point
+		if ( GetOwningTeam(i) != team )
+		{
+			// we can capture
+			if ( TeamCanCapPoint(i,team) )
+			{
+				// if we have captured the previous points we can capture
+				if ( (prev = GetPreviousPointForPoint(i,team,0)) != -1 )
+				{
+					if ( prev == i )
+						points.push_back(i);
+					else
+					{
+						int j;
+
+						for ( j = 0; j < 3; j ++ )
+						{
+							prev = GetPreviousPointForPoint(i,team,j);
+
+							if ( prev == -1 )
+								continue;
+							else if ( GetOwningTeam(GetPreviousPointForPoint(i,team,j)) != team )
+								break;
+						}
+
+						if ( j == 3 )
+							points.push_back(i);
+						else
+							continue;
+					}
+				}
+				else
+				{
+					// if its not an attack defend map check previous points are owned
+					int other = (team==2)?3:2;
+
+					// find the base point
+					int basepoint = GetBaseControlPointForTeam(other);
+
+					if ( basepoint == 0 )
+					{
+						bool allowned = true;
+
+						// make sure bot owns all points above this point
+						for ( int x = i+1; x < *m_iNumControlPoints; x ++ )
+						{
+							if ( GetOwningTeam(x) != team )
+							{
+								allowned = false;
+								break;
+							}
+						}				
+
+						if ( allowned )
+							points.push_back(i);
+						
+						continue;
+					}
+					else if ( basepoint == ((*m_iNumControlPoints)-1) )
+					{
+						bool allowned = true;
+						// make sure team owns all points below this point
+						for ( int x = 0; x < i; x ++ )
+						{
+							if ( GetOwningTeam(x) != team )
+							{
+								allowned = false;
+								break;
+							}
+						}				
+
+						if ( allowned )
+							points.push_back(i);
+
+						continue;
+					}
+
+					points.push_back(i);
+				}
+			}
+		}
+	}
+
+	if ( updatevalidpoints )
+	{
+		for ( unsigned int i = 0; i < points.size(); i ++ )
+			validpoints[points[i]] = 1;
+	}
+
+	if ( points.size() > 0 )
+	{
+		int index = points[randomInt(0,points.size()-1)];
+
+		CWaypoint *pWaypoint = CWaypoints::getWaypoint(m_iControlPointWpt[index]);
+
+		if ( pWaypoint != NULL )
+			return pWaypoint->getArea();
+
+		return points[randomInt(0,points.size()-1)]+1;
+	}
+
+	return 0;
 }

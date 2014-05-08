@@ -641,13 +641,31 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	  
 	  if ( pEvent->getInt("full_reset") == 1 )
 	  {
-		CPoints::resetPoints();
+		//CPoints::resetPoints();
 	  }
 
 	  // MUST BE AFTER RESETPOINTS
 	  CTeamFortress2Mod::roundReset();
 	  CBots::botFunction(&roundstart);
 	  CTeamFortress2Mod::resetSetupTime();
+	  CTeamFortress2Mod::m_ObjectiveResource.setup();
+	  
+	  int numpoints = CTeamFortress2Mod::m_ObjectiveResource.GetNumControlPoints();
+	  int i;
+
+	  for ( i = 0; i < numpoints; i ++ )
+	  {
+		  if ( CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(i) != TF2_TEAM_RED )
+			  break;
+	  }
+	  CTeamFortress2Mod::updatePointMaster();
+	  // if all points are owned by RED at start up then its an attack defend map
+	  CTeamFortress2Mod::setAttackDefendMap(i==numpoints);
+		CTeamFortress2Mod::m_ObjectiveResource.resetValidPoints();
+		CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(2,true);
+		CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(3,true);
+		CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(2,true);
+		CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(3,true);
 }
 /*
 teamplay_capture_broken
@@ -680,6 +698,15 @@ void CTF2PointBlockedCapture :: execute ( IBotEventInterface *pEvent )
 
 	CTeamFortress2Mod::removeCappers(capindex);
 }
+void CTF2PointUnlocked :: execute ( IBotEventInterface *pEvent )
+{
+	//
+}
+
+void CTF2PointLocked :: execute ( IBotEventInterface *pEvent )
+{
+	//
+}
 
 void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 {/*
@@ -708,7 +735,8 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 		}
 	}
 
-	CPoints::pointBeingCaptured(capteam,cpname,cappers[0]);
+	CTeamFortress2Mod::m_ObjectiveResource.updateCaptureTime(capindex);
+	//CPoints::pointBeingCaptured(capteam,cpname,cappers[0]);
 
 	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(capteam,Vector(0,0,0),EVENT_CAPPOINT);
 
@@ -722,9 +750,17 @@ void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
 {
 	CBroadcastCapturedPoint cap = CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"),pEvent->getString("cpname"));
 	
-	CPoints::pointCaptured(pEvent->getInt("team"),pEvent->getString("cpname"));
+	//CPoints::pointCaptured(pEvent->getInt("team"),pEvent->getString("cpname"));
     // MUST BE AFTER POINTCAPTURED
     CBots::botFunction(&cap);
+
+	//CTeamFortress2Mod::m_Resource.debugprint();
+	CTeamFortress2Mod::updatePointMaster();
+	CTeamFortress2Mod::m_ObjectiveResource.resetValidPoints();
+	CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(2,true);
+	CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(3,true);
+	CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(2,true);
+	CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(3,true);
 }
 
 /* Flag has been picked up or dropped */
@@ -1054,6 +1090,8 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CDODPointCaptured());
 	addEvent(new CDODFireWeaponEvent());
 	addEvent(new CTF2RoundWinEvent());
+	addEvent(new CTF2PointUnlocked());
+	addEvent(new CTF2PointLocked());
 	
 /*
 pumpkin_lord_summoned 

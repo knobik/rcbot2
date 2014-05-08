@@ -1468,10 +1468,13 @@ void CBotTF2 :: spawnInit()
 	m_iTrapType = TF_TRAP_TYPE_NONE;
 
 	//m_fBlockPushTime = 0.0f;
-
+	 
 	m_iTeam = getTeam();
 	// update current areas
-	CPoints::getAreas(m_iTeam,&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(m_iTeam);
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(m_iTeam);
+
+	//CPoints::getAreas(m_iTeam,&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
 	m_fDoubleJumpTime = 0.0f;
 	m_fFrenzyTime = 0.0f;
@@ -2120,7 +2123,7 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 	{
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_AREAONLY) )
 		{
-			if ( !CPoints::isValidArea(pWaypoint->getArea()) )
+			if ( !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWaypoint->getArea()) )
 				return false;
 		}
 		
@@ -3851,9 +3854,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		ADD_UTILITY(BOT_UTIL_PLACE_BUILDING, m_bIsCarryingObj, 1.0f); // something went wrong moving this- I still have it!!!
 
 		// destroy and build anew
-		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_SENTRY, !m_bIsCarryingObj && (iMetal>=130) && (m_pSentryGun.get()!=NULL) && !CPoints::isValidArea(m_iSentryArea),fSentryUtil);
-		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_DISP, !m_bIsCarryingObj && (iMetal>=125) && (m_pDispenser.get()!=NULL) && !CPoints::isValidArea(m_iDispenserArea),randomFloat(0.7,0.9));
-		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_ENTRANCE, !m_bIsCarryingObj && (iMetal>=125) && (m_pTeleEntrance.get()!=NULL) && !CPoints::isValidArea(m_iTeleEntranceArea),randomFloat(0.7,0.9));
+		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_SENTRY, !m_bIsCarryingObj && (iMetal>=130) && (m_pSentryGun.get()!=NULL) && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iSentryArea),fSentryUtil);
+		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_DISP, !m_bIsCarryingObj && (iMetal>=125) && (m_pDispenser.get()!=NULL) && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iDispenserArea),randomFloat(0.7,0.9));
+		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_ENTRANCE, !m_bIsCarryingObj && (iMetal>=125) && (m_pTeleEntrance.get()!=NULL) && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iTeleEntranceArea),randomFloat(0.7,0.9));
 		//ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_EXIT, (iMetal>=125) && (m_pTeleExit.get()!=NULL) && !CPoints::isValidArea(m_iTeleExitArea),randomFloat(0.7,0.9));
 
 		ADD_UTILITY(BOT_UTIL_BUILDSENTRY,!m_bIsCarryingObj && !bHasFlag && !m_pSentryGun && (iMetal>=130),0.9);
@@ -4183,6 +4186,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		if ( executeAction(next) )//>getId(),pWaypointResupply,pWaypointHealth,pWaypointAmmo) )
 		{
 			m_CurrentUtil = next->getId();
+			// avoid trying to do same thing again and again if it fails
+			m_fUtilTimes[m_CurrentUtil] = engine->Time() + 0.5f;
 
 			if ( CClients::clientsDebugging(BOT_DEBUG_UTIL) )
 			{
@@ -4239,6 +4244,8 @@ bool CBotTF2 ::deployStickies(eDemoTrapType type, Vector vStand, Vector vLocatio
 {
 	CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS));
 	int iPipesLeft = 0;
+	wantToListen(false);
+	m_bWantToInvestigateSound = false;
 
 	if ( pWeapon )
 	{
@@ -4585,7 +4592,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				{
 					float fTime = rcbot_tf2_protect_cap_time.GetFloat();
 					// chance of going to point
-					fprob = (fTime - (engine->Time() - CPoints::getPointCaptureTime(m_iCurrentDefendArea)))/fTime;
+					fprob = (fTime - (engine->Time() - CTeamFortress2Mod::m_ObjectiveResource.getLastCaptureTime(m_iCurrentDefendArea)))/fTime;
 
 					if ( fprob < rcbot_tf2_protect_cap_percent.GetFloat() )
 						fprob = rcbot_tf2_protect_cap_percent.GetFloat();
@@ -6038,11 +6045,12 @@ void CBotTF2::roundReset(bool bFullReset)
 
 	m_pNavigator->clear();
 
+	m_iTeam = getTeam();
 	// fix : reset current areas
-	m_iCurrentDefendArea = 0;
-	m_iCurrentAttackArea = 0;
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(m_iTeam);
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(m_iTeam);
 
-	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+	//CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
 	//m_pPayloadBomb = NULL;
 }
@@ -6050,14 +6058,12 @@ void CBotTF2::roundReset(bool bFullReset)
 /// TO DO : list of areas
 void CBotTF2::getDefendArea ( vector<int> *m_iAreas )
 {
-	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
-	m_iAreas->push_back(m_iCurrentDefendArea);
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(getTeam());
 }
 
 void CBotTF2::getAttackArea ( vector <int> *m_iAreas )
 {
-	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
-	m_iAreas->push_back(m_iCurrentAttackArea);
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(getTeam());
 }
 
 void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
@@ -6092,7 +6098,8 @@ void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 	}
 	m_pNavigator->clear();
 
-	CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(getTeam());
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(getTeam());
 }
 
 // Is Enemy Function

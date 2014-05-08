@@ -424,6 +424,30 @@ public:
 
 };
 
+class CTF2PointLocked : public CBotEvent
+{
+public:
+	CTF2PointLocked()
+	{
+		setType("teamplay_point_locked");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CTF2PointUnlocked : public CBotEvent
+{
+public:
+	CTF2PointUnlocked()
+	{
+		setType("teamplay_point_unlocked");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CFlagEvent : public CBotEvent
 {
 public:

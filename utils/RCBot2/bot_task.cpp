@@ -692,23 +692,11 @@ CBotTF2AttackPoint :: CBotTF2AttackPoint ( int iArea, Vector vOrigin, int iRadiu
 
 void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
-	vector<int> areas;
-	unsigned int i;
-	bool found = false;
 	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
 
 	pBot->wantToInvestigateSound(false);
-	pTF2Bot->getAttackArea(&areas);
-	
-	i = 0;
 
-	while ( (i < areas.size()) && !found )
-	{
-		found = areas[i] == m_iArea;
-		i++;
-	}
-
-	if ( !found )	
+	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(m_iArea-1) == pBot->getTeam()) )
 		complete();
 	else if ( m_fAttackTime == 0 )
 		m_fAttackTime = engine->Time() + randomFloat(30.0,60.0);
@@ -898,21 +886,7 @@ CBotTF2DefendPoint :: CBotTF2DefendPoint ( int iArea, Vector vOrigin, int iRadiu
 
 void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
-	vector<int> areas;
-	unsigned int i;
-	bool found = false;
-
-	((CBotTF2*)pBot)->getDefendArea(&areas);
-	
-	i = 0;
-
-	while ( (i < areas.size()) && !found )
-	{
-		found = (areas[i] == m_iArea);
-		i++;
-	}
-
-	if ( !found )
+	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(m_iArea-1) != pBot->getTeam()) )
 		complete();
 	else if ( m_fDefendTime == 0 )
 	{
@@ -1693,7 +1667,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	//if ( !pBot->isTF() ) // shouldn't happen ever
 	//	fail();
 
-	if ( !CPoints::isValidArea(m_iArea) )
+	if ( !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iArea) )
 		fail();
 
 	pBot->wantToShoot(false); // don't shoot enemies , want to build the damn thing
@@ -2679,13 +2653,13 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	CWeapon *pWeapon;
 
 	// Sniper should move if the point has changed, so he's not wasting time
-	if ( !CPoints::isValidArea(m_iArea) )
+	if ( !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iArea) )
 		fail(); // move up
 	else if ( CTeamFortress2Mod::isAttackDefendMap() )
 	{
 		CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
 
-		if ( pBotTF2->getTeam() == TF_TEAM_BLUE )
+		if ( pBotTF2->getTeam() == TF2_TEAM_BLUE )
 		{
 			if ( m_iArea != pBotTF2->getCurrentAttackArea() )
 				fail();

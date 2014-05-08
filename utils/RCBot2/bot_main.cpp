@@ -101,6 +101,10 @@ bool bInitialised = false;
 
 void UnhookPlayerRunCommand ();
 
+ConVar rcbot_const_round_offset("rcbot_const_round_offset","840",0,"TF2 OFFSET for Round Class");
+ConVar rcbot_const_point_master_offset("rcbot_const_mstr_offset","840",0,"TF2 OFFSET for Point Master Class");
+ConVar rcbot_const_point_offset("rcbot_const_pnt_offset","1376",0,"TF2 OFFSET for Point Class");
+
 ConVar rcbot_projectile_tweak("rcbot_projtweak","0.05",0,"Tweaks the bots knowledge of projectiles and gravity");
 //ConVar bot_sv_cheat_warning("rcbot_sv_cheats_warning","0",0,"If disabled, bots will try to spawn even if sv_cheats is 0 - use only with admin cvar plugin");
 ConVar bot_cmd_enable_wpt_sounds("rcbot_enable_wpt_sounds","1",0,"Enable/disable sound effects when editing waypoints");
@@ -186,18 +190,136 @@ ConVar rcbot_debug_show_route("rcbot_debug_show_route","0",0,"Debug command, sho
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 
-/*CON_COMMAND( enginetime, "get engine time" )
+
+CON_COMMAND( rcbot_enginetime, "get engine time" )
 {
 	Msg("%f\n",engine->Time());
 }
-CON_COMMAND( maptime, "get map time" )
+
+CON_COMMAND( rcbot_maptime, "get map time" )
 {
 	Msg("CDODMod::getMapStartTime() = %f\n",CDODMod::getMapStartTime());
 	Msg("engine->Time() = %f\n",engine->Time());
 	Msg("diff = %f\n",engine->Time() - CDODMod::getMapStartTime());
 	Msg("gpGlobals->realtime = %f\n",gpGlobals->realtime);
 	Msg("gpGlobals->curtime = %f\n",gpGlobals->curtime);
-}*/
+}
+
+CON_COMMAND( rcbot_objpropblue, "get objective properties for blue team" )
+{
+	CTFObjectiveResource *r = &CTeamFortress2Mod::m_ObjectiveResource;
+	int team = 3;
+
+	int icons[8];
+
+	Msg("GetBaseControlPointForTeam(%d) = %d\n",team,r->GetBaseControlPointForTeam(team));
+	Msg("GetBaseIconForTeam(%d) = %d\n",team,r->GetBaseIconForTeam(team));
+
+	for ( int i = 0; i < 8; i ++ )
+		icons[i] = r->GetIconForTeam(i,team);
+
+	Msg("GetIconForTeam(%d) = [%d,%d,%d,%d,%d,%d,%d,%d]\n",icons[0],icons[1],icons[2],icons[3],icons[4],icons[5],icons[6],icons[7]);
+
+	for ( int i = 0; i < 8; i ++ )
+		icons[i] = r->GetOverlayForTeam(i,team);
+
+	Msg("GetOverlayForTeam(%d) = [%d,%d,%d,%d,%d,%d,%d,%d]\n",icons[0],icons[1],icons[2],icons[3],icons[4],icons[5],icons[6],icons[7]);
+
+}
+
+CON_COMMAND( rcbot_objpropred, "get objective properties for red team" )
+{
+	CTFObjectiveResource *r = &CTeamFortress2Mod::m_ObjectiveResource;
+	int team = 2;
+
+	int icons[8];
+
+	Msg("GetBaseControlPointForTeam(%d) = %d\n",team,r->GetBaseControlPointForTeam(team));
+	Msg("GetBaseIconForTeam(%d) = %d\n",team,r->GetBaseIconForTeam(team));
+
+	for ( int i = 0; i < 8; i ++ )
+		icons[i] = r->GetIconForTeam(i,team);
+
+	Msg("GetIconForTeam(%d) = [%d,%d,%d,%d,%d,%d,%d,%d]\n",icons[0],icons[1],icons[2],icons[3],icons[4],icons[5],icons[6],icons[7]);
+
+	for ( int i = 0; i < 8; i ++ )
+		icons[i] = r->GetOverlayForTeam(i,team);
+
+	Msg("GetOverlayForTeam(%d) = [%d,%d,%d,%d,%d,%d,%d,%d]\n",icons[0],icons[1],icons[2],icons[3],icons[4],icons[5],icons[6],icons[7]);
+
+}
+
+CON_COMMAND( rcbot_objcap1, "get objective properties for cap 1" )
+{
+	CTFObjectiveResource *r = &CTeamFortress2Mod::m_ObjectiveResource;
+	int cappoint = 1;
+
+	int prevblue[3];
+	int prevred[3];
+
+	Msg("GetCappingTeam = %d\n",r->GetCappingTeam(cappoint));
+	Msg("GetCPCappingIcon = %d\n",r->GetCPCappingIcon(cappoint));
+	Msg("GetCPCurrentOwnerIcon = %d\n",r->GetCPCurrentOwnerIcon(cappoint,r->GetOwningTeam(cappoint)));
+	Msg("GetOwningTeam = %d\n",r->GetOwningTeam(cappoint));
+	Msg("GetTeamInZone = %d\n", r->GetTeamInZone(cappoint));
+
+	for ( int i = 0; i < 3; i ++ )
+		prevblue[i] = r->GetPreviousPointForPoint(cappoint,3,i);
+	
+	for ( int i = 0; i < 3; i ++ )
+		prevred[i] = r->GetPreviousPointForPoint(cappoint,2,i);
+
+	Msg("Blue must capture: %d %d %d first\n",prevblue[0],prevblue[1],prevblue[2]);
+	Msg("Red must capture: %d %d %d first\n",prevred[0],prevred[1],prevred[2]);
+}
+
+CON_COMMAND( rcbot_objcap2, "get objective properties for cap 2" )
+{
+	CTFObjectiveResource *r = &CTeamFortress2Mod::m_ObjectiveResource;
+	int cappoint = 2;
+
+	int prevblue[3];
+	int prevred[3];
+
+	Msg("GetCappingTeam = %d\n",r->GetCappingTeam(cappoint));
+	Msg("GetCPCappingIcon = %d\n",r->GetCPCappingIcon(cappoint));
+	Msg("GetCPCurrentOwnerIcon = %d\n",r->GetCPCurrentOwnerIcon(cappoint,r->GetOwningTeam(cappoint)));
+	Msg("GetOwningTeam = %d\n",r->GetOwningTeam(cappoint));
+	Msg("GetTeamInZone = %d\n", r->GetTeamInZone(cappoint));
+
+	for ( int i = 0; i < 3; i ++ )
+		prevblue[i] = r->GetPreviousPointForPoint(cappoint,3,i);
+	
+	for ( int i = 0; i < 3; i ++ )
+		prevred[i] = r->GetPreviousPointForPoint(cappoint,2,i);
+
+	Msg("Blue must capture: %d %d %d first\n",prevblue[0],prevblue[1],prevblue[2]);
+	Msg("Red must capture: %d %d %d first\n",prevred[0],prevred[1],prevred[2]);
+}
+
+CON_COMMAND( rcbot_objcap3, "get objective properties for cap 3" )
+{
+	CTFObjectiveResource *r = &CTeamFortress2Mod::m_ObjectiveResource;
+	int cappoint = 3;
+
+	int prevblue[3];
+	int prevred[3];
+
+	Msg("GetCappingTeam = %d\n",r->GetCappingTeam(cappoint));
+	Msg("GetCPCappingIcon = %d\n",r->GetCPCappingIcon(cappoint));
+	Msg("GetCPCurrentOwnerIcon = %d\n",r->GetCPCurrentOwnerIcon(cappoint,r->GetOwningTeam(cappoint)));
+	Msg("GetOwningTeam = %d\n",r->GetOwningTeam(cappoint));
+	Msg("GetTeamInZone = %d\n", r->GetTeamInZone(cappoint));
+
+	for ( int i = 0; i < 3; i ++ )
+		prevblue[i] = r->GetPreviousPointForPoint(cappoint,3,i);
+	
+	for ( int i = 0; i < 3; i ++ )
+		prevred[i] = r->GetPreviousPointForPoint(cappoint,2,i);
+
+	Msg("Blue must capture: %d %d %d first\n",prevblue[0],prevblue[1],prevblue[2]);
+	Msg("Red must capture: %d %d %d first\n",prevred[0],prevred[1],prevred[2]);
+}
 
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");

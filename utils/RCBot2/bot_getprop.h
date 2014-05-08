@@ -101,6 +101,31 @@ typedef enum
 	GETPROP_TF2OBJECTROCKETS,
 	GETPROP_TF2_TELEPORT_RECHARGETIME,
 	GETPROP_TF2_TELEPORT_RECHARGEDURATION,
+	GETPROP_TF2_OBJTR_m_vCPPositions,
+	GETPROP_TF2_OBJTR_m_bCPIsVisible,
+	GETPROP_TF2_OBJTR_m_iTeamIcons,
+	GETPROP_TF2_OBJTR_m_iTeamOverlays,
+	GETPROP_TF2_OBJTR_m_iTeamReqCappers,
+	GETPROP_TF2_OBJTR_m_flTeamCapTime,
+	GETPROP_TF2_OBJTR_m_iPreviousPoints,
+	GETPROP_TF2_OBJTR_m_bTeamCanCap,
+	GETPROP_TF2_OBJTR_m_iTeamBaseIcons,
+	GETPROP_TF2_OBJTR_m_iBaseControlPoints,
+	GETPROP_TF2_OBJTR_m_bInMiniRound,
+	GETPROP_TF2_OBJTR_m_iWarnOnCap,
+	GETPROP_TF2_OBJTR_m_iCPGroup,
+	GETPROP_TF2_OBJTR_m_bCPLocked,
+	GETPROP_TF2_OBJTR_m_bTrackAlarm,
+	GETPROP_TF2_OBJTR_m_flUnlockTimes,
+	GETPROP_TF2_OBJTR_m_flCPTimerTimes,
+	GETPROP_TF2_OBJTR_m_iNumTeamMembers,
+	GETPROP_TF2_OBJTR_m_iCappingTeam,
+	GETPROP_TF2_OBJTR_m_iTeamInZone,
+	GETPROP_TF2_OBJTR_m_bBlocked,
+	GETPROP_TF2_OBJTR_m_iOwner,
+	GETPROP_TF2_OBJTR_m_bCPCapRateScalesWithPlayers,
+	GETPROP_TF2_OBJTR_m_iNumControlPoints,
+	GETPROP_TF2_OBJTR_m_bPlayingMiniRounds,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -166,7 +191,7 @@ public:
 		return *((float*)m_data); 
 	}
 
-	inline float *getFloatPointer ( edict_t *edict, float defaultvalue ) 
+	inline float *getFloatPointer ( edict_t *edict ) 
 	{ 
 		getData(edict); 
 		
@@ -269,7 +294,7 @@ private:
 
 
 extern CClassInterfaceValue g_GetProps[GET_PROPDATA_MAX];
-
+class CTFObjectiveResource;
 #define DEFINE_GETPROP(id,classname,value,preoffs)\
  g_GetProps[id] = CClassInterfaceValue( CClassInterfaceValue ( classname, value, preoffs ) );
 
@@ -278,6 +303,7 @@ class CClassInterface
 public:
 	static void init ();
 
+	static const char *FindEntityNetClass(int start, const char *classname);
 	static edict_t *FindEntityByNetClass(int start, const char *classname);
 	static edict_t *FindEntityByNetClassNearest(Vector vstart, const char *classname);
 	static edict_t *FindEntityByClassnameNearest(Vector vstart, const char *classname, float fMinDist = 8192.0f, edict_t *pOwner = NULL );
@@ -325,6 +351,7 @@ public:
 	inline static int getTF2SentryShells ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTSHELLS].getInt(edict,0); }
 	inline static int getTF2SentryRockets ( edict_t *edict ) { return g_GetProps[GETPROP_TF2OBJECTROCKETS].getInt(edict,0); }
 	
+	static bool getTF2ObjectiveResource ( CTFObjectiveResource *pResource );
 
 	inline static float getTF2TeleRechargeTime(edict_t *edict) { return g_GetProps[GETPROP_TF2_TELEPORT_RECHARGETIME].getFloat(edict,0); } 
 	inline static float getTF2TeleRechargeDuration(edict_t *edict) { return g_GetProps[GETPROP_TF2_TELEPORT_RECHARGEDURATION].getFloat(edict,0); } 

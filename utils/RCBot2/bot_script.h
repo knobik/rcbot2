@@ -30,7 +30,7 @@
  */
 #ifndef __BOT_SCRIPT_H__
 #define __BOT_SCRIPT_H__
-
+/*
 
 #include <vector>
 using namespace std;
@@ -137,5 +137,5 @@ private:
 	static float m_fLoadedScript;
 };
 
-
+*/
 #endif

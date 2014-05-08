@@ -88,7 +88,7 @@ static MTRand drand;
 
 int randomInt ( int imin, int imax )
 {
-	return (int)(imin + (int)(drand()*((float)(imax-imin)+0.9f)));
+	return (int)(imin + (int)(drand()*((float)(imax-imin)+0.5f)));
 }
 
 float randomFloat ( float fmin, float fmax )

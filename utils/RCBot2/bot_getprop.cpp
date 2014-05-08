@@ -484,12 +484,74 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2_TELEPORT_RECHARGETIME,"CObjectTeleporter","m_flRechargeTime",0);
 		DEFINE_GETPROP(GETPROP_TF2_TELEPORT_RECHARGEDURATION,"CObjectTeleporter","m_flCurrentRechargeDuration",0);
 
+		/* All the nutty TF2 Objective Resource Stuff */
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_vCPPositions,"CTFObjectiveResource","m_vCPPositions",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bCPIsVisible,"CTFObjectiveResource","m_bCPIsVisible",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iTeamIcons,"CTFObjectiveResource","m_iTeamIcons",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iTeamOverlays,"CTFObjectiveResource","m_iTeamOverlays",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iTeamReqCappers,"CTFObjectiveResource","m_iTeamReqCappers",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_flTeamCapTime,"CTFObjectiveResource","m_flTeamCapTime",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iPreviousPoints,"CTFObjectiveResource","m_iPreviousPoints",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bTeamCanCap,"CTFObjectiveResource","m_bTeamCanCap",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iTeamBaseIcons,"CTFObjectiveResource","m_iTeamBaseIcons",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iBaseControlPoints,"CTFObjectiveResource","m_iBaseControlPoints",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bInMiniRound,"CTFObjectiveResource","m_bInMiniRound",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iWarnOnCap,"CTFObjectiveResource","m_iWarnOnCap",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iCPGroup,"CTFObjectiveResource","m_iCPGroup",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bCPLocked,"CTFObjectiveResource","m_bCPLocked",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bTrackAlarm,"CTFObjectiveResource","m_bTrackAlarm",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_flUnlockTimes,"CTFObjectiveResource","m_flUnlockTimes",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_flCPTimerTimes,"CTFObjectiveResource","m_flCPTimerTimes",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iNumTeamMembers,"CTFObjectiveResource","m_iNumTeamMembers",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iCappingTeam,"CTFObjectiveResource","m_iCappingTeam",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iTeamInZone,"CTFObjectiveResource","m_iTeamInZone",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bBlocked,"CTFObjectiveResource","m_bBlocked",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iOwner,"CTFObjectiveResource","m_iOwner",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bCPCapRateScalesWithPlayers,"CTFObjectiveResource","m_bCPCapRateScalesWithPlayers",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iNumControlPoints,"CTFObjectiveResource","m_iNumControlPoints",0);
+		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bPlayingMiniRounds,"CTFObjectiveResource","m_bPlayingMiniRounds",0);
+
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
 			//if ( g_GetProps[i]
 			g_GetProps[i].findOffset();
 		}
 }
+
+//#define GETTF2OBJ_INT(x) pResource->x = g_GetProps[GETPROP_TF2_OBJTR_#x].getIntPointer(edict);
+
+bool CClassInterface :: getTF2ObjectiveResource ( CTFObjectiveResource *pResource )
+{
+	edict_t *edict = pResource->m_ObjectiveResource.get();
+
+	pResource->m_iNumControlPoints = g_GetProps[GETPROP_TF2_OBJTR_m_iNumControlPoints].getIntPointer(edict);
+	pResource->m_bBlocked = g_GetProps[GETPROP_TF2_OBJTR_m_bBlocked].getBoolPointer(edict);
+	pResource->m_bCPCapRateScalesWithPlayers = g_GetProps[GETPROP_TF2_OBJTR_m_bCPCapRateScalesWithPlayers].getBoolPointer(edict);
+	pResource->m_bCPIsVisible = g_GetProps[GETPROP_TF2_OBJTR_m_bCPIsVisible].getIntPointer(edict);
+	pResource->m_bCPLocked = g_GetProps[GETPROP_TF2_OBJTR_m_bCPLocked].getBoolPointer(edict);
+	pResource->m_flCPTimerTimes = g_GetProps[GETPROP_TF2_OBJTR_m_flCPTimerTimes].getFloatPointer(edict);
+	pResource->m_bTeamCanCap = g_GetProps[GETPROP_TF2_OBJTR_m_bTeamCanCap].getBoolPointer(edict);
+	pResource->m_flTeamCapTime = g_GetProps[GETPROP_TF2_OBJTR_m_bTeamCanCap].getFloatPointer(edict);
+	pResource->m_vCPPositions = g_GetProps[GETPROP_TF2_OBJTR_m_vCPPositions].getVectorPointer(edict);
+	pResource->m_iOwner = g_GetProps[GETPROP_TF2_OBJTR_m_iOwner].getIntPointer(edict);
+	pResource->m_flUnlockTimes = g_GetProps[GETPROP_TF2_OBJTR_m_flUnlockTimes].getFloatPointer(edict);
+	pResource->m_iCappingTeam = g_GetProps[GETPROP_TF2_OBJTR_m_iCappingTeam].getIntPointer(edict);
+	pResource->m_iCPGroup = g_GetProps[GETPROP_TF2_OBJTR_m_iCPGroup].getIntPointer(edict);
+	pResource->m_bPlayingMiniRounds = g_GetProps[GETPROP_TF2_OBJTR_m_bPlayingMiniRounds].getBoolPointer(edict);
+	pResource->m_iTeamIcons = g_GetProps[GETPROP_TF2_OBJTR_m_iTeamIcons].getIntPointer(edict);
+	pResource->m_iTeamOverlays = g_GetProps[GETPROP_TF2_OBJTR_m_iTeamOverlays].getIntPointer(edict);
+	pResource->m_iTeamReqCappers = g_GetProps[GETPROP_TF2_OBJTR_m_iTeamReqCappers].getIntPointer(edict);
+	pResource->m_iPreviousPoints = g_GetProps[GETPROP_TF2_OBJTR_m_iPreviousPoints].getIntPointer(edict);
+	pResource->m_iTeamBaseIcons = g_GetProps[GETPROP_TF2_OBJTR_m_iTeamBaseIcons].getIntPointer(edict);
+	pResource->m_bInMiniRound = g_GetProps[GETPROP_TF2_OBJTR_m_bInMiniRound].getBoolPointer(edict);
+	pResource->m_iWarnOnCap = g_GetProps[GETPROP_TF2_OBJTR_m_iWarnOnCap].getIntPointer(edict);
+	pResource->m_iNumTeamMembers = g_GetProps[GETPROP_TF2_OBJTR_m_iNumTeamMembers].getIntPointer(edict);
+	pResource->m_bTrackAlarm = g_GetProps[GETPROP_TF2_OBJTR_m_bTrackAlarm].getBoolPointer(edict);
+	pResource->m_iTeamInZone = g_GetProps[GETPROP_TF2_OBJTR_m_iTeamInZone].getIntPointer(edict);
+	pResource->m_iBaseControlPoints = g_GetProps[GETPROP_TF2_OBJTR_m_iBaseControlPoints].getIntPointer(edict);
+	return true;
+}
+
 
 void CClassInterfaceValue :: getData ( edict_t *edict )
 {
@@ -597,6 +659,37 @@ edict_t *CClassInterface::FindEntityByNetClassNearest(Vector vstart, const char 
 	}
 
 	return pfound;
+}
+
+const char *CClassInterface::FindEntityNetClass(int start, const char *classname)
+{
+	edict_t *current;
+
+	for (int i = ((start != -1) ? start : 0); i < gpGlobals->maxEntities; i++)
+	{
+		current = engine->PEntityOfEntIndex(i);
+		if (current == NULL)
+		{
+			continue;
+		}
+
+		IServerNetworkable *network = current->GetNetworkable();
+
+		if (network == NULL)
+		{
+			continue;
+		}
+
+		if (strcmp(current->GetClassName(), classname) == 0)
+		{
+			ServerClass *sClass = network->GetServerClass();
+			
+			return sClass->GetName();
+		
+		}
+	}
+
+	return NULL;
 }
 // http://svn.alliedmods.net/viewvc.cgi/trunk/extensions/tf2/extension.cpp?revision=2183&root=sourcemod&pathrev=2183
 edict_t *CClassInterface::FindEntityByNetClass(int start, const char *classname)

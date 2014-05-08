@@ -135,12 +135,12 @@ public:
 
 	static void AddWptLocation ( int iIndex, const float *fOrigin );
 
-	static void FindNearestInBucket ( int i, int j, int k, const Vector &vOrigin, float *pfMinDist, int *piIndex,int iIgnoreWpt, bool bGetVisible = true, bool bGetUnreachable = false, bool bIsBot = false, dataUnconstArray<int> *iFailedWpts = NULL, bool bNearestAimingOnly = false, int iTeam = 0, bool bCheckArea = false, bool bGetVisibleFromOther = false, Vector vOther = Vector(0,0,0), int iFlagsOnly = 0 );
+	static void FindNearestInBucket ( int i, int j, int k, const Vector &vOrigin, float *pfMinDist, int *piIndex,int iIgnoreWpt, bool bGetVisible = true, bool bGetUnreachable = false, bool bIsBot = false, dataUnconstArray<int> *iFailedWpts = NULL, bool bNearestAimingOnly = false, int iTeam = 0, bool bCheckArea = false, bool bGetVisibleFromOther = false, Vector vOther = Vector(0,0,0), int iFlagsOnly = 0, edict_t *pPlayer = NULL );
 	static void DrawWaypoints ( CClient *pClient, float fDist );
 	
 	static void DeleteWptLocation ( int iIndex, const float *fOrigin );
 	
-	static int NearestWaypoint ( const Vector &vOrigin, float fDist, int iIgnoreWpt, bool bGetVisible = true, bool bGetUnreachable = false, bool bIsBot = false, dataUnconstArray<int> *iFailedWpts = NULL, bool bNearestAimingOnly = false, int iTeam = 0, bool bCheckArea = false, bool bGetVisibleFromOther = false, Vector vOther = Vector(0,0,0), int FlagsOnly = 0 );
+	static int NearestWaypoint ( const Vector &vOrigin, float fDist, int iIgnoreWpt, bool bGetVisible = true, bool bGetUnreachable = false, bool bIsBot = false, dataUnconstArray<int> *iFailedWpts = NULL, bool bNearestAimingOnly = false, int iTeam = 0, bool bCheckArea = false, bool bGetVisibleFromOther = false, Vector vOther = Vector(0,0,0), int FlagsOnly = 0, edict_t *pPlayer = NULL );
 
 	static void GetAllVisible( int iFrom, int iOther, Vector &vOrigin, Vector &vOther, float fEDist, dataUnconstArray<int> *iVisible, dataUnconstArray<int> *iInvisible );
 

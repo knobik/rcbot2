@@ -825,7 +825,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 		if ( m_iCurrentWaypoint == -1 )
 		{
 			// don't ignore this time
-			m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,-1,true,false,true,NULL,false,m_pBot->getTeam());
+			m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,-1,true,false,true,NULL,false,m_pBot->getTeam(),false,false,Vector(0,0,0),0,m_pBot->getEdict());
 
 			if ( m_iCurrentWaypoint == -1 )
 			{
@@ -1507,7 +1507,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 #ifndef __linux__
 				if ( m_iFlags )
 				{
-					if ( CPoints::isValidArea(m_iArea) )
+					if ( CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iArea) )
 						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+4.0f),0,1,255,255,255,255,"%d",m_iArea);	
 					else
 						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+4.0f),0,1,255,0,0,255,"%d",m_iArea);
@@ -2052,7 +2052,7 @@ int CWaypoints :: getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam, fl
 		{
 			if ( pWpt->hasFlag(iFlags) )
 			{
-				if ( !CPoints::isValidArea(pWpt->getArea()) )
+				if ( !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWpt->getArea()) )
 					continue;
 
 				if ( (iFrom == -1) )
@@ -2288,7 +2288,7 @@ int CWaypoints :: nearestWaypointGoal ( int iFlags, Vector &origin, float fDist,
 		{
 			if ( (iFlags == -1) || pWpt->hasFlag(iFlags) )
 			{
-				if ( CPoints::isValidArea(pWpt->getArea()) )
+				if ( CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWpt->getArea()) )
 				{
 					if ( (distance = pWpt->distanceFrom(origin)) < fDist)
 					{
@@ -2496,7 +2496,7 @@ CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, 
 		{
 			if ( (iFlags == -1) || pWpt->hasSomeFlags(iFlags) )
 			{
-				if ( !bForceArea && !CPoints::isValidArea(pWpt->getArea()) )
+				if ( !bForceArea && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWpt->getArea()) )
 					continue;
 				else if ( bForceArea && (pWpt->getArea() != iArea) )
 					continue;
@@ -2562,7 +2562,7 @@ CWaypoint *CWaypoints :: randomWaypointGoal ( int iFlags, int iTeam, int iArea, 
 		{
 			if ( (iFlags == -1) || pWpt->hasSomeFlags(iFlags) )
 			{
-				if ( !bForceArea && !CPoints::isValidArea(pWpt->getArea()) )
+				if ( !bForceArea && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWpt->getArea()) )
 					continue;
 				else if ( bForceArea && (pWpt->getArea() != iArea) )
 					continue;

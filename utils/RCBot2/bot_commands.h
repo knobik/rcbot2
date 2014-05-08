@@ -44,6 +44,9 @@ typedef enum
 	COMMAND_REQUIRE_ACCESS // dont have access to command
 }eBotCommandResult;
 
+#define NEED_ARG(x) if ( !x || !*x ) return COMMAND_ERROR;
+
+
 #define CMD_ACCESS_NONE				0
 #define CMD_ACCESS_WAYPOINT			(1<<0)
 #define CMD_ACCESS_BOT				(1<<1)
@@ -648,6 +651,52 @@ public:
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 
+class CDebugMemoryCheckCommand : public CBotCommand
+{
+public:
+	CDebugMemoryCheckCommand ()
+	{
+		setName("memorycheck");
+		setHelp("usage \"memorycheck <classname> <offset> <type>\"");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+#define MAX_MEM_SEARCH 8192
+
+typedef union
+{
+	 struct
+	 {
+		  unsigned searched:1; // already searched
+		  unsigned found:1; // offset found
+		  unsigned unused:6;
+	 }b1;
+
+	 byte data;
+}u_MEMSEARCH;
+
+class CDebugMemoryScanCommand : public CBotCommand
+{
+public:
+	CDebugMemoryScanCommand ()
+	{
+		setName("memoryscan");
+		setHelp("usage \"memoryscan <classname> <value> <type = 'bool/int/byte/float'> [store last = 1]\"");
+		setAccessLevel(CMD_ACCESS_DEBUG);
+		memset(stored_offsets,0,sizeof(u_MEMSEARCH)*MAX_MEM_SEARCH);
+		m_size = 0;
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+private:
+
+	u_MEMSEARCH stored_offsets[MAX_MEM_SEARCH];
+	unsigned int m_size;
+};
+
 class CDebugNavCommand : public CBotCommand
 {
 public:
@@ -712,6 +761,20 @@ public:
 
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
+
+class CNoTouchCommand : public CBotCommand
+{
+public:
+	CNoTouchCommand ()
+	{
+		setName("notouch");
+		setHelp("don't set off capture points etc");
+		setAccessLevel(CMD_ACCESS_UTIL);
+	}
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 
 class CNoClipCommand : public CBotCommand
 {

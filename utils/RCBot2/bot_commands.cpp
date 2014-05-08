@@ -43,6 +43,8 @@
 #include "bot_weapons.h"
 #include "bot_menu.h"
 
+#include "bot_tf2_points.h"
+
 CBotCommandContainer *CBotGlobals :: m_pCommands = new CRCBotCommand();
 extern IVDebugOverlay *debugoverlay;
 ///////////////////////////////////////////////////
@@ -271,7 +273,12 @@ eBotCommandResult CFindClassname :: execute ( CClient *pClient, const char *pcmd
 
 		if ( pcmd && *pcmd )
 		{
-			UTIL_FindServerClassnamePrint(pcmd);
+			const char *pclass = CClassInterface::FindEntityNetClass(0,pcmd);
+
+			if ( pclass )
+				CBotGlobals::botMessage(pClient->getPlayer(),0,"%s network name = %s",pcmd,pclass);
+			else
+				CBotGlobals::botMessage(pClient->getPlayer(),0,"%s network name not found",pcmd,pclass);
 		}
 
 
@@ -625,6 +632,8 @@ CDebugCommand :: CDebugCommand()
 	add(new CFindClass());
 	add(new CFindClassname());
 	add(new CFindProp());
+	add(new CDebugMemoryScanCommand());
+	add(new CDebugMemoryCheckCommand());
 
 }
 /////////////////////
@@ -1412,6 +1421,163 @@ eBotCommandResult CWaypointLoadCommand :: execute ( CClient *pClient, const char
 	return COMMAND_ACCESSED;
 }
 
+//usage \"memorycheck <classname> <offset> <type>\"");
+eBotCommandResult CDebugMemoryCheckCommand:: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	// pcmd = classname
+	// arg1 = offset
+	// arg2 = type
+	NEED_ARG(pcmd);
+	NEED_ARG(arg1);
+	NEED_ARG(arg2);
+	// find edict
+	edict_t *pEdict = CClassInterface::FindEntityByClassnameNearest(pClient->getOrigin(),pcmd);
+	
+	if ( pEdict  == NULL )
+	{
+		CBotGlobals::botMessage(pClient->getPlayer(),0,"Edict not found");
+		return COMMAND_ERROR;
+	}
+
+	CBaseEntity *pent = pEdict->GetUnknown()->GetBaseEntity();
+
+	unsigned int offset = atoi(arg1);
+
+	if ( ( strcmp(arg2,"bool") == 0 ) || ( strcmp(arg2,"byte") == 0 ))
+	{
+		CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - Value(byte) = %d",pcmd,offset,*(byte*)(((unsigned long)pent) + offset));
+	}
+	else if ( strcmp(arg2,"int") == 0 )
+	{
+		CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - Value(int) = %d",pcmd,offset,*(int*)(((unsigned long)pent) + offset));
+
+		if ( strcmp(pcmd,"team_control_point_master") == 0 )
+		{
+			CTeamControlPointMaster *p;
+			CTeamControlPointMaster check;
+
+			unsigned int knownoffset = (unsigned int)&check.m_iCurrentRoundIndex - (unsigned int)&check;
+
+			p = (CTeamControlPointMaster*)((((unsigned long)pent) + offset) - knownoffset); //MAP_CLASS(CTeamControlPoint,(((unsigned long)pent) + offset),knownoffset);
+		}
+		else if ( strcmp(pcmd,"team_control_point") == 0 )
+		{
+			CTeamControlPoint *p;
+			CTeamControlPoint check;
+
+			unsigned int knownoffset = (unsigned int)&check.m_iIndex - (unsigned int)&check;
+
+			p = (CTeamControlPoint*)((((unsigned long)pent) + offset) - knownoffset); //MAP_CLASS(CTeamControlPoint,(((unsigned long)pent) + offset),knownoffset);
+		}
+
+	}
+	else if ( strcmp(arg2,"float") == 0 )
+		CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - Value(float) = %0.6f",pcmd,offset,*(float*)(((unsigned long)pent) + offset));
+	else if ( strcmp(arg2,"string") == 0 )
+		CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - Value(string) = %s",pcmd,offset,STRING(*(string_t*)(((unsigned long)pent) + offset)));
+	else
+		return COMMAND_ERROR;
+
+	return COMMAND_ACCESSED;
+}
+
+#define MEMSEARCH_BYTE 1
+#define MEMSEARCH_INT 2
+#define MEMSEARCH_FLOAT 3
+#define MEMSEARCH_STRING 4
+
+eBotCommandResult CDebugMemoryScanCommand:: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	//pcmd = classname
+	// arg1 = value
+	// arg2 = size in bytes
+	// arg3 = want to remember offsets or not
+
+	NEED_ARG(pcmd);
+	NEED_ARG(arg1);
+	NEED_ARG(arg2);
+
+	unsigned int m_prev_size = m_size;
+
+	if ( ( strcmp(arg2,"bool") == 0 ) || ( strcmp(arg2,"byte") == 0 ))
+		m_size = MEMSEARCH_BYTE;
+	else if ( strcmp(arg2,"int") == 0 )
+		m_size = MEMSEARCH_INT;
+	else if ( strcmp(arg2,"float") == 0 )
+		m_size = MEMSEARCH_FLOAT;
+	else if ( strcmp(arg2,"string") == 0 )
+		m_size = MEMSEARCH_STRING;
+	else 
+		m_size = 0;
+
+	if ( (m_prev_size != m_size) || ((m_size==0) || !arg3 || !*arg3) || ( atoi(arg3) == 0 ) )
+	{
+		memset(stored_offsets,0,sizeof(u_MEMSEARCH)*MAX_MEM_SEARCH);
+	}
+
+
+	// find edict
+	edict_t *pEdict = CClassInterface::FindEntityByClassnameNearest(pClient->getOrigin(),pcmd);
+
+	if ( pEdict  == NULL )
+	{
+		CBotGlobals::botMessage(pClient->getPlayer(),0,"Edict not found");
+		return COMMAND_ERROR;
+	}
+
+	// begin memory scan
+	CBaseEntity *pent = pEdict->GetUnknown()->GetBaseEntity();
+
+	byte *mempoint = (byte*)pent;
+	byte value = (byte)atoi(arg1);
+	int ivalue = (atoi(arg1));
+	float fvalue = (atof(arg1));
+
+	bool bfound;
+
+	for ( int i = 0; i < MAX_MEM_SEARCH; i ++ ) // 2KB search
+	{
+		bfound = false;
+
+		if ( m_size == MEMSEARCH_BYTE )
+			bfound = (value == *mempoint);
+		else if ( m_size == MEMSEARCH_INT )
+			bfound = (ivalue == *(int*)mempoint);
+		else if ( m_size == MEMSEARCH_FLOAT )
+			bfound = (fvalue == *(float*)mempoint);
+		else if ( m_size == MEMSEARCH_STRING )
+		{
+			bfound = ( strcmp((char*)mempoint,arg1) == 0 );
+		}
+
+		if ( bfound )
+		{
+			if ( !stored_offsets[i].b1.searched )					
+				stored_offsets[i].b1.found = 1;				
+		}
+		else if ( stored_offsets[i].b1.searched )
+			stored_offsets[i].b1.found = 0;
+
+		stored_offsets[i].b1.searched = 1;
+
+		mempoint++;
+	}
+
+	// Current valid offsets print
+	for ( int i = 0; i < MAX_MEM_SEARCH; i ++ )
+	{
+		if ( stored_offsets[i].data != 0 )
+		{
+			if ( stored_offsets[i].b1.found )
+				CBotGlobals::botMessage(pClient->getPlayer(),0,"%d",i);
+		}
+	}
+	// 
+
+	return COMMAND_ACCESSED;
+}
+
+
 eBotCommandResult CDebugGameEventCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( !pcmd || !*pcmd )
@@ -1527,23 +1693,6 @@ eBotCommandResult CGodModeUtilCommand :: execute ( CClient *pClient, const char 
 				return COMMAND_ACCESSED;
 
 			}
-			/*byte *m_takedamage = CClassInterface::getTakeDamagePointer(pEntity);
-
-			if ( m_takedamage )
-			{
-				char msg[256];
-
-				if ( *m_takedamage == DAMAGE_NO )
-					*m_takedamage = DAMAGE_YES;
-				else 
-					*m_takedamage = DAMAGE_NO;
-
-				sprintf(msg,"god mode %s",(*m_takedamage==DAMAGE_NO)?"enabled":"disabled");
-				
-				CRCBotPlugin::HudTextMessage(pEntity,msg);
-
-				return COMMAND_ACCESSED;
-			}*/
 		}
 	}
 
@@ -1575,6 +1724,39 @@ eBotCommandResult CTeleportUtilCommand :: execute ( CClient *pClient, const char
 			CBotGlobals::teleportPlayer(pClient->getPlayer(),*vTeleport);
 			CRCBotPlugin::HudTextMessage(pClient->getPlayer(),"teleported to your remembered location");
 			return COMMAND_ACCESSED;
+		}
+	}
+
+	return COMMAND_ERROR;
+}
+
+eBotCommandResult CNoTouchCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+
+	if ( pClient )
+	{
+		edict_t *pEntity = pClient->getPlayer();
+
+		if ( pEntity )
+		{
+			int *playerflags = CClassInterface::getPlayerFlagsPointer(pEntity);
+
+			if ( playerflags )
+			{
+				char msg[256];
+
+				if ( *playerflags & FL_DONTTOUCH )
+					*playerflags &= ~FL_DONTTOUCH;
+				else
+					*playerflags |= FL_DONTTOUCH;
+
+				sprintf(msg,"notouch mode %s",(*playerflags & FL_DONTTOUCH)?"enabled":"disabled");
+				
+				CRCBotPlugin::HudTextMessage(pEntity,msg);
+
+				return COMMAND_ACCESSED;
+
+			}
 		}
 	}
 
@@ -1739,6 +1921,7 @@ CUtilCommand :: CUtilCommand()
 	add(new CTeleportUtilCommand());
 	add(new CNoClipCommand());
 	add(new CGodModeUtilCommand());
+	add(new CNoTouchCommand());
 }
 
 CConfigCommand :: CConfigCommand()

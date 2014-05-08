@@ -806,30 +806,27 @@ void CBotGlobals :: botMessage ( edict_t *pEntity, int iErr, char *fmt, ... )
 	vsprintf (string, fmt, argptr); 
 	va_end (argptr); 
 
+	const char *bot_tag = BOT_TAG;
+	int len = strlen(string);
+	int taglen = strlen(BOT_TAG);
+	// add tag -- push tag into string
+	for ( int i = len + taglen; i >= taglen; i -- )
+		string[i] = string[i-taglen];
+
+	string[len+taglen+1] = 0;
+
+	for ( int i = 0; i < taglen; i ++ )
+		string[i] = bot_tag[i];
+
+	strcat(string,"\n");
+
 	if ( pEntity )
 	{
-		const char *bot_tag = BOT_TAG;
-		int len = strlen(string);
-		int taglen = strlen(BOT_TAG);
-		// add tag -- push tag into string
-		for ( int i = len + taglen; i >= taglen; i -- )
-			string[i] = string[i-taglen];
-
-		string[len+taglen+1] = 0;
-
-		for ( int i = 0; i < taglen; i ++ )
-			string[i] = bot_tag[i];
-
-		strcat(string,"\n");
-
 		engine->ClientPrintf(pEntity,string);
-
 	}
 	else
 	{
-		Msg(BOT_TAG);
 		Msg(string);
-		Msg("\n");
 	}
 }
 

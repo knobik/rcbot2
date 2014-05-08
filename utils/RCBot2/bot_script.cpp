@@ -28,6 +28,7 @@
  *    version.
  *
  */
+/*
 #include <string.h>
 
 #include "bot.h"
@@ -167,38 +168,6 @@ void CPoints :: pointBeingCaptured ( int iTeam, const char *szName, int capper )
 	if ( p )
 	{
 		p->updateCaptureTime();
-
-		if ( ((iTeam == TF2_TEAM_BLUE) && ((m_BlueAttack.size() == 0) || (m_RedDefend.size() == 0))) ||
-			 ((iTeam == TF2_TEAM_RED) && ((m_RedAttack.size() == 0) || (m_BlueDefend.size() == 0))) )
-		{
-			if ( capper > 0 )
-			{
-				edict_t *pCapper = INDEXENT(capper);
-				
-				int iWpt = CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(pCapper),
-					400.0f,-1,false,false,false,NULL,false,0,false,false,Vector(0,0,0),CWaypointTypes::W_FL_CAPPOINT);
-
-				CWaypoint *pWaypoint = CWaypoints::getWaypoint(iWpt);
-
-				if ( pWaypoint != NULL )
-				{
-					if ( iTeam == TF2_TEAM_BLUE )
-					{
-						m_BlueAttack.clear();
-						m_RedDefend.clear();
-						m_BlueAttack.push_back(pWaypoint->getArea());
-						m_RedDefend.push_back(pWaypoint->getArea());
-					}
-					else
-					{
-						m_RedAttack.clear();
-						m_BlueDefend.clear();
-						m_RedAttack.push_back(pWaypoint->getArea());
-						m_BlueDefend.push_back(pWaypoint->getArea());
-					}
-				}
-			}
-		}
 	}
 }
 
@@ -600,3 +569,4 @@ void CPoints :: loadMapScript ( )
 	else
 		return;
 }
+*/
