@@ -459,6 +459,8 @@ public:
 	}
 private:
 	MyEHandle m_pHeal;
+	Vector m_vJump;
+	bool m_bHealerJumped;
 
 };
 

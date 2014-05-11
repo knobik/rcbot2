@@ -157,7 +157,7 @@ public:
 	static const int W_FL_DEFEND = 262144;
 	static const int W_FL_AREAONLY = 524288;
 	static const int W_FL_ROUTE = 1048576;
-	static const int W_FL_WAIT_OPEN = 2097152;
+	static const int W_FL_WAIT_GROUND = 2097152;
 	static const int W_FL_NO_FLAG = 4194304;
 	static const int W_FL_COVER_RELOAD = 4194304; // DOD:S only
 	static const int W_FL_LIFT = 8388608;
@@ -227,9 +227,13 @@ public:
 		m_vOrigin = vOrigin;		
 		m_bUsed = true;
 		setAim(iYaw);
+		m_fNextCheckGroundTime = 0;
+		m_bHasGround = false;
 		m_fRadius = 0;
 //		m_iId = iId;
 	}
+
+	bool checkGround ();
 
 	inline void setAim ( int iYaw )
 	{
@@ -354,6 +358,9 @@ private:
 	bool m_bUsed;
 	// paths to other waypoints
 	dataUnconstArray<int> m_thePaths;
+	// for W_FL_WAIT_GROUND waypoints
+	float m_fNextCheckGroundTime;
+	bool m_bHasGround;
 };
 
 class CWaypoints

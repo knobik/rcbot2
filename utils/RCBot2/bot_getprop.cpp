@@ -22,6 +22,7 @@
 #include "bot.h"
 #include "bot_getprop.h"
 #include "bot_globals.h"
+#include "bot_tf2_points.h"
 
 #include "vstdlib/random.h" // for random  seed 
 
@@ -510,12 +511,27 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bCPCapRateScalesWithPlayers,"CTFObjectiveResource","m_bCPCapRateScalesWithPlayers",0);
 		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_iNumControlPoints,"CTFObjectiveResource","m_iNumControlPoints",0);
 		DEFINE_GETPROP(GETPROP_TF2_OBJTR_m_bPlayingMiniRounds,"CTFObjectiveResource","m_bPlayingMiniRounds",0);
+		DEFINE_GETPROP(GETPROP_TF2_RNDTM_m_flTimerEndTime,"CTeamRoundTimer","m_flTimerEndTime",0);
+		DEFINE_GETPROP(GETPROP_TF2_RNDTM_m_nSetupTimeLength,"CTeamRoundTimer","m_nSetupTimeLength",0);
+		DEFINE_GETPROP(GETPROP_TF2_RNDTM_m_bInSetup,"CTeamRoundTimer","m_bInSetup",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
 			//if ( g_GetProps[i]
 			g_GetProps[i].findOffset();
 		}
+}
+
+void CClassInterface :: setupCTeamRoundTimer ( CTeamRoundTimer *pTimer )
+{
+	/*
+		GETPROP_TF2_RNDTM_m_flTimerEndTime,
+	GETPROP_TF2_RNDTM_m_nSetupTimeLength,
+	GETPROP_TF2_RNDTM_m_bInSetup,
+	*/
+	pTimer->m_flTimerEndTime = g_GetProps[GETPROP_TF2_RNDTM_m_flTimerEndTime].getFloatPointer(pTimer->m_Resource);
+	pTimer->m_nSetupTimeLength = g_GetProps[GETPROP_TF2_RNDTM_m_nSetupTimeLength].getIntPointer(pTimer->m_Resource);
+	pTimer->m_bInSetup = g_GetProps[GETPROP_TF2_RNDTM_m_bInSetup].getBoolPointer(pTimer->m_Resource);
 }
 
 //#define GETTF2OBJ_INT(x) pResource->x = g_GetProps[GETPROP_TF2_OBJTR_#x].getIntPointer(edict);

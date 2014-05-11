@@ -283,6 +283,10 @@ bool CWaypointNavigator :: randomDangerPath (Vector *vec)
 	}
 
 	pWpt = CWaypoints::getWaypoint(m_iCurrentWaypoint);
+
+	if ( pWpt == NULL )
+		return false;
+
 	fTotal = 0;
 
 	for ( i = 0; i < pWpt->numPaths(); i ++ )
@@ -1901,6 +1905,18 @@ void CWaypoint :: load ( FILE *bfp, int iVersion )
 		fread(&m_fRadius,sizeof(float),1,bfp);
 	}
 }
+
+bool CWaypoint :: checkGround ()
+{
+	if ( m_fNextCheckGroundTime < engine->Time() )
+	{
+		CBotGlobals::quickTraceline(NULL,m_vOrigin,m_vOrigin-Vector(0,0,80.0f));
+		m_bHasGround = ( CBotGlobals::getTraceResult()->fraction < 1.0f );
+		m_fNextCheckGroundTime = engine->Time() + 1.0f;
+	}
+
+	return m_bHasGround;
+}
 // draw waypoints to this client pClient
 void CWaypoints :: drawWaypoints( CClient *pClient )
 {
@@ -2777,7 +2793,7 @@ void CWaypointTypes :: setup ()
 	addType(new CWaypointType(W_FL_BOMB_TO_OPEN,"bombtoopen","DOD:S bot needs to blow up this point to move on",WptColor(50,200,30),(1<<MOD_DOD)));
 	addType(new CWaypointType(W_FL_BREAKABLE,"breakable","Bots need to break something with a rocket to get through here",WptColor(100,255,50),(1<<MOD_DOD)));
 	addType(new CWaypointType(W_FL_OPENS_LATER,"openslater","this waypoint is available when a door is open only",WptColor(100,100,200)));
-	addType(new CWaypointType(W_FL_WAIT_OPEN,"waitopen","bot will wait until arena point is open to use this waypoint",WptColor(150,150,100)));
+	addType(new CWaypointType(W_FL_WAIT_GROUND,"waitground","bot will wait until there is ground below",WptColor(150,150,100)));
 	addType(new CWaypointType(W_FL_LIFT,"lift","bot needs to wait on a lift here",WptColor(50,80,180)));
 
 	addType(new CWaypointType(W_FL_SPRINT,"sprint","bots will sprint here",WptColor(255,255,190),((1<<MOD_DOD)|(1<<MOD_HLDM2))));

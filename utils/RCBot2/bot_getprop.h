@@ -126,6 +126,9 @@ typedef enum
 	GETPROP_TF2_OBJTR_m_bCPCapRateScalesWithPlayers,
 	GETPROP_TF2_OBJTR_m_iNumControlPoints,
 	GETPROP_TF2_OBJTR_m_bPlayingMiniRounds,
+	GETPROP_TF2_RNDTM_m_flTimerEndTime,
+	GETPROP_TF2_RNDTM_m_nSetupTimeLength,
+	GETPROP_TF2_RNDTM_m_bInSetup,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -295,6 +298,7 @@ private:
 
 extern CClassInterfaceValue g_GetProps[GET_PROPDATA_MAX];
 class CTFObjectiveResource;
+class CTeamRoundTimer;
 #define DEFINE_GETPROP(id,classname,value,preoffs)\
  g_GetProps[id] = CClassInterfaceValue( CClassInterfaceValue ( classname, value, preoffs ) );
 
@@ -310,6 +314,7 @@ public:
 
 	// TF2
 	static int getTF2Score ( edict_t *edict );
+	static void setupCTeamRoundTimer ( CTeamRoundTimer *pTimer );
 	inline static int getFlags ( edict_t *edict ) { return g_GetProps[GETPROP_ENTITY_FLAGS].getInt(edict,0); }
 	inline static int getTeam ( edict_t *edict ) { return g_GetProps[GETPROP_TEAM].getInt(edict,0); }
 	inline static float getPlayerHealth ( edict_t *edict ) { return g_GetProps[GETPROP_PLAYERHEALTH].getFloatFromInt(edict,0); }

@@ -1450,7 +1450,7 @@ eBotCommandResult CDebugMemoryCheckCommand:: execute ( CClient *pClient, const c
 	else if ( strcmp(arg2,"int") == 0 )
 	{
 		CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - Value(int) = %d",pcmd,offset,*(int*)(((unsigned long)pent) + offset));
-
+		/*
 		if ( strcmp(pcmd,"team_control_point_master") == 0 )
 		{
 			CTeamControlPointMaster *p;
@@ -1462,19 +1462,26 @@ eBotCommandResult CDebugMemoryCheckCommand:: execute ( CClient *pClient, const c
 		}
 		else if ( strcmp(pcmd,"team_control_point") == 0 )
 		{
-			CTeamControlPoint *p;
-			CTeamControlPoint check;
+			extern ConVar rcbot_const_point_offset;
+			extern ConVar rcbot_const_point_data_offset;
 
-			unsigned int knownoffset = (unsigned int)&check.m_iIndex - (unsigned int)&check;
+			CTeamControlPoint *p = (CTeamControlPoint*)((((unsigned long)pent) + rcbot_const_point_offset.GetInt())); //MAP_CLASS(CTeamControlPoint,(((unsigned long)pent) + offset),knownoffset);
+//			CTeamControlPointData *d = (CTeamControlPointData*)((((unsigned long)pent) + rcbot_const_point_data_offset.GetInt()));
 
-			p = (CTeamControlPoint*)((((unsigned long)pent) + offset) - knownoffset); //MAP_CLASS(CTeamControlPoint,(((unsigned long)pent) + offset),knownoffset);
-		}
+			CBotGlobals::botMessage(NULL,0,"NULL MSG");
+		}*/
 
 	}
 	else if ( strcmp(arg2,"float") == 0 )
 		CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - Value(float) = %0.6f",pcmd,offset,*(float*)(((unsigned long)pent) + offset));
 	else if ( strcmp(arg2,"string") == 0 )
-		CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - Value(string) = %s",pcmd,offset,STRING(*(string_t*)(((unsigned long)pent) + offset)));
+	{
+		string_t *str = (string_t*)(((unsigned long)pent) + offset);
+		if ( str )
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - Value(string) = %s",pcmd,offset,STRING(*str));
+		else
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - INVALID string",pcmd,offset,STRING(*str));
+	}
 	else
 		return COMMAND_ERROR;
 
@@ -1547,7 +1554,22 @@ eBotCommandResult CDebugMemoryScanCommand:: execute ( CClient *pClient, const ch
 			bfound = (fvalue == *(float*)mempoint);
 		else if ( m_size == MEMSEARCH_STRING )
 		{
-			bfound = ( strcmp((char*)mempoint,arg1) == 0 );
+			try
+			{
+				string_t *str = (string_t*) mempoint;
+
+				if ( str != NULL )
+				{			
+					const char *pszstr = STRING(*str);
+
+					if ( pszstr )
+						bfound = ( strcmp(pszstr,arg1) == 0 );
+				}
+			}
+			catch(...)
+			{
+				CBotGlobals::botMessage(pClient->getPlayer(),0,"Invalid string");
+			}
 		}
 
 		if ( bfound )

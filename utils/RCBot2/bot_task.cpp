@@ -113,6 +113,7 @@ float getGrenadeZ ( edict_t *pShooter, edict_t *pTarget, Vector vOrigin, Vector 
 CBotTF2MedicHeal :: CBotTF2MedicHeal ()
 {
 	m_pHeal = NULL;
+	m_bHealerJumped = false;
 }
 
 void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
@@ -132,6 +133,25 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	pBotTF2 = (CBotTF2*)pBot;
 
 	pHeal = pBotTF2->getHealingEntity();
+
+	if ( pHeal && !m_bHealerJumped )
+	{
+		Vector vVelocity;
+
+		if ( !CClassInterface::getVelocity(pHeal,&vVelocity) || (vVelocity.Length2D() > 1.0f) )
+		{
+			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pHeal);
+		
+			if ( p )
+			{
+				if ( p->GetLastUserCommand().buttons & IN_JUMP )
+				{
+					m_bHealerJumped = true;
+					m_vJump = CBotGlobals::entityOrigin(pHeal);
+				}
+			}
+		}
+	}
 
 	if ( !pHeal )
 	{
@@ -169,7 +189,17 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 	}
 	else 
 	{
+		Vector vVelocity;
+
+		CClassInterface::getVelocity(pBot->getEdict(),&vVelocity);
+
 		pBot->clearFailedWeaponSelect();
+
+		if ( m_bHealerJumped && (pBot->distanceFrom(m_vJump) < 64.0f) && (vVelocity.Length()>1.0f) )
+		{
+			pBot->jump();
+			m_bHealerJumped = false;
+		}
 
 		if ( !pBotTF2->healPlayer(pHeal,m_pHeal) )
 		{

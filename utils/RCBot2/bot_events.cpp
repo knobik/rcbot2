@@ -647,6 +647,9 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	  // MUST BE AFTER RESETPOINTS
 	  CTeamFortress2Mod::roundReset();
 	  CBots::botFunction(&roundstart);
+	  // MUST BE BEFORE RESET SETUP TIME
+	  CTeamFortress2Mod::setPointOpenTime(30.0f);
+
 	  CTeamFortress2Mod::resetSetupTime();
 	  CTeamFortress2Mod::m_ObjectiveResource.setup();
 	  
@@ -661,11 +664,14 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	  CTeamFortress2Mod::updatePointMaster();
 	  // if all points are owned by RED at start up then its an attack defend map
 	  CTeamFortress2Mod::setAttackDefendMap(i==numpoints);
-		CTeamFortress2Mod::m_ObjectiveResource.resetValidPoints();
-		CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(2,true);
-		CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(3,true);
-		CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(2,true);
-		CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(3,true);
+
+	CTeamFortress2Mod::m_ObjectiveResource.resetValidWaypointAreas();
+	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_BLUE);
+	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_RED);
+	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_BLUE);
+	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_RED);
+	CTeamFortress2Mod::m_ObjectiveResource.updateValidWaypointAreas();
+
 }
 /*
 teamplay_capture_broken
@@ -700,6 +706,7 @@ void CTF2PointBlockedCapture :: execute ( IBotEventInterface *pEvent )
 }
 void CTF2PointUnlocked :: execute ( IBotEventInterface *pEvent )
 {
+	CTeamFortress2Mod::setPointOpenTime(0);
 	//
 }
 
@@ -722,7 +729,7 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 	int capteam = pEvent->getInt("capteam",0);
 	int capindex = pEvent->getInt("cp",0);
 	const char *cappers = pEvent->getString("cappers",NULL);
-	const char *cpname = pEvent->getString("cpname");
+//	const char *cpname = pEvent->getString("cpname");
 
 	if ( cappers )
 	{
@@ -738,7 +745,7 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 	CTeamFortress2Mod::m_ObjectiveResource.updateCaptureTime(capindex);
 	//CPoints::pointBeingCaptured(capteam,cpname,cappers[0]);
 
-	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(capteam,Vector(0,0,0),EVENT_CAPPOINT);
+	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(capteam,CTeamFortress2Mod::m_ObjectiveResource.GetCPPosition(capindex),EVENT_CAPPOINT);
 
 	CBots::botFunction(function);
 
@@ -750,17 +757,19 @@ void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
 {
 	CBroadcastCapturedPoint cap = CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"),pEvent->getString("cpname"));
 	
-	//CPoints::pointCaptured(pEvent->getInt("team"),pEvent->getString("cpname"));
-    // MUST BE AFTER POINTCAPTURED
-    CBots::botFunction(&cap);
-
 	//CTeamFortress2Mod::m_Resource.debugprint();
 	CTeamFortress2Mod::updatePointMaster();
-	CTeamFortress2Mod::m_ObjectiveResource.resetValidPoints();
-	CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(2,true);
-	CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(3,true);
-	CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(2,true);
-	CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(3,true);
+
+	CTeamFortress2Mod::m_ObjectiveResource.resetValidWaypointAreas();
+	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_BLUE);
+	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_RED);
+	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_BLUE);
+	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_RED);
+	CTeamFortress2Mod::m_ObjectiveResource.updateValidWaypointAreas();
+
+    // MUST BE AFTER POINTS HAVE BEEN UPDATED!
+    CBots::botFunction(&cap);
+
 }
 
 /* Flag has been picked up or dropped */

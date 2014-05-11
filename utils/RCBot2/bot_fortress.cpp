@@ -1471,8 +1471,8 @@ void CBotTF2 :: spawnInit()
 	 
 	m_iTeam = getTeam();
 	// update current areas
-	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(m_iTeam);
-	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(m_iTeam);
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
 
 	//CPoints::getAreas(m_iTeam,&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
@@ -2159,9 +2159,9 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 			return ( getClass() == TF_CLASS_SCOUT);
 		}
 
-		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_WAIT_OPEN) )
+		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_WAIT_GROUND) )
 		{
-			return ( CTeamFortress2Mod::isArenaPointOpen() );
+			return pWaypoint->checkGround();
 		}
 
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_NO_FLAG) )
@@ -2248,7 +2248,7 @@ bool CBotFortress:: wantToUnCloak ()
 
 void CBotTF2 :: spyUnCloak ()
 {
-	if ( m_fSpyCloakTime < engine->Time() )
+	if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && (m_fSpyCloakTime < engine->Time()) )
 	{
 		secondaryAttack();
 
@@ -2259,7 +2259,7 @@ void CBotTF2 :: spyUnCloak ()
 
 void CBotTF2 ::spyCloak()
 {
-	if ( m_fSpyCloakTime < engine->Time() )
+	if ( !CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict) && (m_fSpyCloakTime < engine->Time()) )
 	{
 		m_fSpyCloakTime = engine->Time() + randomFloat(2.0f,4.0f);
 		//m_fSpyUncloakTime = m_fSpyCloakTime;
@@ -2346,6 +2346,9 @@ void CBotFortress::chooseClass()
 void CBotFortress::updateConditions()
 {
 	CBot::updateConditions();
+
+	if ( CTeamFortress2Mod::withinEndOfRound(10.0f) )
+		updateCondition(CONDITION_PUSH);
 
 	if ( m_iClass == TF_CLASS_ENGINEER )
 	{
@@ -4876,32 +4879,59 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				return true;
 			}
 		case BOT_UTIL_MEDIC_HEAL:			
-			m_pSchedules->add(new CBotTF2HealSched(m_pHeal));
-			return true;
+			if ( m_pHeal )
+			{
+				m_pSchedules->add(new CBotTF2HealSched(m_pHeal));
+				return true;
+			}
 		case BOT_UTIL_MEDIC_HEAL_LAST:
-			m_pSchedules->add(new CBotTF2HealSched(m_pLastHeal));
-			return true;
+			if ( m_pLastHeal )
+			{
+				m_pSchedules->add(new CBotTF2HealSched(m_pLastHeal));
+				return true;
+			}
 		case BOT_UTIL_UPGTMSENTRY:
-			m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pNearestAllySentry));
-			return true;
+			if ( m_pNearestAllySentry )
+			{
+				m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pNearestAllySentry));
+				return true;
+			}
 		case BOT_UTIL_UPGTMDISP:
-			m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pNearestDisp));
-			return true;
+			if ( m_pNearestDisp )
+			{
+				m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pNearestDisp));
+				return true;
+			}
 		case BOT_UTIL_UPGSENTRY:
-			m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pSentryGun));
-			return true;
+			if ( m_pSentryGun )
+			{
+				m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pSentryGun));
+				return true;
+			}
 		case BOT_UTIL_UPGTELENT:
-			m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pTeleEntrance));
-			return true;
+			if ( m_pTeleEntrance )
+			{
+				m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pTeleEntrance));
+				return true;
+			}
 		case BOT_UTIL_UPGTELEXT:
-			m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pTeleExit));
-			return true;
+			if ( m_pTeleExit )
+			{
+				m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pTeleExit));
+				return true;
+			}
 		case BOT_UTIL_UPGDISP:
-			m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pDispenser));
-			return true;
+			if ( m_pDispenser )
+			{
+				m_pSchedules->add(new CBotTFEngiUpgrade(this,m_pDispenser));
+				return true;
+			}
 		case BOT_UTIL_GETAMMODISP:
-			m_pSchedules->add(new CBotGetMetalSched(CBotGlobals::entityOrigin(m_pDispenser)));
-			return true;
+			if ( m_pDispenser )
+			{
+				m_pSchedules->add(new CBotGetMetalSched(CBotGlobals::entityOrigin(m_pDispenser)));
+				return true;
+			}
 		case BOT_UTIL_GOTORESUPPLY_FOR_HEALTH:
 			{
 				CWaypoint *pWaypointResupply = CWaypoints::getWaypoint(util->getIntData());
@@ -6047,8 +6077,8 @@ void CBotTF2::roundReset(bool bFullReset)
 
 	m_iTeam = getTeam();
 	// fix : reset current areas
-	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(m_iTeam);
-	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(m_iTeam);
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
 
 	//CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
@@ -6058,12 +6088,12 @@ void CBotTF2::roundReset(bool bFullReset)
 /// TO DO : list of areas
 void CBotTF2::getDefendArea ( vector<int> *m_iAreas )
 {
-	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(getTeam());
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
 }
 
 void CBotTF2::getAttackArea ( vector <int> *m_iAreas )
 {
-	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(getTeam());
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
 }
 
 void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
@@ -6098,8 +6128,8 @@ void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 	}
 	m_pNavigator->clear();
 
-	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentDefendPoint(getTeam());
-	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.GetCurrentAttackPoint(getTeam());
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
 }
 
 // Is Enemy Function
@@ -6352,7 +6382,7 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 			return;
 	}
 
-	if ( type == EVENT_CAPPOINT )
+	if ( (vPos == Vector(0,0,0)) && (type == EVENT_CAPPOINT) )
 	{
 		if ( !m_iCurrentDefendArea )
 			return;
@@ -6372,7 +6402,7 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 	{
 		dataUnconstArray<int> *failed;
 		m_pNavigator->getFailedGoals(&failed);
-		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPos,400,-1,true,false,true,failed,false,getTeam(),true));
+		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPos,400,-1,false,false,true,failed,false,getTeam(),true));
 
 		if ( pWpt )
 		{
