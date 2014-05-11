@@ -1091,6 +1091,7 @@ public:
 
 	static CTeamControlPointRound *getCurrentRound() { return m_pCurrentRound; }
 
+	static CTeamControlPointMaster *getPointMaster () { return m_PointMaster;}
 private:
 
 

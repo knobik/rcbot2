@@ -785,7 +785,7 @@ public:
 
 	inline CBotProfile *getProfile () { return m_pProfile; }
 
-	virtual bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint );
+	virtual bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev = NULL );
 
 	void tapButton ( int iButton );
 

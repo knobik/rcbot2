@@ -40,6 +40,9 @@ typedef struct
 {
 	float fProb;
 	bool bValid;
+	bool bNextPoint;
+	bool bPrev;
+	int iPrev[MAX_PREVIOUS_POINTS];
 }TF2PointProb_t;
 
 class CTFObjectiveResource
@@ -340,6 +343,8 @@ public:
 class CTeamControlPoint
 {
 public:
+	static CTeamControlPoint *getPoint ( edict_t *pent );
+
 	int			m_iTeam;			
 	int			m_iDefaultOwner;			// Team that initially owns the cap point
 	int			m_iIndex;					// The index of this point in the controlpointArray

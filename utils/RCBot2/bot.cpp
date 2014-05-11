@@ -1241,7 +1241,7 @@ void CBot :: updateConditions ()
 }
 
 // Called when working out route
-bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint )
+bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev )
 {
 	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_UNREACHABLE) ) 
 		return false;
@@ -1251,7 +1251,11 @@ bool CBot :: canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint )
 
 	if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_OPENS_LATER) )
 	{
-		if ( (vPrevWaypoint != pWaypoint->getOrigin()) && !CBotGlobals::checkOpensLater(vPrevWaypoint,pWaypoint->getOrigin()) )
+		if ( pPrev != NULL )
+		{
+			return pPrev->isPathOpened(pWaypoint->getOrigin());
+		}
+		else if ( (vPrevWaypoint != pWaypoint->getOrigin()) && !CBotGlobals::checkOpensLater(vPrevWaypoint,pWaypoint->getOrigin()) )
 			return false;
 	}
 

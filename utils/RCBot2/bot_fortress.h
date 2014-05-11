@@ -399,7 +399,7 @@ public:
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
 	inline void teamFlagReset () { m_fLastKnownTeamFlagTime = 0.0f; }
 
-	bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint );
+	bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev = NULL );
 
 	virtual void setup ();
 

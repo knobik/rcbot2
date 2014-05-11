@@ -720,6 +720,11 @@ class dataUnconstArray
 			return array[iIndex];
 		}
 
+		T *ReturnPointerFromIndex ( int iIndex )
+		{
+			return &(array[iIndex]);
+		}
+
 		bool IsMember ( T Obj )
 		{
 			for ( unsigned int i = 0; i < array.size(); i ++ )

@@ -2115,11 +2115,11 @@ void CBotFortress :: callMedic ()
 	helpers->ClientCommand (m_pEdict,"saveme");
 }
 
-bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint)
+bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev)
 {
 	static edict_t *pSentry;
 
-	if ( CBot::canGotoWaypoint(vPrevWaypoint,pWaypoint) )
+	if ( CBot::canGotoWaypoint(vPrevWaypoint,pWaypoint,pPrev) )
 	{
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_AREAONLY) )
 		{

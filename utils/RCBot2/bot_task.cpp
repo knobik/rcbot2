@@ -2685,7 +2685,7 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	// Sniper should move if the point has changed, so he's not wasting time
 	if ( !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iArea) )
 		fail(); // move up
-	else if ( CTeamFortress2Mod::isAttackDefendMap() )
+	else if ( (m_iArea > 0) && CTeamFortress2Mod::isAttackDefendMap() )
 	{
 		CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
 

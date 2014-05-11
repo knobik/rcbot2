@@ -182,7 +182,7 @@ public:
 
 	bool selectBotWeapon ( CBotWeapon *pBotWeapon );
 
-	bool canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint);
+	bool canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev = NULL);
 
 	void defending ();
 

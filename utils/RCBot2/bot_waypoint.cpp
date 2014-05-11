@@ -947,7 +947,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 				}
 			}
 
-			if ( (iSucc != m_iGoalWaypoint) && !m_pBot->canGotoWaypoint(vOrigin,succWpt) )
+			if ( (iSucc != m_iGoalWaypoint) && !m_pBot->canGotoWaypoint(vOrigin,succWpt,currWpt) )
 				continue;
 
 			if ( currWpt->hasFlag(CWaypointTypes::W_FL_TELEPORT_CHEAT) )
@@ -2413,7 +2413,7 @@ CWaypoint *CWaypoints::getNextCoverPoint ( CBot *pBot, CWaypoint *pCurrent, CWay
 		if ( pNext == pBlocking )
 			continue;
 
-		if ( !pBot->canGotoWaypoint(pCurrent->getOrigin(),pNext) )
+		if ( !pBot->canGotoWaypoint(pCurrent->getOrigin(),pNext,pCurrent) )
 			continue;
 
 		if ( (iMaxDist == -1) || ((fDist=pNext->distanceFrom(pBlocking->getOrigin())) > fMaxDist) )
@@ -2638,6 +2638,39 @@ int CWaypoint :: numPaths ()
 int CWaypoint :: getPath ( int i )
 {
 	return m_thePaths.ReturnValueFromIndex(i);
+}
+
+bool CWaypoint :: isPathOpened ( Vector vPath )
+{
+	wpt_opens_later_t *info;
+
+	for ( int i = 0; i < m_OpensLaterInfo.Size(); i ++ )
+	{
+		info = m_OpensLaterInfo.ReturnPointerFromIndex(i);
+
+		if ( info->vOrigin == vPath )
+		{
+			if ( info->fNextCheck < engine->Time() )
+			{
+				info->bVisibleLastCheck = CBotGlobals::checkOpensLater(m_vOrigin,vPath);
+
+				info->fNextCheck = engine->Time() + 2.0f;
+			}
+
+			return info->bVisibleLastCheck;
+		}
+	}
+
+	// not found -- add now
+	wpt_opens_later_t newinfo;
+
+	newinfo.fNextCheck = engine->Time() + 2.0f;
+	newinfo.vOrigin = vPath;
+	newinfo.bVisibleLastCheck = CBotGlobals::checkOpensLater(m_vOrigin,vPath);
+
+	m_OpensLaterInfo.Add(newinfo);
+
+	return newinfo.bVisibleLastCheck;
 }
 
 bool CWaypoint :: addPathTo ( int iWaypointIndex )

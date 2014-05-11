@@ -141,9 +141,9 @@ void CDODBot :: freeMapMemory ()
 	CBot::freeMapMemory();
 }
 
-bool CDODBot::canGotoWaypoint(Vector vPrevWaypoint, CWaypoint *pWaypoint)
+bool CDODBot::canGotoWaypoint(Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev )
 {
-	if ( CBot::canGotoWaypoint(vPrevWaypoint,pWaypoint) )
+	if ( CBot::canGotoWaypoint(vPrevWaypoint,pWaypoint,pPrev) )
 	{
 		if ( (m_iTeam == TEAM_ALLIES) && pWaypoint->hasFlag(CWaypointTypes::W_FL_NOALLIES) )
 		{

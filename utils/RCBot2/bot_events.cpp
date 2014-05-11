@@ -644,11 +644,11 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 		//CPoints::resetPoints();
 	  }
 
-	  // MUST BE AFTER RESETPOINTS
-	  CTeamFortress2Mod::roundReset();
-	  CBots::botFunction(&roundstart);
 	  // MUST BE BEFORE RESET SETUP TIME
 	  CTeamFortress2Mod::setPointOpenTime(30.0f);
+	  
+	  // MUST BE AFTER RESETPOINTS
+	  CTeamFortress2Mod::roundReset();
 
 	  CTeamFortress2Mod::resetSetupTime();
 	  CTeamFortress2Mod::m_ObjectiveResource.setup();
@@ -671,6 +671,8 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_BLUE);
 	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_RED);
 	CTeamFortress2Mod::m_ObjectiveResource.updateValidWaypointAreas();
+
+	  CBots::botFunction(&roundstart);
 
 }
 /*

@@ -264,6 +264,13 @@ int CTFObjectiveResource::NearestArea ( Vector vOrigin )
 	return iNearest+1;
 }
 
+CTeamControlPoint *getPoint ( edict_t *pent )
+{
+	extern ConVar rcbot_const_point_offset;
+	return (CTeamControlPoint*)((((unsigned long)pent) + rcbot_const_point_offset.GetInt())); //MAP_CLASS(CTeamControlPoint,(((unsigned long)pent) + offset),knownoffset);
+}
+
+
 void CTFObjectiveResource :: updateDefendPoints ( int team )
 {
 	/*int other = (team==2)?3:2;
@@ -275,8 +282,10 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 	int prev;
 	TF2PointProb_t *arr;
 
+	//CTeamControlPoint *pPoint;
+	//CTeamControlPointMaster *pMaster = CTeamFortress2Mod::getPointMaster();
 	CTeamControlPointRound *pRound = CTeamFortress2Mod::getCurrentRound();
-
+	
 	if ( m_ObjectiveResource.get() == NULL ) // not set up yet
 		return;
 	if ( team == 0 ) // invalid team
@@ -285,11 +294,13 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 	arr = m_ValidPoints[team-2][TF2_POINT_DEFEND];
 
 	// reset array
-	memset(arr,0,sizeof(bool)*MAX_CONTROL_POINTS);
+	memset(arr,0,sizeof(TF2PointProb_t)*MAX_CONTROL_POINTS);
 
 	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
 	{
 		arr[i].fProb = 1.0f;
+		memset(arr[i].iPrev,0xFF,sizeof(int)*MAX_PREVIOUS_POINTS);
+
 		// not visible
 		if ( m_bCPIsVisible[i] == 0 )
 			continue;
@@ -299,7 +310,11 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 		// not in round
 		if ( m_pControlPoints[i] && pRound && !pRound->isPointInRound(i) )
 			continue;
+		//int reqcappers = GetRequiredCappers(i,team);
 
+		//if ( m_pControlPoints[i] )
+		//	pPoint = CTeamControlPoint::getPoint(m_pControlPoints[i]);
+		
 		// We own this point
 		if ( GetOwningTeam(i) == team )
 		{
@@ -321,9 +336,10 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 						// This point needs previous points to be captured first
 						int j;
 
-						for ( j = 0; j < 3; j ++ )
+						for ( j = 0; j < MAX_PREVIOUS_POINTS; j ++ )
 						{
 							prev = GetPreviousPointForPoint(i,other,j);
+							arr[i].iPrev[j] = prev;
 
 							if ( prev == -1 )
 								continue;
@@ -331,10 +347,14 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 								break;
 						}
 
-						arr[i].bValid = true;
-
-						if ( j != 3 )
-							arr[i].fProb = 0.1f;
+						if ( j != MAX_PREVIOUS_POINTS )
+						{
+							arr[i].bPrev = true;	
+							arr[i].bValid = false;
+							// Check later by checking prev points
+						}
+						else
+							arr[i].bValid = true;
 						/*
 						// other team has captured previous points
 						if ( j == 3 )
@@ -367,15 +387,74 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 			}
 		}
 	}
-}
-void CTFObjectiveResource :: updateCaptureTime(int index)
-{
-	m_fLastCaptureTime[index] = engine->Time();
-}
 
-float CTFObjectiveResource :: getLastCaptureTime(int index)
-{
-	return m_fLastCaptureTime[index];
+	// do another search through the previous points
+	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+	{
+		if ( arr[i].bPrev )
+		{
+			int j;
+
+			for ( j = 0; j < MAX_PREVIOUS_POINTS; j ++ )
+			{
+				if ( arr[i].iPrev[j] != -1 )
+				{
+					if ( !arr[arr[i].iPrev[j]].bValid )
+						break;
+				}
+			}
+
+			if ( j == MAX_PREVIOUS_POINTS )
+			{
+				// this point is next because the current valid points are required
+				arr[i].bNextPoint = true;
+				arr[i].fProb = 0.2f;
+			}
+		}
+	}
+
+	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+	{
+		if ( arr[i].bNextPoint )
+			arr[i].bValid = true;
+		else if ( arr[i].bValid )
+		{
+			bool bfound = false;
+
+			// find this point in one of the previous points
+			for ( int j = 0; j < *m_iNumControlPoints; j ++ )
+			{
+				if ( i == j )
+					continue;
+
+				if ( arr[j].bPrev )
+				{
+					for ( int k = 0; k < MAX_PREVIOUS_POINTS; k ++ )
+					{
+						if ( arr[j].iPrev[k] == i )
+						{
+							bfound = true;
+							break;
+						}
+					}	
+				}
+
+				if ( bfound )
+					break;
+
+			}
+
+			if ( bfound )
+			{
+				arr[i].fProb = 1.0f;
+			}
+			else
+			{
+				arr[i].fProb = 0.1f;
+			}
+		}		
+	}
+
 }
 
 void CTFObjectiveResource :: updateAttackPoints ( int team )
@@ -390,7 +469,8 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 	arr = m_ValidPoints[team-2][TF2_POINT_ATTACK];
 
 	// reset array
-	memset(arr,0,sizeof(bool)*MAX_CONTROL_POINTS);
+	memset(arr,0,sizeof(TF2PointProb_t)*MAX_CONTROL_POINTS);
+	memset(arr->iPrev,0xFF,sizeof(int)*MAX_PREVIOUS_POINTS);
 
 	if ( (team == TF2_TEAM_RED) && (CTeamFortress2Mod::isAttackDefendMap()) )
 	{
@@ -401,6 +481,8 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
 	{
 		arr[i].fProb = 1.0f;
+		memset(arr[i].iPrev,0xFF,sizeof(int)*MAX_PREVIOUS_POINTS);
+
 		// not visible
 		if ( m_bCPIsVisible[i] == 0 )
 			continue;
@@ -438,20 +520,25 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 					{
 						int j;
 
-						for ( j = 0; j < 3; j ++ )
+						for ( j = 0; j < MAX_PREVIOUS_POINTS; j ++ )
 						{
 							prev = GetPreviousPointForPoint(i,team,j);
+							arr[i].iPrev[j] = prev;
 
 							if ( prev == -1 )
 								continue;
-							else if ( GetOwningTeam(GetPreviousPointForPoint(i,team,j)) != team )
+							else if ( GetOwningTeam(prev) != team )
 								break;
 						}
 
-						if ( j == 3 )
-							arr[i].bValid = true;
+						if ( j != MAX_PREVIOUS_POINTS )
+						{
+							arr[i].bPrev = true;	
+							arr[i].bValid = false;
+							// Check later by checking prev points
+						}
 						else
-							continue;
+							arr[i].bValid = true;
 					}
 				}
 				else
@@ -510,4 +597,56 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 			}
 		}
 	}
+
+	// Flush out less important cap points
+	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+	{
+		if ( arr[i].bValid )
+		{
+			bool bfound = false;
+
+			// find this point in one of the previous points
+			for ( int j = 0; j < *m_iNumControlPoints; j ++ )
+			{
+				if ( i == j )
+					continue;
+
+				if ( arr[j].bPrev )
+				{
+					for ( int k = 0; k < MAX_PREVIOUS_POINTS; k ++ )
+					{
+						if ( arr[j].iPrev[k] == i )
+						{
+							bfound = true;
+							break;
+						}
+					}	
+				}
+
+				if ( bfound )
+					break;
+
+			}
+
+			if ( bfound )
+			{
+				arr[i].fProb = 1.0f;
+			}
+			else
+			{
+				arr[i].fProb = 0.1f;
+			}
+		}		
+	}
+
+}
+
+void CTFObjectiveResource :: updateCaptureTime(int index)
+{
+	m_fLastCaptureTime[index] = engine->Time();
+}
+
+float CTFObjectiveResource :: getLastCaptureTime(int index)
+{
+	return m_fLastCaptureTime[index];
 }

@@ -201,6 +201,13 @@ public:
 	void go ( edict_t *pPlayer );
 };
 
+typedef struct
+{
+	float fNextCheck;
+	Vector vOrigin;
+	bool bVisibleLastCheck;
+}wpt_opens_later_t;
+
 class CWaypoint //: public INavigatorNode
 {
 public:
@@ -230,6 +237,7 @@ public:
 		m_fNextCheckGroundTime = 0;
 		m_bHasGround = false;
 		m_fRadius = 0;
+		m_OpensLaterInfo.Clear();
 //		m_iId = iId;
 	}
 
@@ -293,6 +301,8 @@ public:
 
 	bool addPathTo ( int iWaypointIndex );
 	void removePathTo ( int iWaypointIndex );
+
+	bool isPathOpened ( Vector vPath );
 
 	inline bool isUsed ()
 	{
@@ -361,6 +371,7 @@ private:
 	// for W_FL_WAIT_GROUND waypoints
 	float m_fNextCheckGroundTime;
 	bool m_bHasGround;
+	dataUnconstArray<wpt_opens_later_t> m_OpensLaterInfo;
 };
 
 class CWaypoints
