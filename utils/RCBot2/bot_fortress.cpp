@@ -128,7 +128,7 @@ void CBotTF2FunctionEnemyAtIntel :: execute (CBot *pBot)
 
 	if ( pBot->getTeam() != m_iTeam )
 	{
-		((CBotTF2*)pBot)->enemyAtIntel(m_vPos,m_iType);
+		((CBotTF2*)pBot)->enemyAtIntel(m_vPos,m_iType,m_iCapIndex);
 	}
 	else
 		((CBotTF2*)pBot)->teamFlagPickup();
@@ -4593,12 +4593,22 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				}
 				else
 				{
-					float fTime = rcbot_tf2_protect_cap_time.GetFloat();
-					// chance of going to point
-					fprob = (fTime - (engine->Time() - CTeamFortress2Mod::m_ObjectiveResource.getLastCaptureTime(m_iCurrentDefendArea)))/fTime;
+					int capindex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentDefendArea];
 
-					if ( fprob < rcbot_tf2_protect_cap_percent.GetFloat() )
-						fprob = rcbot_tf2_protect_cap_percent.GetFloat();
+					if ( CTeamFortress2Mod::m_ObjectiveResource.GetTeamInZone(capindex) != m_iTeam )
+					{
+						fprob = 0.9f;
+					}
+					else
+					{
+
+						float fTime = rcbot_tf2_protect_cap_time.GetFloat();
+						// chance of going to point
+						fprob = (fTime - (engine->Time() - CTeamFortress2Mod::m_ObjectiveResource.getLastCaptureTime(m_iCurrentDefendArea)))/fTime;
+
+						if ( fprob < rcbot_tf2_protect_cap_percent.GetFloat() )
+							fprob = rcbot_tf2_protect_cap_percent.GetFloat();
+					}
 				}
 
 				if ( randomFloat(0.0,1.0f) > fprob )
@@ -6346,7 +6356,7 @@ bool CBotFF :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 
 
 // Go back to Cap/Flag to 
-void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
+void CBotTF2 :: enemyAtIntel ( Vector vPos, int type, int iArea )
 {
 	if ( CBotGlobals::entityIsValid(m_pDefendPayloadBomb) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)) )
 	{
@@ -6402,7 +6412,26 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type )
 	{
 		dataUnconstArray<int> *failed;
 		m_pNavigator->getFailedGoals(&failed);
-		CWaypoint *pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPos,400,-1,false,false,true,failed,false,getTeam(),true));
+		CWaypoint *pWpt = NULL;
+		int iIgnore = -1;
+
+		if ( (iArea >=0 ) && (iArea < MAX_CONTROL_POINTS)  )
+		{
+			// get control point waypoint
+			int iWpt = CTeamFortress2Mod::m_ObjectiveResource.getControlPointWaypoint(iArea);
+			pWpt = CWaypoints::getWaypoint(iWpt);
+
+			if ( !pWpt->checkReachable() )
+			{
+				iIgnore = iWpt;
+				// go to nearest defend waypoint
+				pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPos,1024.0f,iIgnore,false,false,false,failed,false,m_iTeam,true,false,Vector(0,0,0),CWaypointTypes::W_FL_DEFEND,m_pEdict));
+			}
+
+		}
+
+		if ( pWpt == NULL )
+			pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPos,400,iIgnore,false,false,true,failed,false,getTeam(),true));
 
 		if ( pWpt )
 		{

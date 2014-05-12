@@ -1334,6 +1334,7 @@ void CTeamFortress2Mod :: mapInit ()
 
 	m_pResourceEntity = NULL;
 	m_ObjectiveResource.m_ObjectiveResource = NULL;
+	m_ObjectiveResource.reset();
 	m_PointMaster = NULL;
 	m_PointMasterResource = NULL;
 	m_pCurrentRound = NULL;

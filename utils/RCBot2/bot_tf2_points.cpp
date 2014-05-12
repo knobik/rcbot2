@@ -1,5 +1,3 @@
-// TO DO : All defend points valid
-// TO DO : Fix probability of attack/defending particular points
 #include "vstdlib/random.h" // for random  seed 
 
 #include "bot.h"
@@ -51,6 +49,7 @@ int CTFObjectiveResource::getRandomValidPointForTeam ( int team, ePointAttackDef
 {
 	TF2PointProb_t *arr = NULL;
 	vector<int> points;
+	int iotherteam;
 
 	float fTotal = 0.0f;
 
@@ -60,6 +59,8 @@ int CTFObjectiveResource::getRandomValidPointForTeam ( int team, ePointAttackDef
 	if ( m_iNumControlPoints == NULL )
 		return 0;
 
+	iotherteam = (team==2)?3:2;
+
 	arr = m_ValidPoints[team-2][type];
 
 	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
@@ -67,7 +68,23 @@ int CTFObjectiveResource::getRandomValidPointForTeam ( int team, ePointAttackDef
 		if ( arr[i].bValid == true )
 		{
 			points.push_back(i);
-			fTotal += arr[i].fProb;
+
+			if ( type == TF2_POINT_ATTACK ) 
+			{
+				if (GetTeamInZone(i) == team)
+					arr[i].fProbMultiplier = 4.0f;
+				else if ((getLastCaptureTime(i) + 10.0f) > gpGlobals->curtime )
+					arr[i].fProbMultiplier = 2.0f;
+			}
+			else
+			{
+				if (GetTeamInZone(i) == iotherteam)
+					arr[i].fProbMultiplier = 4.0f;
+				else if ((getLastCaptureTime(i) + 10.0f) > gpGlobals->curtime )
+					arr[i].fProbMultiplier = 2.0f;
+			}
+
+			fTotal += arr[i].fProb*arr[i].fProbMultiplier;
 		}
 	}
 
@@ -79,7 +96,7 @@ int CTFObjectiveResource::getRandomValidPointForTeam ( int team, ePointAttackDef
 	{
 		int index = points[i];
 
-		fTotal += arr[index].fProb;
+		fTotal += arr[index].fProb*arr[index].fProbMultiplier;
 
 		if ( fTotal > fRand )
 		{
@@ -298,6 +315,7 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 
 	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
 	{
+		arr[i].fProbMultiplier = 1.0f;
 		arr[i].fProb = 1.0f;
 		memset(arr[i].iPrev,0xFF,sizeof(int)*MAX_PREVIOUS_POINTS);
 
@@ -481,6 +499,7 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
 	{
 		arr[i].fProb = 1.0f;
+		arr[i].fProbMultiplier = 1.0f;
 		memset(arr[i].iPrev,0xFF,sizeof(int)*MAX_PREVIOUS_POINTS);
 
 		// not visible

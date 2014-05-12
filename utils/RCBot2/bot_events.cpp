@@ -747,7 +747,7 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 	CTeamFortress2Mod::m_ObjectiveResource.updateCaptureTime(capindex);
 	//CPoints::pointBeingCaptured(capteam,cpname,cappers[0]);
 
-	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(capteam,CTeamFortress2Mod::m_ObjectiveResource.GetCPPosition(capindex),EVENT_CAPPOINT);
+	CBotTF2FunctionEnemyAtIntel *function = new CBotTF2FunctionEnemyAtIntel(capteam,CTeamFortress2Mod::m_ObjectiveResource.GetCPPosition(capindex),EVENT_CAPPOINT,NULL,capindex);
 
 	CBots::botFunction(function);
 

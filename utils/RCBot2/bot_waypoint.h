@@ -238,6 +238,8 @@ public:
 		m_bHasGround = false;
 		m_fRadius = 0;
 		m_OpensLaterInfo.Clear();
+		m_bIsReachable = true; 
+		m_fCheckReachableTime = 0;
 //		m_iId = iId;
 	}
 
@@ -301,6 +303,11 @@ public:
 
 	bool addPathTo ( int iWaypointIndex );
 	void removePathTo ( int iWaypointIndex );
+	
+	void addPathFrom ( int iWaypointIndex );
+	void removePathFrom ( int iWaypointIndex );
+
+	bool checkReachable ();
 
 	bool isPathOpened ( Vector vPath );
 
@@ -339,6 +346,9 @@ public:
 
 	int numPaths ();
 
+	int numPathsToThisWaypoint ();
+	int getPathToThisWaypoint ( int i );
+
 	int getPath ( int i );
 
 	void load ( FILE *bfp, int iVersion );
@@ -371,6 +381,11 @@ private:
 	// for W_FL_WAIT_GROUND waypoints
 	float m_fNextCheckGroundTime;
 	bool m_bHasGround;
+	// Update m_iNumPathsTo (For display)
+	bool m_bIsReachable; 
+	float m_fCheckReachableTime;
+	dataUnconstArray<int> m_PathsTo; // paths to this waypoint from other waypoints
+
 	dataUnconstArray<wpt_opens_later_t> m_OpensLaterInfo;
 };
 
@@ -401,6 +416,8 @@ public:
 	static void removeWaypoint ( int iIndex );
 
 	static int numWaypoints ();
+
+	static bool checkReachable ( CWaypoint *pWaypoint, int iStart );
 
 	static CWaypoint *nearestPipeWaypoint ( Vector vTarget, Vector vOrigin, int *iAiming );
 

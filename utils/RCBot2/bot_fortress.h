@@ -164,7 +164,7 @@ typedef enum
 class CBotTF2FunctionEnemyAtIntel : public IBotFunction
 {
 public:
-	CBotTF2FunctionEnemyAtIntel( int iTeam, Vector vPos, int type, edict_t *pPlayer = NULL ){m_iTeam = iTeam;m_vPos = vPos;m_iType = type; m_pPlayer = pPlayer; }
+	CBotTF2FunctionEnemyAtIntel( int iTeam, Vector vPos, int type, edict_t *pPlayer = NULL, int capindex = -1 ){m_iTeam = iTeam;m_vPos = vPos;m_iType = type; m_pPlayer = pPlayer; m_iCapIndex = capindex; }
 
 	void execute (CBot *pBot);
 private:
@@ -172,6 +172,7 @@ private:
 	Vector m_vPos;
 	int m_iType;
 	edict_t *m_pPlayer;
+	int m_iCapIndex;
 };
 
 class CBroadcastSpySap : public IBotFunction
@@ -593,7 +594,7 @@ public:
 	// found a new enemy
 	void enemyFound (edict_t *pEnemy);
 
-	void enemyAtIntel ( Vector vPos, int type = EVENT_FLAG_PICKUP );
+	void enemyAtIntel ( Vector vPos, int type = EVENT_FLAG_PICKUP, int iArea = -1 );
 	//
 	void fixWeapons ();
 

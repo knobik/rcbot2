@@ -39,6 +39,7 @@ typedef enum ePointAttackDefend_s
 typedef struct
 {
 	float fProb;
+	float fProbMultiplier;
 	bool bValid;
 	bool bNextPoint;
 	bool bPrev;
@@ -108,6 +109,11 @@ public:
 	Vector& GetCPPosition( int index )
 	{
 		return m_vCPPositions[index];
+	}
+
+	int getControlPointWaypoint ( int index )
+	{
+		return m_iControlPointWpt[index];
 	}
 
 	int NearestArea ( Vector vOrigin );
@@ -226,6 +232,7 @@ public:
 
 	edict_t *m_pControlPoints[MAX_CONTROL_POINTS];
 	int m_iControlPointWpt[MAX_CONTROL_POINTS];
+	bool m_iControlPointWptReachable[MAX_CONTROL_POINTS];
 	int *m_iNumControlPoints;
 	Vector *m_vCPPositions;//[8];
 	int *m_bCPIsVisible;//[8];

@@ -559,7 +559,9 @@ const char *CPathWaypointDeleteToMenuItem :: getCaption ( CClient *pClient, WptC
 		return m_szCaption;
 	}
 
-	sprintf(m_szCaption,"Delete Paths To This Waypoint");
+	CWaypoint *pWaypoint = CWaypoints::getWaypoint(iWpt);
+
+	sprintf(m_szCaption,"Delete Paths To This Waypoint (%d)", pWaypoint->numPathsToThisWaypoint());
 
 	return m_szCaption;
 }

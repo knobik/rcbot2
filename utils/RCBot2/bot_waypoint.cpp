@@ -1844,7 +1844,14 @@ void CWaypoint :: init ()
 	setAim(0);
 	m_thePaths.Clear();
 	m_iArea = 0;
+	m_fRadius = 0;	
+	m_bUsed = true;
+	m_fNextCheckGroundTime = 0;
+	m_bHasGround = false;
 	m_fRadius = 0;
+	m_OpensLaterInfo.Clear();
+	m_bIsReachable = true; 
+	m_fCheckReachableTime = 0;
 }
 
 void CWaypoint :: save ( FILE *bfp )
@@ -2093,10 +2100,35 @@ int CWaypoints :: getClosestFlagged ( int iFlags, Vector &vOrigin, int iTeam, fl
 
 void CWaypoints :: deletePathsTo ( int iWpt )
 {
+	CWaypoint *pWaypoint = CWaypoints::getWaypoint(iWpt);
+
+	int iNumPathsTo = pWaypoint->numPathsToThisWaypoint();
+	dataUnconstArray<int> m_PathsTo;
+
+	// this will go into an evil loop unless we do this first
+	// and use a temporary copy as a side effect of performing
+	// a remove will affect the original array
+	for ( int i = 0; i < iNumPathsTo; i ++ )
+	{
+		m_PathsTo.Add(pWaypoint->getPathToThisWaypoint(i));
+	}
+
+	iNumPathsTo = m_PathsTo.Size();
+
+	for ( int i = 0; i < iNumPathsTo; i ++ )
+	{
+		int iOther = m_PathsTo.ReturnValueFromIndex(i);
+
+		CWaypoint *pOther = getWaypoint(iOther);
+
+		pOther->removePathTo(iWpt);
+	}
+	/*
+
 	short int iNumWaypoints = (short int)numWaypoints();
 
 	for ( register short int i = 0; i < iNumWaypoints; i ++ )
-		m_theWaypoints[i].removePathTo(iWpt);
+		m_theWaypoints[i].removePathTo(iWpt);*/
 }
 
 // Fixed; 23/01
@@ -2630,6 +2662,41 @@ int CWaypoints :: freeWaypointIndex ()
 	return -1;
 }
 
+bool CWaypoint :: checkReachable ()
+{
+	if ( m_fCheckReachableTime < engine->Time() )
+	{
+		CWaypoint *pOther;
+		int numPathsTo = numPathsToThisWaypoint();
+		int i;
+
+		for ( i = 0; i < numPathsTo; i ++ )
+		{
+			pOther = CWaypoints::getWaypoint(getPathToThisWaypoint(i));
+
+			if ( pOther->getFlags() == 0 )
+				break;
+
+			if ( pOther->getFlags() & CWaypointTypes::W_FL_WAIT_GROUND )
+			{
+				if ( pOther->checkGround() )
+					break;
+			}
+		
+			if ( getFlags() & CWaypointTypes::W_FL_OPENS_LATER )
+			{
+				if ( pOther->isPathOpened(m_vOrigin) )
+					break;
+			}
+		}
+
+		m_bIsReachable = !( i == numPathsTo );
+		m_fCheckReachableTime = engine->Time() + 1.0f;
+	}
+
+	return m_bIsReachable;
+}
+
 int CWaypoint :: numPaths ()
 {
 	return m_thePaths.Size();
@@ -2673,6 +2740,26 @@ bool CWaypoint :: isPathOpened ( Vector vPath )
 	return newinfo.bVisibleLastCheck;
 }
 
+void CWaypoint :: addPathFrom ( int iWaypointIndex )
+{
+	m_PathsTo.Add(iWaypointIndex);
+}
+
+void CWaypoint :: removePathFrom ( int iWaypointIndex )
+{
+	m_PathsTo.Remove(iWaypointIndex);
+}
+
+int CWaypoint :: numPathsToThisWaypoint ()
+{
+	return m_PathsTo.Size();
+}
+
+int CWaypoint :: getPathToThisWaypoint ( int i )
+{
+	return m_PathsTo.ReturnValueFromIndex(i);
+}
+
 bool CWaypoint :: addPathTo ( int iWaypointIndex )
 {
 	CWaypoint *pTo = CWaypoints::getWaypoint(iWaypointIndex);
@@ -2688,6 +2775,8 @@ bool CWaypoint :: addPathTo ( int iWaypointIndex )
 
 	m_thePaths.Add(iWaypointIndex);
 
+	pTo->addPathFrom(CWaypoints::getWaypointIndex(this));
+
 	return true;
 }
 
@@ -2701,7 +2790,11 @@ Vector CWaypoint :: applyRadius ()
 
 void CWaypoint :: removePathTo ( int iWaypointIndex )
 {
+	CWaypoint *pOther = CWaypoints::getWaypoint(iWaypointIndex);
+
 	m_thePaths.Remove(iWaypointIndex);
+
+	pOther->removePathFrom(CWaypoints::getWaypointIndex(this));
 
 	return;
 }
