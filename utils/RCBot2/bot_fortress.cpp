@@ -4595,7 +4595,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				{
 					int capindex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentDefendArea];
 
-					if ( CTeamFortress2Mod::m_ObjectiveResource.GetTeamInZone(capindex) != m_iTeam )
+					if ( CTeamFortress2Mod::m_ObjectiveResource.GetCappingTeam(capindex) == CTeamFortress2Mod::getEnemyTeam(m_iTeam) )
 					{
 						fprob = 0.9f;
 					}

@@ -43,6 +43,25 @@ bool CTFObjectiveResource :: isWaypointAreaValid ( int wptarea )
 	return m_ValidAreas[wptarea-1];*/
 }
 
+bool CTFObjectiveResource::isCPValidWptArea ( int iWptArea, int iTeam, ePointAttackDefend_s type )
+{
+	if ( iWptArea == 0 )
+		return true;
+
+	if ( (iWptArea < 1) || (iWptArea > MAX_CONTROL_POINTS) )
+		return false;
+
+	return isCPValid(m_WaypointAreaToIndexTranslation[iWptArea],iTeam,type);
+}
+
+bool CTFObjectiveResource::isCPValid ( int iCPIndex, int iTeam, ePointAttackDefend_s type )
+{
+	if ( (iCPIndex < 0) || (iCPIndex >= MAX_CONTROL_POINTS) )
+		return false;
+
+	return m_ValidPoints[iTeam-2][type][iCPIndex].bValid;
+}
+
 // TO DO  - Base on waypoint danger
 // base on base point -- if already have attack point and base point -- less focus on base point
 int CTFObjectiveResource::getRandomValidPointForTeam ( int team, ePointAttackDefend_s type)
@@ -71,14 +90,14 @@ int CTFObjectiveResource::getRandomValidPointForTeam ( int team, ePointAttackDef
 
 			if ( type == TF2_POINT_ATTACK ) 
 			{
-				if (GetTeamInZone(i) == team)
-					arr[i].fProbMultiplier = 4.0f;
+				if (GetCappingTeam(i) == team)
+					arr[i].fProbMultiplier = 3.0f;
 				else if ((getLastCaptureTime(i) + 10.0f) > gpGlobals->curtime )
 					arr[i].fProbMultiplier = 2.0f;
 			}
 			else
 			{
-				if (GetTeamInZone(i) == iotherteam)
+				if (GetCappingTeam(i) == iotherteam)
 					arr[i].fProbMultiplier = 4.0f;
 				else if ((getLastCaptureTime(i) + 10.0f) > gpGlobals->curtime )
 					arr[i].fProbMultiplier = 2.0f;
@@ -168,8 +187,8 @@ CTeamControlPointRound *CTeamControlPointMaster:: getCurrentRound ( )
 
 void CTFObjectiveResource::setup ()
 {
-	memset(m_pControlPoints,0,sizeof(edict_t*)*8);
-	memset(m_iControlPointWpt,0xFF,sizeof(int)*8);
+	memset(m_pControlPoints,0,sizeof(edict_t*)*MAX_CONTROL_POINTS);
+	memset(m_iControlPointWpt,0xFF,sizeof(int)*MAX_CONTROL_POINTS);
 	// Find control point entities
 
 	edict_t *pent;
@@ -353,19 +372,22 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 					{
 						// This point needs previous points to be captured first
 						int j;
+						bool bEnemyCanCap = true;
 
 						for ( j = 0; j < MAX_PREVIOUS_POINTS; j ++ )
 						{
+							// need to go through each previous point to update the array
+							// DONT BREAK!!!
 							prev = GetPreviousPointForPoint(i,other,j);
 							arr[i].iPrev[j] = prev;
 
 							if ( prev == -1 )
 								continue;
 							else if ( GetOwningTeam(prev) != other )
-								break;
+								bEnemyCanCap = false;
 						}
 
-						if ( j != MAX_PREVIOUS_POINTS )
+						if ( !bEnemyCanCap )
 						{
 							arr[i].bPrev = true;	
 							arr[i].bValid = false;
@@ -387,12 +409,12 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 				}
 				else
 				{
-					int basepoint = GetBaseControlPointForTeam(team);
+					/*int basepoint = GetBaseControlPointForTeam(team);
 
 					if ( i == basepoint )
 					{
 						arr[i].fProb = 0.2f;
-					}
+					}*/
 
 					arr[i].bValid = true;
 					continue;
@@ -523,7 +545,7 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 				{
 					if ( prev == i )
 					{
-						int other = (team==2)?3:2;
+						/*int other = (team==2)?3:2;
 
 						// find the base point
 						int basepoint = GetBaseControlPointForTeam(other);
@@ -531,7 +553,7 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 						if ( i == basepoint )
 						{
 							arr[i].fProb = 0.25f;
-						}
+						}*/
 
 						arr[i].bValid = true;
 					}
@@ -539,18 +561,22 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 					{
 						int j;
 
+						bool bCanCap = true;
+
 						for ( j = 0; j < MAX_PREVIOUS_POINTS; j ++ )
 						{
+							// need to go through each previous point to update the array
+							// DONT BREAK!!!
 							prev = GetPreviousPointForPoint(i,team,j);
 							arr[i].iPrev[j] = prev;
 
 							if ( prev == -1 )
 								continue;
 							else if ( GetOwningTeam(prev) != team )
-								break;
+								bCanCap = false;
 						}
 
-						if ( j != MAX_PREVIOUS_POINTS )
+						if ( !bCanCap )
 						{
 							arr[i].bPrev = true;	
 							arr[i].bValid = false;
@@ -568,12 +594,12 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 					// find the base point
 					int basepoint = GetBaseControlPointForTeam(other);
 
-					if ( i == basepoint )
+					/*if ( i == basepoint )
 					{
 						arr[i].bValid = true;
 						arr[i].fProb = 0.25f;
 					}
-					else if ( basepoint == 0 )
+					else */if ( basepoint == 0 )
 					{
 						bool allowned = true;
 

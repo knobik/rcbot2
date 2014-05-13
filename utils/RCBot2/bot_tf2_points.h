@@ -56,8 +56,8 @@ public:
 
 	void reset ()
 	{
-		memset(this,sizeof(CTFObjectiveResource),0);
-		memset(m_iControlPointWpt,0xFF,sizeof(int)*8);
+		memset(this,0,sizeof(CTFObjectiveResource));
+		memset(m_iControlPointWpt,0xFF,sizeof(int)*MAX_CONTROL_POINTS);
 	}
 
 	inline void resetValidWaypointAreas() 
@@ -207,6 +207,9 @@ public:
 	}
 
 	float getLastCaptureTime(int index);
+
+	bool isCPValidWptArea ( int iWptArea, int iTeam, ePointAttackDefend_s type);
+	bool isCPValid ( int iCPIndex, int iTeam, ePointAttackDefend_s type);
 
 	void updateAttackPoints ( int team );
 	void updateDefendPoints ( int team );

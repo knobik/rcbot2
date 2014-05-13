@@ -722,12 +722,16 @@ CBotTF2AttackPoint :: CBotTF2AttackPoint ( int iArea, Vector vOrigin, int iRadiu
 
 void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	int iCpIndex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iArea];
+	int iTeam = pBot->getTeam();
 	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
 
 	pBot->wantToInvestigateSound(false);
 
-	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(m_iArea-1) == pBot->getTeam()) )
-		complete();
+	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(iCpIndex) == iTeam) )
+		complete(); // done
+	else if ( m_iArea && !CTeamFortress2Mod::m_ObjectiveResource.isCPValid(iCpIndex,iTeam,TF2_POINT_ATTACK) )
+		fail(); // too slow
 	else if ( m_fAttackTime == 0 )
 		m_fAttackTime = engine->Time() + randomFloat(30.0,60.0);
 	else if ( m_fAttackTime < engine->Time() )
@@ -916,8 +920,13 @@ CBotTF2DefendPoint :: CBotTF2DefendPoint ( int iArea, Vector vOrigin, int iRadiu
 
 void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
-	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(m_iArea-1) != pBot->getTeam()) )
-		complete();
+	int iCpIndex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iArea];
+	int iTeam = pBot->getTeam();
+
+	//if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetCappingTeam(iCpIndex) != iTeam) )
+	//	complete(); // done
+	if ( m_iArea && !CTeamFortress2Mod::m_ObjectiveResource.isCPValid(iCpIndex,iTeam,TF2_POINT_DEFEND) )
+		fail(); // too slow
 	else if ( m_fDefendTime == 0 )
 	{
 		m_fDefendTime = engine->Time() + randomFloat(30.0,60.0);
@@ -3721,7 +3730,8 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	if( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
 		fail();
 
-
+	pBot->wantToListen(false);
+	pBot->wantToInvestigateSound(false);
 
 	if ( m_fTime == 0 )
 	{
