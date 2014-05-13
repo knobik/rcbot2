@@ -734,7 +734,7 @@ public:
 class CBotTFEngiBuildTask : public CBotTask
 {
 public:
-	CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0, float fRadius = 0 );
+	CBotTFEngiBuildTask ( eEngiBuild iObject,  CWaypoint *pWaypoint );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 

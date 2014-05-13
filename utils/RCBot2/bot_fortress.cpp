@@ -4675,9 +4675,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 			if ( pWaypoint )
 			{
-				Vector vBuild = m_vTeleportEntrance+pWaypoint->applyRadius();
-
-				m_pSchedules->add(new CBotTFEngiBuild(this,ENGI_ENTRANCE,vBuild,getAiming(),pWaypoint->getArea(),pWaypoint->getRadius()));
+				m_pSchedules->add(new CBotTFEngiBuild(this,ENGI_ENTRANCE,pWaypoint));
 				m_iTeleEntranceArea = pWaypoint->getArea();
 				return true;
 			}
@@ -4698,12 +4696,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 			if ( pWaypoint )
 			{
-				Vector vBuild = pWaypoint->getOrigin()+pWaypoint->applyRadius();
-				QAngle angle = QAngle(0,pWaypoint->getAimYaw(),0);
-				Vector vFwd;
-
-				AngleVectors(angle,&vFwd);
-				CBotTFEngiBuildTask *buildtask = new CBotTFEngiBuildTask(ENGI_ENTRANCE,vBuild,vBuild+vFwd*128,pWaypoint->getArea(),pWaypoint->getRadius());
+				CBotTFEngiBuildTask *buildtask = new CBotTFEngiBuildTask(ENGI_ENTRANCE,pWaypoint);
 
 				CBotSchedule *newSched = new CBotSchedule();
 
@@ -4752,7 +4745,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				m_bTeleportExitVectorValid = true;
 				m_vTeleportExit = pWaypoint->getOrigin()+pWaypoint->applyRadius();
 				updateCondition(CONDITION_COVERT); // sneak around to get there
-				m_pSchedules->add(new CBotTFEngiBuild(this,ENGI_EXIT,m_vTeleportExit,getAiming(),pWaypoint->getArea(),pWaypoint->getRadius()));
+				m_pSchedules->add(new CBotTFEngiBuild(this,ENGI_EXIT,pWaypoint));
 				m_iTeleExitArea = pWaypoint->getArea();
 				return true;
 			}
@@ -4795,7 +4788,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				m_vSentryGun = pWaypoint->getOrigin()+pWaypoint->applyRadius();
 				m_bSentryGunVectorValid = true;
 				updateCondition(CONDITION_COVERT); // sneak around to get there
-				m_pSchedules->add(new CBotTFEngiBuild(this,ENGI_SENTRY,m_vSentryGun,getAiming(),pWaypoint->getArea(),pWaypoint->getRadius()));
+				m_pSchedules->add(new CBotTFEngiBuild(this,ENGI_SENTRY,pWaypoint));
 				m_iSentryArea = pWaypoint->getArea();
 				return true;
 			}
@@ -4856,7 +4849,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				m_vDispenser = pWaypoint->getOrigin();
 				m_bDispenserVectorValid = true;
 				updateCondition(CONDITION_COVERT);
-				m_pSchedules->add(new CBotTFEngiBuild(this,ENGI_DISP,m_vDispenser+Vector(randomFloat(-96,96),randomFloat(-96,96),0),getAiming(),pWaypoint->getArea(),pWaypoint->getRadius()));
+				m_pSchedules->add(new CBotTFEngiBuild(this,ENGI_DISP,pWaypoint));
 				m_iDispenserArea = pWaypoint->getArea();
 				return true;
 			}
@@ -6388,8 +6381,30 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type, int iArea )
 	// bot is already capturing a point
 	if ( m_pSchedules && m_pSchedules->isCurrentSchedule(SCHED_ATTACKPOINT) )
 	{
-		if ( m_pNavigator && (distanceFrom(m_pNavigator->getGoalOrigin()) < (distanceFrom(vPos)*0.5f)) )
-			return;
+		// already attacking a point 
+		int capindex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentAttackArea];
+
+		if ( capindex >= 0 )
+		{
+			Vector vLocation = CTeamFortress2Mod::m_ObjectiveResource.getControlPointWaypoint(capindex);
+			Vector vOrigin = getOrigin();
+
+			Vector vecLOS;
+			float flDot;
+	
+			Vector vForward = vLocation-vOrigin;
+			
+			vecLOS = vPos - vOrigin;
+			vecLOS = vecLOS/vecLOS.Length();
+	
+			flDot = DotProduct (vecLOS , vForward );
+
+			// Angle to the cap under attack is more than 60 degrees turn
+			if ( flDot < 0.5f )
+				return;
+		}
+		else if ( (distanceFrom(vPos) > CWaypointLocations::REACHABLE_RANGE) )
+			return; // too far away, i should keep attacking
 	}
 
 	if ( (vPos == Vector(0,0,0)) && (type == EVENT_CAPPOINT) )

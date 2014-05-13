@@ -427,24 +427,27 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 			}
 		}
 	}
-
 	// do another search through the previous points
 	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
 	{
 		if ( arr[i].bPrev )
 		{
+			int iNumPrevPointsAvail = 0;
 			int j;
 
+			// Check this points prevous points
 			for ( j = 0; j < MAX_PREVIOUS_POINTS; j ++ )
 			{
 				if ( arr[i].iPrev[j] != -1 )
 				{
-					if ( !arr[arr[i].iPrev[j]].bValid )
-						break;
+					// the previous point is not valid
+					if ( arr[arr[i].iPrev[j]].bValid )
+						iNumPrevPointsAvail++;
 				}
 			}
 
-			if ( j == MAX_PREVIOUS_POINTS )
+			// only one more point to go until this point
+			if ( iNumPrevPointsAvail == 1 )
 			{
 				// this point is next because the current valid points are required
 				arr[i].bNextPoint = true;

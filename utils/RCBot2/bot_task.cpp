@@ -1681,18 +1681,21 @@ void CBotTF2EngiLookAfter :: execute (CBot *pBot,CBotSchedule *pSchedule)
 }
 
 ////////////////////////
-CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea, float fRadius )
+CBotTFEngiBuildTask :: CBotTFEngiBuildTask ( eEngiBuild iObject, CWaypoint *pWaypoint )
 {
 	m_iObject = iObject;
-	m_vOrigin = vOrigin;
+	m_vOrigin = pWaypoint->getOrigin()+pWaypoint->applyRadius();
 	m_iState = 0;
 	m_fTime = 0;
 	m_iTries = 0;
 	m_fNextUpdateAngle = 0.0f;
-	m_vAimingVector = vAiming;
-	m_iArea = iArea;
-	m_vBaseOrigin = vOrigin;
-	m_fRadius = fRadius;
+	QAngle ang = QAngle(0,pWaypoint->getAimYaw(),0);
+	Vector vForward;
+	AngleVectors(ang,&vForward);
+	m_vAimingVector = m_vOrigin + (vForward*100.0f);
+	m_iArea = pWaypoint->getArea();
+	m_vBaseOrigin = m_vOrigin;
+	m_fRadius = pWaypoint->getRadius();
 }
 	
 void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -1804,7 +1807,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pBot->setLookAtTask(LOOK_VECTOR);
 	pBot->setLookVector(m_vAimingVector);
 
-	bAimingOk = pBot->isFacing(pBot->getLookVector()); // 15 degrees
+	bAimingOk = pBot->isFacing(m_vAimingVector); // 15 degrees
 
 	if ( pBot->distanceFrom(m_vOrigin) > 70.0f )
 	{
@@ -3780,8 +3783,7 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		complete();
 	}
-
-	pBot->wantToChangeWeapon(false);
+	
 	pBot->wantToShoot(false);
 
 	if ( (m_pPipeLauncher->getAmmo(pBot) + m_pPipeLauncher->getClip1(pBot)) == 0 )
@@ -3790,10 +3792,18 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			((CBotTF2*)pBot)->detonateStickies(true);
 
 		complete();
+		return;
 	}
-	else if ( pBot->getCurrentWeapon() != m_pPipeLauncher )
+	
+	if ( pBot->getCurrentWeapon() != m_pPipeLauncher )
+	{
 		pBot->selectBotWeapon(m_pPipeLauncher);
-	else if ( m_pPipeLauncher->getClip1(pBot) == 0 )
+		return;
+	}
+
+	pBot->wantToChangeWeapon(false);
+
+	if ( m_pPipeLauncher->getClip1(pBot) == 0 )
 	{
 		if ( randomInt(0,1) )
 			pBot->reload();
@@ -4102,6 +4112,9 @@ CBotTF2AttackSentryGunTask::CBotTF2AttackSentryGunTask ( edict_t *pSentryGun, CB
 
 void CBotTF2AttackSentryGunTask::execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	pBot->wantToListen(false);
+	pBot->wantToInvestigateSound(false);
+
 	if ( m_pSentryGun.get() == NULL )
 	{
 		fail();
@@ -4158,6 +4171,8 @@ void CBotTF2AttackSentryGunTask::execute (CBot *pBot,CBotSchedule *pSchedule)
 		pBot->selectBotWeapon(m_pWeapon);
 		return;
 	}
+
+	pBot->wantToChangeWeapon(false);
 
 	if ( m_pWeapon->outOfAmmo(pBot) )
 		complete();

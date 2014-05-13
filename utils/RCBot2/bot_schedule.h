@@ -432,7 +432,7 @@ public:
 class CBotTFEngiBuild : public CBotSchedule
 {
 public:
-	CBotTFEngiBuild ( CBot *pBot, eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea = 0, float fRadius = 0 );
+	CBotTFEngiBuild ( CBot *pBot, eEngiBuild iObject, CWaypoint *pWaypoint );
 
 	void init ();
 };

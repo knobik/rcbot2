@@ -2394,11 +2394,13 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	fDistance = distanceFrom(pEntity);
 	fHeadOffset = 0;
 
-	if ( fDistance > 100.0f ) // melee distance
-		fDistFactor = (1.0f - m_pProfile->m_fAimSkill) + (fDistance*0.000125f)*(m_fFov/90.0f);
-	else
-		fDistFactor = fDistance*0.002f;
+	CBotWeapon *pWp = getCurrentWeapon();
 
+	if ( pWp && pWp->isMelee() )
+		fDistFactor = 0;
+	else		
+		fDistFactor = (1.0f - m_pProfile->m_fAimSkill) + (fDistance*0.000125f)*(m_fFov/90.0f);
+	
 	// origin is always the bottom part of the entity
 	// add body height
 	fHeadOffset += v_size.z-1;
@@ -2419,7 +2421,6 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	v_desired_offset->y = fDistFactor*randomFloat(-v_size.y,v_size.y);
 	v_desired_offset->z = fDistFactor*randomFloat(-v_size.z,v_size.z);*/
 	
-
 	// change in velocity
 	if ( CClassInterface::getVelocity(pEntity,&enemyvel) && CClassInterface::getVelocity(m_pEdict,&myvel) )
 	{

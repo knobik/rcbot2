@@ -834,12 +834,18 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 	
 		strcpy(sv_tags_str,sv_tags->GetString());
 
-		if ( sv_tags_str[0] == 0 )
-			strcat(sv_tags_str,"rcbot2");
-		else
-			strcat(sv_tags_str,",rcbot2");
+		// fix
+		if ( strstr(sv_tags_str,"rcbot2") == NULL )
+		{
 
-		sv_tags->SetValue(sv_tags_str);
+			if ( sv_tags_str[0] == 0 )
+				strcat(sv_tags_str,"rcbot2");
+			else
+				strcat(sv_tags_str,",rcbot2");
+
+			sv_tags->SetValue(sv_tags_str);
+
+		}
 	}
 
 	bInitialised = true;

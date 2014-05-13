@@ -129,14 +129,14 @@ void CBotTF2HealSched::init()
 
 /////////////////////////////////////////////
 
-CBotTFEngiBuild :: CBotTFEngiBuild ( CBot *pBot, eEngiBuild iObject, Vector vOrigin, Vector vAiming, int iArea, float fRadius )
+CBotTFEngiBuild :: CBotTFEngiBuild ( CBot *pBot, eEngiBuild iObject, CWaypoint *pWaypoint )
 {
-	CFindPathTask *pathtask = new CFindPathTask(vOrigin);
+	CFindPathTask *pathtask = new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint));
 	addTask(pathtask); // first
 
 	pathtask->setInterruptFunction(new CBotTF2EngineerInterrupt(pBot));
 
-	addTask(new CBotTFEngiBuildTask(iObject,vOrigin,vAiming,iArea,fRadius)); // second
+	addTask(new CBotTFEngiBuildTask(iObject,pWaypoint)); // second
 }
 
 void CBotTFEngiBuild :: init ()
