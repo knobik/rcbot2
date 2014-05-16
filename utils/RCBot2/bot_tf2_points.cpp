@@ -187,6 +187,8 @@ CTeamControlPointRound *CTeamControlPointMaster:: getCurrentRound ( )
 
 void CTFObjectiveResource::setup ()
 {
+	CClassInterface::getTF2ObjectiveResource(this);
+
 	memset(m_pControlPoints,0,sizeof(edict_t*)*MAX_CONTROL_POINTS);
 	memset(m_iControlPointWpt,0xFF,sizeof(int)*MAX_CONTROL_POINTS);
 	// Find control point entities
@@ -256,7 +258,7 @@ void CTFObjectiveResource::setup ()
 		}
 	}
 	
-
+	m_bInitialised = true;
 }
 
 int CTFObjectiveResource :: getControlPointArea ( edict_t *pPoint )

@@ -383,6 +383,7 @@ void CWaypointLocations :: FindNearestCoverWaypointInBucket ( int i, int j, int 
 	float fDist;
 	dataUnconstArray<int> *arr = &(m_iLocations[i][j][k]);
 	short int size = (short int)arr->Size();
+	CBotMod *curmod = CBotGlobals::getCurrentMod();
 
 	for ( int l = 0; l < size; l ++ )
 	//while ( !tempStack.IsEmpty() )
@@ -400,8 +401,10 @@ void CWaypointLocations :: FindNearestCoverWaypointInBucket ( int i, int j, int 
 			continue; 
 		if ( curr_wpt->hasFlag(CWaypointTypes::W_FL_UNREACHABLE) )
 			continue;
-		if ( !curr_wpt->forTeam(iTeam) )
+	    if ( !curr_wpt->forTeam(iTeam) )
+		{
 			continue;
+		}
 		if ( CWaypoints::getVisiblity()->GetVisibilityFromTo(iCoverFromWpt,iSelectedIndex) )
 			continue;
 
@@ -490,7 +493,8 @@ void CWaypointLocations :: FindNearestBlastInBucket ( int i, int j, int k, const
 	
 	dataUnconstArray<int> *arr = &(m_iLocations[i][j][k]);
 	short int size = (short int)arr->Size();
-	
+	CBotMod *curmod = CBotGlobals::getCurrentMod();
+
 	for ( register short int l = 0; l < size; l ++ )
 	//while ( !tempStack.IsEmpty() )
 	{
@@ -508,7 +512,9 @@ void CWaypointLocations :: FindNearestBlastInBucket ( int i, int j, int k, const
 			continue;
 
 		if ( !curr_wpt->forTeam(iTeam) )
+		{
 			continue;
+		}
 
 		if ( bCheckArea && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(curr_wpt->getArea()) )
 			continue;
@@ -565,6 +571,7 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 	trace_t tr;
 	
 	bool bAdd;
+	CBotMod *curmod = CBotGlobals::getCurrentMod();
 	
 	dataUnconstArray<int> *arr = &(m_iLocations[i][j][k]);
 	short int size = (short int)arr->Size();
@@ -590,8 +597,18 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 		if ( !curr_wpt->isUsed() )
 			continue;
 
-		if ( !curr_wpt->forTeam(iTeam) )
-			continue;
+		if ( bIsBot )
+		{
+			if ( curr_wpt->hasFlag(CWaypointTypes::W_FL_OWNER_ONLY) )
+			{
+				if ( !curmod->isAreaOwnedByTeam(curr_wpt->getArea(),iTeam) )
+					continue;
+			}
+			else if ( !curr_wpt->forTeam(iTeam) )
+			{
+				continue;
+			}
+		}
 
 		if ( bCheckArea && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(curr_wpt->getArea()) )
 			continue;

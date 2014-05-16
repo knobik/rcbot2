@@ -108,6 +108,8 @@ public:
 
 	eModId getModId ();
 
+	virtual bool isAreaOwnedByTeam (int iArea, int iTeam) { return (iArea == 0); }
+
 	eBotType getBotType () { return m_iBotType; }
 
 	virtual void addWaypointFlags (edict_t *pPlayer, edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance ){ return; }
@@ -779,6 +781,8 @@ public:
 	}
 
 	void mapInit ();
+
+	bool isAreaOwnedByTeam (int iArea, int iTeam);
 
 	static void updatePointMaster ();
 

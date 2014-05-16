@@ -2121,6 +2121,15 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 
 	if ( CBot::canGotoWaypoint(vPrevWaypoint,pWaypoint,pPrev) )
 	{
+		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_OWNER_ONLY) )
+		{
+			int area = pWaypoint->getArea();
+			int capindex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[area];
+
+			if ( area && (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(capindex)!=m_iTeam) )
+				return false;
+		}
+
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_AREAONLY) )
 		{
 			if ( !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWaypoint->getArea()) )
@@ -2132,6 +2141,7 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 			CBotWeapons *pWeapons = getWeapons();
 			CBotWeapon *pWeapon;
 
+			// only roccket jump if more than 50% health
 			if (getHealthPercent() > 0.5)
 			{
 				// only soldiers or demomen can use these
@@ -3886,7 +3896,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 			failedlist = CWaypointLocations :: resetFailedWaypoints ( failed );
 
-			pWaypointResupply = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vOrigin,1024.0f,-1,false,false,false,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_RESUPPLY));//CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,vOrigin,iTeam,&fResupplyDist,failedlist));
+			pWaypointResupply = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vOrigin,1024.0f,-1,false,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_RESUPPLY));//CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,vOrigin,iTeam,&fResupplyDist,failedlist));
 
 			ADD_UTILITY_DATA(BOT_UTIL_BUILDTELENT_SPAWN,!m_bIsCarryingObj && (pWaypointResupply!=NULL) && !bHasFlag&&!m_pTeleEntrance&&(iMetal>=125),0.95f,CWaypoints::getWaypointIndex(pWaypointResupply));
 		}
@@ -4568,7 +4578,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 					{
 						static const float fSearchDist = 1500.0f;
 						Vector vPayloadBomb = CBotGlobals::entityOrigin(m_pDefendPayloadBomb);
-						CWaypoint *pCapturePoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPayloadBomb,fSearchDist,-1,false,false,false,NULL,false,0,true,false,Vector(0,0,0),CWaypointTypes::W_FL_CAPPOINT));
+						CWaypoint *pCapturePoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPayloadBomb,fSearchDist,-1,false,false,true,NULL,false,0,true,false,Vector(0,0,0),CWaypointTypes::W_FL_CAPPOINT));
 
 						if ( pCapturePoint )
 						{
@@ -5175,7 +5185,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 					dataUnconstArray<int> m_iVisibles;
 					dataUnconstArray<int> m_iInvisibles;
 
-					int iWptFrom = CWaypointLocations::NearestWaypoint(vPoint,2048.0,-1,true,true,false,NULL,false,0,false);
+					int iWptFrom = CWaypointLocations::NearestWaypoint(vPoint,2048.0,-1,true,true,true,NULL,false,0,false);
 
 		//int m_iVisiblePoints[CWaypoints::MAX_WAYPOINTS]; // make searching quicker
 
@@ -6386,21 +6396,9 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type, int iArea )
 
 		if ( capindex >= 0 )
 		{
-			Vector vLocation = CTeamFortress2Mod::m_ObjectiveResource.getControlPointWaypoint(capindex);
-			Vector vOrigin = getOrigin();
+			Vector vCapAttacking = CTeamFortress2Mod::m_ObjectiveResource.getControlPointWaypoint(capindex);
 
-			Vector vecLOS;
-			float flDot;
-	
-			Vector vForward = vLocation-vOrigin;
-			
-			vecLOS = vPos - vOrigin;
-			vecLOS = vecLOS/vecLOS.Length();
-	
-			flDot = DotProduct (vecLOS , vForward );
-
-			// Angle to the cap under attack is more than 60 degrees turn
-			if ( flDot < 0.5f )
+			if ( distanceFrom(vPos) > distanceFrom(vCapAttacking) )
 				return;
 		}
 		else if ( (distanceFrom(vPos) > CWaypointLocations::REACHABLE_RANGE) )
@@ -6440,7 +6438,7 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type, int iArea )
 			{
 				iIgnore = iWpt;
 				// go to nearest defend waypoint
-				pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPos,1024.0f,iIgnore,false,false,false,failed,false,m_iTeam,true,false,Vector(0,0,0),CWaypointTypes::W_FL_DEFEND,m_pEdict));
+				pWpt = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vPos,1024.0f,iIgnore,false,false,true,failed,false,m_iTeam,true,false,Vector(0,0,0),CWaypointTypes::W_FL_DEFEND,m_pEdict));
 			}
 
 		}

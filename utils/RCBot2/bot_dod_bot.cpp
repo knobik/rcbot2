@@ -2064,7 +2064,7 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 				if ( iFlagID == -1 )
 				{
-					pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_pSquad->GetFormationVector(m_pEdict),250.0f,-1,false,false,false,NULL,false,m_iTeam,false,false,Vector(0,0,0),iWaypointType));					
+					pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_pSquad->GetFormationVector(m_pEdict),250.0f,-1,false,false,true,NULL,false,m_iTeam,false,false,Vector(0,0,0),iWaypointType));					
 				}
 				else
 					pWaypoint = CWaypoints::randomWaypointGoal(iWaypointType,m_iTeam,iFlagID,true,this);

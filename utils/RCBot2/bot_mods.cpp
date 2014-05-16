@@ -185,6 +185,16 @@ bool CTeamFortress2Mod :: isHealthKit ( edict_t *pEntity )
 	return strncmp(pEntity->GetClassName(),"item_healthkit",14)==0;
 }
 
+bool CTeamFortress2Mod :: isAreaOwnedByTeam (int iArea, int iTeam)
+{
+	if ( CTeamFortress2Mod::m_ObjectiveResource.isInitialised() )
+	{
+		return ((iArea==0) || (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[iArea])==iTeam) );
+	}
+
+	return false;
+}
+
 // cehc kif the team can pick up a flag in SD mode (special delivery)
 bool CTeamFortress2Mod::canTeamPickupFlag_SD(int iTeam,bool bGetUnknown)
 {
@@ -590,7 +600,6 @@ void CTeamFortress2Mod :: roundReset ()
 		
 		if ( m_ObjectiveResource.m_ObjectiveResource.get() != NULL )
 		{
-			CClassInterface::getTF2ObjectiveResource(&m_ObjectiveResource);
 			m_ObjectiveResource.setup();
 		}
 	}

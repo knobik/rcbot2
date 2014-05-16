@@ -219,7 +219,7 @@ public:
 	bool IsInMiniRound( int index ) { return m_bInMiniRound[index]; }
 	void updateCaptureTime(int index);
 	void setup ();
-
+	bool isInitialised() { return m_bInitialised == true; }
 	MyEHandle m_ObjectiveResource;
 
 	int getRandomValidPointForTeam ( int team, ePointAttackDefend_s type );
@@ -263,6 +263,9 @@ public:
 	bool *m_bPlayingMiniRounds;
 	
 	float m_fLastCaptureTime[MAX_CONTROL_POINTS];
+
+	private:
+	bool m_bInitialised;
 	//bool *m_b
 };
 

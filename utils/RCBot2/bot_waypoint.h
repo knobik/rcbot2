@@ -166,6 +166,7 @@ public:
 	static const int W_FL_BREAKABLE = 67108864;
 	static const int W_FL_SPRINT = 134217728; 
 	static const int W_FL_TELEPORT_CHEAT = 268435456; // teleports bots to the next waypoint (cheat)
+	static const int W_FL_OWNER_ONLY = 536870912; // Only owners of this area can use the waypoint
 
 	static void setup ();
 

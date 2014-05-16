@@ -4132,7 +4132,7 @@ void CBotTF2AttackSentryGunTask::execute (CBot *pBot,CBotSchedule *pSchedule)
 
 		m_iSentryWaypoint = CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),200.0f,-1);
 
-		m_iStartingWaypoint = CWaypointLocations::NearestWaypoint(pBot->getOrigin(),200.0f,-1,true,true,false,NULL);
+		m_iStartingWaypoint = CWaypointLocations::NearestWaypoint(pBot->getOrigin(),200.0f,-1,true,true,true,NULL);
 
 		m_vStart = pBot->getOrigin();
 		m_vHide = m_vStart;
