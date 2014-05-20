@@ -24,7 +24,7 @@ void CTFObjectiveResource::updatePoints()
 
 }
 // INPUT = Waypoint Area
-bool CTFObjectiveResource :: isWaypointAreaValid ( int wptarea ) 
+bool CTFObjectiveResource :: isWaypointAreaValid ( int wptarea, int waypointflags ) 
 {
 //	CWaypoint *pWaypoint;
 
@@ -40,6 +40,14 @@ bool CTFObjectiveResource :: isWaypointAreaValid ( int wptarea )
 	if ( cpindex == -1 )
 		return false;
 
+	if ( waypointflags & CWaypointTypes::W_FL_AREAONLY )
+	{
+		// AND
+		return (m_ValidPoints[0][0][cpindex].bValid && m_ValidPoints[1][1][cpindex].bValid) || 
+			   (m_ValidPoints[0][1][cpindex].bValid && m_ValidPoints[1][0][cpindex].bValid);
+	}
+
+	// OR
 	return m_ValidAreas[cpindex];
 	/*
 	for ( int i = 0; i < MAX_CONTROL_POINTS; i ++ )
@@ -650,53 +658,59 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 				}
 				else
 				{
-					// if its not an attack defend map check previous points are owned
-					int other = (team==2)?3:2;
-
-					// find the base point
-					int basepoint = GetBaseControlPointForTeam(other);
-
-					/*if ( i == basepoint )
+					if ( !CTeamFortress2Mod::isAttackDefendMap() )
 					{
-						arr[i].bValid = true;
-						arr[i].fProb = 0.25f;
-					}
-					else */if ( basepoint == 0 )
-					{
-						bool allowned = true;
+						// if its not an attack defend map check previous points are owned
+						int other = (team==2)?3:2;
 
-						// make sure bot owns all points above this point
-						for ( int x = i+1; x < *m_iNumControlPoints; x ++ )
+						// find the base point
+						int basepoint = GetBaseControlPointForTeam(other);
+
+						/*if ( i == basepoint )
 						{
-							if ( GetOwningTeam(x) != team )
-							{
-								allowned = false;
-								break;
-							}
-						}				
+							arr[i].bValid = true;
+							arr[i].fProb = 0.25f;
+						}
+						else */
+					
+						if ( basepoint == 0 )
+						{
+							bool allowned = true;
 
-						if ( allowned )
-							arr[i].bValid  = true;
+							// make sure bot owns all points above this point
+							for ( int x = i+1; x < *m_iNumControlPoints; x ++ )
+							{
+								if ( GetOwningTeam(x) != team )
+								{
+									allowned = false;
+									break;
+								}
+							}				
+
+							if ( allowned )
+								arr[i].bValid  = true;
 						
-						continue;
-					}
-					else if ( basepoint == ((*m_iNumControlPoints)-1) )
-					{
-						bool allowned = true;
-						// make sure team owns all points below this point
-						for ( int x = 0; x < i; x ++ )
+							continue;
+						}
+						else if ( basepoint == ((*m_iNumControlPoints)-1) )
 						{
-							if ( GetOwningTeam(x) != team )
+							bool allowned = true;
+							// make sure team owns all points below this point
+							for ( int x = 0; x < i; x ++ )
 							{
-								allowned = false;
-								break;
-							}
-						}				
+								if ( GetOwningTeam(x) != team )
+								{
+									allowned = false;
+									break;
+								}
+							}				
 
-						if ( allowned )
-							arr[i].bValid  = true;
+							if ( allowned )
+								arr[i].bValid  = true;
 
-						continue;
+							continue;
+						}
+
 					}
 
 					arr[i].bValid  = true;

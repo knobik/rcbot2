@@ -1511,7 +1511,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 #ifndef __linux__
 				if ( m_iFlags )
 				{
-					if ( CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iArea) )
+					if ( CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iArea,m_iFlags) )
 						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+4.0f),0,1,255,255,255,255,"%d",m_iArea);	
 					else
 						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+4.0f),0,1,255,0,0,255,"%d",m_iArea);

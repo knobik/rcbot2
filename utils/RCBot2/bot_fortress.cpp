@@ -2132,7 +2132,7 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 
 		if ( pWaypoint->hasFlag(CWaypointTypes::W_FL_AREAONLY) )
 		{
-			if ( !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWaypoint->getArea()) )
+			if ( !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWaypoint->getArea(),pWaypoint->getFlags()) )
 				return false;
 		}
 		
@@ -3916,7 +3916,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
 		ADD_UTILITY_DATA(BOT_UTIL_FIND_NEAREST_AMMO,!m_bIsCarryingObj && !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,400.0f/fAmmoDist,CWaypoints::getWaypointIndex(pWaypointAmmo)); // only if close
 
-		ADD_UTILITY(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,!m_bIsCarryingObj && (m_pSentryGun!=NULL) && (iSentryLevel>2) && (m_fLookAfterSentryTime<engine->Time()),fGetFlagUtility+0.01f);
+		ADD_UTILITY(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,!m_bIsCarryingObj && (m_pSentryGun.get()!=NULL) && (iSentryLevel>2) && (m_fLookAfterSentryTime<engine->Time()),fGetFlagUtility+0.01f);
 
 		// remove sappers
 
@@ -4480,7 +4480,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 					return true;
 				}
 
-				if ( m_pDefendPayloadBomb )
+				if ( m_pDefendPayloadBomb.get() != NULL )
 				{
 					m_pSchedules->add(new CBotTF2DefendPayloadBombSched(m_pDefendPayloadBomb));
 					removeCondition(CONDITION_PUSH);
@@ -4490,7 +4490,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 			break;
 		case BOT_UTIL_PUSH_PAYLOAD_BOMB:
 			{
-				if ( m_pPushPayloadBomb )
+				if ( m_pPushPayloadBomb.get() != NULL )
 				{
 					m_pSchedules->add(new CBotTF2PushPayloadBombSched(m_pPushPayloadBomb));
 					removeCondition(CONDITION_PUSH);
@@ -4500,8 +4500,11 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 			break;
 		case BOT_UTIL_ENGI_LOOK_AFTER_SENTRY:
 			{
-				m_pSchedules->add(new CBotTFEngiLookAfterSentry(m_pSentryGun));			
-				return true;
+				if ( m_pSentryGun.get() != NULL )
+				{
+					m_pSchedules->add(new CBotTFEngiLookAfterSentry(m_pSentryGun));			
+					return true;
+				}
 			}
 			break;
 		case BOT_UTIL_DEFEND_FLAG:

@@ -67,7 +67,7 @@ public:
 		memset(m_ValidAreas,0,sizeof(bool)*MAX_CONTROL_POINTS); 
 	}
 
-	bool isWaypointAreaValid ( int wptarea ) ;
+	bool isWaypointAreaValid ( int wptarea, int waypointflags = 0 );
 
 	void updateValidWaypointAreas ( void )
 	{
