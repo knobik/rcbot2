@@ -3,6 +3,8 @@
 
 #include "utlmap.h"
 
+class CTeamControlPoint;
+
 class CTeamControlPointRound
 {
 public:
@@ -85,7 +87,7 @@ public:
 	}
 
 	void debugprint ( void );
-
+	void updatePoints();
 	bool TeamCanCapPoint( int index, int team )
 	{
 		AssertValidIndex(index);
@@ -102,6 +104,8 @@ public:
 	{
 		return m_bBlocked[index];
 	}
+
+	void think ();
 
 	int getControlPointArea ( edict_t *pPoint );
 
@@ -234,6 +238,7 @@ public:
 	int m_WaypointAreaToIndexTranslation[MAX_CONTROL_POINTS+1]; // add one because 0 is always valid for waypoints
 
 	edict_t *m_pControlPoints[MAX_CONTROL_POINTS];
+	CTeamControlPoint *m_pControlPointClass[MAX_CONTROL_POINTS];
 	int m_iControlPointWpt[MAX_CONTROL_POINTS];
 	bool m_iControlPointWptReachable[MAX_CONTROL_POINTS];
 	int *m_iNumControlPoints;
@@ -261,6 +266,9 @@ public:
 	int *m_iOwner;//[8];
 	bool *m_bCPCapRateScalesWithPlayers;//[8];
 	bool *m_bPlayingMiniRounds;
+	// capindex of point being monitored to check previous points for both teams
+	int m_iMonitorPoint[2];
+	float m_fNextCheckMonitoredPoint;
 	
 	float m_fLastCaptureTime[MAX_CONTROL_POINTS];
 

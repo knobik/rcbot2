@@ -782,6 +782,8 @@ public:
 
 	void mapInit ();
 
+	void modFrame ();
+
 	bool isAreaOwnedByTeam (int iArea, int iTeam);
 
 	static void updatePointMaster ();

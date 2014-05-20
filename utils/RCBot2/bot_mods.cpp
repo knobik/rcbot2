@@ -2326,6 +2326,11 @@ void CTeamFortress2Mod :: getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *i
 
 }
 
+void CTeamFortress2Mod ::modFrame ()
+{
+	CTeamFortress2Mod::m_ObjectiveResource.think();
+}
+
 void CDODMod :: getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff )
 {
 	if ( iTeam == TEAM_ALLIES )

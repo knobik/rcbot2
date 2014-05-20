@@ -6361,6 +6361,16 @@ bool CBotFF :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 // Go back to Cap/Flag to 
 void CBotTF2 :: enemyAtIntel ( Vector vPos, int type, int iArea )
 {
+
+	if ( m_pSchedules->getCurrentSchedule() )
+	{
+		if ( m_pSchedules->getCurrentSchedule()->isID(SCHED_RETURN_TO_INTEL) )
+		{
+			// already going back to intel
+			return;
+		}
+	}
+
 	if ( CBotGlobals::entityIsValid(m_pDefendPayloadBomb) && (CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)) )
 	{
 		vPos = CBotGlobals::entityOrigin(m_pDefendPayloadBomb);
@@ -6434,7 +6444,7 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type, int iArea )
 			int iWpt = CTeamFortress2Mod::m_ObjectiveResource.getControlPointWaypoint(iArea);
 			pWpt = CWaypoints::getWaypoint(iWpt);
 
-			if ( !pWpt->checkReachable() )
+			if ( pWpt && !pWpt->checkReachable() )
 			{
 				iIgnore = iWpt;
 				// go to nearest defend waypoint
@@ -6448,7 +6458,7 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type, int iArea )
 
 		if ( pWpt )
 		{
-			CBotSchedule *newSched = new CBotGotoOriginSched(pWpt->getOrigin());
+			CBotSchedule *newSched = new CBotDefendSched(CWaypoints::getWaypointIndex(pWpt),randomFloat(1.0f,6.0f));
 			m_pSchedules->freeMemory();
 			m_pSchedules->add(newSched);
 			newSched->setID(SCHED_RETURN_TO_INTEL);

@@ -383,7 +383,7 @@ void CWaypointLocations :: FindNearestCoverWaypointInBucket ( int i, int j, int 
 	float fDist;
 	dataUnconstArray<int> *arr = &(m_iLocations[i][j][k]);
 	short int size = (short int)arr->Size();
-	CBotMod *curmod = CBotGlobals::getCurrentMod();
+	//CBotMod *curmod = CBotGlobals::getCurrentMod();
 
 	for ( int l = 0; l < size; l ++ )
 	//while ( !tempStack.IsEmpty() )
@@ -493,7 +493,7 @@ void CWaypointLocations :: FindNearestBlastInBucket ( int i, int j, int k, const
 	
 	dataUnconstArray<int> *arr = &(m_iLocations[i][j][k]);
 	short int size = (short int)arr->Size();
-	CBotMod *curmod = CBotGlobals::getCurrentMod();
+//	CBotMod *curmod = CBotGlobals::getCurrentMod();
 
 	for ( register short int l = 0; l < size; l ++ )
 	//while ( !tempStack.IsEmpty() )

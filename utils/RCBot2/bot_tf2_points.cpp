@@ -10,6 +10,19 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+void CTFObjectiveResource::updatePoints()
+{
+	m_iMonitorPoint[0] = -1;
+	m_iMonitorPoint[1] = -1;
+
+	CTeamFortress2Mod::m_ObjectiveResource.resetValidWaypointAreas();
+	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_BLUE);
+	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_RED);
+	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_BLUE);
+	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_RED);
+	CTeamFortress2Mod::m_ObjectiveResource.updateValidWaypointAreas();
+
+}
 // INPUT = Waypoint Area
 bool CTFObjectiveResource :: isWaypointAreaValid ( int wptarea ) 
 {
@@ -222,6 +235,7 @@ void CTFObjectiveResource::setup ()
 				if ( vOrigin == m_vCPPositions[j] )
 				{
 					m_pControlPoints[j] = pent;
+					m_pControlPointClass[j] = CTeamControlPoint::getPoint(pent);
 				}
 			}
 		}
@@ -252,8 +266,8 @@ void CTFObjectiveResource::setup ()
 			}
 			else
 			{
-				m_IndexToWaypointAreaTranslation[j] = j;
-				m_WaypointAreaToIndexTranslation[j] = j;
+				m_IndexToWaypointAreaTranslation[j] = 0;
+				m_WaypointAreaToIndexTranslation[j+1] = -1;
 			}
 		}
 	}
@@ -302,7 +316,7 @@ int CTFObjectiveResource::NearestArea ( Vector vOrigin )
 	return iNearest+1;
 }
 
-CTeamControlPoint *getPoint ( edict_t *pent )
+CTeamControlPoint *CTeamControlPoint::getPoint ( edict_t *pent )
 {
 	extern ConVar rcbot_const_point_offset;
 	return (CTeamControlPoint*)((((unsigned long)pent) + rcbot_const_point_offset.GetInt())); //MAP_CLASS(CTeamControlPoint,(((unsigned long)pent) + offset),knownoffset);
@@ -396,7 +410,9 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 							// Check later by checking prev points
 						}
 						else
+						{
 							arr[i].bValid = true;
+						}
 						/*
 						// other team has captured previous points
 						if ( j == 3 )
@@ -502,6 +518,43 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 
 }
 
+void CTFObjectiveResource :: think ()
+{
+	if ( m_bInitialised && ( m_fNextCheckMonitoredPoint < engine->Time() ) )
+	{
+		bool bupdate = false;
+
+		int team = 0;
+
+		do
+		{
+			if ( m_iMonitorPoint[team] != -1 )
+			{
+				for ( int j = 0; j < MAX_PREVIOUS_POINTS; j ++ )
+				{
+					int prev = GetPreviousPointForPoint(m_iMonitorPoint[team],(team+2),j);
+
+					if ( (prev != -1) && (GetOwningTeam(prev)!=(team+2)) )
+					{
+						bupdate = true;
+						break;
+					}
+				}
+			}
+			team++;
+		}while ((team < 2) && (bupdate==false));
+
+		if ( bupdate )
+		{
+			updatePoints();
+			m_fNextCheckMonitoredPoint = engine->Time() + 5.0f;
+		}
+		else
+			m_fNextCheckMonitoredPoint = engine->Time() + 1.0f;
+	}
+	
+}
+
 void CTFObjectiveResource :: updateAttackPoints ( int team )
 {	
 	int prev;
@@ -588,7 +641,11 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 							// Check later by checking prev points
 						}
 						else
+						{
 							arr[i].bValid = true;
+
+							m_iMonitorPoint[team-2] = i;
+						}
 					}
 				}
 				else

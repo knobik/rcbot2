@@ -665,12 +665,7 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	  // if all points are owned by RED at start up then its an attack defend map
 	  CTeamFortress2Mod::setAttackDefendMap(i==numpoints);
 
-	CTeamFortress2Mod::m_ObjectiveResource.resetValidWaypointAreas();
-	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_BLUE);
-	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_RED);
-	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_BLUE);
-	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_RED);
-	CTeamFortress2Mod::m_ObjectiveResource.updateValidWaypointAreas();
+	  CTeamFortress2Mod::m_ObjectiveResource.updatePoints();
 
 	  CBots::botFunction(&roundstart);
 
@@ -762,12 +757,7 @@ void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
 	//CTeamFortress2Mod::m_Resource.debugprint();
 	CTeamFortress2Mod::updatePointMaster();
 
-	CTeamFortress2Mod::m_ObjectiveResource.resetValidWaypointAreas();
-	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_BLUE);
-	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_RED);
-	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_BLUE);
-	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_RED);
-	CTeamFortress2Mod::m_ObjectiveResource.updateValidWaypointAreas();
+	CTeamFortress2Mod::m_ObjectiveResource.updatePoints();
 
     // MUST BE AFTER POINTS HAVE BEEN UPDATED!
     CBots::botFunction(&cap);
