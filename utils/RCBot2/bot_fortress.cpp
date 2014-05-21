@@ -1472,9 +1472,7 @@ void CBotTF2 :: spawnInit()
 	 
 	m_iTeam = getTeam();
 	// update current areas
-	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
-	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
-
+	updateAttackDefendPoints();
 	//CPoints::getAreas(m_iTeam,&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
 	m_fDoubleJumpTime = 0.0f;
@@ -6100,12 +6098,17 @@ void CBotTF2::roundReset(bool bFullReset)
 
 	m_iTeam = getTeam();
 	// fix : reset current areas
-	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
-	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
-
+	updateAttackDefendPoints();
 	//CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
 	//m_pPayloadBomb = NULL;
+}
+
+void CBotTF2::updateAttackDefendPoints()
+{
+	m_iTeam = getTeam();
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
 }
 
 /// TO DO : list of areas
@@ -6151,8 +6154,7 @@ void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 	}
 	m_pNavigator->clear();
 
-	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
-	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
+	updateAttackDefendPoints();
 }
 
 // Is Enemy Function

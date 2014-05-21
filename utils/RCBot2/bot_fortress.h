@@ -591,6 +591,8 @@ public:
 
 	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide  = false );
 
+	void updateAttackDefendPoints ();
+
 	// found a new enemy
 	void enemyFound (edict_t *pEnemy);
 

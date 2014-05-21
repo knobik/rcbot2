@@ -729,9 +729,15 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pBot->wantToInvestigateSound(false);
 
 	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(iCpIndex) == iTeam) )
+	{
 		complete(); // done
+		pTF2Bot->updateAttackDefendPoints();
+	}
 	else if ( m_iArea && !CTeamFortress2Mod::m_ObjectiveResource.isCPValid(iCpIndex,iTeam,TF2_POINT_ATTACK) )
+	{
 		fail(); // too slow
+		pTF2Bot->updateAttackDefendPoints();
+	}
 	else if ( m_fAttackTime == 0 )
 		m_fAttackTime = engine->Time() + randomFloat(30.0,60.0);
 	else if ( m_fAttackTime < engine->Time() )
@@ -923,10 +929,17 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	int iCpIndex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iArea];
 	int iTeam = pBot->getTeam();
 
-	//if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetCappingTeam(iCpIndex) != iTeam) )
-	//	complete(); // done
-	if ( m_iArea && !CTeamFortress2Mod::m_ObjectiveResource.isCPValid(iCpIndex,iTeam,TF2_POINT_DEFEND) )
+	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetCappingTeam(iCpIndex) != iTeam) )
+	{
+		// doesn't belong to us/can't defend anymore
+		((CBotTF2*)pBot)->updateAttackDefendPoints();
+		complete(); // done
+	}
+	else if ( m_iArea && !CTeamFortress2Mod::m_ObjectiveResource.isCPValid(iCpIndex,iTeam,TF2_POINT_DEFEND) )
+	{
+		((CBotTF2*)pBot)->updateAttackDefendPoints();
 		fail(); // too slow
+	}
 	else if ( m_fDefendTime == 0 )
 	{
 		m_fDefendTime = engine->Time() + randomFloat(30.0,60.0);

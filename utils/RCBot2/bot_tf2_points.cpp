@@ -212,6 +212,7 @@ void CTFObjectiveResource::setup ()
 
 	memset(m_pControlPoints,0,sizeof(edict_t*)*MAX_CONTROL_POINTS);
 	memset(m_iControlPointWpt,0xFF,sizeof(int)*MAX_CONTROL_POINTS);
+	memset(m_fLastCaptureTime,0,sizeof(float)*MAX_CONTROL_POINTS);
 	// Find control point entities
 
 	edict_t *pent;
