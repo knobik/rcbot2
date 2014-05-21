@@ -101,10 +101,10 @@ void CBotTF2DemoPipeEnemySched :: init()
 	setID(SCHED_TF2_DEMO_PIPEENEMY);
 }
 ///////////////////
-CBotTF2DemoPipeTrapSched :: CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate )
+CBotTF2DemoPipeTrapSched :: CBotTF2DemoPipeTrapSched ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate, int wptarea )
 {
 	addTask(new CFindPathTask(vStand));
-	addTask(new CBotTF2DemomanPipeTrap(type,vStand,vLoc,vSpread,bAutoDetonate));
+	addTask(new CBotTF2DemomanPipeTrap(type,vStand,vLoc,vSpread,bAutoDetonate,wptarea));
 }
 
 void CBotTF2DemoPipeTrapSched :: init()

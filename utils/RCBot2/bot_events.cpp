@@ -665,7 +665,8 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	  // if all points are owned by RED at start up then its an attack defend map
 	  CTeamFortress2Mod::setAttackDefendMap(i==numpoints);
 
-	  CTeamFortress2Mod::m_ObjectiveResource.updatePoints();
+	  CTeamFortress2Mod::m_ObjectiveResource.m_fUpdatePointTime = 0;
+	  CTeamFortress2Mod::m_ObjectiveResource.m_fNextCheckMonitoredPoint = engine->Time() + 0.2f;
 
 	  CBots::botFunction(&roundstart);
 
@@ -757,7 +758,9 @@ void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
 	//CTeamFortress2Mod::m_Resource.debugprint();
 	CTeamFortress2Mod::updatePointMaster();
 
-	CTeamFortress2Mod::m_ObjectiveResource.updatePoints();
+	// update points
+	CTeamFortress2Mod::m_ObjectiveResource.m_fUpdatePointTime = 0;
+	CTeamFortress2Mod::m_ObjectiveResource.m_fNextCheckMonitoredPoint = engine->Time() + 0.2f;
 
     // MUST BE AFTER POINTS HAVE BEEN UPDATED!
     CBots::botFunction(&cap);

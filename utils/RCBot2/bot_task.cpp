@@ -1309,7 +1309,11 @@ void CBotTaskEngiPickupBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		if ( CBotGlobals::yawAngleFromEdict(pBot->getEdict(),CBotGlobals::entityOrigin(m_pBuilding)) < 25 )
 		{	
-			pBot->secondaryAttack();
+			if ( randomInt(0,1) )
+				pBot->secondaryAttack();
+			else
+				pBot->letGoOfButton(IN_ATTACK2);
+
 			((CBotTF2*)pBot)->resetCarryTime();
 		}
 	}
@@ -1373,7 +1377,8 @@ void CBotTaskEngiPlaceBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	
 	if ( pBot->hasEnemy() )
 	{
-		pBot->primaryAttack();
+		if ( randomInt(0,1) )
+			pBot->primaryAttack();
 	}
 }
 void CBotTaskEngiPlaceBuilding :: debugString ( char *string )
@@ -2658,9 +2663,9 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( pBot->distanceFrom(pBuilding) > 200 )
 			fail();
 		else if ( pBot->distanceFrom(pBuilding) > 100 )
-			pBot->setMoveTo((CBotGlobals::entityOrigin(pBuilding)));
+			pBot->setMoveTo(CBotGlobals::entityOrigin(pBuilding));
 		
-		pBot->setLookAtTask((LOOK_EDICT));
+		pBot->setLookAtTask(LOOK_EDICT);
 		pBot->lookAtEdict(pBuilding);
 	}
 	else
@@ -3840,7 +3845,7 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 
 //////////////////////////////////////////
-CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate)
+CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate, int wptarea )
 {
 	m_vPoint = vLoc;
 	m_vLocation = vLoc;
@@ -3851,6 +3856,7 @@ CBotTF2DemomanPipeTrap :: CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vS
 	m_vStand = vStand;
 	m_fTime = 0.0f;
 	m_bAutoDetonate = bAutoDetonate;
+	m_iWptArea = wptarea;
 }
 	
 void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
@@ -3869,7 +3875,7 @@ void CBotTF2DemomanPipeTrap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 	}
 	
-	if ( pTF2Bot->deployStickies(m_iTrapType,m_vStand,m_vLocation,m_vSpread,&m_vPoint,&m_iState,&m_iStickies,&bFail,&m_fTime) )
+	if ( pTF2Bot->deployStickies(m_iTrapType,m_vStand,m_vLocation,m_vSpread,&m_vPoint,&m_iState,&m_iStickies,&bFail,&m_fTime,m_iWptArea) )
 	{
 		complete();
 

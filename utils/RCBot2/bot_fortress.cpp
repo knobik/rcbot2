@@ -1445,6 +1445,7 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	m_iTrapCPIndex = -1;
 	m_pHealer = NULL;
 
 	m_fCarryTime = 0.0f;
@@ -4251,9 +4252,10 @@ bool CBotTF2 :: canDeployStickies ()
 #define STICKY_SELECTWEAP	1
 #define STICKY_RELOAD		2
 #define STICKY_FACEVECTOR   3
+#define IN_RANGE(x,low,high) ((x>low)&&(x<high))
 
 // returns true when finished
-bool CBotTF2 ::deployStickies(eDemoTrapType type, Vector vStand, Vector vLocation, Vector vSpread, Vector *vPoint, int *iState,int *iStickyNum, bool *bFail, float *fTime)
+bool CBotTF2 ::deployStickies(eDemoTrapType type, Vector vStand, Vector vLocation, Vector vSpread, Vector *vPoint, int *iState,int *iStickyNum, bool *bFail, float *fTime, int wptindex )
 {
 	CBotWeapon *pWeapon = m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS));
 	int iPipesLeft = 0;
@@ -4307,6 +4309,10 @@ bool CBotTF2 ::deployStickies(eDemoTrapType type, Vector vStand, Vector vLocatio
 		if ( (*iStickyNum == 0) || (iPipesLeft==0)  )
 		{
 			m_iTrapType = type;
+			if ( IN_RANGE(wptindex,1,MAX_CONTROL_POINTS+1) )
+				m_iTrapCPIndex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[wptindex];
+			else
+				m_iTrapCPIndex = -1;
 			m_vStickyLocation = vLocation;
 		}
 	}
@@ -4321,6 +4327,7 @@ void CBotTF2::detonateStickies(bool isJumping)
 	{
 		secondaryAttack();
 		m_iTrapType = TF_TRAP_TYPE_NONE;
+		m_iTrapCPIndex = -1;
 	}
 }
 
@@ -5227,7 +5234,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 						if ( pWaypoint )
 						{
-							m_pSchedules->add(new CBotTF2DemoPipeTrapSched(iDemoTrapType,vStand,vPoint,Vector(150,150,20)));
+							m_pSchedules->add(new CBotTF2DemoPipeTrapSched(iDemoTrapType,vStand,vPoint,Vector(150,150,20),false,pWaypoint->getArea()));
 							return true;
 						}
 					}
@@ -6381,7 +6388,8 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type, int iArea )
 
 	if ( ( m_iClass == TF_CLASS_DEMOMAN ) && ( m_iTrapType != TF_TRAP_TYPE_NONE ) && ( m_iTrapType != TF_TRAP_TYPE_WPT ) )
 	{
-		detonateStickies();
+		if ( ( m_iTrapType != TF_TRAP_TYPE_POINT ) || (iArea == m_iTrapCPIndex) )
+			detonateStickies();
 	}
 
 	m_fRevMiniGunTime = engine->Time()-m_fNextRevMiniGunTime;

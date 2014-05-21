@@ -272,6 +272,8 @@ public:
 	
 	float m_fLastCaptureTime[MAX_CONTROL_POINTS];
 
+	float m_fUpdatePointTime;
+
 	private:
 	bool m_bInitialised;
 	//bool *m_b

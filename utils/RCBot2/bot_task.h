@@ -324,7 +324,7 @@ public:
 	// Set up a pipe trap or fire pipe bombs -- 
 	// if autodetonate, detonate them when I've shot them rather than wait for an enemy
 	// such as when attacking a sentry
-	CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate = false );
+	CBotTF2DemomanPipeTrap ( eDemoTrapType type, Vector vStand, Vector vLoc, Vector vSpread, bool bAutoDetonate = false, int m_iWptArea = -1 );
 	
 	void execute (CBot *pBot,CBotSchedule *pSchedule);
 
@@ -342,6 +342,7 @@ private:
 	int m_iState;
 	int m_iStickies;
 	bool m_bAutoDetonate;
+	int m_iWptArea;
 
 };
 

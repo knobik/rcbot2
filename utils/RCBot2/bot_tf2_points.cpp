@@ -530,7 +530,7 @@ void CTFObjectiveResource :: think ()
 {
 	if ( m_bInitialised && ( m_fNextCheckMonitoredPoint < engine->Time() ) )
 	{
-		bool bupdate = false;
+		bool bupdate = (m_fUpdatePointTime < engine->Time());
 
 		int team = 0;
 
@@ -556,6 +556,7 @@ void CTFObjectiveResource :: think ()
 		{
 			updatePoints();
 			m_fNextCheckMonitoredPoint = engine->Time() + 5.0f;
+			m_fUpdatePointTime = engine->Time() + 60.0f;
 		}
 		else
 			m_fNextCheckMonitoredPoint = engine->Time() + 1.0f;

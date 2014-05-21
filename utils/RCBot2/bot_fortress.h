@@ -706,7 +706,7 @@ public:
 	void sapperDestroyed ( edict_t *pSapper );
 	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
 
-	bool deployStickies ( eDemoTrapType type, Vector vStand, Vector vLocation, Vector vSpread, Vector *vPoint, int *iState, int *iStickyNum, bool *bFail, float *fTime );
+	bool deployStickies ( eDemoTrapType type, Vector vStand, Vector vLocation, Vector vSpread, Vector *vPoint, int *iState, int *iStickyNum, bool *bFail, float *fTime, int wptindex );
 
 	void detonateStickies (bool isJumping = false);
 
@@ -776,6 +776,7 @@ private:
 	// and it can deploy stickies again
 	//bool m_bDeployedStickies;
 	eDemoTrapType m_iTrapType;
+	int m_iTrapCPIndex;
 	Vector m_vStickyLocation;
 	float m_fRemoveSapTime;
 	float m_fRevMiniGunTime;
