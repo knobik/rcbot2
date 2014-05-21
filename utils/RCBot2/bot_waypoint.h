@@ -408,6 +408,8 @@ public:
 		return ((int)pWpt - (int)m_theWaypoints)/sizeof(CWaypoint);
 	}
 
+	static void shiftVisibleAreas ( edict_t *pPlayer, int from, int to );
+
 	static void drawWaypoints ( CClient *pClient );
 
 	static int addWaypoint ( CClient *pClient, const char *type1, const char *type2,const char *type3,const char *type4, bool bUseTemplate = false );

@@ -353,6 +353,14 @@ bool operator<( const AStarNode * A, const AStarNode * B )
 
 #define WPT_SEARCH_AVOID_SENTRIES 1
 
+typedef struct
+{
+	short int iFrom;
+	short int iTo;
+	bool bValid;
+	bool bSkipped;
+}failedpath_t;
+
 class CWaypointNavigator : public IBotNavigator
 {
 public:
@@ -365,6 +373,7 @@ public:
 		m_iBeliefTeam = -1;
 		m_bLoadBelief = true;
 		m_bBeliefChanged = false;
+		memset(&m_lastFailedPath,0,sizeof(failedpath_t));
 	}
 
 	void init ();
@@ -461,9 +470,12 @@ private:
 
 	//int m_iPrevWaypoint;
 	int m_iCurrentWaypoint;
+	int m_iPrevWaypoint;
 	int m_iNextWaypoint;
 	int m_iGoalWaypoint;
 	bool m_bWorkingRoute;
+
+	failedpath_t m_lastFailedPath;
 
 	dataStack<int> m_currentRoute;
 	queue<int> m_oldRoute;

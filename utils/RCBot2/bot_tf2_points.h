@@ -60,6 +60,8 @@ public:
 	{
 		memset(this,0,sizeof(CTFObjectiveResource));
 		memset(m_iControlPointWpt,0xFF,sizeof(int)*MAX_CONTROL_POINTS);
+		m_iMonitorPoint[0] = -1;
+		m_iMonitorPoint[1] = -1;
 	}
 
 	inline void resetValidWaypointAreas() 

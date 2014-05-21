@@ -367,7 +367,18 @@ eBotCommandResult CWaypointShiftAreas :: execute ( CClient *pClient, const char 
 		if ( pcmd && *pcmd )
 			val = atoi(pcmd);
 
-		CWaypoints::shiftAreas(val);
+		if ( arg1 && *arg1 )
+		{
+			int newarea = atoi(arg1);
+
+			if ( pClient )
+			{
+				// change area val to newarea
+				CWaypoints::shiftVisibleAreas(pClient->getPlayer(),val,newarea);
+			}
+		}
+		else
+			CWaypoints::shiftAreas(val);
 
 		return COMMAND_ACCESSED;
 	}

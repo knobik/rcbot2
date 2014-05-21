@@ -400,7 +400,10 @@ public:
 	inline void flagReset () { m_fLastKnownFlagTime = 0.0f; }
 	inline void teamFlagReset () { m_fLastKnownTeamFlagTime = 0.0f; }
 
-	bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev = NULL );
+	virtual bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev = NULL )
+	{
+		return CBot::canGotoWaypoint(vPrevWaypoint,pWaypoint,pPrev);
+	}
 
 	virtual void setup ();
 
@@ -706,7 +709,8 @@ public:
 	void buildingSapped ( eEngiBuild building, edict_t *pSapper, edict_t *pSpy );
 
 	void sapperDestroyed ( edict_t *pSapper );
-	//bool canGotoWaypoint ( CWaypoint *pWaypoint );
+	
+	bool canGotoWaypoint ( Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev = NULL );
 
 	bool deployStickies ( eDemoTrapType type, Vector vStand, Vector vLocation, Vector vSpread, Vector *vPoint, int *iState, int *iStickyNum, bool *bFail, float *fTime, int wptindex );
 

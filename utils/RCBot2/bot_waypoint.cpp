@@ -94,6 +94,7 @@ void CWaypointNavigator :: init ()
 		m_oldRoute.pop();
 
 	m_iLastFailedWpt = -1;
+	m_iPrevWaypoint = -1;
 	m_bWorkingRoute = false;
 
 	Q_memset(m_fBelief,0,sizeof(float)*CWaypoints::MAX_WAYPOINTS);
@@ -746,6 +747,11 @@ void CWaypointNavigator :: failMove ()
 {
 	m_iLastFailedWpt = m_iCurrentWaypoint;
 
+	m_lastFailedPath.bValid = true;
+	m_lastFailedPath.iFrom = m_iPrevWaypoint;
+	m_lastFailedPath.iTo = m_iCurrentWaypoint;
+	m_lastFailedPath.bSkipped = false;
+
 	if ( !m_iFailedGoals.IsMember(m_iGoalWaypoint) )
 	{
 		m_iFailedGoals.Add(m_iGoalWaypoint);
@@ -933,6 +939,18 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 				continue;
 			if ( iSucc == iCurrentNode ) // argh?
 				continue;			
+			if ( m_lastFailedPath.bValid )
+			{
+				if ( m_lastFailedPath.iFrom == iCurrentNode ) 
+				{
+					// failed this path last time
+					if ( m_lastFailedPath.iTo == iSucc )
+					{
+						m_lastFailedPath.bSkipped = true;
+						continue;
+					}
+				}
+			}
 
 			succ = &paths[iSucc];
 			succWpt = CWaypoints::getWaypoint(iSucc);
@@ -1044,6 +1062,10 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 	if ( !bFoundGoal )
 	{
 		*bFail = true;
+
+		//no other path
+		if ( m_lastFailedPath.bSkipped )
+			m_lastFailedPath.bValid = false;
 
 		if ( !m_iFailedGoals.IsMember(m_iGoalWaypoint) )
 		{
@@ -1254,6 +1276,7 @@ void CWaypointNavigator :: updatePosition ()
 			if ( m_currentRoute.IsEmpty() ) // reached goal!!
 			{
 				m_vPreviousPoint = m_pBot->getOrigin();
+				m_iPrevWaypoint = m_iCurrentWaypoint;
 				m_iCurrentWaypoint = -1;
 
 				if ( m_pBot->getSchedule()->isCurrentSchedule(SCHED_RUN_FOR_COVER) ||
@@ -1265,6 +1288,7 @@ void CWaypointNavigator :: updatePosition ()
 				iWaypointFlagsPrev = CWaypoints::getWaypoint(m_iCurrentWaypoint)->getFlags();
 
 				m_vPreviousPoint = m_pBot->getOrigin();
+				m_iPrevWaypoint = m_iCurrentWaypoint;
 				m_iCurrentWaypoint = m_currentRoute.Pop();
 
 				// fix : update pWaypoint as Current Waypoint
@@ -2034,6 +2058,25 @@ void CWaypoints :: deleteWaypoint ( int iIndex )
 
 	// delete any paths pointing to this waypoint
 	deletePathsTo(iIndex);
+}
+
+void CWaypoints :: shiftVisibleAreas ( edict_t *pPlayer, int from, int to )
+{
+	for ( int i = 0; i < m_iNumWaypoints; i ++ )
+	{
+		CWaypoint *pWpt = &(m_theWaypoints[i]);
+
+		if ( !pWpt->isUsed() )
+			continue;
+
+		if ( pWpt->getArea() == from )
+		{
+			CBotGlobals::quickTraceline(pPlayer,CBotGlobals::entityOrigin(pPlayer),pWpt->getOrigin());
+
+			if ( (CBotGlobals::getTraceResult()->fraction >= 1.0f)  )
+				pWpt->setArea(to);	
+		}
+	}
 }
 
 void CWaypoints :: shiftAreas (int val)

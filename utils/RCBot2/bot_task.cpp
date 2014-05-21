@@ -1009,9 +1009,9 @@ void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		if ( pBot->distanceFrom(m_pBuilding) > 200 )
 			fail();
 		else if ( pBot->distanceFrom(m_pBuilding) > 100 )
-			pBot->setMoveTo((CBotGlobals::entityOrigin(m_pBuilding)));
+			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding));
 		
-		pBot->setLookAtTask((LOOK_EDICT));
+		pBot->setLookAtTask(LOOK_EDICT);
 		pBot->lookAtEdict(m_pBuilding);
 	}
 	else if ( CBotGlobals::entityIsValid(m_pBuilding) && CBotGlobals::entityIsAlive(m_pBuilding) )
@@ -3954,10 +3954,11 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
 		bool ok = true;
 
+		pBot->setLookVector(origin);
+		pBot->setLookAtTask((LOOK_VECTOR));
+
 		if ( !pBot->FInViewCone(m_pFriendly) )
 		{
-			pBot->setLookVector(origin);
-			pBot->setLookAtTask((LOOK_VECTOR));
 			ok = false;
 		}
 
@@ -3970,7 +3971,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		if ( ok )
 		{
 			if ( pBot->isTF2() )
-				((CBotTF2*)pBot)->taunt();
+				((CBotTF2*)pBot)->taunt(true);
 			//else if ( pBot->isDOD() )
 			//	((CDODBot*)pBot)->taunt(); pBot->impulse(100);
 		}

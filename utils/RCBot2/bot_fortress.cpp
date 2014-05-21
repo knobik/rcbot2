@@ -2114,7 +2114,7 @@ void CBotFortress :: callMedic ()
 	helpers->ClientCommand (m_pEdict,"saveme");
 }
 
-bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev)
+bool CBotTF2 :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint, CWaypoint *pPrev)
 {
 	static edict_t *pSentry;
 
@@ -2187,27 +2187,102 @@ bool CBotFortress :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint
 
 		if ( ( m_iClass == TF_CLASS_ENGINEER ) && ( pSentry != NULL ) )
 		{
-			Vector vMax = pSentry->GetCollideable()->OBBMaxs();
-			Vector vMin = pSentry->GetCollideable()->OBBMins();
-			Vector vSentry = (vMax + vMin)*0.5f;
-			Vector vSentryComp = vSentry - vPrevWaypoint;
+				Vector vWaypoint = pWaypoint->getOrigin();
+				Vector vWptMin = vWaypoint.Min(vPrevWaypoint) - Vector(32,32,32);
+				Vector vWptMax = vWaypoint.Max(vPrevWaypoint) + Vector(32,32,32);
 
-			float fSentryDist = vSentryComp.Length();
-			float fWaypointDist = pWaypoint->distanceFrom(vPrevWaypoint);
+				Vector vSentry = CBotGlobals::entityOrigin(pSentry);
+				Vector vMax = vSentry+pSentry->GetCollideable()->OBBMaxs();
+				Vector vMin = vSentry+pSentry->GetCollideable()->OBBMins();
 
-			if ( fSentryDist < fWaypointDist )
-			{
-				Vector vComp = pWaypoint->getOrigin() - vPrevWaypoint;
+				if ( vSentry.WithinAABox(vWptMin,vWptMax) )
+				{
+					Vector vSentryComp = vSentry - vPrevWaypoint;
+
+					float fSentryDist = vSentryComp.Length();
+					//float fWaypointDist = pWaypoint->distanceFrom(vPrevWaypoint);
+
+					//if ( fSentryDist < fWaypointDist )
+					//{
+						Vector vComp = pWaypoint->getOrigin() - vPrevWaypoint;
 			
-				vComp = vPrevWaypoint + ((vComp / vComp.Length()) * fSentryDist);
+						vComp = vPrevWaypoint + ((vComp / vComp.Length()) * fSentryDist);
 
-				// Path goes through sentry -- can't walk through here
-				if ( vComp.WithinAABox(vMin,vMax) )
-					return false;
-			}
+						// Path goes through sentry -- can't walk through here
+						if ( vComp.WithinAABox(vMin,vMax) )
+							return false;
+					//}
+				}
 
 			// check if waypoint goes through sentry (can't walk through)
 						
+		}
+
+		if ( CTeamFortress2Mod::isMapType(TF_MAP_CART) || CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
+		{
+			if ( m_pRedPayloadBomb.get() != NULL )
+			{
+				edict_t *pSentry = m_pRedPayloadBomb.get();
+				// check path doesn't go through pay load bomb
+
+				Vector vWaypoint = pWaypoint->getOrigin();
+				Vector vWptMin = vWaypoint.Min(vPrevWaypoint) - Vector(32,32,32);
+				Vector vWptMax = vWaypoint.Max(vPrevWaypoint) + Vector(32,32,32);
+
+				Vector vSentry = CBotGlobals::entityOrigin(pSentry);
+				Vector vMax = vSentry+Vector(32,32,32);
+				Vector vMin = vSentry-Vector(32,32,32);
+
+				if ( vSentry.WithinAABox(vWptMin,vWptMax) )
+				{
+					Vector vSentryComp = vSentry - vPrevWaypoint;
+
+					float fSentryDist = vSentryComp.Length();
+					//float fWaypointDist = pWaypoint->distanceFrom(vPrevWaypoint);
+
+					//if ( fSentryDist < fWaypointDist )
+					//{
+						Vector vComp = pWaypoint->getOrigin() - vPrevWaypoint;
+			
+						vComp = vPrevWaypoint + ((vComp / vComp.Length()) * fSentryDist);
+
+						// Path goes through sentry -- can't walk through here
+						if ( vComp.WithinAABox(vMin,vMax) )
+							return false;
+					//}
+				}
+			}
+
+			if ( m_pBluePayloadBomb.get() != NULL )
+			{
+				edict_t *pSentry = m_pBluePayloadBomb.get();
+				Vector vWaypoint = pWaypoint->getOrigin();
+				Vector vWptMin = vWaypoint.Min(vPrevWaypoint) - Vector(32,32,32);
+				Vector vWptMax = vWaypoint.Max(vPrevWaypoint) + Vector(32,32,32);
+
+				Vector vSentry = CBotGlobals::entityOrigin(pSentry);
+				Vector vMax = vSentry+Vector(32,32,32);
+				Vector vMin = vSentry-Vector(32,32,32);
+
+				if ( vSentry.WithinAABox(vWptMin,vWptMax) )
+				{
+					Vector vSentryComp = vSentry - vPrevWaypoint;
+
+					float fSentryDist = vSentryComp.Length();
+					//float fWaypointDist = pWaypoint->distanceFrom(vPrevWaypoint);
+
+					//if ( fSentryDist < fWaypointDist )
+					//{
+						Vector vComp = pWaypoint->getOrigin() - vPrevWaypoint;
+			
+						vComp = vPrevWaypoint + ((vComp / vComp.Length()) * fSentryDist);
+
+						// Path goes through sentry -- can't walk through here
+						if ( vComp.WithinAABox(vMin,vMax) )
+							return false;
+					//}
+				}
+			}
 		}
 
 		return true;

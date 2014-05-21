@@ -341,6 +341,7 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 	
 	int other;
 	int prev;
+	bool isPayLoadMap = CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE);
 	TF2PointProb_t *arr;
 
 	//CTeamControlPoint *pPoint;
@@ -523,6 +524,19 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 				arr[i].fProb = 0.1f;
 			}
 		}		
+	}
+
+	// In Payload give lower numbers higher priority 
+	if ( isPayLoadMap )
+	{
+		for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+		{
+			if ( arr[i].bValid )
+			{
+				arr[i].fProb = (float)(*m_iNumControlPoints+1-i);
+				arr[i].fProb *= arr[i].fProb; // square it
+			}
+		}
 	}
 
 }
@@ -760,6 +774,19 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 				arr[i].fProb = 0.1f;
 			}
 		}		
+	}
+
+	// In Payload give lower numbers higher priority 
+	if ( CTeamFortress2Mod::isMapType(TF_MAP_CART) || CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
+	{
+		for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+		{
+			if ( arr[i].bValid )
+			{
+				arr[i].fProb = (float)(*m_iNumControlPoints+1-i);
+				arr[i].fProb *= arr[i].fProb; // square it
+			}
+		}
 	}
 
 }
