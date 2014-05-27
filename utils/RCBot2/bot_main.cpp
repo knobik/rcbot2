@@ -187,6 +187,7 @@ ConVar rcbot_tooltips("rcbot_tooltips","1",0,"Enables/disables help tooltips");
 ConVar rcbot_debug_notasks("rcbot_debug_notasks","0",0,"Debug command, stops bots from doing tasks by themselves");
 ConVar rcbot_debug_dont_shoot("rcbot_debug_dont_shoot","0",0,"Debug command, stops bots from shooting everyone");
 ConVar rcbot_debug_show_route("rcbot_debug_show_route","0",0,"Debug command, shows waypoint route to host");
+ConVar rcbot_dod_investigatepath_dp("rcbot_dod_investigatepath_dp","0.4",0,"Dot product of bots investigation");
 //ConVar rcbot_util_learning("rcbot_util_learning","0",0,"Experimental");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");

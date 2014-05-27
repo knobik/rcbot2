@@ -442,7 +442,7 @@ public:
 	static CWaypoint *getNextCoverPoint ( CBot *pBot, CWaypoint *pCurrent, CWaypoint *pBlocking );
 
 	// save waypoints
-	static bool save ( bool bVisiblityMade, edict_t *pPlayer = NULL );
+	static bool save ( bool bVisiblityMade, edict_t *pPlayer = NULL, const char *pszAuthor = NULL, const char *pszModifier = NULL );
 	// load waypoints
 	static bool load (const char *szMapName = NULL);
 

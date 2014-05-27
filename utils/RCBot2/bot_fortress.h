@@ -278,7 +278,7 @@ public:
 		CBot::modAim(pEntity,v_origin,v_desired_offset,v_size,fDist,fDist2D);
 	}
 
-	virtual void touchedWpt ( CWaypoint *pWaypoint ) { CBot::touchedWpt(pWaypoint); }
+	virtual void touchedWpt ( CWaypoint *pWaypoint, int iNextWaypoint = -1, int iPrevWaypoint = -1 ) { CBot::touchedWpt(pWaypoint); }
 
 	inline edict_t *getHealingEntity () { return m_pHeal; }
 
@@ -627,7 +627,7 @@ public:
 
 	void foundSpy (edict_t *pEdict, TF_Class iDisguise);
 
-	void touchedWpt ( CWaypoint *pWaypoint );
+	void touchedWpt ( CWaypoint *pWaypoint, int iNextWaypoint = -1, int iPrevWaypoint = -1 );
 
 	bool handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy );
 

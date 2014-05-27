@@ -64,29 +64,10 @@ public:
 		m_iMonitorPoint[1] = -1;
 	}
 
-	inline void resetValidWaypointAreas() 
-	{ 
-		memset(m_ValidAreas,0,sizeof(bool)*MAX_CONTROL_POINTS); 
-	}
 
 	bool isWaypointAreaValid ( int wptarea, int waypointflags = 0 );
 
-	void updateValidWaypointAreas ( void )
-	{
-		resetValidWaypointAreas();
 
-		for ( int i = 0; i < 2; i ++ )
-		{
-			for ( int j = 0; j < 2; j ++ )
-			{
-				for ( int k = 0; k < MAX_CONTROL_POINTS; k ++ )
-				{
-					// OR
-					m_ValidAreas[k] = (m_ValidAreas[k] || m_ValidPoints[i][j][k].bValid);
-				}
-			}
-		}
-	}
 
 	void debugprint ( void );
 	void updatePoints();
@@ -217,8 +198,6 @@ public:
 	bool isCPValidWptArea ( int iWptArea, int iTeam, ePointAttackDefend_s type);
 	bool isCPValid ( int iCPIndex, int iTeam, ePointAttackDefend_s type);
 
-	void updateAttackPoints ( int team );
-	void updateDefendPoints ( int team );
 
 	// Mini-rounds data
 	bool PlayingMiniRounds( void ){ return *m_bPlayingMiniRounds; }
@@ -278,6 +257,31 @@ public:
 
 	private:
 	bool m_bInitialised;
+
+
+	void updateAttackPoints ( int team );
+	void updateDefendPoints ( int team );
+
+	inline void resetValidWaypointAreas() 
+	{ 
+		memset(m_ValidAreas,0,sizeof(bool)*MAX_CONTROL_POINTS); 
+	}
+	void updateValidWaypointAreas ( void )
+	{
+		resetValidWaypointAreas();
+
+		for ( int i = 0; i < 2; i ++ )
+		{
+			for ( int j = 0; j < 2; j ++ )
+			{
+				for ( int k = 0; k < MAX_CONTROL_POINTS; k ++ )
+				{
+					// OR
+					m_ValidAreas[k] = (m_ValidAreas[k] || m_ValidPoints[i][j][k].bValid);
+				}
+			}
+		}
+	}
 	//bool *m_b
 };
 

@@ -1270,11 +1270,13 @@ void CWaypointNavigator :: updatePosition ()
 
 			m_bDangerPoint = false;
 
-			// fix: bots jumping at wrong positions
-			m_pBot->touchedWpt(pWaypoint);
 
 			if ( m_currentRoute.IsEmpty() ) // reached goal!!
 			{
+				// fix: bots jumping at wrong positions
+				m_pBot->touchedWpt(pWaypoint,-1);
+
+
 				m_vPreviousPoint = m_pBot->getOrigin();
 				m_iPrevWaypoint = m_iCurrentWaypoint;
 				m_iCurrentWaypoint = -1;
@@ -1286,10 +1288,14 @@ void CWaypointNavigator :: updatePosition ()
 			else
 			{
 				iWaypointFlagsPrev = CWaypoints::getWaypoint(m_iCurrentWaypoint)->getFlags();
-
+				int iPrevWpt = m_iPrevWaypoint;
 				m_vPreviousPoint = m_pBot->getOrigin();
 				m_iPrevWaypoint = m_iCurrentWaypoint;
 				m_iCurrentWaypoint = m_currentRoute.Pop();
+
+				// fix: bots jumping at wrong positions
+				m_pBot->touchedWpt(pWaypoint,m_iCurrentWaypoint,iPrevWpt);
+
 
 				// fix : update pWaypoint as Current Waypoint
 				pWaypoint = CWaypoints::getWaypoint(m_iCurrentWaypoint);
@@ -1475,6 +1481,8 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 
 	QAngle qAim;
 	Vector vAim;
+
+	CBotMod *pCurrentMod = CBotGlobals::getCurrentMod();
 	
 	WptColor colour = CWaypointTypes::getColour(m_iFlags);
 
@@ -1535,7 +1543,7 @@ void CWaypoint :: draw ( edict_t *pEdict, bool bDrawPaths, unsigned short int iD
 #ifndef __linux__
 				if ( m_iFlags )
 				{
-					if ( CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iArea,m_iFlags) )
+					if ( pCurrentMod->isWaypointAreaValid(m_iArea,m_iFlags) )
 						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+4.0f),0,1,255,255,255,255,"%d",m_iArea);	
 					else
 						debugoverlay->AddTextOverlayRGB(m_vOrigin + Vector(0,0,fHeight+4.0f),0,1,255,0,0,255,"%d",m_iArea);
@@ -1654,7 +1662,7 @@ void CWaypoints :: updateWaypointPairs ( vector<edict_wpt_pair_t> *pPairs, int i
 /////////////////////////////////////////////////////////////////////////////////////
 // save waypoints (visibilitymade saves having to work out visibility again)
 // pPlayer is the person who called the command to save, NULL if automatic
-bool CWaypoints :: save ( bool bVisiblityMade, edict_t *pPlayer )
+bool CWaypoints :: save ( bool bVisiblityMade, edict_t *pPlayer, const char *pszAuthor, const char *pszModifier )
 {
 	char filename[1024];
 	char szAuthorName[32];
@@ -1684,13 +1692,20 @@ bool CWaypoints :: save ( bool bVisiblityMade, edict_t *pPlayer )
 	header.iFlags = flags;
 	header.iNumWaypoints = iSize;
 	header.iVersion = WAYPOINT_VERSION;
+	if ( pszAuthor != NULL )
+		strncpy(authorinfo.szAuthor,pszAuthor,31);
+	else
+		strncpy(authorinfo.szAuthor,CWaypoints::getAuthor(),31);
 
-	strncpy(authorinfo.szAuthor,CWaypoints::getAuthor(),31);
+	if ( pszModifier != NULL )
+		strncpy(authorinfo.szModifiedBy,pszModifier,31);
+	else
+		strncpy(authorinfo.szModifiedBy,CWaypoints::getModifier(),31);
+
 	authorinfo.szAuthor[31] = 0;
-	strncpy(authorinfo.szModifiedBy,CWaypoints::getModifier(),31);
 	authorinfo.szModifiedBy[31] = 0;
 
-	if ( !bVisiblityMade )
+	if ( !bVisiblityMade && (pszAuthor==NULL) && (pszModifier==NULL) )
 	{
 		strcpy(szAuthorName,"(unknown)");
 

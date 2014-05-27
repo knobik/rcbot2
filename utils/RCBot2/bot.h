@@ -806,7 +806,7 @@ public:
 
 	virtual void checkCanPickup ( edict_t *pPickup );
 
-	virtual void touchedWpt ( CWaypoint *pWaypoint );
+	virtual void touchedWpt ( CWaypoint *pWaypoint, int iNextWaypoint = -1, int iPrevWaypoint = -1 );
 
 	inline void setAiming ( Vector aiming ) { m_vWaypointAim = aiming; }
 

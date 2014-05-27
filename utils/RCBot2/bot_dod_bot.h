@@ -194,7 +194,7 @@ public:
 
 	void reachedCoverSpot (int flags);
 
-	void touchedWpt ( CWaypoint *pWaypoint );
+	void touchedWpt ( CWaypoint *pWaypoint, int iNextWaypoint = -1, int iPrevWaypoint = -1 );
 
 	bool checkStuck ();
 

@@ -1476,7 +1476,7 @@ float CBot :: getEnemyFactor ( edict_t *pEnemy )
 	return distanceFrom(pEnemy);
 }
 
-void CBot :: touchedWpt ( CWaypoint *pWaypoint )
+void CBot :: touchedWpt ( CWaypoint *pWaypoint, int iNextWaypoint, int iPrevWaypoint )
 {
 	resetTouchDistance(48.0f);
 

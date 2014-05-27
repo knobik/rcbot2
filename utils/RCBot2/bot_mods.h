@@ -127,6 +127,8 @@ public:
 
 	virtual void freeMemory() {};
 
+	virtual bool isWaypointAreaValid ( int iWptArea, int iWptFlags ) { return true; }
+
 	virtual void getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff )
 	{
 		*iOn = 0;
@@ -138,6 +140,7 @@ private:
 	char *m_szSteamFolder;
 	eModId m_iModId;
 	eBotType m_iBotType;
+protected:
 	bool m_bPlayerHasSpawned;
 };
 
@@ -811,6 +814,8 @@ public:
 	static bool isPayloadBomb ( edict_t *pEntity, int iTeam );
 
 	static int getTeleporterWaypoint ( edict_t *pTele );
+
+	bool isWaypointAreaValid ( int iWptArea, int iWptFlags );
 
 	static bool isHealthKit ( edict_t *pEntity );
 

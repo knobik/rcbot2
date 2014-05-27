@@ -5632,7 +5632,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 		return false;
 }
 
-void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint )
+void CBotTF2 :: touchedWpt ( CWaypoint *pWaypoint , int iNextWaypoint, int iPrevWaypoint )
 {
 	static int wptindex;
 

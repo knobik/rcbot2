@@ -87,6 +87,7 @@ const char *szSchedules[SCHED_MAX+1] =
 	"SCHED_DEPLOY_MACHINE_GUN",
 	"SCHED_ATTACK_SENTRY_GUN",
 	"SCHED_RETURN_TO_INTEL",
+	"SCHED_INVESTIGATE_HIDE",
 	"SCHED_MAX"
 };
 ////////////////////// unused

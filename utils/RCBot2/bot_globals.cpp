@@ -407,6 +407,7 @@ float CBotGlobals :: DotProductFromOrigin ( edict_t *pEnemy, Vector pOrigin )
 	return flDot; 
 }
 
+
 bool CBotGlobals :: traceVisible (edict_t *pEnt)
 {
 	return (m_TraceResult.fraction >= 1.0)||(m_TraceResult.m_pEnt && pEnt && (m_TraceResult.m_pEnt==pEnt->GetUnknown()->GetBaseEntity()));

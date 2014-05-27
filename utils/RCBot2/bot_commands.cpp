@@ -1400,7 +1400,7 @@ eBotCommandResult CWaypointInfoCommand :: execute ( CClient *pClient, const char
 
 eBotCommandResult CWaypointSaveCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
-	if ( CWaypoints::save(false,(pClient!=NULL)?pClient->getPlayer():NULL) )
+	if ( CWaypoints::save(false,(pClient!=NULL)?pClient->getPlayer():NULL,((pcmd!=NULL) && (*pcmd!=0))?pcmd:NULL,((arg1!=NULL) && (*arg1!=0))?arg1:NULL) )
 	{
 		CBotGlobals::botMessage(NULL,0,"waypoints saved");
 		pClient->giveMessage("Waypoints Saved");

@@ -29,6 +29,7 @@
  *
  */
 #include "bot.h"
+#include "ndebugoverlay.h"
 #include "bot_squads.h"
 #include "bot_dod_bot.h"
 #include "in_buttons.h"
@@ -823,7 +824,7 @@ void CDODBot :: handleWeapons ()
 	}
 }
 
-void CDODBot :: touchedWpt ( CWaypoint *pWaypoint )
+void CDODBot :: touchedWpt ( CWaypoint *pWaypoint, int iNextWaypoint, int iPrevWaypoint )
 {
 	static int wptindex;
 
@@ -883,6 +884,93 @@ void CDODBot :: touchedWpt ( CWaypoint *pWaypoint )
 						updateCondition(CONDITION_NEED_BOMB);
 						updateCondition(CONDITION_CHANGED);
 					}
+			}
+		}
+	}
+	else
+	{
+		
+		// normal waypoint
+		// Check if current waypoint has a path which is invisible to my next waypoint
+		if ( (iNextWaypoint != -1) && (randomFloat(0,MAX_BELIEF) < m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint))) )
+		{
+			
+			int i;
+			int iPath;
+			CWaypointVisibilityTable *pTable = CWaypoints::getVisiblity();
+			vector<int> m_InvisPaths;
+			CWaypoint *pPath;
+			int iThisWaypoint = CWaypoints::getWaypointIndex(pWaypoint);
+			//CWaypoint *pNextWaypoint = CWaypoints::getWaypoint(iNextWaypoint);
+
+
+			extern IVDebugOverlay *debugoverlay;
+
+			for ( i = 0; i < pWaypoint->numPaths(); i++ )
+			{
+				iPath = pWaypoint->getPath(i);
+
+				if ( iPath == iNextWaypoint )
+					continue;
+				if ( iPath == iPrevWaypoint )
+					continue;
+
+				pPath = CWaypoints::getWaypoint(iPath);
+
+				if ( pPath == pWaypoint )
+					continue;
+
+				if ( pPath->hasFlag(CWaypointTypes::W_FL_UNREACHABLE) )
+					continue;
+				/*
+				static Vector vecLOS;
+				static float flDot;
+				extern ConVar rcbot_dod_investigatepath_dp;
+
+				Vector vForward = pNextWaypoint->getOrigin() - pWaypoint->getOrigin();
+				vForward = vForward/vForward.Length();
+
+				vecLOS = pWaypoint->getOrigin() - pPath->getOrigin();
+				vecLOS = vecLOS/vecLOS.Length();
+	
+				flDot = DotProduct (vecLOS , vForward );
+	
+				if ( flDot > rcbot_dod_investigatepath_dp.GetFloat() )
+					continue;*/
+					
+				if (  (pTable->GetVisibilityFromTo(iPrevWaypoint,iPath) == false) && (pTable->GetVisibilityFromTo(iThisWaypoint,iPath) == true) && (pTable->GetVisibilityFromTo(iNextWaypoint,iPath) == false) )
+				{
+					m_InvisPaths.push_back(iPath);
+
+#ifndef __linux__
+					if ( CClients::clientsDebugging(BOT_DEBUG_TASK) )
+					{
+						debugoverlay->AddLineOverlay(CWaypoints::getWaypoint(iNextWaypoint)->getOrigin(),pPath->getOrigin(),255,120,120,false,7.0f);
+						debugoverlay->AddLineOverlay(pWaypoint->getOrigin(),pPath->getOrigin(),255,255,255,false,7.0f);
+					}
+
+#endif
+//					debugoverlay->AddTextOverlayRGB((pWaypoint->getOrigin()+pPath->getOrigin())/2,0,7.0f,255,255,255,255,"Dot: %0.3f",flDot);
+				}
+				
+			}
+
+			if ( m_InvisPaths.size() > 0 )
+			{
+				int iCheck = randomInt(0,m_InvisPaths.size()-1);
+
+				iCheck = m_InvisPaths[iCheck];
+
+				if ( !m_pSchedules->hasSchedule(SCHED_INVESTIGATE_HIDE) )
+				{
+					// waypoint to check is this one "iCheck"
+					CBotSchedule *pSched = new CBotSchedule();
+
+					pSched->setID(SCHED_INVESTIGATE_HIDE);
+					pSched->addTask(new CBotInvestigateHidePoint(iCheck,CWaypoints::getWaypointIndex(pWaypoint)));
+
+					m_pSchedules->addFront(pSched);				
+				}
 			}
 		}
 	}

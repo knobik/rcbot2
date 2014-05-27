@@ -1404,7 +1404,6 @@ void CTeamFortress2Mod :: mapInit ()
 
 	resetCappers();
 	//CPoints::loadMapScript();
-
 }
 
 int CTeamFortress2Mod :: getTeleporterWaypoint ( edict_t *pTele )
@@ -2328,7 +2327,18 @@ void CTeamFortress2Mod :: getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *i
 
 void CTeamFortress2Mod ::modFrame ()
 {
-	CTeamFortress2Mod::m_ObjectiveResource.think();
+	if( m_bPlayerHasSpawned )
+	{
+		if ( m_ObjectiveResource.m_ObjectiveResource == NULL )
+		{
+			m_ObjectiveResource.m_ObjectiveResource = CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1, "CTFObjectiveResource");
+		
+			if ( m_ObjectiveResource.m_ObjectiveResource.get() != NULL )			
+				m_ObjectiveResource.setup();			
+		}
+		else
+			CTeamFortress2Mod::m_ObjectiveResource.think();
+	}
 }
 
 void CDODMod :: getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff )
@@ -2347,6 +2357,10 @@ void CDODMod :: getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff )
 
 }
 
+bool CTeamFortress2Mod :: isWaypointAreaValid ( int iWptArea, int iWptFlags )
+{
+	return CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(iWptArea,iWptFlags);
+}
 ///////////////////////////
 bool CTeamFortress2Mod :: withinEndOfRound ( float fTime )	
 {
