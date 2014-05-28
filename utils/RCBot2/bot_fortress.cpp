@@ -264,6 +264,7 @@ CBotFortress :: CBotFortress()
 	m_pNearestEnemySentry = NULL;
 	m_pNearestEnemyTeleporter = NULL;
 	m_pNearestEnemyDisp = NULL;
+	m_pNearestPipeGren = NULL;
 	m_pPrevSpy = NULL;
 	m_fSeeSpyTime = 0.0f;
 	m_bEntranceVectorValid = false;
@@ -434,7 +435,7 @@ bool CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 		{
 			if ( (m_iClass!=TF_CLASS_ENGINEER)||!CClassInterface::isObjectCarried(pEntity) )
 			{
-				if ( !m_pNearestEnemySentry || (pEntity != m_pNearestEnemySentry) && (distanceFrom(pEntity) < distanceFrom(m_pNearestEnemySentry)) )
+				if ( !m_pNearestEnemySentry || ((pEntity != m_pNearestEnemySentry) && (distanceFrom(pEntity) < distanceFrom(m_pNearestEnemySentry)) ))
 				{
 					m_pNearestEnemySentry = pEntity;
 				}
@@ -442,16 +443,23 @@ bool CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 		}
 		else if ( CTeamFortress2Mod::isTeleporter(pEntity,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
-			if ( !m_pNearestEnemyTeleporter || (pEntity != m_pNearestEnemyTeleporter)&&(distanceFrom(pEntity)<distanceFrom(m_pNearestEnemyTeleporter)))
+			if ( !m_pNearestEnemyTeleporter || ((pEntity != m_pNearestEnemyTeleporter)&&(distanceFrom(pEntity)<distanceFrom(m_pNearestEnemyTeleporter))))
 			{
 				m_pNearestEnemyTeleporter = pEntity;
 			}
 		}
 		else if ( CTeamFortress2Mod::isDispenser(pEntity,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
-			if ( !m_pNearestEnemyDisp || (pEntity != m_pNearestEnemyDisp)&&(distanceFrom(pEntity)<distanceFrom(m_pNearestEnemyDisp)))
+			if ( !m_pNearestEnemyDisp || ((pEntity != m_pNearestEnemyDisp)&&(distanceFrom(pEntity)<distanceFrom(m_pNearestEnemyDisp))))
 			{
 				m_pNearestEnemyDisp = pEntity;
+			}
+		}
+		else if ( CTeamFortress2Mod::isHurtfulPipeGrenade(pEntity,m_pEdict) )
+		{
+			if ( !m_pNearestPipeGren || ((pEntity != m_pNearestPipeGren)&&(distanceFrom(pEntity)<distanceFrom(m_pNearestPipeGren))))
+			{
+				m_pNearestPipeGren = pEntity;
 			}
 		}
 	}
@@ -466,6 +474,10 @@ bool CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	else if ( pEntity == m_pNearestEnemyDisp )
 	{
 		m_pNearestEnemyDisp = NULL;
+	}
+	else if ( pEntity == m_pNearestPipeGren )
+	{
+		m_pNearestPipeGren = NULL;
 	}
 
 	//}
@@ -518,16 +530,18 @@ bool CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 	}
 	else 
 	{
-		if ( pEntity == m_pFlag )
+		if ( pEntity == m_pFlag.get_old() )
 			m_pFlag = NULL;
-		else if ( pEntity == m_pNearestDisp )
+		else if ( pEntity == m_pNearestDisp.get_old() )
 			m_pNearestDisp = NULL;
-		else if ( pEntity == m_pAmmo )
+		else if ( pEntity == m_pAmmo.get_old() )
 			m_pAmmo = NULL;
-		else if ( pEntity == m_pHealthkit )
+		else if ( pEntity == m_pHealthkit.get_old() )
 			m_pHealthkit = NULL;
-		else if ( pEntity == m_pHeal )
+		else if ( pEntity == m_pHeal.get_old() )
 			m_pHeal = NULL;
+		else if ( pEntity == m_pNearestPipeGren.get_old() )
+			m_pNearestPipeGren = NULL;
 	}
 
 	return bValid;
@@ -710,6 +724,13 @@ void CBotFortress :: detectedAsSpy( edict_t *pDetector, bool bDisguiseComprimise
 void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
+
+	m_pHealthkit = MyEHandle(NULL);
+	m_pFlag = MyEHandle(NULL);
+	m_pNearestDisp = MyEHandle(NULL);
+	m_pAmmo = MyEHandle(NULL);
+	m_pHeal = MyEHandle(NULL);
+	m_pNearestPipeGren = MyEHandle(NULL);
 
 	//m_bWantToZoom = false;
 
@@ -1192,6 +1213,16 @@ void CBotFortress :: modThink ()
 	{
 		m_fLastSeeEnemy = 0;
 		m_pButtons->tap(IN_RELOAD);
+	}
+
+	if ( m_pNearestPipeGren.get() != NULL )
+	{
+		if ( !m_pSchedules->hasSchedule(SCHED_GOOD_HIDE_SPOT) && (distanceFrom(m_pNearestPipeGren)<BLAST_RADIUS) )
+		{
+			CGotoHideSpotSched *pSchedule = new CGotoHideSpotSched(this,m_pNearestPipeGren.get(),true);
+
+			m_pSchedules->addFront(pSchedule);
+		}
 	}
 }
 
@@ -2903,11 +2934,11 @@ bool CBotTF2::canAvoid(edict_t *pEntity)
 
 	if ( !CBotGlobals::entityIsValid(pEntity) )
 		return false;
-	if ( m_pLookEdict == pEntity )
+	if ( pEntity == m_pLookEdict )
 		return false;
 	if ( m_pEdict == pEntity ) // can't avoid self!!!!
 		return false;
-	if ( m_pLastEnemy == pEntity )
+	if ( pEntity == m_pLastEnemy )
 		return false;
 	if ( pEntity == m_pTeleEntrance )
 		return false;
@@ -3282,17 +3313,21 @@ bool CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 {
 	bool bValid = CBotFortress::setVisible(pEntity,bVisible);
 
-	if ( bValid && bVisible )
+	if ( bValid )
 	{
-		if ( (m_pRedPayloadBomb.get() != pEntity) && CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_RED) )
+		if ( (m_pRedPayloadBomb.get() == NULL) && CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_RED) )
 		{
 			m_pRedPayloadBomb = pEntity;
 		}
-		else if ( (m_pBluePayloadBomb.get() != pEntity) && CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_BLUE) )
+		else if ( (m_pBluePayloadBomb.get() == NULL) && CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_BLUE) )
 		{
 			m_pBluePayloadBomb = pEntity;
 		}
-		else if ( (m_NearestEnemyRocket.get() != pEntity) && CTeamFortress2Mod::isRocket ( pEntity, CTeamFortress2Mod::getEnemyTeam(m_iTeam) ) )
+	}
+
+	if ( bValid && bVisible )
+	{
+		if ( (m_NearestEnemyRocket.get() != pEntity) && CTeamFortress2Mod::isRocket ( pEntity, CTeamFortress2Mod::getEnemyTeam(m_iTeam) ) )
 		{
 			if ( ( m_NearestEnemyRocket.get() == NULL ) || (distanceFrom(pEntity) < distanceFrom(m_NearestEnemyRocket)) )
 				m_NearestEnemyRocket = pEntity;
@@ -3300,7 +3335,7 @@ bool CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 	}
 	else 
 	{
-		if ( pEntity == m_NearestEnemyRocket.get() )
+		if ( pEntity == m_NearestEnemyRocket.get_old() )
 			m_NearestEnemyRocket = NULL;
 	}
 
@@ -3366,7 +3401,7 @@ bool CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 		}
 		else
 		{
-			if ( m_pCloakedSpy == pEntity )
+			if ( m_pCloakedSpy.get_old() == pEntity )
 				m_pCloakedSpy = NULL;
 		}
 	}
@@ -4852,7 +4887,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 			if ( m_bSentryGunVectorValid )
 			{
-				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vSentryGun,150,m_iLastFailSentryWpt,true,false,true,NULL,false,getTeam(),true));
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vSentryGun,150,m_iLastFailSentryWpt,true,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_SENTRY));
 
 				if ( pWaypoint && CTeamFortress2Mod::buildingNearby(m_iTeam,pWaypoint->getOrigin()) )
 					pWaypoint = NULL;
@@ -5388,7 +5423,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 						CBotTask *pipetask = new CBotTF2Spam(pWpt->getOrigin(),vEnemy,util->getWeaponChoice());
 						CBotSchedule *pipesched = new CBotSchedule();
 
-						pipesched->addTask(new CBotTF2FindPipeWaypoint(getOrigin(),vEnemy));
+						pipesched->addTask(new CBotTF2FindPipeWaypoint(vLoc,vEnemy));
 						pipesched->addTask(findpath);
 						pipesched->addTask(pipetask);
 
@@ -5443,7 +5478,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 						CBotTask *pipetask = new CBotTF2DemomanPipeEnemy(getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)),vEnemy,pEnemy);
 						CBotSchedule *pipesched = new CBotSchedule();
 
-						pipesched->addTask(new CBotTF2FindPipeWaypoint(getOrigin(),vEnemy));
+						pipesched->addTask(new CBotTF2FindPipeWaypoint(vLoc,vEnemy));
 						pipesched->addTask(findpath);
 						pipesched->addTask(pipetask);
 
@@ -6156,6 +6191,7 @@ void CBotTF2::roundReset(bool bFullReset)
 	m_pNearestAllySentry = NULL;
 	m_pNearestEnemyTeleporter = NULL;
 	m_pNearestEnemyDisp = NULL;
+	m_pNearestPipeGren = NULL;
 	m_pFlag = NULL;
 	m_pPrevSpy = NULL;
 	m_iSentryKills = 0;
@@ -6184,6 +6220,30 @@ void CBotTF2::updateAttackDefendPoints()
 	m_iTeam = getTeam();
 	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
 	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
+}
+
+void CBotTF2::updateAttackPoints()
+{
+	int iPrev = m_iCurrentAttackArea;
+
+	m_iTeam = getTeam();
+
+	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
+
+	if ( iPrev != m_iCurrentAttackArea )
+		updateCondition(CONDITION_CHANGED);
+}
+
+void CBotTF2::updateDefendPoints()
+{
+	int iPrev = m_iCurrentDefendArea;
+
+	m_iTeam = getTeam();
+
+	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
+
+	if ( iPrev != m_iCurrentDefendArea )
+		updateCondition(CONDITION_CHANGED);
 }
 
 /// TO DO : list of areas
@@ -6466,7 +6526,22 @@ void CBotTF2 :: enemyAtIntel ( Vector vPos, int type, int iArea )
 	if ( ( m_iClass == TF_CLASS_DEMOMAN ) && ( m_iTrapType != TF_TRAP_TYPE_NONE ) && ( m_iTrapType != TF_TRAP_TYPE_WPT ) )
 	{
 		if ( ( m_iTrapType != TF_TRAP_TYPE_POINT ) || (iArea == m_iTrapCPIndex) )
-			detonateStickies();
+		{
+			// Stickies at PL Capture or bomb point
+			if ( (( m_iTrapType == TF_TRAP_TYPE_POINT ) || ( m_iTrapType == TF_TRAP_TYPE_PL )) && ( CTeamFortress2Mod::isMapType(TF_MAP_CART) || CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE)) )
+			{
+				edict_t *pBomb;
+
+				// get enemy pl bomb
+				if ( (pBomb=m_pDefendPayloadBomb.get()) != NULL )
+				{
+					if ( (m_vStickyLocation-CBotGlobals::entityOrigin(pBomb)).Length() < (BLAST_RADIUS*2) )
+						detonateStickies();
+				}
+			}
+			else
+				detonateStickies();
+		}
 	}
 
 	m_fRevMiniGunTime = engine->Time()-m_fNextRevMiniGunTime;

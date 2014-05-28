@@ -10,16 +10,64 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+class CBotFuncResetAttackPoint : public IBotFunction
+{
+public:
+	CBotFuncResetAttackPoint(int team) { iTeam = team; }
+	void execute ( CBot *pBot )
+	{
+		if ( pBot->getTeam() == iTeam )
+			((CBotTF2*)pBot)->updateAttackPoints();
+	}
+private:
+	int iTeam;	
+};
+
+class CBotFuncResetDefendPoint : public IBotFunction
+{
+public:
+	CBotFuncResetDefendPoint(int team) { iTeam = team; }
+	void execute ( CBot *pBot )
+	{
+		if ( pBot->getTeam() == iTeam )
+			((CBotTF2*)pBot)->updateDefendPoints();
+	}
+private:
+	int iTeam;	
+};
+
 void CTFObjectiveResource::updatePoints()
 {
+	static CBotFuncResetAttackPoint resetBlueAttack(TF2_TEAM_BLUE);
+	static CBotFuncResetDefendPoint resetBlueDefend(TF2_TEAM_BLUE);
+	static CBotFuncResetDefendPoint resetRedAttack(TF2_TEAM_RED);
+	static CBotFuncResetDefendPoint resetRedDefend(TF2_TEAM_RED);
+
 	m_iMonitorPoint[0] = -1;
 	m_iMonitorPoint[1] = -1;
 
 	CTeamFortress2Mod::m_ObjectiveResource.resetValidWaypointAreas();
-	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_BLUE);
-	CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_RED);
-	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_BLUE);
-	CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_RED);
+
+	if ( CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_BLUE) )
+	{
+		CBots::botFunction(&resetBlueAttack);
+	}
+
+	if ( CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_RED) )
+	{
+		CBots::botFunction(&resetRedAttack);
+	}
+
+	if ( CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_BLUE) )
+	{
+		CBots::botFunction(&resetBlueDefend);
+	}
+
+	if ( CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_RED) )
+	{
+		CBots::botFunction(&resetRedDefend);
+	}
+
 	CTeamFortress2Mod::m_ObjectiveResource.updateValidWaypointAreas();
 
 }
@@ -332,13 +380,13 @@ CTeamControlPoint *CTeamControlPoint::getPoint ( edict_t *pent )
 }
 
 
-void CTFObjectiveResource :: updateDefendPoints ( int team )
+bool CTFObjectiveResource :: updateDefendPoints ( int team )
 {
 	/*int other = (team==2)?3:2;
 
 	return GetCurrentAttackPoint(other);
 	*/
-	
+	int signature = 0;
 	int other;
 	int prev;
 	bool isPayLoadMap = CTeamFortress2Mod::isMapType(TF_MAP_CART)||CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE);
@@ -349,9 +397,9 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 	CTeamControlPointRound *pRound = CTeamFortress2Mod::getCurrentRound();
 	
 	if ( m_ObjectiveResource.get() == NULL ) // not set up yet
-		return;
+		return false;
 	if ( team == 0 ) // invalid team
-		return;
+		return false;
 
 	arr = m_ValidPoints[team-2][TF2_POINT_DEFEND];
 
@@ -539,6 +587,23 @@ void CTFObjectiveResource :: updateDefendPoints ( int team )
 		}
 	}
 
+	// update signature
+	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+	{
+		byte j;
+		byte *barr = (byte*)&(arr[i]);
+
+		for ( j = 0; j < sizeof(TF2PointProb_t); j ++ )
+			signature = signature + ((barr[j]*i)+j);
+	}
+
+	if ( signature != m_PointSignature[team-2][TF2_POINT_DEFEND] )
+	{
+		m_PointSignature[team-2][TF2_POINT_DEFEND] = signature;
+		return true;
+	}
+
+	return false;
 }
 
 void CTFObjectiveResource :: think ()
@@ -569,9 +634,12 @@ void CTFObjectiveResource :: think ()
 
 		if ( bupdate )
 		{
+			extern ConVar rcbot_tf2_autoupdate_point_time;
+
 			updatePoints();
+
 			m_fNextCheckMonitoredPoint = engine->Time() + 5.0f;
-			m_fUpdatePointTime = engine->Time() + 60.0f;
+			m_fUpdatePointTime = engine->Time() + rcbot_tf2_autoupdate_point_time.GetFloat();
 		}
 		else
 			m_fNextCheckMonitoredPoint = engine->Time() + 1.0f;
@@ -579,14 +647,18 @@ void CTFObjectiveResource :: think ()
 	
 }
 
-void CTFObjectiveResource :: updateAttackPoints ( int team )
+// return true if bots should change attack point
+bool CTFObjectiveResource :: updateAttackPoints ( int team )
 {	
 	int prev;
+	int signature = 0;
 	CTeamControlPointRound *pRound = CTeamFortress2Mod::getCurrentRound();
 	TF2PointProb_t *arr;
 
 	if ( m_ObjectiveResource.get() == NULL ) // not set up yet
-		return;
+		return false;
+	if ( team == 0 )
+		return false;
 
 	arr = m_ValidPoints[team-2][TF2_POINT_ATTACK];
 
@@ -597,7 +669,7 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 	if ( (team == TF2_TEAM_RED) && (CTeamFortress2Mod::isAttackDefendMap()) )
 	{
 		// no attacking for red on this map
-		return;
+		return false;
 	}
 
 	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
@@ -788,6 +860,23 @@ void CTFObjectiveResource :: updateAttackPoints ( int team )
 			}
 		}
 	}
+
+	for ( int i = 0; i < *m_iNumControlPoints; i ++ )
+	{
+		byte j;
+		byte *barr = (byte*)&(arr[i]);
+
+		for ( j = 0; j < sizeof(TF2PointProb_t); j ++ )
+			signature = signature + ((barr[j]*i)+j);
+	}
+
+	if ( signature != m_PointSignature[team-2][TF2_POINT_ATTACK] )
+	{
+		m_PointSignature[team-2][TF2_POINT_ATTACK] = signature;
+		return true;
+	}
+
+	return false;
 
 }
 

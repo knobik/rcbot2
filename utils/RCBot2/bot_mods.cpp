@@ -604,12 +604,38 @@ void CTeamFortress2Mod :: roundReset ()
 		}
 	}
 
+	if ( !m_ObjectiveResource.isInitialised() )
+		m_ObjectiveResource.setup();
+
 	m_Timer.reset();
 
 	updatePointMaster();
 
+	if ( m_ObjectiveResource.isInitialised() )
+	{
+		extern ConVar rcbot_tf2_autoupdate_point_time;
+		int numpoints = m_ObjectiveResource.GetNumControlPoints();
+		int i;
+
+		for ( i = 0; i < numpoints; i ++ )
+		{
+			if ( m_ObjectiveResource.GetOwningTeam(i) != TF2_TEAM_RED )
+				break;
+		}
+
+		// if all points are owned by RED at start up then its an attack defend map
+		setAttackDefendMap(i==numpoints);
+
+		m_ObjectiveResource.m_fUpdatePointTime = engine->Time() + rcbot_tf2_autoupdate_point_time.GetFloat();
+		m_ObjectiveResource.m_fNextCheckMonitoredPoint = engine->Time() + 0.2f;
+
+		m_ObjectiveResource.updatePoints();
+
+	}
+
 	m_bHasRoundStarted = false;
 	m_iFlagCarrierTeam = 0;
+
 }
 
 void CTeamFortress2Mod::sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )
@@ -1280,6 +1306,22 @@ bool CTeamFortress2Mod :: isTeleporterExit ( edict_t *pEntity, int iTeam )
 bool CTeamFortress2Mod :: isPipeBomb ( edict_t *pEntity, int iTeam)
 {
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"tf_projectile_pipe_remote")==0);
+}
+
+bool CTeamFortress2Mod :: isHurtfulPipeGrenade ( edict_t *pEntity, edict_t *pPlayer)
+{
+	if ( strcmp(pEntity->GetClassName(),"tf_projectile_pipe")==0 )
+	{
+		if ( CClassInterface::getPipeBombOwner(pEntity) == pPlayer )
+			return true;
+
+		int iPlayerTeam = getTeam(pPlayer);
+		int iGrenTeam = getTeam(pPlayer);
+
+		return iPlayerTeam != iGrenTeam;
+	}
+
+	return false;
 }
 
 bool CTeamFortress2Mod :: isRocket ( edict_t *pEntity, int iTeam )

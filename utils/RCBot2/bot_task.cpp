@@ -929,7 +929,7 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	int iCpIndex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iArea];
 	int iTeam = pBot->getTeam();
 
-	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetCappingTeam(iCpIndex) != iTeam) )
+	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(iCpIndex) != iTeam) )
 	{
 		// doesn't belong to us/can't defend anymore
 		((CBotTF2*)pBot)->updateAttackDefendPoints();

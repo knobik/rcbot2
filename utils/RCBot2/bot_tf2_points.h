@@ -211,6 +211,8 @@ public:
 
 	// [team][type][point]
 	TF2PointProb_t m_ValidPoints[2][2][MAX_CONTROL_POINTS];
+	// [team][type] -- if changed, bots must also be updated
+	int m_PointSignature[2][2]; 
 
 	// this is a union set of the above array
 	bool m_ValidAreas[MAX_CONTROL_POINTS];
@@ -258,9 +260,10 @@ public:
 	private:
 	bool m_bInitialised;
 
-
-	void updateAttackPoints ( int team );
-	void updateDefendPoints ( int team );
+	//return a signature of the points structure. Bots will rethink their defend or attack point
+	// if the signature changes
+	bool updateAttackPoints ( int team );
+	bool updateDefendPoints ( int team );
 
 	inline void resetValidWaypointAreas() 
 	{ 

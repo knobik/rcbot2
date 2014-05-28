@@ -844,6 +844,8 @@ public:
 
 	static bool isPipeBomb ( edict_t *pEntity, int iTeam);
 
+	static bool isHurtfulPipeGrenade ( edict_t *pEntity, edict_t *pPlayer );
+
 	static bool isRocket ( edict_t *pEntity, int iTeam );
 
 	static int getEnemyTeam ( int iTeam );

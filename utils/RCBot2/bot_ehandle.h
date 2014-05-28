@@ -46,16 +46,22 @@ public:
 		m_pEnt = pent;
 
 		if ( pent )
+		{
 			m_iSerialNumber = pent->m_NetworkSerialNumber;
+		}
+		else
+			m_iSerialNumber = 0;
 	}
 
 	inline edict_t *get ()
 	{
-		if ( m_pEnt )
+		if ( m_iSerialNumber && m_pEnt )
 		{
 			if ( !m_pEnt->IsFree() && (m_iSerialNumber == m_pEnt->m_NetworkSerialNumber) )
 				return m_pEnt;
 		}
+		else if ( m_pEnt )
+			m_pEnt = NULL;
 
 		return NULL;
 	}
@@ -67,11 +73,13 @@ public:
 
 	inline operator edict_t * const ()
 	{ // same as get function (inlined for speed)
-		if ( m_pEnt )
+		if ( m_iSerialNumber && m_pEnt )
 		{
 			if ( !m_pEnt->IsFree() && (m_iSerialNumber == m_pEnt->m_NetworkSerialNumber) )
 				return m_pEnt;
 		}
+		else if ( m_pEnt )
+			m_pEnt = NULL;
 
 		return NULL;
 	}
@@ -96,7 +104,11 @@ public:
 		m_pEnt = pent;
 
 		if ( pent )
+		{
 			m_iSerialNumber = pent->m_NetworkSerialNumber;
+		}
+		else
+			m_iSerialNumber = 0;
 
 		return m_pEnt;
 	}

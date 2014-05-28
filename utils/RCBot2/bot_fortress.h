@@ -486,6 +486,7 @@ protected:
 	MyEHandle m_pNearestEnemyTeleporter;
 	MyEHandle m_pNearestEnemyDisp;
 	MyEHandle m_pNearestTeleEntrance;
+	MyEHandle m_pNearestPipeGren;
 
 	MyEHandle m_pFlag;
 	MyEHandle m_pPrevSpy;
@@ -595,6 +596,9 @@ public:
 	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide  = false );
 
 	void updateAttackDefendPoints ();
+
+	void updateAttackPoints ();
+	void updateDefendPoints ();
 
 	// found a new enemy
 	void enemyFound (edict_t *pEnemy);

@@ -129,6 +129,7 @@ typedef enum
 	GETPROP_TF2_RNDTM_m_flTimerEndTime,
 	GETPROP_TF2_RNDTM_m_nSetupTimeLength,
 	GETPROP_TF2_RNDTM_m_bInSetup,
+	GETPROP_PIPEBOMB_OWNER,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -374,6 +375,8 @@ public:
 	inline static edict_t *onLadder ( edict_t *player ) { return g_GetProps[GETPROP_HL2DM_LADDER_ENT].getEntity(player);}
 	inline static CBaseHandle *getWeaponList ( edict_t *player ) { return g_GetProps[GETPROP_WEAPONLIST].getEntityHandle(player);}
 	inline static int getWeaponState ( edict_t *pgun ) { return g_GetProps[GETPROP_WEAPONSTATE].getInt(pgun,0); }
+
+	inline static edict_t *getPipeBombOwner ( edict_t *pPipeBomb ) { return g_GetProps[GETPROP_PIPEBOMB_OWNER].getEntity(pPipeBomb); }
 
 	inline static int getDODBombState ( edict_t *pBombTarget ) { return g_GetProps[GETPROP_DOD_BOMB_STATE].getInt(pBombTarget,0); }
 	inline static int getDODBombTeam ( edict_t *pBombTarget ) { return g_GetProps[GETPROP_DOD_BOMB_TEAM].getInt(pBombTarget,0); }

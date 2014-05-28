@@ -651,22 +651,6 @@ void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
 	  CTeamFortress2Mod::roundReset();
 
 	  CTeamFortress2Mod::resetSetupTime();
-	  CTeamFortress2Mod::m_ObjectiveResource.setup();
-	  
-	  int numpoints = CTeamFortress2Mod::m_ObjectiveResource.GetNumControlPoints();
-	  int i;
-
-	  for ( i = 0; i < numpoints; i ++ )
-	  {
-		  if ( CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(i) != TF2_TEAM_RED )
-			  break;
-	  }
-	  CTeamFortress2Mod::updatePointMaster();
-	  // if all points are owned by RED at start up then its an attack defend map
-	  CTeamFortress2Mod::setAttackDefendMap(i==numpoints);
-
-	  CTeamFortress2Mod::m_ObjectiveResource.m_fUpdatePointTime = 0;
-	  CTeamFortress2Mod::m_ObjectiveResource.m_fNextCheckMonitoredPoint = engine->Time() + 0.2f;
 
 	  CBots::botFunction(&roundstart);
 
