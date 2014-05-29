@@ -1269,6 +1269,17 @@ bool CTeamFortress2Mod ::isBoss ( edict_t *pEntity )
 			return true;
 		}
 	}
+	else if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
+	{
+		if ( m_pBoss.get() == pEntity )
+			return true;
+		// for plr_hightower_event summon event is not called! Boo tf2!!!
+		else if (strcmp(pEntity->GetClassName(),"tf_zombie")==0)
+		{
+			m_pBoss = pEntity;
+			return true;
+		}
+	}
 
 	return false;
 }

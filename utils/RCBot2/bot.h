@@ -1243,7 +1243,11 @@ void DrawLine ( const Vector &origin, const Vector &target, int r, int g, int b,
 void WriteUsercmd( bf_write *buf, CUserCmd *cmd );
 // useful helper funcs...
 //int RANDOM_INT(int min, int max);
-bool FStrEq(const char *sz1, const char *sz2);
+// Misc useful
+inline bool FStrEq(const char *sz1, const char *sz2)
+{
+	return ( sz1 == sz2 || Q_stricmp(sz1, sz2) == 0 );
+}
 //edict_t* INDEXENT( int iEdictNum );
 // get entity index
 //int ENTINDEX( edict_t *pEdict );

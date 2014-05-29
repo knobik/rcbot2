@@ -4662,7 +4662,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 			pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentAttackArea,true,this);
 
-			if ( pWaypoint )
+			if ( pWaypoint && pWaypoint->checkReachable() )
 			{
 				CWaypoint *pRoute = NULL;
 				Vector vRoute = Vector(0,0,0);
@@ -4738,8 +4738,10 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 							fprob = rcbot_tf2_protect_cap_percent.GetFloat();
 					}
 				}
+				
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea,true,this);
 
-				if ( randomFloat(0.0,1.0f) > fprob )
+				if ( !pWaypoint->checkReachable() || (randomFloat(0.0,1.0f) > fprob) )
 				{
 					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),m_iCurrentDefendArea,true,this,false);
 
@@ -4775,8 +4777,6 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 						return true;
 					}
 				}
-
-				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea,true,this);
 
 				if ( pWaypoint )
 				{

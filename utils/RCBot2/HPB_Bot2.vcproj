@@ -460,7 +460,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\bot_script.cpp"
+				RelativePath=".\bot_tf2_points.cpp"
 				>
 			</File>
 			<File
@@ -653,7 +653,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\bot_script.h"
+				RelativePath=".\bot_tf2_points.h"
 				>
 			</File>
 			<File

@@ -1399,11 +1399,6 @@ void CRCBotEventListener::FireGameEvent( IGameEvent * pevent )
 //////////////////////
 
 
-bool FStrEq(const char *sz1, const char *sz2)
-{
-	return(Q_stricmp(sz1, sz2) == 0);
-}
-
 /*edict_t* INDEXENT( int iEdictNum )		
 { 
 	return engine->PEntityOfEntIndex(iEdictNum); 
