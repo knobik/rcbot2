@@ -2146,7 +2146,9 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			continue;
 		}
 
-		CWaypointLocations::GetAllInArea(pTempi->getOrigin(),&m_WaypointsJ,m_WaypointsI[m_i]);
+		Vector vTempi = pTempi->getOrigin();
+
+		CWaypointLocations::GetAllInArea(vTempi,&m_WaypointsJ,m_WaypointsI[m_i]);
 
 		// loop through every visible waypoint to intermediatery waypoint (cannot be unreachable)
 			while ((m_j < m_WaypointsJ.size())&&(m_iters<maxiters))

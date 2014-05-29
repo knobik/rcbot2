@@ -954,7 +954,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 
 			succ = &paths[iSucc];
 			succWpt = CWaypoints::getWaypoint(iSucc);
-
+#ifndef __linux__
 			if ( rcbot_debug_show_route.GetBool() )
 			{
 				edict_t *pListenEdict;
@@ -964,7 +964,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 					debugoverlay->AddLineOverlayAlpha(succWpt->getOrigin(),currWpt->getOrigin(),255,0,0,255,false,5.0f);
 				}
 			}
-
+#endif
 			if ( (iSucc != m_iGoalWaypoint) && !m_pBot->canGotoWaypoint(vOrigin,succWpt,currWpt) )
 				continue;
 
@@ -1101,7 +1101,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 		// crash bug fix
 		if ( iParent != -1 )
 			fDistance += (CWaypoints::getWaypoint(iCurrentNode)->getOrigin() - CWaypoints::getWaypoint(iParent)->getOrigin()).Length();
-		
+#ifndef __linux__		
 		if ( rcbot_debug_show_route.GetBool() )
 		{
 			edict_t *pListenEdict;
@@ -1111,7 +1111,7 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 				debugoverlay->AddLineOverlayAlpha(CWaypoints::getWaypoint(iCurrentNode)->getOrigin()+Vector(0,0,8.0f),CWaypoints::getWaypoint(iParent)->getOrigin()+Vector(0,0,8.0f),255,255,255,255,false,5.0f);
 			}
 		}
-
+#endif
 		iCurrentNode = iParent;
 	}
 
@@ -1692,15 +1692,24 @@ bool CWaypoints :: save ( bool bVisiblityMade, edict_t *pPlayer, const char *psz
 	header.iFlags = flags;
 	header.iNumWaypoints = iSize;
 	header.iVersion = WAYPOINT_VERSION;
+
 	if ( pszAuthor != NULL )
 		strncpy(authorinfo.szAuthor,pszAuthor,31);
+#ifdef _DEBUG
 	else
+	{
 		strncpy(authorinfo.szAuthor,CWaypoints::getAuthor(),31);
+	}
+#endif
 
 	if ( pszModifier != NULL )
 		strncpy(authorinfo.szModifiedBy,pszModifier,31);
+#ifdef _DEBUG
 	else
+	{
 		strncpy(authorinfo.szModifiedBy,CWaypoints::getModifier(),31);
+	}
+#endif
 
 	authorinfo.szAuthor[31] = 0;
 	authorinfo.szModifiedBy[31] = 0;

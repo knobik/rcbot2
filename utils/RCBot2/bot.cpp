@@ -2176,7 +2176,7 @@ void CBot :: doMove ()
 						m_fAvoidSideSwitch = engine->Time() + randomFloat(2.0f,3.0f);
 						m_bAvoidRight = !m_bAvoidRight;
 					}
-
+#ifndef __linux__
 					if ( CClients::clientsDebugging(BOT_DEBUG_THINK) )
 					{
 						debugoverlay->AddLineOverlay (getOrigin(), m_vAvoidOrigin, 0,0,255, false, 0.05f);
@@ -2184,6 +2184,8 @@ void CBot :: doMove ()
 						debugoverlay->AddLineOverlay (getOrigin(), getOrigin() + ((vMove/vMove.Length())*bot_avoid_strength.GetFloat()), 255,0,0, false, 0.05f);
 						debugoverlay->AddTextOverlayRGB(getOrigin()+Vector(0,0,100),0,0.05,255,255,255,255,"Avoiding: %s",m_pAvoidEntity.get()->GetClassName());
 					}
+#endif
+
 	//*/
 					//debugoverlay->AddLineOverlay (getOrigin(), m_vAvoidOrigin, 0,0,255, false, 0.05f);
 					//debugoverlay->AddLineOverlay (getOrigin(), m_bAvoidRight ? (getOrigin()+(vLeft*bot_avoid_strength.GetFloat())):(getOrigin()-(vLeft*bot_avoid_strength.GetFloat())), 0,255,0, false, 0.05f);
@@ -3070,6 +3072,8 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 		char cmd[128];
 
 		extern ConCommandBase *puppet_bot_cmd;
+		//bool bChangedFlags = false;
+		//int nPrevFlags = 0;
 		//extern ConVar bot_cmd_nocheats;
 
 		// Attempt to make puppet bot command cheat free
@@ -3078,8 +3082,9 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 			if ( /*bot_cmd_nocheats.GetBool() &&*/ puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
 			{
 				int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + BOT_CONVAR_FLAGS_OFFSET); // 20 is offset to flags
-			
+				//nPrevFlags = *m_nFlags;
 				*m_nFlags &= ~FCVAR_CHEAT;
+				//bChangedFlags = true;
 			}
 		}
 

@@ -643,7 +643,31 @@ class dataUnconstArray
 		{
 			if ( array.size() == 0  )
 				return;
-#ifdef _DEBUG
+#if defined(__linux__) && defined(_DEBUG)
+			//SAFE REMOVE - SLOW
+			std::vector<T> newVec;
+
+			for ( unsigned int i = 0; i < array.size(); i ++ )
+			{
+				if ( array[i] != obj )
+					newVec.push_back(array[i]);
+			}
+
+			array.clear();
+			array = newVec;
+#elif defined(__linux__) && !defined(_DEBUG)
+            typename std::vector<T> ::iterator it;
+			for ( it = array.begin(); it != array.end(); )
+			{
+				if ( *it == obj )
+				{
+					it = array.erase(it);
+					return;
+				}
+				else
+					++ it;
+			}
+#elif defined(_DEBUG)
 			//SAFE REMOVE - SLOW
 			vector<T> newVec;
 
@@ -655,17 +679,8 @@ class dataUnconstArray
 
 			array.clear();
 			array = newVec;
-#endif
-
-#if defined(__linux__) && !defined(_DEBUG)
-            vector<T> ::iterator it;
-#endif
-
-#if defined(_WIN32) && !defined(_DEBUG)
-            typename vector<T> ::iterator it;
-#endif
-
-#ifndef _DEBUG
+#else
+			typename vector<T> ::iterator it;
 
 			for ( it = array.begin(); it != array.end(); )
 			{

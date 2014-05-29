@@ -4810,32 +4810,26 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 			
 			break;
 		case BOT_UTIL_BUILDTELENT_SPAWN:
-
-			pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_TELE_ENTRANCE,getOrigin(),4096.0f,getTeam()));
-			/*
-			pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(getOrigin(),1024.0f,-1,false,false,false,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_TELE_ENTRANCE));
-
-			if ( !pWaypoint && m_bEntranceVectorValid )
-				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportEntrance,1024.0f,-1,false,false,false,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_TELE_ENTRANCE));
-			else
 			{
-				pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_TELE_ENTRANCE,getOrigin(),4096,m_iTeam));
-			}*/
+				Vector vOrigin = getOrigin();
 
-			if ( pWaypoint )
-			{
-				CBotTFEngiBuildTask *buildtask = new CBotTFEngiBuildTask(ENGI_ENTRANCE,pWaypoint);
+				pWaypoint = CWaypoints::getWaypoint(CWaypoints::nearestWaypointGoal(CWaypointTypes::W_FL_TELE_ENTRANCE,vOrigin,4096.0f,getTeam()));
 
-				CBotSchedule *newSched = new CBotSchedule();
+				if ( pWaypoint )
+				{
+					CBotTFEngiBuildTask *buildtask = new CBotTFEngiBuildTask(ENGI_ENTRANCE,pWaypoint);
 
-				newSched->addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint))); // first
-				newSched->addTask(buildtask);
-				newSched->addTask(new CFindPathTask(util->getIntData()));
-				buildtask->oneTryOnly();
+					CBotSchedule *newSched = new CBotSchedule();
 
-				m_pSchedules->add(newSched);
-				m_iTeleEntranceArea = pWaypoint->getArea();
-				return true;
+					newSched->addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint))); // first
+					newSched->addTask(buildtask);
+					newSched->addTask(new CFindPathTask(util->getIntData()));
+					buildtask->oneTryOnly();
+
+					m_pSchedules->add(newSched);
+					m_iTeleEntranceArea = pWaypoint->getArea();
+					return true;
+				}
 			}
 			
 			break;

@@ -417,6 +417,7 @@ CWaypointShowVisCommand :: CWaypointShowVisCommand ()
 
 eBotCommandResult CWaypointShowVisCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
+#ifndef __linux__
 	pClient->updateCurrentWaypoint();
 
 	if ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) )
@@ -454,7 +455,7 @@ eBotCommandResult CWaypointShowVisCommand :: execute ( CClient *pClient, const c
 	}
 	else
 		return COMMAND_ERROR;
-
+#endif
 	return COMMAND_ACCESSED;
 }
 
@@ -897,6 +898,8 @@ eBotCommandResult CAddBotCommand :: execute ( CClient *pClient, const char *pcmd
 
 eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
+#ifndef __linux__
+
 	if ( pClient && pClient->getDebugBot()!=NULL )
 	{
 		edict_t *pEdict = pClient->getDebugBot();
@@ -987,6 +990,8 @@ eBotCommandResult CBotTaskCommand::execute ( CClient *pClient, const char *pcmd,
 			
 		}
 	}
+
+#endif
 	return COMMAND_ACCESSED;
 
 }

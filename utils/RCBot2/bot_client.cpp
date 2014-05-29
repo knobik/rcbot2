@@ -737,12 +737,13 @@ void CClient :: think ()
 					CBotGlobals::quickTraceline(m_pPlayer,vPlayerOrigin,vCheckOrigin);
 					tr = CBotGlobals::getTraceResult();
 
+#ifndef __linux__
 					if ( m_bDebugAutoWaypoint && !engine->IsDedicatedServer() )
 					{
 						debugoverlay->AddLineOverlay(vCheckOrigin+Vector(0,0,16),vCheckOrigin-Vector(0,0,16),255,255,255,0,2);
 						debugoverlay->AddLineOverlay(vPlayerOrigin,vCheckOrigin,255,255,255,0,2);
 					}
-					
+#endif					
 					if ( tr->fraction < 1.0 )
 					{
 						if ( tr->m_pEnt )
@@ -770,9 +771,10 @@ void CClient :: think ()
 
 							CBotGlobals::quickTraceline(m_pPlayer,vPlayerOrigin,vCheckOrigin);
 			
+#ifndef __linux__
 							if ( m_bDebugAutoWaypoint )
 								debugoverlay->AddLineOverlay(vPlayerOrigin,vCheckOrigin,255,255,255,false,2);
-							
+#endif							
 							if ( tr->fraction >= 1.0 )
 							{
 								int iNearestWpt = CWaypointLocations::NearestWaypoint(vCheckOrigin, 100.0, -1, true, false, false, NULL);
