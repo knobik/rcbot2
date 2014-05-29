@@ -3519,7 +3519,8 @@ bool CBots :: handlePlayerJoin ( edict_t *pEdict, const char *name )
 {
 	static int botnum;
 
-	if ( m_bControlNext && ((strcmp(&name[strlen(name)-strlen(m_szNextName)],m_szNextName) == 0)) || (sscanf(name,"Bot%d",&botnum) == 1) )
+	if ( m_bControlNext && 
+		((strcmp(&name[strlen(name)-strlen(m_szNextName)],m_szNextName) == 0) || (sscanf(name,"Bot%d",&botnum) == 1)) )
 	{
 		m_ControlQueue.push(pEdict);
 		m_bControlNext = false;
