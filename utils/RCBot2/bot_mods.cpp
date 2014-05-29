@@ -1262,7 +1262,8 @@ bool CTeamFortress2Mod ::isBoss ( edict_t *pEntity )
 			return m_pBoss.get() == pEntity;
 		else if ( (strcmp(pEntity->GetClassName(),"merasmus")==0)||
 			(strcmp(pEntity->GetClassName(),"headless_hatman")==0)||
-			(strcmp(pEntity->GetClassName(),"eyeball_boss")==0) )
+			(strcmp(pEntity->GetClassName(),"eyeball_boss")==0)||
+			(strcmp(pEntity->GetClassName(),"tf_zombie")==0) )
 		{
 			m_pBoss = pEntity;
 			return true;

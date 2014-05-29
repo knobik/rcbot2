@@ -177,9 +177,9 @@ void CRoundStartEvent :: execute ( IBotEventInterface *pEvent )
 void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
-	int iAttacker = pEvent->getInt("attacker",-1);
+	int iAttacker = pEvent->getInt("attacker",0);
 
-	if ( iAttacker >= 0 )
+	if ( iAttacker > 0 )
 	{
 		edict_t *pAttacker = CBotGlobals::playerByUserId(iAttacker);
 	/*
@@ -231,9 +231,9 @@ void CPlayerDeathEvent :: execute ( IBotEventInterface *pEvent )
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 	const char *weapon = pEvent->getString("weapon",NULL);
 	CBotSquad *pPrevSquadLeadersSquad = NULL;
-	int iAttacker = pEvent->getInt("attacker",-1);
+	int iAttacker = pEvent->getInt("attacker",0);
 
-		edict_t *pAttacker = (iAttacker>=0)?CBotGlobals::playerByUserId(iAttacker):NULL;
+		edict_t *pAttacker = (iAttacker>0)?CBotGlobals::playerByUserId(iAttacker):NULL;
 	
 		if ( pAttacker && ((CBotGlobals::entityOrigin(pAttacker)-CBotGlobals::entityOrigin(m_pActivator)).Length()>512.0f) )
 		{
