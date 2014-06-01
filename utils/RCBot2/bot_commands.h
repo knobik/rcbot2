@@ -945,6 +945,8 @@ public:
 		setAccessLevel(CMD_ACCESS_DEBUG);
 	}
 
+	bool canbeUsedDedicated () { return false; }
+
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 //////////////////////////////////

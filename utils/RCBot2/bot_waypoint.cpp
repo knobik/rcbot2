@@ -51,10 +51,8 @@
 #include "bot_wpt_color.h"
 #include "bot_profile.h"
 #include "bot_schedule.h"
-#include "bot_fortress.h"
-#include "bot_script.h"
 #include "bot_getprop.h"
-
+#include "bot_fortress.h"
 #include "bot_wpt_dist.h"
 
 

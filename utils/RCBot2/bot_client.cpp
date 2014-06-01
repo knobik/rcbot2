@@ -52,6 +52,7 @@ extern IVDebugOverlay *debugoverlay;
 void CClient :: init ()
 {
 	m_iWaypointShowFlags = 0;
+	m_fMonitorHighFiveTime = 0;
 	m_fSpeed = 0;
 	m_pPlayer = NULL;
 	m_szSteamID = NULL;
@@ -192,6 +193,42 @@ void CClient :: teleportTo (Vector vOrigin)
 	*v_origin = vOrigin;
 }
 
+class CBotFunc_HighFiveSearch : public IBotFunction
+{
+public:
+	CBotFunc_HighFiveSearch ( edict_t *pPlayer, int iTeam )
+	{
+		m_pPlayer = pPlayer;
+		m_iTeam = iTeam;
+		m_pNearestBot = NULL;
+		m_fNearestDist = 0;
+	}
+
+	void execute ( CBot *pBot )
+	{
+		if ( (pBot->getEdict() != m_pPlayer) && (pBot->getTeam() == m_iTeam) && pBot->isVisible(m_pPlayer) )
+		{
+			float fDist = pBot->distanceFrom(m_pPlayer);
+
+			if ( !m_pNearestBot || (fDist < m_fNearestDist) )
+			{
+				m_pNearestBot = pBot;
+				m_fNearestDist = fDist;
+			}
+		}
+	}
+
+	CBot *getNearestBot ()
+	{
+		return m_pNearestBot;
+	}
+
+private:
+	edict_t *m_pPlayer;
+	int m_iTeam;
+	CBot *m_pNearestBot;
+	float m_fNearestDist;
+};
 
 // called each frame
 void CClient :: think ()
@@ -204,6 +241,32 @@ void CClient :: think ()
 		return;
 	}
 	*/
+
+	//if ( m_fMonitorHighFiveTime > engine->Time() )
+	//{
+	if ( CBotGlobals::isMod(MOD_TF2) )
+	{
+		if ( (m_pPlayer != NULL) && (m_pPlayerInfo != NULL) && m_pPlayerInfo->IsConnected() && 
+			!m_pPlayerInfo->IsDead() && m_pPlayerInfo->IsPlayer() && !m_pPlayerInfo->IsObserver() && 
+			CClassInterface::getTF2HighFiveReady(m_pPlayer) )
+		{
+			if ( CClassInterface::getHighFivePartner(m_pPlayer) == NULL )
+			{
+				// wanting high five partner
+				// search for bots nearby who can see this player
+				CBotFunc_HighFiveSearch *newFunc = new CBotFunc_HighFiveSearch(m_pPlayer,CClassInterface::getTeam(m_pPlayer));
+
+				CBots::botFunction(newFunc);
+
+				if ( newFunc->getNearestBot() != NULL )
+				{
+					((CBotTF2*)newFunc)->highFivePlayer(m_pPlayer,CClassInterface::getTF2TauntYaw(m_pPlayer));
+				}
+
+				m_fMonitorHighFiveTime = 0;
+			}
+		}
+	}
 
 	if ( m_szSoundToPlay[0] != 0 )
 	{

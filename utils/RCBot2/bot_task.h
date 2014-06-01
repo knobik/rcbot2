@@ -1108,6 +1108,29 @@ private:
 	bool m_bTimeset;
 };
 //////////////////////
+class CTF2_TauntTask : public CBotTask
+{
+public:
+	CTF2_TauntTask ( Vector vPlayer, Vector vOrigin, float fDist )
+	{
+		m_vPlayer = vPlayer;
+		m_vOrigin = vOrigin;
+		m_fDist = fDist;
+	}
+
+	void init ();
+
+	void execute ( CBot *pBot, CBotSchedule *pSchedule );
+
+	virtual void debugString ( char *string );
+private:
+	Vector m_vPlayer;
+	Vector m_vOrigin;
+	float m_fDist;
+	float m_fTime;
+};
+
+/////////////////////
 class CMoveToTask : public CBotTask
 {
 public:

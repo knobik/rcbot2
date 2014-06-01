@@ -130,6 +130,9 @@ typedef enum
 	GETPROP_TF2_RNDTM_m_nSetupTimeLength,
 	GETPROP_TF2_RNDTM_m_bInSetup,
 	GETPROP_PIPEBOMB_OWNER,
+	GETPROP_TF2_TAUNTYAW,
+	GETPROP_TF2_HIGHFIVE,
+	GETPROP_TF2_HIGHFIVE_PARTNER,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -439,6 +442,10 @@ public:
 		*m_iBombsRemaining = g_GetProps[GETPROP_DOD_BOMBSREMAINING].getIntPointer(pResource);
 		*m_bBombBeingDefused = g_GetProps[GETPROP_DOD_BOMBSDEFUSED].getBoolPointer(pResource);
 	}
+
+	inline static float getTF2TauntYaw ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_TAUNTYAW].getFloat(edict,0); }
+	inline static bool getTF2HighFiveReady ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_HIGHFIVE].getBool(edict,false); }
+	inline static edict_t *getHighFivePartner ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_HIGHFIVE_PARTNER].getEntity(edict); }
 
 	inline static int getDesPlayerClassDOD(edict_t *player) { return g_GetProps[GETPROP_DOD_DES_PLAYERCLASS].getInt(player,0); }
 

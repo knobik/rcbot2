@@ -516,6 +516,10 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2_RNDTM_m_bInSetup,"CTeamRoundTimer","m_bInSetup",0);
 		DEFINE_GETPROP(GETPROP_PIPEBOMB_OWNER,"CTFGrenadePipebombProjectile","m_hThrower",0);
 
+		DEFINE_GETPROP(GETPROP_TF2_TAUNTYAW,"CTFPlayer","m_flTauntYaw",0);
+		DEFINE_GETPROP(GETPROP_TF2_HIGHFIVE,"CTFPlayer","m_bIsReadyToHighFive",0);
+		DEFINE_GETPROP(GETPROP_TF2_HIGHFIVE_PARTNER,"CTFPlayer","m_hHighFivePartner",0);
+
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
 			//if ( g_GetProps[i]

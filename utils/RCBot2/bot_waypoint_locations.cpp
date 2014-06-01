@@ -40,7 +40,6 @@
 
 #include <vector>    //bir3yk
 using namespace std;    //bir3yk
-#include "bot_script.h"
 
 unsigned char CWaypointLocations :: g_iFailedWaypoints[CWaypoints::MAX_WAYPOINTS];
 dataUnconstArray<int> CWaypointLocations :: m_iLocations[MAX_WPT_BUCKETS][MAX_WPT_BUCKETS][MAX_WPT_BUCKETS];

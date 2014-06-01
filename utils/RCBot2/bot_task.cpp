@@ -44,7 +44,6 @@
 #include "bot_profiling.h"
 #include "bot_getprop.h"
 #include "bot_dod_bot.h"
-#include "bot_script.h"
 #include "bot_squads.h"
 #include "bot_waypoint_visibility.h"
 
@@ -2211,7 +2210,44 @@ void CBotTF2FindPipeWaypoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		}
 	}
 }
+//////////////////////////////////////
 
+void CTF2_TauntTask :: init ()
+{
+	m_fTime = 0;
+}
+
+void CTF2_TauntTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
+{
+	if ( m_fTime == 0 )
+		m_fTime = engine->Time() + randomFloat(2.5f,5.0f);
+	else if ( m_fTime < engine->Time() )
+	{
+		fail();
+		return;
+	}
+
+	pBot->setLookVector(m_vPlayer);
+	pBot->setLookAtTask(LOOK_VECTOR);
+
+	if ( pBot->distanceFrom(m_vOrigin) > m_fDist )
+		pBot->setMoveTo(m_vOrigin);
+	else
+	{
+		if ( pBot->DotProductFromOrigin(m_vPlayer) > 0.95 )
+		{
+			((CBotTF2*)pBot)->taunt(true);
+			complete();
+		}
+	}
+}
+
+void CTF2_TauntTask :: debugString ( char *string )
+{
+	sprintf(string,"CTF2_TauntTask");
+}
+
+//////////////////////////////////////
 void CMoveToTask :: init () 
 { 
 	fPrevDist = 0;
@@ -2247,7 +2283,7 @@ void CMoveToTask :: execute ( CBot *pBot, CBotSchedule *pSchedule )
 	}
 	else
 	{		
-		pBot->setMoveTo((m_vVector));
+		pBot->setMoveTo(m_vVector);
 
 		if ( pBot->moveFailed() )
 			fail();

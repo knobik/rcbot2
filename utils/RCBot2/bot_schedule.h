@@ -91,6 +91,7 @@ typedef enum
 	SCHED_ATTACK_SENTRY_GUN,
 	SCHED_RETURN_TO_INTEL,
 	SCHED_INVESTIGATE_HIDE,
+	SCHED_TAUNT,
 	SCHED_MAX
 	//SCHED_HIDE_FROM_ENEMY
 }eBotSchedule;
@@ -347,7 +348,17 @@ public:
 };
 
 ///////////////////////////////////////////////////
+class CBotTauntSchedule : public CBotSchedule
+{
+public:
+	CBotTauntSchedule ( edict_t *pPlayer, float fYaw );
 
+	void init ();
+private:
+	MyEHandle m_pPlayer;
+	float m_fYaw;
+};
+////////////////////////////////////////////
 class CBotUseTeleSched : public CBotSchedule
 {
 public:

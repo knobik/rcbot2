@@ -38,7 +38,6 @@
 #include "bot_globals.h"
 #include "bot_fortress.h"
 #include "bot_weapons.h"
-#include "bot_script.h"
 #include "bot_configfile.h"
 #include "bot_getprop.h"
 #include "bot_dod_bot.h"
@@ -295,6 +294,18 @@ void CTeamFortress2Mod:: clientCommand ( edict_t *pEntity, int argc, const char 
 
 			CBots::botFunction(&voicecmd);
 		}
+	}
+	else
+	{
+		/*if ( strcmp(pcmd,"+use_action_slot_item") == 0 )
+		{
+			CClient *pClient = CClients::get(pEntity);
+
+			if ( pClient != NULL )
+			{
+				pClient->monitorHighFive();
+			}
+		}*/
 	}
 }
 

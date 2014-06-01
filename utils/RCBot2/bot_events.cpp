@@ -34,7 +34,6 @@
 #include "bot_strings.h"
 #include "bot_globals.h"
 #include "bot_fortress.h"
-#include "bot_script.h"
 #include "bot_dod_bot.h"
 #include "bot_weapons.h"
 #include "bot_getprop.h"

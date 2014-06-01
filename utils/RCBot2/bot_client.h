@@ -159,6 +159,12 @@ public:
 		m_fUpdatePos = 0;
 		m_bTeleportVectorValid = false;
 		m_vTeleportVector = Vector(0,0,0);
+		m_fMonitorHighFiveTime = 0;
+	}
+
+	void monitorHighFive ()
+	{
+		m_fMonitorHighFiveTime = engine->Time() + 5.0f;
 	}
 
 	void init ();
@@ -364,6 +370,8 @@ private:
 
 	bool m_bIsTeleporting;
 	float m_fTeleportTime;
+
+	float m_fMonitorHighFiveTime;
 };
 
 class CClients

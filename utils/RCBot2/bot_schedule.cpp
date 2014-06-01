@@ -88,6 +88,7 @@ const char *szSchedules[SCHED_MAX+1] =
 	"SCHED_ATTACK_SENTRY_GUN",
 	"SCHED_RETURN_TO_INTEL",
 	"SCHED_INVESTIGATE_HIDE",
+	"SCHED_TAUNT",
 	"SCHED_MAX"
 };
 ////////////////////// unused
@@ -393,6 +394,37 @@ CBotSpySapBuildingSched :: CBotSpySapBuildingSched ( edict_t *pBuilding, eEngiBu
 
 	findpath->setDangerPoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(pBuilding),200.0f,-1));
 }
+//////////////////////////////////////
+CBotTauntSchedule :: CBotTauntSchedule ( edict_t *pPlayer, float fYaw )
+{
+	QAngle angles = QAngle(0,fYaw,0);
+	Vector forward;
+	Vector vOrigin;
+	Vector vGoto;
+	const float fTauntDist = 40.0f;
+
+	m_pPlayer = pPlayer;
+	m_fYaw = 180 - fYaw;
+
+	AngleVectors(angles,&forward);
+
+	forward = forward/forward.Length();
+	vOrigin = CBotGlobals::entityOrigin(pPlayer);
+
+	vGoto = vOrigin + (forward*fTauntDist);
+
+	CBotGlobals::fixFloatAngle(&m_fYaw);
+
+	addTask(new CFindPathTask(vOrigin));
+	addTask(new CMoveToTask(vOrigin));
+	addTask(new CTF2_TauntTask(vOrigin,vGoto,fTauntDist));
+}
+
+void CBotTauntSchedule :: init ()
+{
+	setID(SCHED_TAUNT);
+}
+
 
 ///////////////////////////////////////////
 CBotTF2FindFlagSched :: CBotTF2FindFlagSched ( Vector vOrigin )

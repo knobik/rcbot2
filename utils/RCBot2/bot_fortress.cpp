@@ -49,7 +49,6 @@
 #include "bot_waypoint_locations.h"
 #include "in_buttons.h"
 #include "bot_utility.h"
-#include "bot_script.h"
 #include "bot_configfile.h"
 #include "bot_getprop.h"
 #include "bot_mtrand.h"
@@ -1624,6 +1623,12 @@ void CBotTF2 :: fixWeapons ()
 void CBotTF2 :: setClass ( TF_Class _class )
 {
 	m_iClass = _class;
+}
+
+void CBotTF2 :: highFivePlayer ( edict_t *pPlayer, float fYaw )
+{
+	if ( !m_pSchedules->isCurrentSchedule(SCHED_TAUNT) )
+		m_pSchedules->addFront(new CBotTauntSchedule(pPlayer,fYaw));
 }
 
 // bOverride will be true in messaround mode

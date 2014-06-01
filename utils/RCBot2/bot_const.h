@@ -95,8 +95,7 @@ extern const char *g_szLookTaskToString[LOOK_MAX];
 #define BOT_PROFILE_FOLDER "profiles"
 #define BOT_WAYPOINT_FOLDER "waypoints"
 #define BOT_CONFIG_EXTENSION "ini"
-#define BOT_SCRIPT_FOLDER "scripts"
-#define BOT_SCRIPT_EXTENSION "rcs"
+
 #define BOT_WAYPOINT_EXTENSION "rcw" // extension for waypoint files
 #define BOT_WAYPOINT_FILE_TYPE "RCBot2\0" // for waypoint file header
 
