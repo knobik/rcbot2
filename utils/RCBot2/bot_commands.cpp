@@ -808,21 +808,62 @@ eBotCommandResult CWaypointDeleteCommand :: execute ( CClient *pClient, const ch
 {	
 	if ( pClient )
 	{
-		pClient->updateCurrentWaypoint();
-
-		if ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) )
+		if ( pcmd && *pcmd )
 		{
-			CWaypoints::deleteWaypoint(pClient->currentWaypoint());
-			CBotGlobals::botMessage(pClient->getPlayer(),0,"waypoint %d deleted",pClient->currentWaypoint());
-			pClient->updateCurrentWaypoint(); // waypoint deleted so get a new one
-			pClient->playSound("buttons/combine_button_locked");
-			pClient->giveMessage("Waypoint deleted");
+			float radius = atof(pcmd);
+
+			if ( radius > 0 )
+			{
+				vector<int> pWpt;
+				int numdeleted = 0;
+
+				CWaypointLocations::GetAllInArea(pClient->getOrigin(),&pWpt,-1);
+
+				for ( unsigned short int i = 0; i < pWpt.size(); i ++ )
+				{
+					CWaypoint *pWaypoint = CWaypoints::getWaypoint(pWpt[i]);
+
+					if ( pWaypoint->distanceFrom(pClient->getOrigin()) < radius)
+					{
+						CWaypoints::deleteWaypoint(pWpt[i]);
+						numdeleted++;
+					}
+				}
+
+				if ( numdeleted > 0 )
+				{
+					CBotGlobals::botMessage(pClient->getPlayer(),0,"%d waypoints within range of %0.0f deleted",numdeleted,radius);
+					pClient->updateCurrentWaypoint(); // waypoint deleted so get a new one
+					pClient->playSound("buttons/combine_button_locked");
+					pClient->giveMessage("Waypoints deleted");
+				}
+				else
+				{
+					CBotGlobals::botMessage(pClient->getPlayer(),0,"no waypoints within range of %0.0f",radius);
+					pClient->playSound("weapons/wpn_denyselect");
+					pClient->giveMessage("Waypoints deleted");
+					pClient->updateCurrentWaypoint(); // waypoint deleted so get a new one
+				}
+			}
 		}
 		else
 		{
-			CBotGlobals::botMessage(pClient->getPlayer(),0,"no waypoint nearby to delete");
-			pClient->playSound("weapons/wpn_denyselect");
-			pClient->giveMessage("No Waypoint");
+			pClient->updateCurrentWaypoint();
+
+			if ( CWaypoints::validWaypointIndex(pClient->currentWaypoint()) )
+			{
+				CWaypoints::deleteWaypoint(pClient->currentWaypoint());
+				CBotGlobals::botMessage(pClient->getPlayer(),0,"waypoint %d deleted",pClient->currentWaypoint());
+				pClient->updateCurrentWaypoint(); // waypoint deleted so get a new one
+				pClient->playSound("buttons/combine_button_locked");
+				pClient->giveMessage("Waypoint deleted");
+			}
+			else
+			{
+				CBotGlobals::botMessage(pClient->getPlayer(),0,"no waypoint nearby to delete");
+				pClient->playSound("weapons/wpn_denyselect");
+				pClient->giveMessage("No Waypoint");
+			}
 		}
 	}
 

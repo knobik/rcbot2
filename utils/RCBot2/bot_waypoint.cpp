@@ -2857,9 +2857,12 @@ void CWaypoint :: removePathTo ( int iWaypointIndex )
 {
 	CWaypoint *pOther = CWaypoints::getWaypoint(iWaypointIndex);
 
-	m_thePaths.Remove(iWaypointIndex);
+	if ( pOther != NULL )
+	{
+		m_thePaths.Remove(iWaypointIndex);
 
-	pOther->removePathFrom(CWaypoints::getWaypointIndex(this));
+		pOther->removePathFrom(CWaypoints::getWaypointIndex(this));
+	}
 
 	return;
 }

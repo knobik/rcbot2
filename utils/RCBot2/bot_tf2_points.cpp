@@ -286,12 +286,12 @@ void CTFObjectiveResource::setup ()
 
 			for ( int j = 0; j < *m_iNumControlPoints; j ++ )
 			{
-				if ( m_pControlPoints[j] != NULL )
+				if ( m_pControlPoints[j].get() != NULL )
 					continue;
 
 				if ( vOrigin == m_vCPPositions[j] )
 				{
-					m_pControlPoints[j] = pent;
+					m_pControlPoints[j] = MyEHandle(pent);
 					m_pControlPointClass[j] = CTeamControlPoint::getPoint(pent);
 				}
 			}

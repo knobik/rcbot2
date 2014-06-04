@@ -220,7 +220,7 @@ public:
 	int m_IndexToWaypointAreaTranslation[MAX_CONTROL_POINTS];
 	int m_WaypointAreaToIndexTranslation[MAX_CONTROL_POINTS+1]; // add one because 0 is always valid for waypoints
 
-	edict_t *m_pControlPoints[MAX_CONTROL_POINTS];
+	MyEHandle m_pControlPoints[MAX_CONTROL_POINTS];
 	CTeamControlPoint *m_pControlPointClass[MAX_CONTROL_POINTS];
 	int m_iControlPointWpt[MAX_CONTROL_POINTS];
 	bool m_iControlPointWptReachable[MAX_CONTROL_POINTS];

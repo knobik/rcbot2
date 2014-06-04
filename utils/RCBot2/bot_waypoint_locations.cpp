@@ -160,7 +160,7 @@ void CWaypointLocations :: GetAllInArea ( Vector &vOrigin, vector <int> *pWaypoi
 					if ( iWpt == iVisibleTo )
 						continue;
 
-					if ( pTable->GetVisibilityFromTo(iWpt,iVisibleTo) )
+					if ( (iVisibleTo==-1) || pTable->GetVisibilityFromTo(iWpt,iVisibleTo) )
 						pWaypointList->push_back(iWpt);
 				}
 			}

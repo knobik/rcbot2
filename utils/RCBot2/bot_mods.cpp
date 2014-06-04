@@ -609,13 +609,14 @@ void CTeamFortress2Mod :: roundReset ()
 	{
 		m_ObjectiveResource.m_ObjectiveResource = CClassInterface::FindEntityByNetClass(gpGlobals->maxClients+1, "CTFObjectiveResource");
 		
-		if ( m_ObjectiveResource.m_ObjectiveResource.get() != NULL )
-		{
-			m_ObjectiveResource.setup();
-		}
+		//if ( m_ObjectiveResource.m_ObjectiveResource.get() != NULL )
+		//{
+		//	m_ObjectiveResource.setup();
+		//}
 	}
 
-	if ( !m_ObjectiveResource.isInitialised() )
+	//always reset on new round
+	if ( m_ObjectiveResource.m_ObjectiveResource.get() != NULL ) //!m_ObjectiveResource.isInitialised() )
 		m_ObjectiveResource.setup();
 
 	m_Timer.reset();

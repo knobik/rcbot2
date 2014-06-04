@@ -244,12 +244,20 @@ void CClient :: think ()
 
 	//if ( m_fMonitorHighFiveTime > engine->Time() )
 	//{
+
+	if ( (m_pPlayer != NULL) && (m_pPlayerInfo == NULL) )
+	{
+		m_pPlayerInfo = playerinfomanager->GetPlayerInfo(m_pPlayer);
+	}
+
 	if ( CBotGlobals::isMod(MOD_TF2) )
 	{
-		if ( (m_pPlayer != NULL) && (m_pPlayerInfo != NULL) && m_pPlayerInfo->IsConnected() && 
+		if ( (m_fMonitorHighFiveTime < engine->Time()) && (m_pPlayer != NULL) && (m_pPlayerInfo != NULL) && m_pPlayerInfo->IsConnected() && 
 			!m_pPlayerInfo->IsDead() && m_pPlayerInfo->IsPlayer() && !m_pPlayerInfo->IsObserver() && 
 			CClassInterface::getTF2HighFiveReady(m_pPlayer) )
 		{
+			m_fMonitorHighFiveTime = engine->Time() + 0.25f;
+
 			if ( CClassInterface::getHighFivePartner(m_pPlayer) == NULL )
 			{
 				// wanting high five partner
@@ -258,12 +266,15 @@ void CClient :: think ()
 
 				CBots::botFunction(newFunc);
 
-				if ( newFunc->getNearestBot() != NULL )
-				{
-					((CBotTF2*)newFunc)->highFivePlayer(m_pPlayer,CClassInterface::getTF2TauntYaw(m_pPlayer));
-				}
+				CBot *pBot = newFunc->getNearestBot();
 
-				m_fMonitorHighFiveTime = 0;
+				if ( pBot != NULL )
+				{
+					((CBotTF2*)pBot)->highFivePlayer(m_pPlayer,CClassInterface::getTF2TauntYaw(m_pPlayer));
+					m_fMonitorHighFiveTime = engine->Time() + 3.0f;
+				}				
+
+				delete newFunc;
 			}
 		}
 	}
