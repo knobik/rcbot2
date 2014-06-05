@@ -408,6 +408,24 @@ float CBotGlobals :: DotProductFromOrigin ( edict_t *pEnemy, Vector pOrigin )
 }
 
 
+float CBotGlobals :: DotProductFromOrigin ( Vector vPlayer, Vector vFacing, QAngle eyes )
+{
+	static Vector vecLOS;
+	static float flDot;
+
+	Vector vForward;
+
+	// in fov? Check angle to edict
+	AngleVectors(eyes,&vForward);
+	
+	vecLOS = vFacing - vPlayer;
+	vecLOS = vecLOS/vecLOS.Length();
+	
+	flDot = DotProduct (vecLOS , vForward );
+	
+	return flDot; 
+}
+
 bool CBotGlobals :: traceVisible (edict_t *pEnt)
 {
 	return (m_TraceResult.fraction >= 1.0)||(m_TraceResult.m_pEnt && pEnt && (m_TraceResult.m_pEnt==pEnt->GetUnknown()->GetBaseEntity()));

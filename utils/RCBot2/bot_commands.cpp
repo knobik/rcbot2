@@ -90,17 +90,21 @@ CWaypointCommand :: CWaypointCommand()
 	add(new CWaypointPaste());
 	add(new CWaypointShiftAreas());
 	add(new CWaypointTeleportCommand());
+	add(new CWaypointAreaSetToNearest());
+	add(new CWaypointShowCommand());
+	add(new CWaypointCheckCommand());
 	add(new CWaypointShowVisCommand());
 	add(new CWaypointAutoWaypointCommand());
+	add(new CWaypointAutoFix());
 }///////////////
 
-CWaypointTeleportCommand :: CWaypointTeleportCommand()
+CWaypointShowCommand :: CWaypointShowCommand()
 {
 	setName("show");
 	setHelp("show <waypoint ID>, shows you to this waypoint");
 }
 
-eBotCommandResult CWaypointTeleportCommand::execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+eBotCommandResult CWaypointShowCommand::execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( pClient )
 	{
@@ -1402,6 +1406,124 @@ eBotCommandResult CPathWaypointRemove2Command :: execute ( CClient *pClient, con
 
 	return COMMAND_ACCESSED;	
 }
+/////////////
+CWaypointAutoFix :: CWaypointAutoFix  ()
+{
+	setName("autofix");
+}
+
+eBotCommandResult CWaypointAutoFix :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	CWaypoints::autoFix();
+	return COMMAND_ACCESSED;
+}
+
+////////////
+
+CWaypointAreaSetToNearest::CWaypointAreaSetToNearest()
+{
+	setName("setareatonearest");
+}
+
+eBotCommandResult CWaypointAreaSetToNearest::execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		int id;
+		CWaypoint *pWpt;
+		bool bOk = false;
+		int setarea = 0;
+
+		id = pClient->currentWaypoint();
+
+		if ( (pWpt=CWaypoints::getWaypoint(id)) != NULL )
+		{
+			if ( pWpt->isUsed() )
+			{
+
+				if ( CBotGlobals::isCurrentMod(MOD_TF2) )
+					setarea = CTeamFortress2Mod::m_ObjectiveResource.NearestArea(pWpt->getOrigin());
+				else if (CBotGlobals::isCurrentMod(MOD_DOD) )
+					setarea = CDODMod::m_Flags.findNearestObjective(pWpt->getOrigin());
+				
+				if ( setarea > 0 )
+					pWpt->setArea(setarea);
+
+				bOk = true;
+			}
+		}
+
+		if ( bOk )
+		{
+			if ( setarea > 0 )
+				CBotGlobals::botMessage(pClient->getPlayer(),0,"Changed waypoint %d area to %d",id,setarea);
+			else
+				CBotGlobals::botMessage(pClient->getPlayer(),0,"No nearest area to wpt id %d",id);
+		}
+		else
+		{
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"Invalid waypoint id %d",id);
+		}
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
+
+///////////////
+CWaypointCheckCommand::CWaypointCheckCommand()
+{
+	setName("check");
+}
+
+eBotCommandResult CWaypointCheckCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	// loop through every waypoint and check the areas are not outside the number of control points
+
+	CWaypoints::checkAreas((pClient==NULL)?NULL:pClient->getPlayer());
+
+	return COMMAND_ACCESSED;
+}
+
+CWaypointTeleportCommand::CWaypointTeleportCommand()
+{
+	setName("teleport");
+}
+
+eBotCommandResult CWaypointTeleportCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient && pcmd && *pcmd )
+	{
+		int id;
+		CWaypoint *pWpt;
+		bool bTele = false;
+
+		id = atoi(pcmd);
+
+		if ( (pWpt=CWaypoints::getWaypoint(id)) != NULL )
+		{
+			if ( pWpt->isUsed() )
+			{
+				pClient->teleportTo(pWpt->getOrigin()+Vector(0,0,8));
+				bTele = true;
+			}
+		}
+
+		if ( bTele )
+		{
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"Teleported to waypoint %d",id);
+		}
+		else
+		{
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"Invalid waypoint id %d",id);
+		}
+
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
+//////////////
 
 CWaypointAngleCommand :: CWaypointAngleCommand()
 {

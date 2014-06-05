@@ -2948,10 +2948,15 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 					if ( m_iPrevClip > pBotWeapon->getAmmo(pBot) )
 					{
-						angle = (angle - 0.96f) * 25;
+						bool bhide;
 
-						// hide after good shots with less health
-						if ( randomFloat(0.0f,2.0f) <= (angle+(1.0f-pBot->getHealthPercent())) )
+						// hide if player can see me, otherwise if not player hide if low health
+						if ( CBotGlobals::isPlayer(pBot->getEnemy()) )						
+							bhide = CBotGlobals::DotProductFromOrigin(pBot->getEnemy(),pBot->getOrigin()) > 0.96f;						
+						else
+							bhide = randomFloat(0.0f,2.0f) <= (angle+(1.0f-pBot->getHealthPercent()));
+						
+						if ( bhide )
 							m_fHideTime = engine->Time() + randomFloat(1.5f,2.5f);
 
 						m_fAimTime = 0.0f;

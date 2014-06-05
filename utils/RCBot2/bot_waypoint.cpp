@@ -2590,6 +2590,51 @@ CWaypoint *CWaypoints :: nearestPipeWaypoint ( Vector vTarget, Vector vOrigin, i
 
 }
 
+void CWaypoints :: autoFix ( )
+{
+	int *iNumAreas = CTeamFortress2Mod::m_ObjectiveResource.m_iNumControlPoints;
+	int iNumCps;
+
+	if ( iNumAreas == NULL )
+		return;
+
+	iNumCps = *iNumAreas + 1;
+
+	for ( int i = 0; i < numWaypoints(); i ++ )
+	{
+		if ( m_theWaypoints[i].isUsed() && (m_theWaypoints[i].getFlags() > 0) )
+		{
+			if ( m_theWaypoints[i].getArea() > iNumCps )
+			{
+				m_theWaypoints[i].setArea(CTeamFortress2Mod::m_ObjectiveResource.NearestArea(m_theWaypoints[i].getOrigin()));
+				CBotGlobals::botMessage(NULL,0,"Changed Waypoint id %d area to (area = %d)",i,m_theWaypoints[i].getArea());
+			}
+		}
+	}
+}
+
+void CWaypoints :: checkAreas ( edict_t *pActivator )
+{
+	int *iNumAreas = CTeamFortress2Mod::m_ObjectiveResource.m_iNumControlPoints;
+	int iNumCps;
+
+	if ( iNumAreas == NULL )
+		return;
+
+	iNumCps = *iNumAreas + 1;
+
+	for ( int i = 0; i < numWaypoints(); i ++ )
+	{
+		if ( m_theWaypoints[i].isUsed() && (m_theWaypoints[i].getFlags() > 0) )
+		{
+			if ( m_theWaypoints[i].getArea() > iNumCps )
+			{
+				CBotGlobals::botMessage(pActivator,0,"Invalid Waypoint id %d (area = %d)",i,m_theWaypoints[i].getArea());
+			}
+		}
+	}
+}
+
 CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *org1, Vector *org2 )
 {
 	register short int i;

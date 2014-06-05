@@ -357,7 +357,7 @@ void CTFObjectiveResource::	debugprint ( void )
 int CTFObjectiveResource::NearestArea ( Vector vOrigin )
 {
 	int iNearest = -1;
-	float fNearest = 1024.0f;
+	float fNearest = 2048.0f;
 	float fDist;
 
 	for ( int i = 0; i < *m_iNumControlPoints; i ++ )

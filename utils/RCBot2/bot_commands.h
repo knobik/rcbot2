@@ -376,6 +376,38 @@ public:
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 
+class CWaypointCheckCommand : public CBotCommand
+{
+public:
+	CWaypointCheckCommand();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+class CWaypointAreaSetToNearest : public CBotCommand
+{
+public:
+	CWaypointAreaSetToNearest();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+class CWaypointAutoFix : public CBotCommand
+{
+public:
+	CWaypointAutoFix();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
+class CWaypointShowCommand : public CBotCommand
+{
+public:
+	CWaypointShowCommand();
+
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
+
 class CWaypointSetAngleCommand : public CBotCommand
 {
 public:

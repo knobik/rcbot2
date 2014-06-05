@@ -294,6 +294,9 @@ public:
 		// move to new origin
 		m_vOrigin = origin;
 	}
+
+	void checkAreas ( edict_t *pActivator );
+
 	// show info to player
 	void info ( edict_t *pEdict );
 
@@ -407,6 +410,10 @@ public:
 
 		return ((int)pWpt - (int)m_theWaypoints)/sizeof(CWaypoint);
 	}
+
+	static void autoFix ();
+
+	static void checkAreas ( edict_t *pActivator );
 
 	static void shiftVisibleAreas ( edict_t *pPlayer, int from, int to );
 
