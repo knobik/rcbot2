@@ -2430,5 +2430,8 @@ bool CTeamFortress2Mod :: isWaypointAreaValid ( int iWptArea, int iWptFlags )
 ///////////////////////////
 bool CTeamFortress2Mod :: withinEndOfRound ( float fTime )	
 {
-	return (gpGlobals->curtime > (*m_Timer.m_flTimerEndTime - fTime));
+	if ( m_Timer.m_flTimerEndTime )
+		return (gpGlobals->curtime > (*m_Timer.m_flTimerEndTime - fTime));
+
+	return false;
 }

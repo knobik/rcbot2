@@ -2857,6 +2857,14 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		// check wall time
 		m_fCheckTime = engine->Time() + 0.15f;
 	}
+	else if (m_fTime<engine->Time() )
+	{
+		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+			pBot->secondaryAttack();
+
+		complete();
+		return;
+	}
 
 	// look at waypoint yaw and have random updates
 	pBot->setLookAtTask(LOOK_SNIPE);
@@ -2987,22 +2995,11 @@ void CBotTF2Snipe :: execute (CBot *pBot,CBotSchedule *pSchedule)
 					m_fCheckTime = engine->Time() + 0.15f;
 				}
 			}
-
-			if (m_fTime<engine->Time() )
-			{
-				if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
-					pBot->secondaryAttack();
-
-				complete();
-			}
+			// zoom in
+			if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
+				pBot->secondaryAttack();
 			else
-			{
-				// zoom in
-				if ( !CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()) )
-					pBot->secondaryAttack();
-				else
-					m_fHideTime = 0.0f;
-			}
+				m_fHideTime = 0.0f;
 		}
 	}
 }

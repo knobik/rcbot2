@@ -651,6 +651,9 @@ bool CBotGlobals :: walkableFromTo (edict_t *pPlayer, Vector v_src, Vector v_des
 	Vector vleftsrc,vleftdest, vrightsrc,vrightdest;
 	float fWidth = rcbot_wptplace_width.GetFloat();
 
+	if ( v_dest == v_src )
+		return true;
+
 	// minimum
 	if ( fWidth < 2.0f )
 		fWidth = 2.0f;

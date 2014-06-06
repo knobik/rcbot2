@@ -395,16 +395,35 @@ bool CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 					{
 						if ( wantToHeal(pEntity) )
 						{
-							if ( m_pHeal )
+							if ( m_pHeal.get() != NULL )
 							{
 								if ( m_pHeal != pEntity )
 								{
 									IPlayerInfo *p1 = playerinfomanager->GetPlayerInfo(m_pHeal);
 									IPlayerInfo *p2 = playerinfomanager->GetPlayerInfo(pEntity);
 
-									if ( ((float)p2->GetHealth()/p2->GetMaxHealth()) < ((float)p1->GetHealth()/p1->GetMaxHealth()) )
-									{									
-										m_pHeal = pEntity;
+									int playerclass = CClassInterface::getTF2Class(m_pHeal);
+
+									switch ( CClassInterface::getTF2Class(pEntity)  )
+									{
+									case TF_CLASS_HWGUY:
+									case TF_CLASS_SOLDIER:
+									case TF_CLASS_DEMOMAN:
+										// if current healing player is not heavy class and am ubered , uber the new guy
+										if ( ((playerclass != TF_CLASS_HWGUY)&&(playerclass != TF_CLASS_SOLDIER)&&(playerclass != TF_CLASS_DEMOMAN)) && CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) ) /// I'm ubered
+											m_pHeal = pEntity;
+									default:
+										if ( CTeamFortress2Mod::TF2_IsPlayerOnFire(pEntity) && !CTeamFortress2Mod::TF2_IsPlayerOnFire(m_pHeal) )
+											m_pHeal = pEntity;
+
+										if ( ((float)p2->GetHealth()/p2->GetMaxHealth()) < ((float)p1->GetHealth()/p1->GetMaxHealth()) )
+											m_pHeal = pEntity;
+
+										break;
+									}
+
+									if ( m_pHeal == pEntity ) 
+									{																			
 										updateCondition(CONDITION_SEE_HEAL);
 									}
 								}					
