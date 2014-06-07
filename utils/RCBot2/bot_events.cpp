@@ -95,6 +95,7 @@ private:
 	edict_t *m_pEnemy;
 };
 
+
 class CBotSeeFriendlyDie : public IBotFunction
 {
 public:

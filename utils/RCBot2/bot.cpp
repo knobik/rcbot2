@@ -2020,74 +2020,80 @@ void CBot :: hearPlayerAttack( edict_t *pAttacker, int iWeaponID )
 
 void CBot :: listenToPlayer ( edict_t *pPlayer, bool bIsEnemy, bool bIsAttacking )
 {
-	IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
 	bool bIsVisible = isVisible(pPlayer);
 
-	if ( bIsEnemy == false )
-		bIsEnemy = isEnemy(pPlayer);
+	if ( CBotGlobals::isPlayer( pPlayer ) )
+	{
+		IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+		if ( bIsEnemy == false )
+			bIsEnemy = isEnemy(pPlayer);
 			 
-	// look at possible enemy
-	if ( !bIsVisible || bIsEnemy )
-	{
-		m_vListenPosition = p->GetAbsOrigin();
-	}
-	else if ( bIsAttacking )
-	{
-		if ( !bIsEnemy && wantToInvestigateSound() )
+		// look at possible enemy
+		if ( !bIsVisible || bIsEnemy )
 		{
-			QAngle angle = p->GetAbsAngles();
-			Vector forward;
-
-			AngleVectors( angle, &forward );
-
-			// look where team mate is shooting
-			m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);		
-
-			// not investigating any noise right now -- depending on my braveness I will check it out
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && (randomFloat(0.0f,0.75f) < m_pProfile->m_fBraveness) )
+			m_vListenPosition = p->GetAbsOrigin();
+		}
+		else if ( bIsAttacking )
+		{
+			if ( !bIsEnemy && wantToInvestigateSound() )
 			{
-				trace_t *TraceResult = CBotGlobals::getTraceResult();
-					
-				Vector vAttackerOrigin = CBotGlobals::entityOrigin(pPlayer);
+				QAngle angle = p->GetAbsAngles();
+				Vector forward;
 
-				if ( distanceFrom(vAttackerOrigin) > 96.0f )
+				AngleVectors( angle, &forward );
+
+				// look where team mate is shooting
+				m_vListenPosition = p->GetAbsOrigin() + (forward*1024.0f);		
+
+				// not investigating any noise right now -- depending on my braveness I will check it out
+				if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && (randomFloat(0.0f,0.75f) < m_pProfile->m_fBraveness) )
 				{
-					// check exactly where teammate is firing
-					CBotGlobals::quickTraceline(pPlayer,vAttackerOrigin,m_vListenPosition);
+					trace_t *TraceResult = CBotGlobals::getTraceResult();
+					
+					Vector vAttackerOrigin = CBotGlobals::entityOrigin(pPlayer);
 
-					// update the wall or player teammate is shooting
-					m_vListenPosition = TraceResult->endpos; 
-
-					CBotGlobals::quickTraceline(m_pEdict,getOrigin(),m_vListenPosition);
-
-					// can't see what my teammate is shooting -- go there
-					if ( (TraceResult->fraction < 1.0f) && (TraceResult->m_pEnt != m_pEdict->GetIServerEntity()->GetBaseEntity() ) )
+					if ( distanceFrom(vAttackerOrigin) > 96.0f )
 					{
-						m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
+						// check exactly where teammate is firing
+						CBotGlobals::quickTraceline(pPlayer,vAttackerOrigin,m_vListenPosition);
+
+						// update the wall or player teammate is shooting
+						m_vListenPosition = TraceResult->endpos; 
+
+						CBotGlobals::quickTraceline(m_pEdict,getOrigin(),m_vListenPosition);
+
+						// can't see what my teammate is shooting -- go there
+						if ( (TraceResult->fraction < 1.0f) && (TraceResult->m_pEnt != m_pEdict->GetIServerEntity()->GetBaseEntity() ) )
+						{
+							m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
 						
-						Vector vecLOS;
-						float flDot;
+							Vector vecLOS;
+							float flDot;
 
-						vecLOS = getOrigin() - vAttackerOrigin;
-						vecLOS = vecLOS/vecLOS.Length();
+							vecLOS = getOrigin() - vAttackerOrigin;
+							vecLOS = vecLOS/vecLOS.Length();
 	
-						flDot = DotProduct (vecLOS , forward );
+							flDot = DotProduct (vecLOS , forward );
 
-						if ( flDot > 0.5f )
-						{
-							// Facing my direction
-							m_pSchedules->addFront(new CBotInvestigateNoiseSched(m_vListenPosition,m_vListenPosition));
+							if ( flDot > 0.5f )
+							{
+								// Facing my direction
+								m_pSchedules->addFront(new CBotInvestigateNoiseSched(m_vListenPosition,m_vListenPosition));
+							}
+							else
+							{
+								// Not facing my direction
+								m_pSchedules->addFront(new CBotInvestigateNoiseSched(vAttackerOrigin,m_vListenPosition));
+							}						
 						}
-						else
-						{
-							// Not facing my direction
-							m_pSchedules->addFront(new CBotInvestigateNoiseSched(vAttackerOrigin,m_vListenPosition));
-						}						
 					}
 				}
 			}
 		}
 	}
+	else
+		m_vListenPosition = CBotGlobals::entityOrigin(pPlayer);
 
 	m_PlayerListeningTo = pPlayer;
 	m_bListenPositionValid = true;

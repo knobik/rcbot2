@@ -164,7 +164,7 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 		pBot->getNavigator()->rollBackPosition();
 		fail();
 	}
-	else if ( !pBotTF2->wantToHeal(pHeal) )
+	else if ( pBotTF2->getHealFactor(pHeal) == 0.0f )
 	{
 		pBotTF2->clearHealingEntity();
 		pBot->getNavigator()->rollBackPosition();
@@ -200,15 +200,13 @@ void CBotTF2MedicHeal::execute(CBot *pBot,CBotSchedule *pSchedule)
 			m_bHealerJumped = false;
 		}
 
-		if ( !pBotTF2->healPlayer(pHeal,m_pHeal) )
+		if ( !pBotTF2->healPlayer() )
 		{
 			pBot->getNavigator()->rollBackPosition();
 			pBotTF2->clearHealingEntity();
 			fail();
 		}
 	}
-
-	m_pHeal = pHeal;
 }
 
 ///////////

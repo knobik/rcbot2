@@ -300,7 +300,7 @@ public:
 
 	bool isBuilding ( edict_t *pBuilding );
 
-	bool wantToHeal ( edict_t *pPlayer );
+	float getHealFactor ( edict_t *pPlayer );
 
 	virtual bool wantToFollowEnemy ();
 
@@ -469,6 +469,8 @@ protected:
 	float m_fTauntTime;
 	float m_fTaunting;
 	float m_fDefendTime;
+
+	float m_fHealFactor;
 
 	MyEHandle m_pHeal;
 	MyEHandle m_pLastHeal;
@@ -706,7 +708,7 @@ public:
 
 	void updateClass ();
 
-	bool healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer );
+	bool healPlayer ( );
 	
 	bool upgradeBuilding ( edict_t *pBuilding, bool removesapper = false );
 

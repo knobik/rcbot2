@@ -345,7 +345,7 @@ void CBotFortress :: checkHealingValid ()
 			m_pHeal = NULL;
 			removeCondition(CONDITION_SEE_HEAL);
 		}
-		else if ( !wantToHeal(m_pHeal) )
+		else if ( getHealFactor(m_pHeal) == 0.0f )
 		{
 			m_pHeal = NULL;
 			removeCondition(CONDITION_SEE_HEAL);
@@ -355,18 +355,59 @@ void CBotFortress :: checkHealingValid ()
 		removeCondition(CONDITION_SEE_HEAL);
 }
 
-bool CBotFortress :: wantToHeal ( edict_t *pPlayer )
+float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 {
+	float fFactor = 0.0f;
+	bool bHeavyClass = false;
+	edict_t *pMedigun = CTeamFortress2Mod::getMediGun(m_pEdict);
 
 	IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
 	TF_Class iclass = (TF_Class)CClassInterface::getTF2Class(pPlayer);
 	
-	// Heal normal classes till full health
-	if ( (CClassInterface::getTF2NumHealers(pPlayer) < 2) && ( iclass == TF_CLASS_SPY ) || (iclass == TF_CLASS_SNIPER ) || (iclass == TF_CLASS_MEDIC) || (iclass == TF_CLASS_ENGINEER) || (iclass == TF_CLASS_SCOUT) )
-		return CBotGlobals::entityIsAlive(pPlayer) && (p->GetHealth() < p->GetMaxHealth());
-	
-	// overheal HWGUY/SOLDIER/DEMOMAN
-	return (CClassInterface::getTF2NumHealers(pPlayer) < 2) && CBotGlobals::entityIsAlive(pPlayer);
+	if ( !CBotGlobals::entityIsAlive(pPlayer) )
+		return 0.0f;
+
+	if ( CClassInterface::getTF2NumHealers(pPlayer) > 1 )
+		return 0.0f;
+
+	switch ( iclass )
+	{
+	case TF_CLASS_DEMOMAN:
+	case TF_CLASS_HWGUY:
+	case TF_CLASS_SOLDIER:
+	case TF_CLASS_PYRO:
+		{
+			bHeavyClass = true;
+
+			fFactor += 1.0f;
+
+			if ( pMedigun )
+			{
+				// overheal HWGUY/SOLDIER/DEMOMAN
+				fFactor += (float)(CClassInterface::getUberChargeLevel(pMedigun))/100;
+
+				if ( CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) ) // uber deployed
+					fFactor += (1.0f - ((float)(CClassInterface::getUberChargeLevel(pMedigun))/100));
+			}
+		}
+	default:
+
+		if ( !bHeavyClass ) // add more factor bassed on uber charge level - bot can gain more uber charge
+			fFactor += (0.1f - ((float)(CClassInterface::getUberChargeLevel(pMedigun))/1000));
+
+		fFactor += 1.0f - (p->GetHealth()/p->GetMaxHealth());
+
+		if ( CTeamFortress2Mod::TF2_IsPlayerOnFire(pPlayer) )
+			fFactor += 1.0f;
+
+		if ( ((m_fLastCalledMedicTime + 6.0f) > engine->Time()) && ( m_pLastCalledMedic == pPlayer ) )
+			fFactor += 1.0f;
+
+		if ( iclass == TF_CLASS_MEDIC )
+			fFactor *= 0.5f;
+	}
+
+	return fFactor;
 }
 
 
@@ -391,45 +432,27 @@ bool CBotFortress :: setVisible ( edict_t *pEntity, bool bVisible )
 				{
 					Vector vPlayer = CBotGlobals::entityOrigin(pEntity);
 
-					if ( distanceFrom(vPlayer) <= 384 )
+					if ( distanceFrom(vPlayer) <= CWaypointLocations::REACHABLE_RANGE )
 					{
-						if ( wantToHeal(pEntity) )
+						float fFactor;
+
+						if ( (fFactor = getHealFactor(pEntity)) > 0 )
 						{
 							if ( m_pHeal.get() != NULL )
 							{
 								if ( m_pHeal != pEntity )
 								{
-									IPlayerInfo *p1 = playerinfomanager->GetPlayerInfo(m_pHeal);
-									IPlayerInfo *p2 = playerinfomanager->GetPlayerInfo(pEntity);
-
-									int playerclass = CClassInterface::getTF2Class(m_pHeal);
-
-									switch ( CClassInterface::getTF2Class(pEntity)  )
-									{
-									case TF_CLASS_HWGUY:
-									case TF_CLASS_SOLDIER:
-									case TF_CLASS_DEMOMAN:
-										// if current healing player is not heavy class and am ubered , uber the new guy
-										if ( ((playerclass != TF_CLASS_HWGUY)&&(playerclass != TF_CLASS_SOLDIER)&&(playerclass != TF_CLASS_DEMOMAN)) && CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) ) /// I'm ubered
-											m_pHeal = pEntity;
-									default:
-										if ( CTeamFortress2Mod::TF2_IsPlayerOnFire(pEntity) && !CTeamFortress2Mod::TF2_IsPlayerOnFire(m_pHeal) )
-											m_pHeal = pEntity;
-
-										if ( ((float)p2->GetHealth()/p2->GetMaxHealth()) < ((float)p1->GetHealth()/p1->GetMaxHealth()) )
-											m_pHeal = pEntity;
-
-										break;
-									}
-
-									if ( m_pHeal == pEntity ) 
-									{																			
+									if ( fFactor > m_fHealFactor )
+									{			
+										m_pHeal = pEntity;
+										m_fHealFactor = fFactor;
 										updateCondition(CONDITION_SEE_HEAL);
 									}
 								}					
 							}
 							else
 							{
+								m_fHealFactor = fFactor;
 								m_pHeal = pEntity;
 								updateCondition(CONDITION_SEE_HEAL);
 							}
@@ -742,6 +765,8 @@ void CBotFortress :: detectedAsSpy( edict_t *pDetector, bool bDisguiseComprimise
 void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
+
+	m_fHealFactor = 0.0f;
 
 	m_pHealthkit = MyEHandle(NULL);
 	m_pFlag = MyEHandle(NULL);
@@ -3488,7 +3513,7 @@ void CBotTF2 :: checkBeingHealed ()
 // Preconditions :  Current weapon is Medigun
 //					pPlayer is not NULL
 //
-bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
+bool CBotTF2 :: healPlayer ()
 {
 	static CBotWeapon *pWeap;
 	static IPlayerInfo *p;
@@ -3502,7 +3527,7 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	if ( !m_pHeal )
 		return false;
 	
-	if ( !wantToHeal(m_pHeal) )
+	if ( getHealFactor(m_pHeal) == 0.0f )
 		return false;
 
 	vOrigin = CBotGlobals::entityOrigin(m_pHeal);
@@ -3512,13 +3537,16 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	//	return false;
 	p = playerinfomanager->GetPlayerInfo(m_pHeal);
 
+	if ( !p || p->IsDead() || !p->IsConnected() || p->IsObserver() )
+		return false;
+
 	if ( m_fMedicUpdatePosTime < engine->Time() )
 	{
 		float fRand;
 
 		fRand = randomFloat(1.0f,2.0f);
 
-		pClient = CClients::get(pPlayer);
+		pClient = CClients::get(m_pHeal);
 
 		if ( pClient )
 			fSpeed = pClient->getSpeed();
@@ -3571,8 +3599,9 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	{
 		edict_t *pent;
 
-		pPlayer = NULL;
+		edict_t *pPlayer = NULL;
 
+		// Find the player I'm currently healing
 		for ( unsigned short i = 1; i <= gpGlobals->maxClients; i++ )
 		{
 			pent = INDEXENT(i);
@@ -3587,12 +3616,13 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 			}
 		}
 
+		// found it
 		if ( pPlayer )
 		{
-			m_pHeal = pPlayer;
-			
-			if ( pPrevPlayer != pPlayer )
+			// is the person I want to heal different from the player I am healing now?
+			if ( m_pHeal != pPlayer )
 			{
+				// yes -- press fire to disconnect from player
 				if ( m_fHealClickTime < engine->Time() )
 				{
 					primaryAttack(true);
@@ -3608,8 +3638,6 @@ bool CBotTF2 :: healPlayer ( edict_t *pPlayer, edict_t *pPrevPlayer )
 	setLookAtTask(LOOK_EDICT);
 
 	m_pLastHeal = m_pHeal;
-
-	p = playerinfomanager->GetPlayerInfo(pPlayer);
 
 	// Simple UBER check : healing player not ubered already
 	if ( !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pHeal) && !CTeamFortress2Mod::isFlagCarrier(m_pHeal) && 
@@ -4153,10 +4181,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility);
 
 	ADD_UTILITY(BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pHeal && 
-		CBotGlobals::entityIsAlive(m_pHeal) && wantToHeal(m_pHeal),0.98f);
+		CBotGlobals::entityIsAlive(m_pHeal) && (getHealFactor(m_pHeal)>0),0.98f);
 
 	ADD_UTILITY(BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && 
-		CBotGlobals::entityIsAlive(m_pLastHeal) && wantToHeal(m_pLastHeal),0.99f); 
+		CBotGlobals::entityIsAlive(m_pLastHeal) && (getHealFactor(m_pLastHeal)>0),0.99f); 
 
 	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) &&
 		!hasFlag() && !CTeamFortress2Mod::isFlagCarrier(m_pEnemy) && (((m_iClass == TF_CLASS_MEDIC) && !m_pHeal) || 
