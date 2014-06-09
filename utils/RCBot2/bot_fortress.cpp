@@ -360,18 +360,32 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 	float fFactor = 0.0f;
 	bool bHeavyClass = false;
 	edict_t *pMedigun = CTeamFortress2Mod::getMediGun(m_pEdict);
+	float fHealthPercent;
+	Vector vVel = Vector(0,0,0);
+	
+	CClassInterface::getVelocity(pPlayer,&vVel);
 
 	IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
 	TF_Class iclass = (TF_Class)CClassInterface::getTF2Class(pPlayer);
 	
-	if ( !CBotGlobals::entityIsAlive(pPlayer) )
+	if ( !CBotGlobals::entityIsAlive(pPlayer) || !p || p->IsDead() || p->IsObserver() || !p->IsConnected() )
 		return 0.0f;
 
 	if ( CClassInterface::getTF2NumHealers(pPlayer) > 1 )
 		return 0.0f;
 
+	fHealthPercent = (p->GetHealth()/p->GetMaxHealth());
+
 	switch ( iclass )
 	{
+	case TF_CLASS_MEDIC:
+
+		if ( fHealthPercent >= 1.0f )
+			return 0.0f;
+
+		fFactor = 0.1f;
+
+		break;
 	case TF_CLASS_DEMOMAN:
 	case TF_CLASS_HWGUY:
 	case TF_CLASS_SOLDIER:
@@ -395,7 +409,7 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 		if ( !bHeavyClass ) // add more factor bassed on uber charge level - bot can gain more uber charge
 			fFactor += (0.1f - ((float)(CClassInterface::getUberChargeLevel(pMedigun))/1000));
 
-		fFactor += 1.0f - (p->GetHealth()/p->GetMaxHealth());
+		fFactor += 1.0f - fHealthPercent;
 
 		if ( CTeamFortress2Mod::TF2_IsPlayerOnFire(pPlayer) )
 			fFactor += 1.0f;
@@ -403,8 +417,8 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 		if ( ((m_fLastCalledMedicTime + 6.0f) > engine->Time()) && ( m_pLastCalledMedic == pPlayer ) )
 			fFactor += 1.0f;
 
-		if ( iclass == TF_CLASS_MEDIC )
-			fFactor *= 0.5f;
+		// higher movement better
+		fFactor += (vVel.Length() / 320);
 	}
 
 	return fFactor;
@@ -3589,11 +3603,8 @@ bool CBotTF2 :: healPlayer ()
 
 	if ( !CClassInterface::getMedigunHealing(pWeapon) )
 	{
-		if ( m_fHealClickTime < engine->Time() )
-		{
+		if ( m_fHealClickTime < engine->Time() )		
 			primaryAttack(true);
-			m_fHealClickTime = engine->Time() + randomFloat(0.75f,1.25f);
-		}
 	}
 	else
 	{
@@ -3624,11 +3635,12 @@ bool CBotTF2 :: healPlayer ()
 			{
 				// yes -- press fire to disconnect from player
 				if ( m_fHealClickTime < engine->Time() )
-				{
-					primaryAttack(true);
+				{					
 					m_fHealClickTime = engine->Time() + randomFloat(1.0f,2.0f);
 				}
 			}
+			else
+				primaryAttack(true);
 		}
 	}
 	//else

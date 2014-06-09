@@ -133,6 +133,7 @@ typedef enum
 	GETPROP_TF2_TAUNTYAW,
 	GETPROP_TF2_HIGHFIVE,
 	GETPROP_TF2_HIGHFIVE_PARTNER,
+	GETPROP_SENTRYGUN_PLACING,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -559,6 +560,11 @@ public:
 	inline static bool isPlayerPlantingBomb_DOD(edict_t *pPlayer)
 	{
 		return g_GetProps[GETPROP_DOD_PLANTINGBOMB].getBool(pPlayer,false);
+	}
+
+	inline static bool isSentryGunBeingPlaced (edict_t *pSentry )
+	{
+		return g_GetProps[GETPROP_SENTRYGUN_PLACING].getBool(pSentry,false);
 	}
 
 private:

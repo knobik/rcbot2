@@ -1258,7 +1258,7 @@ int CTeamFortress2Mod :: getEnemyTeam ( int iTeam )
 
 bool CTeamFortress2Mod :: isDispenser ( edict_t *pEntity, int iTeam )
 {
-	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_dispenser")==0);
+	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_dispenser")==0) && !CClassInterface::isSentryGunBeingPlaced(pEntity);
 }
 
 bool CTeamFortress2Mod :: isFlag ( edict_t *pEntity, int iTeam )
@@ -1309,22 +1309,22 @@ float CTeamFortress2Mod :: getTeleportTime ( edict_t *pOwner )
 
 bool CTeamFortress2Mod :: isSentry ( edict_t *pEntity, int iTeam )
 {
-	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_sentrygun")==0);
+	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_sentrygun")==0) && !CClassInterface::isSentryGunBeingPlaced(pEntity);
 }
 
 bool CTeamFortress2Mod :: isTeleporter ( edict_t *pEntity, int iTeam )
 {
-	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter")==0);
+	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_teleporter")==0) && !CClassInterface::isSentryGunBeingPlaced(pEntity);;
 }
 
 bool CTeamFortress2Mod :: isTeleporterEntrance ( edict_t *pEntity, int iTeam )
 {
-	return isTeleporter(pEntity,iTeam) && CClassInterface::isTeleporterMode(pEntity,TELE_ENTRANCE);
+	return isTeleporter(pEntity,iTeam) && CClassInterface::isTeleporterMode(pEntity,TELE_ENTRANCE) && !CClassInterface::isSentryGunBeingPlaced(pEntity);
 }
 
 bool CTeamFortress2Mod :: isTeleporterExit ( edict_t *pEntity, int iTeam )
 {
-	return isTeleporter(pEntity,iTeam) && CClassInterface::isTeleporterMode(pEntity,TELE_EXIT);
+	return isTeleporter(pEntity,iTeam) && CClassInterface::isTeleporterMode(pEntity,TELE_EXIT) && !CClassInterface::isSentryGunBeingPlaced(pEntity);
 }
 
 bool CTeamFortress2Mod :: isPipeBomb ( edict_t *pEntity, int iTeam)

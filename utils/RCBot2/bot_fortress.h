@@ -450,6 +450,8 @@ public:
 	virtual void seeFriendlyHurtEnemy ( edict_t *pTeammate, edict_t *pEnemy, CWeapon *pWeapon );
 	
 	bool incomingRocket ( float fRange );
+
+	virtual void hearPlayerAttack( edict_t *pAttacker, int iWeaponID ) { CBot::hearPlayerAttack(pAttacker,iWeaponID); }
 protected:
 	virtual void selectTeam ();
 
