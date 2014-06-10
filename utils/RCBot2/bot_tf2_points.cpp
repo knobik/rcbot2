@@ -167,7 +167,20 @@ int CTFObjectiveResource::getRandomValidPointForTeam ( int team, ePointAttackDef
 			else
 			{
 				if (GetCappingTeam(i) == iotherteam)
-					arr[i].fProbMultiplier = 4.0f;
+				{
+					int numplayers = GetNumPlayersInArea(i,iotherteam);
+
+					// IF this is not base point and a lot of players are here, reduce probability of defending
+					if ( (i != GetBaseControlPointForTeam(team)) && (numplayers > 1)  )
+					{
+						arr[i].fProbMultiplier = 1.0f - ((float)numplayers/(gpGlobals->maxClients/4));
+
+						if ( arr[i].fProbMultiplier <= 0.0f )
+							arr[i].fProbMultiplier = 0.1f;
+					}
+					else // Otherwise there aren't any playres on or is base and has been attacked recently
+						arr[i].fProbMultiplier = 4.0f;
+				}
 				else if ((getLastCaptureTime(i) + 10.0f) > gpGlobals->curtime )
 					arr[i].fProbMultiplier = 2.0f;
 			}
@@ -485,14 +498,47 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 				}
 				else
 				{
-					/*int basepoint = GetBaseControlPointForTeam(team);
-
-					if ( i == basepoint )
+					if ( CTeamFortress2Mod::isAttackDefendMap() )
+						arr[i].bValid = true;
+					else
 					{
-						arr[i].fProb = 0.2f;
-					}*/
+						int basepoint = GetBaseControlPointForTeam(team);
+						arr[i].bValid = true;						
 
-					arr[i].bValid = true;
+						if ( i == basepoint )
+						{
+							// check that all other points are owned
+							int iNumOwned = 0;
+							int iNumAvailable = 0;
+
+							for ( int j = 0; j < *m_iNumControlPoints; j ++ )
+							{
+								// not visible
+								if ( m_bCPIsVisible[j] == 0 )
+									continue;
+								// not unlocked
+								if ( m_flUnlockTimes[j] > gpGlobals->curtime )
+									continue;
+								// not in round
+								if ( m_pControlPoints[j] && pRound && !pRound->isPointInRound(j) )
+									continue;
+
+								if ( GetOwningTeam(j) == other )
+									iNumOwned ++;
+
+								iNumAvailable++;
+							}
+
+							if ( iNumOwned == (iNumAvailable-1) )
+							{								
+								// other team can capture
+								arr[i].fProb = 1.0f;
+							}
+							else // still valid but very low probability of ever defending here
+								arr[i].fProb = 0.001f;
+						}
+					}
+
 					continue;
 				}
 			}

@@ -411,6 +411,21 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 					fFactor += (1.0f - ((float)(CClassInterface::getUberChargeLevel(pMedigun))/100));
 			}
 		}
+		// drop down
+	case TF_CLASS_SPY:
+		if ( iclass == TF_CLASS_SPY )
+		{
+			int iClass,iTeam,iIndex,iHealth;
+
+			if ( CClassInterface::getTF2SpyDisguised(pPlayer,&iClass,&iTeam,&iIndex,&iHealth) )
+			{
+				if ( iTeam != m_iTeam )
+					return 0.0f;
+			}
+
+			if ( CTeamFortress2Mod::TF2_IsPlayerCloaked(pPlayer) )
+				return 0.0f;
+		}
 	default:
 
 		if ( !bHeavyClass ) // add more factor bassed on uber charge level - bot can gain more uber charge
@@ -4928,7 +4943,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportExit,150,-1,true,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_TELE_EXIT));
 
 				// no use going back to this waypoint
-				if ( (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
+				if ( pWaypoint && (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
 					pWaypoint = NULL;
 			}
 			else
@@ -4979,7 +4994,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				if ( pWaypoint && CTeamFortress2Mod::buildingNearby(m_iTeam,pWaypoint->getOrigin()) )
 					pWaypoint = NULL;
 				// no use going back to this waypoint
-				if ( (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
+				if ( pWaypoint && (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
 					pWaypoint = NULL;
 			}
 			
@@ -5068,7 +5083,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vDispenser,150,-1,true,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_SENTRY));
 				
 				// no use going back to this waypoint
-				if ( (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
+				if ( pWaypoint && (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
 					pWaypoint = NULL;
 			}
 			else if ( m_pSentryGun.get() != NULL )

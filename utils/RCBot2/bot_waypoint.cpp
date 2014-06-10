@@ -446,7 +446,7 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 						{
 							if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pSentry)) < 200.0f )
 							{
-								bBeliefFactor *= 0.5f;
+								bBeliefFactor *= 0.1f;
 							}
 						}
 					}
@@ -482,7 +482,7 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 						{
 							if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pSentry)) < 200.0f )
 							{
-								bBeliefFactor *= 0.5f;
+								bBeliefFactor *= 0.1f;
 							}
 						}
 					}
