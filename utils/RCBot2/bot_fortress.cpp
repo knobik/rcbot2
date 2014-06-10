@@ -357,11 +357,18 @@ void CBotFortress :: checkHealingValid ()
 
 float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 {
+	// Factors are 
+	// 1. health
+	// 2. max health
+	// 3. ubercharge
+	// 4. player class
+	// 5. etc
 	float fFactor = 0.0f;
 	bool bHeavyClass = false;
 	edict_t *pMedigun = CTeamFortress2Mod::getMediGun(m_pEdict);
 	float fHealthPercent;
 	Vector vVel = Vector(0,0,0);
+	int iHighestScore = CTeamFortress2Mod::getHighestScore();
 	
 	CClassInterface::getVelocity(pPlayer,&vVel);
 
@@ -418,7 +425,13 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 			fFactor += 1.0f;
 
 		// higher movement better
-		fFactor += (vVel.Length() / 320);
+		fFactor += (vVel.Length() / 1000);
+
+		// favour big guys
+		fFactor += ((float)p->GetMaxHealth())/200;
+
+		// favour those with bigger scores
+		fFactor += (((float)CClassInterface::getTF2Score(pPlayer))/iHighestScore)/2;
 	}
 
 	return fFactor;
@@ -4911,7 +4924,13 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 		case BOT_UTIL_BUILDTELEXT:
 
 			if ( m_bTeleportExitVectorValid )
-				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportExit,150,-1,true,false,true,NULL,false,getTeam(),true));
+			{
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportExit,150,-1,true,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_TELE_EXIT));
+
+				// no use going back to this waypoint
+				if ( (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
+					pWaypoint = NULL;
+			}
 			else
 			{
 				if ( CTeamFortress2Mod::isAttackDefendMap() )
@@ -4952,11 +4971,15 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 			pWaypoint = NULL;
 
+			// did someone destroy my sentry at the last sentry point? -- build it again
 			if ( m_bSentryGunVectorValid )
 			{
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vSentryGun,150,m_iLastFailSentryWpt,true,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_SENTRY));
 
 				if ( pWaypoint && CTeamFortress2Mod::buildingNearby(m_iTeam,pWaypoint->getOrigin()) )
+					pWaypoint = NULL;
+				// no use going back to this waypoint
+				if ( (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
 					pWaypoint = NULL;
 			}
 			
@@ -5041,7 +5064,13 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 		case BOT_UTIL_BUILDDISP:
 			pWaypoint = NULL;
 			if ( m_bDispenserVectorValid )
-				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vDispenser,150,-1,true,false,true,NULL,false,getTeam(),true));
+			{
+				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vDispenser,150,-1,true,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_SENTRY));
+				
+				// no use going back to this waypoint
+				if ( (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
+					pWaypoint = NULL;
+			}
 			else if ( m_pSentryGun.get() != NULL )
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam(),true));			
 
