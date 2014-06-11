@@ -405,7 +405,7 @@ bool CBotWeapons ::update ( bool bOverrideAllFromEngine )
 	return false;
 }
 
-CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bool bAllowMeleeFallback, bool bMeleeOnly, bool bExplosivesOnly )
+CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bool bAllowMeleeFallback, bool bMeleeOnly, bool bExplosivesOnly, bool bIgnorePrimaryMinimum )
 {
 	CBotWeapon *m_theBestWeapon = NULL;
 	CBotWeapon *m_FallbackMelee = NULL;
@@ -458,7 +458,8 @@ CBotWeapon *CBotWeapons :: getBestWeapon ( edict_t *pEnemy, bool bAllowMelee, bo
 			if ( pWeapon->isMelee() && !pWeapon->isSpecial() )
 				m_FallbackMelee = pWeapon;
 
-			continue;
+			if ( pWeapon->isExplosive() && !bIgnorePrimaryMinimum )
+				continue;
 		}
 
 		if ( pWeapon->getPreference() > iBestPreference )
