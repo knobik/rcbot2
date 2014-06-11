@@ -534,6 +534,12 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 								// other team can capture
 								arr[i].fProb = 1.0f;
 							}
+							else if ( iNumOwned == (iNumAvailable-2) )
+							{							
+								extern ConVar bot_defrate;
+								// other team can capture this as the next point
+								arr[i].fProb = bot_defrate.GetFloat();
+							}
 							else // still valid but very low probability of ever defending here
 								arr[i].fProb = 0.001f;
 						}
@@ -573,7 +579,10 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 			{
 				// this point is next because the current valid points are required
 				arr[i].bNextPoint = true;
-				arr[i].fProb = 0.2f;
+
+				extern ConVar bot_defrate;
+				// other team can capture this as the next point
+				arr[i].fProb = bot_defrate.GetFloat();
 			}
 		}
 	}

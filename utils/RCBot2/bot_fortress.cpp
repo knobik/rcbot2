@@ -364,6 +364,7 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 	// 4. player class
 	// 5. etc
 	float fFactor = 0.0f;
+	float fLastCalledMedic = 0.0f;
 	bool bHeavyClass = false;
 	edict_t *pMedigun = CTeamFortress2Mod::getMediGun(m_pEdict);
 	float fHealthPercent;
@@ -434,10 +435,8 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 		fFactor += 1.0f - fHealthPercent;
 
 		if ( CTeamFortress2Mod::TF2_IsPlayerOnFire(pPlayer) )
-			fFactor += 1.0f;
+			fFactor += 2.0f;
 
-		if ( ((m_fLastCalledMedicTime + 6.0f) > engine->Time()) && ( m_pLastCalledMedic == pPlayer ) )
-			fFactor += 1.0f;
 
 		// higher movement better
 		fFactor += (vVel.Length() / 1000);
@@ -447,6 +446,12 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 
 		// favour those with bigger scores
 		fFactor += (((float)CClassInterface::getTF2Score(pPlayer))/iHighestScore)/2;
+
+		if ( (fLastCalledMedic = m_fCallMedicTime[ENTINDEX(pPlayer)-1]) > 0 )
+			fFactor += MAX(0.0f,1.0f-((engine->Time() - fLastCalledMedic)/5));
+		if ( ((m_fLastCalledMedicTime + 5.0f) > engine->Time()) && ( m_pLastCalledMedic == pPlayer ) )
+			fFactor += 0.5f;
+
 	}
 
 	return fFactor;
@@ -4954,20 +4959,20 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				if ( CTeamFortress2Mod::isAttackDefendMap() )
 				{
 					if ( getTeam() == TF2_TEAM_BLUE )
-						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),m_iCurrentAttackArea,true,this,true);
+						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),m_iCurrentAttackArea,true,this,false);
 					else
-						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),m_iCurrentDefendArea,true,this,true);
+						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),m_iCurrentDefendArea,true,this,false);
 				}
 
 				if ( !pWaypoint )
 				{
 					int area = (randomInt(0,1)==1)?m_iCurrentAttackArea:m_iCurrentDefendArea;
 
-					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),area,true,this);//CTeamFortress2Mod::getArea());
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),area,true,this,false);//CTeamFortress2Mod::getArea());
 					
 					if ( !pWaypoint )
 					{
-						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),0,false,this);//CTeamFortress2Mod::getArea());
+						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),0,false,this,false);//CTeamFortress2Mod::getArea());
 					}
 				}
 			}
@@ -5644,14 +5649,14 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				if ( getTeam() == TF2_TEAM_RED )
 					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),m_iCurrentDefendArea,true,this,true);
 				else
-					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),m_iCurrentAttackArea,true,this,false);
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),m_iCurrentAttackArea,false,this,false);
 			}
 
 			if ( !pWaypoint )
 			{
 				int area = (randomInt(0,1)==1)?m_iCurrentAttackArea:m_iCurrentDefendArea;
 
-				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),area,true,this);
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),area,true,this,area==m_iCurrentDefendArea);
 
 				if ( !pWaypoint )
 				{
