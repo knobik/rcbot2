@@ -430,13 +430,17 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 	default:
 
 		if ( !bHeavyClass ) // add more factor bassed on uber charge level - bot can gain more uber charge
+		{
 			fFactor += (0.1f - ((float)(CClassInterface::getUberChargeLevel(pMedigun))/1000));
+			
+			if ( (m_StatsCanUse.stats.m_iTeamMatesVisible == 1) && (fHealthPercent >= 1.0f) )
+				return 0.0f; // find another guy
+		}
 
 		fFactor += 1.0f - fHealthPercent;
 
 		if ( CTeamFortress2Mod::TF2_IsPlayerOnFire(pPlayer) )
 			fFactor += 2.0f;
-
 
 		// higher movement better
 		fFactor += (vVel.Length() / 1000);
@@ -2955,7 +2959,7 @@ void CBotTF2::handleWeapons()
 		if ( m_bIsCarryingObj )
 		{
 			// don't shoot while carrying object unless after 5 seconds of carrying
-			if ( (getHealthPercent() > 0.5f) || ((m_fCarryTime + 5.0f) > engine->Time()) )
+			if ( (getHealthPercent() > 0.9f) || ((m_fCarryTime + 3.0f) > engine->Time()) )
 				return;
 		}
 		else if ( ( pSentry != NULL ) && !hasSomeConditions(CONDITION_PARANOID) )
@@ -4206,7 +4210,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	{
 		CBotWeapon *pWeapon = m_pWeapons->getPrimaryWeapon();
 
-		ADD_UTILITY_DATA(BOT_UTIL_ATTACK_SENTRY,(distanceFrom(m_pNearestEnemySentry) >= TF2_MAX_SENTRYGUN_RANGE) && (m_iClass!=TF_CLASS_SPY)&& pWeapon && !pWeapon->outOfAmmo(this) && pWeapon->primaryGreaterThanRange(TF2_MAX_SENTRYGUN_RANGE+32.0f),0.7f,ENTINDEX(m_pNearestEnemySentry.get()));
+		ADD_UTILITY_DATA(BOT_UTIL_ATTACK_SENTRY,(distanceFrom(m_pNearestEnemySentry) >= CWaypointLocations::REACHABLE_RANGE) && (m_iClass!=TF_CLASS_SPY)&& pWeapon && !pWeapon->outOfAmmo(this) && pWeapon->primaryGreaterThanRange(TF2_MAX_SENTRYGUN_RANGE+32.0f),0.7f,ENTINDEX(m_pNearestEnemySentry.get()));
 	}
 	// only attack if attack area is > 0
 	ADD_UTILITY(BOT_UTIL_ATTACK_POINT,(m_fAttackPointTime<engine->Time()) && 
@@ -4232,8 +4236,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		CBotGlobals::entityIsAlive(m_pLastHeal) && (getHealFactor(m_pLastHeal)>0),0.99f); 
 
 	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) &&
-		!hasFlag() && !CTeamFortress2Mod::isFlagCarrier(m_pEnemy) && (((m_iClass == TF_CLASS_MEDIC) && !m_pHeal) || 
-		CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEnemy)),1.0f);
+		!hasFlag() && !CTeamFortress2Mod::isFlagCarrier(m_pEnemy) && (((m_iClass == TF_CLASS_SPY)&&(!isDisguised()&&!isCloaked()))||(((m_iClass == TF_CLASS_MEDIC) && !m_pHeal) || 
+		CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEnemy))),1.0f);
 
 	ADD_UTILITY(BOT_UTIL_MEDIC_FINDPLAYER,(m_iClass == TF_CLASS_MEDIC) && 
 		!m_pHeal && m_pLastCalledMedic && ((m_fLastCalledMedicTime+30.0f)>engine->Time()) && 
@@ -6374,6 +6378,35 @@ void CBotTF2::updateAttackDefendPoints()
 	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
 }
 
+void CBotTF2 :: pointsUpdated()
+{
+	if ( m_iClass == TF_CLASS_ENGINEER )
+	{
+		extern ConVar rcbot_move_sentry_time;
+		extern ConVar rcbot_move_disp_time;
+		extern ConVar rcbot_move_tele_time;
+
+//m_pPayloadBomb = NULL;
+		bool bMoveSentry = (m_iSentryArea!=m_iCurrentAttackArea)&&(m_iSentryArea!=m_iCurrentDefendArea)&&((m_iTeam==TF_TEAM_BLUE)||!CTeamFortress2Mod::isAttackDefendMap());
+		bool bMoveTeleEntrance = (m_iTeam==TF_TEAM_BLUE)||!CTeamFortress2Mod::isAttackDefendMap();
+		bool bMoveTeleExit = (m_iTeleExitArea!=m_iCurrentAttackArea)&&(m_iTeleExitArea!=m_iCurrentDefendArea)&&((m_iTeam==TF_TEAM_BLUE)||!CTeamFortress2Mod::isAttackDefendMap());
+		bool bMoveDisp = bMoveSentry;
+
+		// think about moving stuff now
+		if ( bMoveSentry && m_pSentryGun.get() && ((m_fSentryPlaceTime + rcbot_move_sentry_time.GetFloat())>engine->Time()) )
+			m_fSentryPlaceTime = engine->Time() - rcbot_move_sentry_time.GetFloat();
+		if ( bMoveDisp && m_pDispenser.get() && ((m_fDispenserPlaceTime + rcbot_move_disp_time.GetFloat())>engine->Time()))
+			m_fDispenserPlaceTime = engine->Time() - rcbot_move_disp_time.GetFloat();
+		if ( bMoveTeleEntrance && m_pTeleEntrance.get() && ((m_fTeleporterEntPlacedTime + rcbot_move_tele_time.GetFloat())>engine->Time()))
+				m_fTeleporterEntPlacedTime = engine->Time() - rcbot_move_tele_time.GetFloat();
+		if ( bMoveTeleExit && m_pTeleExit.get() && ((m_fTeleporterExtPlacedTime + rcbot_move_tele_time.GetFloat())>engine->Time()))
+				m_fTeleporterExtPlacedTime = engine->Time() - rcbot_move_tele_time.GetFloat();
+
+		// rethink everything
+		updateCondition(CONDITION_CHANGED);
+	}
+}
+
 void CBotTF2::updateAttackPoints()
 {
 	int iPrev = m_iCurrentAttackArea;
@@ -6383,7 +6416,9 @@ void CBotTF2::updateAttackPoints()
 	m_iCurrentAttackArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_ATTACK);
 
 	if ( iPrev != m_iCurrentAttackArea )
+	{
 		updateCondition(CONDITION_CHANGED);
+	}
 }
 
 void CBotTF2::updateDefendPoints()
@@ -6395,7 +6430,9 @@ void CBotTF2::updateDefendPoints()
 	m_iCurrentDefendArea = CTeamFortress2Mod::m_ObjectiveResource.getRandomValidPointForTeam(m_iTeam,TF2_POINT_DEFEND);
 
 	if ( iPrev != m_iCurrentDefendArea )
+	{
 		updateCondition(CONDITION_CHANGED);
+	}
 }
 
 /// TO DO : list of areas
@@ -6411,37 +6448,8 @@ void CBotTF2::getAttackArea ( vector <int> *m_iAreas )
 
 void CBotTF2::pointCaptured(int iPoint, int iTeam, const char *szPointName)
 {
-	extern ConVar rcbot_move_sentry_time;
-	extern ConVar rcbot_move_disp_time;
-	extern ConVar rcbot_move_tele_time;
-
-	//m_pPayloadBomb = NULL;
 	m_pRedPayloadBomb = NULL;
 	m_pBluePayloadBomb = NULL;
-
-	if ( m_iClass == TF_CLASS_ENGINEER )
-	{
-		bool bMoveSentry = (m_iTeam==TF_TEAM_BLUE)||!CTeamFortress2Mod::isAttackDefendMap();
-		bool bMoveTeleEntrance = (m_iTeam==TF_TEAM_BLUE)||!CTeamFortress2Mod::isAttackDefendMap();
-		bool bMoveTeleExit = (m_iTeam==TF_TEAM_BLUE)||!CTeamFortress2Mod::isAttackDefendMap();
-		bool bMoveDisp = bMoveSentry;
-
-		// think about moving stuff now
-		if ( bMoveSentry && m_pSentryGun.get() && ((m_fSentryPlaceTime + rcbot_move_sentry_time.GetFloat())>engine->Time()) )
-			m_fSentryPlaceTime = engine->Time() - rcbot_move_sentry_time.GetFloat();
-		if ( bMoveDisp && m_pDispenser.get() && ((m_fDispenserPlaceTime + rcbot_move_disp_time.GetFloat())>engine->Time()))
-			m_fDispenserPlaceTime = engine->Time() - rcbot_move_disp_time.GetFloat();
-		if ( bMoveTeleEntrance && m_pTeleEntrance.get() && ((m_fTeleporterEntPlacedTime + rcbot_move_tele_time.GetFloat())>engine->Time()))
-			 m_fTeleporterEntPlacedTime = engine->Time() - rcbot_move_tele_time.GetFloat();
-		if ( bMoveTeleExit && m_pTeleExit.get() && ((m_fTeleporterExtPlacedTime + rcbot_move_tele_time.GetFloat())>engine->Time()))
-			 m_fTeleporterExtPlacedTime = engine->Time() - rcbot_move_tele_time.GetFloat();
-
-		// rethink everything
-		m_pSchedules->freeMemory();
-	}
-	m_pNavigator->clear();
-
-	updateAttackDefendPoints();
 }
 
 // Is Enemy Function

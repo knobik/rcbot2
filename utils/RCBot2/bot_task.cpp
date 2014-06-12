@@ -768,7 +768,7 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 				if ( pTF2Bot->isCloaked() )
 				{
 					// uncloak
-					pBot->secondaryAttack();
+					pTF2Bot->spyUnCloak();
 				}
 				else 
 				{

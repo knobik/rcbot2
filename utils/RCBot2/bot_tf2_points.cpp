@@ -36,12 +36,24 @@ private:
 	int iTeam;	
 };
 
+
+class CBotFuncPointsUpdated : public IBotFunction
+{
+public:
+	void execute ( CBot *pBot )
+	{
+		((CBotTF2*)pBot)->pointsUpdated();
+	}	
+};
+
 void CTFObjectiveResource::updatePoints()
 {
 	static CBotFuncResetAttackPoint resetBlueAttack(TF2_TEAM_BLUE);
 	static CBotFuncResetDefendPoint resetBlueDefend(TF2_TEAM_BLUE);
 	static CBotFuncResetDefendPoint resetRedAttack(TF2_TEAM_RED);
 	static CBotFuncResetDefendPoint resetRedDefend(TF2_TEAM_RED);
+	static CBotFuncPointsUpdated pointsUpdated;
+	bool bChanged = false;
 
 	m_iMonitorPoint[0] = -1;
 	m_iMonitorPoint[1] = -1;
@@ -51,22 +63,29 @@ void CTFObjectiveResource::updatePoints()
 	if ( CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_BLUE) )
 	{
 		CBots::botFunction(&resetBlueAttack);
+		bChanged = true;
 	}
 
 	if ( CTeamFortress2Mod::m_ObjectiveResource.updateAttackPoints(TF2_TEAM_RED) )
 	{
 		CBots::botFunction(&resetRedAttack);
+		bChanged = true;
 	}
 
 	if ( CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_BLUE) )
 	{
 		CBots::botFunction(&resetBlueDefend);
+		bChanged = true;
 	}
 
 	if ( CTeamFortress2Mod::m_ObjectiveResource.updateDefendPoints(TF2_TEAM_RED) )
 	{
 		CBots::botFunction(&resetRedDefend);
+		bChanged = true;
 	}
+
+	if ( bChanged )
+		CBots::botFunction(&pointsUpdated);
 
 	CTeamFortress2Mod::m_ObjectiveResource.updateValidWaypointAreas();
 

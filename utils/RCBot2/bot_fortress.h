@@ -629,6 +629,8 @@ public:
 	int getCurrentAttackArea () { return m_iCurrentAttackArea; }
 	int getCurrentDefendArea () { return m_iCurrentDefendArea; }
 
+	void pointsUpdated ( );
+
 	eBotFuncState rocketJump(int *iState,float *fTime);
 
 	void resetCloakTime () { m_fSpyCloakTime = 0.0f; }
@@ -814,10 +816,10 @@ private:
 	 float m_fDispenserHealAmount;
 	 float m_fDispenserPlaceTime;
 
-	 unsigned int m_iSentryArea;
-	 unsigned int m_iDispenserArea;
-	 unsigned int m_iTeleEntranceArea;
-	 unsigned int m_iTeleExitArea;
+	 int m_iSentryArea;
+	 int m_iDispenserArea;
+	 int m_iTeleEntranceArea;
+	 int m_iTeleExitArea;
 
 	 eTFVoiceCMD m_nextVoicecmd;
 
