@@ -567,6 +567,8 @@ void CTF2RoundWinEvent :: execute (IBotEventInterface *pEvent )
 
 	CBots::botFunction(function);
 
+	CTeamFortress2Mod::roundWon();
+
 	delete function;
 }
 

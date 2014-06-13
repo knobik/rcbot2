@@ -6316,6 +6316,11 @@ void CBotTF2::roundWon(int iTeam, bool bFullRound )
 	{
 		m_fChangeClassTime = engine->Time();
 	}
+
+	updateCondition(CONDITION_PUSH);
+	removeCondition(CONDITION_PARANOID);
+	removeCondition(CONDITION_BUILDING_SAPPED);
+	removeCondition(CONDITION_COVERT);
 }
 
 void CBotTF2::waitRemoveSap ()

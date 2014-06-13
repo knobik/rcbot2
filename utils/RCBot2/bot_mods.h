@@ -915,6 +915,11 @@ public:
 		m_bHasRoundStarted = true;
 	}
 
+	static void roundWon ()
+	{
+		m_bHasRoundStarted = false;
+	}
+
 	static void roundReset ();
 
 	static bool isFlagCarrier (edict_t *pPlayer)
