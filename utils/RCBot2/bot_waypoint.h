@@ -411,7 +411,7 @@ public:
 		return ((int)pWpt - (int)m_theWaypoints)/sizeof(CWaypoint);
 	}
 
-	static void autoFix ();
+	static void autoFix ( bool bAutoFixNonArea );
 
 	static void checkAreas ( edict_t *pActivator );
 

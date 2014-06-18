@@ -651,12 +651,15 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 	// In Payload give lower numbers higher priority 
 	if ( isPayLoadMap )
 	{
+		float fMaxProb = 1.0f;
+
 		for ( int i = 0; i < *m_iNumControlPoints; i ++ )
 		{
 			if ( arr[i].bValid )
 			{
-				arr[i].fProb = (float)(*m_iNumControlPoints+1-i);
-				arr[i].fProb *= arr[i].fProb; // square it
+				arr[i].fProb = fMaxProb;
+				fMaxProb = fMaxProb/4;
+				//arr[i].fProb *= arr[i].fProb; // square it
 			}
 		}
 	}

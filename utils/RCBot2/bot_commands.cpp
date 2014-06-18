@@ -1414,7 +1414,15 @@ CWaypointAutoFix :: CWaypointAutoFix  ()
 
 eBotCommandResult CWaypointAutoFix :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
-	CWaypoints::autoFix();
+	bool bFixSentry_Sniper_Defend_TeleExtWpts = false;
+
+	if ( pcmd && *pcmd )
+	{
+		bFixSentry_Sniper_Defend_TeleExtWpts = ( atoi(pcmd) == 1 );
+	}
+
+	CWaypoints::autoFix(bFixSentry_Sniper_Defend_TeleExtWpts);
+	
 	return COMMAND_ACCESSED;
 }
 

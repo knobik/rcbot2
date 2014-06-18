@@ -2590,7 +2590,7 @@ CWaypoint *CWaypoints :: nearestPipeWaypoint ( Vector vTarget, Vector vOrigin, i
 
 }
 
-void CWaypoints :: autoFix ( )
+void CWaypoints :: autoFix ( bool bAutoFixNonArea )
 {
 	int *iNumAreas = CTeamFortress2Mod::m_ObjectiveResource.m_iNumControlPoints;
 	int iNumCps;
@@ -2604,7 +2604,7 @@ void CWaypoints :: autoFix ( )
 	{
 		if ( m_theWaypoints[i].isUsed() && (m_theWaypoints[i].getFlags() > 0) )
 		{
-			if ( m_theWaypoints[i].getArea() > iNumCps )
+			if ( ( m_theWaypoints[i].getArea() > iNumCps ) || ( bAutoFixNonArea && ( m_theWaypoints[i].getArea()==0) && m_theWaypoints[i].hasSomeFlags(CWaypointTypes::W_FL_SENTRY|CWaypointTypes::W_FL_DEFEND|CWaypointTypes::W_FL_SNIPER|CWaypointTypes::W_FL_CAPPOINT|CWaypointTypes::W_FL_TELE_EXIT) ) )
 			{
 				m_theWaypoints[i].setArea(CTeamFortress2Mod::m_ObjectiveResource.NearestArea(m_theWaypoints[i].getOrigin()));
 				CBotGlobals::botMessage(NULL,0,"Changed Waypoint id %d area to (area = %d)",i,m_theWaypoints[i].getArea());
