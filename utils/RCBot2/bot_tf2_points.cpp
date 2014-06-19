@@ -652,13 +652,64 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 	if ( isPayLoadMap )
 	{
 		float fMaxProb = 1.0f;
+		bool bFirst = true;
+		extern ConVar bot_defrate;
+
+		other = (team==2)?3:2;
 
 		for ( int i = 0; i < *m_iNumControlPoints; i ++ )
 		{
 			if ( arr[i].bValid )
 			{
-				arr[i].fProb = fMaxProb;
-				fMaxProb = fMaxProb/4;
+				edict_t *pPayloadBomb = CTeamFortress2Mod::getPayloadBomb(other);
+
+				if ( pPayloadBomb != NULL )
+				{
+					if ( bFirst )
+					{
+						// TO DO update probability depending on distance to payload bomb
+						float fDist = (CBotGlobals::entityOrigin(pPayloadBomb) - m_vCPPositions[i]).Length();
+
+						bFirst = false;
+
+						if ( fDist > 512.0f )
+						{
+							arr[i].fProb = 1.0f;
+
+							if ( !CTeamFortress2Mod::hasRoundStarted() )
+								fMaxProb = 0.1f;
+							else
+								fMaxProb = fMaxProb/4;
+						}
+						else
+						{
+							arr[i].fProb = bot_defrate.GetFloat();
+
+							int j = i + 1;
+
+							if ( j < *m_iNumControlPoints )
+							{
+								if ( arr[j].bValid == false )
+								{
+									if ( !pRound || pRound->isPointInRound(j) )
+										arr[j].bValid = true; // this is the next point - move back lads
+								}
+							}
+						}
+					}
+					else
+					{
+						arr[i].fProb = fMaxProb;
+						fMaxProb = fMaxProb/4;
+					}
+				}
+				else
+				{
+					arr[i].fProb = fMaxProb;
+					fMaxProb = fMaxProb/4;
+				}
+
+				
 				//arr[i].fProb *= arr[i].fProb; // square it
 			}
 		}

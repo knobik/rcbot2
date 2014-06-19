@@ -3418,10 +3418,13 @@ bool CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 		if ( (m_pRedPayloadBomb.get() == NULL) && CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_RED) )
 		{
 			m_pRedPayloadBomb = pEntity;
+			CTeamFortress2Mod::updateRedPayloadBomb(pEntity);
+			//if ( CTeamFortress2Mod::se
 		}
 		else if ( (m_pBluePayloadBomb.get() == NULL) && CTeamFortress2Mod::isPayloadBomb(pEntity,TF2_TEAM_BLUE) )
 		{
 			m_pBluePayloadBomb = pEntity;
+			CTeamFortress2Mod::updateBluePayloadBomb(pEntity);
 		}
 	}
 
@@ -3638,9 +3641,11 @@ bool CBotTF2 :: healPlayer ()
 	if ( pWeapon == NULL )
 		return false;
 
+	m_bIncreaseSensitivity = true;
+
 	if ( !CClassInterface::getMedigunHealing(pWeapon) )
 	{
-		if ( m_fHealClickTime < engine->Time() )		
+		if ( (m_fHealClickTime < engine->Time()) && (DotProductFromOrigin(vOrigin) > 0.98f) )		
 			primaryAttack(true);
 	}
 	else

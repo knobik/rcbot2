@@ -76,6 +76,7 @@ typedef enum
 	BOTTYPE_COOP,
 	BOTTYPE_ZOMBIE,
 	BOTTYPE_DOD,
+	BOTTYPE_NS2,
 	BOTTYPE_MAX
 }eBotType;
 
@@ -1110,6 +1111,11 @@ public:
 	static CTeamControlPointRound *getCurrentRound() { return m_pCurrentRound; }
 
 	static CTeamControlPointMaster *getPointMaster () { return m_PointMaster;}
+
+	static void updateRedPayloadBomb ( edict_t *pent );
+	static void updateBluePayloadBomb ( edict_t *pent ); 
+
+	static edict_t *getPayloadBomb ( int team );
 private:
 
 
@@ -1121,6 +1127,9 @@ private:
 	static CTeamRoundTimer m_Timer;
 
 	static eTFMapType m_MapType;	
+
+	static MyEHandle m_pPayLoadBombRed;
+	static MyEHandle m_pPayLoadBombBlue;
 
 	static tf_tele_t m_Teleporters[MAX_PLAYERS];	// used to let bots know who made a teleport ans where it goes
 	static tf_sentry_t m_SentryGuns[MAX_PLAYERS];	// used to let bots know if sentries have been sapped or not
@@ -1216,6 +1225,47 @@ public:
 protected:
 
 };
+/*
+class CNaturalSelection2Mod : public CBotMod
+{
+public:
+	CNaturalSelection2Mod() 
+	{
+		setup("ns2","natural selection 2",MOD_NS2,BOTTYPE_NS2);
+	}
+// linux fix
+
+	virtual const char *getPlayerClass ()
+	{
+		return "CBaseNS2Player";
+	}
+
+	virtual bool isAreaOwnedByTeam (int iArea, int iTeam) { return (iArea == 0); }
+
+	virtual void addWaypointFlags (edict_t *pPlayer, edict_t *pEdict, int *iFlags, int *iArea, float *fMaxDistance ){ return; }
+
+////////////////////////////////
+	virtual void initMod ();
+
+	virtual void mapInit ();
+
+	virtual bool playerSpawned ( edict_t *pPlayer );
+
+	virtual void clientCommand ( edict_t *pEntity, int argc,const char *pcmd, const char *arg1, const char *arg2 ) {};
+
+	virtual void modFrame () { };
+
+	virtual void freeMemory() {};
+
+	virtual bool isWaypointAreaValid ( int iWptArea, int iWptFlags ) { return true; }
+
+	virtual void getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff )
+	{
+		*iOn = 0;
+		*iOff = 0;
+	}
+};
+*/
 
 class CBotMods
 {
