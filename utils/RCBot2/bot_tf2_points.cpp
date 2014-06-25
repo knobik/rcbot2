@@ -654,6 +654,7 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 		float fMaxProb = 1.0f;
 		bool bFirst = true;
 		extern ConVar bot_defrate;
+		extern ConVar rcbot_tf2_payload_dist_retreat;
 
 		other = (team==2)?3:2;
 
@@ -672,7 +673,7 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 
 						bFirst = false;
 
-						if ( fDist > 512.0f )
+						if ( fDist > rcbot_tf2_payload_dist_retreat.GetFloat() )
 						{
 							arr[i].fProb = 1.0f;
 

@@ -1552,7 +1552,10 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 	{
 		if ( !isCloaked() && !CTeamFortress2Mod::isSentry(pAttacker,CTeamFortress2Mod::getEnemyTeam(m_iTeam)) )
 		{
-			m_fFrenzyTime = engine->Time() + randomFloat(2.0f,6.0f);
+			// TO DO : make sure I'm not just caught in crossfire
+			// search for other team members
+			if ( !m_StatsCanUse.stats.m_iTeamMatesVisible || !m_StatsCanUse.stats.m_iTeamMatesInRange )
+				m_fFrenzyTime = engine->Time() + randomFloat(2.0f,6.0f);
 
 			if ( isDisguised() )
 				detectedAsSpy(pAttacker,true);
@@ -4266,9 +4269,9 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		}
 		else if ( pGren && !pGren->outOfAmmo(this) ) 
 		{
-			ADD_UTILITY_WEAPON(BOT_UTIL_SPAM_LAST_ENEMY,(m_pLastEnemy!=NULL) && (distanceFrom(m_pLastEnemy) > (BLAST_RADIUS)),0.79f,pGren);
-			ADD_UTILITY_WEAPON(BOT_UTIL_SPAM_NEAREST_SENTRY,(m_pNearestEnemySentry!=NULL) && (distanceFrom(m_pNearestEnemySentry) > (BLAST_RADIUS)),0.80f,pGren);
-			ADD_UTILITY_WEAPON(BOT_UTIL_SPAM_LAST_ENEMY_SENTRY,(m_pLastEnemySentry!=NULL) && (distanceFrom(m_pLastEnemySentry) > (BLAST_RADIUS)),0.81f,pGren);
+			ADD_UTILITY_WEAPON(BOT_UTIL_SPAM_LAST_ENEMY,(m_pLastEnemy!=NULL) && (distanceFrom(m_pLastEnemy) > (BLAST_RADIUS)),0.78f,pGren);
+			ADD_UTILITY_WEAPON(BOT_UTIL_SPAM_NEAREST_SENTRY,(m_pNearestEnemySentry!=NULL) && (distanceFrom(m_pNearestEnemySentry) > (BLAST_RADIUS)),0.79f,pGren);
+			ADD_UTILITY_WEAPON(BOT_UTIL_SPAM_LAST_ENEMY_SENTRY,(m_pLastEnemySentry!=NULL) && (distanceFrom(m_pLastEnemySentry) > (BLAST_RADIUS)),0.80f,pGren);
 		}
 	}
 
