@@ -1,3 +1,121 @@
+0.91
+====
+tf2: fixed crash with new version on loading
+dod:s bots use route waypoints -- give route waypoint same ID as flag to go to that flag through back alley
+dod:s bots listen to go left / go right voice commands if there are route waypoints nearbby
+
+0.90
+====
+tf2: bots check if they can see the ground beneath enemies to help aim for rockets and grenades 
+tf2: removed need for scripts in TF2 -- using TF2 point detection
+tf2: bots can attack skeletons on plr_hightower_event
+tf2: if capture point is unreachable bots will go to nearest defend points
+tf2: updated sniper and sentry and exit building based on current attack or defend point on cp maps
+tf2: bots can now high five
+tf2: fixed bots attacking sentries from distance 
+tf2: sentry and sniper placement changes
+tf2: added new medic dode
+tf2: waypoint autofix 1 command fixes senty waypoints etc with no area on cp maps
+tf2: fixed snipers getting stuck
+tf2: snipers hide when enemies see them
+tf2: spies don't deliberately lose their disguise unless they think enemy is targeting them
+tf2: ubered bots don't change to shotgun or melee if they have explosive weapon ammo 
+tf2: fixed sentry waypoint selection
+tf2: more chance of bots going to point when point under attack 
+tf2: less chance of bots trying to build sentries upon each other
+tf2: medics try not to heal cloaked spies or disguised spies as other team 
+tf2: when points are updated automatically update bots attack or defend points 
+tf2: bots try to take cover from demo pipe grenades
+tf2: fixed sentry avoidance
+tf2: added payload avoidance
+tf2: bots can now taunt when messing around if taunts are disabled
+tf2: fixed sniper bug
+tf2: new debug tools (memory scan and memory check)
+tf2: fixed current waypoint being -1 if bot stuck in corner
+tf2: fixed demomen detonating stickies at wrong CP when under attack
+tf2: improved engineer picking up buildings quicker for moving
+tf2: areaonly waypoint is activated when area is under attack 
+tf2: added new waypoint type "owneronly" - this waypoint can only be used by the owner of the point 
+tf2: fixed improved engineer building code
+tf2: fixed piping and sentry attacking
+tf2: improved return to defend code
+tf2: bots improved aiming for melee attacks
+tf2: quicker waypoint 
+tf2: if capture point can't be reached bots go to nearest defend point (e.g. cp_steel last cap)
+tf2: more probability of defending/atacking points under attack 
+tf2: within 10 seconds of round end bots will push
+tf2: fixed some possible crashes
+tf2: fixed - bots go to the correct point under attack to defend
+tf2: removed need for setup time in script
+tf2: medics jump when the players they heal jump 
+tf2: fixed rocket launcher aiming
+tf2: fixed sniper aiming if sniper can't see the ground of entity 
+tf2: more probability of bots choosing spy or demoman if killed by a sentry if rcbot_change_classes is enabled
+tf2: fixed possible pipe waypoint was unreachable
+tf2: bots don't investigate sounds if they have an enemy or were recently spawned
+tf2: fixed rocket aiming
+tf2: faster pipe waypoint searching
+tf2: bots stop spy checking a team mate if they attack
+tf2: fixed aiming when piping or spamming grens
+tf2: medics don't heal if a player's already being healed by a medic
+tf2: sniper improvements, taking cover after shooting
+tf2: fixed bug when bots would forget getting the flag if enemy dropped the flag 
+tf2: if enemy drops flag bots stop returning to intel
+tf2: fixed snipers walking while zoomed
+tf2: fixed new sentry attacking task behaviour
+tf2: medics don't hide from enemy if they are ubered
+tf2: bots see spies if they are cloaked with no cloak meter left
+tf2: fixed bots hearing cloaked bots moving and walking towards them cloaked
+tf2: fixed bots looking back at their healing medic
+tf2: improved bots choice of taking teleports or not
+tf2: bots become less paranoid after they kill a spy
+tf2: bots become paranoid when their sentry is sapped 
+tf2: fixed demoman pipe trap at flag standing location bug
+tf2: improved demoman aiming with grenade launcher
+tf2: engineers try to walk round their sentries (requires more waypoints)
+tf2: engineers tend not to attack enemies if near their sentry so they can repair it instead
+tf2: ubered players dont investigate sounds
+tf2: fixed possible bug with ghost sentries
+tf2: bots only build teleporters when their sentries are okay
+tf2: fixed engineers going to other team resupply after building teleporter entrance after team switch
+tf2: engineers go to ther sentries if it is attacking
+tf2: improved defence and attack on attack/defend maps(must be set in script)
+tf2: fixed a small memory leak
+tf2: fixed payload bomb crash
+tf2: fixed navigation crash
+tf2: bots don't investigate sounds when attacking payload bomb
+tf2: fixed crashes in PLR and navigation
+tf2: spies try to avoid line of sight of enemies 
+tf2: improved demoman piping and spamming sentries
+tf2: medics don't heal if a player's already being healed by a medic
+tf2: sniper improvements, taking cover after shooting
+tf2: fixed bug when bots would forget getting the flag if enemy dropped the flag 
+tf2: if enemy drops flag bots stop returning to intel
+tf2: fixed snipers walking while zoomed
+tf2: fixed new sentry attacking task behaviour
+tf2: medics don't hide from enemy if they are ubered
+tf2: bots see spies if they are cloaked with no cloak meter left
+all: fixed sv_tags multiple rcbot2 tags
+all: fixed possible crash while editing waypoints 
+all: fixed random function
+all: reduced cpu usage with lots of openslater waypoints in a map and lots of bots
+all: changed waitopen to waitground waypoint 
+all: waypoint menu shows number of paths to waypoint
+all: added new debug commands
+all: you can debug a bot by looking at it with the debug bot command
+all: fixed crash bug when bot died on trigger_hurt 
+all: waypoint distances automatically update during path find 
+all: fixed debug bot crash when bot leaves server
+all: added waypoint commands
+all: new commands rcbot waypoint check, rcbot waypoint setareatonearest
+all: new commands rcbot waypoint teleport, rcbot waypoint autofix
+all: more reliability checks for ehandle (more stable)
+all: new command rcbot waypoint shiftareas X Y - shifts all visible waypoints with area X to Y
+all: bot remembers last failed path and avoids it next time 
+all: fixed random function to be less biased
+all: fixed unable to select waypoint while editing if on the wrong team 
+dod:s bots periodically check waypoints where other team may hide
+
 0.85
 ====
 all: fixed player speed

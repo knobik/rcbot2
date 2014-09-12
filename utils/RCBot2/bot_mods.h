@@ -90,6 +90,8 @@ public:
 		m_iModId = MOD_UNSUPPORTED;
 		m_iBotType = BOTTYPE_GENERIC;
 		m_bPlayerHasSpawned = false;
+		m_bBotCommand_ResetCheatFlag = false;
+		m_bBotCommand_NeedCheatsHack = false;
 	}
 // linux fix
 	void setup ( const char *szModFolder, const char *szSteamFolder, eModId iModId, eBotType iBotType );
@@ -136,6 +138,15 @@ public:
 		*iOff = 0;
 	}
 
+	inline bool needCheatsHack ()
+	{
+		return m_bBotCommand_NeedCheatsHack;
+	}
+
+	inline bool needResetCheatFlag ()
+	{
+		return m_bBotCommand_ResetCheatFlag;
+	}
 private:
 	char *m_szModFolder;
 	char *m_szSteamFolder;
@@ -143,6 +154,8 @@ private:
 	eBotType m_iBotType;
 protected:
 	bool m_bPlayerHasSpawned;
+	bool m_bBotCommand_ResetCheatFlag;
+	bool m_bBotCommand_NeedCheatsHack;
 };
 
 ///////////////////
@@ -515,6 +528,8 @@ public:
 	CDODMod()
 	{
 		setup("dod","day of defeat source",MOD_DOD,BOTTYPE_DOD);
+
+		m_bBotCommand_NeedCheatsHack = false;
 	}
 
 	static void roundStart ();
@@ -782,6 +797,7 @@ public:
 		setup("tf","team fortress 2",MOD_TF2,BOTTYPE_TF2);
 
 		m_pResourceEntity = NULL;
+		m_bBotCommand_NeedCheatsHack = true;
 	}
 
 	void mapInit ();

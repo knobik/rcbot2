@@ -401,8 +401,11 @@ int CTFObjectiveResource::NearestArea ( Vector vOrigin )
 		}
 	}
 
+	if ( iNearest == -1 )
+		return 0;
+
 	// Add one for waypoint area
-	return iNearest+1;
+	return m_IndexToWaypointAreaTranslation[iNearest];
 }
 
 CTeamControlPoint *CTeamControlPoint::getPoint ( edict_t *pent )

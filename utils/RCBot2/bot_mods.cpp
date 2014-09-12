@@ -388,6 +388,8 @@ CBotMod *CBotMods :: getMod ( char *szModFolder, char *szSteamFolder )
 	{
 		if ( m_Mods[i]->isModFolder(szModFolder) && m_Mods[i]->isSteamFolder(szSteamFolder) )
 		{
+			CBotGlobals::botMessage(NULL,1,"HL2 MOD ID %d (Steam Folder = %s) (Game Folder = %s) FOUND",m_Mods[i]->getModId(),szSteamFolder,szModFolder);
+
 			return m_Mods[i];
 		}
 	}

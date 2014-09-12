@@ -3043,6 +3043,7 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 {		
 	edict_t *pEdict;	
 	CBotProfile *pBotProfile;
+	CBotMod *pMod = CBotGlobals::getCurrentMod();
 
 	char *szOVName = "";
 
@@ -3112,10 +3113,14 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 		if ( sv_cheats->IsFlagSet(FCVAR_NOTIFY) )
 			*m_nFlags &= ~FCVAR_NOTIFY;
 
-		sv_cheats->SetValue(1);
+		if ( pMod->needCheatsHack() )
+			sv_cheats->SetValue(1);
+
 		m_bControlNext = true;
 		((ConCommand*)puppet_bot_cmd)->Dispatch(*com);
-		sv_cheats->SetValue(0);
+
+		if ( pMod->needCheatsHack() )
+			sv_cheats->SetValue(0);
 
 		*m_nFlags |= FCVAR_NOTIFY;
 
@@ -3561,21 +3566,6 @@ void CBots :: handleAutomaticControl ()
 				//engine->SetFakeClientConVarValue( pEdict, "name",m_pNextProfile->getName() );
 
 				m_Bots[slotOfEdict(pEdict)]->createBotFromEdict(pEdict,m_pNextProfile);
-
-				extern ConCommandBase *puppet_bot_cmd;
-				//extern ConVar bot_cmd_nocheats;
-				
-				// Reset Cheat Flag
-				if ( puppet_bot_cmd != NULL )
-				{
-					if ( !puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
-					{
-						int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + BOT_CONVAR_FLAGS_OFFSET); // 20 is offset to flags
-			
-						*m_nFlags |= FCVAR_CHEAT;
-					}
-				}
-
 			}
 		}
 		

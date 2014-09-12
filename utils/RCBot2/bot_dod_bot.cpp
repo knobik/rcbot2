@@ -394,6 +394,12 @@ void CDODBot :: killed ( edict_t *pVictim, char *weapon )
 			m_pWantToProne->train(0.0f);
 	}
 
+	if ( (m_pLastEnemy == pVictim) && inSquad() && isSquadLeader() )
+	{
+		addVoiceCommand(DOD_VC_ENEMY_DOWN);
+		//addVoiceCommand(DOD_VC_GOGOGO);
+	}
+
 	return;
 }
 
@@ -479,6 +485,36 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 					bFollow = false;
 				}
 			}
+			/*else if ( CBotGlobals::isPlayer(pDied) )
+			{
+				// make a guess where the bullet came from
+				IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pDied);
+				Vector v;
+				CClassInterface::getVelocity(pDied,&v);
+				
+				if ( v.Length() > 0 )
+					v = v / v.Length();
+
+				Vector vend = (p->GetAbsOrigin() + v * 1024);
+
+				CBotGlobals::quickTraceline(pDied,p->GetAbsOrigin(),vend);
+
+				vend = CBotGlobals::getTraceResult()->endpos;
+
+				int iWpt = CWaypointLocations::NearestWaypoint(vend,1024,-1,false,true);
+
+				if ( iWpt != -1 )
+				{
+					CWaypoint *pWpt = CWaypoints::getPinchPointFromWaypoint(getOrigin(),CWaypoints::getWaypoint(iWpt)->getOrigin());
+
+					if ( pWpt != NULL )
+					{
+						m_pSchedules->removeSchedule(SCHED_CROUCH_AND_HIDE);
+						m_pSchedules->addFront(new CCrouchHideSched(pKiller));
+						bFollow = false;
+					}
+				}
+			}*/
 		}
 
 		// encourage bots to snoop out enemy or throw grenades
@@ -493,6 +529,11 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 		if ( pWpt )
 		{
 			m_vLastSeeEnemyBlastWaypoint = pWpt->getOrigin();
+		}
+
+		if ( inSquad() && isSquadLeader() )
+		{
+			addVoiceCommand(DOD_VC_HOLD);
 		}
 
 		if ( !hasEnemy() )
@@ -603,7 +644,7 @@ void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *p
 
 		if ( pDied == m_pEnemy )
 		{
-			if ( ( getHealthPercent() < 0.1f ) && ( randomFloat(0.0,1.0) > 0.75f ) )
+			if ( ( getHealthPercent() < 0.2f ) && ( randomFloat(0.0,1.0) > 0.75f ) )
 				addVoiceCommand(DOD_VC_NICE_SHOT);
 
 			ga_nn_value inputs[3] = {distanceFrom(m_pEnemy)/1000.0f,getHealthPercent(),m_fCurrentDanger/MAX_BELIEF};
@@ -613,14 +654,19 @@ void CDODBot :: seeFriendlyKill ( edict_t *pTeamMate, edict_t *pDied, CWeapon *p
 			if ( m_bProne )
 				m_pWantToProne->train(1.0f);
 			else
-				m_pWantToProne->train(0.0f);
-		
+				m_pWantToProne->train(0.0f);		
 		}
 
 		if ( m_pLastEnemy == pDied )
 		{
 			m_pLastEnemy = NULL;
 			m_fLastSeeEnemy = 0;
+
+			if ( inSquad() && isSquadLeader() )
+			{
+				addVoiceCommand(DOD_VC_ENEMY_DOWN);
+				//addVoiceCommand(DOD_VC_GOGOGO);
+			}
 		}
 
 	}
@@ -1545,17 +1591,86 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 	case DOD_VC_USE_GRENADE:
 		IF_WANT_TO_LISTEN
 		{
-			updateCondition(CONDITION_GREN);
+			if ( m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_GER) ||  m_pWeapons->hasWeapon(DOD_WEAPON_FRAG_US)  )
+			{
+				updateCondition(CONDITION_GREN);
+				updateCondition(CONDITION_CHANGED);
+
+				if ( randomFloat(0.0f,1.0f) > 0.25f )
+					addVoiceCommand(DOD_VC_YES);
+			}
 		}
 		break;
+	case DOD_VC_GO_LEFT:
+	case DOD_VC_GO_RIGHT:
+		IF_WANT_TO_LISTEN
+		{
+			Vector vOrigin = CBotGlobals::entityOrigin(pPlayer);
+			QAngle angles;
+			CBotCmd usercmd;
+			IPlayerInfo *p;
+			Vector vForward,vUp,vRight;
+			Vector vCapSearchOrigin;
+
+			p = playerinfomanager->GetPlayerInfo(pPlayer);
+
+			if ( p )
+			{
+				usercmd = p->GetLastUserCommand();
+				angles = usercmd.viewangles;
+				AngleVectors(angles,&vForward,&vRight,&vUp);
+				// find capture point nearest to where leader is pointing
+				
+				vCapSearchOrigin = vOrigin+(vForward*CWaypointLocations::BUCKET_SPACING*2);
+				int iNearestPoint = CDODMod::m_Flags.findNearestObjective(vCapSearchOrigin);
+
+				if ( cmd == DOD_VC_GO_LEFT )
+					vOrigin = vOrigin - (vRight*(CWaypointLocations::BUCKET_SPACING+1)) + (vForward*(CWaypointLocations::BUCKET_SPACING+1));
+				else
+					vOrigin = vOrigin + (vRight*(CWaypointLocations::BUCKET_SPACING+1)) + (vForward*(CWaypointLocations::BUCKET_SPACING+1));
+
+				// find route waypoint to right of leader
+								
+				CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vOrigin,768.0f,-1,false,false,false,NULL,false,0,false,false,Vector(0,0,0),CWaypointTypes::W_FL_ROUTE,NULL));
+
+				if ( pWaypoint != NULL )
+				{
+					if ( iNearestPoint != -1 )
+					{
+						CWaypoint *pCap = CWaypoints::getWaypoint(CDODMod::m_Flags.getWaypointAtFlag(iNearestPoint));
+
+						if ( pCap != NULL ) // go here after going through route
+							m_pSchedules->addFront(new CBotGotoOriginSched(pCap->getOrigin()));
+					}
+
+					m_pSchedules->addFront(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+				}
+				else
+				{
+					// find capture waypoint to right of leader
+					CWaypoint *pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vOrigin,768.0f,-1,false,false,false,NULL,false,0,false,false,Vector(0,0,0),CWaypointTypes::W_FL_CAPPOINT,NULL));
+
+					if ( pWaypoint != NULL )
+					{
+						m_pSchedules->addFront(new CBotGotoOriginSched(pWaypoint->getOrigin()));
+						addVoiceCommand(DOD_VC_YES);
+					}					
+					else
+						addVoiceCommand(DOD_VC_NO);
+				}
+			}
+		}
+		break;
+	case DOD_VC_ENEMY_DOWN:
 	case DOD_VC_GOGOGO:
 		IF_WANT_TO_LISTEN
 		{
-			updateCondition(CONDITION_PUSH);
+			updateCondition(CONDITION_PUSH);	 
 			updateCondition(CONDITION_RUN);
 			updateCondition(CONDITION_CHANGED);
+			removeCondition(CONDITION_DEFENSIVE);
 
-			if ( randomFloat(0.0f,1.0f) > 0.25f )
+			if ( hasSomeConditions(CONDITION_DEFENSIVE) || (randomFloat(0.0f,1.0f) > 0.25f) )
 				addVoiceCommand(DOD_VC_YES);
 		} 
 		else if ( randomFloat(0.0f,1.0f) > 0.9f )
@@ -1592,12 +1707,13 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 	case DOD_VC_SMOKE:
 		IF_WANT_TO_LISTEN
 		{
-			updateCondition(CONDITION_COVERT);
-
 			if ( m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_US) || m_pWeapons->hasWeapon(DOD_WEAPON_SMOKE_GER) )
 			{
 				if ( randomFloat(0.0f,1.0f) > 0.75f )
 					addVoiceCommand(DOD_VC_YES);
+
+				updateCondition(CONDITION_COVERT);
+				updateCondition(CONDITION_CHANGED);
 			}
 		}
 		
@@ -1715,7 +1831,7 @@ void CDODBot :: hearVoiceCommand ( edict_t *pPlayer, byte cmd )
 						fProb = 0.3f;*/
 				}
 				
-				if ( randomFloat(0.0f,1.0f) <= fProb )
+				if ( randomFloat(0.0f,1.0f) < fProb )
 				{
 					m_pSquad = CBotSquads::AddSquadMember(pPlayer,m_pEdict);
 
@@ -2489,21 +2605,38 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 				if ( iGoalWaypoint == -1 )
 					return false;
 				
-				if ( distanceFrom(vGoal) > 1024 ) // outside waypoint bucket of goal
-					pWaypoint = CWaypoints::getPinchPointFromWaypoint(vGoal,vGoal);
-				else
-					pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),vGoal);
-
 				CBotSchedule *attack = new CBotSchedule();
+
+				CWaypoint *pRoute = NULL;
+
+				if ( (m_fUseRouteTime < engine->Time()) )
+				{
+				// find random route
+					CWaypoint *pGoalWpt = CWaypoints::getWaypoint(iGoalWaypoint);
+					pRoute = CWaypoints::randomRouteWaypoint(this,getOrigin(),pGoalWpt->getOrigin(),getTeam(),0);
+
+					if ( pRoute )
+					{
+						attack->addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pRoute)));
+						m_fUseRouteTime = engine->Time() + 30.0f;
+					}
+				}
 
 				attack->setID(SCHED_ATTACKPOINT);
 
-				if ( pWaypoint && (randomFloat(0.0f,MAX_BELIEF) < m_pNavigator->getBelief(iGoalWaypoint)) )
+				if ( (pRoute == NULL) && (randomFloat(0.0f,MAX_BELIEF) < m_pNavigator->getBelief(iGoalWaypoint)) )
 				{
-					attack->addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint)));
-					attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,Vector(0,0,0),false,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
-				}
+					if ( distanceFrom(vGoal) > 1024 ) // outside waypoint bucket of goal
+						pWaypoint = CWaypoints::getPinchPointFromWaypoint(vGoal,vGoal);
+					else
+						pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),vGoal);
 
+					if ( pWaypoint )
+					{
+						attack->addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pWaypoint)));
+						attack->addTask(new CBotInvestigateTask(pWaypoint->getOrigin(),250,Vector(0,0,0),false,randomFloat(3.0f,5.0f),CONDITION_SEE_CUR_ENEMY));
+					}
+				}
 
 				attack->addTask(new CFindPathTask(iGoalWaypoint));
 				attack->addTask(new CBotDODAttackPoint(iFlagID,vGoal,150.0f));
@@ -2643,6 +2776,18 @@ bool CDODBot:: checkStuck ()
 					secondaryAttack();
 				else if ( !pWeapon->isExplosive() && CClassInterface::isMachineGunDeployed(pWeapon->getWeaponEntity()) )
 					secondaryAttack();
+			}
+		}
+
+		edict_t *pGroundEnt = CClassInterface::getGroundEntity(m_pEdict);
+
+		if ( pGroundEnt ) // stuck on furniture? 
+		{
+			if ( strncmp(pGroundEnt->GetClassName(),"prop_physics",12) )
+			{
+				// Duck
+				if ( randomFloat(0.0f,1.0f) < 0.9f )
+					duck();
 			}
 		}
 	}

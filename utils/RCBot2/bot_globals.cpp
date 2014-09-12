@@ -441,7 +441,13 @@ bool CBotGlobals :: gameStart ()
 	char szGameFolder[512];
 	engine->GetGameDir(szGameFolder,512);	
 	char szSteamFolder[512];
-	filesystem->GetCurrentDirectory(szSteamFolder,512);
+	/*
+	CFileSystemPassThru a;
+	a.InitPassThru(filesystem,true);
+	a.GetCurrentDirectoryA(szSteamFolder,512);
+*/
+	V_GetCurrentDirectory(szSteamFolder,512);
+	//filesystem->GetCurrentDirectory(szSteamFolder,512);
 
 	int iLength = strlen(szSteamFolder);
 
