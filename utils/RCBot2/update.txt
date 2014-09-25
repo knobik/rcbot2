@@ -3,6 +3,9 @@
 tf2: fixed crash with new version on loading
 dod:s bots use route waypoints -- give route waypoint same ID as flag to go to that flag through back alley
 dod:s bots listen to go left / go right voice commands if there are route waypoints nearbby
+dod:s bots use enemy down voice command when in a squad
+dod:s more chance of bots throwing a grenade when they hear the use grenade voice command
+dod:s bots try ducking if they get stuck on furniture
 
 0.90
 ====

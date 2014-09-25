@@ -241,7 +241,7 @@ void CTeamRoundTimer :: reset ()
 	}
 }
 
-bool CTeamControlPointRound :: isPointInRound ( int iIndex )
+bool CTeamControlPointRound :: isPointInRound ( edict_t *point_pent )
 {
 	edict_t *pPoint;
 	extern ConVar rcbot_const_point_offset;
@@ -258,13 +258,16 @@ bool CTeamControlPointRound :: isPointInRound ( int iIndex )
 
 			CBaseEntity *pent = pPoint->GetUnknown()->GetBaseEntity();
 
-			CTeamControlPoint *point = (CTeamControlPoint*)((unsigned long)pent + rcbot_const_point_offset.GetInt() );
+			if ( point_pent->GetUnknown()->GetBaseEntity() == pent )
+				return true;
 
-			if ( point )
-			{
-				if ( point->m_iIndex == iIndex )
-					return true;
-			}
+			//CTeamControlPoint *point = (CTeamControlPoint*)((unsigned long)pent + rcbot_const_point_offset.GetInt() );
+
+			//if ( point )
+			//{
+			//	if ( point->m_iIndex == iIndex )
+			//		return true;
+			//}
 		}
 	}
 
@@ -324,7 +327,7 @@ void CTFObjectiveResource::setup ()
 				if ( vOrigin == m_vCPPositions[j] )
 				{
 					m_pControlPoints[j] = MyEHandle(pent);
-					m_pControlPointClass[j] = CTeamControlPoint::getPoint(pent);
+					//m_pControlPointClass[j] = CTeamControlPoint::getPoint(pent);
 				}
 			}
 		}
@@ -408,11 +411,11 @@ int CTFObjectiveResource::NearestArea ( Vector vOrigin )
 	return m_IndexToWaypointAreaTranslation[iNearest];
 }
 
-CTeamControlPoint *CTeamControlPoint::getPoint ( edict_t *pent )
+/*CTeamControlPoint *CTeamControlPoint::getPoint ( edict_t *pent )
 {
 	extern ConVar rcbot_const_point_offset;
 	return (CTeamControlPoint*)((((unsigned long)pent) + rcbot_const_point_offset.GetInt())); //MAP_CLASS(CTeamControlPoint,(((unsigned long)pent) + offset),knownoffset);
-}
+}*/
 
 
 bool CTFObjectiveResource :: updateDefendPoints ( int team )
@@ -454,7 +457,7 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 		if ( m_flUnlockTimes[i] > gpGlobals->curtime )
 			continue;
 		// not in round
-		if ( m_pControlPoints[i] && pRound && !pRound->isPointInRound(i) )
+		if ( m_pControlPoints[i] && pRound && !pRound->isPointInRound(m_pControlPoints[i]) )
 			continue;
 		//int reqcappers = GetRequiredCappers(i,team);
 
@@ -542,7 +545,7 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 								if ( m_flUnlockTimes[j] > gpGlobals->curtime )
 									continue;
 								// not in round
-								if ( m_pControlPoints[j] && pRound && !pRound->isPointInRound(j) )
+								if ( m_pControlPoints[j] && pRound && !pRound->isPointInRound(m_pControlPoints[j]) )
 									continue;
 
 								if ( GetOwningTeam(j) == other )
@@ -695,7 +698,7 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 							{
 								if ( arr[j].bValid == false )
 								{
-									if ( !pRound || pRound->isPointInRound(j) )
+									if ( !pRound || (m_pControlPoints[j]&&pRound->isPointInRound(m_pControlPoints[j])) )
 										arr[j].bValid = true; // this is the next point - move back lads
 								}
 							}
@@ -726,7 +729,7 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 		byte *barr = (byte*)&(arr[i]);
 
 		for ( j = 0; j < sizeof(TF2PointProb_t); j ++ )
-			signature = signature + ((barr[j]*i)+j);
+			signature = signature + ((barr[j]*(i+1))+j);
 	}
 
 	if ( signature != m_PointSignature[team-2][TF2_POINT_DEFEND] )
@@ -817,7 +820,7 @@ bool CTFObjectiveResource :: updateAttackPoints ( int team )
 		if ( m_flUnlockTimes[i] > engine->Time() )
 			continue;
 		// not in round
-		if ( m_pControlPoints[i] && pRound && !pRound->isPointInRound(i) )
+		if ( m_pControlPoints[i] && pRound && !pRound->isPointInRound(m_pControlPoints[i]) )
 			continue;
 
 		// We don't own this point
@@ -999,7 +1002,7 @@ bool CTFObjectiveResource :: updateAttackPoints ( int team )
 		byte *barr = (byte*)&(arr[i]);
 
 		for ( j = 0; j < sizeof(TF2PointProb_t); j ++ )
-			signature = signature + ((barr[j]*i)+j);
+			signature = signature + ((barr[j]*(i+1))+j);
 	}
 
 	if ( signature != m_PointSignature[team-2][TF2_POINT_ATTACK] )

@@ -1162,7 +1162,7 @@ bool CBotFortress :: needAmmo ()
 
 bool CBotFortress :: needHealth ()
 {
-	return getHealthPercent() < 0.7;
+	return (getHealthPercent() < 0.7) || CTeamFortress2Mod::TF2_IsPlayerOnFire(m_pEdict);
 }
 
 bool CBotTF2 :: needAmmo()

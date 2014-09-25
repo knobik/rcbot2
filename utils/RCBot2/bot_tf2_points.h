@@ -9,7 +9,7 @@ class CTeamControlPointRound
 {
 public:
 
-	bool isPointInRound ( int iIndex );
+	bool isPointInRound ( edict_t *point_pent );
 
 	CUtlVector< CBaseHandle > m_ControlPoints;
 
@@ -221,7 +221,7 @@ public:
 	int m_WaypointAreaToIndexTranslation[MAX_CONTROL_POINTS+1]; // add one because 0 is always valid for waypoints
 
 	MyEHandle m_pControlPoints[MAX_CONTROL_POINTS];
-	CTeamControlPoint *m_pControlPointClass[MAX_CONTROL_POINTS];
+	//CTeamControlPoint *m_pControlPointClass[MAX_CONTROL_POINTS];
 	int m_iControlPointWpt[MAX_CONTROL_POINTS];
 	bool m_iControlPointWptReachable[MAX_CONTROL_POINTS];
 	int *m_iNumControlPoints;
@@ -375,7 +375,7 @@ public:
 class CTeamControlPoint
 {
 public:
-	static CTeamControlPoint *getPoint ( edict_t *pent );
+	//static CTeamControlPoint *getPoint ( edict_t *pent );
 
 	int			m_iTeam;			
 	int			m_iDefaultOwner;			// Team that initially owns the cap point
