@@ -134,6 +134,8 @@ typedef enum
 	GETPROP_TF2_HIGHFIVE,
 	GETPROP_TF2_HIGHFIVE_PARTNER,
 	GETPROP_SENTRYGUN_PLACING,
+	GETPROP_TF2_ISCARRYINGOBJ,
+	GETPROP_TF2_GETCARRIEDOBJ,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -342,6 +344,8 @@ public:
 		*_health = g_GetProps[GETPROP_TF2SPYDISGUISED_DIS_HEALTH].getInt(edict,0);
 		return !CClassInterfaceValue::isError();
 	}
+	inline static bool isCarryingObj ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_ISCARRYINGOBJ].getBool(edict,false); }
+	inline static edict_t *getCarriedObj ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_GETCARRIEDOBJ].getEntity(edict); }
 	inline static bool getMedigunHealing ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MEDIGUN_HEALING].getBool(edict,false); }
 	inline static edict_t *getMedigunTarget ( edict_t *edict ) { return g_GetProps[GETPROP_TF2MEDIGUN_TARGETTING].getEntity(edict); }
 	inline static edict_t *getSentryEnemy ( edict_t *edict ) { return g_GetProps[GETPROP_SENTRY_ENEMY].getEntity(edict); }

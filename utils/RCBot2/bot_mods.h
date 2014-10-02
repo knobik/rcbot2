@@ -826,7 +826,7 @@ public:
 	static int getSentryLevel ( edict_t *pSentry );
 	static int getDispenserLevel ( edict_t *pDispenser );
 
-	static bool isDispenser ( edict_t *pEntity, int iTeam );
+	static bool isDispenser ( edict_t *pEntity, int iTeam, bool checkcarrying = false );
 
 	static bool isPayloadBomb ( edict_t *pEntity, int iTeam );
 
@@ -842,16 +842,16 @@ public:
 
 	static void setArea ( int area ) { m_iArea = area; }
 
-	static bool isSentry ( edict_t *pEntity, int iTeam );
+	static bool isSentry ( edict_t *pEntity, int iTeam, bool checkcarrying = false );
 
-	static bool isTeleporter ( edict_t *pEntity, int iTeam );
+	static bool isTeleporter ( edict_t *pEntity, int iTeam, bool checkcarrying = false );
 
 	static void updateTeleportTime ( edict_t *pOwner );
 	static float getTeleportTime ( edict_t *pOwner );
 
-	static bool isTeleporterEntrance ( edict_t *pEntity, int iTeam );
+	static bool isTeleporterEntrance ( edict_t *pEntity, int iTeam, bool checkcarrying = false );
 
-	static bool isTeleporterExit ( edict_t *pEntity, int iTeam );
+	static bool isTeleporterExit ( edict_t *pEntity, int iTeam, bool checkcarrying = false );
 
 	static inline bool isMapType ( eTFMapType iMapType ) { return iMapType == m_MapType; }
 

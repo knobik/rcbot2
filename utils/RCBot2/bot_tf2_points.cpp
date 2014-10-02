@@ -281,7 +281,15 @@ CTeamControlPointRound *CTeamControlPointMaster:: getCurrentRound ( )
 
 	CBaseEntity *pent = m_ControlPointRounds[m_iCurrentRoundIndex];
 
+	//extern IServerGameEnts *servergameents;
+
+	//edict_t *p = servergameents->BaseEntityToEdict(pent);
+	
 	extern ConVar rcbot_const_round_offset;
+	/*
+	CTeamControlPointRound *org = (CTeamControlPointRound*)((unsigned long)pent+(unsigned long)rcbot_const_round_offset.GetInt());
+	CTeamControlPointRound *fromunk = (CTeamControlPointRound*)p->GetUnknown();
+	CTeamControlPointRound *fromserverent = (CTeamControlPointRound*)p->GetIServerEntity();*/
 
 	return (CTeamControlPointRound*)((unsigned long)pent+(unsigned long)rcbot_const_round_offset.GetInt());
 }

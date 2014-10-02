@@ -520,6 +520,10 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2_TAUNTYAW,"CTFPlayer","m_flTauntYaw",0);
 		DEFINE_GETPROP(GETPROP_TF2_HIGHFIVE,"CTFPlayer","m_bIsReadyToHighFive",0);
 		DEFINE_GETPROP(GETPROP_TF2_HIGHFIVE_PARTNER,"CTFPlayer","m_hHighFivePartner",0);
+		//8480 : m_hCarriedObject
+		//8484 : m_bCarryingObject
+		DEFINE_GETPROP(GETPROP_TF2_ISCARRYINGOBJ,"CTFPlayer","m_bCarryingObject",0);
+		DEFINE_GETPROP(GETPROP_TF2_GETCARRIEDOBJ,"CTFPlayer","m_hCarriedObject",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

@@ -1877,12 +1877,25 @@ void CBotTF2 :: engineerBuild ( eEngiBuild iBuilding, eEngiCmd iEngiCmd )
 
 void CBotTF2 :: updateCarrying ()
 {
-	m_bIsCarryingTeleExit = (m_pTeleExit.get()!=NULL) && CClassInterface::isObjectCarried(m_pTeleExit);//(strcmp(&(m_pTeleExit.get()->GetIServerEntity()->GetModelName().ToCStr())[18],"teleporter_blueprint_exit.mdl")==0);
-	m_bIsCarryingSentry = (m_pSentryGun.get()!=NULL) && CClassInterface::isObjectCarried(m_pSentryGun);// && (strcmp(&(m_pSentryGun.get()->GetIServerEntity()->GetModelName().ToCStr())[18],"sentry1_blueprint.mdl")==0);
-	m_bIsCarryingDisp = (m_pDispenser.get()!=NULL) && CClassInterface::isObjectCarried(m_pDispenser);// && (strcmp(&(m_pDispenser.get()->GetIServerEntity()->GetModelName().ToCStr())[18],"dispenser_blueprint.mdl")==0);
-	m_bIsCarryingTeleEnt = (m_pTeleEntrance.get()!=NULL) && CClassInterface::isObjectCarried(m_pTeleEntrance);// && (strcmp(&(m_pTeleEntrance.get()->GetIServerEntity()->GetModelName().ToCStr())[18],"teleporter_blueprint_enter.mdl")==0);
-	m_bIsCarryingObj = m_bIsCarryingSentry || m_bIsCarryingTeleExit || m_bIsCarryingDisp || m_bIsCarryingTeleEnt;
-		//m_fCheckNextCarrying = m_fCheckNextCarrying + 0.5f;
+	if ( (m_bIsCarryingObj = CClassInterface::isCarryingObj(m_pEdict)) == true )
+	{
+		edict_t *pCarriedObj = CClassInterface::getCarriedObj(m_pEdict);
+
+		if ( pCarriedObj )
+		{
+			m_bIsCarryingTeleExit = CTeamFortress2Mod::isTeleporterExit(pCarriedObj,m_iTeam,true);
+			m_bIsCarryingSentry = CTeamFortress2Mod::isSentry(pCarriedObj,m_iTeam,true);
+			m_bIsCarryingDisp = CTeamFortress2Mod::isDispenser(pCarriedObj,m_iTeam,true);
+			m_bIsCarryingTeleEnt = CTeamFortress2Mod::isTeleporterEntrance(pCarriedObj,m_iTeam,true);
+		}
+	}
+	else
+	{
+		m_bIsCarryingTeleExit = NULL;
+		m_bIsCarryingSentry = NULL;
+		m_bIsCarryingDisp = NULL;
+		m_bIsCarryingTeleEnt = NULL;
+	}
 }
 
 void CBotTF2 :: checkBuildingsValid (bool bForce) // force check carrying
@@ -3254,6 +3267,62 @@ bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
 	return false;
 }
 
+bool CBotTF2 :: wantToFollowEnemy()
+{
+	if ( !wantToInvestigateSound() ) // maybe capturing point right now
+		return false;
+	else if ( (m_iCurrentDefendArea != 0) && (m_pLastEnemy.get() != NULL) && CTeamFortress2Mod::isMapType(TF_MAP_CP) && (CTeamFortress2Mod::m_ObjectiveResource.GetNumControlPoints() > 0) )
+	{
+		Vector vDefend = CTeamFortress2Mod::m_ObjectiveResource.GetCPPosition(CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentDefendArea]);
+
+		edict_t *pEnemy = m_pLastEnemy.get();
+
+		Vector vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
+		Vector vOrigin = getOrigin();
+
+		// He's trying to cap the point? Maybe! Go after him!
+		if ( ((vDefend-vEnemyOrigin).Length()+80.0f) < (vDefend-vOrigin).Length() )
+		{
+			updateCondition(CONDITION_DEFENSIVE);
+			return true;
+		}
+	}
+	else if ( (m_fLastKnownTeamFlagTime > 0) && (m_pLastEnemy.get() != NULL) && CTeamFortress2Mod::isMapType(TF_MAP_CTF) )
+	{
+		Vector vDefend = m_vLastKnownTeamFlagPoint;
+
+		edict_t *pEnemy = m_pLastEnemy.get();
+
+		Vector vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
+		Vector vOrigin = getOrigin();
+
+		// He's trying to get the flag? Maybe! Go after him!
+		if ( ((vDefend-vEnemyOrigin).Length()+80.0f) < (vDefend-vOrigin).Length() )
+		{
+			updateCondition(CONDITION_DEFENSIVE);
+			return true;
+		}
+	}
+	/*else if ( (m_fLastKnownTeamFlagTime == 0) && (m_pLastEnemy.get() != NULL) && CTeamFortress2Mod::isMapType(TF_MAP_CTF) )
+	{
+		Vector vDefend = m_vLastKnownTeamFlagPoint;
+
+		edict_t *pEnemy = m_pLastEnemy.get();
+
+		Vector vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
+		Vector vOrigin = getOrigin();
+
+		// He's trying to get the flag? Maybe! Go after him!
+		if ( ((vDefend-vEnemyOrigin).Length()+80.0f) < (vDefend-vOrigin).Length() )
+		{
+			updateCondition(CONDITION_DEFENSIVE);
+			return true;
+		}
+	}*/
+
+	return CBotFortress::wantToFollowEnemy();
+}
+
 bool CBotFortress :: wantToFollowEnemy ()
 {
 	if ( hasSomeConditions(CONDITION_NEED_HEALTH) )
@@ -4191,6 +4260,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		fDefendFlagUtility *= 2;
 	}
 
+	// recently saw an enemy go near the point
+	if ( hasSomeConditions(CONDITION_DEFENSIVE) && (m_pLastEnemy.get() != NULL) && CBotGlobals::entityIsAlive(m_pLastEnemy.get()) && (m_fLastSeeEnemy > 0) )
+		fDefendFlagUtility = fGetFlagUtility+0.1f;
+
 	
 	ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
 
@@ -4246,6 +4319,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) &&
 		!hasFlag() && !CTeamFortress2Mod::isFlagCarrier(m_pEnemy) && (((m_iClass == TF_CLASS_SPY)&&(!isDisguised()&&!isCloaked()))||(((m_iClass == TF_CLASS_MEDIC) && !m_pHeal) || 
 		CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEnemy))),1.0f);
+
+	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && ((m_iClass == TF_CLASS_ENGINEER) && m_bIsCarryingObj),1.0f);
 
 	ADD_UTILITY(BOT_UTIL_MEDIC_FINDPLAYER,(m_iClass == TF_CLASS_MEDIC) && 
 		!m_pHeal && m_pLastCalledMedic && ((m_fLastCalledMedicTime+30.0f)>engine->Time()) && 
@@ -4675,6 +4750,8 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 		{
 		case BOT_UTIL_DEFEND_PAYLOAD_BOMB:
 			{
+				removeCondition(CONDITION_DEFENSIVE);
+
 				if ( m_pDefendPayloadBomb )
 				{
 					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT,0,m_iCurrentDefendArea,true,this);
@@ -4737,14 +4814,15 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				CWaypoint *pWaypoint = NULL;
 				
 				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_DEFEND,getTeam(),0,false,this,true);
-				
+								
 				//if ( pWaypoint && randomInt(0,1) )
 				//	pWaypoint = CWaypoints::getPinchPointFromWaypoint(getOrigin(),pWaypoint->getOrigin());
 
 				if ( pWaypoint )
 				{
 					setLookAt(pWaypoint->getOrigin());
-					m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin(),(m_iClass == TF_CLASS_MEDIC) ? randomFloat(5.0f,10.0f) : 0.0f));
+					m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin(),((m_iClass == TF_CLASS_MEDIC)||hasSomeConditions(CONDITION_DEFENSIVE)) ? randomFloat(4.0f,8.0f) : 0.0f));
+					removeCondition(CONDITION_DEFENSIVE);
 					removeCondition(CONDITION_PUSH);
 					return true;
 				}
@@ -4753,8 +4831,13 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 		case BOT_UTIL_DEFEND_FLAG_LASTKNOWN:
 			// find our flag waypoint
 			{
+				
+				
+
 				setLookAt(m_vLastKnownTeamFlagPoint);
-				m_pSchedules->add(new CBotDefendSched(m_vLastKnownTeamFlagPoint,(m_iClass == TF_CLASS_MEDIC) ? randomFloat(5.0f,10.0f) : 0.0f));
+				m_pSchedules->add(new CBotDefendSched(m_vLastKnownTeamFlagPoint,((m_iClass == TF_CLASS_MEDIC)||hasSomeConditions(CONDITION_DEFENSIVE)) ? randomFloat(4.0f,8.0f) : 0.0f));
+
+				removeCondition(CONDITION_DEFENSIVE);
 				removeCondition(CONDITION_PUSH);
 				return true;
 			}
@@ -4884,8 +4967,11 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 							}
 						}
 
-						m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin(),(m_iClass == TF_CLASS_MEDIC) ? randomFloat(5.0f,10.0f) : 0.0f));
+						m_pSchedules->add(new CBotDefendSched(pWaypoint->getOrigin(),(hasSomeConditions(CONDITION_DEFENSIVE)||(m_iClass == TF_CLASS_MEDIC)) ? randomFloat(5.0f,10.0f) : 0.0f));
 						removeCondition(CONDITION_PUSH);
+
+						removeCondition(CONDITION_DEFENSIVE);
+
 						return true;
 					}
 				}
@@ -4894,6 +4980,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				{
 					m_pSchedules->add(new CBotDefendPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea()));
 					removeCondition(CONDITION_PUSH);
+					removeCondition(CONDITION_DEFENSIVE);
 					return true;
 				}
 			}
@@ -6200,8 +6287,8 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 			// dontAvoid my enemy
 			m_fAvoidTime = engine->Time() + 1.0f;
 		}
-
-		if ( CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
+		
+		if ( pEnemy == m_NearestEnemyRocket )//  CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
 			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) > 25) )
 				bSecAttack = true;

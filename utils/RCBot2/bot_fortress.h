@@ -633,6 +633,8 @@ public:
 
 	eBotFuncState rocketJump(int *iState,float *fTime);
 
+	virtual bool wantToFollowEnemy ();
+
 	void resetCloakTime () { m_fSpyCloakTime = 0.0f; }
 
 	float getEnemyFactor ( edict_t *pEnemy );

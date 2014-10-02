@@ -170,7 +170,12 @@ public:
 	}
 
 	// Data functions, called to set up the state at the beginning of a round
-	int	 GetNumControlPoints( void ) { return *m_iNumControlPoints; }
+	inline int	 GetNumControlPoints( void ) 
+	{ 
+		if ( m_iNumControlPoints==NULL )
+			return 0;
+		return *m_iNumControlPoints;
+	}
 
 	int GetPreviousPointForPoint( int index, int team, int iPrevIndex )
 	{
