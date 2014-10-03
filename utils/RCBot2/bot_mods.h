@@ -743,6 +743,8 @@ public:
 	//void entitySpawn ( edict_t *pEntity );
 };
 
+#define NEWENUM typedef enum {
+
 typedef enum
 {
 	TF_MAP_DM = 0,
@@ -755,7 +757,9 @@ typedef enum
 	TF_MAP_KOTH,
 	TF_MAP_SD, // special delivery : added 15 jul 12
 	TF_MAP_TR,
-	TF_MAP_MVM
+	TF_MAP_MVM,
+	TF_MAP_RD,
+	TF_MAP_MAX
 }eTFMapType;
 
 // These must be MyEHandles because they may be destroyed at any time

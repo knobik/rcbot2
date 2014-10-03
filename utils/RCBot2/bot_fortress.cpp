@@ -1343,8 +1343,10 @@ bool CBotFortress :: isTeleporterUseful ( edict_t *pTele )
 			float fGoalDistance = ((iCurWpt==-1)||(iGoalId==-1))?((m_vGoal-vEntrance).Length()+fEntranceDist) : CWaypointDistances::getDistance(iCurWpt,iGoalId);
 			float fTeleDistance = ((iTeleWpt==-1)||(iGoalId==-1))?((m_vGoal - vExit).Length()+fEntranceDist) : CWaypointDistances::getDistance(iTeleWpt,iGoalId);
 
-			if ( fTeleDistance < fGoalDistance )// ((m_vGoal - CBotGlobals::entityOrigin(pExit)).Length()+distanceFrom(pTele)) < fGoalDistance )
+			// still need to run to entrance then from exit
+			if ( (fEntranceDist+fTeleDistance) < fGoalDistance )// ((m_vGoal - CBotGlobals::entityOrigin(pExit)).Length()+distanceFrom(pTele)) < fGoalDistance )
 			{			
+				// now check wait time based on how many players are waiting for the teleporter
 				float fMaxSpeed = CClassInterface::getMaxSpeed(m_pEdict);
 				float fDuration = CClassInterface::getTF2TeleRechargeDuration(pTele);
 
@@ -6685,6 +6687,10 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 			else
 				bValid = true;
 		}
+	}
+	else if ( CTeamFortress2Mod::isMapType(TF_MAP_RD) && !strcmp(pEdict->GetClassName(),"tf_robot_destruction_robot") && (CClassInterface::getTeam(pEdict) != m_iTeam) )
+	{
+		bValid = true;
 	}
 	else if ( CTeamFortress2Mod::isBoss(pEdict) )
 	{
