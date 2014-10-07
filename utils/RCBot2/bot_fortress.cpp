@@ -429,7 +429,7 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 		}
 	default:
 
-		if ( !bHeavyClass ) // add more factor bassed on uber charge level - bot can gain more uber charge
+		if ( !bHeavyClass && pMedigun ) // add more factor bassed on uber charge level - bot can gain more uber charge
 		{
 			fFactor += (0.1f - ((float)(CClassInterface::getUberChargeLevel(pMedigun))/1000));
 			
@@ -3942,6 +3942,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	static float fTeleporterEntPlaceTime;
 	static float fTeleporterExtPlaceTime;
 
+	static edict_t *pMedigun;
 	static float fSentryUtil;
 	static int iMetalInDisp;
 
@@ -4217,6 +4218,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	}
 	else
 	{
+		pMedigun = CTeamFortress2Mod::getMediGun(m_pEdict);
+
 		if ( !m_pNearestDisp )
 		{
 			m_pNearestDisp = CTeamFortress2Mod::nearestDispenser(getOrigin(),iTeam);
@@ -4312,25 +4315,25 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		CTeamFortress2Mod::isMapType(TF_MAP_KOTH)||CTeamFortress2Mod::isMapType(TF_MAP_CP)||
 		CTeamFortress2Mod::isMapType(TF_MAP_TC))&&m_iClass!=TF_CLASS_SCOUT,fDefendFlagUtility);
 
-	ADD_UTILITY(BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pHeal && 
+	ADD_UTILITY(BOT_UTIL_MEDIC_HEAL,(m_iClass == TF_CLASS_MEDIC) && (pMedigun!= NULL) && !hasFlag() && m_pHeal && 
 		CBotGlobals::entityIsAlive(m_pHeal) && (getHealFactor(m_pHeal)>0),0.98f);
 
-	ADD_UTILITY(BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && !hasFlag() && m_pLastHeal && 
+	ADD_UTILITY(BOT_UTIL_MEDIC_HEAL_LAST,(m_iClass == TF_CLASS_MEDIC) && (pMedigun!= NULL) && !hasFlag() && m_pLastHeal && 
 		CBotGlobals::entityIsAlive(m_pLastHeal) && (getHealFactor(m_pLastHeal)>0),0.99f); 
 
 	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) &&
 		!hasFlag() && !CTeamFortress2Mod::isFlagCarrier(m_pEnemy) && (((m_iClass == TF_CLASS_SPY)&&(!isDisguised()&&!isCloaked()))||(((m_iClass == TF_CLASS_MEDIC) && !m_pHeal) || 
 		CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEnemy))),1.0f);
 
-	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,m_pEnemy && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && ((m_iClass == TF_CLASS_ENGINEER) && m_bIsCarryingObj),1.0f);
+	ADD_UTILITY(BOT_UTIL_HIDE_FROM_ENEMY,m_pEnemy && (pMedigun!= NULL) && hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && ((m_iClass == TF_CLASS_ENGINEER) && m_bIsCarryingObj),1.0f);
 
 	ADD_UTILITY(BOT_UTIL_MEDIC_FINDPLAYER,(m_iClass == TF_CLASS_MEDIC) && 
-		!m_pHeal && m_pLastCalledMedic && ((m_fLastCalledMedicTime+30.0f)>engine->Time()) && 
+		!m_pHeal && m_pLastCalledMedic && (pMedigun!= NULL) && ((m_fLastCalledMedicTime+30.0f)>engine->Time()) && 
 		( (numplayersonteam>1) && 
 		  (numplayersonteam>CTeamFortress2Mod::numClassOnTeam(iTeam,getClass())) ),0.95f);
 
 	ADD_UTILITY(BOT_UTIL_MEDIC_FINDPLAYER_AT_SPAWN,(m_iClass == TF_CLASS_MEDIC) && 
-		!m_pHeal && !m_pLastCalledMedic && m_bEntranceVectorValid && (numplayersonteam>1) && 
+		!m_pHeal && !m_pLastCalledMedic && (pMedigun!= NULL) && m_bEntranceVectorValid && (numplayersonteam>1) && 
 		((!CTeamFortress2Mod::isAttackDefendMap() && !CTeamFortress2Mod::hasRoundStarted()) || (numplayersonteam_alive < numplayersonteam)),0.94f);
 
 	if ( (m_iClass==TF_CLASS_DEMOMAN) && !hasEnemy() && !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) )

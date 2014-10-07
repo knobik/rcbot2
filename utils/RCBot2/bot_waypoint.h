@@ -152,8 +152,7 @@ public:
 	static const int W_FL_MACHINEGUN = 16384;
 	static const int W_FL_DOUBLEJUMP = 32768;
 	static const int W_FL_PRONE = 32768;
-	static const int W_FL_TELE_ENTRANCE = 65536;
-	static const int W_FL_ATTACKFROM = 65536;
+	static const int W_FL_TELE_ENTRANCE = 65536;	
 	static const int W_FL_TELE_EXIT = 131072;
 	static const int W_FL_DEFEND = 262144;
 	static const int W_FL_AREAONLY = 524288;
@@ -168,6 +167,7 @@ public:
 	static const int W_FL_SPRINT = 134217728; 
 	static const int W_FL_TELEPORT_CHEAT = 268435456; // teleports bots to the next waypoint (cheat)
 	static const int W_FL_OWNER_ONLY = 536870912; // Only owners of this area can use the waypoint
+	//static const int W_FL_ATTACKPOINT = 1073741824; // Tactical waypoint -- each squad will go to different attack points and signal others to go
 
 	static void setup ();
 

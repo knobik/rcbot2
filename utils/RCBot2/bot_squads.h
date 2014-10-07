@@ -206,6 +206,18 @@ public:
 
 	void setTactic ( eTacticType iTactics ) { m_Tactics = iTactics; }
 
+	// Squad is waiting for another squad to Syncronize
+	bool isWaitingForOtherSquad ()
+	{
+		return m_bIsWaitingForOther;
+	}
+
+	// Squad is given the go by another squad
+	void givenGo ()
+	{
+		m_bIsWaitingForOther = false;
+	}
+
 private:
 	// use 'EHandles' for squads
 	// as players might leave and stuff...
@@ -220,6 +232,7 @@ private:
 
 	QAngle m_vLeaderAngle;
 	eTacticType m_Tactics;
+	bool m_bIsWaitingForOther;
 };
 
 //-------------------
