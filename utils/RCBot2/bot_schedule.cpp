@@ -621,18 +621,27 @@ void CBotAttackSched :: init ()
 	setID(SCHED_ATTACK);
 }
 ///////////////////////////////////////////
-CBotAttackPointSched :: CBotAttackPointSched ( Vector vPoint, int iRadius, int iArea, bool bHasRoute, Vector vRoute, bool bNest )
+CBotAttackPointSched :: CBotAttackPointSched ( Vector vPoint, int iRadius, int iArea, bool bHasRoute, Vector vRoute, bool bNest, edict_t *pLastEnemySentry )
 {
+	int iDangerWpt = -1;
+
+	if ( pLastEnemySentry != NULL )
+		iDangerWpt = CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(pLastEnemySentry),200.0f,-1,true,true);
+
 	// First find random route 
 	if ( bHasRoute )
 	{
-		addTask(new CFindPathTask(vRoute)); // first
+		CFindPathTask *toRoute = new CFindPathTask(vRoute);
+		addTask(toRoute); // first
+		toRoute->setDangerPoint(iDangerWpt);
 
 		if ( bNest )
 			addTask(new CBotNest());
 	}
 
-	addTask(new CFindPathTask(vPoint)); // second / first
+	CFindPathTask *toPoint = new CFindPathTask(vPoint);
+	addTask(toPoint); // second / first
+	toPoint->setDangerPoint(iDangerWpt);
 	addTask(new CBotTF2AttackPoint(iArea,vPoint,iRadius)); // third / second 
 }
 

@@ -4393,8 +4393,8 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 {
 	CBotTF2 *pBotTF2 = (CBotTF2*)pBot;
 
-	if ( pBotTF2->someoneCalledMedic() )
-		fail();
+	if ( ( pBotTF2->getClass() == TF_CLASS_MEDIC ) && pBotTF2->someoneCalledMedic() )
+		fail(); // Follow player
 
 	if ( !pBotTF2->wantToNest() )
 	{
@@ -4412,7 +4412,7 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 
 	if ( m_fTime == 0 )
 	{
-		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
+		m_fTime = engine->Time() + randomFloat(6.0f,12.0f);
 
 		if ( randomInt(0,1) )
 			pBotTF2->addVoiceCommand(TF_VC_HELP);
@@ -4428,10 +4428,9 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 	// heal up
 	// 
 
-	pBot->setLookAtTask((LOOK_AROUND));
+	pBot->setLookAtTask(LOOK_AROUND);
 
 	pBot->stopMoving();
-
 }
 
 CBotNest::CBotNest()

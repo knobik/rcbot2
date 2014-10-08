@@ -1115,3 +1115,62 @@ void CTeamFortress2Mod::updateBluePayloadBomb ( edict_t *pent )
 	if ( cur != pent )
 		m_pPayLoadBombBlue = pent;
 }
+
+bool CTeamFortress2Mod::isDefending ( edict_t *pPlayer )//, int iCapIndex = -1 )
+{
+	int iIndex = (1<<(ENTINDEX(pPlayer)-1));
+
+	if ( m_ObjectiveResource.GetNumControlPoints() > 0 )
+	{
+		int iTeam = CClassInterface::getTeam(pPlayer);
+
+	//if ( iCapIndex == -1 )
+	//{
+		for ( short int i = 0; i < MAX_CONTROL_POINTS; i ++ )
+		{
+			if ( m_ObjectiveResource.isCPValid(i,iTeam,TF2_POINT_DEFEND) )
+			{
+				if ( (m_iCapDefenders[i] & iIndex) == iIndex )
+					return true;
+			}
+		}
+	//}
+	//else
+	//	return ((m_iCapDefenders[iCapIndex] & iIndex) == iIndex );
+	}
+
+	return false;
+}
+
+bool CTeamFortress2Mod::isCapping ( edict_t *pPlayer )//, int iCapIndex = -1 )
+{
+	int index = (1<<(ENTINDEX(pPlayer)-1));
+
+	if ( m_ObjectiveResource.GetNumControlPoints() > 0 )
+	{
+		int iTeam = CClassInterface::getTeam(pPlayer);
+
+	//if ( index >= 0 )
+	//{
+		//if ( iCapIndex >= 0 )
+		//{
+		//	return (m_Cappers[iCapIndex] & index) == index; 
+		//}
+		//else
+		//{
+			int i = 0;
+
+			for ( i = 0; i < MAX_CAP_POINTS; i ++ )
+			{				
+				if ( m_ObjectiveResource.isCPValid(i,iTeam,TF2_POINT_ATTACK) )
+				{
+					if ( (m_Cappers[i] & index) == index  )
+						return true;
+				}
+			}
+		//}
+	//}
+	}
+
+	return false;
+}

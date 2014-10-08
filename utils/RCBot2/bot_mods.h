@@ -1062,24 +1062,6 @@ public:
 
 	static edict_t *findResourceEntity ();
 
-	static bool isDefending ( edict_t *pPlayer, int iCapIndex = -1 )
-	{
-		int iIndex = (1<<(ENTINDEX(pPlayer)-1));
-
-		if ( iCapIndex == -1 )
-		{
-			for ( short int i = 0; i < MAX_CONTROL_POINTS; i ++ )
-			{
-				if ( (m_iCapDefenders[i] & iIndex) == iIndex )
-					return true;
-			}
-		}
-		else
-			return ((m_iCapDefenders[iCapIndex] & iIndex) == iIndex );
-
-		return false;
-	}
-
 	static void addCapDefender ( edict_t *pPlayer, int iCapIndex )
 	{
 		m_iCapDefenders[iCapIndex] |= (1<<(ENTINDEX(pPlayer)-1));
@@ -1095,6 +1077,10 @@ public:
 		memset(m_iCapDefenders,0,sizeof(int)*MAX_CONTROL_POINTS);
 	}
 
+	static bool isDefending ( edict_t *pPlayer );//, int iCapIndex = -1 );
+
+	static bool isCapping ( edict_t *pPlayer );//, int iCapIndex = -1 );
+	
 	static void addCapper ( int cp, int capper )
 	{
 		if ( capper && (cp < MAX_CAP_POINTS) )
@@ -1104,31 +1090,6 @@ public:
 	static void removeCappers ( int cp )
 	{
 		m_Cappers[cp] = 0;
-	}
-
-	static bool isCapping ( edict_t *pPlayer, int iCapIndex = -1 )
-	{
-		int index = (1<<(ENTINDEX(pPlayer)-1));
-
-		if ( index >= 0 )
-		{
-			if ( iCapIndex >= 0 )
-			{
-				return (m_Cappers[iCapIndex] & index) == index; 
-			}
-			else
-			{
-				int i = 0;
-
-				for ( i = 0; i < MAX_CAP_POINTS; i ++ )
-				{
-					if ( (m_Cappers[i] & index) )
-						return true;
-				}
-			}
-		}
-
-		return false;
 	}
 
 	static void resetCappers ()

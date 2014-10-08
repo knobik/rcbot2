@@ -2152,7 +2152,7 @@ void CBotTF2 :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 				m_vLastDiedOrigin = CBotGlobals::entityOrigin(pDied);
 				pKiller = m_pLastEnemySentry;
 
-				if ( m_iClass == TF_CLASS_DEMOMAN )
+				if ( (m_iClass == TF_CLASS_DEMOMAN) || (m_iClass == TF_CLASS_SPY) )
 				{
 					// perhaps pipe it!
 					updateCondition(CONDITION_CHANGED);
@@ -3880,7 +3880,7 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 
 bool CBotFortress :: wantToNest ()
 {
-	return (!hasFlag() && ((getClass()!=TF_CLASS_ENGINEER)&&(m_pSentryGun.get()!=NULL)) && ((getClass() != TF_CLASS_MEDIC) || !m_pHeal) && (getHealthPercent() < 0.9) && (nearbyFriendlies(512.0f)<2));
+	return (!hasFlag() && ((getClass()!=TF_CLASS_ENGINEER)&&(m_pSentryGun.get()!=NULL)) && ((getClass() != TF_CLASS_MEDIC) || !m_pHeal) && (getHealthPercent() < 0.95) && (nearbyFriendlies(256.0f)<2));
 }
 
 void CBotTF2:: teleportedPlayer ( void )
@@ -4885,7 +4885,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 					}
 				}
 
-				m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea(),bUseRoute,vRoute, bNest));
+				m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea(),bUseRoute,vRoute, bNest, m_pLastEnemySentry.get()));
 				removeCondition(CONDITION_PUSH);
 				return true;
 			}
@@ -6288,6 +6288,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 	{
 		Vector vEnemyOrigin;
 		bool bSecAttack = false;
+		extern ConVar rcbot_tf2_pyro_airblast;
 
 		clearFailedWeaponSelect();
 
@@ -6303,10 +6304,10 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		if ( (pEnemy == m_NearestEnemyRocket) || 
 			 (CBotGlobals::isPlayer(pEnemy) && 
 				(CTeamFortress2Mod::TF2_IsPlayerInvuln(pEnemy)||
-					(m_iCurrentDefendArea && CTeamFortress2Mod::isCapping(pEnemy,CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentDefendArea]) ||
-					(m_iCurrentAttackArea && CTeamFortress2Mod::isDefending(pEnemy,CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentAttackArea]))))))
+					(m_iCurrentDefendArea && CTeamFortress2Mod::isCapping(pEnemy) ||
+					(m_iCurrentAttackArea && CTeamFortress2Mod::isDefending(pEnemy))))))
 		{
-			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) > 25) )
+			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) >= rcbot_tf2_pyro_airblast.GetInt()) )
 				bSecAttack = true;
 			else if ( pEnemy == m_NearestEnemyRocket )
 				return false; // don't attack the rocket anymore
