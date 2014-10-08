@@ -4412,7 +4412,7 @@ void CBotNest :: execute (CBot *pBot, CBotSchedule *pSchedule)
 
 	if ( m_fTime == 0 )
 	{
-		m_fTime = engine->Time() + randomFloat(5.0,10.0);
+		m_fTime = engine->Time() + randomFloat(5.0f,10.0f);
 
 		if ( randomInt(0,1) )
 			pBotTF2->addVoiceCommand(TF_VC_HELP);

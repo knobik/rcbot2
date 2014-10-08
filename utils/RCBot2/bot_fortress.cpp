@@ -1251,7 +1251,7 @@ void CBotFortress :: modThink ()
 
 	if ( m_fCallMedic < engine->Time() )
 	{
-		if ( ((float)m_pPlayerInfo->GetHealth() / m_pPlayerInfo->GetMaxHealth()) < 0.5 )
+		if ( getHealthPercent() < 0.5 )
 		{
 			m_fCallMedic = engine->Time() + randomFloat(10.0f,30.0f);
 
@@ -1577,7 +1577,7 @@ void CBotTF2 :: spawnInit()
 
 	m_iTrapCPIndex = -1;
 	m_pHealer = NULL;
-
+	m_fCallMedic = engine->Time() + 10.0f;
 	m_fCarryTime = 0.0f;
 
 	m_bIsCarryingTeleExit = false;
@@ -3271,13 +3271,17 @@ bool CBotFortress :: isClassOnTeam ( int iClass, int iTeam )
 
 bool CBotTF2 :: wantToFollowEnemy()
 {
+	edict_t *pEnemy = m_pLastEnemy.get();
+
 	if ( !wantToInvestigateSound() ) // maybe capturing point right now
 		return false;
-	else if ( (m_iCurrentDefendArea != 0) && (m_pLastEnemy.get() != NULL) && CTeamFortress2Mod::isMapType(TF_MAP_CP) && (CTeamFortress2Mod::m_ObjectiveResource.GetNumControlPoints() > 0) )
+	else if ( (pEnemy != NULL) && CBotGlobals::isPlayer(pEnemy) && CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && (m_iClass != TF_CLASS_MEDIC) )
+		return true; // I am ubered  GO!!!
+	else if ( (pEnemy != NULL) && CBotGlobals::isPlayer(pEnemy) && CTeamFortress2Mod::TF2_IsPlayerInvuln(pEnemy) )
+		return false; // Enemy is UBERED  -- don't follow
+	else if ( (m_iCurrentDefendArea != 0) && (pEnemy != NULL) && CTeamFortress2Mod::isMapType(TF_MAP_CP) && (CTeamFortress2Mod::m_ObjectiveResource.GetNumControlPoints() > 0) )
 	{
 		Vector vDefend = CTeamFortress2Mod::m_ObjectiveResource.GetCPPosition(CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentDefendArea]);
-
-		edict_t *pEnemy = m_pLastEnemy.get();
 
 		Vector vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
 		Vector vOrigin = getOrigin();
@@ -3289,11 +3293,9 @@ bool CBotTF2 :: wantToFollowEnemy()
 			return true;
 		}
 	}
-	else if ( (m_fLastKnownTeamFlagTime > 0) && (m_pLastEnemy.get() != NULL) && CTeamFortress2Mod::isMapType(TF_MAP_CTF) )
+	else if ( (m_fLastKnownTeamFlagTime > 0) && (pEnemy != NULL) && CTeamFortress2Mod::isMapType(TF_MAP_CTF) )
 	{
 		Vector vDefend = m_vLastKnownTeamFlagPoint;
-
-		edict_t *pEnemy = m_pLastEnemy.get();
 
 		Vector vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
 		Vector vOrigin = getOrigin();
@@ -4864,6 +4866,8 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				CWaypoint *pRoute = NULL;
 				Vector vRoute = Vector(0,0,0);
 				bool bUseRoute = false;
+				int iRouteWpt = -1;
+				bool bNest = false;
 
 				if ( (m_fUseRouteTime < engine->Time()) )
 				{
@@ -4875,10 +4879,13 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 						bUseRoute = true;
 						vRoute = pRoute->getOrigin();
 						m_fUseRouteTime = engine->Time() + randomFloat(30.0f,60.0f);
+						iRouteWpt = CWaypoints::getWaypointIndex(pRoute);
+
+						bNest = ( (m_pNavigator->getBelief(iRouteWpt)/MAX_BELIEF) + (1.0f-getHealthPercent()) > 0.75f );
 					}
 				}
 
-				m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea(),bUseRoute,vRoute));
+				m_pSchedules->add(new CBotAttackPointSched(pWaypoint->getOrigin(),pWaypoint->getRadius(),pWaypoint->getArea(),bUseRoute,vRoute, bNest));
 				removeCondition(CONDITION_PUSH);
 				return true;
 			}
@@ -6293,11 +6300,11 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 			m_fAvoidTime = engine->Time() + 1.0f;
 		}
 		
-		if ( pEnemy == m_NearestEnemyRocket )//  CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
+		if ( (pEnemy == m_NearestEnemyRocket) || (CBotGlobals::isPlayer(pEnemy) && (CTeamFortress2Mod::TF2_IsPlayerInvuln(pEnemy)||(m_iCurrentDefendArea && CTeamFortress2Mod::isCapping(pEnemy,CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentDefendArea])))) )//  CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
 		{
 			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) > 25) )
 				bSecAttack = true;
-			else
+			else if ( pEnemy == m_NearestEnemyRocket )
 				return false; // don't attack the rocket anymore
 		}
 

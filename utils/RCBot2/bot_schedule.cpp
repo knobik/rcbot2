@@ -621,11 +621,16 @@ void CBotAttackSched :: init ()
 	setID(SCHED_ATTACK);
 }
 ///////////////////////////////////////////
-CBotAttackPointSched :: CBotAttackPointSched ( Vector vPoint, int iRadius, int iArea, bool bHasRoute, Vector vRoute )
+CBotAttackPointSched :: CBotAttackPointSched ( Vector vPoint, int iRadius, int iArea, bool bHasRoute, Vector vRoute, bool bNest )
 {
 	// First find random route 
 	if ( bHasRoute )
+	{
 		addTask(new CFindPathTask(vRoute)); // first
+
+		if ( bNest )
+			addTask(new CBotNest());
+	}
 
 	addTask(new CFindPathTask(vPoint)); // second / first
 	addTask(new CBotTF2AttackPoint(iArea,vPoint,iRadius)); // third / second 

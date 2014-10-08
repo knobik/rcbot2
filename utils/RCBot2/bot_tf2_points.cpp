@@ -614,8 +614,10 @@ bool CTFObjectiveResource :: updateDefendPoints ( int team )
 				arr[i].bNextPoint = true;
 
 				extern ConVar bot_defrate;
+		
 				// other team can capture this as the next point
-				arr[i].fProb = bot_defrate.GetFloat();
+				// lower chance of defending the next point before round has started!!! Get everyone up!!
+				arr[i].fProb = CTeamFortress2Mod::hasRoundStarted() ? bot_defrate.GetFloat() : (bot_defrate.GetFloat()*0.5f);
 			}
 		}
 	}

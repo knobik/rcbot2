@@ -1073,18 +1073,25 @@ public:
 		m_Cappers[cp] = 0;
 	}
 
-	static bool isCapping ( edict_t *pPlayer )
+	static bool isCapping ( edict_t *pPlayer, int iCapIndex = -1 )
 	{
-		int index = ENTINDEX(pPlayer)-1;
+		int index = (1<<(ENTINDEX(pPlayer)-1));
 
 		if ( index >= 0 )
 		{
-			int i = 0;
-
-			for ( i = 0; i < MAX_CAP_POINTS; i ++ )
+			if ( iCapIndex >= 0 )
 			{
-				if ( (m_Cappers[i] & (1<<index)) )
-					return true;
+				return (m_Cappers[iCapIndex] & index) == index; 
+			}
+			else
+			{
+				int i = 0;
+
+				for ( i = 0; i < MAX_CAP_POINTS; i ++ )
+				{
+					if ( (m_Cappers[i] & index) )
+						return true;
+				}
 			}
 		}
 
