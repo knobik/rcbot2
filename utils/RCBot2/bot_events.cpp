@@ -699,6 +699,36 @@ void CTF2PointLocked :: execute ( IBotEventInterface *pEvent )
 	//
 }
 
+void CTF2PointStartTouch :: execute ( IBotEventInterface *pEvent )
+{
+	int capindex = pEvent->getInt("area",0);
+	int iplayerIndex = pEvent->getInt("player",-1);
+//	const char *cpname = pEvent->getString("cpname");
+
+	edict_t *pPlayer = INDEXENT(iplayerIndex);
+
+	if ( (capindex >= 0) && (CTeamFortress2Mod::m_ObjectiveResource.GetNumControlPoints() > 0) && 
+		CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(capindex) == CClassInterface::getTeam(pPlayer) )
+	{
+		CTeamFortress2Mod::addCapDefender(pPlayer,capindex);
+	}	
+}
+
+void CTF2PointEndTouch :: execute ( IBotEventInterface *pEvent ) 
+{
+	int capindex = pEvent->getInt("area",0);
+	int iplayerIndex = pEvent->getInt("player",-1);
+//	const char *cpname = pEvent->getString("cpname");
+
+	edict_t *pPlayer = INDEXENT(iplayerIndex);
+
+	if ( (capindex >= 0) && (CTeamFortress2Mod::m_ObjectiveResource.GetNumControlPoints() > 0) && 
+		CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(capindex) == CClassInterface::getTeam(pPlayer) )
+	{
+		CTeamFortress2Mod::removeCapDefender(pPlayer,capindex);
+	}	
+}
+
 void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 {/*
  [RCBot] [DEBUG game_event] teamplay_point_startcapture
@@ -1107,6 +1137,8 @@ eyeball_boss_escaped */
 	addEvent(new CDODRoundActive());
 	addEvent(new CDODRoundWin());
 	addEvent(new CDODRoundOver());
+	addEvent(new CTF2PointStartTouch());
+	addEvent(new CTF2PointEndTouch());
 }
 
 void CBotEvents :: addEvent ( CBotEvent *pEvent )

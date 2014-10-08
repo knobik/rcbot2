@@ -59,7 +59,8 @@ tf_sentry_t CTeamFortress2Mod::m_SentryGuns[MAX_PLAYERS];	// used to let bots kn
 tf_disp_t  CTeamFortress2Mod::m_Dispensers[MAX_PLAYERS];	// used to let bots know where friendly/enemy dispensers are
 MyEHandle CTeamFortress2Mod::m_pResourceEntity = MyEHandle(NULL);
 bool CTeamFortress2Mod::m_bAttackDefendMap = false;
-int CTeamFortress2Mod::m_Cappers[MAX_CAP_POINTS];
+int CTeamFortress2Mod::m_Cappers[MAX_CONTROL_POINTS];
+int CTeamFortress2Mod::m_iCapDefenders[MAX_CONTROL_POINTS];
 bool CTeamFortress2Mod::m_bHasRoundStarted = true;
 bool CTeamFortress2Mod::m_bDontClearPoints = false;
 int CTeamFortress2Mod::m_iFlagCarrierTeam = 0;
@@ -211,6 +212,7 @@ void CTeamFortress2Mod :: mapInit ()
 	m_bBossSummoned = false;
 
 	resetCappers();
+	resetDefenders();
 	//CPoints::loadMapScript();
 }
 

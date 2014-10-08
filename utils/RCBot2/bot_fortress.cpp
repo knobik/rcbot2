@@ -6295,12 +6295,16 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		{
 			setMoveTo(CBotGlobals::entityOrigin(pEnemy));
 			//setLookAt(m_vAimVector);
-			setLookAtTask((LOOK_ENEMY));
+			setLookAtTask(LOOK_ENEMY);
 			// dontAvoid my enemy
 			m_fAvoidTime = engine->Time() + 1.0f;
 		}
 		
-		if ( (pEnemy == m_NearestEnemyRocket) || (CBotGlobals::isPlayer(pEnemy) && (CTeamFortress2Mod::TF2_IsPlayerInvuln(pEnemy)||(m_iCurrentDefendArea && CTeamFortress2Mod::isCapping(pEnemy,CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentDefendArea])))) )//  CTeamFortress2Mod::isRocket(m_pEdict,CTeamFortress2Mod::getEnemyTeam(getTeam())) )
+		if ( (pEnemy == m_NearestEnemyRocket) || 
+			 (CBotGlobals::isPlayer(pEnemy) && 
+				(CTeamFortress2Mod::TF2_IsPlayerInvuln(pEnemy)||
+					(m_iCurrentDefendArea && CTeamFortress2Mod::isCapping(pEnemy,CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentDefendArea]) ||
+					(m_iCurrentAttackArea && CTeamFortress2Mod::isDefending(pEnemy,CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[m_iCurrentAttackArea]))))))
 		{
 			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) > 25) )
 				bSecAttack = true;

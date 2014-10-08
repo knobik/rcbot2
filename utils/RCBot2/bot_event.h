@@ -318,6 +318,30 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2PointStartTouch : public CBotEvent
+{
+public:
+	CTF2PointStartTouch()
+	{
+		setType("controlpoint_starttouch");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
+class CTF2PointEndTouch : public CBotEvent
+{
+public:
+	CTF2PointEndTouch()
+	{
+		setType("controlpoint_endtouch");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CTF2RoundStart : public CBotEvent
 {
 public:

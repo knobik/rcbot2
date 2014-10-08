@@ -1062,6 +1062,39 @@ public:
 
 	static edict_t *findResourceEntity ();
 
+	static bool isDefending ( edict_t *pPlayer, int iCapIndex = -1 )
+	{
+		int iIndex = (1<<(ENTINDEX(pPlayer)-1));
+
+		if ( iCapIndex == -1 )
+		{
+			for ( short int i = 0; i < MAX_CONTROL_POINTS; i ++ )
+			{
+				if ( (m_iCapDefenders[i] & iIndex) == iIndex )
+					return true;
+			}
+		}
+		else
+			return ((m_iCapDefenders[iCapIndex] & iIndex) == iIndex );
+
+		return false;
+	}
+
+	static void addCapDefender ( edict_t *pPlayer, int iCapIndex )
+	{
+		m_iCapDefenders[iCapIndex] |= (1<<(ENTINDEX(pPlayer)-1));
+	}
+
+	static void removeCapDefender ( edict_t *pPlayer, int iCapIndex )
+	{
+		m_iCapDefenders[iCapIndex] &= ~(1<<(ENTINDEX(pPlayer)-1));
+	}
+
+	static void resetDefenders ()
+	{
+		memset(m_iCapDefenders,0,sizeof(int)*MAX_CONTROL_POINTS);
+	}
+
 	static void addCapper ( int cp, int capper )
 	{
 		if ( capper && (cp < MAX_CAP_POINTS) )
@@ -1100,12 +1133,7 @@ public:
 
 	static void resetCappers ()
 	{
-		int i = 0;
-
-		for ( i = 0; i < MAX_CAP_POINTS; i ++ )
-		{
-			m_Cappers[i] = 0;
-		}
+		memset(m_Cappers,0,sizeof(int)*MAX_CONTROL_POINTS);
 	}
 
 	static int numPlayersOnTeam ( int iTeam, bool bAliveOnly = false );
@@ -1143,6 +1171,7 @@ public:
 	static void updateBluePayloadBomb ( edict_t *pent ); 
 
 	static edict_t *getPayloadBomb ( int team );
+
 private:
 
 
@@ -1177,7 +1206,8 @@ private:
 	static MyEHandle m_pResourceEntity;
 	static bool m_bAttackDefendMap;
 
-	static int m_Cappers[MAX_CAP_POINTS];
+	static int m_Cappers[MAX_CONTROL_POINTS];
+	static int m_iCapDefenders[MAX_CONTROL_POINTS];
 
 	static bool m_bHasRoundStarted;
 
@@ -1188,6 +1218,7 @@ private:
 
 	static MyEHandle pMediGuns[MAX_PLAYERS];
 	static bool m_bDontClearPoints;
+	
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod
