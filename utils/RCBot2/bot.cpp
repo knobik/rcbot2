@@ -1446,6 +1446,13 @@ void CBot::setLastEnemy(edict_t *pEnemy)
 {
 	CWaypoint *pWpt;
 
+	if ( pEnemy == NULL )
+	{
+		m_fLastSeeEnemy = 0.0f;
+		m_pLastEnemy = NULL;
+		return;
+	}
+
 	m_fLastSeeEnemy = engine->Time();
 	m_pLastEnemy = pEnemy;
 	m_fLastUpdateLastSeeEnemy = 0;

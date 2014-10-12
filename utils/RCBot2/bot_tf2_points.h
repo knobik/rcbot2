@@ -68,6 +68,7 @@ public:
 	bool isWaypointAreaValid ( int wptarea, int waypointflags = 0 );
 
 
+	bool testProbWptArea ( int iWptArea, int iTeam );
 
 	void debugprint ( void );
 	void updatePoints();

@@ -723,6 +723,9 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	int iTeam = pBot->getTeam();
 	CBotTF2 *pTF2Bot = (CBotTF2*)pBot;
 
+	if ( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
+		fail();
+
 	pBot->wantToInvestigateSound(false);
 
 	if ( m_iArea && (CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(iCpIndex) == iTeam) )
@@ -967,7 +970,7 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		{
 			m_fTime = 0;
 		}
-		pBot->setLookAtTask((LOOK_SNIPE));
+		pBot->setLookAtTask(LOOK_SNIPE);
 	}
 }
 
@@ -3944,7 +3947,10 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	if ( pBot->distanceFrom(m_vStand) > 200 )
+	{
 		fail();
+		pBot->setLastEnemy(NULL);
+	}
 
 
 	if ( !CBotGlobals::entityIsValid(m_pEnemy) || !CBotGlobals::entityIsAlive(m_pEnemy) || (m_fTime < engine->Time()) )
@@ -3954,6 +3960,8 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		((CBotTF2*)pBot)->detonateStickies(true);
 
 		complete();
+		pBot->setLastEnemy(NULL);
+		return;
 	}
 	
 	pBot->wantToShoot(false);
@@ -3964,12 +3972,14 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 			((CBotTF2*)pBot)->detonateStickies(true);
 
 		complete();
+		pBot->setLastEnemy(NULL);
 		return;
 	}
 	
 	if ( pBot->getCurrentWeapon() != m_pPipeLauncher )
 	{
 		pBot->selectBotWeapon(m_pPipeLauncher);
+		pBot->setLastEnemy(NULL);
 		return;
 	}
 
@@ -4241,6 +4251,8 @@ void CBotTF2Spam :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		complete();
 
+		pBot->setLastEnemy(NULL);
+
 		// prevent bot from keeping doing this
 		pBot->updateUtilTime(BOT_UTIL_SPAM_NEAREST_SENTRY);
 		pBot->updateUtilTime(BOT_UTIL_SPAM_LAST_ENEMY);
@@ -4262,7 +4274,10 @@ void CBotTF2Spam :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pBot->setLookAtTask(LOOK_VECTOR);
 
 	if ( m_pWeapon->outOfAmmo(pBot) )
+	{
+		pBot->setLastEnemy(NULL);
 		complete();
+	}
 	else if ( m_pWeapon->needToReload(pBot) )
 	{
 		if ( randomInt(0,1) )

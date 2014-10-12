@@ -142,6 +142,23 @@ bool CTFObjectiveResource::isCPValidWptArea ( int iWptArea, int iTeam, ePointAtt
 	return isCPValid(m_WaypointAreaToIndexTranslation[iWptArea],iTeam,type);
 }
 
+// Returns TRUE if waypoint area is worth attacking or defending at this moment
+bool CTFObjectiveResource::testProbWptArea ( int iWptArea, int iTeam )
+{
+	int iCpIndex = m_WaypointAreaToIndexTranslation[iWptArea];
+
+	if ( (iTeam != TF2_TEAM_BLUE) && (iTeam != TF2_TEAM_RED) )
+		return true;
+
+	if ( iWptArea == 0 )
+		return true;
+
+	if ( (iWptArea < 1) || (iWptArea > MAX_CONTROL_POINTS) )
+		return true;
+
+	return isCPValid(iCpIndex,iTeam,TF2_POINT_ATTACK) ? (randomFloat(0.0f,1.0f) > m_ValidPoints[iTeam-2][TF2_POINT_ATTACK][iCpIndex].fProb) : ( isCPValid(iCpIndex,iTeam,TF2_POINT_DEFEND) ? (randomFloat(0.0f,1.0f) > m_ValidPoints[iTeam-2][TF2_POINT_DEFEND][iCpIndex].fProb) : true );
+}
+
 bool CTFObjectiveResource::isCPValid ( int iCPIndex, int iTeam, ePointAttackDefend_s type )
 {
 	if ( (iCPIndex < 0) || (iCPIndex >= MAX_CONTROL_POINTS) )

@@ -484,15 +484,15 @@ bool CTeamFortress2Mod :: isPipeBomb ( edict_t *pEntity, int iTeam)
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"tf_projectile_pipe_remote")==0);
 }
 
-bool CTeamFortress2Mod :: isHurtfulPipeGrenade ( edict_t *pEntity, edict_t *pPlayer)
+bool CTeamFortress2Mod :: isHurtfulPipeGrenade ( edict_t *pEntity, edict_t *pPlayer, bool bCheckOwner )
 {
 	if ( strcmp(pEntity->GetClassName(),"tf_projectile_pipe")==0 )
 	{
-		if ( CClassInterface::getPipeBombOwner(pEntity) == pPlayer )
+		if ( bCheckOwner && (CClassInterface::getPipeBombOwner(pEntity) == pPlayer) )
 			return true;
 
 		int iPlayerTeam = getTeam(pPlayer);
-		int iGrenTeam = getTeam(pPlayer);
+		int iGrenTeam = getTeam(pEntity);
 
 		return iPlayerTeam != iGrenTeam;
 	}

@@ -1,3 +1,30 @@
+0.94
+====
+tf2: updated and fixed some waypoints
+tf2: bots will try to avoid sentries that killed them before when attacking point 
+tf2: new command rcbot_tf2_pyro_airblast_ammo
+tf2: pyros airblast attackers of point
+tf2: fixed demomen reverting to primary weapon at a distance 
+tf2: bots follow enemies if ubered
+tf2: bots dont follow ubered enemies
+tf2: pyros airblast ubered enemies
+tf2: pyros airblast capping / defending players
+tf2: bots will hang around route waypoints for more team mates
+tf2: more chance of red defending first point if round has not yet started
+tf2: fixed medic crash on cp_degrootkeep
+tf2: included RD mode - bots attack robots
+tf2: fixed bots going back to use teleporter bug
+tf2: fixed engineers not placing carried objects bug
+tf2: bots follow their enemy to the defend point if CP map 
+tf2: pyros occasionally deflect rockets
+all: fixed bots not choosing correct weapon due to distance
+
+0.92
+====
+tf2: Fixed crashes - bugs in CP maps in TF2
+tf2: bots on fire will continuously want health
+
+
 0.91
 ====
 tf2: fixed crash with new version on loading
