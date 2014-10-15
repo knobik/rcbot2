@@ -277,11 +277,11 @@ DWORD* pdwNewInterface = 0;
 // PlayerRunCommmand Hook 
 // Some Mods have their own puppet bots that run around and override RCBOT if this is not here
 // this function overrides the puppet bots movements
-#ifdef __linux__
+//#ifdef __linux__
 void FASTCALL nPlayerRunCommand( CBaseEntity *_this, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
-#else
-void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
-#endif
+//#else
+//void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
+//#endif
 {
 	edict_t *pEdict = servergameents->BaseEntityToEdict(_this);
 

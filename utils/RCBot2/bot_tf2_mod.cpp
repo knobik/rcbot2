@@ -177,7 +177,7 @@ void CTeamFortress2Mod :: mapInit ()
 		m_MapType = TF_MAP_TR; // training mode
 	else if ( strncmp(szmapname,"mvm_",4) == 0 )
 		m_MapType = TF_MAP_MVM; // mann vs machine
-	else if ( strncmp(szmapname,"rd_",4) == 0 )
+	else if ( strncmp(szmapname,"rd_",3) == 0 )
 		m_MapType = TF_MAP_RD; // robot destruction
 	else
 		m_MapType = TF_MAP_DM;

@@ -123,6 +123,12 @@ void CBroadcastFlagDropped :: execute ( CBot *pBot )
 // flag picked up
 void CBotTF2FunctionEnemyAtIntel :: execute (CBot *pBot)
 {
+	if ( m_iType == EVENT_CAPPOINT )
+	{
+		if ( CTeamFortress2Mod::m_ObjectiveResource.GetOwningTeam(m_iCapIndex) != pBot->getTeam() )
+			return;
+	}
+
 	pBot->updateCondition(CONDITION_PUSH);
 
 	if ( pBot->getTeam() != m_iTeam )
@@ -6325,6 +6331,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		Vector vEnemyOrigin;
 		bool bSecAttack = false;
 		extern ConVar rcbot_tf2_pyro_airblast;
+		bool bIsPlayer = false;
 
 		clearFailedWeaponSelect();
 
@@ -6340,12 +6347,12 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 		// Airblast an enemy rocket , ubered player, or capping or defending player if they are on fire
 		// First put them on fire then airblast them!
 		if ( (pEnemy == m_NearestEnemyRocket.get()) || (pEnemy == m_pNearestPipeGren.get()) ||
-			 (CBotGlobals::isPlayer(pEnemy) && 
+			 (((bIsPlayer=CBotGlobals::isPlayer(pEnemy))==true) && 
 				(CTeamFortress2Mod::TF2_IsPlayerInvuln(pEnemy)||
 					(CTeamFortress2Mod::TF2_IsPlayerOnFire(pEnemy) && (m_iCurrentDefendArea && CTeamFortress2Mod::isCapping(pEnemy) ||
 					(m_iCurrentAttackArea && CTeamFortress2Mod::isDefending(pEnemy)))))))
 		{
-			if ( (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) >= rcbot_tf2_pyro_airblast.GetInt()) )
+			if ( (bIsPlayer||(fDistance>80)) && (fDistance < 400) && pWeapon->canDeflectRockets() && (pWeapon->getAmmo(this) >= rcbot_tf2_pyro_airblast.GetInt()) )
 				bSecAttack = true;
 			else if (( pEnemy == m_NearestEnemyRocket.get() ) || ( pEnemy == m_pNearestPipeGren.get() ))
 				return false; // don't attack the rocket anymore

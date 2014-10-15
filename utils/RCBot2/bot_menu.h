@@ -384,9 +384,81 @@ public:
 	const char *getCaption(CClient *pClient,WptColor &color );
 };
 
+////////////////////////////////////////
+/*
+class CTF2BotMenu : public CBotMenu
+{
+public:
+	CTF2BotMenu (CBotMenu *pParent)
+	{
+		addMenuItem(new CWaypointCutMenuItem());
+		addMenuItem(new CWaypointCopyMenuItem());
+		addMenuItem(new CWaypointPasteMenuItem());
+		addMenuItem(new CBotGotoMenuItem("Back",pParent));
+		setCaption("Edit Waypoint Options");
+	}
+};
+
+class CFillServer : public CBotMenuItem
+{
+public:
+	CFillServer() { setCaption("Fill Server with RCBOTs"); }
+
+	void activate ( CClient *pClient );
+	//const char *getCaption(CClient *pClient, WptColor &color);
+};
+
+class CRemoveAllBots : public CBotMenuItem
+{
+public:
+	CRemoveAllBots() { setCaption("Remove all bots"); }
+
+	void activate ( CClient *pClient );
+	//const char *getCaption(CClient *pClient, WptColor &color);
+};
+
+class CMakeTFVSRCBotGame : public CBotMenuItem
+{
+public:
+	CMakeTFVSRCBotGame() { setCaption("Make TF2 VS RCBot Game"); }
+
+	void activate ( CClient *pClient );
+	//const char *getCaption(CClient *pClient, WptColor &color);
+};
+
+class CBotMenu_Bot : public CBotMenu
+{
+public:
+	// needs 
+	// Waypoint Menu ID []
+	// 1 Waypoint Flags []
+	// 2 area []
+	// 3 yaw [] degrees
+	// 4 remove all flags
+	// 5 clear waypoints
+	// 6 copy
+	// 7 cut
+	// 8 paste
+	// 9 Exit
+	CBotMenu_Bot ()
+	{
+		addMenuItem(new CFillServer());
+
+		addMenuItem(new CRemoveAllBots());
+		addMenuItem(new CMakeTFVSRCBotGame());
+		addMenuItem(new CWaypointYawMenuItem());
+
+		addMenuItem(new CBotGotoMenuItem("Exit",NULL));
+	}
+
+	//CWaypointFlagMenu ( int iShow );
+	const char *getCaption(CClient *pClient,WptColor &color );
+};*/
+
 typedef enum 
 {
 	BOT_MENU_WPT = 0,
+	//BOT_MENU_BOT = 1,
 	BOT_MENU_MAX
 };
 
