@@ -73,10 +73,11 @@ private:
 class CBotSeeFriendlyHurtEnemy : public IBotFunction
 {
 public:
-	CBotSeeFriendlyHurtEnemy ( edict_t *pTeammate, edict_t *pEnemy )
+	CBotSeeFriendlyHurtEnemy ( edict_t *pTeammate, edict_t *pEnemy, int iWeaponID )
 	{
 		m_pTeammate = pTeammate;
 		m_pEnemy = pEnemy;
+		m_pWeapon = CWeapons::getWeapon(iWeaponID);
 	}
 
 	void execute ( CBot *pBot )
@@ -87,12 +88,41 @@ public:
 		if ( pBot->getEdict() != m_pTeammate )
 		{
 			if ( pBot->isVisible(m_pTeammate) && pBot->isVisible(m_pEnemy) )
-				pBot->seeFriendlyHurtEnemy(m_pTeammate,m_pEnemy,NULL);
+				pBot->seeFriendlyHurtEnemy(m_pTeammate,m_pEnemy,m_pWeapon);
 		}
 	}
 private:
 	edict_t *m_pTeammate;
 	edict_t *m_pEnemy;
+	CWeapon *m_pWeapon;
+};
+
+
+class CBotSeeEnemyHurtFriendly : public IBotFunction
+{
+public:
+	CBotSeeEnemyHurtFriendly ( edict_t *pEnemy, edict_t *pTeammate, int iWeaponID )
+	{
+		m_pTeammate = pTeammate;
+		m_pEnemy = pEnemy;
+		m_pWeapon = CWeapons::getWeapon(iWeaponID);
+	}
+
+	void execute ( CBot *pBot )
+	{
+		if ( CClassInterface::getTeam(m_pTeammate) != pBot->getTeam() )
+			return;
+
+		if ( pBot->getEdict() != m_pTeammate )
+		{
+			if ( pBot->isVisible(m_pTeammate) )
+				pBot->seeEnemyHurtFriendly(m_pTeammate,m_pEnemy,m_pWeapon);
+		}
+	}
+private:
+	edict_t *m_pTeammate;
+	edict_t *m_pEnemy;
+	CWeapon *m_pWeapon;
 };
 
 
@@ -178,6 +208,7 @@ void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 {
 	CBot *pBot = CBots::getBotPointer(m_pActivator);
 	int iAttacker = pEvent->getInt("attacker",0);
+	int iWeaponId = pEvent->getInt("weaponid",-1);
 
 	if ( iAttacker > 0 )
 	{
@@ -216,9 +247,11 @@ void CPlayerHurtEvent :: execute ( IBotEventInterface *pEvent )
 
 			if ( CBotGlobals::isPlayer(m_pActivator) && CBotGlobals::isPlayer(pAttacker) )
 			{
-				CBotSeeFriendlyHurtEnemy func1(pAttacker,m_pActivator);
+				CBotSeeFriendlyHurtEnemy func1(pAttacker,m_pActivator,iWeaponId);
+				CBotSeeEnemyHurtFriendly func2(pAttacker,m_pActivator,iWeaponId);
 
 				CBots::botFunction(&func1);
+				CBots::botFunction(&func2);
 			}
 		}
 

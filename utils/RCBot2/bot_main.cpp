@@ -101,6 +101,7 @@ bool bInitialised = false;
 
 void UnhookPlayerRunCommand ();
 
+ConVar rcbot_tf2_medic_letgotime("rcbot_tf2_medic_letgotime","0.4",0,"Time for medic to let go of medigun to switch players");
 ConVar rcbot_const_round_offset("rcbot_const_round_offset","844",0,"TF2 OFFSET for Round Class");
 ConVar rcbot_const_point_master_offset("rcbot_const_mstr_offset","844",0,"TF2 OFFSET for Point Master Class");
 //ConVar rcbot_const_point_offset("rcbot_const_pnt_offset","1140",0,"TF2 OFFSET for Point Class");
@@ -277,11 +278,11 @@ DWORD* pdwNewInterface = 0;
 // PlayerRunCommmand Hook 
 // Some Mods have their own puppet bots that run around and override RCBOT if this is not here
 // this function overrides the puppet bots movements
-//#ifdef __linux__
+#ifdef __linux__
 void FASTCALL nPlayerRunCommand( CBaseEntity *_this, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
-//#else
-//void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
-//#endif
+#else
+void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
+#endif
 {
 	edict_t *pEdict = servergameents->BaseEntityToEdict(_this);
 

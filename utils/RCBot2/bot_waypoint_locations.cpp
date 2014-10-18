@@ -43,6 +43,9 @@ using namespace std;    //bir3yk
 
 unsigned char CWaypointLocations :: g_iFailedWaypoints[CWaypoints::MAX_WAYPOINTS];
 dataUnconstArray<int> CWaypointLocations :: m_iLocations[MAX_WPT_BUCKETS][MAX_WPT_BUCKETS][MAX_WPT_BUCKETS];
+float CWaypointLocations :: m_fIgnoreSize = 0;
+Vector CWaypointLocations :: m_vIgnoreLoc = Vector(0,0,0);
+bool CWaypointLocations :: m_bIgnoreBox = false;
 
 #define READ_LOC(loc) abs((int)((int)(loc + HALF_MAX_MAP_SIZE) / BUCKET_SPACING));
 
@@ -624,6 +627,18 @@ void CWaypointLocations :: FindNearestInBucket ( int i, int j, int k, const Vect
 				continue;
 		}
 
+		// Used to ignore waypoints where objects are e.g. Sentry guns
+		if ( m_bIgnoreBox )
+		{
+			Vector vcomp = curr_wpt->getOrigin() - vOrigin;
+			vcomp = vcomp / vcomp.Length();
+			
+			if ( curr_wpt->distanceFrom(m_vIgnoreLoc) < m_fIgnoreSize )
+				continue;
+			else if ( ((vOrigin + (vcomp*((vOther-vOrigin).Length()))) - vOther).Length() < m_fIgnoreSize )
+				continue;
+		}
+
 		if ( (fDist = curr_wpt->distanceFrom(vOrigin)) < *pfMinDist )
 		{
 			bAdd = false;
@@ -661,10 +676,11 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 										   int iIgnoreWpt, bool bGetVisible, bool bGetUnReachable, 
 										   bool bIsBot, dataUnconstArray<int> *iFailedWpts, 
 										   bool bNearestAimingOnly, int iTeam, bool bCheckArea,
-										   bool bGetVisibleFromOther, Vector vOther, int iFlagsOnly, edict_t *pPlayer )
+										   bool bGetVisibleFromOther, Vector vOther, int iFlagsOnly, 
+										   edict_t *pPlayer, bool bIgnorevOther, float fIgnoreSize )
 {
 	int iNearestIndex = -1;
-
+	
 	int iLoc = READ_LOC(vOrigin.x);
 	int jLoc = READ_LOC(vOrigin.y);
 	int kLoc = READ_LOC(vOrigin.z);
@@ -674,6 +690,10 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 	int iMinLoci,iMaxLoci,iMinLocj,iMaxLocj,iMinLock,iMaxLock;
 
 	getMinMaxs(iLoc,jLoc,kLoc,&iMinLoci,&iMinLocj,&iMinLock,&iMaxLoci,&iMaxLocj,&iMaxLock);
+
+	m_bIgnoreBox = bIgnorevOther;
+	m_vIgnoreLoc = vOther;
+	m_fIgnoreSize = fIgnoreSize;
 
 	if ( !bNearestAimingOnly )
 	{
@@ -717,6 +737,8 @@ int CWaypointLocations :: NearestWaypoint ( const Vector &vOrigin, float fNeares
 			}
 		}
 	}
+
+	m_bIgnoreBox = false;
 
 	return iNearestIndex;
 }

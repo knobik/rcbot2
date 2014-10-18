@@ -975,6 +975,17 @@ public:
 		return NULL;
 	}
 
+	static edict_t *getSentryOwner ( edict_t *pSentry )
+	{
+		for ( short int i = 1; i <= gpGlobals->maxClients; i ++ )
+		{
+			if ( m_SentryGuns[i].sentry.get() == pSentry )
+				return INDEXENT(i-1);
+		}
+
+		return NULL;
+	}
+
 	static bool isMySentrySapped ( edict_t *pOwner ) 
 	{
 		int id = ENTINDEX(pOwner)-1;

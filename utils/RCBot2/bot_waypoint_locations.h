@@ -140,7 +140,11 @@ public:
 	
 	static void DeleteWptLocation ( int iIndex, const float *fOrigin );
 	
-	static int NearestWaypoint ( const Vector &vOrigin, float fDist, int iIgnoreWpt, bool bGetVisible = true, bool bGetUnreachable = false, bool bIsBot = false, dataUnconstArray<int> *iFailedWpts = NULL, bool bNearestAimingOnly = false, int iTeam = 0, bool bCheckArea = false, bool bGetVisibleFromOther = false, Vector vOther = Vector(0,0,0), int FlagsOnly = 0, edict_t *pPlayer = NULL );
+	static int NearestWaypoint ( const Vector &vOrigin, float fDist, int iIgnoreWpt, bool bGetVisible = true, 
+		bool bGetUnreachable = false, bool bIsBot = false, dataUnconstArray<int> *iFailedWpts = NULL, 
+		bool bNearestAimingOnly = false, int iTeam = 0, bool bCheckArea = false, 
+		bool bGetVisibleFromOther = false, Vector vOther = Vector(0,0,0), int FlagsOnly = 0, 
+		edict_t *pPlayer = NULL, bool bIgnorevOther = false, float fIgnoreSize = 0.0f );
 
 	static void GetAllVisible( int iFrom, int iOther, Vector &vOrigin, Vector &vOther, float fEDist, dataUnconstArray<int> *iVisible, dataUnconstArray<int> *iInvisible );
 
@@ -162,5 +166,8 @@ private:
 	
 	//static dataStack<int> m_iLocations[MAX_WPT_BUCKETS][MAX_WPT_BUCKETS][MAX_WPT_BUCKETS];
 	static dataUnconstArray<int> m_iLocations[MAX_WPT_BUCKETS][MAX_WPT_BUCKETS][MAX_WPT_BUCKETS];
+	static float m_fIgnoreSize;
+	static Vector m_vIgnoreLoc;
+	static bool m_bIgnoreBox;
 };
 #endif

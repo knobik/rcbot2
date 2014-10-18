@@ -53,6 +53,9 @@ public:
 			m_iSerialNumber = 0;
 	}
 
+	inline bool notValid () { return get() == NULL; }
+	inline bool isValid () { return get() != NULL; }
+
 	inline edict_t *get ()
 	{
 		if ( m_iSerialNumber && m_pEnt )

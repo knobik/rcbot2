@@ -309,6 +309,7 @@ void CBotVisibles :: updateVisibles ()
 	// get entities belonging to players too
 	// we've captured them elsewhere in another data structure which is quicker to find 
 	pEntity = m_pBot->getVisibleSpecial();
+	iSpecialIndex = 0;
 
 	if ( pEntity )
 	{

@@ -418,6 +418,8 @@ public:
 	virtual bool select_CWeapon ( CWeapon *pWeapon ) { return CBot::select_CWeapon(pWeapon); }
 	virtual bool selectBotWeapon ( CBotWeapon *pBotWeapon ) { return CBot::selectBotWeapon(pBotWeapon); }
 
+	virtual bool getIgnoreBox ( Vector *vLoc, float *fSize );
+
 	// found a new enemy
 	virtual void enemyFound (edict_t *pEnemy){CBot::enemyFound(pEnemy); }
 
@@ -584,6 +586,7 @@ protected:
 	MyEHandle m_NearestEnemyRocket;
 	MyEHandle m_NearestEnemyGrenade;
 
+	float m_fLastSentryEnemyTime;
 	//bool m_bWantToZoom;
 };
 //

@@ -794,6 +794,8 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 
 	if ( bRestart )
 	{
+		CWaypoint *pGoalWaypoint;
+
 		if ( wantToSaveBelief() )
 			beliefSave();
 		if ( wantToLoadBelief() )
@@ -807,6 +809,8 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 			m_iGoalWaypoint = CWaypointLocations::NearestWaypoint(vTo,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,&m_iFailedGoals,false,m_pBot->getTeam());
 		else
 			m_iGoalWaypoint = iGoalId;
+
+		pGoalWaypoint = CWaypoints::getWaypoint(m_iGoalWaypoint);
 
 		if ( CClients::clientsDebugging(BOT_DEBUG_NAV) )
 		{
@@ -827,7 +831,13 @@ bool CWaypointNavigator :: workRoute ( Vector vFrom,
 			
 		m_vPreviousPoint = vFrom;
 		// get closest waypoint -- ignore previous failed waypoint
-		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,true,false,true,NULL,false,m_pBot->getTeam());
+		Vector vIgnore;
+		float fIgnoreSize;
+
+		bool bIgnore = m_pBot->getIgnoreBox(&vIgnore,&fIgnoreSize) && (pGoalWaypoint->distanceFrom(vFrom) > (fIgnoreSize*2));
+
+		m_iCurrentWaypoint = CWaypointLocations::NearestWaypoint(vFrom,CWaypointLocations::REACHABLE_RANGE,m_iLastFailedWpt,
+			true,false,true,NULL,false,m_pBot->getTeam(),true,false,vIgnore,0,NULL,bIgnore,fIgnoreSize);
 
 		// no nearest waypoint -- find nearest waypoint
 		if ( m_iCurrentWaypoint == -1 )

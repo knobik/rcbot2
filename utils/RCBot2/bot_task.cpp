@@ -963,7 +963,7 @@ void CBotTF2DefendPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 				fail();
 			else
 			{				
-				pBot->setMoveTo((m_vMoveTo));
+				pBot->setMoveTo(m_vMoveTo);
 			}		
 		}
 		else if ( m_fTime < engine->Time() )
@@ -988,6 +988,8 @@ CBotTF2UpgradeBuilding :: CBotTF2UpgradeBuilding ( edict_t *pBuilding )
 
 void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
+	edict_t *pBuilding = m_pBuilding.get();
+	edict_t *pOwner = NULL;
 	pBot->wantToShoot(false);
 	pBot->wantToInvestigateSound(false);
 	pBot->wantToListen(false);
@@ -999,24 +1001,31 @@ void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	{
 		complete();
 	}// Fix 16/07/09
-	else if ( !CBotGlobals::entityIsValid(m_pBuilding) )
+	else if ( pBuilding == NULL )
 	{
 		fail();
 		return;
 	}
-	else if ( !pBot->isVisible(m_pBuilding) )
+	else if ( ((pOwner = CTeamFortress2Mod::getSentryOwner(pBuilding)) != NULL) && 
+		CClassInterface::isCarryingObj(pOwner) && (CClassInterface::getCarriedObj(pOwner)==pBuilding))
 	{
-		if ( pBot->distanceFrom(m_pBuilding) > 200 )
+		// Owner is carrying it
+		fail();
+		return;
+	}
+	else if ( !pBot->isVisible(pBuilding) )
+	{
+		if ( pBot->distanceFrom(pBuilding) > 200 )
 			fail();
-		else if ( pBot->distanceFrom(m_pBuilding) > 100 )
-			pBot->setMoveTo(CBotGlobals::entityOrigin(m_pBuilding));
+		else if ( pBot->distanceFrom(pBuilding) > 100 )
+			pBot->setMoveTo(CBotGlobals::entityOrigin(pBuilding));
 		
 		pBot->setLookAtTask(LOOK_EDICT);
-		pBot->lookAtEdict(m_pBuilding);
+		pBot->lookAtEdict(pBuilding);
 	}
-	else if ( CBotGlobals::entityIsValid(m_pBuilding) && CBotGlobals::entityIsAlive(m_pBuilding) )
+	else if ( CBotGlobals::entityIsValid(pBuilding) && CBotGlobals::entityIsAlive(pBuilding) )
 	{
-		if ( !((CBotFortress*)pBot)->upgradeBuilding(m_pBuilding) )
+		if ( !((CBotFortress*)pBot)->upgradeBuilding(pBuilding) )
 			fail();		
 	}
 	else

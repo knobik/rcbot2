@@ -820,14 +820,15 @@ eBotCommandResult CWaypointDeleteCommand :: execute ( CClient *pClient, const ch
 			{
 				vector<int> pWpt;
 				int numdeleted = 0;
+				Vector vOrigin = pClient->getOrigin();
 
-				CWaypointLocations::GetAllInArea(pClient->getOrigin(),&pWpt,-1);
+				CWaypointLocations::GetAllInArea(vOrigin,&pWpt,-1);
 
 				for ( unsigned short int i = 0; i < pWpt.size(); i ++ )
 				{
 					CWaypoint *pWaypoint = CWaypoints::getWaypoint(pWpt[i]);
 
-					if ( pWaypoint->distanceFrom(pClient->getOrigin()) < radius)
+					if ( pWaypoint->distanceFrom(vOrigin) < radius)
 					{
 						CWaypoints::deleteWaypoint(pWpt[i]);
 						numdeleted++;

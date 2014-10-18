@@ -455,6 +455,9 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 		fFactor += ((float)p->GetMaxHealth())/200;
 
 		// favour those with bigger scores
+		if ( iHighestScore == 0 )
+			iHighestScore = 1;
+
 		fFactor += (((float)CClassInterface::getTF2Score(pPlayer))/iHighestScore)/2;
 
 		if ( (fLastCalledMedic = m_fCallMedicTime[ENTINDEX(pPlayer)-1]) > 0 )
@@ -823,6 +826,8 @@ void CBotFortress :: spawnInit ()
 {
 	CBot::spawnInit();
 
+	m_fLastSentryEnemyTime = 0.0f;
+
 	m_fHealFactor = 0.0f;
 
 	m_pHealthkit = MyEHandle(NULL);
@@ -1070,6 +1075,7 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 					if ( iObject == ENGI_SENTRY )
 					{
 						m_bSentryGunVectorValid = false;
+						m_fLastSentryEnemyTime = 0.0f;
 					}
 					else
 					{
@@ -1785,7 +1791,8 @@ edict_t *CBotFortress::getVisibleSpecial()
 			// more interested in teleporters on my team
 			edict_t *pTele = CTeamFortress2Mod::getTeleEntrance (m_iSpecialVisibleId);
 
-			pReturn = pTele;
+			if ( pTele )
+				pReturn = pTele;
 
 			if ( getClass() == TF_CLASS_ENGINEER )
 			{
@@ -1916,6 +1923,8 @@ void CBotTF2 :: checkBuildingsValid (bool bForce) // force check carrying
 			m_prevSentryHealth = 0;
 			m_iSentryArea = 0;
 		}
+		else if ( CClassInterface::getSentryEnemy(m_pSentryGun) != NULL )
+			m_fLastSentryEnemyTime = engine->Time();
 	}
 
 	if ( m_pDispenser )
@@ -2338,9 +2347,14 @@ bool CBotTF2 :: canGotoWaypoint (Vector vPrevWaypoint, CWaypoint *pWaypoint, CWa
 			return hasFlag();
 		}
 
-		pSentry = m_pSentryGun.get();
+		pSentry = NULL;
 
-		if ( ( m_iClass == TF_CLASS_ENGINEER ) && ( pSentry != NULL ) )
+		if ( m_iClass == TF_CLASS_ENGINEER )
+			pSentry = m_pSentryGun.get();
+		else if ( m_iClass == TF_CLASS_SPY )
+			pSentry = m_pNearestEnemySentry.get();
+
+		if ( pSentry != NULL )
 		{
 				Vector vWaypoint = pWaypoint->getOrigin();
 				Vector vWptMin = vWaypoint.Min(vPrevWaypoint) - Vector(32,32,32);
@@ -2513,6 +2527,7 @@ void CBotFortress::chooseClass()
 	float fTotalFitness = 0;
 	float fRandom;
 
+	int iNumMedics = 0;
 	int i = 0;
 	int iTeam = getTeam();
 	int iClass;
@@ -2532,6 +2547,9 @@ void CBotFortress::chooseClass()
 		{
 			iClass = CClassInterface::getTF2Class(pPlayer);
 
+			if ( iClass == TF_CLASS_MEDIC )
+				iNumMedics ++;
+
 			if ( (iClass >= 0) && (iClass < 10) )
 				fClassFitness [iClass] *= 0.6f; 
 		}
@@ -2545,12 +2563,6 @@ void CBotFortress::chooseClass()
 			fClassFitness[TF_CLASS_ENGINEER] *= 0.75;
 			fClassFitness[TF_CLASS_SPY] *= 1.25;
 			fClassFitness[TF_CLASS_SCOUT] *= 1.05;
-
-			if ( m_pLastEnemySentry.get() != NULL )
-			{
-				fClassFitness[TF_CLASS_SPY] *= 1.25;
-				fClassFitness[TF_CLASS_DEMOMAN] *= 1.3;
-			}
 		}
 		else
 		{
@@ -2560,6 +2572,18 @@ void CBotFortress::chooseClass()
 			fClassFitness[TF_CLASS_MEDIC] *= 1.1;
 		}
 	}
+	else if ( CTeamFortress2Mod::isMapType(TF_MAP_CP) )
+		fClassFitness[TF_CLASS_SCOUT] *= 1.2f;
+
+	if ( m_pLastEnemySentry.get() != NULL )
+	{
+		fClassFitness[TF_CLASS_SPY] *= 1.25;
+		fClassFitness[TF_CLASS_DEMOMAN] *= 1.3;
+	}
+
+	if ( iNumMedics == 0 )
+		fClassFitness[TF_CLASS_MEDIC] *= 2.0f;
+
 
 	for ( int i = 1; i < 10; i ++ )
 		fTotalFitness += fClassFitness[i];
@@ -2615,6 +2639,19 @@ void CBotTF2 :: modThink ()
 
 	checkBeingHealed();
 
+	if ( wantToListen() )
+	{
+		if ( ( m_pNearestAllySentry.get() != NULL ) && ( CClassInterface::getSentryEnemy(m_pNearestAllySentry) != NULL ) )
+		{
+			m_PlayerListeningTo = m_pNearestAllySentry;
+			m_bListenPositionValid = true;
+			m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
+			setLookAtTask(LOOK_NOISE);
+			m_fLookSetTime = m_fListenTime;
+			m_vListenPosition = CBotGlobals::entityOrigin(m_pNearestAllySentry.get());
+		}
+	}
+
 	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
 	{
 		if ( getTeam() == TF2_TEAM_BLUE )
@@ -2655,13 +2692,16 @@ void CBotTF2 :: modThink ()
 				if ( m_iClass == TF_CLASS_ENGINEER )
 				{
 					if ( m_pSentryGun.get() )
-						scoreValue *= 2.0f;
+					{
+						scoreValue *= 2.0f * CTeamFortress2Mod::getSentryLevel(m_pSentryGun);
+						scoreValue *= ((m_fLastSentryEnemyTime + 15.0f) < engine->Time()) ? 2.0f : 1.0f;
+					}
 					if ( m_pTeleEntrance.get() && m_pTeleExit.get() )
 						scoreValue *= CTeamFortress2Mod::isAttackDefendMap()?2.0f:1.5f;
 					if ( m_pDispenser.get() )
 						scoreValue *= 1.25f;
 					 // less chance of changing class if bot has these up
-					
+					m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat()/2,bot_max_cc_time.GetFloat()/2);
 				}
 
 				// if I think I could do better
@@ -2670,8 +2710,7 @@ void CBotTF2 :: modThink ()
 					chooseClass(); // edits m_iDesiredClass
 					
 					// change class
-					selectClass();
-				
+					selectClass();				
 				}
 		}
 	}
@@ -2879,6 +2918,7 @@ void CBotTF2 :: modThink ()
 			{
 					m_pSchedules->freeMemory();
 					m_pSchedules->add(new CBotRemoveSapperSched(m_pNearestAllySentry,ENGI_SENTRY));
+					updateCondition(CONDITION_PARANOID);
 			}
 			else if ( (m_fRemoveSapTime<engine->Time()) && m_pSentryGun && CBotGlobals::entityIsValid(m_pSentryGun) && CTeamFortress2Mod::isSentrySapped(m_pSentryGun) )
 			{
@@ -2886,6 +2926,7 @@ void CBotTF2 :: modThink ()
 				{
 					m_pSchedules->freeMemory();
 					m_pSchedules->add(new CBotRemoveSapperSched(m_pSentryGun,ENGI_SENTRY));
+					updateCondition(CONDITION_PARANOID);
 				}
 			}
 		}
@@ -3476,6 +3517,31 @@ bool CBotFortress :: incomingRocket ( float fRange )
 		}
 	}
 
+	pRocket = m_pNearestPipeGren;
+
+	if ( pRocket )
+	{
+		Vector vel;
+		Vector vorg = CBotGlobals::entityOrigin(pRocket);
+		Vector vcomp;
+		float fDist = distanceFrom(pRocket);
+
+		if ( fDist < fRange )
+		{
+			CClassInterface::getVelocity(pRocket,&vel);
+
+			if ( vel.Length() > 0 )
+			{
+				vel = vel/vel.Length();
+				vcomp = vorg + vel*fDist;
+			}
+			else
+				vcomp = vorg;
+
+			return ( distanceFrom(vcomp) < BLAST_RADIUS );
+		}
+	}
+
 	return false;
 }
 
@@ -3729,7 +3795,9 @@ bool CBotTF2 :: healPlayer ()
 	if ( !CClassInterface::getMedigunHealing(pWeapon) )
 	{
 		if ( (m_fHealClickTime < engine->Time()) && (DotProductFromOrigin(vOrigin) > 0.98f) )		
-			primaryAttack(true);
+			primaryAttack();
+		//else
+			//m_pButtons->letGo(IN_ATTACK);
 	}
 	else
 	{
@@ -3761,11 +3829,14 @@ bool CBotTF2 :: healPlayer ()
 				// yes -- press fire to disconnect from player
 				if ( m_fHealClickTime < engine->Time() )
 				{					
-					m_fHealClickTime = engine->Time() + randomFloat(1.0f,2.0f);
+					extern ConVar rcbot_tf2_medic_letgotime;
+					m_fHealClickTime = engine->Time() + rcbot_tf2_medic_letgotime.GetFloat();
 				}
+
+				//m_pButtons->letGo(IN_ATTACK);
 			}
-			else
-				primaryAttack(true);
+			else if ( m_fHealClickTime < engine->Time() )
+				primaryAttack();
 		}
 	}
 	//else
@@ -3801,17 +3872,17 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 		{
 			// this enemy is carrying the flag, attack!
 			// shoot flag carrier even if 1000 units away from nearest enemy
-			fPreFactor = -1000;
+			fPreFactor = -1000.0f;
 		}
-		else if ( !CTeamFortress2Mod::isMapType(TF_MAP_CTF) && CTeamFortress2Mod::isCapping(pEnemy) )
+		else if ( !CTeamFortress2Mod::isMapType(TF_MAP_CTF) && (CTeamFortress2Mod::isCapping(pEnemy)||CTeamFortress2Mod::isDefending(pEnemy)) )
 		{
 			// this enemy is capping the point, attack!
-			fPreFactor = -1000;
+			fPreFactor = -400.0f;
 		}
 		else if ( CTeamFortress2Mod::TF2_IsPlayerInvuln(pEnemy) )
 		{
 			// dont shoot ubered player unlesss he's the only thing around for 2000 units
-			fPreFactor = 2000;
+			fPreFactor = 2000.0f;
 		}
 		else
 		{
@@ -3820,12 +3891,12 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 			if ( iclass == TF_CLASS_MEDIC )
 			{
 				// shoot medic even if 250 units further from nearest enemy (approx. healing range)
-				fPreFactor = -260;
+				fPreFactor = -260.0f;
 			}
 			else if ( iclass == TF_CLASS_SPY ) 
 			{
 				// shoot spy even if a little further from nearest enemy
-				fPreFactor = -400;
+				fPreFactor = -400.0f;
 			}
 			else if ( iclass == TF_CLASS_SNIPER )
 			{
@@ -3847,7 +3918,7 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 			{
 				// I'm a spy and I'm attacking an engineer!
 				if ( m_iClass == TF_CLASS_SPY )
-					fPreFactor = -450;
+					fPreFactor = -450.0f;
 			}
 		}
 	}
@@ -4122,7 +4193,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 			fSentryHealthPercent = ((float)CClassInterface::getSentryHealth(m_pSentryGun))/CClassInterface::getTF2GetBuildingMaxHealth(m_pSentryGun);
 			// move sentry
 			ADD_UTILITY(BOT_UTIL_ENGI_MOVE_SENTRY,(!m_bIsCarryingObj || m_bIsCarryingSentry) && 
-				bMoveObjs && (m_fSentryPlaceTime>0.0f) && !bHasFlag && m_pSentryGun && 
+				bMoveObjs && (m_fSentryPlaceTime>0.0f) && !bHasFlag && m_pSentryGun && (CClassInterface::getSentryEnemy(m_pSentryGun) == NULL) && ((m_fLastSentryEnemyTime + 15.0f) < engine->Time()) &&
 				(!CTeamFortress2Mod::isMapType(TF_MAP_CP) || CTeamFortress2Mod::m_ObjectiveResource.testProbWptArea(m_iSentryArea,m_iTeam)) &&
 				(fSentryPlaceTime>rcbot_move_sentry_time.GetFloat())&&(((60.0f*m_iSentryKills)/fSentryPlaceTime)<rcbot_move_sentry_kpm.GetFloat()),
 				(fMetalPercent*getHealthPercent()*fSentryHealthPercent)+((int)m_bIsCarryingSentry));
@@ -5193,28 +5264,28 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 			
 			break;
 		case  BOT_UTIL_REMOVE_TMTELE_SAPPER:
-						
+			updateCondition(CONDITION_PARANOID);
 			m_pSchedules->add(new CBotRemoveSapperSched(m_pNearestTeleEntrance,ENGI_TELE));
 			return true;
 
 		case BOT_UTIL_REMOVE_SENTRY_SAPPER:
-
+			updateCondition(CONDITION_PARANOID);
 			m_pSchedules->add(new CBotRemoveSapperSched(m_pSentryGun,ENGI_SENTRY));
 			return true;
 
 		case BOT_UTIL_REMOVE_DISP_SAPPER:
-
+			updateCondition(CONDITION_PARANOID);
 			m_pSchedules->add(new CBotRemoveSapperSched(m_pDispenser,ENGI_DISP));
 			return true;
 
 		case BOT_UTIL_REMOVE_TMSENTRY_SAPPER:
-
+			updateCondition(CONDITION_PARANOID);
 			m_pSchedules->add(new CBotRemoveSapperSched(m_pNearestAllySentry,ENGI_SENTRY));
 			return true;
 
 			break;
 		case BOT_UTIL_REMOVE_TMDISP_SAPPER:
-
+			updateCondition(CONDITION_PARANOID);
 			m_pSchedules->add(new CBotRemoveSapperSched(m_pNearestDisp,ENGI_DISP));
 			return true;
 
@@ -7051,4 +7122,31 @@ void CBotTF2 ::init(bool bVarInit)
 	CBotFortress::init(bVarInit);
 }
 
+bool CBotFortress :: getIgnoreBox ( Vector *vLoc, float *fSize )
+{
+	if ( (m_iClass == TF_CLASS_ENGINEER) && vLoc )
+	{
+		edict_t *pSentry;
+
+		if ( (pSentry = m_pSentryGun.get()) != NULL )
+		{
+			*vLoc = CBotGlobals::entityOrigin(pSentry);
+			*fSize = pSentry->GetCollideable()->OBBMaxs().Length()/2;
+			return true;
+		}
+	}
+	else if ( ( m_iClass == TF_CLASS_SPY ) && vLoc )
+	{
+		edict_t *pSentry;
+
+		if ( (pSentry = m_pNearestEnemySentry.get()) != NULL )
+		{
+			*vLoc = CBotGlobals::entityOrigin(pSentry);
+			*fSize = pSentry->GetCollideable()->OBBMaxs().Length()/2;
+			return true;
+		}
+	}
+
+	return false;
+}
 

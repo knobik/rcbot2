@@ -331,7 +331,7 @@ bool CBot :: createBotFromEdict(edict_t *pEdict, CBotProfile *pProfile)
 	engine->SetFakeClientConVarValue(pEdict,"cl_team","default");
 	engine->SetFakeClientConVarValue(pEdict,"cl_defaultweapon","pistol");
 	engine->SetFakeClientConVarValue(pEdict,"cl_autowepswitch","1");	
-	//engine->SetFakeClientConVarValue(pEdict,"tf_medigun_autoheal","1");	
+	engine->SetFakeClientConVarValue(pEdict,"tf_medigun_autoheal","0");	
 
 	// joining name not the same as the profile name, change name
 	if (strcmp(m_szBotName,pProfile->m_szName) )
@@ -3542,7 +3542,6 @@ bool CBots :: handlePlayerJoin ( edict_t *pEdict, const char *name )
 	{
 		m_ControlQueue.push(pEdict);
 		m_bControlNext = false;
-		engine->SetFakeClientConVarValue(pEdict,"tf_medigun_autoheal","1");	
 
 		return true;
 	}
