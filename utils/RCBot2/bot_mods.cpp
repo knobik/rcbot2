@@ -448,3 +448,4 @@ void CHalfLifeDeathmatchMod :: mapInit ()
 
 	m_LiftWaypoints.clear();
 }
+

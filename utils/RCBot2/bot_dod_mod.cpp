@@ -95,6 +95,12 @@ eDODVoiceCommand_t g_DODVoiceCommands[DOD_VC_INVALID] =
 //
 //
 
+// Returns true if team can go to waypoint
+bool CDODMod :: checkWaypointForTeam(CWaypoint *pWpt, int iTeam)
+{
+	return (!pWpt->hasFlag(CWaypointTypes::W_FL_NOALLIES)||(iTeam!=TEAM_ALLIES))&&(!pWpt->hasFlag(CWaypointTypes::W_FL_NOAXIS)||(iTeam!=TEAM_AXIS));
+}
+
 bool CDODMod :: shouldAttack ( int iTeam )
 // uses the perceptron to return probability of attack
 {

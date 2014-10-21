@@ -127,7 +127,7 @@ typedef enum
 	TF_CLASS_MAX
 }TF_Class;
 
-enum
+/*enum
 {
 	TF_TEAM_SPEC = 0,
 	TF_TEAM_BLUE = 1,
@@ -135,7 +135,7 @@ enum
 	TF_TEAM_GREEN = 3,
 	TF_TEAM_YELLOW = 4
 };
-/*
+
 typedef enum
 {
 	ENGI_DISP = 0,
@@ -599,6 +599,8 @@ public:
 
 	// 
 	CBotTF2();
+
+	void MannVsMachineAlarmTriggered (Vector vLoc);
 
 	void highFivePlayer ( edict_t *pPlayer, float fYaw );
 

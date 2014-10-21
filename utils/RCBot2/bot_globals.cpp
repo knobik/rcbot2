@@ -302,7 +302,7 @@ private:
 
 bool CBotGlobals :: checkOpensLater ( Vector vSrc, Vector vDest )
 {
-	CTraceFilterSimple traceFilter( NULL, NULL, MASK_ALL );
+	CTraceFilterSimple traceFilter( NULL, NULL, MASK_PLAYERSOLID );
 
 	traceLine (vSrc,vDest,MASK_PLAYERSOLID,&traceFilter);
 

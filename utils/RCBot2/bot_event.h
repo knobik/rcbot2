@@ -318,6 +318,19 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+
+class CTF2MVMWaveFailedEvent : public CBotEvent
+{
+public:
+	CTF2MVMWaveFailedEvent()
+	{
+		setType("mvm_wave_failed");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CTF2PointStartTouch : public CBotEvent
 {
 public:
@@ -471,6 +484,19 @@ public:
 
 	void execute ( IBotEventInterface *pEvent );
 };
+
+class CTF2MannVsMachineAlarm : public CBotEvent
+{
+public:
+	CTF2MannVsMachineAlarm()
+	{
+		setType("mvm_bomb_alarm_triggered");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 
 class CFlagEvent : public CBotEvent
 {

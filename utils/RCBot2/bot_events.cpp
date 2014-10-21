@@ -39,6 +39,7 @@
 #include "bot_getprop.h"
 #include "bot_dod_bot.h"
 #include "bot_squads.h"
+#include "bot_waypoint_locations.h"
 
 vector<CBotEvent*> CBotEvents :: m_theEvents;
 extern ConVar bot_use_vc_commands;
@@ -95,6 +96,24 @@ private:
 	edict_t *m_pTeammate;
 	edict_t *m_pEnemy;
 	CWeapon *m_pWeapon;
+};
+
+class CBroadcastMVMAlarm : public IBotFunction
+{
+public:
+	CBroadcastMVMAlarm()
+	{
+		m_bValid = CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&m_vLoc);
+	}
+
+	void execute ( CBot *pBot )
+	{
+		if ( m_bValid )
+			((CBotTF2*)pBot)->MannVsMachineAlarmTriggered(m_vLoc);
+	}
+private:
+	Vector m_vLoc;
+	bool m_bValid;
 };
 
 
@@ -434,7 +453,10 @@ void CTF2ObjectSapped :: execute ( IBotEventInterface *pEvent )
 
 void CTF2RoundActive :: execute ( IBotEventInterface *pEvent )
 {
-	CTeamFortress2Mod::resetSetupTime();
+	if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) )
+		CTeamFortress2Mod::roundStarted();
+	else 
+		CTeamFortress2Mod::resetSetupTime();
 }
 
 void COverTimeBegin :: execute ( IBotEventInterface *pEvent )
@@ -596,11 +618,12 @@ void CTF2UpgradeObjectEvent :: execute ( IBotEventInterface *pEvent )
 
 void CTF2RoundWinEvent :: execute (IBotEventInterface *pEvent )
 {
-	CTF2BroadcastRoundWin *function = new CTF2BroadcastRoundWin(pEvent->getInt("team"),pEvent->getInt("full_round") == 1);
+	int iWinningTeam = pEvent->getInt("team");
+	CTF2BroadcastRoundWin *function = new CTF2BroadcastRoundWin(iWinningTeam,pEvent->getInt("full_round") == 1);
 
 	CBots::botFunction(function);
 
-	CTeamFortress2Mod::roundWon();
+	CTeamFortress2Mod::roundWon(iWinningTeam);
 
 	delete function;
 }
@@ -666,6 +689,13 @@ void CTF2ChangeClass :: execute ( IBotEventInterface *pEvent )
 		((CBotFortress*)pBot)->setClass((TF_Class)_class);
 
 	}
+}
+
+void CTF2MVMWaveFailedEvent :: execute ( IBotEventInterface *pEvent )
+{
+	  CBroadcastRoundStart roundstart = CBroadcastRoundStart(pEvent->getInt("full_reset") == 1);
+	  
+	  CBots::botFunction(&roundstart);
 }
 
 void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
@@ -800,6 +830,13 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 	
 }
 
+void CTF2MannVsMachineAlarm :: execute ( IBotEventInterface *pEvent )
+{
+	CBroadcastMVMAlarm alarm = CBroadcastMVMAlarm();
+	   // MUST BE AFTER POINTS HAVE BEEN UPDATED!
+    CBots::botFunction(&alarm);
+}
+
 void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
 {
 	CBroadcastCapturedPoint cap = CBroadcastCapturedPoint(pEvent->getInt("cp"),pEvent->getInt("team"),pEvent->getString("cpname"));
@@ -892,7 +929,7 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 			if ( pPlayer )
 			{
 				int iTeam = CTeamFortress2Mod::getTeam(pPlayer);
-				CTeamFortress2Mod::flagDropped(iTeam);
+				CTeamFortress2Mod::flagDropped(iTeam,Vector(0,0,0));
 
 				CClient *pClient;
 
@@ -909,10 +946,12 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 	case FLAG_DROPPED: // drop
 		{
 			IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pPlayer);
+			Vector vLoc;
 
 			if ( p )
 			{
-				CBroadcastFlagDropped dropped = CBroadcastFlagDropped(p->GetTeamIndex(),CBotGlobals::entityOrigin(pPlayer));
+				vLoc = CBotGlobals::entityOrigin(pPlayer);
+				CBroadcastFlagDropped dropped = CBroadcastFlagDropped(p->GetTeamIndex(),vLoc);
 				CBots::botFunction(&dropped);
 			}
 
@@ -921,7 +960,7 @@ void CFlagEvent :: execute ( IBotEventInterface *pEvent )
 
 			
 			if ( pPlayer )
-				CTeamFortress2Mod::flagDropped(CTeamFortress2Mod::getTeam(pPlayer));
+				CTeamFortress2Mod::flagDropped(CTeamFortress2Mod::getTeam(pPlayer),vLoc);
 		}
 		break;
 	case FLAG_RETURN:
@@ -1111,6 +1150,7 @@ inline bool CBotEvent :: isType ( const char *szType )
 ///////////////////////////////////////////////////////
 void CBotEvents :: setupEvents ()
 {
+	addEvent(new CTF2MVMWaveFailedEvent());
 	addEvent(new CRoundStartEvent());
 	addEvent(new CPlayerHurtEvent());
 	addEvent(new CPlayerDeathEvent());
@@ -1145,7 +1185,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CTF2RoundWinEvent());
 	addEvent(new CTF2PointUnlocked());
 	addEvent(new CTF2PointLocked());
-	
+	addEvent(new CTF2MannVsMachineAlarm());
 /*
 pumpkin_lord_summoned 
 merasmus_summoned 

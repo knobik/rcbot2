@@ -75,9 +75,22 @@ CTeamControlPointRound *CTeamFortress2Mod::m_pCurrentRound = NULL;
 bool CTeamFortress2Mod::bFlagStateDefault = true;
 MyEHandle CTeamFortress2Mod::m_pPayLoadBombBlue = MyEHandle(NULL);
 MyEHandle CTeamFortress2Mod::m_pPayLoadBombRed = MyEHandle(NULL);
+bool CTeamFortress2Mod::m_bRoundOver = false;
+int CTeamFortress2Mod::m_iWinningTeam = 0;
+Vector CTeamFortress2Mod::m_vFlagLocationBlue = Vector(0,0,0);
+Vector CTeamFortress2Mod::m_vFlagLocationRed = Vector(0,0,0);
+bool CTeamFortress2Mod::m_bFlagLocationValidBlue = false;
+bool CTeamFortress2Mod::m_bFlagLocationValidRed = false;
 
 extern ConVar bot_use_disp_dist;
 
+
+bool CTeamFortress2Mod :: checkWaypointForTeam(CWaypoint *pWpt, int iTeam)
+{
+// Returns true if team can go to waypoint
+	return m_bRoundOver || ((!pWpt->hasFlag(CWaypointTypes::W_FL_NOBLU)||(iTeam!=TF2_TEAM_BLUE))&&(!pWpt->hasFlag(CWaypointTypes::W_FL_NORED)||(iTeam!=TF2_TEAM_RED)));
+}
+	
 
 bool CTeamFortress2Mod :: isWaypointAreaValid ( int iWptArea, int iWptFlags )
 {
@@ -418,7 +431,7 @@ bool CTeamFortress2Mod :: isFlag ( edict_t *pEntity, int iTeam )
 	return (!iTeam || (getEnemyTeam(iTeam) == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"item_teamflag")==0);
 }
 
-bool CTeamFortress2Mod ::isBoss ( edict_t *pEntity )
+bool CTeamFortress2Mod ::isBoss ( edict_t *pEntity, float *fFactor )
 {
 	if ( m_bBossSummoned )
 	{
@@ -440,6 +453,19 @@ bool CTeamFortress2Mod ::isBoss ( edict_t *pEntity )
 		// for plr_hightower_event summon event is not called! Boo tf2!!!
 		else if (strcmp(pEntity->GetClassName(),"tf_zombie")==0)
 		{
+			m_pBoss = pEntity;
+			return true;
+		}
+	}
+	else if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) )
+	{
+		if ( m_pBoss.get() == pEntity )
+			return true;
+		else if (strcmp(pEntity->GetClassName(),"tank_boss")==0)
+		{
+			if ( fFactor != NULL )
+				*fFactor = 200.0f;
+
 			m_pBoss = pEntity;
 			return true;
 		}
@@ -589,20 +615,51 @@ bool CTeamFortress2Mod::canTeamPickupFlag_SD(int iTeam,bool bGetUnknown)
 
 	return false;
 }
-// for special delivery mod
+// For MVM only
+bool CTeamFortress2Mod::getFlagLocation ( int iTeam, Vector *vec )
+{
+	if ( getDroppedFlagLocation(iTeam,vec) )
+	{
+		return true;
+	}
+	else if ( hasRoundStarted() && isFlagCarried(iTeam) )
+	{
+		*vec = CBotGlobals::entityOrigin(getFlagCarrier(iTeam));
+		return true;
+	}
+
+	return false;
+}
+
+// for special delivery mod and MVM
 void CTeamFortress2Mod::flagReturned(int iTeam)
 {
 	m_iFlagCarrierTeam = 0;
 	bFlagStateDefault = true;
+
+	if ( iTeam == TF2_TEAM_BLUE )
+	{
+		m_bFlagLocationValidBlue = false;
+	}
+	else if ( iTeam == TF2_TEAM_RED )
+	{
+		m_bFlagLocationValidRed = false;
+	}
 }
 
 void CTeamFortress2Mod:: flagPickedUp (int iTeam, edict_t *pPlayer)
 {
 	bFlagStateDefault = false;
 	if ( iTeam == TF2_TEAM_BLUE )
+	{
 		m_pFlagCarrierBlue = pPlayer;
+		m_bFlagLocationValidBlue = false;
+	}
 	else if ( iTeam == TF2_TEAM_RED )
+	{
 		m_pFlagCarrierRed = pPlayer;
+		m_bFlagLocationValidRed = false;
+	}
 
 	m_iFlagCarrierTeam = iTeam;
 
@@ -626,7 +683,7 @@ void CTeamFortress2Mod :: resetSetupTime ()
 
 bool CTeamFortress2Mod::hasRoundStarted ()
 {
-	return m_bHasRoundStarted || (engine->Time() > m_fRoundTime);
+	return m_bHasRoundStarted || (!isMapType(TF_MAP_MVM)&&(engine->Time() > m_fRoundTime));
 
 	//return (engine->Time() > m_fRoundTime);
 }
@@ -1036,12 +1093,25 @@ void CTeamFortress2Mod :: roundReset ()
 		m_ObjectiveResource.updatePoints();
 
 	}
-
+	m_iWinningTeam = 0;
+	m_bRoundOver = false;
 	m_bHasRoundStarted = false;
 	m_iFlagCarrierTeam = 0;
 	m_pPayLoadBombBlue = NULL;
 	m_pPayLoadBombRed = NULL;
+	m_bFlagLocationValidBlue = false;
+	m_bFlagLocationValidRed = false;
 
+	if ( isMapType(TF_MAP_MVM) )	
+	{
+		CWaypoint *pGoal = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_FLAG);
+
+		if ( pGoal )
+		{
+			m_vFlagLocationBlue = pGoal->getOrigin();
+			m_bFlagLocationValidBlue = true;
+		}
+	}
 }
 
 void CTeamFortress2Mod::sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding )

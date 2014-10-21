@@ -1593,7 +1593,22 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		else if ( m_fMaxTime > 0 )
 			m_fTime = engine->Time() + m_fMaxTime;
 		else
+		{
 			m_fTime = engine->Time() + randomFloat(20.0f,90.0f);
+
+			if ( pBot->isTF2() )
+			{		
+				if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) )
+				{
+					Vector vFlag;
+
+					if ( CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&vFlag) )
+					{
+						m_fTime = engine->Time() + (90.0f - ((vFlag - m_vOrigin).Length()/45));
+					}
+				}
+			}
+		}
 	}
 
 	fDist = pBot->distanceFrom(m_vOrigin);
@@ -4312,6 +4327,9 @@ void CBotTF2AttackSentryGunTask::execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	pBot->wantToListen(false);
 	pBot->wantToInvestigateSound(false);
+
+	if ( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
+		fail();
 
 	if ( m_pSentryGun.get() == NULL )
 	{

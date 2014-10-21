@@ -383,7 +383,7 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBeliefBetweenAreas ( dataUnconstA
 				if ( bHighDanger )
 					fBelief += m_fBelief[node->getWaypoint()] + node->getHeuristic();
 				else
-					fBelief += MAX_BELIEF - m_fBelief[node->getWaypoint()] + node->getHeuristic();
+					fBelief += MAX_BELIEF - m_fBelief[node->getWaypoint()] + (131072.0f - node->getHeuristic());
 			}
 
 			fSelect = randomFloat(0,fBelief);
@@ -397,7 +397,7 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBeliefBetweenAreas ( dataUnconstA
 				if ( bHighDanger )
 					fBelief += m_fBelief[node->getWaypoint()] + node->getHeuristic();
 				else
-					fBelief += MAX_BELIEF - m_fBelief[node->getWaypoint()] + node->getHeuristic();
+					fBelief += MAX_BELIEF - m_fBelief[node->getWaypoint()] + (131072.0f - node->getHeuristic());
 
 				if ( fSelect <= fBelief )
 				{
@@ -2645,6 +2645,79 @@ void CWaypoints :: checkAreas ( edict_t *pActivator )
 	}
 }
 
+CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *origin, int iIgnore )
+{
+	register short int i;
+	static short int size; 
+	CWaypoint *pWpt;
+	AStarNode *node;
+	float fDist;
+
+	size = numWaypoints();
+
+	dataUnconstArray<AStarNode*> goals;
+
+	for ( i = 0; i < size; i ++ )
+	{
+		if ( i == iIgnore )
+			continue;
+
+		pWpt = &m_theWaypoints[i];
+
+		if ( pWpt->isUsed() && pWpt->forTeam(iTeam) )// && (pWpt->getArea() == iArea) )
+		{
+			if ( (iFlags == -1) || pWpt->hasSomeFlags(iFlags) )
+			{
+				if ( !bForceArea && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWpt->getArea()) )
+					continue;
+				else if ( bForceArea && (pWpt->getArea() != iArea) )
+					continue;
+
+				node = new AStarNode();
+
+				fDist = pWpt->distanceFrom(*origin);
+
+				if ( fDist == 0.0f )
+					fDist = 1.0f;
+
+				node->setWaypoint(i);
+				node->setHeuristic(131072.0f/(fDist*fDist));
+			
+				goals.Add(node);
+			}
+		}
+	}
+
+	pWpt = NULL;
+
+	if ( !goals.IsEmpty() )
+	{
+		if ( pBot )
+		{
+			CWaypointNavigator *pNav;
+		
+			pNav = (CWaypointNavigator*)pBot->getNavigator();
+
+			pWpt = pNav->chooseBestFromBeliefBetweenAreas(&goals,bHighDanger);
+		}
+		else
+			pWpt = CWaypoints::getWaypoint(goals.Random()->getWaypoint());
+
+		//pWpt = goals.Random();
+	}
+
+	for ( i = 0; i < goals.Size(); i ++ )
+	{
+		node = goals.ReturnValueFromIndex(i);
+
+		delete node;
+	}
+
+	goals.Clear();
+
+	return pWpt;
+}
+
 CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *org1, Vector *org2 )
 {
 	register short int i;
@@ -3148,12 +3221,16 @@ CWaypointType :: CWaypointType (int iBit, const char *szName, const char *szDesc
 
 bool CWaypoint :: forTeam ( int iTeam )
 {
+	CBotMod *pMod = CBotGlobals::getCurrentMod();
+
+	return pMod->checkWaypointForTeam(this,iTeam);
+	/*
 	if ( iTeam == TF2_TEAM_BLUE )
 		return (m_iFlags & CWaypointTypes::W_FL_NOBLU)==0;
 	else if ( iTeam == TF2_TEAM_RED )
 		return (m_iFlags & CWaypointTypes::W_FL_NORED)==0;
 
-	return true;	
+	return true;	*/
 }
 
 class CTestBot : public CBotTF2

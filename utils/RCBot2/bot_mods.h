@@ -93,6 +93,11 @@ public:
 		m_bBotCommand_ResetCheatFlag = false;
 		m_bBotCommand_NeedCheatsHack = false;
 	}
+
+	virtual bool checkWaypointForTeam(CWaypoint *pWpt, int iTeam)
+	{
+		return true; // okay -- no teams!!
+	}
 // linux fix
 	void setup ( const char *szModFolder, const char *szSteamFolder, eModId iModId, eBotType iBotType );
 
@@ -533,6 +538,8 @@ public:
 	}
 
 	static void roundStart ();
+
+	bool checkWaypointForTeam(CWaypoint *pWpt, int iTeam);
 	
 	static int numClassOnTeam( int iTeam, int iClass );
 
@@ -921,12 +928,38 @@ public:
 
 	void getTeamOnlyWaypointFlags ( int iTeam, int *iOn, int *iOff );
 
-	static void flagDropped (int iTeam)
+	static bool getFlagLocation ( int iTeam, Vector *vec );
+
+	static bool getDroppedFlagLocation ( int iTeam, Vector *vec )
 	{
 		if ( iTeam == TF2_TEAM_BLUE )
-			m_pFlagCarrierBlue = NULL;
+		{
+			*vec = m_vFlagLocationBlue;
+			return m_bFlagLocationValidBlue;
+		}
 		else if ( iTeam == TF2_TEAM_RED )
+		{
+			*vec = m_vFlagLocationRed;
+			return m_bFlagLocationValidRed;
+		}
+
+		return false;
+	}
+
+	static void flagDropped (int iTeam, Vector vLoc)
+	{
+		if ( iTeam == TF2_TEAM_BLUE )
+		{
+			m_pFlagCarrierBlue = NULL;
+			m_vFlagLocationBlue = vLoc;
+			m_bFlagLocationValidBlue = true;
+		}
+		else if ( iTeam == TF2_TEAM_RED )
+		{
 			m_pFlagCarrierRed = NULL;
+			m_vFlagLocationRed = vLoc;
+			m_bFlagLocationValidRed = true;
+		}
 
 		m_iFlagCarrierTeam = iTeam;
 	}
@@ -934,18 +967,37 @@ public:
 	static void roundStarted ()
 	{
 		m_bHasRoundStarted = true;
+	    m_bRoundOver = false;
+		m_iWinningTeam = 0; 
 	}
 
-	static void roundWon ()
+	static void roundWon ( int iWinningTeam )
 	{
 		m_bHasRoundStarted = false;
+		m_bRoundOver = true;
+		m_iWinningTeam = iWinningTeam;
+	}
+
+	static inline bool isLosingTeam ( int iTeam )
+	{
+		return !m_bHasRoundStarted && m_bRoundOver && m_iWinningTeam && (m_iWinningTeam != iTeam); 
 	}
 
 	static void roundReset ();
 
-	static bool isFlagCarrier (edict_t *pPlayer)
+	static inline bool isFlagCarrier (edict_t *pPlayer)
 	{
 		return (m_pFlagCarrierBlue==pPlayer)||(m_pFlagCarrierRed==pPlayer);
+	}
+
+	static inline edict_t *getFlagCarrier (int iTeam)
+	{
+		if ( iTeam == TF2_TEAM_BLUE )
+			return m_pFlagCarrierBlue;
+		else if ( iTeam == TF2_TEAM_RED )
+			return m_pFlagCarrierRed;
+
+		return NULL;
 	}
 
 	static bool isFlagCarried (int iTeam)
@@ -1117,7 +1169,7 @@ public:
 	static edict_t *getBuildingOwner (eEngiBuild object, short index);
 	static edict_t *getBuilding (eEngiBuild object, edict_t *pOwner);
 
-	static bool isBoss ( edict_t *pEntity );
+	static bool isBoss ( edict_t *pEntity, float *fFactor = NULL );
 
 	static void initBoss ( bool bSummoned ) { m_bBossSummoned = bSummoned; m_pBoss = NULL; }
 
@@ -1128,6 +1180,10 @@ public:
 	static edict_t *getMediGun ( edict_t *pPlayer );
 
 	static void findMediGun ( edict_t *pPlayer );
+
+
+	bool checkWaypointForTeam(CWaypoint *pWpt, int iTeam);
+	
 
 	static bool isFlagAtDefaultState () { return bFlagStateDefault; }
 	static void resetFlagStateToDefault() { bFlagStateDefault = true; }
@@ -1190,7 +1246,14 @@ private:
 
 	static MyEHandle pMediGuns[MAX_PLAYERS];
 	static bool m_bDontClearPoints;
-	
+
+	static bool m_bRoundOver;
+	static int m_iWinningTeam;
+
+	static Vector m_vFlagLocationBlue;
+	static bool m_bFlagLocationValidBlue;
+	static Vector m_vFlagLocationRed;
+	static bool m_bFlagLocationValidRed;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod
