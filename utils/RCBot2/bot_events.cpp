@@ -39,6 +39,7 @@
 #include "bot_getprop.h"
 #include "bot_dod_bot.h"
 #include "bot_squads.h"
+#include "bot_schedule.h"
 #include "bot_waypoint_locations.h"
 
 vector<CBotEvent*> CBotEvents :: m_theEvents;
@@ -69,6 +70,20 @@ private:
 	edict_t *m_pTeammate;
 	edict_t *m_pDied;
 	CWeapon *m_pWeapon;
+};
+
+class CBotWaveCompleteMVM : public IBotFunction
+{
+public:
+
+	void execute ( CBot *pBot )
+	{
+		CBotSchedules *pSched = pBot->getSchedule();
+		pSched->freeMemory();
+		pBot->setLastEnemy(NULL);
+		pBot->reload();
+	}
+
 };
 
 class CBotSeeFriendlyHurtEnemy : public IBotFunction
@@ -691,11 +706,20 @@ void CTF2ChangeClass :: execute ( IBotEventInterface *pEvent )
 	}
 }
 
+void CTF2MVMWaveCompleteEvent :: execute ( IBotEventInterface *pEvent )
+{
+	CBotWaveCompleteMVM func;
+
+	  CTeamFortress2Mod::MVMAlarmReset();
+	  CTeamFortress2Mod::roundReset();
+
+	  CBots::botFunction(&func);
+}
+
 void CTF2MVMWaveFailedEvent :: execute ( IBotEventInterface *pEvent )
 {
-	  CBroadcastRoundStart roundstart = CBroadcastRoundStart(pEvent->getInt("full_reset") == 1);
-	  
-	  CBots::botFunction(&roundstart);
+	  CTeamFortress2Mod::MVMAlarmReset();
+	  CTeamFortress2Mod::roundReset();
 }
 
 void CTF2RoundStart :: execute ( IBotEventInterface *pEvent )
@@ -835,6 +859,8 @@ void CTF2MannVsMachineAlarm :: execute ( IBotEventInterface *pEvent )
 	CBroadcastMVMAlarm alarm = CBroadcastMVMAlarm();
 	   // MUST BE AFTER POINTS HAVE BEEN UPDATED!
     CBots::botFunction(&alarm);
+
+	CTeamFortress2Mod::MVMAlarmSounded();
 }
 
 void CTF2PointCaptured :: execute ( IBotEventInterface *pEvent )
@@ -1150,6 +1176,7 @@ inline bool CBotEvent :: isType ( const char *szType )
 ///////////////////////////////////////////////////////
 void CBotEvents :: setupEvents ()
 {
+	addEvent(new CTF2MVMWaveCompleteEvent());
 	addEvent(new CTF2MVMWaveFailedEvent());
 	addEvent(new CRoundStartEvent());
 	addEvent(new CPlayerHurtEvent());

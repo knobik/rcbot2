@@ -291,7 +291,7 @@ void CBotTF2ShootLastEnemyPosition ::  execute (CBot *pBot,CBotSchedule *pSchedu
 	}
 
 	pBot->setLookVector(m_vPosition);
-	pBot->setLookAtTask((LOOK_VECTOR));
+	pBot->setLookAtTask(LOOK_VECTOR);
 
 }
 
@@ -793,7 +793,7 @@ void CBotTF2AttackPoint :: execute (CBot *pBot,CBotSchedule *pSchedule)
 				pBot->setMoveTo((m_vMoveTo));
 			}
 
-			pBot->setLookAtTask((LOOK_AROUND));
+			pBot->setLookAtTask(LOOK_AROUND);
 
 			if ( ((CBotTF2*)pBot)->checkAttackPoint() )
 				complete();
@@ -1310,9 +1310,16 @@ void CBotTaskEngiPickupBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
+	// don't pick up sentry now because my sentry is in good use!!!
+	if ( ((CBotTF2*)pBot)->sentryRecentlyHadEnemy() )
+	{
+		fail();
+		return;
+	}
+
 	pBot->wantToShoot(false);
 	pBot->lookAtEdict(m_pBuilding.get());
-	pBot->setLookAtTask((LOOK_EDICT));
+	pBot->setLookAtTask(LOOK_EDICT);
 
 	((CBotTF2*)pBot)->updateCarrying();
 
@@ -1604,7 +1611,11 @@ void CBotDefendTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 					if ( CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&vFlag) )
 					{
-						m_fTime = engine->Time() + (90.0f - ((vFlag - m_vOrigin).Length()/45));
+						// FOR DEBUGGING
+						float fDist = (vFlag - m_vOrigin).Length();
+						float fWaitTime = (90.0f - (fDist/45)); // MAX Dist 4050
+						//
+						m_fTime = engine->Time() + fWaitTime;
 					}
 				}
 			}
@@ -3093,7 +3104,7 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	pBot->lookAtEdict(pBuilding);
-	pBot->setLookAtTask((LOOK_EDICT));
+	pBot->setLookAtTask(LOOK_EDICT);
 	weapon = tf2Bot->getCurrentWeapon();
 
 	// time out
@@ -3269,7 +3280,7 @@ void CAttackEntityTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 
 	pBot->setEnemy(m_pEdict);
 
-	pBot->setLookAtTask((LOOK_ENEMY));
+	pBot->setLookAtTask(LOOK_ENEMY);
 
 	if ( !pBot->handleAttack ( pWeapon, m_pEdict ) )
 		fail();
@@ -4113,7 +4124,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		Vector origin = CBotGlobals::entityOrigin(m_pFriendly);
 
 		pBot->setLookVector(origin);
-		pBot->setLookAtTask((LOOK_VECTOR));
+		pBot->setLookAtTask(LOOK_VECTOR);
 
 
 		if ( pBot->distanceFrom(m_pFriendly) > 100 )
@@ -4143,7 +4154,7 @@ void CMessAround::execute ( CBot *pBot, CBotSchedule *pSchedule )
 		bool ok = true;
 
 		pBot->setLookVector(origin);
-		pBot->setLookAtTask((LOOK_VECTOR));
+		pBot->setLookAtTask(LOOK_VECTOR);
 
 		if ( !pBot->FInViewCone(m_pFriendly) )
 		{

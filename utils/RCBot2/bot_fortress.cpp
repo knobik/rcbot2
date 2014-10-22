@@ -306,6 +306,11 @@ inline bool CBotFortress::someoneCalledMedic()
 			((m_fLastCalledMedicTime+30.0f)>engine->Time());
 }
 
+bool CBotTF2 :: sentryRecentlyHadEnemy ()
+{
+	return (m_fLastSentryEnemyTime + 15.0f) > engine->Time();
+}
+
 bool CBotFortress :: startGame()
 {
 	int team = m_pPlayerInfo->GetTeamIndex();
@@ -322,6 +327,10 @@ bool CBotFortress :: startGame()
 	}
 	else if ( (m_iDesiredClass>0 && (m_iClass != m_iDesiredClass)) || (m_iClass == TF_CLASS_MAX) )
 	{
+		// can't change class in MVM during round!
+		if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) && CTeamFortress2Mod::hasRoundStarted() )
+			return true;
+
 		selectClass();
 	}
 	else
@@ -1481,7 +1490,7 @@ bool CBotFortress :: waitForFlag ( Vector *vOrigin, float *fWait, bool bFindFlag
 		if ( CBotGlobals::entityIsValid(m_pFlag) )
 		{
 			lookAtEdict(m_pFlag);
-			setLookAtTask((LOOK_EDICT));
+			setLookAtTask(LOOK_EDICT);
 			*vOrigin = CBotGlobals::entityOrigin(m_pFlag);
 			*fWait = engine->Time() + 5.0f;
 		}
@@ -2572,8 +2581,19 @@ void CBotFortress::chooseClass()
 		}
 	}
 
+	if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) )
+	{
+		fClassFitness[TF_CLASS_ENGINEER] *= 1.5;
+		fClassFitness[TF_CLASS_SPY] *= 0.6;
+		fClassFitness[TF_CLASS_SCOUT] *= 0.6;
+		fClassFitness[TF_CLASS_HWGUY] *= 1.5;
+		fClassFitness[TF_CLASS_MEDIC] *= 1.1;
+		fClassFitness[TF_CLASS_SOLDIER] *= 1.5;
+		fClassFitness[TF_CLASS_DEMOMAN] *= 1.4;
+		fClassFitness[TF_CLASS_PYRO] *= 1.6;
 	// attacking team?
-	if ( CTeamFortress2Mod::isAttackDefendMap() )
+	}
+	else if ( CTeamFortress2Mod::isAttackDefendMap() )
 	{
 		if ( getTeam() == TF2_TEAM_BLUE )
 		{
@@ -4254,7 +4274,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 			fUseDispFactor = (((float)iMetalInDisp)/400) * (1.0f-fMetalPercent) * ((float)iAllyDispLevel/3) * (1000.0f/distanceFrom(m_pNearestDisp));
 
-			ADD_UTILITY(BOT_UTIL_GOTODISP,m_pNearestDisp && !CClassInterface::isObjectBeingBuilt(m_pNearestDisp) && (bNeedAmmo || bNeedHealth),fUseDispFactor);
+			ADD_UTILITY(BOT_UTIL_GOTODISP,m_pNearestDisp && !CClassInterface::isObjectBeingBuilt(m_pNearestDisp) && (bNeedAmmo || bNeedHealth),fUseDispFactor + ((!CTeamFortress2Mod::hasRoundStarted() && CTeamFortress2Mod::isMapType(TF_MAP_MVM))?0.5f:0.0f));
 			ADD_UTILITY(BOT_UTIL_REMOVE_TMDISP_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&m_pNearestDisp && CTeamFortress2Mod::isDispenserSapped(m_pNearestDisp),1.1f);
 			ADD_UTILITY(BOT_UTIL_UPGTMDISP,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) && (m_pNearestDisp!=NULL)&&(m_pNearestDisp!=m_pDispenser) && (iMetal>=(200-CClassInterface::getTF2SentryUpgradeMetal(m_pNearestDisp))) && ((iAllyDispLevel<3)||(fAllyDispenserHealthPercent<1.0f)),0.7+((1.0f-fAllyDispenserHealthPercent)*0.3));
 		}
@@ -4321,7 +4341,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		ADD_UTILITY(BOT_UTIL_REMOVE_DISP_SAPPER,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag&&(m_pDispenser!=NULL) && CTeamFortress2Mod::isMyDispenserSapped(m_pEdict),1000.0f);
 
 		ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
-		ADD_UTILITY_DATA(BOT_UTIL_FIND_NEAREST_AMMO,!m_bIsCarryingObj && !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,400.0f/fAmmoDist,CWaypoints::getWaypointIndex(pWaypointAmmo)); // only if close
+		ADD_UTILITY_DATA(BOT_UTIL_FIND_NEAREST_AMMO,!m_bIsCarryingObj && !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(400.0f/fAmmoDist) + ((!CTeamFortress2Mod::hasRoundStarted() && CTeamFortress2Mod::isMapType(TF_MAP_MVM))?0.5f:0.0f),CWaypoints::getWaypointIndex(pWaypointAmmo)); // only if close
 
 		ADD_UTILITY(BOT_UTIL_ENGI_LOOK_AFTER_SENTRY,!m_bIsCarryingObj && (m_pSentryGun.get()!=NULL) && (iSentryLevel>2) && (m_fLookAfterSentryTime<engine->Time()),fGetFlagUtility+0.01f);
 
@@ -4350,10 +4370,10 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		}
 
 		ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_AMMO, !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedAmmo && !m_pAmmo,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
-		ADD_UTILITY_DATA(BOT_UTIL_FIND_NEAREST_AMMO, !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,400.0f/fAmmoDist,CWaypoints::getWaypointIndex(pWaypointAmmo));
+		ADD_UTILITY_DATA(BOT_UTIL_FIND_NEAREST_AMMO, !bHasFlag&&bNeedAmmo&&!m_pAmmo&&pWaypointAmmo,(400.0f/fAmmoDist) + ((!CTeamFortress2Mod::hasRoundStarted() && CTeamFortress2Mod::isMapType(TF_MAP_MVM))?0.5f:0.0f),CWaypoints::getWaypointIndex(pWaypointAmmo));
 
 		if ( m_pNearestDisp )
-			ADD_UTILITY(BOT_UTIL_GOTODISP,m_pNearestDisp && !CClassInterface::isObjectBeingBuilt(m_pNearestDisp) && !CTeamFortress2Mod::isDispenserSapped(m_pNearestDisp) && (bNeedAmmo || bNeedHealth),1000.0f/distanceFrom(m_pNearestDisp));
+			ADD_UTILITY(BOT_UTIL_GOTODISP,m_pNearestDisp && !CClassInterface::isObjectBeingBuilt(m_pNearestDisp) && !CTeamFortress2Mod::isDispenserSapped(m_pNearestDisp) && (bNeedAmmo || bNeedHealth),(1000.0f/distanceFrom(m_pNearestDisp)) + ((!CTeamFortress2Mod::hasRoundStarted() && CTeamFortress2Mod::isMapType(TF_MAP_MVM))?0.5f:0.0f));
 	}
 
 	fGetFlagUtility = 0.2+randomFloat(0.0f,0.2f);
@@ -4404,8 +4424,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	ADD_UTILITY_DATA(BOT_UTIL_GOTORESUPPLY_FOR_HEALTH, !CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && !m_bIsCarryingObj && !bHasFlag && pWaypointResupply && bNeedHealth && !m_pHealthkit,1000.0f/fResupplyDist,CWaypoints::getWaypointIndex(pWaypointResupply));
 
-	ADD_UTILITY(BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0);
-	ADD_UTILITY(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0);
+	ADD_UTILITY(BOT_UTIL_GETAMMOKIT, bNeedAmmo && m_pAmmo,1.0 + ((!CTeamFortress2Mod::hasRoundStarted() && CTeamFortress2Mod::isMapType(TF_MAP_MVM))?0.5f:0.0f));
+	ADD_UTILITY(BOT_UTIL_GETHEALTHKIT, bNeedHealth && m_pHealthkit,1.0 + ((!CTeamFortress2Mod::hasRoundStarted() && CTeamFortress2Mod::isMapType(TF_MAP_MVM))?0.5f:0.0f));
 
 	ADD_UTILITY(BOT_UTIL_GETFLAG, (CTeamFortress2Mod::isMapType(TF_MAP_CTF)||(CTeamFortress2Mod::isMapType(TF_MAP_SD)&&CTeamFortress2Mod::canTeamPickupFlag_SD(iTeam,false))) && !bHasFlag,fGetFlagUtility);
 	ADD_UTILITY(BOT_UTIL_GETFLAG_LASTKNOWN, (CTeamFortress2Mod::isMapType(TF_MAP_CTF)||CTeamFortress2Mod::isMapType(TF_MAP_MVM)||(CTeamFortress2Mod::isMapType(TF_MAP_SD)&&CTeamFortress2Mod::canTeamPickupFlag_SD(iTeam,true))) && !bHasFlag && (m_fLastKnownFlagTime && (m_fLastKnownFlagTime > engine->Time())), fGetFlagUtility+0.1);
@@ -4420,7 +4440,7 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 	ADD_UTILITY(BOT_UTIL_SNIPE, (iClass==TF_CLASS_SNIPER) && !m_pWeapons->getWeapon(CWeapons::getWeapon(TF2_WEAPON_SNIPERRIFLE))->outOfAmmo(this) && !hasSomeConditions(CONDITION_PARANOID) && !bHasFlag && (getHealthPercent()>0.2f), 0.95);	
 
 	ADD_UTILITY(BOT_UTIL_ROAM,true,0.0001f);
-	ADD_UTILITY_DATA(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,1000.0f/fHealthDist,CWaypoints::getWaypointIndex(pWaypointHealth));
+	ADD_UTILITY_DATA(BOT_UTIL_FIND_NEAREST_HEALTH,!bHasFlag&&bNeedHealth&&!m_pHealthkit&&pWaypointHealth,(1000.0f/fHealthDist) + ((!CTeamFortress2Mod::hasRoundStarted() && CTeamFortress2Mod::isMapType(TF_MAP_MVM))?0.5f:0.0f),CWaypoints::getWaypointIndex(pWaypointHealth));
 	
 	ADD_UTILITY(BOT_UTIL_FIND_MEDIC_FOR_HEALTH,(m_iClass != TF_CLASS_MEDIC) && !bHasFlag && bNeedHealth && m_pLastSeeMedic.hasSeen(10.0f),1.0f);
 	
@@ -4724,7 +4744,7 @@ bool CBotTF2 ::deployStickies(eDemoTrapType type, Vector vStand, Vector vLocatio
 		if ( *iState == 2 )
 		{
 			setLookVector(*vPoint);
-			setLookAtTask((LOOK_VECTOR));
+			setLookAtTask(LOOK_VECTOR);
 
 			if ( (*fTime < engine->Time()) && (CBotGlobals::yawAngleFromEdict(m_pEdict,*vPoint) < 20) )
 			{
@@ -4952,12 +4972,14 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 				if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) )
 				{					
-					Vector vFlagLocation;
+
+					pWaypoint = CTeamFortress2Mod::getBestWaypointMVM(this,CWaypointTypes::W_FL_DEFEND);
+					/*Vector vFlagLocation;
 
 					if ( CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&vFlagLocation) )
 					{
 						pWaypoint = CWaypoints::randomWaypointGoalNearestArea(CWaypointTypes::W_FL_DEFEND,m_iTeam,0,false,this,true,&vFlagLocation);
-					}
+					}*/
 				}
 				
 				if ( pWaypoint == NULL )
@@ -5260,12 +5282,14 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 			{
 				if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) )
 				{
+					pWaypoint = CTeamFortress2Mod::getBestWaypointMVM(this,CWaypointTypes::W_FL_SENTRY);
+					/*
 					Vector vFlagLocation;
 
 					if ( CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&vFlagLocation) )
 					{
 						pWaypoint = CWaypoints::randomWaypointGoalNearestArea(CWaypointTypes::W_FL_SENTRY,m_iTeam,0,false,this,true,&vFlagLocation);
-					}
+					}*/
 				}
 				else if ( CTeamFortress2Mod::isAttackDefendMap() )
 				{
@@ -5490,12 +5514,14 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 				if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) )
 				{
+					pWaypoint = CTeamFortress2Mod::getBestWaypointMVM(this,CWaypointTypes::W_FL_SENTRY);
+					/*
 					Vector vFlagLocation;
 
 					if ( CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&vFlagLocation) )
 					{
-						pWaypoint = CWaypoints::randomWaypointGoalNearestArea(CWaypointTypes::W_FL_SENTRY,m_iTeam,0,false,this,true,&vFlagLocation,m_iLastFailSentryWpt);
-					}
+						pWaypoint = CWaypoints::randomWaypointGoalNearestArea(CWaypointTypes::W_FL_SENTRY,m_iTeam,0,false,this,true,&vFlagLocation);
+					}*/
 				}
 				else if ( CTeamFortress2Mod::isAttackDefendMap() )
 				{
@@ -5934,12 +5960,14 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 
 			if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) )
 			{
-				Vector vFlagLocation;
+					pWaypoint = CTeamFortress2Mod::getBestWaypointMVM(this,CWaypointTypes::W_FL_SNIPER);
+					/*
+					Vector vFlagLocation;
 
-				if ( CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&vFlagLocation) )
-				{
-					pWaypoint = CWaypoints::randomWaypointGoalNearestArea(CWaypointTypes::W_FL_SNIPER,m_iTeam,0,false,this,true,&vFlagLocation);
-				}
+					if ( CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&vFlagLocation) )
+					{
+						pWaypoint = CWaypoints::randomWaypointGoalNearestArea(CWaypointTypes::W_FL_SNIPER,m_iTeam,0,false,this,true,&vFlagLocation);
+					}*/
 			}
 			else if ( CTeamFortress2Mod::isAttackDefendMap() )
 			{
@@ -6597,7 +6625,7 @@ bool CBotTF2 :: upgradeBuilding ( edict_t *pBuilding, bool removesapper )
 
 	lookAtEdict(pBuilding);
 	m_fLookSetTime = 0;
-	setLookAtTask((LOOK_EDICT));
+	setLookAtTask(LOOK_EDICT);
 	m_fLookSetTime = engine->Time() + randomFloat(3.0,8.0);
 
 	return true;

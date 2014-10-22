@@ -602,6 +602,8 @@ public:
 
 	void MannVsMachineAlarmTriggered (Vector vLoc);
 
+	bool sentryRecentlyHadEnemy ();
+
 	void highFivePlayer ( edict_t *pPlayer, float fYaw );
 
 	virtual bool hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide  = false );

@@ -1015,6 +1015,8 @@ public:
 	static void sentryBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding);
 	static void dispenserBuilt(edict_t *pOwner, eEngiBuild type, edict_t *pBuilding);
 
+	static CWaypoint *getBestWaypointMVM ( CBot *pBot, int iFlags );
+
 	static edict_t *getMySentryGun ( edict_t *pOwner )
 	{
 		int id = ENTINDEX(pOwner)-1;
@@ -1200,6 +1202,9 @@ public:
 
 	static edict_t *getPayloadBomb ( int team );
 
+	static void MVMAlarmSounded () { m_bMVMAlarmSounded = true; }
+	static void MVMAlarmReset () { m_bMVMAlarmSounded = false; }
+
 private:
 
 
@@ -1254,6 +1259,13 @@ private:
 	static bool m_bFlagLocationValidBlue;
 	static Vector m_vFlagLocationRed;
 	static bool m_bFlagLocationValidRed;
+
+
+	static bool m_bMVMFlagStartValid;
+	static Vector m_vMVMFlagStart;
+	static bool m_bMVMCapturePointValid;
+	static Vector m_vMVMCapturePoint;
+	static bool m_bMVMAlarmSounded;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

@@ -81,6 +81,11 @@ Vector CTeamFortress2Mod::m_vFlagLocationBlue = Vector(0,0,0);
 Vector CTeamFortress2Mod::m_vFlagLocationRed = Vector(0,0,0);
 bool CTeamFortress2Mod::m_bFlagLocationValidBlue = false;
 bool CTeamFortress2Mod::m_bFlagLocationValidRed = false;
+bool CTeamFortress2Mod::m_bMVMFlagStartValid = false;
+Vector CTeamFortress2Mod::m_vMVMFlagStart = Vector(0,0,0);
+bool CTeamFortress2Mod::m_bMVMCapturePointValid = false;
+Vector CTeamFortress2Mod::m_vMVMCapturePoint = Vector(0,0,0);
+bool CTeamFortress2Mod::m_bMVMAlarmSounded = false;
 
 extern ConVar bot_use_disp_dist;
 
@@ -169,6 +174,11 @@ void CTeamFortress2Mod :: mapInit ()
 	m_pCurrentRound = NULL;
 	m_Timer = CTeamRoundTimer();
 	bFlagStateDefault = true;
+	m_bFlagLocationValidBlue = false;
+	m_bFlagLocationValidRed = false;
+	m_bMVMAlarmSounded = false;
+	m_bMVMFlagStartValid = false;
+	m_bMVMCapturePointValid = false;
 
 	if ( strncmp(szmapname,"ctf_",4) == 0 )
 		m_MapType = TF_MAP_CTF; // capture the flag
@@ -714,6 +724,28 @@ bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity, int iTeam )
 	return ((strncmp(pEntity->GetClassName(),"mapobj_cart_dispenser",21)==0) && (CClassInterface::getTeam(pEntity)==iTeam));
 }
 
+CWaypoint *CTeamFortress2Mod :: getBestWaypointMVM ( CBot *pBot, int iFlags )
+{
+	Vector vFlagLocation;
+
+	bool bFlagLocationValid = CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&vFlagLocation);		
+
+	if ( hasRoundStarted() && m_bMVMFlagStartValid && m_bMVMCapturePointValid && bFlagLocationValid )
+	{
+		if ( m_bMVMAlarmSounded )
+			return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&m_vMVMCapturePoint);
+		else if ( ((m_vMVMFlagStart-vFlagLocation).Length()<1024.0f) )
+			return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&vFlagLocation);
+		else 
+			return CWaypoints::randomWaypointGoalBetweenArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&vFlagLocation,&m_vMVMCapturePoint);
+	}
+	else if ( bFlagLocationValid )
+	{
+		return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&vFlagLocation);
+	}
+
+	return NULL;
+}
 
 // check voice commands
 void CTeamFortress2Mod:: clientCommand ( edict_t *pEntity, int argc, const char *pcmd, const char *arg1, const char *arg2 )
@@ -1093,23 +1125,43 @@ void CTeamFortress2Mod :: roundReset ()
 		m_ObjectiveResource.updatePoints();
 
 	}
+
 	m_iWinningTeam = 0;
 	m_bRoundOver = false;
 	m_bHasRoundStarted = false;
 	m_iFlagCarrierTeam = 0;
 	m_pPayLoadBombBlue = NULL;
 	m_pPayLoadBombRed = NULL;
-	m_bFlagLocationValidBlue = false;
-	m_bFlagLocationValidRed = false;
+
 
 	if ( isMapType(TF_MAP_MVM) )	
 	{
-		CWaypoint *pGoal = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_FLAG);
-
-		if ( pGoal )
+		if ( !m_bMVMFlagStartValid )
 		{
-			m_vFlagLocationBlue = pGoal->getOrigin();
+			CWaypoint *pGoal = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_FLAG);
+
+			if ( pGoal )
+			{
+				m_vMVMFlagStart = m_vFlagLocationBlue = pGoal->getOrigin();
+				m_bMVMFlagStartValid = m_bFlagLocationValidBlue = true;
+			}			
+		}
+		else 
+		{
+			// Reset Flag Location
+			m_vFlagLocationBlue = m_vMVMFlagStart;
 			m_bFlagLocationValidBlue = true;
+		}
+
+		if ( !m_bMVMCapturePointValid )
+		{
+			CWaypoint *pGoal = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_CAPPOINT);
+
+			if ( pGoal )
+			{
+				m_vMVMCapturePoint = pGoal->getOrigin();
+				m_bMVMCapturePointValid = true;
+			}
 		}
 	}
 }

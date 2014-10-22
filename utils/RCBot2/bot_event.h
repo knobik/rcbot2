@@ -331,6 +331,18 @@ public:
 	void execute ( IBotEventInterface *pEvent );
 };
 
+class CTF2MVMWaveCompleteEvent : public CBotEvent
+{
+public:
+	CTF2MVMWaveCompleteEvent()
+	{
+		setType("mvm_wave_complete");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
+
 class CTF2PointStartTouch : public CBotEvent
 {
 public:
