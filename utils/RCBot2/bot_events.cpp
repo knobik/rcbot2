@@ -118,7 +118,7 @@ class CBroadcastMVMAlarm : public IBotFunction
 public:
 	CBroadcastMVMAlarm()
 	{
-		m_bValid = CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&m_vLoc);
+		m_bValid = CTeamFortress2Mod::getMVMCapturePoint(&m_vLoc);
 	}
 
 	void execute ( CBot *pBot )

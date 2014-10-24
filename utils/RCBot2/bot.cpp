@@ -2403,19 +2403,26 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	static Vector enemyvel;
 	static float fDistFactor;
 	static float fHeadOffset;
-	static float fDistance;
 	int iPlayerFlags = CClassInterface::getPlayerFlags(pEntity);
 
-	fDistance = distanceFrom(pEntity);
 	fHeadOffset = 0;
 
 	CBotWeapon *pWp = getCurrentWeapon();
 
+	float fVelFactor = 0.003125f;
+
 	if ( pWp && pWp->isMelee() )
+	{
 		fDistFactor = 0;
-	else		
-		fDistFactor = (1.0f - m_pProfile->m_fAimSkill) + (fDistance*0.000125f)*(m_fFov/90.0f);
-	
+		fVelFactor = 0;
+	}
+	else
+	{
+		if ( fDist < 160 )
+			fVelFactor = 0.001f;
+
+		fDistFactor = (1.0f - m_pProfile->m_fAimSkill) + (fDist*0.000125f)*(m_fFov/90.0f);
+	}
 	// origin is always the bottom part of the entity
 	// add body height
 	fHeadOffset += v_size.z-1;
@@ -2430,18 +2437,12 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	myvel = Vector(0,0,0);
 	enemyvel = Vector(0,0,0);
 
-	//v_size = v_size / 2;
-
-	/*v_desired_offset->x = fDistFactor*randomFloat(-v_size.x,v_size.x);
-	v_desired_offset->y = fDistFactor*randomFloat(-v_size.y,v_size.y);
-	v_desired_offset->z = fDistFactor*randomFloat(-v_size.z,v_size.z);*/
-	
 	// change in velocity
 	if ( CClassInterface::getVelocity(pEntity,&enemyvel) && CClassInterface::getVelocity(m_pEdict,&myvel) )
 	{
 		vel = (enemyvel - myvel); // relative velocity
 
-		vel = vel * 0.003125f;
+		vel = vel * fVelFactor;//0.003125f;
 
 		//fVelocityFactor = exp(-1.0f + ((vel.Length() * 0.003125f)*2)); // divide by max speed
 	}

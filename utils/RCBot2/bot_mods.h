@@ -1204,6 +1204,16 @@ public:
 
 	static void MVMAlarmSounded () { m_bMVMAlarmSounded = true; }
 	static void MVMAlarmReset () { m_bMVMAlarmSounded = false; }
+	static bool getMVMCapturePoint ( Vector *vec )
+	{
+		if ( m_bMVMCapturePointValid )
+		{
+			*vec = m_vMVMCapturePoint;
+			return true;
+		}
+
+		return ( getFlagLocation(TF2_TEAM_BLUE,vec) );
+	}
 
 private:
 

@@ -358,7 +358,7 @@ float CWaypointNavigator :: getNextYaw ()
 }
 
 // best waypoints are those with lowest danger
-CWaypoint *CWaypointNavigator :: chooseBestFromBeliefBetweenAreas ( dataUnconstArray<AStarNode*> *goals, bool bHighDanger )
+CWaypoint *CWaypointNavigator :: chooseBestFromBeliefBetweenAreas ( dataUnconstArray<AStarNode*> *goals, bool bHighDanger, bool bIgnoreBelief )
 {
 	int i;
 	CWaypoint *pWpt = NULL;
@@ -380,7 +380,14 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBeliefBetweenAreas ( dataUnconstA
 			{
 				node = goals->ReturnValueFromIndex(i);
 
-				if ( bHighDanger )
+				if ( bIgnoreBelief )
+				{
+					if ( bHighDanger )
+						fBelief += node->getHeuristic();
+					else
+						fBelief += (131072.0f - node->getHeuristic());
+				}
+				else if ( bHighDanger )
 					fBelief += m_fBelief[node->getWaypoint()] + node->getHeuristic();
 				else
 					fBelief += MAX_BELIEF - m_fBelief[node->getWaypoint()] + (131072.0f - node->getHeuristic());
@@ -394,7 +401,14 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBeliefBetweenAreas ( dataUnconstA
 			{
 				node = goals->ReturnValueFromIndex(i);
 
-				if ( bHighDanger )
+				if ( bIgnoreBelief )
+				{
+					if ( bHighDanger )
+						fBelief += node->getHeuristic();
+					else
+						fBelief += (131072.0f - node->getHeuristic());
+				}
+				else if ( bHighDanger )
 					fBelief += m_fBelief[node->getWaypoint()] + node->getHeuristic();
 				else
 					fBelief += MAX_BELIEF - m_fBelief[node->getWaypoint()] + (131072.0f - node->getHeuristic());
@@ -2645,7 +2659,7 @@ void CWaypoints :: checkAreas ( edict_t *pActivator )
 	}
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *origin, int iIgnore )
+CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *origin, int iIgnore, bool bIgnoreBelief )
 {
 	register short int i;
 	static short int size; 
@@ -2698,7 +2712,7 @@ CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, 
 		
 			pNav = (CWaypointNavigator*)pBot->getNavigator();
 
-			pWpt = pNav->chooseBestFromBeliefBetweenAreas(&goals,bHighDanger);
+			pWpt = pNav->chooseBestFromBeliefBetweenAreas(&goals,bHighDanger,bIgnoreBelief);
 		}
 		else
 			pWpt = CWaypoints::getWaypoint(goals.Random()->getWaypoint());
@@ -2718,7 +2732,7 @@ CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, 
 	return pWpt;
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *org1, Vector *org2 )
+CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *org1, Vector *org2, bool bIgnoreBelief )
 {
 	register short int i;
 	static short int size; 
@@ -2762,7 +2776,7 @@ CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, 
 		
 			pNav = (CWaypointNavigator*)pBot->getNavigator();
 
-			pWpt = pNav->chooseBestFromBeliefBetweenAreas(&goals,bHighDanger);
+			pWpt = pNav->chooseBestFromBeliefBetweenAreas(&goals,bHighDanger,bIgnoreBelief);
 		}
 		else
 			pWpt = CWaypoints::getWaypoint(goals.Random()->getWaypoint());

@@ -798,10 +798,18 @@ void CBotTF2 :: buildingDestroyed ( int iType, edict_t *pAttacker, edict_t *pEdi
 
 void CBotFortress ::wantToDisguise(bool bSet)
 {
-	if ( bSet )
-		m_fSpyDisguiseTime = 0.0f;
+	extern ConVar rcbot_tf2_debug_spies_cloakdisguise;
+
+	if ( rcbot_tf2_debug_spies_cloakdisguise.GetBool() )
+	{
+		if ( bSet )
+			m_fSpyDisguiseTime = 0.0f;
+		else
+			m_fSpyDisguiseTime = engine->Time() + 2.0f;
+	}
 	else
-		m_fSpyDisguiseTime = engine->Time() + 2.0f;
+		m_fSpyDisguiseTime = engine->Time() + 10.0f;
+
 }
 
 void CBotFortress :: detectedAsSpy( edict_t *pDetector, bool bDisguiseComprimised )
@@ -2502,9 +2510,14 @@ void CBotFortress ::waitCloak()
 
 bool CBotFortress:: wantToCloak()
 {	
-	if ( ( m_fFrenzyTime < engine->Time() ) && (!m_pEnemy || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY))  )
+	extern ConVar rcbot_tf2_debug_spies_cloakdisguise;
+
+	if ( rcbot_tf2_debug_spies_cloakdisguise.GetBool() )
 	{
-		return ( (CClassInterface::getTF2SpyCloakMeter(m_pEdict) > 90.0f) && ( m_fCurrentDanger > TF2_SPY_CLOAK_BELIEF ));
+		if ( ( m_fFrenzyTime < engine->Time() ) && (!m_pEnemy || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY))  )
+		{
+			return ( (CClassInterface::getTF2SpyCloakMeter(m_pEdict) > 90.0f) && ( m_fCurrentDanger > TF2_SPY_CLOAK_BELIEF ));
+		}
 	}
 
 	return false;
@@ -2910,8 +2923,9 @@ void CBotTF2 :: modThink ()
 	{
 		if ( !hasFlag() )
 		{
+			extern ConVar rcbot_tf2_debug_spies_cloakdisguise;
 
-			if ( m_fSpyDisguiseTime < engine->Time() )
+			if ( rcbot_tf2_debug_spies_cloakdisguise.GetBool() && (m_fSpyDisguiseTime < engine->Time()) )
 			{
 				// if previously detected or isn't disguised
 				if ( (m_fDisguiseTime == 0.0f) || !isDisguised() )
@@ -3917,7 +3931,9 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 
 	// Player
 	if ( CBotGlobals::isPlayer(pEnemy) )
-	{		
+	{	
+		const char *szModel = pEnemy->GetIServerEntity()->GetModelName().ToCStr();
+
 		if ( CTeamFortress2Mod::isFlagCarrier(pEnemy) )
 		{
 			// this enemy is carrying the flag, attack!
@@ -3933,6 +3949,14 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 		{
 			// dont shoot ubered player unlesss he's the only thing around for 2000 units
 			fPreFactor = 2000.0f;
+		}
+		// models/bots/demo/bot_sentry_buster.mdl
+		// 0000000000111111111122222222223333333
+		// 0123456789012345678901234567890123456
+		else if ( CTeamFortress2Mod::isMapType(TF_MAP_MVM) && (szModel[7]=='b') && (szModel[12]=='d') && (szModel[17]=='b') && (szModel[21]=='s') && (szModel[28]=='b') )
+		{
+			// sentry buster
+			fPreFactor = -500.0f;
 		}
 		else
 		{
@@ -6220,7 +6244,6 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 	static float fTime;
 
 	pWp = getCurrentWeapon();
-	fDist = distanceFrom(pEntity);
 
 	CBot::modAim(pEntity,v_origin,v_desired_offset,v_size,fDist,fDist2D);
 
@@ -6246,15 +6269,12 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 
 				Vector vForward;
 				Vector vRight;
-				QAngle eyes;
+				Vector vUp;
 
-				eyes = eyeAngles();
+				QAngle eyes = m_pController->GetLocalAngles();
 
 				// in fov? Check angle to edict
-				AngleVectors(eyes,&vForward);
-				vForward = vForward.NormalizeInPlace();
-
-				vRight = vForward.Cross(Vector(0,0,1));
+				AngleVectors(eyes,&vForward,&vRight,&vUp);
 
 				*v_desired_offset = *v_desired_offset + (((vRight * 24) - Vector(0,0,24))* bot_heavyaimoffset.GetFloat());
 			}
@@ -6563,7 +6583,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 			duck();
 		}
 
-		if ( pWeapon->outOfAmmo(this) )
+		if ( !pWeapon->isMelee() && pWeapon->outOfAmmo(this) )
 			return false; // change weapon/enemy
 	}
 	else
