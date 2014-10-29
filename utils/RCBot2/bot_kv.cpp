@@ -26,6 +26,9 @@ void CRCBotKeyValueList :: parseFile ( FILE *fp )
 
 		iLen = strlen(buffer);
 
+		if ( iLen == 0 )
+			continue;
+
 		if ( buffer[iLen-1] == '\n' )
 			buffer[--iLen] = 0;
 

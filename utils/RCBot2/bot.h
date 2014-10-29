@@ -942,6 +942,9 @@ public:
 		return false;
 	}
 
+	bool recentlyHurt ( float fTime );
+
+	eBotAction getCurrentUtil ( void ) { return m_CurrentUtil;}
 protected:
 
 	inline void setLookAt ( Vector vNew )
@@ -1128,7 +1131,7 @@ protected:
 
 	unsigned int m_iSpecialVisibleId;
 	float m_fCurrentDanger;
-
+	float m_fLastHurtTime;
 
 	float m_fUtilTimes[BOT_UTIL_MAX];	
 	

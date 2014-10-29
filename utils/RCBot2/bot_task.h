@@ -60,6 +60,13 @@ private:
 	CBotWeapon *pWrench;
 };
 
+class CBotTF2CoverInterrupt : public IBotTaskInterrupt
+{
+public:
+	bool isInterrupted ( CBot *pBot, bool *bFailed, bool *bCompleted );
+};
+
+
 class CBotTask
 {
 public:	

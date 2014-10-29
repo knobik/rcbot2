@@ -178,7 +178,15 @@ public:
 		if ( !m_data ) 
 			return defaultvalue; 
 		
-		return *((bool*)m_data); 
+		try
+		{
+			return *((bool*)m_data); 
+		}
+
+		catch(...)
+		{
+			return defaultvalue;
+		}
 	}
 
 	inline bool *getBoolPointer ( edict_t *edict ) 

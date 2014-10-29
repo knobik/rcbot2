@@ -190,40 +190,44 @@ void CBotUtilities :: execute ()
 
 			// put in correct order by making a linked list
 			pnew = (util_node_t*)malloc(sizeof(util_node_t));
-			pnew->util = pUtil;
-			pnew->next = NULL;
-			prev = NULL;
 
-			if ( temp )
+			if ( pnew != NULL )
 			{
-				while ( temp )
+				pnew->util = pUtil;
+				pnew->next = NULL;
+				prev = NULL;
+
+				if ( temp )
 				{
-					// put into correct position
-					if ( fUtil > temp->util->getUtility() )
+					while ( temp )
 					{
-						if ( temp == m_pBest.head )
+						// put into correct position
+						if ( fUtil > temp->util->getUtility() )
 						{
-							pnew->next = temp;
-							m_pBest.head = pnew;
-							break;
+							if ( temp == m_pBest.head )
+							{
+								pnew->next = temp;
+								m_pBest.head = pnew;
+								break;
+							}
+							else
+							{
+								prev->next = pnew;
+								pnew->next = temp;
+								break;
+							}
 						}
-						else
-						{
-							prev->next = pnew;
-							pnew->next = temp;
-							break;
-						}
+
+						prev = temp;
+						temp = temp->next;
 					}
 
-					prev = temp;
-					temp = temp->next;
+					if ( pnew->next == NULL )
+						prev->next = pnew;
 				}
-
-				if ( pnew->next == NULL )
-					prev->next = pnew;
+				else
+					m_pBest.head = pnew;
 			}
-			else
-				m_pBest.head = pnew;
 		}
 	}
 

@@ -554,7 +554,7 @@ CGotoHideSpotSched :: CGotoHideSpotSched ( CBot *pBot, edict_t *pEdict, bool bIs
 	}
 }
 
-CGotoHideSpotSched :: CGotoHideSpotSched (CBot *pBot, Vector vOrigin )
+CGotoHideSpotSched :: CGotoHideSpotSched (CBot *pBot, Vector vOrigin, IBotTaskInterrupt *interrupt )
 {
 	// run at flank while shooting	
 	CFindPathTask *pHideGoalPoint = new CFindPathTask();
@@ -565,6 +565,7 @@ CGotoHideSpotSched :: CGotoHideSpotSched (CBot *pBot, Vector vOrigin )
 
 	// no interrupts, should be a quick waypoint path anyway
 	pHideGoalPoint->setNoInterruptions();
+	pHideGoalPoint->setInterruptFunction(interrupt);
 	// get vector from good hide spot task
 	pHideGoalPoint->getPassedVector();
 }

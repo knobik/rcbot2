@@ -600,6 +600,7 @@ public:
 	// 
 	CBotTF2();
 
+	void MannVsMachineWaveComplete();
 	void MannVsMachineAlarmTriggered (Vector vLoc);
 
 	bool sentryRecentlyHadEnemy ();

@@ -1204,6 +1204,10 @@ public:
 
 	static void MVMAlarmSounded () { m_bMVMAlarmSounded = true; }
 	static void MVMAlarmReset () { m_bMVMAlarmSounded = false; }
+	static float getMVMCapturePointRadius ( )
+	{
+		return m_fMVMCapturePointRadius;
+	}
 	static bool getMVMCapturePoint ( Vector *vec )
 	{
 		if ( m_bMVMCapturePointValid )
@@ -1276,6 +1280,7 @@ private:
 	static bool m_bMVMCapturePointValid;
 	static Vector m_vMVMCapturePoint;
 	static bool m_bMVMAlarmSounded;
+	static float m_fMVMCapturePointRadius;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

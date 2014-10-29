@@ -429,7 +429,7 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBeliefBetweenAreas ( dataUnconstA
 }
 
 // best waypoints are those with lowest danger
-CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger, int iSearchFlags )
+CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger, int iSearchFlags, int iTeam )
 {
 	int i;
 	CWaypoint *pWpt = NULL;
@@ -452,15 +452,53 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 
 				if ( iSearchFlags & WPT_SEARCH_AVOID_SENTRIES )
 				{
-					for ( int j = 0; j < MAX_PLAYERS; j ++ )
+					for ( int j = 1; j <= gpGlobals->maxClients; j ++ )
 					{
-						edict_t *pSentry = CTeamFortress2Mod::getSentryGun(j);
+						edict_t *pSentry = CTeamFortress2Mod::getSentryGun(j-1);
 
 						if ( pSentry != NULL )
 						{
 							if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pSentry)) < 200.0f )
 							{
 								bBeliefFactor *= 0.1f;
+							}
+						}
+					}
+				}
+
+				if ( iSearchFlags & WPT_SEARCH_AVOID_SNIPERS )
+				{
+					for ( int j = 1; j <= gpGlobals->maxClients; j ++ )
+					{
+						edict_t *pPlayer = INDEXENT(i);
+
+						if ( (pPlayer != NULL) && !pPlayer->IsFree() && (CClassInterface::getTF2Class(pPlayer)==TF_CLASS_SNIPER) )
+						{
+							if ( ( iTeam == 0 ) || ( iTeam == CClassInterface::getTeam(pPlayer) ) )
+							{
+								if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pPlayer)) < 200.0f )
+								{
+									bBeliefFactor *= 0.1f;
+								}
+							}
+						}
+					}
+				}
+
+				if ( iSearchFlags & WPT_SEARCH_AVOID_TEAMMATE )
+				{
+					for ( int j = 1; j <= gpGlobals->maxClients; j ++ )
+					{
+						edict_t *pPlayer = INDEXENT(i);
+
+						if ( (pPlayer != NULL) && !pPlayer->IsFree() )
+						{
+							if ( ( iTeam == 0 ) || ( iTeam == CClassInterface::getTeam(pPlayer) ) )
+							{
+								if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pPlayer)) < 200.0f )
+								{
+									bBeliefFactor *= 0.1f;
+								}
 							}
 						}
 					}
@@ -495,6 +533,38 @@ CWaypoint *CWaypointNavigator :: chooseBestFromBelief ( dataUnconstArray<CWaypoi
 						if ( pSentry != NULL )
 						{
 							if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pSentry)) < 200.0f )
+							{
+								bBeliefFactor *= 0.1f;
+							}
+						}
+					}
+				}
+
+				if ( iSearchFlags & WPT_SEARCH_AVOID_SNIPERS )
+				{
+					for ( int j = 1; j <= gpGlobals->maxClients; j ++ )
+					{
+						edict_t *pPlayer = INDEXENT(i);
+
+						if ( (pPlayer != NULL) && !pPlayer->IsFree() && (CClassInterface::getTF2Class(pPlayer)==TF_CLASS_SNIPER) )
+						{
+							if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pPlayer)) < 200.0f )
+							{
+								bBeliefFactor *= 0.1f;
+							}
+						}
+					}
+				}
+
+				if ( iSearchFlags & WPT_SEARCH_AVOID_TEAMMATE )
+				{
+					for ( int j = 1; j <= gpGlobals->maxClients; j ++ )
+					{
+						edict_t *pPlayer = INDEXENT(i);
+
+						if ( (pPlayer != NULL) && !pPlayer->IsFree() )
+						{
+							if ( goals->ReturnValueFromIndex(i)->distanceFrom(CBotGlobals::entityOrigin(pPlayer)) < 200.0f )
 							{
 								bBeliefFactor *= 0.1f;
 							}
@@ -1350,7 +1420,7 @@ void CWaypointNavigator :: updatePosition ()
 
 	m_pBot->setMoveTo(vWptOrigin+m_vOffset);
 
-	if ( pWaypoint->isAiming() )
+	if ( pWaypoint && pWaypoint->isAiming() )
 		m_pBot->setAiming(vWptOrigin+(vaim*1024));
 	
 	/*if ( !m_pBot->hasEnemy() && (fBelief >= (fPrevBelief+10.0f)) ) 
@@ -2666,10 +2736,12 @@ CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, 
 	CWaypoint *pWpt;
 	AStarNode *node;
 	float fDist;
-
+	
 	size = numWaypoints();
 
 	dataUnconstArray<AStarNode*> goals;
+
+	int iWaypoint1 = CWaypointLocations::NearestWaypoint(*origin,200,-1);
 
 	for ( i = 0; i < size; i ++ )
 	{
@@ -2689,10 +2761,17 @@ CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, 
 
 				node = new AStarNode();
 
-				fDist = pWpt->distanceFrom(*origin);
-
+				if ( iWaypoint1 != -1 )
+				{
+					fDist = CWaypointDistances::getDistance(iWaypoint1,i);					
+				}
+				else 
+				{
+					fDist = pWpt->distanceFrom(*origin);
+				}
+				
 				if ( fDist == 0.0f )
-					fDist = 1.0f;
+					fDist = 0.1f;
 
 				node->setWaypoint(i);
 				node->setHeuristic(131072.0f/(fDist*fDist));
@@ -2738,6 +2817,10 @@ CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, 
 	static short int size; 
 	CWaypoint *pWpt;
 	AStarNode *node;
+	float fCost = 0;
+
+	int iWaypoint1 = CWaypointLocations::NearestWaypoint(*org1,200,-1);
+	int iWaypoint2 = CWaypointLocations::NearestWaypoint(*org2,200,-1);
 
 	size = numWaypoints();
 
@@ -2751,15 +2834,29 @@ CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, 
 		{
 			if ( (iFlags == -1) || pWpt->hasSomeFlags(iFlags) )
 			{
+
 				if ( !bForceArea && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(pWpt->getArea()) )
 					continue;
 				else if ( bForceArea && (pWpt->getArea() != iArea) )
 					continue;
 
+				fCost = 0;
+
 				node = new AStarNode();
 
 				node->setWaypoint(i);
-				node->setHeuristic((131072.0f/pWpt->distanceFrom(*org1))+(131072.0f/pWpt->distanceFrom(*org2)));
+
+				if ( iWaypoint1 != -1 )
+					fCost = 131072.0f/CWaypointDistances::getDistance(iWaypoint1,i);
+				else
+					fCost = 131072.0f/pWpt->distanceFrom(*org1);
+
+				if ( iWaypoint2 != -1 )
+					fCost +=  131072.0f/CWaypointDistances::getDistance(iWaypoint2,i);
+				else
+					fCost += 131072.0f/pWpt->distanceFrom(*org2);
+
+				node->setHeuristic(fCost);
 			
 				goals.Add(node);
 			}

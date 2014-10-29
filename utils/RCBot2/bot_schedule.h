@@ -38,6 +38,7 @@
 
 class CBotTask;
 class CAttackEntityTask;
+class IBotTaskInterrupt;
 
 #define BITS_SCHED_PASS_INT		(1<<0)
 #define BITS_SCHED_PASS_FLOAT	(1<<1)
@@ -618,7 +619,7 @@ public:
 	// hide from an enemy (pEdict)
 	CGotoHideSpotSched ( CBot *pBot, edict_t *pEdict, bool bIsGrenade = false );
 	// hide from a Vector
-	CGotoHideSpotSched ( CBot *pBot, Vector vOrigin );
+	CGotoHideSpotSched ( CBot *pBot, Vector vOrigin, IBotTaskInterrupt *interrupt = NULL );
 
 	void init ();
 };

@@ -78,10 +78,7 @@ public:
 
 	void execute ( CBot *pBot )
 	{
-		CBotSchedules *pSched = pBot->getSchedule();
-		pSched->freeMemory();
-		pBot->setLastEnemy(NULL);
-		pBot->reload();
+		((CBotTF2*)pBot)->MannVsMachineWaveComplete();
 	}
 
 };
@@ -116,18 +113,20 @@ private:
 class CBroadcastMVMAlarm : public IBotFunction
 {
 public:
-	CBroadcastMVMAlarm()
+	CBroadcastMVMAlarm(float fRadius)
 	{
 		m_bValid = CTeamFortress2Mod::getMVMCapturePoint(&m_vLoc);
+		m_fRadius = fRadius;
 	}
 
 	void execute ( CBot *pBot )
 	{
 		if ( m_bValid )
-			((CBotTF2*)pBot)->MannVsMachineAlarmTriggered(m_vLoc);
+			((CBotTF2*)pBot)->MannVsMachineAlarmTriggered(m_vLoc + Vector(randomFloat(-m_fRadius,m_fRadius),randomFloat(-m_fRadius,m_fRadius),0));
 	}
 private:
 	Vector m_vLoc;
+	float m_fRadius;
 	bool m_bValid;
 };
 
@@ -856,7 +855,7 @@ void CTF2PointStartCapture :: execute ( IBotEventInterface *pEvent )
 
 void CTF2MannVsMachineAlarm :: execute ( IBotEventInterface *pEvent )
 {
-	CBroadcastMVMAlarm alarm = CBroadcastMVMAlarm();
+	CBroadcastMVMAlarm alarm = CBroadcastMVMAlarm(CTeamFortress2Mod::getMVMCapturePointRadius());
 	   // MUST BE AFTER POINTS HAVE BEEN UPDATED!
     CBots::botFunction(&alarm);
 

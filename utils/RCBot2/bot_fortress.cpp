@@ -1552,7 +1552,7 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 			{
 				// don't hide if I am being healed or can be ubered
 
-				if ( m_bCanBeUbered && this->isTF2() && !hasFlag() ) // hack
+				if ( m_bCanBeUbered && !hasFlag() ) // hack
 					m_nextVoicecmd = TF_VC_ACTIVATEUBER;
 			}
 			else if ( !bDontHide )
@@ -1576,6 +1576,7 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 					pHideGoalPoint->setNoInterruptions();
 					// get vector from good hide spot task
 					pHideGoalPoint->getPassedVector();
+					pHideGoalPoint->setInterruptFunction(new CBotTF2CoverInterrupt());
 					
 
 					m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
@@ -1584,7 +1585,7 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 				else
 				{
 					m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
-					m_pSchedules->addFront(new CGotoHideSpotSched(this,m_vHurtOrigin));
+					m_pSchedules->addFront(new CGotoHideSpotSched(this,m_vHurtOrigin,new CBotTF2CoverInterrupt()));
 				}
 			}
 
@@ -3856,6 +3857,7 @@ bool CBotTF2 :: healPlayer ()
 
 	m_bIncreaseSensitivity = true;
 
+	//!!!CRASH!!!
 	if ( !CClassInterface::getMedigunHealing(pWeapon) )
 	{
 		if ( (m_fHealClickTime < engine->Time()) && (DotProductFromOrigin(vOrigin) > 0.98f) )		
@@ -5434,6 +5436,8 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				pHideGoalPoint->setNoInterruptions();
 				// get vector from good hide spot task
 				pHideGoalPoint->getPassedVector();
+				// Makes sure bot stopes trying to cover if ubered
+				pHideGoalPoint->setInterruptFunction(new CBotTF2CoverInterrupt());
 				//pSchedule->setID(SCHED_HIDE_FROM_ENEMY);
 
 				m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
@@ -5996,20 +6000,20 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 			else if ( CTeamFortress2Mod::isAttackDefendMap() )
 			{
 				if ( getTeam() == TF2_TEAM_RED )
-					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),m_iCurrentDefendArea,true,this,true);
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),m_iCurrentDefendArea,true,this,true,WPT_SEARCH_AVOID_SNIPERS);
 				else
-					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),m_iCurrentAttackArea,false,this,false);
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),m_iCurrentAttackArea,false,this,false,WPT_SEARCH_AVOID_SNIPERS);
 			}
 
 			if ( !pWaypoint )
 			{
 				int area = (randomInt(0,1)==1)?m_iCurrentAttackArea:m_iCurrentDefendArea;
 
-				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),area,true,this,area==m_iCurrentDefendArea);
+				pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),area,true,this,area==m_iCurrentDefendArea,WPT_SEARCH_AVOID_SNIPERS);
 
 				if ( !pWaypoint )
 				{
-					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),0,false,this);
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_SNIPER,getTeam(),0,false,this,false,WPT_SEARCH_AVOID_SNIPERS);
 				}
 			}
 
@@ -6583,7 +6587,7 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 			duck();
 		}
 
-		if ( !pWeapon->isMelee() && pWeapon->outOfAmmo(this) )
+		if ( (!pWeapon->isMelee() || pWeapon->isSpecial()) && pWeapon->outOfAmmo(this) )
 			return false; // change weapon/enemy
 	}
 	else
@@ -7028,12 +7032,43 @@ bool CBotFF :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 	return true;	
 }
 
+void CBotTF2::MannVsMachineWaveComplete()
+{
+	if ( (m_iClass != TF_CLASS_ENGINEER) || !isCarrying() )
+		m_pSchedules->freeMemory();
+
+	setLastEnemy(NULL);
+	
+	reload();
+	
+	m_fSentryPlaceTime = 1.0f;
+	m_fLastSentryEnemyTime = 0.0f;
+	
+	m_fDispenserPlaceTime = 1.0f;
+}
 
 void CBotTF2::MannVsMachineAlarmTriggered(Vector vLoc)
 {
+
+	if ( m_iClass == TF_CLASS_ENGINEER )
+	{
+		edict_t *pSentry;
+
+		if ( (pSentry = m_pSentryGun.get()) != NULL )
+		{
+			if ( CTeamFortress2Mod::getSentryLevel(pSentry) < 3 )
+				return;
+
+			// don't defend work on sentry!!!
+		}
+		
+		if ( isCarrying() )
+			return;
+	}
+
 	float fDefTime = randomFloat(10.0f,20.0f);
 
-	m_fDefendTime = engine->Time() + fDefTime;
+	m_fDefendTime = engine->Time() + fDefTime + 1.0f;
 
 	CBotSchedule *newSched = new CBotDefendSched(vLoc,m_fDefendTime/2);
 

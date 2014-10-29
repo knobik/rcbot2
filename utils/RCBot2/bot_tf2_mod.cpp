@@ -86,6 +86,7 @@ Vector CTeamFortress2Mod::m_vMVMFlagStart = Vector(0,0,0);
 bool CTeamFortress2Mod::m_bMVMCapturePointValid = false;
 Vector CTeamFortress2Mod::m_vMVMCapturePoint = Vector(0,0,0);
 bool CTeamFortress2Mod::m_bMVMAlarmSounded = false;
+float CTeamFortress2Mod::m_fMVMCapturePointRadius = 0.0f;
 
 extern ConVar bot_use_disp_dist;
 
@@ -179,6 +180,7 @@ void CTeamFortress2Mod :: mapInit ()
 	m_bMVMAlarmSounded = false;
 	m_bMVMFlagStartValid = false;
 	m_bMVMCapturePointValid = false;
+	m_fMVMCapturePointRadius = 0.0f;
 
 	if ( strncmp(szmapname,"ctf_",4) == 0 )
 		m_MapType = TF_MAP_CTF; // capture the flag
@@ -1161,6 +1163,7 @@ void CTeamFortress2Mod :: roundReset ()
 			{
 				m_vMVMCapturePoint = pGoal->getOrigin();
 				m_bMVMCapturePointValid = true;
+				m_fMVMCapturePointRadius = pGoal->getRadius();
 			}
 		}
 	}

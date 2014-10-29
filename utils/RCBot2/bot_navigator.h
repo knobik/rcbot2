@@ -352,6 +352,8 @@ bool operator<( const AStarNode * A, const AStarNode * B )
 }*/
 
 #define WPT_SEARCH_AVOID_SENTRIES 1
+#define WPT_SEARCH_AVOID_SNIPERS 2
+#define WPT_SEARCH_AVOID_TEAMMATE 4
 
 typedef struct
 {
@@ -378,7 +380,7 @@ public:
 
 	void init ();
 
-	CWaypoint *chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger = false, int iSearchFlags = 0);
+	CWaypoint *chooseBestFromBelief ( dataUnconstArray<CWaypoint*> *goals, bool bHighDanger = false, int iSearchFlags = 0, int iTeam = 0);
 	CWaypoint *chooseBestFromBeliefBetweenAreas ( dataUnconstArray<AStarNode*> *goals, bool bHighDanger = false, bool bIgnoreBelief = false );
 
 	float getNextYaw ();

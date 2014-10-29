@@ -1082,7 +1082,7 @@ CBot :: CBot()
 void CBot :: init (bool bVarInit)
 {
 	//m_bNeedToInit = false; // doing this now
-
+	m_fLastHurtTime = 0.0f;
 	m_iAmmo = NULL;
 	m_pButtons = NULL;
 	m_pNavigator = NULL;
@@ -1321,8 +1321,14 @@ bool CBot::wantToInvestigateSound ()
 	return ((m_fSpawnTime + 10.0f) < engine->Time()) && !hasEnemy() && m_bWantToInvestigateSound; 
 }
 
+bool CBot :: recentlyHurt ( float fTime )
+{
+	return (m_fLastHurtTime>0) && (m_fLastHurtTime>(engine->Time()-fTime));
+}
+
 void CBot :: spawnInit ()
 {
+	m_fLastHurtTime = 0.0f;
 	m_bWantToInvestigateSound = true;
 	m_fSpawnTime = engine->Time();
 	m_bIncreaseSensitivity = false;
@@ -1589,6 +1595,7 @@ bool CBot :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 		m_iAccumulatedDamage = 0;
 	}
 
+	m_fLastHurtTime = engine->Time();
 	m_iAccumulatedDamage += (m_iPrevHealth-iHealthNow);
 	m_iPrevHealth = iHealthNow;	
 

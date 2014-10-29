@@ -86,6 +86,9 @@ void CBotMods :: parseFile ()
 
 		len = strlen(buffer);
 
+		if ( len == 0 )
+			continue;
+
 		if ( buffer[len-1] == '\n' )
 			buffer[--len] = 0;
 

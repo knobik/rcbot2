@@ -1158,6 +1158,7 @@ void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
 		if ( !pBot->select_CWeapon(CWeapons::getWeapon(HL2DM_WEAPON_PHYSCANNON)) )
 		{
 			fail();
+			return;
 		}
 	}
 	else if ( pBot->distanceFrom(vOrigin) > 100 )
@@ -1167,7 +1168,13 @@ void CBotGravGunPickup :: execute(CBot *pBot,CBotSchedule *pSchedule)
 	else
 		pBot->stopMoving();
 
-	m_Weapon = INDEXENT(pWeapon->getWeaponIndex());
+	if ( pWeapon )
+		m_Weapon = INDEXENT(pWeapon->getWeaponIndex());
+	else
+	{
+		fail();
+		return;
+	}
 
 	pBot->setMoveLookPriority(MOVELOOK_OVERRIDE);
 	pBot->setLookVector(vOrigin);
@@ -3940,6 +3947,14 @@ void CBotTF2DemomanPipeEnemy :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		return;
 	}
 
+	if ( pBot->recentlyHurt(1.0f) )
+	{
+		// taking damage
+		fail();
+		pBot->updateUtilTime(pBot->getCurrentUtil());
+		return;
+	}
+
 	if( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
 		fail();
 
@@ -4265,7 +4280,20 @@ void CBotTF2Spam :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	pBot->wantToListen(false);
 
 	if( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
+	{
 		fail();
+		return;
+	}
+
+	if ( pBot->recentlyHurt(1.0f) )
+	{
+		// taking damage
+		fail();
+		pBot->updateUtilTime(pBot->getCurrentUtil());
+		pBot->wantToShoot(true);
+		return;
+	}
+
 
 	if ( m_fTime == 0.0f )
 	{
@@ -4936,6 +4964,17 @@ CBotTF2EngineerInterrupt :: CBotTF2EngineerInterrupt( CBot *pBot )
 	}
 	else
 		m_fPrevSentryHealth = 0;
+}
+
+bool CBotTF2CoverInterrupt::isInterrupted ( CBot *pBot, bool *bFailed, bool *bCompleted )
+{
+	if ( CTeamFortress2Mod::TF2_IsPlayerInvuln(pBot->getEdict()) )
+	{
+		*bFailed = true;
+		return true;
+	}
+
+	return false;
 }
 
 bool CBotTF2EngineerInterrupt :: isInterrupted ( CBot *pBot, bool *bFailed, bool *bCompleted )

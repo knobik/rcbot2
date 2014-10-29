@@ -1275,7 +1275,7 @@ CPathWaypointCreateFromToCommand :: CPathWaypointCreateFromToCommand()
 
 eBotCommandResult CPathWaypointCreateFromToCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
-	if ( pcmd && *pcmd && arg1 && *arg1 )
+	if ( pClient && pcmd && *pcmd && arg1 && *arg1 )
 	{
 		CWaypoint *pWaypoint = CWaypoints::getWaypoint(atoi(pcmd));
 
@@ -1322,7 +1322,7 @@ CPathWaypointRemoveFromToCommand :: CPathWaypointRemoveFromToCommand()
 
 eBotCommandResult CPathWaypointRemoveFromToCommand :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
-	if ( pcmd && *pcmd && arg1 && *arg1 )
+	if ( pClient && pcmd && *pcmd && arg1 && *arg1 )
 	{
 		CWaypoint *pWaypoint = CWaypoints::getWaypoint(atoi(pcmd));
 
@@ -1580,7 +1580,8 @@ eBotCommandResult CWaypointSaveCommand :: execute ( CClient *pClient, const char
 	if ( CWaypoints::save(false,(pClient!=NULL)?pClient->getPlayer():NULL,((pcmd!=NULL) && (*pcmd!=0))?pcmd:NULL,((arg1!=NULL) && (*arg1!=0))?arg1:NULL) )
 	{
 		CBotGlobals::botMessage(NULL,0,"waypoints saved");
-		pClient->giveMessage("Waypoints Saved");
+		if ( pClient )
+			pClient->giveMessage("Waypoints Saved");
 	}
 	else
 		CBotGlobals::botMessage(NULL,0,"error: could not save waypoints");
@@ -1668,7 +1669,7 @@ eBotCommandResult CDebugMemoryCheckCommand:: execute ( CClient *pClient, const c
 		if ( str )
 			CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - Value(string) = %s",pcmd,offset,STRING(*str));
 		else
-			CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - INVALID string",pcmd,offset,STRING(*str));
+			CBotGlobals::botMessage(pClient->getPlayer(),0,"%s - offset %d - INVALID string",pcmd,offset);
 	}
 	else
 		return COMMAND_ERROR;
@@ -2401,7 +2402,7 @@ void CBotCommandContainer :: freeMemory ()
 
 eBotCommandResult CPrintCommands ::execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
-	if ( pClient == NULL )
+	if ( pClient != NULL )
 	{
 		CBotGlobals::botMessage(pClient->getPlayer(),0,"All bot commands:");
 		CBotGlobals::m_pCommands->printCommand(pClient->getPlayer());
