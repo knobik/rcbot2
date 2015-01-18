@@ -2729,7 +2729,7 @@ void CWaypoints :: checkAreas ( edict_t *pActivator )
 	}
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *origin, int iIgnore, bool bIgnoreBelief )
+CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *origin, int iIgnore, bool bIgnoreBelief, int iWpt1 )
 {
 	register short int i;
 	static short int size; 
@@ -2741,7 +2741,8 @@ CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, 
 
 	dataUnconstArray<AStarNode*> goals;
 
-	int iWaypoint1 = CWaypointLocations::NearestWaypoint(*origin,200,-1);
+	if ( iWpt1 == -1 )
+	   iWpt1 = CWaypointLocations::NearestWaypoint(*origin,200,-1);
 
 	for ( i = 0; i < size; i ++ )
 	{
@@ -2761,9 +2762,9 @@ CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, 
 
 				node = new AStarNode();
 
-				if ( iWaypoint1 != -1 )
+				if ( iWpt1 != -1 )
 				{
-					fDist = CWaypointDistances::getDistance(iWaypoint1,i);					
+					fDist = CWaypointDistances::getDistance(iWpt1,i);					
 				}
 				else 
 				{
@@ -2811,7 +2812,7 @@ CWaypoint *CWaypoints :: randomWaypointGoalNearestArea ( int iFlags, int iTeam, 
 	return pWpt;
 }
 
-CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *org1, Vector *org2, bool bIgnoreBelief )
+CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, int iArea, bool bForceArea, CBot *pBot, bool bHighDanger, Vector *org1, Vector *org2, bool bIgnoreBelief, int iWpt1, int iWpt2 )
 {
 	register short int i;
 	static short int size; 
@@ -2819,8 +2820,10 @@ CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, 
 	AStarNode *node;
 	float fCost = 0;
 
-	int iWaypoint1 = CWaypointLocations::NearestWaypoint(*org1,200,-1);
-	int iWaypoint2 = CWaypointLocations::NearestWaypoint(*org2,200,-1);
+	if ( iWpt1 == -1 )
+		iWpt1 = CWaypointLocations::NearestWaypoint(*org1,200,-1);
+	if ( iWpt2 == -1 )
+		iWpt2 = CWaypointLocations::NearestWaypoint(*org2,200,-1);
 
 	size = numWaypoints();
 
@@ -2846,13 +2849,13 @@ CWaypoint *CWaypoints :: randomWaypointGoalBetweenArea ( int iFlags, int iTeam, 
 
 				node->setWaypoint(i);
 
-				if ( iWaypoint1 != -1 )
-					fCost = 131072.0f/CWaypointDistances::getDistance(iWaypoint1,i);
+				if ( iWpt1 != -1 )
+					fCost = 131072.0f/CWaypointDistances::getDistance(iWpt1,i);
 				else
 					fCost = 131072.0f/pWpt->distanceFrom(*org1);
 
-				if ( iWaypoint2 != -1 )
-					fCost +=  131072.0f/CWaypointDistances::getDistance(iWaypoint2,i);
+				if ( iWpt2 != -1 )
+					fCost +=  131072.0f/CWaypointDistances::getDistance(iWpt2,i);
 				else
 					fCost += 131072.0f/pWpt->distanceFrom(*org2);
 

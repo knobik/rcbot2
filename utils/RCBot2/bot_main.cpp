@@ -171,7 +171,7 @@ ConVar rcbot_melee_only("rcbot_melee_only","0",0,"if 1 bots will only use melee 
 ConVar rcbot_debug_iglev("rcbot_debug_iglev","0",0,"bot think ignores functions to test cpu speed");
 ConVar rcbot_dont_move("rcbot_dontmove","0",0,"if 1 , bots will all move forward");
 ConVar rcbot_runplayercmd_dods("rcbot_runplayer_cmd_dods","417",0,"offset of the DOD:S PlayerRunCommand function");
-ConVar rcbot_runplayercmd_tf2("rcbot_runplayer_cmd_tf2","417",0,"offset of the TF2 PlayerRunCommand function");
+ConVar rcbot_runplayercmd_tf2("rcbot_runplayer_cmd_tf2","418",0,"offset of the TF2 PlayerRunCommand function");
 ConVar rcbot_runplayercmd_hookonce("rcbot_runplayer_hookonce","1",0,"function will hook only once, if 0 it will unook and rehook after every map");
 ConVar rcbot_ladder_offs("rcbot_ladder_offs","42",0,"difference in height for bot to think it has touched the ladder waypoint");
 ConVar rcbot_ffa("rcbot_ffa","0",0,"Free for all mode -- bots shoot everyone");
@@ -308,12 +308,12 @@ void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* p
 		pCmd->weaponsubtype = cmd->weaponsubtype;
 		pCmd->tick_count = cmd->tick_count;
 	}
-#ifdef __linux__
+//#ifdef __linux__
 	try
 	{
-#endif
+//#endif
 		(*_this.*pPlayerRunCommand)(pCmd, pMoveHelper);
-#ifdef __linux__
+//#ifdef __linux__
 	}
 	catch(...)
 	{
@@ -321,7 +321,7 @@ void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* p
 		Error("RCBOT:  nPlayerRunCommand Failed. bad offset?");
 		return;
 	}
-#endif
+//#endif
 }
 
 // begin hook

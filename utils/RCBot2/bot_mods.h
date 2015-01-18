@@ -766,6 +766,7 @@ typedef enum
 	TF_MAP_TR,
 	TF_MAP_MVM,
 	TF_MAP_RD,
+	TF_MAP_BUMPERCARS,
 	TF_MAP_MAX
 }eTFMapType;
 
@@ -1281,6 +1282,8 @@ private:
 	static Vector m_vMVMCapturePoint;
 	static bool m_bMVMAlarmSounded;
 	static float m_fMVMCapturePointRadius;
+	static int m_iCapturePointWptID;
+	static int m_iFlagPointWptID;
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

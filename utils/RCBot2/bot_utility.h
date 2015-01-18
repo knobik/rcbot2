@@ -144,6 +144,10 @@ typedef enum
  BOT_UTIL_SAP_ENEMY_DISP,
  BOT_UTIL_SAP_LASTENEMY_DISP,
  BOT_UTIL_BUILDTELENT_SPAWN,
+ BOT_UTIL_INVESTIGATE_POINT,
+ BOT_UTIL_COVER_POINT,
+ BOT_UTIL_SNIPE_POINT,
+ BOT_UTIL_MOVEUP_MG,
  BOT_UTIL_MAX
 }eBotAction;
 
@@ -211,6 +215,7 @@ private:
 
 	util_list m_pBest;
 };
+#define ADD_UTILITY_WEAPON_DATA_VECTOR(utilname,condition,utility,weapon,data,vector) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility,weapon,data,vector)); } }
 #define ADD_UTILITY_DATA_VECTOR(utilname,condition,utility,data,vector) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility,NULL,data,vector)); } }
 #define ADD_UTILITY_WEAPON_DATA(utilname,condition,utility,weapon,data) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility,weapon,data)); } }
 #define ADD_UTILITY_DATA(utilname,condition,utility,data) if ( m_fUtilTimes[utilname] < engine->Time()) { if ( condition ) { utils.addUtility(CBotUtility(this,utilname,true,utility,NULL,data)); } }

@@ -433,14 +433,21 @@ void CDODBot :: died ( edict_t *pKiller, const char *pszWeapon )
 
 }
 
+// TO COMPLETE
 void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWeapon )
 {
 	static CWaypoint *pWpt;
 	extern ConVar rcbot_melee_only;
 
+	static CBotUtilities utils;
+
+	utils.freeMemory();
+
 	if ( (pKiller != m_pEdict) && pKiller && !m_pEnemy && !hasSomeConditions(CONDITION_SEE_CUR_ENEMY) && isEnemy(pKiller,false) )
 	{
-		bool bFollow = true;
+		//bool bInvestigate = true;
+		//bool bFollow = true;
+		Vector vecEnemy = CBotGlobals::entityOrigin(pKiller);
 		
 		if ( pWeapon )
 		{
@@ -456,6 +463,9 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 				updateCondition(CONDITION_COVERT);
 				//m_pNavigator->belief
 				m_fCurrentDanger += 100.0f; // sniper danger
+				//bInvestigate = false;
+				// Find Hide Spot
+				ADD_UTILITY_DATA_VECTOR(BOT_UTIL_SNIPE_POINT,!hasEnemy() && (m_iClass == DOD_CLASS_SNIPER) && getSniperRifle() && !getSniperRifle()->outOfAmmo(this),1.0f,(unsigned int)pKiller,vecEnemy);
 			}
 			else if ( (pclass == DOD_CLASS_MACHINEGUNNER) && pWeapon->isDeployable() )
 			{
@@ -468,9 +478,16 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 				m_pNavigator->belief(CBotGlobals::entityOrigin(pDied),CBotGlobals::entityOrigin(pKiller),100.0f,512.0f,BELIEF_DANGER);
 				//updateCondition(CONDITION_CHANGED);
 				m_fCurrentDanger = MAX_BELIEF; // machine gun danger
+				//bInvestigate = false;
+
+				ADD_UTILITY_DATA_VECTOR(BOT_UTIL_SNIPE_POINT,!hasEnemy() && (m_iClass == DOD_CLASS_SNIPER) && getSniperRifle() && !getSniperRifle()->outOfAmmo(this),1.0f,1,vecEnemy);
+				//ADD_UTILITY_DATA_VECTOR(BOT_UTIL_MOVEUP_MG,!hasEnemy() && (m_iClass == DOD_CLASS_MACHINEGUNNER) && getMG() && !getMG()->outOfAmmo(this),1.0f,1,vecEnemy);
 			}
 			else
+			{
 				m_fCurrentDanger += 20.0f;
+				//ADD_UTILITY_DATA_VECTOR(BOT_UTIL_SNIPE_POINT,m_iClass == DOD_CLASS_SNIPER,1.0f,1,vecEnemy);
+			}
 
 			if ( isVisible(pKiller) )
 			{
@@ -480,9 +497,9 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 
 				if ( (iCurrentWaypoint!=-1) && (iEnemyWaypoint!=-1) && !pTable->GetVisibilityFromTo(iCurrentWaypoint,iEnemyWaypoint) )
 				{
-					m_pSchedules->removeSchedule(SCHED_CROUCH_AND_HIDE);
-					m_pSchedules->addFront(new CCrouchHideSched(pKiller));
-					bFollow = false;
+					//bFollow = false;
+
+					ADD_UTILITY_DATA_VECTOR(BOT_UTIL_COVER_POINT,m_pCurrentWeapon != NULL,0.8f,((unsigned int)pKiller),(vecEnemy));
 				}
 			}
 			/*else if ( CBotGlobals::isPlayer(pDied) )
@@ -546,11 +563,7 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 			{
 				CWaypoint *pWaypoint;
 
-				if ( m_pSchedules->hasSchedule(SCHED_DEPLOY_MACHINE_GUN) )
-				{
-					bFollow = false;
-				}
-				else
+				if ( !m_pSchedules->hasSchedule(SCHED_DEPLOY_MACHINE_GUN) )
 				{
 					Vector vSearchForMachineGunPointOrigin = m_vListenPosition-getOrigin();
 
@@ -569,18 +582,22 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 						false,false,
 						Vector(0,0,0),
 						CWaypointTypes::W_FL_MACHINEGUN))) != NULL)
-						{					
-							m_pSchedules->add(new CDeployMachineGunSched(pMachineGun,pWaypoint,m_vListenPosition));
+						{	
+							ADD_UTILITY_WEAPON_DATA_VECTOR(BOT_UTIL_MOVEUP_MG,pMachineGun && !pMachineGun->outOfAmmo(this),1.0f,pMachineGun,CWaypoints::getWaypointIndex(pWaypoint),m_vListenPosition);
 
-							bFollow = false;
+							//m_pSchedules->add(new CDeployMachineGunSched(pMachineGun,pWaypoint,m_vListenPosition));
+
+							//bFollow = false;
 						}
 				}
 			}
 
-			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) && bFollow )
+			if ( !m_pSchedules->isCurrentSchedule(SCHED_INVESTIGATE_NOISE) )
 			{
-				m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
-				m_pSchedules->addFront(new CBotInvestigateNoiseSched(CBotGlobals::entityOrigin(pDied),m_vListenPosition));
+				ADD_UTILITY_DATA_VECTOR(BOT_UTIL_INVESTIGATE_POINT,!m_pSchedules->hasSchedule(SCHED_DEPLOY_MACHINE_GUN)&&!m_pSchedules->hasSchedule(SCHED_SNIPE),0.5f,(unsigned int)pDied,m_vListenPosition);
+
+				//m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
+				//m_pSchedules->addFront(new CBotInvestigateNoiseSched(CBotGlobals::entityOrigin(pDied),m_vListenPosition));
 			}
 
 			m_bListenPositionValid = true;
@@ -591,8 +608,29 @@ void CDODBot :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 			//listenToPlayer(pDied);
 		}
 
-		if ( !bFollow )
-			updateCondition(CONDITION_CHANGED);
+		utils.execute();
+		CBotUtility *next;
+
+		while ( (next = utils.nextBest()) != NULL )
+		{
+			if ( executeAction(next) )
+			{
+				m_CurrentUtil = next->getId();
+
+				if ( m_fUtilTimes[next->getId()] < engine->Time() )
+					m_fUtilTimes[next->getId()] = engine->Time() + randomFloat(0.1f,2.0f); // saves problems with consistent failing
+
+				if ( CClients::clientsDebugging(BOT_DEBUG_UTIL) )
+					CClients::clientDebugMsg(BOT_DEBUG_UTIL,g_szUtils[next->getId()],this);
+			
+				break;
+			}
+		}
+
+		utils.freeMemory();
+
+		//if ( !bInvestigate && !bFollow )
+		//	updateCondition(CONDITION_CHANGED);
 
 		if ( (m_pEnemy==pKiller) )
 		{
@@ -844,8 +882,7 @@ void CDODBot :: handleWeapons ()
 
 		pWeapon = getCurrentWeapon();
 
-
-		if ( !rcbot_melee_only.GetBool() && pWeapon && pWeapon->isDeployable() && !pWeapon->outOfAmmo(this) && CClassInterface::isMachineGunDeployed(pWeapon->getWeaponEntity()))
+		if ( pWeapon && pWeapon->getWeaponEntity() && !rcbot_melee_only.GetBool() && pWeapon->isDeployable() && !pWeapon->outOfAmmo(this) && CClassInterface::isMachineGunDeployed(pWeapon->getWeaponEntity()))
 		{
 			; // keep current weapon on
 		}
@@ -938,7 +975,7 @@ void CDODBot :: touchedWpt ( CWaypoint *pWaypoint, int iNextWaypoint, int iPrevW
 		
 		// normal waypoint
 		// Check if current waypoint has a path which is invisible to my next waypoint
-		if ( (iNextWaypoint != -1) && (randomFloat(0,MAX_BELIEF) < m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint))) )
+		if ( (iPrevWaypoint != -1) && (iNextWaypoint != -1) && (randomFloat(0,MAX_BELIEF) < m_pNavigator->getBelief(CWaypoints::getWaypointIndex(pWaypoint))) )
 		{
 			
 			int i;
@@ -2111,6 +2148,95 @@ bool CDODBot :: executeAction ( CBotUtility *util )
 
 	switch ( util->getId() )
 	{
+	case  BOT_UTIL_INVESTIGATE_POINT:
+		m_pSchedules->removeSchedule(SCHED_INVESTIGATE_NOISE);
+		m_pSchedules->addFront(new CBotInvestigateNoiseSched(CBotGlobals::entityOrigin((edict_t*)util->getIntData()),util->getVectorData()));
+		return true;
+	case BOT_UTIL_COVER_POINT:
+		m_pSchedules->removeSchedule(SCHED_CROUCH_AND_HIDE);
+		m_pSchedules->addFront(new CCrouchHideSched((edict_t*)util->getIntData()));
+		return true;
+	case BOT_UTIL_SNIPE_POINT:
+		// find sniper point facing the enemy
+		{
+			edict_t *pEnemy = (edict_t*)util->getIntData();
+
+			Vector vEnemyOrigin = CBotGlobals::entityOrigin(pEnemy);
+
+			int iEnemyWpt = CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(pEnemy),200.0f,-1,true,true,false,NULL,false,0,false);
+
+			vector <int> pWaypointList;
+
+			Vector vOrigin = getOrigin();
+
+			// find all sniper points
+			CWaypointLocations::GetAllInArea(vOrigin,&pWaypointList,iEnemyWpt);
+
+			unsigned int size = pWaypointList.size();
+			float fDist;
+			float fNearest = 1024.0f;
+			CWaypoint *pNearest = NULL;
+
+			for ( unsigned short i = 0; i < size; i ++ )
+			{
+				CWaypoint *pWpt = CWaypoints::getWaypoint(pWaypointList[i]);
+
+				if ( pWpt->hasFlag(CWaypointTypes::W_FL_SNIPER) )
+				{
+					// Check the yaw
+					QAngle eyes;
+
+					float iYaw = pWpt->getAimYaw();
+
+					eyes.x = 0;
+					eyes.y = iYaw;
+					eyes.z = 0;
+
+					Vector vecLOS;
+					float flDot;
+	
+					Vector vForward;
+		
+					// in fov? Check angle to edict
+					AngleVectors(eyes,&vForward);
+	
+					vecLOS = vEnemyOrigin - pWpt->getOrigin();
+					vecLOS = vecLOS/vecLOS.Length();
+	
+					flDot = DotProduct (vecLOS , vForward );
+	
+					if ( flDot > 0 ) // 90 degrees 
+					{
+						fDist = pWpt->distanceFrom(vOrigin);
+
+						if ( fDist < fNearest )
+						{
+							pNearest = pWpt;
+							fNearest = fDist;
+						}
+					}
+				}
+			}
+
+			if ( pNearest != NULL )
+			{
+				m_pSchedules->freeMemory();
+
+				CBotSchedule *snipesched = new CBotSchedule();
+
+				snipesched->addTask(new CFindPathTask(CWaypoints::getWaypointIndex(pNearest)));
+				snipesched->addTask(new CBotDODSnipe(getSniperRifle(),pNearest->getOrigin(),pNearest->getAimYaw(),true,vEnemyOrigin.z,pNearest->getFlags()));
+
+				snipesched->setID(SCHED_SNIPE);
+
+				m_pSchedules->addFront(snipesched);
+				return true;
+			}
+		}
+		break;
+	case BOT_UTIL_MOVEUP_MG:
+		m_pSchedules->add(new CDeployMachineGunSched(util->getWeaponChoice(),CWaypoints::getWaypoint(util->getIntData()),util->getVectorData()));
+		return true;
 	case BOT_UTIL_PICKUP_WEAPON:
 		m_pSchedules->add(new CBotPickupSchedUse(m_pNearestWeapon.get()));
 		return true;

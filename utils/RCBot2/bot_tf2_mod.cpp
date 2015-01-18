@@ -87,6 +87,8 @@ bool CTeamFortress2Mod::m_bMVMCapturePointValid = false;
 Vector CTeamFortress2Mod::m_vMVMCapturePoint = Vector(0,0,0);
 bool CTeamFortress2Mod::m_bMVMAlarmSounded = false;
 float CTeamFortress2Mod::m_fMVMCapturePointRadius = 0.0f;
+int CTeamFortress2Mod::m_iCapturePointWptID = -1;
+int CTeamFortress2Mod::m_iFlagPointWptID = -1;
 
 extern ConVar bot_use_disp_dist;
 
@@ -181,6 +183,8 @@ void CTeamFortress2Mod :: mapInit ()
 	m_bMVMFlagStartValid = false;
 	m_bMVMCapturePointValid = false;
 	m_fMVMCapturePointRadius = 0.0f;
+	m_iCapturePointWptID = -1;
+	m_iFlagPointWptID = -1;
 
 	if ( strncmp(szmapname,"ctf_",4) == 0 )
 		m_MapType = TF_MAP_CTF; // capture the flag
@@ -735,15 +739,15 @@ CWaypoint *CTeamFortress2Mod :: getBestWaypointMVM ( CBot *pBot, int iFlags )
 	if ( hasRoundStarted() && m_bMVMFlagStartValid && m_bMVMCapturePointValid && bFlagLocationValid )
 	{
 		if ( m_bMVMAlarmSounded )
-			return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&m_vMVMCapturePoint,-1,true);
+			return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&m_vMVMCapturePoint,-1,true,m_iCapturePointWptID);
 		else if ( ((m_vMVMFlagStart-vFlagLocation).Length()<1024.0f) )
 			return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&vFlagLocation,-1,true);
 		else 
-			return CWaypoints::randomWaypointGoalBetweenArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&vFlagLocation,&m_vMVMCapturePoint,true);
+			return CWaypoints::randomWaypointGoalBetweenArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&vFlagLocation,&m_vMVMCapturePoint,true,-1,m_iCapturePointWptID);
 	}
 	else if ( bFlagLocationValid )
 	{
-		return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&vFlagLocation,-1,true);
+		return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&vFlagLocation,-1,true,m_iFlagPointWptID);
 	}
 
 	return NULL;
@@ -1146,6 +1150,7 @@ void CTeamFortress2Mod :: roundReset ()
 			{
 				m_vMVMFlagStart = m_vFlagLocationBlue = pGoal->getOrigin();
 				m_bMVMFlagStartValid = m_bFlagLocationValidBlue = true;
+				m_iFlagPointWptID = CWaypoints::getWaypointIndex(pGoal);
 			}			
 		}
 		else 
@@ -1164,6 +1169,7 @@ void CTeamFortress2Mod :: roundReset ()
 				m_vMVMCapturePoint = pGoal->getOrigin();
 				m_bMVMCapturePointValid = true;
 				m_fMVMCapturePointRadius = pGoal->getRadius();
+				m_iCapturePointWptID = CWaypoints::getWaypointIndex(pGoal);
 			}
 		}
 	}

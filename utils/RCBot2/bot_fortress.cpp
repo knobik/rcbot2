@@ -2868,7 +2868,7 @@ void CBotTF2 :: modThink ()
 			if ( (m_fRevMiniGunTime + m_fNextRevMiniGunTime) > engine->Time() )
 			{
 				secondaryAttack(true);
-				m_fIdealMoveSpeed = 30.0f;
+				//m_fIdealMoveSpeed = 30.0f; Improve Max Speed here
 
 				if ( m_fCurrentDanger < 1 )
 				{

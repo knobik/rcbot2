@@ -661,7 +661,11 @@ edict_t *CClassInterface::FindEntityByNetClassNearest(Vector vstart, const char 
 		{
 			continue;
 		}
-
+		if ( current->IsFree() )
+			continue;
+		if ( current->GetUnknown() == NULL )
+			continue;
+		
 		IServerNetworkable *network = current->GetNetworkable();
 
 		if (network == NULL)
