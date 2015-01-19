@@ -388,6 +388,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\bot_dod_mod.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\bot_events.cpp"
 				>
 			</File>
@@ -477,6 +481,10 @@
 			</File>
 			<File
 				RelativePath=".\bot_task.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\bot_tf2_mod.cpp"
 				>
 			</File>
 			<File

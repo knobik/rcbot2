@@ -1,3 +1,31 @@
+0.95
+====
+tf2: updated MVM waypoints + new Sd_doomsday_event waypoints
+tf2: Lots of MVM improvements (mvm map must have flag waypoint near enemy bot spawn and capture point at defend point)
+tf2: Fixed slow heavy guy when revving mini gun
+tf2: updated default rcbot_runplayer_cmd_tf2 to 418
+tf2: demomen who are piping stop when they get hurt
+tf2: fix bug with bots standing in respawn in MVM
+tf2: bots choose more defensive classes in MVM
+tf2: bots stop hiding when they get ubered
+tf2: bots are aware of nearby ally sentries that are shooting
+tf2: spies and engineers try to avoid walking into their sentries by mistake
+tf2: linux build fix
+tf2: engineers dont change class so often if they have a 3rd level sentry 
+tf2: engineers dont move their sentry if it recently shot an enemy
+tf2: bots have higher priority to shoot defending players on CP points 
+tf2: if there are no medics on a team there will be a higher chance for a bot to change class to medic
+tf2: bots take cover from pipe grenade fix 
+tf2: snipers take cover from pipe grenades when sniping
+tf2: engineers stop trying to upgrade a building if it is being moved 
+tf2: bots know they can go into other teams spawn when they win a round 
+tf2: pyros dont airblast grenades so close
+tf2: players only go back to cap points that they own which are under attack 
+tf2: RD map fix 
+tf2: fixed medic healing bugsall: fixed some crashes due to rcbot commands
+all: fixed some other possible crashes
+all: fixed a melee weapon bug
+
 0.94
 ====
 tf2: updated and fixed some waypoints
