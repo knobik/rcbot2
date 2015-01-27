@@ -1541,6 +1541,8 @@ void CBotFortress :: foundSpy (edict_t *pEdict,TF_Class iDisguise)
 // got shot by someone
 bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 {
+	extern ConVar rcbot_spy_runaway_health;
+
 	if ( !pAttacker )
 		return false;
 
@@ -1587,6 +1589,20 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 					m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
 					m_pSchedules->addFront(new CGotoHideSpotSched(this,m_vHurtOrigin,new CBotTF2CoverInterrupt()));
 				}
+
+				if( ( m_iClass == TF_CLASS_SPY ) && (iHealthNow<rcbot_spy_runaway_health.GetInt()) )
+				{
+					// cloak and run
+					if ( !isCloaked() )
+					{
+						spyCloak();
+						// hide and find health
+						updateCondition(CONDITION_CHANGED);				
+						wantToShoot(false);
+						m_fFrenzyTime = 0.0f;
+						m_pEnemy = NULL; // reset enemy
+					}
+				}
 			}
 
 			return true;
@@ -1595,8 +1611,9 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 
 	if ( pAttacker )
 	{
-		if ( !isCloaked() && !CTeamFortress2Mod::isSentry(pAttacker,CTeamFortress2Mod::getEnemyTeam(m_iTeam)) )
+		if ( (m_iClass == TF_CLASS_SPY) && !isCloaked() && !CTeamFortress2Mod::isSentry(pAttacker,CTeamFortress2Mod::getEnemyTeam(m_iTeam)) )
 		{
+			
 			// TO DO : make sure I'm not just caught in crossfire
 			// search for other team members
 			if ( !m_StatsCanUse.stats.m_iTeamMatesVisible || !m_StatsCanUse.stats.m_iTeamMatesInRange )
@@ -1604,6 +1621,17 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 
 			if ( isDisguised() )
 				detectedAsSpy(pAttacker,true);
+
+			if ( (iHealthNow<rcbot_spy_runaway_health.GetInt()) && (CClassInterface::getTF2SpyCloakMeter(m_pEdict) > 0.3f) )
+			{
+				// cloak and run
+				spyCloak();
+				// hide and find health
+				updateCondition(CONDITION_CHANGED);				
+				wantToShoot(false);
+				m_fFrenzyTime = 0.0f;
+				m_pEnemy = NULL; // reset enemy
+			}
 		}
 	}
 
@@ -3995,7 +4023,20 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 			{
 				// I'm a spy and I'm attacking an engineer!
 				if ( m_iClass == TF_CLASS_SPY )
+				{
+					edict_t *pSentry = NULL;
+
 					fPreFactor = -400.0f;
+
+					if ( (pSentry = m_pNearestEnemySentry.get()) != NULL )
+					{
+						if ( (CTeamFortress2Mod::getSentryOwner(pSentry) == pEnemy) && CTeamFortress2Mod::isSentrySapped(pSentry) && (distanceFrom(pSentry)<TF2_MAX_SENTRYGUN_RANGE) )
+						{
+							// this guy is the owner of a disabled sentry gun -- take him out!
+							fPreFactor = -1024.0f;
+						}
+					}					
+				}
 			}
 		}
 	}
@@ -5963,6 +6004,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 						CBotTask *pipetask = new CBotTF2DemomanPipeEnemy(getWeapons()->getWeapon(CWeapons::getWeapon(TF2_WEAPON_PIPEBOMBS)),vEnemy,pEnemy);
 						CBotSchedule *pipesched = new CBotSchedule();
 
+						pipetask->setInterruptFunction(new CBotTF2HurtInterrupt(this));
 						pipesched->addTask(new CBotTF2FindPipeWaypoint(vLoc,vEnemy));
 						pipesched->addTask(findpath);
 						pipesched->addTask(pipetask);
@@ -6850,8 +6892,26 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 		{
 			if ( m_iClass == TF_CLASS_SPY )	
 			{
+				edict_t *pSentry = NULL;
+
 				if ( !bCheckWeapons )
 					return true;
+
+				if ( isDisguised() ) 
+				{
+					if ( (pSentry = m_pNearestEnemySentry.get()) != NULL )
+					{
+						// If I'm disguised don't attack any player until nearby sentry is disabled
+						if ( !CTeamFortress2Mod::isSentrySapped(pSentry) && isVisible(pSentry) && (distanceFrom(pSentry)<TF2_MAX_SENTRYGUN_RANGE) )
+							return false;
+					}
+					else if ( (pSentry = m_pLastEnemySentry.get()) != NULL )
+					{
+						// If I'm disguised don't attack any player until nearby sentry is disabled
+						if ( !CTeamFortress2Mod::isSentrySapped(pSentry) && isVisible(pSentry) && (distanceFrom(pSentry)<TF2_MAX_SENTRYGUN_RANGE) )
+							return false;
+					}
+				}
 			}	
 
 			if ( CClassInterface::getTF2Class(pEdict) == (int)TF_CLASS_SPY )

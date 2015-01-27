@@ -191,10 +191,25 @@ ConVar rcbot_debug_dont_shoot("rcbot_debug_dont_shoot","0",0,"Debug command, sto
 ConVar rcbot_debug_show_route("rcbot_debug_show_route","0",0,"Debug command, shows waypoint route to host");
 ConVar rcbot_tf2_autoupdate_point_time("rcbot_tf2_autoupdate_point_time","60",0,"Time to automatically update points in TF2 for any changes");
 ConVar rcbot_tf2_payload_dist_retreat("rcbot_tf2_payload_dist_retreat","512.0",0,"Distance for payload bomb to be greater than at cap before defend team retreats");
+ConVar rcbot_spy_runaway_health("rcbot_spy_runaway_health","70",0,"health which spies run away after attacking");
 //ConVar rcbot_util_learning("rcbot_util_learning","0",0,"Experimental");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 
+#ifdef _DEBUG
+
+CON_COMMAND( rcbot_attribtest, "attributes for tf2 test" )
+{
+	// get listen server edict
+	edict_t *pplayer = CClients::getListenServerClient();
+
+	if ( pplayer )
+	{
+		byte *list = CClassInterface::getAttributeList(pplayer);
+
+		CBotGlobals::botMessage(pplayer,0,(char*)list);
+	}
+}
 
 CON_COMMAND( rcbot_enginetime, "get engine time" )
 {
@@ -209,6 +224,8 @@ CON_COMMAND( rcbot_maptime, "get map time" )
 	Msg("gpGlobals->realtime = %f\n",gpGlobals->realtime);
 	Msg("gpGlobals->curtime = %f\n",gpGlobals->curtime);
 }
+
+#endif
 
 ConVar *sv_gravity = NULL;
 ConVar *sv_cheats = NULL;//("sv_cheats");

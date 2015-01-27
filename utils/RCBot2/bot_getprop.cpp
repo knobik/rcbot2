@@ -524,6 +524,7 @@ void CClassInterface:: init ()
 		//8484 : m_bCarryingObject
 		DEFINE_GETPROP(GETPROP_TF2_ISCARRYINGOBJ,"CTFPlayer","m_bCarryingObject",0);
 		DEFINE_GETPROP(GETPROP_TF2_GETCARRIEDOBJ,"CTFPlayer","m_hCarriedObject",0);
+		DEFINE_GETPROP(GETPROP_TF2_ATTRIBUTELIST,"CTFPlayer","m_AttributeList",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
