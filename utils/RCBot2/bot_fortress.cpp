@@ -246,6 +246,7 @@ CBotFortress :: CBotFortress()
 	CBot(); 
 
 	m_iLastFailSentryWpt = -1;
+	m_iLastFailTeleExitWpt = -1;
 
 	// remember prev spy disguised in game while playing
 	m_iPrevSpyDisguise = (TF_Class)0;
@@ -1597,7 +1598,7 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 					{
 						spyCloak();
 						// hide and find health
-						updateCondition(CONDITION_CHANGED);				
+						//updateCondition(CONDITION_CHANGED);				
 						wantToShoot(false);
 						m_fFrenzyTime = 0.0f;
 						m_pEnemy = NULL; // reset enemy
@@ -1627,10 +1628,13 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 				// cloak and run
 				spyCloak();
 				// hide and find health
-				updateCondition(CONDITION_CHANGED);				
+				m_pSchedules->removeSchedule(SCHED_GOOD_HIDE_SPOT);
+				m_pSchedules->addFront(new CGotoHideSpotSched(this,m_vHurtOrigin,new CBotTF2CoverInterrupt()));		
 				wantToShoot(false);
 				m_fFrenzyTime = 0.0f;
 				m_pEnemy = NULL; // reset enemy
+
+				return true;
 			}
 		}
 	}
@@ -2224,7 +2228,7 @@ void CBotTF2 :: seeFriendlyDie ( edict_t *pDied, edict_t *pKiller, CWeapon *pWea
 				m_fCurrentDanger += 100.0f;
 				m_pLastEnemySentry = CTeamFortress2Mod::getMySentryGun(pKiller);
 				m_vLastDiedOrigin = CBotGlobals::entityOrigin(pDied);
-				pKiller = m_pLastEnemySentry;
+				m_pLastEnemySentry = pKiller;
 
 				if ( (m_iClass == TF_CLASS_DEMOMAN) || (m_iClass == TF_CLASS_SPY) )
 				{
@@ -5289,11 +5293,20 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 			{
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vTeleportExit,150,-1,true,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_TELE_EXIT));
 
-				// no use going back to this waypoint
-				if ( pWaypoint && (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
+				if ( CWaypoints::getWaypointIndex(pWaypoint) == m_iLastFailTeleExitWpt )
+				{
 					pWaypoint = NULL;
+					m_bTeleportExitVectorValid = false;
+				}
+				// no use going back to this waypoint
+				else if ( pWaypoint && (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
+				{
+					pWaypoint = NULL;
+					m_bTeleportExitVectorValid = false;
+				}
 			}
-			else
+			
+			if ( pWaypoint == NULL )
 			{
 				if ( CTeamFortress2Mod::isAttackDefendMap() )
 				{
@@ -5307,11 +5320,14 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				{
 					int area = (randomInt(0,1)==1)?m_iCurrentAttackArea:m_iCurrentDefendArea;
 
-					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),area,true,this,false);//CTeamFortress2Mod::getArea());
+					pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),area,true,this,false,0,m_iLastFailTeleExitWpt);//CTeamFortress2Mod::getArea());
 					
 					if ( !pWaypoint )
 					{
-						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),0,false,this,false);//CTeamFortress2Mod::getArea());
+						pWaypoint = CWaypoints::randomWaypointGoal(CWaypointTypes::W_FL_TELE_EXIT,getTeam(),0,false,this,false,0,m_iLastFailTeleExitWpt);//CTeamFortress2Mod::getArea());
+						
+						if ( !pWaypoint ) 
+							m_iLastFailTeleExitWpt = -1;
 					}
 				}
 			}
@@ -5323,6 +5339,7 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				updateCondition(CONDITION_COVERT); // sneak around to get there
 				m_pSchedules->add(new CBotTFEngiBuild(this,ENGI_EXIT,pWaypoint));
 				m_iTeleExitArea = pWaypoint->getArea();
+				m_iLastFailTeleExitWpt = CWaypoints::getWaypointIndex(pWaypoint);
 				return true;
 			}
 
@@ -6905,7 +6922,8 @@ bool CBotTF2 :: isEnemy ( edict_t *pEdict,bool bCheckWeapons )
 						if ( !CTeamFortress2Mod::isSentrySapped(pSentry) && isVisible(pSentry) && (distanceFrom(pSentry)<TF2_MAX_SENTRYGUN_RANGE) )
 							return false;
 					}
-					else if ( (pSentry = m_pLastEnemySentry.get()) != NULL )
+					
+					if ( (pSentry = m_pLastEnemySentry.get()) != NULL )
 					{
 						// If I'm disguised don't attack any player until nearby sentry is disabled
 						if ( !CTeamFortress2Mod::isSentrySapped(pSentry) && isVisible(pSentry) && (distanceFrom(pSentry)<TF2_MAX_SENTRYGUN_RANGE) )

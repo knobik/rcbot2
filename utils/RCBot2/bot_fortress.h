@@ -577,6 +577,7 @@ protected:
 	float m_fCallMedicTime[MAX_PLAYERS]; // for every player ID is kept the last time they called medic
 
 	int m_iLastFailSentryWpt;
+	int m_iLastFailTeleExitWpt;
 
 	MyEHandle m_pHealer;
 
