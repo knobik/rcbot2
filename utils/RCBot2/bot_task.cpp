@@ -1020,7 +1020,7 @@ void CBotTF2UpgradeBuilding :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		else if ( pBot->distanceFrom(pBuilding) > 100 )
 			pBot->setMoveTo(CBotGlobals::entityOrigin(pBuilding));
 		
-		pBot->setLookAtTask(LOOK_EDICT);
+		pBot->setLookAtTask(LOOK_EDICT,0.15f);
 		pBot->lookAtEdict(pBuilding);
 	}
 	else if ( CBotGlobals::entityIsValid(pBuilding) && CBotGlobals::entityIsAlive(pBuilding) )
@@ -1864,7 +1864,7 @@ void CBotTFEngiBuildTask :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		m_fNextUpdateAngle = engine->Time() + 1.5f;
 	}
 
-	pBot->setLookAtTask(LOOK_VECTOR);
+	pBot->setLookAtTask(LOOK_VECTOR,0.2f);
 	pBot->setLookVector(m_vAimingVector);
 
 	bAimingOk = pBot->isFacing(m_vAimingVector); // 15 degrees
@@ -2759,7 +2759,7 @@ void CBotRemoveSapper :: execute (CBot *pBot,CBotSchedule *pSchedule)
 		else if ( pBot->distanceFrom(pBuilding) > 100 )
 			pBot->setMoveTo(CBotGlobals::entityOrigin(pBuilding));
 		
-		pBot->setLookAtTask(LOOK_EDICT);
+		pBot->setLookAtTask(LOOK_EDICT,0.15f);
 		pBot->lookAtEdict(pBuilding);
 	}
 	else
@@ -3111,7 +3111,7 @@ void CBotTF2SpySap :: execute (CBot *pBot,CBotSchedule *pSchedule)
 	}
 
 	pBot->lookAtEdict(pBuilding);
-	pBot->setLookAtTask(LOOK_EDICT);
+	pBot->setLookAtTask(LOOK_EDICT,0.2f);
 	weapon = tf2Bot->getCurrentWeapon();
 
 	// time out
