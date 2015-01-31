@@ -1591,7 +1591,7 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 					m_pSchedules->addFront(new CGotoHideSpotSched(this,m_vHurtOrigin,new CBotTF2CoverInterrupt()));
 				}
 
-				if( ( m_iClass == TF_CLASS_SPY ) && (iHealthNow<rcbot_spy_runaway_health.GetInt()) )
+				if( CBotGlobals::isPlayer(pAttacker) && ( m_iClass == TF_CLASS_SPY ) && (iHealthNow<rcbot_spy_runaway_health.GetInt()) )
 				{
 					// cloak and run
 					if ( !isCloaked() )
@@ -1601,6 +1601,8 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 						//updateCondition(CONDITION_CHANGED);				
 						wantToShoot(false);
 						m_fFrenzyTime = 0.0f;
+						if ( hasEnemy() )
+							setLastEnemy(m_pEnemy);
 						m_pEnemy = NULL; // reset enemy
 					}
 				}
@@ -1623,7 +1625,7 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 			if ( isDisguised() )
 				detectedAsSpy(pAttacker,true);
 
-			if ( (iHealthNow<rcbot_spy_runaway_health.GetInt()) && (CClassInterface::getTF2SpyCloakMeter(m_pEdict) > 0.3f) )
+			if ( CBotGlobals::isPlayer(pAttacker) && (iHealthNow<rcbot_spy_runaway_health.GetInt()) && (CClassInterface::getTF2SpyCloakMeter(m_pEdict) > 0.3f) )
 			{
 				// cloak and run
 				spyCloak();
@@ -1632,6 +1634,10 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 				m_pSchedules->addFront(new CGotoHideSpotSched(this,m_vHurtOrigin,new CBotTF2CoverInterrupt()));		
 				wantToShoot(false);
 				m_fFrenzyTime = 0.0f;
+
+				if ( hasEnemy() )
+					setLastEnemy(m_pEnemy);
+
 				m_pEnemy = NULL; // reset enemy
 
 				return true;
@@ -2546,10 +2552,10 @@ bool CBotFortress:: wantToCloak()
 	extern ConVar rcbot_tf2_debug_spies_cloakdisguise;
 
 	if ( rcbot_tf2_debug_spies_cloakdisguise.GetBool() )
-	{
+	{		
 		if ( ( m_fFrenzyTime < engine->Time() ) && (!m_pEnemy || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY))  )
 		{
-			return ( (CClassInterface::getTF2SpyCloakMeter(m_pEdict) > 90.0f) && ( m_fCurrentDanger > TF2_SPY_CLOAK_BELIEF ));
+			return ( (!m_bStatsCanUse || (m_StatsCanUse.stats.m_iEnemiesVisible>0)) && (CClassInterface::getTF2SpyCloakMeter(m_pEdict) > 90.0f) && ( m_fCurrentDanger > TF2_SPY_CLOAK_BELIEF ));
 		}
 	}
 
@@ -2567,7 +2573,7 @@ bool CBotFortress:: wantToUnCloak ()
 			return (m_fCurrentDanger < 1.0f);
 	}
 
-	return false;
+	return (m_bStatsCanUse && (m_StatsCanUse.stats.m_iEnemiesVisible == 0));
 }
 
 
@@ -3651,6 +3657,8 @@ void CBotFortress :: enemyLost(edict_t *pEnemy)
 			updateCondition(CONDITION_CHANGED);
 		}
 	}
+
+	//CBot::enemyLost(pEnemy);
 }
 
 bool CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
@@ -3967,6 +3975,7 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 	if ( CBotGlobals::isPlayer(pEnemy) )
 	{	
 		const char *szModel = pEnemy->GetIServerEntity()->GetModelName().ToCStr();
+		IPlayerInfo *p = playerinfomanager->GetPlayerInfo(pEnemy);
 
 		if ( CTeamFortress2Mod::isFlagCarrier(pEnemy) )
 		{
@@ -3983,6 +3992,11 @@ float CBotTF2 :: getEnemyFactor ( edict_t *pEnemy )
 		{
 			// dont shoot ubered player unlesss he's the only thing around for 2000 units
 			fPreFactor = 2000.0f;
+		}
+		else if ( (m_iClass == TF_CLASS_SPY) && isDisguised() && (p!=NULL) && (CBotGlobals::DotProductFromOrigin(CBotGlobals::entityOrigin(pEnemy),getOrigin(),p->GetLastUserCommand().viewangles) > 0.1f) )
+		{
+			// I'm disguised as a spy but this guy can see me , better lay off the attack unless theres someone else around
+			fPreFactor = 1000.0f;
 		}
 		// models/bots/demo/bot_sentry_buster.mdl
 		// 0000000000111111111122222222223333333

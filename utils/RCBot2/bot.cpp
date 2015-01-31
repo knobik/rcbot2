@@ -109,6 +109,7 @@ const float CBot :: m_fAttackLowestLetGoTime = 0.1f;
 const float CBot :: m_fAttackHighestLetGoTime = 0.5f;
 bool CBots :: m_bControlBotsOnly = false;
 bool CBots :: m_bControlNext = false;
+queue<CAddbot> CBots::m_AddBotQueue;
 CBotProfile *CBots :: m_pNextProfile = NULL;
 queue<edict_t*> CBots :: m_ControlQueue;
 char CBots :: m_szNextName[64];
@@ -3305,6 +3306,7 @@ void CBots :: runPlayerMoveAll ()
 	}
 }
 
+#define CHECK_STRING(str) (((str)==NULL)?"NULL":(str))
 
 void CBots :: botThink ()
 {
@@ -3380,14 +3382,53 @@ void CBots :: botThink ()
 
 #endif
 
-	if ( needToAddBot () )
+	if ( needToAddBot () || (m_AddBotQueue.size()>0) )
 	{
-		createBot(NULL,NULL,NULL);
+		if ( m_AddBotQueue.size() > 0 )
+		{
+			CAddbot newbot = m_AddBotQueue.front();
+			m_AddBotQueue.pop();
+
+			CBotGlobals::botMessage(NULL,0,"adding bot %s %s %s",CHECK_STRING(newbot.m_szClass),CHECK_STRING(newbot.m_szTeam),CHECK_STRING(newbot.m_szBotName));
+			createBot(newbot.m_szClass,newbot.m_szTeam,newbot.m_szBotName);
+		}
+		else
+			createBot(NULL,NULL,NULL);
 	}
 	else if ( needToKickBot () )
 	{
-		kickRandomBot();		
+		kickRandomBot();
+
+		/*if ( m_iMaxBots >= 0 )
+		{
+			m_iMaxBots--;
+			CBotGlobals::botMessage(NULL,0,"max bots changed to %d",m_iMaxBots);
+		}*/
 	}
+}
+
+bool CBots :: addBot ( const char *szClass, const char *szTeam, const char *szName )
+{
+	if ( ((unsigned int)CBotGlobals::numClients() + m_AddBotQueue.size()) < (unsigned int)gpGlobals->maxClients )
+	{
+		CAddbot newbot;
+
+		newbot.m_szClass = CStrings::getString(szClass);
+		newbot.m_szTeam = CStrings::getString(szTeam);
+		newbot.m_szBotName = CStrings::getString(szName);
+
+		m_AddBotQueue.push(newbot);
+
+		/*if ( m_iMaxBots == -1 )
+			m_iMaxBots = CBotGlobals::numClients()+1;
+		else 
+			m_iMaxBots ++;
+
+		CBotGlobals::botMessage(NULL,0,"max bots changed to %d",m_iMaxBots);*/
+		return true;
+	}
+
+	return false;
 }
 
 CBot *CBots :: getBotPointer ( edict_t *pEdict )

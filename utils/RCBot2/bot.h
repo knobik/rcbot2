@@ -1167,6 +1167,21 @@ protected:
 	bool m_bWantToInvestigateSound;
 };
 
+class CAddbot
+{
+
+public:
+
+	CAddbot ()
+	{
+		memset(this,sizeof(CAddbot),0);
+	};
+
+	const char *m_szClass;
+	const char *m_szTeam;
+	const char *m_szBotName;
+};
+
 class CBots
 {
 public:
@@ -1225,6 +1240,8 @@ public:
 
 	static void runPlayerMoveAll ();
 
+	static bool addBot ( const char *szClass, const char *szTeam, const char *szName );
+
 private:
 	static CBot **m_Bots;
 
@@ -1244,6 +1261,8 @@ private:
 	static float m_flAddKickBotTime;
 
 	static queue<edict_t*> m_ControlQueue;
+
+	static queue<CAddbot> m_AddBotQueue;
 
 };
 
