@@ -2144,13 +2144,6 @@ void CBot :: forceGotoWaypoint ( int wpt )
 		m_pSchedules->add(new CBotSchedule(new CFindPathTask(wpt)));
 	}
 }
-
-Vector CBot :: getOrigin ()
-{	
-	return m_pController->GetLocalOrigin();
-	//return CBotGlobals::entityOrigin(m_pEdict);//m_pEdict->GetCollideable()->GetCollisionOrigin();
-}
-
 // found a new enemy
 void CBot :: enemyFound (edict_t *pEnemy)
 {
@@ -2363,17 +2356,25 @@ Vector CBot::getAimVector ( edict_t *pEntity )
 
 	// post aim
 	// update 
+	extern ConVar rcbot_supermode;
 
-	m_vAimOffset.x = ((1.0f-fSensitivity)*m_vAimOffset.x) + fSensitivity*v_desired_offset.x; 
-	m_vAimOffset.y = ((1.0f-fSensitivity)*m_vAimOffset.y) + fSensitivity*v_desired_offset.y;
-	m_vAimOffset.z = ((1.0f-fSensitivity)*m_vAimOffset.z) + fSensitivity*v_desired_offset.z;
-
-	// check for QNAN
-	if ( (m_vAimOffset.x != m_vAimOffset.x) || 
-		(m_vAimOffset.y != m_vAimOffset.y) || 
-		(m_vAimOffset.z != m_vAimOffset.z) )
+	if ( rcbot_supermode.GetBool() )
 	{
-		m_vAimOffset = Vector(1.0f,1.0f,1.0f);
+		m_vAimOffset = v_desired_offset;
+	}
+	else
+	{
+		m_vAimOffset.x = ((1.0f-fSensitivity)*m_vAimOffset.x) + fSensitivity*v_desired_offset.x; 
+		m_vAimOffset.y = ((1.0f-fSensitivity)*m_vAimOffset.y) + fSensitivity*v_desired_offset.y;
+		m_vAimOffset.z = ((1.0f-fSensitivity)*m_vAimOffset.z) + fSensitivity*v_desired_offset.z;
+
+		// check for QNAN
+		if ( (m_vAimOffset.x != m_vAimOffset.x) || 
+			(m_vAimOffset.y != m_vAimOffset.y) || 
+			(m_vAimOffset.z != m_vAimOffset.z) )
+		{
+			m_vAimOffset = Vector(1.0f,1.0f,1.0f);
+		}
 	}
 
 	if ( pEntity == CClassInterface::getGroundEntity(m_pEdict) )
@@ -2411,9 +2412,21 @@ void CBot::modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_offset
 	static Vector enemyvel;
 	static float fDistFactor;
 	static float fHeadOffset;
+
+	extern ConVar rcbot_supermode;
+
 	int iPlayerFlags = CClassInterface::getPlayerFlags(pEntity);
 
 	fHeadOffset = 0;
+
+	if ( rcbot_supermode.GetBool() )
+	{
+		v_desired_offset->x = 0;
+		v_desired_offset->y = 0;
+		v_desired_offset->z = v_size.z-1;
+
+		return;
+	}
 
 	CBotWeapon *pWp = getCurrentWeapon();
 
@@ -2804,8 +2817,9 @@ void CBot :: doLook ()
     if ( lookAtIsValid () )
 	{	
 		float fSensitivity;
+		extern ConVar rcbot_supermode;
 		
-		if ( m_bIncreaseSensitivity || onLadder() )
+		if ( rcbot_supermode.GetBool() || m_bIncreaseSensitivity || onLadder() )
 			fSensitivity = 15.0f;
 		else
 			fSensitivity = (float)m_pProfile->m_iSensitivity;
@@ -3060,13 +3074,14 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 	edict_t *pEdict;	
 	CBotProfile *pBotProfile;
 	CBotMod *pMod = CBotGlobals::getCurrentMod();
+	extern ConVar rcbot_addbottime;
 
 	char *szOVName = "";
 
 	if ( (m_iMaxBots != -1) && (CBotGlobals::numClients() >= m_iMaxBots) )
 		CBotGlobals::botMessage(NULL,0,"Can't create bot, max_bots reached");
 
-	m_flAddKickBotTime = engine->Time() + 2.0f;
+	m_flAddKickBotTime = engine->Time() + rcbot_addbottime.GetFloat();
 
 	pBotProfile = CBotProfiles::getRandomFreeProfile();
 
@@ -3382,7 +3397,7 @@ void CBots :: botThink ()
 
 #endif
 
-	if ( needToAddBot () || (m_AddBotQueue.size()>0) )
+	if ( (m_flAddKickBotTime < engine->Time()) && (needToAddBot () || (m_AddBotQueue.size()>0)) )
 	{
 		if ( m_AddBotQueue.size() > 0 )
 		{
@@ -3499,7 +3514,7 @@ bool CBots :: needToAddBot ()
 {
 	int iClients = CBotGlobals::numClients();
 
-	return (m_flAddKickBotTime < engine->Time()) && (((m_iMinBots!=-1)&&(CBots::numBots() < m_iMinBots)) || ((iClients < m_iMaxBots)&&(m_iMaxBots!=-1)));
+	return (((m_iMinBots!=-1)&&(CBots::numBots() < m_iMinBots)) || ((iClients < m_iMaxBots)&&(m_iMaxBots!=-1)));
 }
 
 bool CBots :: needToKickBot ()

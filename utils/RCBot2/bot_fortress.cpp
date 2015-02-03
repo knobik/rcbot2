@@ -6320,6 +6320,8 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 	static CBotWeapon *pWp;
 	static float fTime;
 
+	extern ConVar rcbot_supermode;
+
 	pWp = getCurrentWeapon();
 
 	CBot::modAim(pEntity,v_origin,v_desired_offset,v_size,fDist,fDist2D);
@@ -6330,7 +6332,10 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 		{
 			if ( (v_desired_offset->z < 64.0f) && !hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
 			{
-				v_desired_offset->z += randomFloat(0.0f,16.0f);
+				if ( rcbot_supermode.GetBool() )
+					v_desired_offset->z += 15.0f;
+				else
+					v_desired_offset->z += randomFloat(0.0f,16.0f);
 			}
 		}
 		else if ( m_iClass == TF_CLASS_MEDIC )
@@ -6395,7 +6400,10 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 							else
 								fTime = fDist/(pWp->getProjectileSpeed());
 
-							*v_desired_offset = *v_desired_offset + ((vVelocity*fTime)*m_pProfile->m_fAimSkill );
+							if ( rcbot_supermode.GetBool() )
+								*v_desired_offset = *v_desired_offset + ((vVelocity*fTime) );
+							else
+								*v_desired_offset = *v_desired_offset + ((vVelocity*fTime)*m_pProfile->m_fAimSkill );
 						
 							if ( (sv_gravity != NULL) && (pWp->getID() == TF2_WEAPON_GRENADELAUNCHER) )
 								v_desired_offset->z += ((pow(2,fTime)-1.0f)*(sv_gravity->GetFloat()*0.1f));// - (getOrigin().z - v_origin.z);

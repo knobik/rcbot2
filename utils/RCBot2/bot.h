@@ -488,7 +488,10 @@ public:
 
 	virtual void handleWeapons ();
 
-	Vector getOrigin ();
+	inline Vector getOrigin ()
+	{
+		return m_pController->GetLocalOrigin();
+	}
 	/*
 	 * init()
 	 *
