@@ -42,7 +42,8 @@
 #define BOT_DEFAULT_FOV 75.0f
 
 #define to_lower(a) (((a)>='A')&&((a)<='Z'))?('a'+((a)-'A')):(a)
-#define strlow(str) { int len = strlen(str); int i;	for ( i = 0; i < len; i ++ ) { str[i] = to_lower(str[i]); } }
+//#define strlow(str) { char *__strx = str; while ( __strx && *__strx ) *__strx = tolower(*__strx)
+#define strlow(str) { unsigned short int len = strlen(str); unsigned short int i;	for ( i = 0; i < len; i ++ ) { str[i] = to_lower(str[i]); } }
 #define round(a) (((a-(int)a) >= 0.5) ? ((int)a+1) : ((int)a))
 //#define RANDOM_INT(min,max) (min + round(((float)rand()/RAND_MAX)*(float)(max-min)))
 //#define RANDOM_FLOAT(min,max) (min + ((float)rand()/RAND_MAX)*(float)(max-min))
@@ -162,9 +163,9 @@ typedef enum
 #define BUILDNUM "365"*/
 #define BOT_NAME "RCBot"
 #ifdef __linux__
-#define BOT_VER "TF2/HL2DM/DOD:S 0.95 BETA linux 440 (BUILD " __DATE__ "-" __TIME__ ")" //bir3yk
+#define BOT_VER "TF2/HL2DM/DOD:S 0.96 BETA linux 453 (BUILD " __DATE__ "-" __TIME__ ")" //bir3yk
 #else
-#define BOT_VER "TF2/HL2DM/DOD:S 0.95 BETA win32 440 (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
+#define BOT_VER "TF2/HL2DM/DOD:S 0.96 BETA win32 453 (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
 #endif
 #define BOT_NAME_VER "RCbot version"
 #define BOT_VER_CVAR "rcbot_ver"

@@ -1,3 +1,19 @@
+0.96
+====
+all: rcbot_supermode 1 allows bots to increase skill to aimbot like skill for a challenge (works mainly for tf2)
+all: rcbot_addbottime changes the time bots are automatically added after each other
+all: an addbot queue that allows multiple addbot commands without crashing or any bad effect
+tf2: spies run away once they reach a lower amount of health (customised by cvar rcbot_spy_runaway_health)
+tf2: spies now only cloak if they see an enemy and uncloak if they think no-one is looking at them
+tf2: spies put more priority into attacking enemies who can't see them
+tf2: improved spy sapping and engi sap removal, upgrading and building 
+tf2: crash fix
+tf2: more spy fixes
+tf2: engineer teleport exit building improved
+tf2: spies don't attack any players if there is an unsapped sentry in range
+tf2: demomen stop piping when they get hurt
+tf2: spies don't attack if they see an unsapped sentry around them
+
 0.95
 ====
 tf2: updated MVM waypoints + new Sd_doomsday_event waypoints
