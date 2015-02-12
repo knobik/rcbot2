@@ -103,6 +103,17 @@ public:
 
 	void execute ( IBotEventInterface *pEvent );
 };
+class CPostInventoryApplicationTF2 : public CBotEvent
+{
+public:
+	CPostInventoryApplicationTF2()
+	{
+		setType("post_inventory_application");
+		setMod(MOD_TF2);
+	}
+
+	void execute ( IBotEventInterface *pEvent );
+};
 
 class CTF2RoundWinEvent : public CBotEvent
 {

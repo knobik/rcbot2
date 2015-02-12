@@ -207,9 +207,12 @@ CON_COMMAND( rcbot_attribtest, "attributes for tf2 test" )
 
 	if ( pplayer )
 	{
-		byte *list = CClassInterface::getAttributeList(pplayer);
+		CEconItemAttribute *list = (CEconItemAttribute*)CClassInterface::getAttributeList(pplayer);
 
-		CBotGlobals::botMessage(pplayer,0,(char*)list);
+		CBotGlobals::botMessage(pplayer,0,"m_pVTable = %x",list->m_pVTable);
+		CBotGlobals::botMessage(pplayer,0,"m_flValue = %0.2f",list->m_flValue);
+		CBotGlobals::botMessage(pplayer,0,"m_iAttributeDefinitionIndex = %d",list->m_iAttributeDefinitionIndex);
+		CBotGlobals::botMessage(pplayer,0,"m_nRefundableCurrency = %d",list->m_nRefundableCurrency);
 	}
 }
 

@@ -599,6 +599,10 @@ void CTF2ObjectDestroyed :: execute ( IBotEventInterface *pEvent )
 
 }
 
+
+void CPostInventoryApplicationTF2 :: execute ( IBotEventInterface *pEvent )
+{
+}
 /*
 player_upgradedobject
 Name: 	player_upgradedobject
@@ -1212,6 +1216,7 @@ void CBotEvents :: setupEvents ()
 	addEvent(new CTF2PointUnlocked());
 	addEvent(new CTF2PointLocked());
 	addEvent(new CTF2MannVsMachineAlarm());
+	addEvent(new CPostInventoryApplicationTF2());
 /*
 pumpkin_lord_summoned 
 merasmus_summoned 

@@ -268,7 +268,19 @@ public:
 	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
 };
 
+///////////////////////
+// command
+class CSetProp : public CBotCommand
+{
+public:
+	CSetProp()
+	{
+		setName("setprop");
+		setAccessLevel(CMD_ACCESS_DEBUG);		
+	}
 
+	eBotCommandResult execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 );
+};
 class CGameEventVersion : public CBotCommand
 {
 public:

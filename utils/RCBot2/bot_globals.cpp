@@ -854,7 +854,12 @@ void CBotGlobals :: botMessage ( edict_t *pEntity, int iErr, char *fmt, ... )
 	}
 	else
 	{
-		Msg(string);
+		if ( iErr )
+		{
+			Warning(string);
+		}
+		else
+			Msg(string);
 	}
 }
 

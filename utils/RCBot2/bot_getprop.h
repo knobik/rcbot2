@@ -137,6 +137,11 @@ typedef enum
 	GETPROP_TF2_ISCARRYINGOBJ,
 	GETPROP_TF2_GETCARRIEDOBJ,
 	GETPROP_TF2_ATTRIBUTELIST,
+	GETPROP_TF2_ITEMDEFINITIONINDEX,
+	GETPROP_TF2_DISGUISEWEARABLE,
+	GETPROP_TF2_ENTITYLEVEL,
+	GETPROP_TF2_RAGEMETER,
+	GETPROP_TF2_RAGEDRAINING,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -347,10 +352,18 @@ public:
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health ) 
 	{ 
 		CClassInterfaceValue::resetError();
+		if ( _team )
 		*_team = g_GetProps[GETPROP_TF2SPYDISGUISED_TEAM].getInt(edict,0); 
+
+		if ( _class )
 		*_class = g_GetProps[GETPROP_TF2SPYDISGUISED_CLASS].getInt(edict,0); 
+
+		if  ( _index )
 		*_index = g_GetProps[GETPROP_TF2SPYDISGUISED_TARGET_INDEX].getInt(edict,0); 
+
+		if ( _health )
 		*_health = g_GetProps[GETPROP_TF2SPYDISGUISED_DIS_HEALTH].getInt(edict,0);
+
 		return !CClassInterfaceValue::isError();
 	}
 	inline static bool isCarryingObj ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_ISCARRYINGOBJ].getBool(edict,false); }

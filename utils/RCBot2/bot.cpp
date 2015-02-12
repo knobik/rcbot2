@@ -3487,9 +3487,12 @@ void CBots :: freeAllMemory ()
 
 	for ( short int i = 0; i < MAX_PLAYERS; i ++ )
 	{
-		m_Bots[i]->freeAllMemory();
-		delete m_Bots[i];
-		m_Bots[i] = NULL;
+		if ( m_Bots[i] != NULL )
+		{
+			m_Bots[i]->freeAllMemory();
+			delete m_Bots[i];
+			m_Bots[i] = NULL;
+		}
 	}
 
 	delete[] m_Bots;

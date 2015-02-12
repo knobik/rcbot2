@@ -372,11 +372,25 @@ void CClassInterfaceValue :: findOffset ( )
 	ServerClass *sc = UTIL_FindServerClass(m_class);
 
 	if ( sc )
+	{
 		UTIL_FindSendPropInfo(sc,m_value,&m_offset);
-	//}
+	}
+#ifdef _DEBUG	
+	else
+	{
+		CBotGlobals::botMessage(NULL,1,"Warning: Couldn't find CLASS %s",m_class);
+		return;
+	}
+#endif
 
 	if ( m_offset > 0 )
 		m_offset += m_preoffset;
+#ifdef _DEBUG	
+	else
+	{
+		CBotGlobals::botMessage(NULL,1,"Warning: Couldn't find getprop %s for class %s",m_value,m_class);
+	}
+#endif
 }
 /* Find and save all offsets at load to save CPU */
 void CClassInterface:: init ()
@@ -525,6 +539,13 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2_ISCARRYINGOBJ,"CTFPlayer","m_bCarryingObject",0);
 		DEFINE_GETPROP(GETPROP_TF2_GETCARRIEDOBJ,"CTFPlayer","m_hCarriedObject",0);
 		DEFINE_GETPROP(GETPROP_TF2_ATTRIBUTELIST,"CTFPlayer","m_AttributeList",0);
+
+		// Addon stuff for TF2
+		DEFINE_GETPROP(GETPROP_TF2_ITEMDEFINITIONINDEX,"CTFWeaponBase","m_iItemDefinitionIndex",0);
+		DEFINE_GETPROP(GETPROP_TF2_DISGUISEWEARABLE,"CTFWearable","m_bDisguiseWearable",0);
+		DEFINE_GETPROP(GETPROP_TF2_ENTITYLEVEL,"CBaseAttributableItem","m_iEntityLevel",0);
+		DEFINE_GETPROP(GETPROP_TF2_RAGEMETER,"CTFPlayer","m_flRageMeter",0);
+		DEFINE_GETPROP(GETPROP_TF2_RAGEDRAINING,"CTFPlayer","m_bRageDraining",0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{

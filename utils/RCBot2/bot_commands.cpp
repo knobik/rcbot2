@@ -183,6 +183,84 @@ eBotCommandResult CWaypointCut :: execute ( CClient *pClient, const char *pcmd, 
 }
 
 ////////////////////////////////
+eBotCommandResult CSetProp :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
+{
+	if ( pClient )
+	{
+		// classname           // key             // type          //value
+		if ( (pcmd && *pcmd) &&(arg1 && *arg1) && (arg2 && *arg2) && (arg3 && *arg3))
+		{
+			//int i = 0;
+
+			edict_t *pPlayer = pClient->getPlayer();
+//			edict_t *pEdict;
+			edict_t *pNearest = NULL;
+//			float fDistance;
+//			float fNearest = 400.0f;
+
+			pNearest = CClassInterface::FindEntityByNetClassNearest(pClient->getOrigin(),pcmd);
+
+			if ( pNearest )
+			{
+				void *data = NULL;
+
+				extern bool g_PrintProps;
+				unsigned int m_offset = 0;
+
+				ServerClass *sc = UTIL_FindServerClass(pcmd);
+
+				if ( sc )
+				{
+					UTIL_FindSendPropInfo(sc,arg1,&m_offset);
+
+					if ( m_offset )
+					{
+						static IServerUnknown *pUnknown;
+						static CBaseEntity *pEntity;
+						Vector vdata;
+
+						pUnknown = (IServerUnknown *)pNearest->GetUnknown();
+					 
+						pEntity = pUnknown->GetBaseEntity();
+
+						data = (void *)((char *)pEntity + m_offset);
+
+						if ( data )
+						{
+							bool *booldata = (bool*)data;
+							int *intdata = (int*)data;
+							float *floatdata = (float*)data;
+
+							if ( strcmp(arg2,"int")==0)
+								*intdata = atoi(arg3);
+							else if ( strcmp(arg2,"bool")==0 )
+								*booldata = (atoi(arg3)==1);
+							else if ( strcmp(arg2,"float")==0 )
+								*floatdata = atof(arg3);
+						}
+						else
+							CBotGlobals::botMessage(pPlayer,0,"NULL");
+					}
+					else
+						CBotGlobals::botMessage(NULL,0,"OFFSET NOT FOUND");
+				}
+				else
+					CBotGlobals::botMessage(NULL,0,"CLASS NOT FOUND");
+
+			}
+			else
+				CBotGlobals::botMessage(NULL,0,"EDICT NOT FOUND");
+		}
+		else
+			CBotGlobals::botMessage(NULL,0,"Usage: getprop CLASSNAME KEY TYPE(int,bool,float) VALUE");
+
+		return COMMAND_ACCESSED;
+	}
+
+	return COMMAND_ERROR;
+}
+
+////////////////////////////////
 eBotCommandResult CGetProp :: execute ( CClient *pClient, const char *pcmd, const char *arg1, const char *arg2, const char *arg3, const char *arg4, const char *arg5 )
 {
 	if ( pClient )
@@ -645,6 +723,7 @@ CDebugCommand :: CDebugCommand()
 	add(new CDebugEdictsCommand());
 	add(new CPrintProps());
 	add(new CGetProp());
+	add(new CSetProp());
 	add(new CFindClass());
 	add(new CFindClassname());
 	add(new CFindProp());

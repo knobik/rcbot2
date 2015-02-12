@@ -843,6 +843,7 @@ private:
 	float m_fCarryTime;
 
 	float m_fCheckNextCarrying;
+	float m_fEquipWeaponTime;
 };
 
 class CBotFF : public CBotFortress
@@ -857,6 +858,17 @@ public:
 
 	bool isTF () { return true; }
 
+};
+
+// from TF2 Items
+class CEconItemAttribute
+{
+public:
+	void *m_pVTable; //0
+
+	uint16 m_iAttributeDefinitionIndex; //4
+	float m_flValue; //8
+	int32 m_nRefundableCurrency; //12
 };
 
 #endif
