@@ -89,9 +89,169 @@ bool CTeamFortress2Mod::m_bMVMAlarmSounded = false;
 float CTeamFortress2Mod::m_fMVMCapturePointRadius = 0.0f;
 int CTeamFortress2Mod::m_iCapturePointWptID = -1;
 int CTeamFortress2Mod::m_iFlagPointWptID = -1;
+vector<CTF2LoadoutWeapon*> CTeamFortress2Mod::m_pLoadoutWeapons[3][9];
 
 extern ConVar bot_use_disp_dist;
 
+CTF2LoadoutWeapon :: CTF2LoadoutWeapon ( const char *pszClassname, int iIndex, int iQuality, int iLevel, const char *pszAttribs, int iMaxAmmo )
+{
+	m_pszClassname = CStrings::getString(pszClassname);
+	m_iIndex = iIndex;
+	m_iQuality = iQuality;
+	m_iLevel = iLevel;
+	m_pszAttribs = CStrings::getString(pszAttribs);
+	m_iMaxAmmo = iMaxAmmo;
+}
+
+void CTeamFortress2Mod :: setupLoadOutWeapons ()
+{	
+	extern IFileSystem *filesystem;
+	KeyValues *mainkv = new KeyValues("tfweapons");
+
+	KeyValues *kv;
+	KeyValues *usedbyclass;
+	
+	CBotGlobals::botMessage(NULL,0,"Reading Weapon Loadout details from TF MOD...");
+	mainkv->LoadFromFile(filesystem,"scripts/items/items_game.txt","MOD");
+
+	kv = mainkv->FindKey("items");
+
+	if ( kv )
+	{
+		kv = kv->FindKey("default");
+
+		if ( kv )
+		{
+			while ( (kv = kv->GetNextTrueSubKey()) != NULL )
+			{
+				int iclass = 0;
+
+				usedbyclass = kv->FindKey("used_by_classes");
+
+				if ( usedbyclass )
+				{
+					if ( usedbyclass->FindKey("scout") )
+						iclass = TF_CLASS_SCOUT;
+					else if ( usedbyclass->FindKey("sniper") )
+						iclass = TF_CLASS_SNIPER;
+					else if ( usedbyclass->FindKey("soldier") )
+						iclass = TF_CLASS_SOLDIER;
+					else if ( usedbyclass->FindKey("demoman") )
+						iclass = TF_CLASS_DEMOMAN;
+					else if ( usedbyclass->FindKey("medic") )
+						iclass = TF_CLASS_MEDIC;
+					else if ( usedbyclass->FindKey("heavy") )
+						iclass = TF_CLASS_HWGUY;
+					else if ( usedbyclass->FindKey("pyro") )
+						iclass = TF_CLASS_PYRO;
+					else if ( usedbyclass->FindKey("spy") )
+						iclass = TF_CLASS_SPY;
+					else if ( usedbyclass->FindKey("engineer") )
+						iclass = TF_CLASS_ENGINEER;
+				}
+
+				if ( iclass == 0 )
+					continue;
+
+				int iindex = atoi(kv->GetName());
+				const char *pszquality;
+				int iquality = 0;
+				int ilevel;
+				
+				if ( iindex == 0 )
+					continue;
+
+				const char *classname = kv->GetString("item_class");
+
+				if ( (classname == NULL) || (*classname == 0) )
+					continue;
+
+				CWeapon *pWeapon = CWeapons::getWeapon(classname);
+
+				// check if bots can use this weapon
+				if ( pWeapon == NULL )
+					continue;
+
+				const char *slot = kv->GetString("item_slot");
+
+				if ( ( slot == NULL ) || (*slot == 0 ) )
+					continue;
+
+				int islot;
+
+				if ( strcmp(slot,"primary") == 0 )
+					islot = TF2_SLOT_PRMRY;
+				else if ( strcmp(slot,"melee") == 0 )
+					islot = TF2_SLOT_MELEE;
+				else if ( strcmp(slot,"secondary") == 0 )
+					islot = TF2_SLOT_SCNDR;
+				else
+					continue;
+
+				if ( pWeapon->getSlot() != islot )
+				{
+					CBotGlobals::botMessage(NULL,1,"Weapon Slot mismatch for %s - set as %d -- should be %d",pWeapon->getWeaponName(),pWeapon->getSlot(),islot);
+					continue;
+				}
+
+				pszquality = kv->GetString("quality");
+
+				if ( pszquality && *pszquality )
+					iquality = (strcmp(pszquality,"unique")==0)?6:0;
+
+				ilevel = kv->GetInt("max_ilevel");
+
+				CBotGlobals::botMessage(NULL,0,"FOUND loadout weapon : %s",classname);
+
+				m_pLoadoutWeapons[islot][iclass-1].push_back(new CTF2LoadoutWeapon(classname,iindex,iquality,ilevel,NULL,0));
+			}
+		}
+	}
+
+	mainkv->deleteThis();
+	/*
+	m_pLoadoutWeapons[TF2_SLOT_PRMRY][TF_CLASS_PYRO].push_back(new CTF2LoadoutWeapon("tf_weapon_flamethrower",40,6,10,"170 ; 2.5 ; 24 ; 1.0 ; 28 ; 0.0",200));
+	m_pLoadoutWeapons[TF2_SLOT_SCNDR][TF_CLASS_PYRO].push_back(new CTF2LoadoutWeapon("tf_weapon_flaregun",39,6,10,"25 ; 0.5",16));
+	m_pLoadoutWeapons[TF2_SLOT_PRMRY][TF_CLASS_SOLDIER].push_back(new CTF2LoadoutWeapon("tf_weapon_rocketlauncher_directhit",127,6,1,"100 ; 0.3 ; 103 ; 1.8 ; 2 ; 1.25 ; 114 ; 1.0 ; 328 ; 1.0",20));
+	*/
+
+}
+
+const char *CTeamFortress2Mod::findRandomWeaponLoadOut ( int iclass, const char *classname, CEconItemView *cscript )
+{
+	// find weapon slot
+	int islot;
+	CWeapon *pWeapon = CWeapons::getWeapon(classname);
+
+	if ( pWeapon == NULL )
+		return NULL;
+
+	islot = pWeapon->getSlot();
+
+	if ( islot < 3 )
+	{
+		vector<CTF2LoadoutWeapon*> *list = &(m_pLoadoutWeapons[islot][iclass-1]);
+		CTF2LoadoutWeapon *weap;
+
+		if ( list->size() == 0 )
+			return NULL;
+
+		weap = list->at(randomInt(0,list->size()-1));
+
+		if ( weap )
+		{
+			cscript->m_iEntityLevel = weap->m_iLevel;
+			cscript->m_iEntityQuality = weap->m_iQuality;
+			cscript->m_iItemDefinitionIndex = weap->m_iIndex;
+
+			cscript->m_bInitialized = true;
+
+			return weap->m_pszClassname;
+		}
+	}
+
+	return NULL;
+}
 
 bool CTeamFortress2Mod :: checkWaypointForTeam(CWaypoint *pWpt, int iTeam)
 {
@@ -156,6 +316,8 @@ void CTeamFortress2Mod :: initMod ()
 		CWeapons::addWeapon(new CWeapon(TF2Weaps[i]));//.iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference,TF2Weaps[i].m_fProjSpeed));
 
 	CRCBotTF2UtilFile::loadConfig();
+
+	setupLoadOutWeapons();
 	//memset(g_fBotUtilityPerturb,0,sizeof(float)*TF_CLASS_MAX*BOT_UTIL_MAX);
 }
 

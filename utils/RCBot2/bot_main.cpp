@@ -852,22 +852,20 @@ void __fastcall nTF2GiveNamedItem( CBaseEntity *_this, void *punused, const char
 {
 	const char *pszOverrideName = name;
 	edict_t *pEdict = servergameents->BaseEntityToEdict(_this);
-	// pseudocode
-	if ( strcmp(name,"tf_weapon_shotgun_pyro") == 0 )
-	{
-		strcpy(g_szOverrideWeaponName,"tf_weapon_flaregun");
-		pszOverrideName = g_szOverrideWeaponName;
-
-		cscript->m_iItemDefinitionIndex = 351;
-		cscript->m_iEntityQuality = 10;
-		cscript->m_iEntityLevel = 6;
-		cscript->m_bInitialized = true;
-	}
 
 	if ( cscript && (g_pVTable == NULL) )
 		g_pVTable = cscript->m_pVTable;
 	if ( cscript && (g_pVTable_Attributes == NULL) )
 		g_pVTable_Attributes = cscript->m_pVTable_Attributes;
+
+	if ( CBots::getBotPointer(pEdict) != NULL )
+	{
+		int iclass = CClassInterface::getTF2Class(pEdict);
+		const char *pszNewWeapon;
+		// this is an RC bot
+		if ( (pszNewWeapon = CTeamFortress2Mod::findRandomWeaponLoadOut(iclass,name,cscript)) != NULL )
+			name = pszNewWeapon;
+	}
 
 	(*_this.*TF2GiveNamedItem)(pszOverrideName,subtype,cscript,b);
 }

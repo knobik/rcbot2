@@ -801,6 +801,21 @@ class CTeamControlPointMaster;
 class CTeamControlPoint;
 class CTeamRoundTimer;
 
+class CTF2LoadoutWeapon
+{
+public:
+	CTF2LoadoutWeapon ( const char *pszClassname, int iIndex, int iQuality, int iLevel, const char *pszAttribs, int iMaxAmmo );
+
+	int m_iIndex;
+	int m_iSlot;
+	int m_iClassMask;
+	int m_iQuality;
+	int m_iLevel;
+	const char *m_pszClassname;
+	const char *m_pszAttribs;
+	int m_iMaxAmmo;
+};
+
 class CTeamFortress2Mod : public CBotMod
 {
 public:
@@ -1220,6 +1235,8 @@ public:
 		return ( getFlagLocation(TF2_TEAM_BLUE,vec) );
 	}
 
+	static const char *findRandomWeaponLoadOut ( int iclass, const char *classname, CEconItemView *cscript );
+
 private:
 
 
@@ -1284,6 +1301,11 @@ private:
 	static float m_fMVMCapturePointRadius;
 	static int m_iCapturePointWptID;
 	static int m_iFlagPointWptID;
+
+	static void setupLoadOutWeapons ( void );
+
+	// three slots + nine classes
+	static vector<CTF2LoadoutWeapon*> m_pLoadoutWeapons[3][9];
 };
 
 class CTeamFortress2ModDedicated : public CTeamFortress2Mod

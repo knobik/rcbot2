@@ -44,6 +44,11 @@ class CBotWeapon;
 class CWaypoint;
 class CBotUtility;
 
+#define TF2_SLOT_OTHER 3
+#define TF2_SLOT_PRMRY 0 // primary
+#define TF2_SLOT_SCNDR 1 // secondary
+#define TF2_SLOT_MELEE 2
+
 #define TF2_TEAM_BLUE 3
 #define TF2_TEAM_RED 2
 
