@@ -93,7 +93,7 @@ enum
 	TF2_WEAPON_INVIS,//30
 	TF2_WEAPON_FLAREGUN,//31
 	TF2_WEAPON_OBJECTSSELECTION,//32
-	TF2_WEAPON_UNKNOWN1,//33
+	TF2_WEAPON_SAXXY,//33
 	TF2_WEAPON_SENTRYGUN,//34
 	TF2_WEAPON_BAT_WOOD,//=44,
 	TF2_WEAPON_LUNCHBOX_DRINK,//=46,
@@ -736,6 +736,8 @@ public:
 	CBotWeapon *getWeapon ( CWeapon *pWeapon );
 
 	CBotWeapon *getActiveWeapon ( const char *szWeaponName );
+
+	CBotWeapon *getCurrentWeaponInSlot ( int iSlot );
 
 	CBotWeapon *getGrenade ()
 	{

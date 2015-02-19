@@ -225,12 +225,13 @@ WeaponsData_t TF2Weaps[] =
 	{TF2_SLOT_OTHER,TF2_WEAPON_OBJECTSSELECTION,	"tf_weapon_objectselection",	WEAP_FL_NONE,0,100,0,1,0},
 	{TF2_SLOT_SCNDR,TF2_WEAPON_FLAREGUN,		"tf_weapon_flaregun",	WEAP_FL_PRIM_ATTACK,0,800,2,2,0},
 	{TF2_SLOT_OTHER,TF2_WEAPON_SENTRYGUN,		"obj_sentrygun",0,0,0,0,0,0},
+	{TF2_SLOT_MELEE,TF2_WEAPON_SAXXY,		"saxxy",	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,150,0,1,0},
 	{TF2_SLOT_MELEE,TF2_WEAPON_BAT_WOOD,		"tf_weapon_bat_wood",	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,0,1,0},
 	{TF2_SLOT_SCNDR,TF2_WEAPON_LUNCHBOX_DRINK,		"tf_weapon_lunchbox_drink",	WEAP_FL_NONE,0,180,0,1,0},
 	{TF2_SLOT_PRMRY,TF2_WEAPON_BOW,		"tf_weapon_compound_bow",	WEAP_FL_SCOPE|WEAP_FL_PRIM_ATTACK|WEAP_FL_PROJECTILE,700,2400,1,3,TF2_ROCKETSPEED},
 	{TF2_SLOT_SCNDR,TF2_WEAPON_JAR,		"tf_weapon_jar",	WEAP_FL_NONE,0,180,0,1,0},
 	{TF2_SLOT_MELEE,TF2_WEAPON_BAT_FISH,		"tf_weapon_bat_fish",	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,0,1,0},
-	{TF2_SLOT_PRMRY,TF2_WEAPON_DIRECTHIT,		"tf_weapon_rocketlauncher_directhit",	WEAP_FL_PRIM_ATTACK|WEAP_FL_EXPLOSIVE|WEAP_FL_UNDERWATER,BLAST_RADIUS,4096,1,3,TF2_ROCKETSPEED},
+	{TF2_SLOT_PRMRY,TF2_WEAPON_DIRECTHIT,		"tf_weapon_rocketlauncher_directhit",	WEAP_FL_PRIM_ATTACK|WEAP_FL_EXPLOSIVE|WEAP_FL_UNDERWATER,BLAST_RADIUS,4096,1,3,TF2_ROCKETSPEED*1.8},
 	{TF2_SLOT_MELEE,TF2_WEAPON_SWORD,		"tf_weapon_sword",	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,190,0,1,0},
 	{TF2_SLOT_MELEE,TF2_WEAPON_KATANA,		"tf_weapon_katana",	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,210,0,1,0},
 	{TF2_SLOT_PRMRY,TF2_WEAPON_COWMANGLER,	"tf_weapon_particle_cannon",	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,500,2,2,0},
@@ -615,6 +616,17 @@ CBotWeapon *CBotWeapons :: getWeapon ( CWeapon *pWeapon )
 	for ( register unsigned int i = 0; i < MAX_WEAPONS; i ++ )
 	{
 		if ( m_theWeapons[i].getWeaponInfo() == pWeapon )
+			return &(m_theWeapons[i]);
+	}
+
+	return NULL;
+}
+
+CBotWeapon *CBotWeapons :: getCurrentWeaponInSlot ( int iSlot )
+{
+	for ( register unsigned int i = 0; i < MAX_WEAPONS; i ++ )
+	{
+		if (  m_theWeapons[i].hasWeapon() && m_theWeapons[i].getWeaponInfo() && (m_theWeapons[i].getWeaponInfo()->getSlot()==iSlot) )
 			return &(m_theWeapons[i]);
 	}
 

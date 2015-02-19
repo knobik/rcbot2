@@ -546,7 +546,10 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2_ENTITYLEVEL,"CBaseAttributableItem","m_iEntityLevel",0);
 		DEFINE_GETPROP(GETPROP_TF2_RAGEMETER,"CTFPlayer","m_flRageMeter",0);
 		DEFINE_GETPROP(GETPROP_TF2_RAGEDRAINING,"CTFPlayer","m_bRageDraining",0);
-
+		DEFINE_GETPROP(GETPROP_TF2_ENTITYQUALITY,"CBaseAttributableItem","m_iEntityQuality",0);
+		DEFINE_GETPROP(GETPROP_TF2_WEAPON_INITIALIZED,"CBaseAttributableItem","m_bInitialized",0);
+		DEFINE_GETPROP(GETPROP_SIMULATIONTIME,"CBaseEntity","m_flSimulationTime",0);
+		DEFINE_GETPROP(GETPROP_TF2_INUPGRADEZONE,"CTFPlayer","m_bInUpgradeZone",0);
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
 			//if ( g_GetProps[i]

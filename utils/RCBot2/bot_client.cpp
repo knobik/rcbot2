@@ -234,7 +234,12 @@ private:
 void CClient :: think ()
 {
 	extern ConVar bot_cmd_enable_wpt_sounds;
+	extern ConVar rcbot_customloadouts;
 
+#ifdef _DEBUG
+	if ( m_pPlayer && rcbot_customloadouts.GetBool() )
+		HookGiveNamedItem(m_pPlayer);
+#endif
 	/*if ( m_pPlayer.get() == NULL )
 	{
 		clientDisconnected();

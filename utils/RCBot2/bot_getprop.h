@@ -142,6 +142,10 @@ typedef enum
 	GETPROP_TF2_ENTITYLEVEL,
 	GETPROP_TF2_RAGEMETER,
 	GETPROP_TF2_RAGEDRAINING,
+	GETPROP_TF2_ENTITYQUALITY,
+	GETPROP_SIMULATIONTIME,
+	GETPROP_TF2_WEAPON_INITIALIZED,
+	GETPROP_TF2_INUPGRADEZONE,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -150,6 +154,9 @@ ServerClass *UTIL_FindServerClass(const char *name);
 void UTIL_FindServerClassPrint(const char*name_cmd);
 void UTIL_FindServerClassnamePrint(const char *name_cmd);
 void UTIL_FindPropPrint(const char *prop_name);
+
+typedef CBaseEntity* (*GiveNamedItem_func)(const char*, int); 
+typedef void (*RemovePlayerItem_func)(CBaseEntity*);
 
 class CClassInterfaceValue
 {
@@ -346,8 +353,21 @@ public:
 	inline static int getTF2Conditions ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_CONDITIONS].getInt(edict,0); }
 	inline static bool getVelocity ( edict_t *edict, Vector *v ) {return g_GetProps[GETPROP_VELOCITY].getVector(edict,v); }
 	inline static int getTF2Class ( edict_t *edict ) { return g_GetProps[GETPROP_TF2CLASS].getInt(edict,0); }
+	inline static void setInitialized ( edict_t *edict ) 
+	{
+		bool *m_bInitialized = g_GetProps[GETPROP_TF2_WEAPON_INITIALIZED].getBoolPointer(edict);
+
+		*m_bInitialized = true;
+	}
 	inline static float getTF2SpyCloakMeter ( edict_t *edict ) { return g_GetProps[GETPROP_TF2SPYMETER].getFloat(edict,0); }
 	inline static int getWaterLevel ( edict_t *edict ) { return g_GetProps[GETPROP_WATERLEVEL].getInt(edict,0); }
+	inline static void updateSimulationTime ( edict_t *edict )
+	{
+		float *m_flSimulationTime = g_GetProps[GETPROP_SIMULATIONTIME].getFloatPointer(edict);
+
+		if ( m_flSimulationTime )
+			*m_flSimulationTime = gpGlobals->curtime;
+	}
 	inline static bool *getDODCPVisible ( edict_t *pResource ) { return g_GetProps[GETPROP_DOD_CP_VISIBLE].getBoolPointer(pResource); }
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health ) 
 	{ 
@@ -365,6 +385,28 @@ public:
 		*_health = g_GetProps[GETPROP_TF2SPYDISGUISED_DIS_HEALTH].getInt(edict,0);
 
 		return !CClassInterfaceValue::isError();
+	}
+	inline static void setEntityIndex_Level_Quality( edict_t *edict, int iIndex, int iLevel = 0, int iQuality = 0 )
+	{
+		int *pdata = g_GetProps[GETPROP_TF2_ITEMDEFINITIONINDEX].getIntPointer(edict);
+
+		if ( pdata )
+			*pdata = iIndex;
+
+		if ( iLevel )
+		{
+			int *pdata = g_GetProps[GETPROP_TF2_ENTITYLEVEL].getIntPointer(edict);
+
+			if ( pdata )
+				*pdata = iLevel;
+		}
+		if ( iQuality )
+		{
+			int *pdata = g_GetProps[GETPROP_TF2_ENTITYQUALITY].getIntPointer(edict);
+
+			if ( pdata )
+				*pdata = iQuality;
+		}
 	}
 	inline static bool isCarryingObj ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_ISCARRYINGOBJ].getBool(edict,false); }
 	inline static edict_t *getCarriedObj ( edict_t *edict ) { return g_GetProps[GETPROP_TF2_GETCARRIEDOBJ].getEntity(edict); }
@@ -446,6 +488,13 @@ public:
 	inline static Vector *getOrigin ( edict_t *pPlayer )
 	{
 		return g_GetProps[GETPROP_ORIGIN].getVectorPointer(pPlayer);
+	}
+
+	inline static void setOrigin ( edict_t *pPlayer, Vector vOrigin )
+	{
+		Vector *vEntOrigin = g_GetProps[GETPROP_ORIGIN].getVectorPointer(pPlayer);
+
+		*vEntOrigin = vOrigin;
 	}
 
 	inline static Vector *getDODCP_Positions ( edict_t *pResource )

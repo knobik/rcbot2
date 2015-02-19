@@ -2749,6 +2749,47 @@ void CBotFortress::updateConditions()
 			removeCondition(CONDITION_BUILDING_SAPPED);
 	}
 }
+void CBotTF2 :: giveWeapon ( int slot, int index )
+{
+	// GiveNamedItem
+	extern IServerGameEnts *servergameents;
+	edict_t *pWeapon;
+	CBaseEntity *pEnt = m_pEdict->GetUnknown()->GetBaseEntity();
+	unsigned int gni_offset = 399;
+	unsigned int rpi_offset = 269;
+	extern IServerTools *servertools;	
+
+	GiveNamedItem_func *GiveNamedItem = (GiveNamedItem_func*)(&((unsigned long*)pEnt)[gni_offset]);
+	RemovePlayerItem_func *RemovePlayerItem = (RemovePlayerItem_func*)(&((unsigned long*)pEnt)[rpi_offset]);
+	CBaseHandle *m_Weapons = CClassInterface::getWeaponList(m_pEdict);
+	CBaseHandle *m_Weapon_iter;
+
+	m_Weapon_iter = m_Weapons;
+
+	bool bFound = false;
+	
+	m_pWeapons->update(overrideAmmoTypes());
+
+	CBotWeapon *pWeaponInSlot = m_pWeapons->getCurrentWeaponInSlot(slot);
+
+	if ( pWeaponInSlot->getWeaponEntity() )
+	{
+		(*RemovePlayerItem)(pWeaponInSlot->getWeaponEntity()->GetUnknown()->GetBaseEntity());
+
+		// find classname for index (slot must also match)
+		const char *pWeaponName;// = CTeamFortress2Mod::findWeaponWithIndex(index,slot);
+
+		if ( pWeaponName != NULL )
+		{
+			CBaseEntity *pNewWeapon = (*GiveNamedItem)(pWeaponName,0);
+
+			edict_t *pEdict = servergameents->BaseEntityToEdict(pNewWeapon);
+
+			CClassInterface::setEntityIndex_Level_Quality(pEdict,index);
+		}
+
+	}
+}
 
 void CBotTF2 :: modThink ()
 {

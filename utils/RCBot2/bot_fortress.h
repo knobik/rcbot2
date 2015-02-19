@@ -601,6 +601,8 @@ public:
 	// 
 	CBotTF2();
 
+	void giveWeapon ( int slot, int index );
+
 	void MannVsMachineWaveComplete();
 	void MannVsMachineAlarmTriggered (Vector vLoc);
 
@@ -860,15 +862,82 @@ public:
 
 };
 
-// from TF2 Items
+class CBasePlayer;
+
+template< class T, class I = int >
+class CUtlMemoryTF2Items : public CUtlMemory< T, I >
+{
+public:
+	CUtlMemoryTF2Items( int nGrowSize = 0, int nInitSize = 0 ) { CUtlMemory< T, I >( nGrowSize, nInitSize ); }
+    CUtlMemoryTF2Items( T* pMemory, int numElements ) { CUtlMemory< T, I >( pMemory, numElements ); }
+    CUtlMemoryTF2Items( const T* pMemory, int numElements ) { CUtlMemory< T, I >( pMemory, numElements ); }
+    //~CUtlMemoryTF2Items() { ~CUtlMemory< T, I >(); }
+    
+	void Purge()
+	{
+		if ( !CUtlMemory< T, I >::IsExternallyAllocated() )
+		{
+			if (CUtlMemory< T, I >::m_pMemory)
+			{
+				UTLMEMORY_TRACK_FREE();
+				//free( (void*)m_pMemory );
+#ifdef TF2ITEMS_DEBUG_ITEMS
+				META_CONPRINTF("CUtlMemory tried to be freed!\n");
+#endif
+				CUtlMemory< T, I >::m_pMemory = 0;
+			}
+			CUtlMemory< T, I >::m_nAllocationCount = 0;
+		}
+	}
+};
+
+// Taken from the TF2Items extension by Asher "asherkin" Baker
+class CAttributeManager;
+
 class CEconItemAttribute
 {
 public:
-	void *m_pVTable; //0
+	CEconItemAttribute() {};
 
-	uint16 m_iAttributeDefinitionIndex; //4
-	float m_flValue; //8
-	int32 m_nRefundableCurrency; //12
+	CEconItemAttribute(uint16 iAttributeDefinitionIndex, float flValue/* = -1.0*/)
+	{
+		this->m_iAttributeDefinitionIndex = iAttributeDefinitionIndex;
+		this->m_flValue = flValue;
+		this->m_nRefundableCurrency = 0;
+	}
+
+public:
+	void *m_pVTable;
+
+	uint16 m_iAttributeDefinitionIndex;
+	float m_flValue;
+	int32 m_nRefundableCurrency;
+};
+
+class CEconItemView
+{
+public:
+	void *m_pVTable;
+
+	uint16 m_iItemDefinitionIndex;
+	
+	int32 m_iEntityQuality;
+	uint32 m_iEntityLevel;
+
+	uint64 m_iItemID;
+	uint32 m_iItemIDHigh;
+	uint32 m_iItemIDLow;
+	uint32 m_iAccountID;
+	uint32 m_iInventoryPosition;
+
+	void *m_pAlternateItemData;
+	bool m_bInitialized;
+
+	void *m_pVTable_Attributes;
+	CUtlVector<CEconItemAttribute, CUtlMemoryTF2Items<CEconItemAttribute> > m_Attributes;
+	CAttributeManager *m_pAttributeManager;
+	
+	bool m_bDoNotIterateStaticAttributes;
 };
 
 #endif

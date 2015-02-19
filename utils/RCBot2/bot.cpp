@@ -815,7 +815,7 @@ void CBot :: think ()
 
 	m_pButtons->letGoAllButtons(false);
 
-	m_fNextThink = fTime + 0.04f;
+	m_fNextThink = fTime + 0.03f;
 
 	if ( m_pWeapons )
 	{
