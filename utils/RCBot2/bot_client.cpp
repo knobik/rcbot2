@@ -40,6 +40,7 @@
 // autowaypoint
 #include "bot_getprop.h"
 #include "bot_waypoint_locations.h"
+#include "bot_hooks.h"
 #include "in_buttons.h"
 
 // setup static client array
@@ -234,12 +235,10 @@ private:
 void CClient :: think ()
 {
 	extern ConVar bot_cmd_enable_wpt_sounds;
-	extern ConVar rcbot_customloadouts;
 
-#ifdef _DEBUG
-	if ( m_pPlayer && rcbot_customloadouts.GetBool() )
+	if ( m_pPlayer  )
 		HookGiveNamedItem(m_pPlayer);
-#endif
+
 	/*if ( m_pPlayer.get() == NULL )
 	{
 		clientDisconnected();

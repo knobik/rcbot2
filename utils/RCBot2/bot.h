@@ -468,6 +468,8 @@ public:
 	virtual unsigned int maxEntityIndex ( ) { return MAX_PLAYERS; }
 
 // linux fix 1
+	virtual void onInventoryApplication (){}
+
 	inline float distanceFrom(edict_t *pEntity)
 	{
 		return (pEntity->GetCollideable()->GetCollisionOrigin()-m_pController->GetLocalOrigin()).Length();
@@ -1351,9 +1353,6 @@ inline bool FStrEq(const char *sz1, const char *sz2)
 float VectorDistance(Vector &vec);
 int Ceiling ( float fVal );
 bool FNullEnt(const edict_t* pent);
-
-void HookGiveNamedItem ( edict_t *edict );
-void UnhookGiveNamedItem ( );
 // ??
 //#define SAFE_STRCPY (to,from,siz)\
 //	strncpy(to,from,siz-1);\

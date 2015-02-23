@@ -36,7 +36,9 @@
 #include <stdio.h>
 #include <time.h>
 
-#ifdef __linux__
+#ifdef WIN32
+#include <Windows.h>
+#else
 #include <sys/mman.h>
 #include <errno.h>
 #include <unistd.h>
@@ -78,6 +80,7 @@
 #include "bot_profiling.h"
 #include "bot_menu.h"
 #include "bot_squads.h"
+#include "bot_kv.h"
 #include "bot_fortress.h"
 #include "vstdlib/random.h" // for random  seed 
 
@@ -87,20 +90,15 @@
 
 #include "bot_getprop.h"
 
-#ifdef WIN32
-#include <Windows.h>
-#else
-#include <sys/mman.h>
-#endif
+#include "bot_sigscan.h"
 
+#include "bot_hooks.h"
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 static ICvar *s_pCVar;
 
 bool bInitialised = false;
-
-void UnhookPlayerRunCommand ();
 
 ConVar rcbot_tf2_debug_spies_cloakdisguise("rcbot_tf2_debug_spies_cloakdisguise","1",0,"Debug command : allow spy bots to cloak and disguise");
 ConVar rcbot_tf2_medic_letgotime("rcbot_tf2_medic_letgotime","0.4",0,"Time for medic to let go of medigun to switch players");
@@ -197,7 +195,10 @@ ConVar rcbot_supermode("rcbot_supermode","0",0,"If 1 will make every bot skill a
 ConVar rcbot_addbottime("rcbot_addbottime","0.83",0,"The time in seconds for bots to be added after another");
 ConVar rcbot_customloadouts("rcbot_customloadouts","1",0,"if 1 bots can use custom weapons");
 ConVar rcbot_givenameditem_offset("rcbot_givenameditem_offset","471",0,"offset of the GiveNamedItem function");
+ConVar rcbot_equipwearable_offset("rcbot_equipwearable_offset","426",0,"offset of the EquipWearable function");
 ConVar rcbot_rmplayeritem_offset("rcbot_rmplayeritem_offset","270",0,"offset of the RemovePlayerItem function");
+ConVar rcbot_enable_attributes("rcbot_enable_attributes","1",0,"Enable/disable attributes on TF2 weapon loadouts");
+ConVar rcbot_force_generation("rcbot_force_generation","0",0,"force generation of weapons");
 //ConVar rcbot_util_learning("rcbot_util_learning","0",0,"Experimental");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
@@ -224,437 +225,29 @@ IVDebugOverlay *debugoverlay = NULL;
 IServerGameEnts *servergameents = NULL; // for accessing the server game entities
 IServerGameDLL *servergamedll = NULL;
 IServerTools *servertools = NULL;
-void *g_pVTable = NULL;
-void *g_pVTable_Attributes = NULL;
-#ifdef _DEBUG
-CBaseEntity* (CBaseEntity::*GiveNamedItem)(const char*, int) = 0x0;
-CBaseEntity* (CBaseEntity::*TF2GiveNamedItem)(char const*, int, CEconItemView*, bool) = 0x0;
+
 void (CBaseEntity::*RemovePlayerItem)(CBaseEntity*) = 0x0;
 void (CBaseEntity::*Touch)(CBaseEntity*) = 0x0;
-void (CAttributeManager::*OnAttributesChanged)(void) = 0x0;
-/* From SOURCEMOD */
+//GCC takes the this pointer on the stack as the first parameter
 
-size_t UTIL_DecodeHexString(unsigned char *buffer, size_t maxlength, const char *hexstr);
-void *FindPattern(const void *libPtr, const char *pattern, size_t len);
-
-struct DynLibInfo
+void UTIL_ApplyAttribute ( edict_t *pEdict, const char *name, float fVal )
 {
-	void *baseAddress;
-	size_t memorySize;
-};
+	CAttributeList *address = CClassInterface::getAttributeList(pEdict);
 
-size_t UTIL_DecodeHexString(unsigned char *buffer, size_t maxlength, const char *hexstr)
-{
-	size_t written = 0;
-	size_t length = strlen(hexstr);
-
-	for (size_t i = 0; i < length; i++)
+	if ( address == NULL )
 	{
-		if (written >= maxlength)
-			break;
-		buffer[written++] = hexstr[i];
-		if (hexstr[i] == '\\' && hexstr[i + 1] == 'x')
-		{
-			if (i + 3 >= length)
-				continue;
-			/* Get the hex part. */
-			char s_byte[3];
-			int r_byte;
-			s_byte[0] = hexstr[i + 2];
-			s_byte[1] = hexstr[i + 3];
-			s_byte[2] = '\0';
-			/* Read it as an integer */
-			sscanf_s(s_byte, "%x", &r_byte);
-			/* Save the value */
-			buffer[written - 1] = r_byte;
-			/* Adjust index */
-			i += 3;
-		}
+		CBotGlobals::botMessage(NULL,1,"getAttributeList not found");
+		return;
 	}
 
-	return written;
-}
+	CEconItemAttributeDefinition *def = g_pGetAttributeDefinitionByName->callme(g_pGetEconItemSchema->callme(),name);
 
-
-bool GetLibraryInfo(const void *libPtr, DynLibInfo &lib)
-{
-	uintptr_t baseAddr;
-
-	if (libPtr == NULL)
+	if ( def )
 	{
-		return false;
+		g_pSetRuntimeAttributeValue->callme(pEdict,address,def,fVal);			
 	}
-
-#ifdef _WIN32
-
-
-	MEMORY_BASIC_INFORMATION info;
-	IMAGE_DOS_HEADER *dos;
-	IMAGE_NT_HEADERS *pe;
-	IMAGE_FILE_HEADER *file;
-	IMAGE_OPTIONAL_HEADER *opt;
-
-	if (!VirtualQuery(libPtr, &info, sizeof(MEMORY_BASIC_INFORMATION)))
-	{
-		return false;
-	}
-
-	baseAddr = reinterpret_cast<uintptr_t>(info.AllocationBase);
-
-	/* All this is for our insane sanity checks :o */
-	dos = reinterpret_cast<IMAGE_DOS_HEADER *>(baseAddr);
-	pe = reinterpret_cast<IMAGE_NT_HEADERS *>(baseAddr + dos->e_lfanew);
-	file = &pe->FileHeader;
-	opt = &pe->OptionalHeader;
-
-	/* Check PE magic and signature */
-	if (dos->e_magic != IMAGE_DOS_SIGNATURE || pe->Signature != IMAGE_NT_SIGNATURE || opt->Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC)
-	{
-		return false;
-	}
-
-	/* Check architecture, which is 32-bit/x86 right now
-	 * Should change this for 64-bit if Valve gets their act together
-	 */
-	if (file->Machine != IMAGE_FILE_MACHINE_I386)
-	{
-		return false;
-	}
-
-	/* For our purposes, this must be a dynamic library */
-	if ((file->Characteristics & IMAGE_FILE_DLL) == 0)
-	{
-		return false;
-	}
-
-	/* Finally, we can do this */
-	lib.memorySize = opt->SizeOfImage;
-
-	lib.baseAddress = reinterpret_cast<void *>(baseAddr);
-
-	return true;
-
-	#endif
-
-	return false;
-}
-
-
-void *FindPattern(const void *libPtr, const char *pattern, size_t len)
-{
-	DynLibInfo lib;
-	bool found;
-	char *ptr, *end;
-
-	memset(&lib, 0, sizeof(DynLibInfo));
-
-	if (!GetLibraryInfo(libPtr, lib))
-	{
-		return NULL;
-	}
-
-	ptr = reinterpret_cast<char *>(lib.baseAddress);
-	end = ptr + lib.memorySize - len;
-
-	while (ptr < end)
-	{
-		found = true;
-		for (register size_t i = 0; i < len; i++)
-		{
-			if (pattern[i] != '\x2A' && pattern[i] != ptr[i])
-			{
-				found = false;
-				break;
-			}
-		}
-
-		if (found)
-			return ptr;
-
-		ptr++;
-	}
-
-	return NULL;
-}
-
-typedef void* (*CALL_EXECUTE)(void *, void *);
-
-typedef void* (__thiscall *THISCALL_EXECUTE_1)(void *this_ptr, void *arg1);
-typedef void* (__thiscall *THISCALL_EXECUTE_2)(void *this_ptr, void *arg1, void *arg2);
-
-class CAttributeList;
-class CEconItemAttributeDefinition;
-class CEconItemSchema;
-
-CEconItemSchema *g_pEconItemSchema = 0x0;
-void *GEconItemSchemaFunc = 0x0;
-/*
-#if defined WIN32
-typedef CEconItemAttributeDefinition* (*CEconItemSchema_GetAttributeByID)(GEconItemSchema*,int);
-typedef CEconItemAttributeDefinition* (*CEconItemSchema_GetAttributeByName)(const char*);
-typedef void (*CAttributeList_SetRuntimeAttributeValue)(const CEconItemAttributeDefinition*, float);
-typedef void (*CAttributeList_RemoveAttribute)(const CEconItemAttributeDefinition*); // note the argument change
-typedef int (*CAttributeList_DestroyAllAttributes)(void); // same as before
-typedef void (*CAttributeList_SetRuntimeAttributeRefundableCurrency)(const CEconItemAttributeDefinition*, int);
-typedef int (*CAttributeList_GetRuntimeAttributeRefundableCurrency)(const CEconItemAttributeDefinition);
-typedef void (*CAttributeList_NotifyManagerOfAttributeValueChanges)(void); // Replaces ClearCache?
-#else //GCC takes the this pointer on the stack as the first parameter
-typedef CEconItemAttributeDefinition* (*CEconItemSchema_GetAttributeByID)(GEconItemSchema*,int);
-typedef CEconItemAttributeDefinition* (*CEconItemSchema_GetAttributeByName)(GEconItemSchema,const char*);
-typedef void (*CAttributeList_SetRuntimeAttributeValue)(CAttributeList*,const CEconItemAttributeDefinition*, float);
-typedef void (*CAttributeList_RemoveAttribute)(CAttributeList*,const CEconItemAttributeDefinition*); // note the argument change
-typedef int (*CAttributeList_DestroyAllAttributes)(CAttributeList*); // same as before
-typedef void (*CAttributeList_SetRuntimeAttributeRefundableCurrency)(CAttributeList*,const CEconItemAttributeDefinition*, int);
-typedef int (*CAttributeList_GetRuntimeAttributeRefundableCurrency)(CAttributeList*,const CEconItemAttributeDefinition);
-typedef void (*CAttributeList_NotifyManagerOfAttributeValueChanges)(CAttributeList*); // Replaces ClearCache?
-#endif
-*/
-
-void *GetAttributeDefinitionByName = NULL;
-void *SetRuntimeAttributeValue = NULL;
-//CEconItemAttributeDefinition* (*GetAttributeDefinitionByName)(const char*) = 0x0;
-//void (*SetRuntimeAttributeValue)(const CEconItemAttributeDefinition*, float) = 0x0;
-
-//CEconItemAttributeDefinition* (CEconItemSchema::*GetAttributeDefinitionByName)(const char*) = 0x0;
-//void (CAttributeList::*SetRuntimeAttributeValue)(const CEconItemAttributeDefinition*, float) = 0x0;
-/*
-typedef CEconItemAttributeDefinition* (*CEconItemSchema::GetAttributeByName)(const char*);
-typedef void (*CAttributeList::SetRuntimeAttributeValue)(const CEconItemAttributeDefinition*, float);
-
-CAttributeList_SetRuntimeAttributeValue nSetRuntimeAttributeValueFunc = 0x0;
-CEconItemSchema_GetAttributeByName nGetAttributeByName = 0x0;*/
-
-/*
-typedef void (*SwitchTeam)(void*, int);
-
-SwitchTeam m_SwitchTeam = 0x0;
-
-void S_SwitchTeam(void* thisptr, int iTeamIndex)
-{
-      if(!m_SwitchTeam)
-      {
-           
-            return;
-       }
-
-       void* func = (void*)m_SwitchTeam;
-
-       #ifdef _WIN32
-            __asm {
-                push ecx;
-                mov ecx, thisptr;
-                push iTeamIndex;
-                call func;
-                pop ecx;
-            };
-       #else
-             (m_SwitchTeam)(thisptr, iTeamIndex);
-       #endif
-}
-
-
-class ServerFactory
-{
-public:
-	ServerFactory()
-	{
-		strcpy_s(dll,"ABCDEFGHIJ");
-	}
-
-	void SwitchTeam ( int iTeamIndex )
-	{
-		printf("test");
-	}
-private:
-	char dll[64];
-};
-
-ServerFactory serverfactory;
-*/
-void *findSignature ( void *addrInBase, const char *signature )
-{
-	// First, preprocess the signature 
-	unsigned char real_sig[511];
-
-	size_t real_bytes;
-	size_t length = strlen(signature);
-
-	real_bytes = UTIL_DecodeHexString(real_sig, sizeof(real_sig), signature);
-
-	if (real_bytes >= 1)
-	{
-		return FindPattern(addrInBase, (char*) real_sig, real_bytes);
-	}
-
-	return NULL;
-}
-
-//int _tmain(int argc, _TCHAR* argv[])
-//{
-//	m_SwitchTeam = (SwitchTeam)findSignature(&serverfactory,"ABCDEFGHIJ");
-
-//	return 0;
-//}
-
-/* END - FROM SOURCEMOD */
-
-CON_COMMAND ( rcbot_serverdll, "aaa" )
-{
-	char dllfile[32] = "server.dll";
-	HMODULE serverdll = LoadLibrary(dllfile);
-
-	if ( serverdll )
-	{
-		char symbol[64] = "\x55\x8B\xEC\x51\x53\x8B\xD9\x8B\x43\x10";
-
-		if ( args.ArgC() > 1 )
-			strcpy(symbol,args.Arg(1));
-
-		void *GetAttributeByID = GetProcAddress(serverdll,symbol);
-
-		if ( GetAttributeByID )
-		{
-			CBotGlobals::botMessage(NULL,0,"Found");
-		}
-	}
-}
-
-CON_COMMAND ( rcbot_giveweapon, "give_flaregun" )
-{
-	//const char *name = args.Arg(0);
-	//int index = atoi(args.Arg(1));
-	//int slot = atoi(args.Arg(2));
-
-	//if ( name && index && slot )
-	{
-		// GiveNamedItem
-
-		int touch_offset = 100;
-		edict_t *pWeapon;
-		edict_t *pPlayer = CClients::getListenServerClient();
-
-		if ( args.ArgC() > 1 && args.Arg(1) != NULL )
-		{
-			pPlayer = CBotGlobals::findPlayerByTruncName(args.Arg(1));
-
-			if ( pPlayer == NULL )
-				return;
-		}
-
-		CBaseEntity *pEnt = pPlayer->GetUnknown()->GetBaseEntity();
-
-		unsigned int gni_offset = rcbot_givenameditem_offset.GetInt();
-		unsigned int rpi_offset = rcbot_rmplayeritem_offset.GetInt();
-
-		DWORD *mem = ( DWORD* )*( DWORD* )pEnt;
-
-		//*(DWORD*)&GiveNamedItem = mem[gni_offset];
-		*(DWORD*)&RemovePlayerItem = mem[rpi_offset];
-		//*(DWORD*)&Touch = mem[touch_offset];
-		//*(DWORD*)&TF2GiveNamedItem = mem[478];
-
-		CEconItemView p;
-
-		memset(&p,0,sizeof(CEconItemView));
-
-		p.m_iItemDefinitionIndex = 351;
-		p.m_iEntityQuality = 10;
-		p.m_iEntityLevel = 6;
-		p.m_pVTable_Attributes = g_pVTable_Attributes;
-		p.m_pVTable = g_pVTable;
-		p.m_bInitialized = true;
-
-		//GiveNamedItem_func *GiveNamedItem = (GiveNamedItem_func*)(&mem[gni_offset]);
-		//RemovePlayerItem_func *RemovePlayerItem = (RemovePlayerItem_func*)(&mem[rpi_offset]);
-		
-		//CBaseEntity *pEntity = servertools->CreateEntityByName("tf_weapon_flaregun");
-
-		edict_t *pShotgun = CClassInterface::FindEntityByClassnameNearest(CBotGlobals::entityOrigin(pPlayer),"tf_weapon_shotgun_pyro",100);
-
-		if ( !pShotgun )
-			return;
-
-		CBaseEntity *pShotgunEntity = pShotgun->GetUnknown()->GetBaseEntity();
-			
-		//pShotgunEntity->AddSpawnFlags(0);
-		(*pEnt.*RemovePlayerItem)(pShotgunEntity);
-		servertools->RemoveEntityImmediate(pShotgunEntity);
-
-		CBaseEntity *pEntity = (*pEnt.*TF2GiveNamedItem)("tf_weapon_flaregun",0,&p,false);
-
-			/*
-		if ( pEntity != NULL )
-		{
-			edict_t *pEdict = servergameents->BaseEntityToEdict(pEntity);
-
-			CClassInterface::setEntityIndex_Level_Quality(pEdict,351,10,6); // the detonator
-
-			Vector *vPlayerOrigin = CClassInterface::getOrigin(pPlayer);
-
-			CClassInterface::setOrigin(pEdict,*vPlayerOrigin);
-			CClassInterface::updateSimulationTime(pEdict);
-
-			CClassInterface::setInitialized(pEdict);
-
-			servertools->DispatchSpawn(pEntity);
-
-			(*pEntity.*Touch)(pEnt);	
-		}*/
-		/*
-			// find classname for index (slot must also match)
-			const char *pWeaponName = "tf_weapon_flaregun";// = CTeamFortress2Mod::findWeaponWithIndex(index,slot);
-
-			if ( pWeaponName != NULL )
-			{
-				CBaseEntity *pNewWeapon = (*pEnt.*GiveNamedItem)(pWeaponName,0);
-
-				edict_t *pEdict = servergameents->BaseEntityToEdict(pNewWeapon);
-
-				CClassInterface::setEntityIndex_Level_Quality(pEdict,351); // the detonator
-			}*/
-	}
-}
-
-CEconItemAttributeDefinition *getAttributeDefinitionByNameFunc ( const char *attrib )
-{
-	CEconItemAttributeDefinition *ret = NULL;
-
-	if ( g_pEconItemSchema && GetAttributeDefinitionByName )
-	{
-		__asm
-	   {
-		  mov ecx, g_pEconItemSchema;
-		  push attrib;
-		  call GetAttributeDefinitionByName;
-		  mov ret, eax;
-	   };
-
-	}
-
-	return ret;
-}
-
-bool SetRuntimeAttributeValueFunc ( int iEntityIndex, CAttributeList *list, CEconItemAttributeDefinition *attrib, float value )
-{
-	int bret = 0;
-
-	if ( list && attrib && SetRuntimeAttributeValue )
-	{
-		//void *preveax1 = 0x0;
-		
-		__asm 
-		{
-			//mov preveax1, eax;
-			mov ecx, list;
-			push attrib;
-			push value;
-			call SetRuntimeAttributeValue;
-			mov bret, eax;
-			//mov eax, preveax1;
-		};
-	}
-
-	return (bret==1) || ((bret & 0x1FFF) == ((iEntityIndex + 4) * 4));//((entindex + 4) * 4) | 0xA000), and you can AND it with 0x1FFF ((bret&0xFF)>0);
+	else
+		CBotGlobals::botMessage(NULL,1,"CEconItemAttributeDefinition for %s not found",name);
 }
 
 CON_COMMAND( rcbot_attribtest, "attributes for tf2 test" )
@@ -673,47 +266,21 @@ CON_COMMAND( rcbot_attribtest, "attributes for tf2 test" )
 
 		const char *attrib = args.Arg(2);
 		float fValue = atof(args.Arg(3));
-		CAttributeList *address = (CAttributeList*)CClassInterface::getAttributeList(pEnt);
 
-		if ( address == NULL )
-		{
-			CBotGlobals::botMessage(NULL,0,"No AttributeList");
-			return;
-		}
-		//void *preveax = 0x0;
-
-		__asm
-		{
-			//mov preveax, eax;
-			call GEconItemSchemaFunc;
-			mov g_pEconItemSchema, eax;
-			//mov eax, preveax;
-		};
-
-		CEconItemAttributeDefinition *def = getAttributeDefinitionByNameFunc(attrib);
-
-		if ( def )
-		{
-			if ( SetRuntimeAttributeValueFunc(ENTINDEX(pEnt),address,def,fValue) )
-			{
-				CBotGlobals::botMessage(NULL,0,"SetRuntimeAttributeValueFunc returned SUCCESSFUL");
-			}
-			else
-				CBotGlobals::botMessage(NULL,0,"SetRuntimeAttributeValueFunc returned FAIL");
+		UTIL_ApplyAttribute(pEnt,attrib,fValue);
 
 			// Call AttributeChanged
 			
-			/*DWORD *mem = ( DWORD* )*( DWORD* )address;
-			*(DWORD*)&OnAttributesChanged = mem[12];
-			CAttributeManager *pAttributeManager = (CAttributeManager *)((unsigned long)address + 24);	
+			//DWORD *mem = ( DWORD* )*( DWORD* )address;
+			//*(DWORD*)&OnAttributesChanged = mem[12];CAttributeListSetValue
+			//CAttributeManager *pAttributeManager = (CAttributeManager *)((unsigned long)address + 24);	
 
-			if ( pAttributeManager && OnAttributesChanged )
-			{
-				(*pAttributeManager.*OnAttributesChanged)();
-			}*/
-		}
-		else
-			CBotGlobals::botMessage(NULL,1,"Definition not found");
+			//if ( pAttributeManager && OnAttributesChanged )
+			//{
+			//	(*pAttributeManager.*OnAttributesChanged)();
+			//}
+	
+			
 	}
 }
 
@@ -731,244 +298,12 @@ CON_COMMAND( rcbot_maptime, "get map time" )
 	Msg("gpGlobals->curtime = %f\n",gpGlobals->curtime);
 }
 
-#endif
-
-
 //CBaseEntityList * g_pEntityList;
 // 
 // The plugin is a static singleton that is exported as an interface
 //
 CRCBotPlugin g_RCBOTServerPlugin;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR(CRCBotPlugin, IServerPluginCallbacks, INTERFACEVERSION_ISERVERPLUGINCALLBACKS, g_RCBOTServerPlugin );
-
-// linux:  Ted  http://rcbot.bots-united.com/forums/index.php?showuser=2257
-// Needed to hook virtual tables and member functions
-DWORD VirtualTableHook( DWORD* pdwNewInterface, int vtable, DWORD newInterface )
-{
-    DWORD dwOld, dwStor = 0x0;
-#ifndef __linux
-    VirtualProtect( &pdwNewInterface[vtable], 4, PAGE_EXECUTE_READWRITE, &dwOld );
-#else
-   // need page aligned address
-    char *addr = reinterpret_cast<char *>(reinterpret_cast<DWORD>(&pdwNewInterface[vtable])
-                      - reinterpret_cast<DWORD>(&pdwNewInterface[vtable])
-                      % sysconf(_SC_PAGE_SIZE));
-    int len = sizeof(DWORD) + reinterpret_cast<DWORD>(&pdwNewInterface[vtable])
-      % sysconf(_SC_PAGE_SIZE);
-    if (mprotect(addr, len, PROT_EXEC|PROT_READ|PROT_WRITE) == -1) {
-      Warning("In VirtualTableHook while calling mprotect for write access: %s.\n",
-          strerror(errno));
-    } else {
-#endif
-    dwStor = pdwNewInterface[vtable];
-    *(DWORD*)&pdwNewInterface[vtable] = newInterface;
-#ifndef __linux
-    VirtualProtect(&pdwNewInterface[vtable], 4, dwOld, &dwOld);
-#else
-    if (mprotect(addr, len, PROT_EXEC|PROT_READ) == -1) {
-      Warning("In VirtualTableHook while calling mprotect to remove write access: %s.\n",
-          strerror(errno));
-    }
-    }
-#endif
-
-    return dwStor;
-}
-// needed to call the original playerruncommand function
-void (CBaseEntity::*pPlayerRunCommand)(CUserCmd*, IMoveHelper*) = 0x0;
-DWORD* pPlayerRunCommandHookedClass = 0;
-DWORD* GiveNamedItemHookedClass = 0;
-// PlayerRunCommmand Hook 
-// Some Mods have their own puppet bots that run around and override RCBOT if this is not here
-// this function overrides the puppet bots movements
-#ifdef __linux__
-void FASTCALL nPlayerRunCommand( CBaseEntity *_this, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
-#else
-void __fastcall nPlayerRunCommand( CBaseEntity *_this, void *unused, CUserCmd* pCmd, IMoveHelper* pMoveHelper)
-#endif
-{
-	edict_t *pEdict = servergameents->BaseEntityToEdict(_this);
-
-	static CBot *pBot;
-
-	pBot = CBots::getBotPointer(pEdict);
-	
-	if ( pBot )
-	{
-		static CBotCmd *cmd;
-		
-		cmd = pBot->getUserCMD();
-
-		// put the bot's commands into this move frame
-		pCmd->buttons = cmd->buttons;
-		pCmd->forwardmove = cmd->forwardmove;
-		pCmd->impulse = cmd->impulse;
-		pCmd->sidemove = cmd->sidemove;
-		pCmd->upmove = cmd->upmove;
-		pCmd->viewangles = cmd->viewangles;
-		pCmd->weaponselect = cmd->weaponselect;
-		pCmd->weaponsubtype = cmd->weaponsubtype;
-		pCmd->tick_count = cmd->tick_count;
-	}
-//#ifdef __linux__
-	try
-	{
-//#endif
-		(*_this.*pPlayerRunCommand)(pCmd, pMoveHelper);
-//#ifdef __linux__
-	}
-	catch(...)
-	{
-		UnhookPlayerRunCommand();
-		Error("RCBOT:  nPlayerRunCommand Failed. bad offset?");
-		return;
-	}
-//#endif
-}
-/*
-typedef struct
-{
-	int ItemIndex;
-	int Quality;
-	int Level;
-	char *attribs;
-}
-	SetTrieString(hItemInfoTrie, "528_classname", "tf_weapon_mechanical_arm", false);
-	SetTrieValue(hItemInfoTrie, "528_index", 528, false);
-	SetTrieValue(hItemInfoTrie, "528_slot", 1, false);
-	SetTrieValue(hItemInfoTrie, "528_quality", 6, false);
-	SetTrieValue(hItemInfoTrie, "528_level", 5, false);
-	SetTrieString(hItemInfoTrie, "528_attribs", "300 ; 1.0 ; 307 ; 1.0 ; 303 ; -1.0 ; 15 ; 0.0 ; 298 ; 35.0 ; 301 ; 1.0 ; 312 ; 1.0", false);
-	SetTrieValue(hItemInfoTrie, "528_ammo", 200, false);
-	*/
-
-char g_szOverrideWeaponName[32];
-
-#ifdef __linux__
-void FASTCALL nTF2GiveNamedItem( CBaseEntity *_this, void *punused, const char *name, int subtype, CEconItemView *cscript, bool b )
-#else
-void __fastcall nTF2GiveNamedItem( CBaseEntity *_this, void *punused, const char *name, int subtype, CEconItemView *cscript, bool b )
-#endif
-{
-	const char *pszOverrideName = name;
-	edict_t *pEdict = servergameents->BaseEntityToEdict(_this);
-
-	if ( cscript && (g_pVTable == NULL) )
-		g_pVTable = cscript->m_pVTable;
-	if ( cscript && (g_pVTable_Attributes == NULL) )
-		g_pVTable_Attributes = cscript->m_pVTable_Attributes;
-
-	if ( CBots::getBotPointer(pEdict) != NULL )
-	{
-		int iclass = CClassInterface::getTF2Class(pEdict);
-		const char *pszNewWeapon;
-		// this is an RC bot
-		if ( (pszNewWeapon = CTeamFortress2Mod::findRandomWeaponLoadOut(iclass,name,cscript)) != NULL )
-			name = pszNewWeapon;
-	}
-
-	(*_this.*TF2GiveNamedItem)(pszOverrideName,subtype,cscript,b);
-}
-#ifdef _DEBUG
-void HookGiveNamedItem ( edict_t *edict )
-{
-	CBaseEntity *BasePlayer = servergameents->EdictToBaseEntity(edict);//(CBaseEntity *)(edict->GetUnknown()->GetBaseEntity());
-
-	if((TF2GiveNamedItem == 0x0) && BasePlayer)
-	{
-		int vtable = rcbot_givenameditem_offset.GetInt();
-
-		if ( vtable != 0 )
-		{
-#ifndef WIN32
-			++vtable;
-#endif
-	    // hook it
-			GiveNamedItemHookedClass = ( DWORD* )*( DWORD* )BasePlayer;
-			*(DWORD*)&TF2GiveNamedItem = VirtualTableHook( GiveNamedItemHookedClass, vtable, ( DWORD )nTF2GiveNamedItem );
-			
-		}
-	}
-	
-}
-
-void UnhookGiveNamedItem ()
-{
-	if ( TF2GiveNamedItem && GiveNamedItemHookedClass )
-	{
-		int vtable = rcbot_givenameditem_offset.GetInt();
-
-		if ( vtable != 0 )
-		{
-	#ifndef WIN32
-			++vtable;
-	#endif
-	       
-			VirtualTableHook( GiveNamedItemHookedClass, vtable, *(DWORD*)&TF2GiveNamedItem );
-			TF2GiveNamedItem = 0x0;
-			GiveNamedItemHookedClass = 0x0;
-		}
-	}
-}
-#endif
-//----------------------------------
-// begin hook
-void HookPlayerRunCommand ( edict_t *edict )
-{
-	if ( CBots::controlBots() ) //rcbot_override.GetBool() )
-	{
-		CBaseEntity *BasePlayer = (CBaseEntity *)(edict->GetUnknown()->GetBaseEntity());
-
-		if(BasePlayer)
-		{
-			int vtable = 0;
-
-			if ( CBotGlobals::isCurrentMod(MOD_DOD) )
-				vtable = rcbot_runplayercmd_dods.GetInt();
-			else
-				vtable = rcbot_runplayercmd_tf2.GetInt();
-
-			if ( vtable != 0 )
-			{
-	#ifndef WIN32
-				++vtable;
-	#endif
-	       // hook it
-				if ( pPlayerRunCommand == 0x0 )
-				{
-					pPlayerRunCommandHookedClass = ( DWORD* )*( DWORD* )BasePlayer;
-					*(DWORD*)&pPlayerRunCommand = VirtualTableHook( pPlayerRunCommandHookedClass, vtable, ( DWORD )nPlayerRunCommand );
-				}
-			}
-		}
-	}
-}
-
-// end hook
-void UnhookPlayerRunCommand ()
-{
-	if ( pPlayerRunCommand && pPlayerRunCommandHookedClass )
-	{
-		int vtable = 0;
-
-		if ( CBotGlobals::isCurrentMod(MOD_DOD) )
-			vtable = rcbot_runplayercmd_dods.GetInt();
-		else
-			vtable = rcbot_runplayercmd_tf2.GetInt();
-
-		if ( vtable != 0 )
-		{
-	#ifndef WIN32
-			++vtable;
-	#endif
-	       
-			VirtualTableHook( pPlayerRunCommandHookedClass, vtable, *(DWORD*)&pPlayerRunCommand );
-			pPlayerRunCommandHookedClass = NULL;
-			pPlayerRunCommand = NULL;
-		}
-	}
-}
-
 
 //---------------------------------------------------------------------------------
 // Purpose: constructor/destructor
@@ -1021,32 +356,14 @@ CON_COMMAND( rcbotd, "access the bot commands on a server" )
 
 void CRCBotPlugin::OnEdictAllocated( edict_t *edict )
 {
-	/*
-#ifdef _DEBUG
-	static char msg[256];
 
-	if ( CClients::clientsDebugging(BOT_DEBUG_EDICTS) )
-	{
-		sprintf(msg,"%x : %s\n",(int)edict,edict->GetClassName());
-
-		CClients::clientDebugMsg(BOT_DEBUG_EDICTS,msg);
-	}
-#endif*/
 }
 
 void CRCBotPlugin::OnEdictFreed( const edict_t *edict  )
-{/*
-#ifdef _DEBUG
-	static char msg[256];
+{
 
-	if ( CClients::clientsDebugging(BOT_DEBUG_EDICTS) )
-	{
-		sprintf(msg,"%x : %s\n",(int)edict,edict->GetClassName());
-
-		CClients::clientDebugMsg(BOT_DEBUG_EDICTS,msg);
-	}
-#endif*/
 }
+
 class CBotRecipientFilter : public IRecipientFilter
 {
 public:
@@ -1221,6 +538,88 @@ void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, const char *szMessage )
 
 #endif
 
+void findSignaturesAndOffsets(void *gameServerFactory)
+{
+	char filename[512];
+	// Load RCBOT2 hook data
+	CBotGlobals::buildFileName(filename,"hookinfo",BOT_CONFIG_FOLDER,"ini");
+	
+	FILE *fp = fopen(filename,"r");
+	
+	CRCBotKeyValueList *pKVL = new CRCBotKeyValueList();
+
+	if ( fp )
+		pKVL->parseFile(fp);	
+
+	g_pGetEconItemSchema = new CGetEconItemSchema(pKVL,gameServerFactory);
+	g_pSetRuntimeAttributeValue = new CSetRuntimeAttributeValue(pKVL,gameServerFactory);
+	g_pGetAttributeDefinitionByName = new CGetAttributeDefinitionByName(pKVL,gameServerFactory);
+		/*
+#ifdef _WIN32
+	if ( pKVL->getString("set_attribute_value_win",&sig) && sig )
+#else
+	if ( pKVL->getString("set_attribute_value_linux",&sig) && sig )
+#endif
+		SetRuntimeAttributeValue = findSignature((void*)gameServerFactory,sig);
+	else
+		SetRuntimeAttributeValue = findSignature((void*)gameServerFactory,"\\x55\\x8B\\xEC\\x83\\xEC\\x14\\x33\\xD2\\x53\\x8B\\xD9\\x56\\x57\\x8B\\x73\\x10\\x85\\xF6");
+
+#ifdef _WIN32
+	if ( pKVL->getString("get_item_schema_win",&sig) && sig )
+#else
+	if ( pKVL->getString("get_item_schema_linux",&sig) && sig )
+#endif
+		GEconItemSchemaFunc = findSignature((void*)gameServerFactory,sig);
+	else
+		GEconItemSchemaFunc = findSignature((void*)gameServerFactory,"\\xE8\\x2A\\x2A\\x2A\\x2A\\x83\\xC0\\x04\\xC3");
+
+#ifdef _WIN32
+	if ( pKVL->getString("get_attrib_definition_win",&sig) && sig )
+#else
+	if ( pKVL->getString("get_attrib_definition_linux",&sig) && sig )
+#endif
+		GetAttributeDefinitionByName = findSignature((void*)gameServerFactory,sig);
+	else
+		GetAttributeDefinitionByName = findSignature((void*)gameServerFactory,"\\x55\\x8B\\xEC\\x83\\xEC\\x1C\\x53\\x8B\\xD9\\x8B\\x0D\\x2A\\x2A\\x2A\\x2A\\x56\\x33\\xF6\\x89\\x5D\\xF8\\x89\\x75\\xE4\\x89\\x75\\xE8");
+
+#ifdef _WIN32
+	if ( pKVL->getString("attributelist_get_attrib_by_id_win",&sig) && sig )
+#else
+	if ( pKVL->getString("attributelist_get_attrib_by_id_linux",&sig) && sig )
+#endif
+		AttributeList_GetAttributeByID = findSignature((void*)gameServerFactory,sig);
+	else
+		AttributeList_GetAttributeByID = findSignature((void*)gameServerFactory,"\\x55\\x8B\\xEC\\x51\\x8B\\xC1\\x53\\x56\\x33\\xF6\\x89\\x45\\xFC\\x8B\\x58\\x10"); 
+		*/
+	int val;
+
+#ifdef _WIN32
+
+	if ( pKVL->getInt("givenameditem_win",&val) )
+		rcbot_givenameditem_offset.SetValue(val);
+	if ( pKVL->getInt("equipwearable_win",&val) )
+		rcbot_equipwearable_offset.SetValue(val);
+	if ( pKVL->getInt("runplayermove_tf2_win",&val) )
+		rcbot_runplayercmd_tf2.SetValue(val);
+	if ( pKVL->getInt("runplayermove_dods_win",&val) )
+		rcbot_runplayercmd_dods.SetValue(val);
+	
+#else
+
+	if ( pKVL->getInt("givenameditem_linux",&val) )
+		rcbot_givenameditem_offset.SetValue(val);
+	if ( pKVL->getInt("equipwearable_linux",&val) )
+		rcbot_equipwearable_offset.SetValue(val);
+	if ( pKVL->getInt("runplayermove_tf2_linux",&val) )
+		rcbot_runplayercmd_tf2.SetValue(val);
+	if ( pKVL->getInt("runplayermove_dods_linux",&val) )
+		rcbot_runplayercmd_dods.SetValue(val);
+	
+#endif
+
+	delete pKVL;
+	fclose(fp);
+}
 
 //---------------------------------------------------------------------------------
 // Purpose: called when the plugin is loaded, load the interface we need from the engine
@@ -1245,38 +644,7 @@ bool CRCBotPlugin::Load( CreateInterfaceFn interfaceFactory, CreateInterfaceFn g
 		return false;
 	}
 
-//CEconItemAttributeDefinition* (CEconItemSchema::*GetAttributeByName)(const char*) = 0x0;
-//void (CAttributeList::*SetRuntimeAttributeValue)(const CEconItemAttributeDefinition*, float) = 0x0;
-
-	SetRuntimeAttributeValue = findSignature((void*)gameServerFactory,"\\x55\\x8B\\xEC\\x83\\xEC\\x14\\x33\\xD2\\x53\\x8B\\xD9\\x56\\x57\\x8B\\x73\\x10\\x85\\xF6");
-
-	//*(DWORD*)&SetRuntimeAttributeValue = (DWORD)findSignature((void*)gameServerFactory,"\\x55\\x8B\\xEC\\x83\\xEC\\x14\\x33\\xD2\\x53\\x8B\\xD9\\x56\\x57\\x8B\\x73\\x10\\x85\\xF6");
-	/*CBotGlobals::botMessage(NULL,0,"Searching for Signature CAttributeList_SetRuntimeAttributeValue");
-	nSetRuntimeAttributeValueFunc = (CAttributeList_SetRuntimeAttributeValue) findSignature((void*)gameServerFactory,"\\x55\\x8B\\xEC\\x83\\xEC\\x14\\x33\\xD2\\x53\\x8B\\xD9\\x56\\x57\\x8B\\x73\\x10\\x85\\xF6");
-	if ( nSetRuntimeAttributeValueFunc != 0x0 )
-		CBotGlobals::botMessage(NULL,0,"Signature CAttributeList_SetRuntimeAttributeValue FOUND");
-	else
-		CBotGlobals::botMessage(NULL,0,"couldn't find Signature CAttributeList_SetRuntimeAttributeValue");*/
-
-	/*
-				"GEconItemSchema"
-			{
-				"library"			"server"
-				"windows"			"\xE8\x2A\x2A\x2A\x2A\x83\xC0\x04\xC3"
-				"linux"				"@_Z15GEconItemSchemav"
-				"mac"				"@_Z15GEconItemSchemav"
-	*/
-	GEconItemSchemaFunc = findSignature((void*)gameServerFactory,"\\xE8\\x2A\\x2A\\x2A\\x2A\\x83\\xC0\\x04\\xC3");
-
-	/*CBotGlobals::botMessage(NULL,0,"Searching for Signature CEconItemSchema_GetAttributeByName");
-	nGetAttributeByName = (CEconItemSchema_GetAttributeByName)findSignature((void*)gameServerFactory,"\\x55\\x8B\\xEC\\x83\\xEC\\x1C\\x53\\x8B\\xD9\\x8B\\x0D\\x2A\\x2A\\x2A\\x2A\\x56\\x33\\xF6\\x89\\x5D\\xF8\\x89\\x75\\xE4\\x89\\x75\\xE8");
-	if ( nGetAttributeByName != 0x0 )
-		CBotGlobals::botMessage(NULL,0,"Signature CEconItemSchema_GetAttributeByName FOUND");
-	else
-		CBotGlobals::botMessage(NULL,0,"couldn't find Signature CEconItemSchema_GetAttributeByName");
-*/
-	GetAttributeDefinitionByName = findSignature((void*)gameServerFactory,"\\x55\\x8B\\xEC\\x83\\xEC\\x1C\\x53\\x8B\\xD9\\x8B\\x0D\\x2A\\x2A\\x2A\\x2A\\x56\\x33\\xF6\\x89\\x5D\\xF8\\x89\\x75\\xE4\\x89\\x75\\xE8");
-	//*(DWORD*)&GetAttributeDefinitionByName = (DWORD)findSignature((void*)gameServerFactory,"\\x55\\x8B\\xEC\\x83\\xEC\\x1C\\x53\\x8B\\xD9\\x8B\\x0D\\x2A\\x2A\\x2A\\x2A\\x56\\x33\\xF6\\x89\\x5D\\xF8\\x89\\x75\\xE4\\x89\\x75\\xE8");
+	findSignaturesAndOffsets((void*)gameServerFactory);
 
 	LOAD_GAME_SERVER_INTERFACE(playerinfomanager,IPlayerInfoManager,INTERFACEVERSION_PLAYERINFOMANAGER);
 
@@ -1418,9 +786,8 @@ void CRCBotPlugin::Unload( void )
 		CBotMenuList::freeMemory();
 
 		UnhookPlayerRunCommand();
-#ifdef _DEBUG
 		UnhookGiveNamedItem();
-#endif
+
 		//ConVar_Unregister();
 
 		if ( gameeventmanager1 )

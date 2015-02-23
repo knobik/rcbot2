@@ -82,7 +82,7 @@ CRCBotKeyValueList :: ~CRCBotKeyValueList()
 	m_KVs.clear();
 }
 
-CRCBotKeyValue *CRCBotKeyValueList :: getKV ( char *key )
+CRCBotKeyValue *CRCBotKeyValueList :: getKV ( const char *key )
 {
 	for ( unsigned int i = 0; i < m_KVs.size(); i ++ )
 	{
@@ -93,7 +93,7 @@ CRCBotKeyValue *CRCBotKeyValueList :: getKV ( char *key )
 	return NULL;
 }
 
-bool CRCBotKeyValueList :: getFloat ( char *key, float *val )
+bool CRCBotKeyValueList :: getFloat ( const char *key, float *val )
 {
 	CRCBotKeyValue *pKV;
 
@@ -108,7 +108,7 @@ bool CRCBotKeyValueList :: getFloat ( char *key, float *val )
 }
 
 	
-bool CRCBotKeyValueList :: getInt ( char *key, int *val )
+bool CRCBotKeyValueList :: getInt ( const char *key, int *val )
 {
 	CRCBotKeyValue *pKV;
 
@@ -123,7 +123,7 @@ bool CRCBotKeyValueList :: getInt ( char *key, int *val )
 }
 
 
-bool CRCBotKeyValueList :: getString ( char *key, char **val )
+bool CRCBotKeyValueList :: getString ( const char *key, char **val )
 {
 	CRCBotKeyValue *pKV;
 
@@ -137,7 +137,7 @@ bool CRCBotKeyValueList :: getString ( char *key, char **val )
 	return true;
 }
 
-CRCBotKeyValue :: CRCBotKeyValue (char *szKey, char *szValue )
+CRCBotKeyValue :: CRCBotKeyValue (const char *szKey, char *szValue )
 {
 	strncpy(m_szKey,szKey,RCBOT_MAX_KV_LEN-1);
 	m_szKey[RCBOT_MAX_KV_LEN-1] = 0;

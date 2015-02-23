@@ -45,6 +45,7 @@
 #include "bot_waypoint_locations.h"
 #include "bot_perceptron.h"
 #include "bot_tf2_points.h"
+#include "bot_sigscan.h"
 
 eTFMapType CTeamFortress2Mod :: m_MapType = TF_MAP_CTF;
 tf_tele_t CTeamFortress2Mod :: m_Teleporters[MAX_PLAYERS];
@@ -89,18 +90,432 @@ bool CTeamFortress2Mod::m_bMVMAlarmSounded = false;
 float CTeamFortress2Mod::m_fMVMCapturePointRadius = 0.0f;
 int CTeamFortress2Mod::m_iCapturePointWptID = -1;
 int CTeamFortress2Mod::m_iFlagPointWptID = -1;
-vector<CTF2LoadoutWeapon*> CTeamFortress2Mod::m_pLoadoutWeapons[3][9];
-
+vector<CTF2Loadout*> CTeamFortress2Mod::m_pLoadoutWeapons[3][9];
+vector<CTF2Loadout*> CTeamFortress2Mod::m_pHats;
 extern ConVar bot_use_disp_dist;
 
-CTF2LoadoutWeapon :: CTF2LoadoutWeapon ( const char *pszClassname, int iIndex, int iQuality, int iLevel, const char *pszAttribs, int iMaxAmmo )
+
+
+const char *g_pszAttributeNames[] = 
+{
+{"damage penalty"},
+{"damage bonus"},
+{"clip size penalty"},
+{"clip size bonus"},
+{"fire rate penalty"},
+{"fire rate bonus"},
+{"heal rate penalty"},
+{"heal rate bonus"},
+{"ubercharge rate penalty"},
+{"ubercharge rate bonus"},
+{"overheal bonus"},
+{"overheal decay penalty"},
+{"overheal decay bonus"},
+{"overheal decay disabled"},
+{"crit mod disabled"},
+{"heal on hit for rapidfire"},
+{"add uber charge on hit"},
+{"medigun charge is crit boost"},
+{"tmp dmgbuff on hit"},
+{"crit vs burning players"},
+{"dmg penalty vs nonburning"},
+{"no crit vs nonburning"},
+{"mod flamethrower push"},
+{"mod flamethrower back crit"},
+{"hidden secondary max ammo penalty"},
+{"max health additive bonus"},
+{"alt-fire disabled"},
+{"crit mod disabled hidden"},
+{"alt-fire is vampire"},
+{"fists have radial buff"},
+{"critboost on kill"},
+{"slow enemy on hit"},
+{"set cloak is feign death"},
+{"mult cloak meter consume rate"},
+{"mult cloak meter regen rate"},
+{"spread penalty"},
+{"hidden primary max ammo bonus"},
+{"mod bat launches balls"},
+{"dmg penalty vs nonstunned"},
+{"zoom speed mod disabled"},
+{"sniper charge per sec"},
+{"sniper no headshots"},
+{"scattergun no reload single"},
+{"scattergun has knockback"},
+{"bullets per shot bonus"},
+{"sniper zoom penalty"},
+{"sniper no charge"},
+{"set cloak is movement based"},
+{"no double jump"},
+{"absorb damage while cloaked"},
+{"revolver use hit locations"},
+{"backstab shield"},
+{"fire retardant"},
+{"move speed penalty"},
+{"obsolete ammo penalty"},
+{"jarate description"},
+{"health regen"},
+{"self dmg push force increased"},
+{"self dmg push force decreased"},
+{"dmg taken from fire reduced"},
+{"dmg taken from fire increased"},
+{"dmg taken from crit reduced"},
+{"dmg taken from crit increased"},
+{"dmg taken from blast reduced"},
+{"dmg taken from blast increased"},
+{"dmg taken from bullets reduced"},
+{"dmg taken from bullets increased"},
+{"increase player capture value"},
+{"health from healers reduced"},
+{"health from healers increased"},
+{"weapon burn dmg increased"},
+{"weapon burn dmg reduced"},
+{"weapon burn time increased"},
+{"weapon burn time reduced"},
+{"aiming movespeed increased"},
+{"maxammo primary increased"},
+{"maxammo primary reduced"},
+{"maxammo secondary increased"},
+{"maxammo secondary reduced"},
+{"maxammo metal increased"},
+{"maxammo metal reduced"},
+{"cloak consume rate increased"},
+{"cloak consume rate decreased"},
+{"cloak regen rate increased"},
+{"cloak regen rate decreased"},
+{"minigun spinup time increased"},
+{"minigun spinup time decreased"},
+{"max pipebombs increased"},
+{"max pipebombs decreased"},
+{"SRifle Charge rate increased"},
+{"SRifle Charge rate decreased"},
+{"Construction rate increased"},
+{"Construction rate decreased"},
+{"Repair rate increased"},
+{"Repair rate decreased"},
+{"Reload time increased"},
+{"Reload time decreased"},
+{"selfdmg on hit for rapidfire"},
+{"Blast radius increased"},
+{"Blast radius decreased"},
+{"Projectile range increased"},
+{"Projectile range decreased"},
+{"Projectile speed increased"},
+{"Projectile speed decreased"},
+{"overheal penalty"},
+{"weapon spread bonus"},
+{"move speed bonus"},
+{"health from packs increased"},
+{"health from packs decreased"},
+{"heal on hit for slowfire"},
+{"selfdmg on hit for slowfire"},
+{"ammo regen"},
+{"metal regen"},
+{"mod mini-crit airborne"},
+{"mod shovel damage boost"},
+{"mod soldier buff type"},
+{"dmg falloff increased"},
+{"dmg falloff decreased"},
+{"sticky detonate mode"},
+{"sticky arm time penalty"},
+{"stickies detonate stickies"},
+{"mod demo buff type"},
+{"speed boost when active"},
+{"mod wrench builds minisentry"},
+{"max health additive penalty"},
+{"sticky arm time bonus"},
+{"sticky air burst mode"},
+{"provide on active"},
+{"health drain"},
+{"medic regen bonus"},
+{"medic regen penalty"},
+{"community description"},
+{"soldier model index"},
+{"attach particle effect"},
+{"rocket jump damage reduction"},
+{"mod sentry killed revenge"},
+{"dmg bonus vs buildings"},
+{"dmg penalty vs players"},
+{"lunchbox adds maxhealth bonus"},
+{"hidden maxhealth non buffed"},
+{"selfmade description"},
+{"set item tint RGB"},
+{"custom employee number"},
+{"lunchbox adds minicrits"},
+{"taunt is hifive"},
+{"damage applies to sappers"},
+{"Wrench index"},
+{"building cost reduction"},
+{"bleeding duration"},
+{"turn to gold"},
+{"socketed item definition id"},
+{"custom texture lo"},
+{"cannot trade"},
+{"disguise on backstab"},
+{"cannot disguise"},
+{"silent killer"},
+{"disguise speed penalty"},
+{"add cloak on kill"},
+{"cloak blink time penalty"},
+{"quiet unstealth"},
+{"flame size penalty"},
+{"flame size bonus"},
+{"flame life penalty"},
+{"flame life bonus"},
+{"charged airblast"},
+{"add cloak on hit"},
+{"disguise damage reduction"},
+{"disguise no burn"},
+{"dmg from sentry reduced"},
+{"airblast cost increased"},
+{"airblast cost decreased"},
+{"purchased"},
+{"flame ammopersec increased"},
+{"flame ammopersec decreased"},
+{"jarate duration"},
+{"no death from headshots"},
+{"deploy time increased"},
+{"deploy time decreased"},
+{"minicrits become crits"},
+{"heal on kill"},
+{"no self blast dmg"},
+{"slow enemy on hit major"},
+{"aiming movespeed decreased"},
+{"duel loser account id"},
+{"event date"},
+{"gifter account id"},
+{"set supply crate series"},
+{"preserve ubercharge"},
+{"elevate quality"},
+{"active health regen"},
+{"active health degen"},
+{"referenced item id low"},
+{"referenced item id high"},
+{"referenced item def"},
+{"always tradable"},
+{"noise maker"},
+{"halloween item"},
+{"collection bits"},
+{"fires healing bolts"},
+{"enables aoe heal"},
+{"gesture speed increase"},
+{"charge time increased"},
+{"drop health pack on kill"},
+{"hit self on miss"},
+{"dmg from ranged reduced"},
+{"dmg from melee increased"},
+{"blast dmg to self increased"},
+{"Set DamageType Ignite"},
+{"minicrit vs burning player"},
+{"paint effect"},
+{"tradable after date"},
+{"force level display"},
+{"random level curve replacement"},
+{"kill eater"},
+{"apply z velocity on damage"},
+{"apply look velocity on damage"},
+{"sanguisuge"},
+{"mark for death"},
+{"decapitate type"},
+{"restore health on kill"},
+{"mult decloak rate"},
+{"mult sniper charge after bodyshot"},
+{"mult sniper charge after miss"},
+{"dmg bonus while half dead"},
+{"dmg penalty while half alive"},
+{"honorbound"},
+{"custom texture hi"},
+{"makers mark id"},
+{"unique craft index"},
+{"mod medic killed revenge"},
+{"medigun charge is megaheal"},
+{"mod medic killed minicrit boost"},
+{"mod medic healed damage bonus"},
+{"mod medic healed deploy time penalty"},
+{"mod shovel speed boost"},
+{"mod weapon blocks healing"},
+{"mult sniper charge after headshot"},
+{"minigun no spin sounds"},
+{"ubercharge rate bonus for healer"},
+{"reload time decreased while healed"},
+{"reload time increased hidden"},
+{"mod medic killed marked for death"},
+{"mod rage on hit penalty"},
+{"mod rage on hit bonus"},
+{"mod rage damage boost"},
+{"mult charge turn control"},
+{"no charge impact range"},
+{"charge impact damage increased"},
+{"charge recharge rate increased"},
+{"air dash count"},
+{"speed buff ally"},
+{"damage force reduction"},
+{"mult cloak rate"},
+{"airblast functionality flags"},
+{"airblast pushback scale"},
+{"mult airblast refire time"},
+{"airblast vertical pushback scale"},
+{"ammo becomes health"},
+{"boots falling stomp"},
+{"deflection size multiplier"},
+{"set item tint RGB 2"},
+{"saxxy award category"},
+{"melee bounds multiplier"},
+{"melee range multiplier"},
+{"mod mini-crit airborne deploy"},
+{"projectile penetration"},
+{"mod crit while airborne"},
+{"mult sniper charge penalty DISPLAY ONLY"},
+{"mod see enemy health"},
+{"energy weapon no ammo"},
+{"energy weapon charged shot"},
+{"energy weapon penetration"},
+{"energy weapon no hurt building"},
+{"energy weapon no deflect"},
+{"no crit boost"},
+{"centerfire projectile"},
+{"has pipboy build interface"},
+{"\0"}
+};
+
+
+int UTIL_FindAttributeID ( const char *name )
+{
+	int i = 0;
+
+	while ( g_pszAttributeNames[i][0] != '\0' )
+	{
+		if ( strcmp(name,g_pszAttributeNames[i]) == 0 )
+			return i;
+		i++;
+	}
+
+	return -1;
+}
+
+CTF2Loadout :: CTF2Loadout ( const char *pszClassname, int iIndex, int iQuality, int iLevel )
 {
 	m_pszClassname = CStrings::getString(pszClassname);
 	m_iIndex = iIndex;
 	m_iQuality = iQuality;
 	m_iLevel = iLevel;
-	m_pszAttribs = CStrings::getString(pszAttribs);
-	m_iMaxAmmo = iMaxAmmo;
+}
+
+void CSCICopy(CEconItemView *olditem, CEconItemView *newitem)
+{
+	memset(newitem, 0, sizeof(CEconItemView));
+	
+	//#define copymember(a) newitem->a = olditem->a
+	#define copymember(a) memcpy(&newitem->a, &olditem->a, sizeof(newitem->a));
+
+	copymember(m_pVTable);
+
+	copymember(m_iItemDefinitionIndex);
+	
+	copymember(m_iEntityQuality);
+	copymember(m_iEntityLevel);
+
+	copymember(m_iItemID);
+	copymember(m_iItemIDHigh);
+	copymember(m_iItemIDLow);
+	copymember(m_iAccountID);
+	copymember(m_iInventoryPosition);
+
+	copymember(m_pAlternateItemData);
+	copymember(m_bInitialized);
+
+	copymember(m_pVTable_Attributes);
+	copymember(m_pAttributeManager);
+	
+	copymember(m_bDoNotIterateStaticAttributes);
+
+	newitem->m_Attributes = olditem->m_Attributes;
+	
+	/*
+	META_CONPRINTF("Copying attributes...\n");
+	int nCount = olditem->m_Attributes.Count();
+	META_CONPRINTF("Count: %d\n", nCount);
+	newitem->m_Attributes.SetSize( nCount );
+	for ( int i = 0; i < nCount; i++ )
+	{
+		META_CONPRINTF("Copying %d...\n", i+1);
+		newitem->m_Attributes[ i ] = olditem->m_Attributes[ i ];
+	}
+	*/
+}
+
+void CTF2Loadout::getScript ( CEconItemView *cscript )
+{
+	static CEconItemAttribute m_Attributes[16];
+	extern ConVar rcbot_enable_attributes;
+
+	cscript->m_iEntityLevel = m_iLevel;
+	cscript->m_iEntityQuality = m_iQuality;
+	cscript->m_iItemDefinitionIndex = m_iIndex;
+	cscript->m_bInitialized = true;
+
+	if ( rcbot_enable_attributes.GetBool() )
+	{
+		unsigned int size = copyAttributesIntoArray(m_Attributes,cscript->m_pVTable_Attributes);
+
+		if ( size > 0 )
+		{
+			cscript->m_Attributes.CopyArray(m_Attributes,size);
+
+			cscript->m_bDoNotIterateStaticAttributes = true;
+
+			if ( cscript->m_iEntityQuality == 0 )
+				cscript->m_iEntityQuality = 6;
+		}
+	}
+	/*
+	static CEconItemAttribute m_Attributes[16];
+
+	CSCICopy(other,&m_ItemView);
+
+	m_ItemView.m_iEntityLevel = m_iLevel;
+	m_ItemView.m_iEntityQuality = m_iQuality;
+	m_ItemView.m_iItemDefinitionIndex = m_iIndex;
+	m_ItemView.m_bInitialized = true;
+
+	extern ConVar rcbot_enable_attributes;
+
+	if ( rcbot_enable_attributes.GetBool() )
+	{
+		unsigned int size = copyAttributesIntoArray(m_Attributes,other->m_pVTable);
+
+		if ( size > 0 )
+		{
+			m_ItemView.m_Attributes.CopyArray(m_Attributes,size);
+
+			m_ItemView.m_bDoNotIterateStaticAttributes = true;
+
+			if ( m_ItemView.m_iEntityQuality == 0 )
+				m_ItemView.m_iEntityQuality = 6;
+		}
+	}
+
+	return &m_ItemView;*/
+}
+/*
+const char *CTF2Loadout :: getScript ( CEconItemView *script )
+{
+	script->m_iEntityLevel = m_iLevel;
+	script->m_iItemDefinitionIndex = m_iIndex;
+	script->m_iEntityQuality = m_iQuality;
+	script->m_bInitialized = true;
+
+	return m_pszClassname;
+}*/
+
+CTF2Loadout *CTeamFortress2Mod :: getRandomHat ( void )
+{
+	if ( m_pHats.size() > 0 )
+	{
+		return m_pHats.at(randomInt(0,m_pHats.size()-1));
+	}
+
+	return NULL;
 }
 
 void CTeamFortress2Mod :: setupLoadOutWeapons ()
@@ -125,29 +540,60 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 			while ( (kv = kv->GetNextTrueSubKey()) != NULL )
 			{
 				int iclass = 0;
+				bool usedbyall = false;
+				CTF2Loadout *added = NULL;
+
 
 				usedbyclass = kv->FindKey("used_by_classes");
 
 				if ( usedbyclass )
 				{
+					usedbyall = true;
+
 					if ( usedbyclass->FindKey("scout") )
 						iclass = TF_CLASS_SCOUT;
-					else if ( usedbyclass->FindKey("sniper") )
+					else 
+						usedbyall = false;
+
+					if ( usedbyclass->FindKey("sniper") )
 						iclass = TF_CLASS_SNIPER;
-					else if ( usedbyclass->FindKey("soldier") )
+					else 
+						usedbyall = false;
+
+					if ( usedbyclass->FindKey("soldier") )
 						iclass = TF_CLASS_SOLDIER;
-					else if ( usedbyclass->FindKey("demoman") )
+					else 
+						usedbyall = false;
+
+					if ( usedbyclass->FindKey("demoman") )
 						iclass = TF_CLASS_DEMOMAN;
-					else if ( usedbyclass->FindKey("medic") )
+					else 
+						usedbyall = false;
+
+					if ( usedbyclass->FindKey("medic") )
 						iclass = TF_CLASS_MEDIC;
-					else if ( usedbyclass->FindKey("heavy") )
+					else 
+						usedbyall = false;
+
+					if ( usedbyclass->FindKey("heavy") )
 						iclass = TF_CLASS_HWGUY;
-					else if ( usedbyclass->FindKey("pyro") )
+					else 
+						usedbyall = false;
+
+					if ( usedbyclass->FindKey("pyro") )
 						iclass = TF_CLASS_PYRO;
-					else if ( usedbyclass->FindKey("spy") )
+					else 
+						usedbyall = false;
+
+					if ( usedbyclass->FindKey("spy") )
 						iclass = TF_CLASS_SPY;
-					else if ( usedbyclass->FindKey("engineer") )
+					else 
+						usedbyall = false;
+
+					if ( usedbyclass->FindKey("engineer") )
 						iclass = TF_CLASS_ENGINEER;
+					else 
+						usedbyall = false;
 				}
 
 				if ( iclass == 0 )
@@ -156,7 +602,7 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 				int iindex = atoi(kv->GetName());
 				const char *pszquality;
 				int iquality = 0;
-				int ilevel;
+				int ilevel = 0;
 				
 				if ( iindex == 0 )
 					continue;
@@ -166,44 +612,98 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 				if ( (classname == NULL) || (*classname == 0) )
 					continue;
 
-				CWeapon *pWeapon = CWeapons::getWeapon(classname);
-
-				// check if bots can use this weapon
-				if ( pWeapon == NULL )
-					continue;
-
 				const char *slot = kv->GetString("item_slot");
 
 				if ( ( slot == NULL ) || (*slot == 0 ) )
 					continue;
-
-				int islot;
-
-				if ( strcmp(slot,"primary") == 0 )
-					islot = TF2_SLOT_PRMRY;
-				else if ( strcmp(slot,"melee") == 0 )
-					islot = TF2_SLOT_MELEE;
-				else if ( strcmp(slot,"secondary") == 0 )
-					islot = TF2_SLOT_SCNDR;
-				else
-					continue;
-
-				if ( pWeapon->getSlot() != islot )
-				{
-					CBotGlobals::botMessage(NULL,1,"Weapon Slot mismatch for %s - set as %d -- should be %d",pWeapon->getWeaponName(),pWeapon->getSlot(),islot);
-					continue;
-				}
 
 				pszquality = kv->GetString("quality");
 
 				if ( pszquality && *pszquality )
 					iquality = (strcmp(pszquality,"unique")==0)?6:0;
 
-				ilevel = kv->GetInt("max_ilevel");
+				if ( strcmp(classname,"tf_wearable") == 0 )
+				{
+					if ( !usedbyall )
+						continue;
 
-				CBotGlobals::botMessage(NULL,0,"FOUND loadout weapon : %s",classname);
+					// hat
+					if ( strcmp(slot,"head") == 0 )
+					{
+						added = new CTF2Loadout(classname,iindex,iquality,ilevel);
+						m_pHats.push_back(added);
 
-				m_pLoadoutWeapons[islot][iclass-1].push_back(new CTF2LoadoutWeapon(classname,iindex,iquality,ilevel,NULL,0));
+						CBotGlobals::botMessage(NULL,0,"FOUND hat : %s",kv->GetString("name"));
+					}
+				}
+
+				if ( added == NULL )
+				{
+
+					CWeapon *pWeapon = CWeapons::getWeapon(classname);
+
+					// check if bots can use this weapon
+					if ( pWeapon == NULL )
+						continue;
+
+					int islot;
+
+					if ( strcmp(slot,"primary") == 0 )
+						islot = TF2_SLOT_PRMRY;
+					else if ( strcmp(slot,"melee") == 0 )
+						islot = TF2_SLOT_MELEE;
+					else if ( strcmp(slot,"secondary") == 0 )
+						islot = TF2_SLOT_SCNDR;
+					else
+						continue;
+
+					if ( pWeapon->getSlot() != islot )
+					{
+						CBotGlobals::botMessage(NULL,1,"Weapon Slot mismatch for %s - set as %d -- should be %d",pWeapon->getWeaponName(),pWeapon->getSlot(),islot);
+						continue;
+					}
+
+					if ( (iclass == TF_CLASS_ENGINEER) && (islot == TF2_SLOT_MELEE) )
+					{
+						// don't add any wrenches -- may cause bots unable to build sentries
+						continue;
+					}
+
+					ilevel = kv->GetInt("max_ilevel");
+
+					CBotGlobals::botMessage(NULL,0,"FOUND loadout weapon : %s",kv->GetString("name"));
+
+					//attributes
+					added = new CTF2Loadout(classname,iindex,iquality,ilevel);
+					m_pLoadoutWeapons[islot][iclass-1].push_back(added);
+				}
+
+				if ( added )
+				{
+					KeyValues *attribs = kv->FindKey("attributes");
+
+					if ( attribs )
+					{
+						attribs = attribs->GetFirstSubKey();
+
+						if ( attribs )
+						{
+							do 
+							{
+								const char *attribname = attribs->GetName();
+								float fval = attribs->GetFloat("value");
+
+								if ( attribname && *attribname )
+								{
+									int iId = UTIL_FindAttributeID(attribname);
+
+									if ( iId != -1 )
+										added->addAttribute(iId,fval);
+								}
+							}while ( (attribs = attribs->GetNextTrueSubKey()) != NULL );
+						}
+					}
+				}
 			}
 		}
 	}
@@ -217,7 +717,7 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 
 }
 
-const char *CTeamFortress2Mod::findRandomWeaponLoadOut ( int iclass, const char *classname, CEconItemView *cscript )
+CTF2Loadout *CTeamFortress2Mod::findRandomWeaponLoadOut ( int iclass, const char *classname )
 {
 	// find weapon slot
 	int islot;
@@ -230,8 +730,8 @@ const char *CTeamFortress2Mod::findRandomWeaponLoadOut ( int iclass, const char 
 
 	if ( islot < 3 )
 	{
-		vector<CTF2LoadoutWeapon*> *list = &(m_pLoadoutWeapons[islot][iclass-1]);
-		CTF2LoadoutWeapon *weap;
+		vector<CTF2Loadout*> *list = &(m_pLoadoutWeapons[islot][iclass-1]);
+		CTF2Loadout *weap;
 
 		if ( list->size() == 0 )
 			return NULL;
@@ -240,13 +740,7 @@ const char *CTeamFortress2Mod::findRandomWeaponLoadOut ( int iclass, const char 
 
 		if ( weap )
 		{
-			cscript->m_iEntityLevel = weap->m_iLevel;
-			cscript->m_iEntityQuality = weap->m_iQuality;
-			cscript->m_iItemDefinitionIndex = weap->m_iIndex;
-
-			cscript->m_bInitialized = true;
-
-			return weap->m_pszClassname;
+			return weap;
 		}
 	}
 
@@ -1466,4 +1960,91 @@ bool CTeamFortress2Mod::isCapping ( edict_t *pPlayer )//, int iCapIndex = -1 )
 	}
 
 	return false;
+}
+
+
+/*void CTF2Loadout :: addAttribute ( CAttribute *attrib )
+{
+	m_Attributes.push_back(attrib);
+}*/
+
+unsigned int CTF2Loadout::copyAttributesIntoArray ( CEconItemAttribute *pArray, void *pVTable )
+{
+	for ( unsigned int i = 0; i < m_Attributes.size(); i ++ )
+	{
+		pArray[i] = *(m_Attributes[i]);
+		pArray[i].m_pVTable = pVTable;
+	}
+
+	return m_Attributes.size();
+}
+
+void CTF2Loadout :: addAttribute ( int id, float fval )
+{
+	m_Attributes.push_back(new CEconItemAttribute(id,fval));
+}
+
+void  CTF2Loadout :: applyAttributes  ( CBaseEntity *pEnt )
+{
+	extern IServerGameEnts *servergameents;
+
+	edict_t *pEdict = servergameents->BaseEntityToEdict(pEnt);
+
+	for ( unsigned int i = 0; i < m_Attributes.size(); i ++ )
+	{		
+		int id = m_Attributes[i]->m_iAttributeDefinitionIndex;
+		float fval = m_Attributes[i]->m_flValue;
+
+		UTIL_ApplyAttribute(pEdict,g_pszAttributeNames[id],fval);		
+	}
+}
+
+void  CTF2Loadout :: applyAttributes  ( CEconItemView *cscript )
+{
+	for ( unsigned int i = 0; i < m_Attributes.size(); i ++ )
+	{
+		m_Attributes[i]->m_pVTable = cscript->m_pVTable_Attributes;
+
+		cscript->m_Attributes.AddToHead((*m_Attributes[i]));
+	}
+}
+
+void  CTF2Loadout :: freeMemory ()
+{
+	for ( unsigned int i = 0; i < m_Attributes.size(); i ++ )
+	{
+		CEconItemAttribute *pdel = m_Attributes[i];
+		delete pdel;
+		m_Attributes[i] = NULL;
+	}
+}
+
+void CTeamFortress2Mod::freeMemory()
+{
+	for ( unsigned int i = 0; i < 3; i ++ )
+	{
+		for ( unsigned int j = 0; j < 9; j ++ )
+		{
+			for ( unsigned int k = 0; k < m_pLoadoutWeapons[i][j].size(); k ++ )
+			{
+				CTF2Loadout *wep = (m_pLoadoutWeapons[i][j])[k];
+
+				delete wep;
+				(m_pLoadoutWeapons[i][j])[k] = NULL;
+			}
+		}
+	}
+
+	for ( unsigned int i = 0; i < m_pHats.size(); i ++ )
+	{
+		CTF2Loadout *hat = (m_pHats[i]);
+
+		delete hat;
+		m_pHats[i] = NULL;
+	}
+}
+
+void CAttribute :: applyAttribute ( edict_t *pEdict )
+{
+	UTIL_ApplyAttribute(pEdict,m_name,m_fval);
 }

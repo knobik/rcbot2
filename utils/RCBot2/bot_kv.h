@@ -1,7 +1,7 @@
 #ifndef __RCBOT_KEY_VAL__
 #define __RCBOT_KEY_VAL__
 
-#define RCBOT_MAX_KV_LEN 128
+#define RCBOT_MAX_KV_LEN 256
 
 #include <vector>
 using namespace std;
@@ -9,7 +9,7 @@ using namespace std;
 class CRCBotKeyValue
 {
 public:
-	CRCBotKeyValue(char *szKey, char *szValue);
+	CRCBotKeyValue(const char *szKey, char *szValue);
 
 	char *getKey ()
 	{
@@ -37,15 +37,15 @@ public:
 
 	//CRCBotKeyValue *getKV ( unsigned int iIndex );
 
-	bool getInt ( char *key, int *val );
+	bool getInt ( const char *key, int *val );
 
-	bool getString ( char *key, char **val );
+	bool getString ( const char *key, char **val );
 
-	bool getFloat ( char *key, float *val );
+	bool getFloat ( const char *key, float *val );
 
 private:
 
-	CRCBotKeyValue *getKV ( char *key );
+	CRCBotKeyValue *getKV ( const char *key );
 
 	vector <CRCBotKeyValue*> m_KVs;
 };

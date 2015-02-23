@@ -1686,6 +1686,7 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	//m_bHatEquipped = false;
 	m_iTrapCPIndex = -1;
 	m_pHealer = NULL;
 	m_fCallMedic = engine->Time() + 10.0f;
@@ -2751,6 +2752,7 @@ void CBotFortress::updateConditions()
 }
 void CBotTF2 :: giveWeapon ( int slot, int index )
 {
+	/*
 	// GiveNamedItem
 	extern IServerGameEnts *servergameents;
 	edict_t *pWeapon;
@@ -2788,24 +2790,61 @@ void CBotTF2 :: giveWeapon ( int slot, int index )
 			CClassInterface::setEntityIndex_Level_Quality(pEdict,index);
 		}
 
-	}
+	}*/
 }
 
+void CBotTF2 :: onInventoryApplication ()
+{
+	m_fEquipHatTime = engine->Time() + 0.1f;
+}
+
+void CBotTF2 :: PostGiveNamedItem ( CBaseEntity *pEntity, CTF2Loadout *loadout, CEconItemView *cscript )
+{
+	m_pVTable = cscript->m_pVTable;
+	m_pVTable_Attributes = cscript->m_pVTable_Attributes;
+
+	//m_toApply.push(new CTF2LoadoutAdded(pEntity,loadout));
+
+}
+/*
+void CBotTF2 :: addLoadoutWeapon ( CTF2Loadout *weap )
+{
+	m_LoadoutsApplyAttributes.Push(weap);
+}
+*/
 void CBotTF2 :: modThink ()
 {
 	static bool bNeedHealth;
 	static bool bNeedAmmo;
 	static bool bIsCloaked;
 	
-	if ( (m_fEquipWeaponTime > 0.0f) && (m_fEquipWeaponTime < engine->Time()) )
+	if ( (m_fEquipHatTime > 0.0f) && (m_fEquipHatTime < engine->Time()) )
 	{
 		// Equip
 		if ( isAlive() )
-		{
-			//giveWeapon(index,slot);
-			m_fEquipWeaponTime = 0.0f;
+		{			
+			UTIL_TF2EquipRandomHat(m_pEdict,m_pVTable,m_pVTable_Attributes);
+
+			m_fEquipHatTime = 0.0f;
+			m_bHatEquipped = true;
 		}
 	}
+
+	if ( m_toApply.size() > 0 )
+	{
+		CTF2LoadoutAdded *p = m_toApply.top();
+
+		p->m_loadout->applyAttributes(p->m_pEnt);
+
+		m_toApply.pop();
+
+		delete p;
+	}
+
+/*	if ( !m_LoadoutsApplyAttributes.IsEmpty() )
+	{
+		CTF2Loadout
+	}*/
 
 	if ( CTeamFortress2Mod::isLosingTeam(m_iTeam) )
 		wantToShoot(false);
@@ -7459,7 +7498,9 @@ void CBotTF2 :: sapperDestroyed ( edict_t *pSapper )
 CBotTF2::CBotTF2() 
 { 
 		CBotFortress(); 
-		m_fEquipWeaponTime = 0.0f;
+		m_pVTable = m_pVTable_Attributes = NULL;
+		m_bHatEquipped = false;
+		m_fEquipHatTime = 0.0f;
 		m_fDispenserPlaceTime = 0.0f;
 		m_fDispenserHealAmount = 0.0f;
 	 m_fTeleporterEntPlacedTime = 0;
@@ -7541,3 +7582,8 @@ bool CBotFortress :: getIgnoreBox ( Vector *vLoc, float *fSize )
 	return false;
 }
 
+CAttribute :: CAttribute ( const char *name, float fval )
+{
+	m_name = CStrings::getString(name);
+	m_fval = fval;
+}

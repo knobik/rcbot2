@@ -602,6 +602,16 @@ void CTF2ObjectDestroyed :: execute ( IBotEventInterface *pEvent )
 
 void CPostInventoryApplicationTF2 :: execute ( IBotEventInterface *pEvent )
 {
+	int iUserID = pEvent->getInt( "userid" );
+
+	edict_t *pEdict = CBotGlobals::playerByUserId(iUserID);
+
+	CBot *pBot = CBots::getBotPointer(pEdict);
+
+	if ( pBot )
+	{
+		pBot->onInventoryApplication();
+	}
 }
 /*
 player_upgradedobject

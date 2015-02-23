@@ -3527,7 +3527,7 @@ bool CBots :: needToKickBot ()
 		if ( ((m_iMinBots != -1 ) && (CBots::numBots() <= m_iMinBots)) )
 			return false;
 
-		if ( (m_iMaxBots != -1 ) && (CBotGlobals::numClients() > m_iMaxBots) )
+		if ( (m_iMaxBots > 0 ) && (CBotGlobals::numClients() > m_iMaxBots) )
 			return true;
 	}
 
