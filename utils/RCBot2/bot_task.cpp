@@ -1431,6 +1431,8 @@ void CBotUseBuffItem :: execute (CBot *pBot,CBotSchedule *pSchedule)
 {
 	CBotWeapon *pWeapon;
 
+	pBot->wantToShoot(false);
+
 	if ( m_fTime == 0 )
 		m_fTime = engine->Time() + 5.0f;
 	else if ( m_fTime < engine->Time() )
