@@ -15,7 +15,6 @@ typedef CEconItemSchema* (*FUNC_GET_ECON_ITEM_SCHEMA)(void);
 typedef CEconItemAttributeDefinition* (*FUNC_GET_ATTRIB_BY_NAME)(CEconItemSchema*,const char*);
 typedef int (*FUNC_SET_ATTRIB_VALUE)(CAttributeList*,const CEconItemAttributeDefinition*, float);
 
-void UTIL_TF2EquipRandomHat ( edict_t *pEdict, void *vTable, void *vTableAttributes );
 void UTIL_ApplyAttribute ( edict_t *pEdict, const char *name, float fVal );
 
 struct DynLibInfo
@@ -69,8 +68,44 @@ public:
 	CEconItemAttributeDefinition *callme(CEconItemSchema *schema, const char *attrib);
 };
 
+class CAttributeList_GetAttributeByID : public CSignatureFunction
+{
+public:
+	CAttributeList_GetAttributeByID ( CRCBotKeyValueList *list, void *pAddrBase );
+
+	CEconItemAttributeDefinition *callme(CAttributeList *list, int id);
+};
+
+/*
+CEconItemAttribute *UTIL_AttributeList_GetAttributeByID ( CAttributeList *list, int id )
+{
+	void *pret = NULL;
+
+	if ( list && AttributeList_GetAttributeByID )
+	{
+#ifdef _WIN32
+		__asm
+	   {
+		  mov ecx, list;
+		  push id;
+		  call AttributeList_GetAttributeByID;
+		  mov pret, eax;
+	   };
+#else
+	   FUNC_ATTRIBLIST_GET_ATTRIB_BY_ID func = (FUNC_ATTRIBLIST_GET_ATTRIB_BY_ID)AttributeList_GetAttributeByID;
+
+	   pret = (void*)func(list,id);
+#endif
+	}
+
+	return (CEconItemAttribute*)pret;
+}
+*/
+
+
 extern CGetEconItemSchema *g_pGetEconItemSchema;
 extern CSetRuntimeAttributeValue *g_pSetRuntimeAttributeValue;
 extern CGetAttributeDefinitionByName *g_pGetAttributeDefinitionByName;
+extern CAttributeList_GetAttributeByID *g_pAttribList_GetAttributeByID;
 
 #endif

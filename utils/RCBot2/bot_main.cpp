@@ -250,6 +250,18 @@ void UTIL_ApplyAttribute ( edict_t *pEdict, const char *name, float fVal )
 		CBotGlobals::botMessage(NULL,1,"CEconItemAttributeDefinition for %s not found",name);
 }
 
+
+CON_COMMAND( rcbot_ragemeter, "get rage meter value" )
+{
+	// get listen server edict
+	edict_t *pplayer = CClients::getListenServerClient();
+
+	if ( pplayer )
+	{
+		CBotGlobals::botMessage(NULL,0,"ragemeter = %0.2f",CClassInterface::getRageMeter(pplayer));
+	}
+}
+
 CON_COMMAND( rcbot_attribtest, "attributes for tf2 test" )
 {
 	// get listen server edict
@@ -538,6 +550,21 @@ void CRCBotPlugin :: HudTextMessage ( edict_t *pEntity, const char *szMessage )
 
 #endif
 
+void unloadSignatures ()
+{
+	if ( g_pGetEconItemSchema )
+		delete g_pGetEconItemSchema;
+
+	if ( g_pSetRuntimeAttributeValue )
+		delete g_pSetRuntimeAttributeValue;
+
+	if ( g_pGetAttributeDefinitionByName )
+		delete g_pGetAttributeDefinitionByName;
+
+	if ( g_pAttribList_GetAttributeByID )
+		delete g_pAttribList_GetAttributeByID;
+}
+
 void findSignaturesAndOffsets(void *gameServerFactory)
 {
 	char filename[512];
@@ -554,6 +581,7 @@ void findSignaturesAndOffsets(void *gameServerFactory)
 	g_pGetEconItemSchema = new CGetEconItemSchema(pKVL,gameServerFactory);
 	g_pSetRuntimeAttributeValue = new CSetRuntimeAttributeValue(pKVL,gameServerFactory);
 	g_pGetAttributeDefinitionByName = new CGetAttributeDefinitionByName(pKVL,gameServerFactory);
+	g_pAttribList_GetAttributeByID = new CAttributeList_GetAttributeByID(pKVL,gameServerFactory);
 		/*
 #ifdef _WIN32
 	if ( pKVL->getString("set_attribute_value_win",&sig) && sig )
@@ -771,53 +799,55 @@ void CRCBotPlugin::ShowLicense ( void )
 void CRCBotPlugin::Unload( void )
 {
 	// if another instance is running dont run through this
-	if ( bInitialised )
+	if ( !bInitialised )
+		return;
+	
+	CBots::freeAllMemory();
+	CStrings::freeAllMemory();
+	CBotGlobals::freeMemory();
+	CBotMods::freeMemory();
+	CAccessClients::freeMemory();
+	CBotEvents::freeMemory();
+	CWaypoints::freeMemory();
+	CWaypointTypes::freeMemory();
+	CBotProfiles::deleteProfiles();
+	CWeapons::freeMemory();
+	CBotMenuList::freeMemory();
+
+	unloadSignatures();
+
+	UnhookPlayerRunCommand();
+	UnhookGiveNamedItem();
+
+	//ConVar_Unregister();
+
+	if ( gameeventmanager1 )
+		gameeventmanager1->RemoveListener( this ); // make sure we are unloaded from the event system
+	if ( gameeventmanager )
 	{
-		CBots::freeAllMemory();
-		CStrings::freeAllMemory();
-		CBotGlobals::freeMemory();
-		CBotMods::freeMemory();
-		CAccessClients::freeMemory();
-		CBotEvents::freeMemory();
-		CWaypoints::freeMemory();
-		CWaypointTypes::freeMemory();
-		CBotProfiles::deleteProfiles();
-		CWeapons::freeMemory();
-		CBotMenuList::freeMemory();
-
-		UnhookPlayerRunCommand();
-		UnhookGiveNamedItem();
-
-		//ConVar_Unregister();
-
-		if ( gameeventmanager1 )
-			gameeventmanager1->RemoveListener( this ); // make sure we are unloaded from the event system
-		if ( gameeventmanager )
+		if ( eventListener2 )
 		{
-			if ( eventListener2 )
-			{
-				gameeventmanager->RemoveListener( eventListener2 );
-				delete eventListener2;
-			}
+			gameeventmanager->RemoveListener( eventListener2 );
+			delete eventListener2;
 		}
-
-		// Reset Cheat Flag
-		if ( puppet_bot_cmd != NULL )
-		{
-			if ( !puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
-			{
-				int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + BOT_CONVAR_FLAGS_OFFSET); // 20 is offset to flags
-			
-				*m_nFlags |= FCVAR_CHEAT;
-			}
-		}
-
-		ConVar_Unregister( );
-
-		DisconnectTier2Libraries( );
-		DisconnectTier1Libraries( );
-
 	}
+
+	// Reset Cheat Flag
+	if ( puppet_bot_cmd != NULL )
+	{
+		if ( !puppet_bot_cmd->IsFlagSet(FCVAR_CHEAT) )
+		{
+			int *m_nFlags = (int*)((unsigned long)puppet_bot_cmd + BOT_CONVAR_FLAGS_OFFSET); // 20 is offset to flags
+			
+			*m_nFlags |= FCVAR_CHEAT;
+		}
+	}
+
+	ConVar_Unregister( );
+		
+	DisconnectTier2Libraries( );
+	DisconnectTier1Libraries( );
+	
 }
 
 //---------------------------------------------------------------------------------

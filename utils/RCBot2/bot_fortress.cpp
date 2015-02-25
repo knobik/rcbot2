@@ -54,6 +54,7 @@
 #include "bot_mtrand.h"
 #include "bot_wpt_dist.h"
 #include "bot_squads.h"
+#include "bot_hooks.h"
 
 extern ConVar bot_beliefmulti;
 extern ConVar bot_spyknifefov;
@@ -1685,7 +1686,7 @@ bool CBotTF2 :: hurt ( edict_t *pAttacker, int iHealthNow, bool bDontHide )
 void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
-
+	m_fUseBuffItemTime = 0.0f;
 	//m_bHatEquipped = false;
 	m_iTrapCPIndex = -1;
 	m_pHealer = NULL;
@@ -2830,6 +2831,8 @@ void CBotTF2 :: modThink ()
 		}
 	}
 
+	/*
+
 	if ( m_toApply.size() > 0 )
 	{
 		CTF2LoadoutAdded *p = m_toApply.top();
@@ -2840,11 +2843,26 @@ void CBotTF2 :: modThink ()
 
 		delete p;
 	}
-
+	*/
 /*	if ( !m_LoadoutsApplyAttributes.IsEmpty() )
 	{
 		CTF2Loadout
 	}*/
+
+	if ( m_pWeapons->hasWeapon(TF2_WEAPON_BUFF_ITEM) )
+	{
+		if ( m_bStatsCanUse && (CClassInterface::getRageMeter(m_pEdict) > 99.99f) )
+		{
+			if ( m_StatsCanUse.stats.m_iTeamMatesInRange > 1 )
+			{
+				if ( m_fUseBuffItemTime < engine->Time() )
+				{
+					m_fUseBuffItemTime = engine->Time() + 30.0f;
+					m_pSchedules->addFront(new CBotSchedule(new CBotUseBuffItem()));
+				}
+			}
+		}
+	}
 
 	if ( CTeamFortress2Mod::isLosingTeam(m_iTeam) )
 		wantToShoot(false);

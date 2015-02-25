@@ -29,6 +29,7 @@
 CGetEconItemSchema *g_pGetEconItemSchema = NULL;
 CSetRuntimeAttributeValue *g_pSetRuntimeAttributeValue = NULL;
 CGetAttributeDefinitionByName *g_pGetAttributeDefinitionByName = NULL;
+CAttributeList_GetAttributeByID *g_pAttribList_GetAttributeByID = NULL;
 
 size_t CSignatureFunction :: decodeHexString(unsigned char *buffer, size_t maxlength, const char *hexstr)
 {
@@ -365,3 +366,64 @@ CEconItemAttributeDefinition *CGetAttributeDefinitionByName::callme(CEconItemSch
 
 	return (CEconItemAttributeDefinition*)pret;
 }
+
+
+CAttributeList_GetAttributeByID::CAttributeList_GetAttributeByID ( CRCBotKeyValueList *list, void *pAddrBase )
+{
+#ifdef _WIN32
+	findFunc(list,"attributelist_get_attrib_by_id_win",pAddrBase,"\\x55\\x8B\\xEC\\x51\\x8B\\xC1\\x53\\x56\\x33\\xF6\\x89\\x45\\xFC\\x8B\\x58\\x10");
+#else
+	findFunc(list,"attributelist_get_attrib_by_id_linux",pAddrBase,"@_ZNK14CAttributeList16GetAttributeByIDEi");
+#endif
+}
+
+CEconItemAttributeDefinition *CAttributeList_GetAttributeByID::callme(CAttributeList *list, int id)
+{
+	void *pret = NULL;
+
+	if ( list && m_func )
+	{
+		void *thefunc = m_func;
+#ifdef _WIN32
+		__asm
+	   {
+		  mov ecx, list;
+		  push id;
+		  call thefunc;
+		  mov pret, eax;
+	   };
+#else
+	   FUNC_ATTRIBLIST_GET_ATTRIB_BY_ID func = (FUNC_ATTRIBLIST_GET_ATTRIB_BY_ID)thefunc;
+
+	   pret = (void*)func(list,id);
+#endif
+	}
+
+	return (CEconItemAttributeDefinition*)pret;
+}
+
+/*
+CEconItemAttribute *UTIL_AttributeList_GetAttributeByID ( CAttributeList *list, int id )
+{
+	void *pret = NULL;
+
+	if ( list && AttributeList_GetAttributeByID )
+	{
+#ifdef _WIN32
+		__asm
+	   {
+		  mov ecx, list;
+		  push id;
+		  call AttributeList_GetAttributeByID;
+		  mov pret, eax;
+	   };
+#else
+	   FUNC_ATTRIBLIST_GET_ATTRIB_BY_ID func = (FUNC_ATTRIBLIST_GET_ATTRIB_BY_ID)AttributeList_GetAttributeByID;
+
+	   pret = (void*)func(list,id);
+#endif
+	}
+
+	return (CEconItemAttribute*)pret;
+}
+*/

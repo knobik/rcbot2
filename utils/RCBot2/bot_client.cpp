@@ -1032,6 +1032,13 @@ void CClient :: clientDisconnected ()
 		}
 	}
 
+	/*extern IServerGameEnts *servergameents;
+
+	DWORD *baseentity = ( DWORD* )*( DWORD* )servergameents->EdictToBaseEntity(m_pPlayer);
+
+	if ( baseentity == GiveNamedItemHookedClass )
+		UnhookGiveNamedItem();*/
+
 	init();
 }
 

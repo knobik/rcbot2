@@ -94,10 +94,8 @@ vector<CTF2Loadout*> CTeamFortress2Mod::m_pLoadoutWeapons[3][9];
 vector<CTF2Loadout*> CTeamFortress2Mod::m_pHats;
 extern ConVar bot_use_disp_dist;
 
-
-
-const char *g_pszAttributeNames[] = 
-{
+const char *g_pszAttributeNames[] = {
+{"reserved"},
 {"damage penalty"},
 {"damage bonus"},
 {"clip size penalty"},
@@ -242,13 +240,13 @@ const char *g_pszAttributeNames[] =
 {"set item tint RGB"},
 {"custom employee number"},
 {"lunchbox adds minicrits"},
-{"taunt is hifive"},
+{"taunt is highfive"},
 {"damage applies to sappers"},
 {"Wrench index"},
 {"building cost reduction"},
 {"bleeding duration"},
 {"turn to gold"},
-{"socketed item definition id"},
+{"DEPRECATED socketed item definition id DEPRECATED"},
 {"custom texture lo"},
 {"cannot trade"},
 {"disguise on backstab"},
@@ -367,17 +365,189 @@ const char *g_pszAttributeNames[] =
 {"mod crit while airborne"},
 {"mult sniper charge penalty DISPLAY ONLY"},
 {"mod see enemy health"},
+{"powerup max charges"},
+{"powerup charges"},
+{"powerup duration"},
+{"critboost"},
+{"ubercharge"},
+{"cancel falling damage"},
+{"bidirectional teleport"},
+{"multiple sentries"},
+{"effect bar recharge rate increased"},
+{"maxammo grenades1 increased"},
+{"override projectile type"},
 {"energy weapon no ammo"},
 {"energy weapon charged shot"},
 {"energy weapon penetration"},
 {"energy weapon no hurt building"},
 {"energy weapon no deflect"},
+{"engy building health bonus"},
+{"engy sentry damage bonus"},
 {"no crit boost"},
 {"centerfire projectile"},
+{"unknown1"},
+{"unknown2"},
+{"kill eater score type"},
+{"kill eater score type 2"},
+{"kill eater 2"},
 {"has pipboy build interface"},
+{"sapper kills collect crits"},
+{"sniper only fire zoomed"},
+{"mod ammo per shot"},
+{"add onhit addammo"},
+{"electrical airblast DISPLAY ONLY"},
+{"mod use metal ammo type"},
+{"expiration date"},
+{"mod max primary clip override"},
+{"sniper full charge damage bonus"},
+{"sniper fires tracer DISPLAY ONLY"},
+{"sniper no headshot without full charge"},
+{"mod no reload DISPLAY ONLY"},
+{"sniper penetrate players when charged"},
+{"crit kill will gib"},
+{"recall"},
+{"unlimited quantity"},
+{"disable weapon hiding for animations"},
+{"applies snare effect"},
+{"uber duration bonus"},
+{"refill_ammo"},
+{"unknown3"},
+{"store sort override DEPRECATED"},
+{"faster reload rate"},
+{"increase buff duration"},
+{"robo sapper"},
+{"build rate bonus"},
+{"taunt is press and hold"},
+{"attack projectiles"},
+{"accuracy scales damage"},
+{"currency bonus"},
+{"increased jump height"},
+{"building instant upgrade"},
+{"disable fancy class select anim"},
+{"airblast vulnerability multiplier"},
+{"override footstep sound set"},
+{"spawn with physics toy"},
+{"fish damage override"},
+{"special dsp"},
+{"bombinomicon effect on death"},
+{"clip size bonus upgrade"},
+{"hide enemy health"},
+{"subtract victim medigun charge on hit"},
+{"subtract victim cloak on hit"},
+{"reveal cloaked victim on hit"},
+{"reveal disguised victim on hit"},
+{"jarate backstabber"},
+{"unknown4"},
+{"engy sentry fire rate increased"},
+{"engy sentry radius increased"},
+{"engy dispenser radius increased"},
+{"mod bat launches ornaments"},
+{"freeze backstab victim"},
+{"fire rate penalty HIDDEN"},
+{"energy weapon no drain"},
+{"ragdolls become ash"},
+{"engy disposable sentries"},
+{"alt fire teleport to spawn"},
+{"cannot pick up buildings"},
+{"stun enemies wielding same weapon"},
+{"unknown5"},
+{"airblast disabled"},
+{"increase buff duration HIDDEN"},
+{"crit forces victim to laugh"},
+{"melts in fire"},
+{"damage all connected"},
+{"become fireproof on hit by fire"},
+{"crit from behind"},
+{"crit does no damage"},
+{"add jingle to footsteps"},
+{"set icicle knife mode"},
+{"mod stun waist high airborne"},
+{"extinguish earns revenge crits"},
+{"burn damage earns rage"},
+{"tickle enemies wielding same weapon"},
+{"attach particle effect static"},
+{"taunt success sound"},
+{"accepted wedding ring account id 1"},
+{"accepted wedding ring account id 2"},
+{"tool escrow until date"},
+{"generate rage on damage"},
+{"aiming no flinch"},
+{"aiming knockback resistance"},
+{"sniper aiming movespeed decreased"},
+{"kill eater user 1"},
+{"kill eater user score type 1"},
+{"kill eater user 2"},
+{"kill eater user score type 2"},
+{"kill eater user 3"},
+{"kill eater user score type 3"},
+{"strange part new counter ID"},
+{"mvm completed challenges bitmask"},
+{"rage on kill"},
+{"kill eater kill type"},
+{"shot penetrate all players"},
+{"headshot damage increase"},
+{"mystery solving time decrease"},
+{"damage penalty on bodyshot"},
+{"sniper rage DISPLAY ONLY"},
+{"fire rate bonus HIDDEN"},
+{"explosive sniper shot"},
+{"melee attack rate bonus"},
+{"projectile penetration heavy"},
+{"rage on assists"},
+{"armor piercing"},
+{"cannot pick up intelligence"},
+{"chance of hunger decrease"},
+{"cannot be backstabbed"},
+{"squad surplus claimer id DEPRECATED"},
+{"share consumable with patient"},
+{"airblast vertical vulnerability multiplier"},
+{"vision opt in flags"},
+{"crit vs disguised players"},
+{"crit vs non burning players"},
+{"kill forces attacker to laugh"},
+{"damage bonus while undisguised"},
+{"projectile spread angle penalty"},
+{"dmg taken increased"},
+{"auto fires full clip"},
+{"self mark for death"},
+{"counts as assister is some kind of pet this update is going to be awesome"},
+{"mod flaregun fires pellets with knockback"},
+{"can overload"},
+{"hype on damage"},
+{"hype resets on jump"},
+{"pyro year number"},
+{"no primary ammo from dispensers"},
+{"pyrovision only DISPLAY ONLY"},
+{"unknown6"},
+{"clip size penalty HIDDEN"},
+{"sapper damage bonus"},
+{"sapper damage penalty"},
+{"sapper damage leaches health"},
+{"sapper health bonus"},
+{"sapper health penalty"},
+{"ring of fire while aiming"},
+{"uses ammo while aiming"},
+{"unknown7"},
+{"sapper degenerates buildings"},
+{"sapper damage penalty hidden"},
+{"cleaver description"},
+{"ragdolls plasma effect"},
+{"crit vs stunned players"},
+{"crit vs wet players"},
+{"override item level desc string"},
+{"clip size upgrade atomic"},
+{"unknown8"},
+{"major move speed bonus"},
+{"major increased jump height"},
+{"head scale"},
+{"pyrovision opt in DISPLAY ONLY"},
+{"halloweenvision opt in DISPLAY ONLY"},
+{"halloweenvision filter DISPLAY ONLY"},
+{"player skin override"},
+{"never craftable"},
+{"zombiezombiezombiezombie"},
 {"\0"}
 };
-
 
 int UTIL_FindAttributeID ( const char *name )
 {
@@ -603,7 +773,9 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 				const char *pszquality;
 				int iquality = 0;
 				int ilevel = 0;
-				
+				bool bIsWeapon = false;
+				int islot = 0;
+
 				if ( iindex == 0 )
 					continue;
 
@@ -646,8 +818,6 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 					if ( pWeapon == NULL )
 						continue;
 
-					int islot;
-
 					if ( strcmp(slot,"primary") == 0 )
 						islot = TF2_SLOT_PRMRY;
 					else if ( strcmp(slot,"melee") == 0 )
@@ -663,7 +833,7 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 						continue;
 					}
 
-					if ( (iclass == TF_CLASS_ENGINEER) && (islot == TF2_SLOT_MELEE) )
+					if ( ((iclass == TF_CLASS_ENGINEER) && (islot == TF2_SLOT_MELEE)) || (strcmp(classname,"tf_weapon_wrench")==0) )
 					{
 						// don't add any wrenches -- may cause bots unable to build sentries
 						continue;
@@ -676,6 +846,7 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 					//attributes
 					added = new CTF2Loadout(classname,iindex,iquality,ilevel);
 					m_pLoadoutWeapons[islot][iclass-1].push_back(added);
+					bIsWeapon = true;
 				}
 
 				if ( added )
@@ -697,10 +868,26 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 								{
 									int iId = UTIL_FindAttributeID(attribname);
 
+									if ( bIsWeapon && (strcmp(attribname,"damage penalty") == 0) )
+									{
+										// don't add any weapons that don't cause damage e.g. rocket jumper
+										if ( fval == 0 )
+										{
+											// delete
+											m_pLoadoutWeapons[islot][iclass-1].pop_back();
+
+											delete added; // free
+
+											attribs = NULL; // break loop
+
+											iId = -1; // don't add
+										}
+									}
+
 									if ( iId != -1 )
 										added->addAttribute(iId,fval);
 								}
-							}while ( (attribs = attribs->GetNextTrueSubKey()) != NULL );
+							}while ( attribs && ((attribs = attribs->GetNextTrueSubKey()) != NULL) );
 						}
 					}
 				}

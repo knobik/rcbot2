@@ -9,6 +9,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef GetClassName
+#undef GetClassName
+#endif
+
 DWORD VirtualTableHook( DWORD* pdwNewInterface, int vtable, DWORD newInterface );
 
 extern DWORD* pPlayerRunCommandHookedClass;

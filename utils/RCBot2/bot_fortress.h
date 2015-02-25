@@ -969,6 +969,7 @@ private:
 	void *m_pVTable;
 	void *m_pVTable_Attributes;
 
+	float m_fUseBuffItemTime;
 	//dataStack<CTF2LoadoutAdded*> m_LoadoutsApplyAttributes;
 };
 

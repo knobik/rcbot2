@@ -154,7 +154,8 @@ CBaseEntity * __fastcall nTF2GiveNamedItem( CBaseEntity *_this, void *punused, c
 			{
 				if ( strcmp( pszOverrideName, "saxxy" ) )
 				{
-					b = rcbot_force_generation.GetBool();
+					if ( b == false )
+						b = rcbot_force_generation.GetBool();
 				}
 			}
 		}
@@ -178,32 +179,6 @@ CBaseEntity * __fastcall nTF2GiveNamedItem( CBaseEntity *_this, void *punused, c
 	return pAdded;
 
 }
-/*
-CEconItemAttribute *UTIL_AttributeList_GetAttributeByID ( CAttributeList *list, int id )
-{
-	void *pret = NULL;
-
-	if ( list && AttributeList_GetAttributeByID )
-	{
-#ifdef _WIN32
-		__asm
-	   {
-		  mov ecx, list;
-		  push id;
-		  call AttributeList_GetAttributeByID;
-		  mov pret, eax;
-	   };
-#else
-	   FUNC_ATTRIBLIST_GET_ATTRIB_BY_ID func = (FUNC_ATTRIBLIST_GET_ATTRIB_BY_ID)AttributeList_GetAttributeByID;
-
-	   pret = (void*)func(list,id);
-#endif
-	}
-
-	return (CEconItemAttribute*)pret;
-}
-*/
-
 
 void UTIL_TF2EquipRandomHat ( edict_t *pEdict, void *vTable, void *vTableAttributes )
 {
