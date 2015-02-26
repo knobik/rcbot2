@@ -142,20 +142,25 @@ CBaseEntity * __fastcall nTF2GiveNamedItem( CBaseEntity *_this, void *punused, c
 	{		
 		int iclass = CClassInterface::getTF2Class(pEdict);
 
-		weap = CTeamFortress2Mod::findRandomWeaponLoadOut(iclass,name);
-		// this is an RC bot
-		if ( weap != NULL )
+		// prevent any weird things from happening
+		// only change weapons if this class is the class I want to be and I just spawned
+		if ( pBot->isDesiredClass(iclass) && pBot->recentlySpawned(5.0f) )
 		{
-			weap->getScript(cscript);
-
-			pszOverrideName = weap->m_pszClassname;
-
-			if ( weap->m_Attributes.size() > 0 )
+			weap = CTeamFortress2Mod::findRandomWeaponLoadOut(iclass,name);
+			// this is an RC bot
+			if ( weap != NULL )
 			{
-				if ( strcmp( pszOverrideName, "saxxy" ) )
+				weap->getScript(cscript);
+
+				pszOverrideName = weap->m_pszClassname;
+
+				if ( weap->m_Attributes.size() > 0 )
 				{
-					if ( b == false )
-						b = rcbot_force_generation.GetBool();
+					if ( strcmp( pszOverrideName, "saxxy" ) )
+					{
+						if ( b == false )
+							b = rcbot_force_generation.GetBool();
+					}
 				}
 			}
 		}
@@ -218,7 +223,7 @@ void HookGiveNamedItem ( edict_t *edict )
 	extern ConVar rcbot_equipwearable_offset;
 	CBaseEntity *BasePlayer = servergameents->EdictToBaseEntity(edict);//(CBaseEntity *)(edict->GetUnknown()->GetBaseEntity());
 
-	if((TF2GiveNamedItem == 0x0) && BasePlayer)
+	if((TF2GiveNamedItem == 0x0) && BasePlayer && CBotGlobals::isCurrentMod(MOD_TF2) )
 	{
 		int vtable = rcbot_givenameditem_offset.GetInt();
 
@@ -228,9 +233,9 @@ void HookGiveNamedItem ( edict_t *edict )
 
 		if ( vtable != 0 )
 		{
-#ifndef WIN32
+/*#ifndef WIN32
 			++vtable;
-#endif
+#endif*/
 	    // hook it
 			GiveNamedItemHookedClass = ( DWORD* )*( DWORD* )BasePlayer;
 			*(DWORD*)&TF2GiveNamedItem = VirtualTableHook( GiveNamedItemHookedClass, vtable, ( DWORD )nTF2GiveNamedItem );
@@ -250,10 +255,11 @@ void UnhookGiveNamedItem ()
 
 		if ( vtable != 0 )
 		{
+			/* linux and windows offsets are now separate in hooksinfo.ini
 	#ifndef WIN32
 			++vtable;
 	#endif
-	       
+	       */
 			VirtualTableHook( GiveNamedItemHookedClass, vtable, *(DWORD*)&TF2GiveNamedItem );
 			TF2GiveNamedItem = 0x0;
 			GiveNamedItemHookedClass = 0x0;
@@ -283,9 +289,10 @@ void HookPlayerRunCommand ( edict_t *edict )
 
 			if ( vtable != 0 )
 			{
+				/*
 	#ifndef WIN32
 				++vtable;
-	#endif
+	#endif*/
 	       // hook it
 				if ( pPlayerRunCommand == 0x0 )
 				{
@@ -314,10 +321,11 @@ void UnhookPlayerRunCommand ()
 
 		if ( vtable != 0 )
 		{
+			/*
 	#ifndef WIN32
 			++vtable;
 	#endif
-	       
+	       */
 			VirtualTableHook( pPlayerRunCommandHookedClass, vtable, *(DWORD*)&pPlayerRunCommand );
 			pPlayerRunCommandHookedClass = NULL;
 			pPlayerRunCommand = NULL;

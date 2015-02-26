@@ -212,7 +212,9 @@ WeaponsData_t TF2Weaps[] =
 	{TF2_SLOT_SCNDR,TF2_WEAPON_PISTOL_SCOUT,		"tf_weapon_pistol_scout",	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1800,2,2,0},
 	{TF2_SLOT_SCNDR,TF2_WEAPON_REVOLVER,			"tf_weapon_revolver",	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1400,2,1,0},
 	{TF2_SLOT_OTHER,TF2_WEAPON_PDA_ENGI_BUILD,		"tf_weapon_pda_engineer_build",	WEAP_FL_NONE,0,100,0,1,0},
-	{TF2_SLOT_OTHER,TF2_WEAPON_PDA_ENGI_DESTROY,	"tf_weapon_pda_engineer_destroy",	WEAP_FL_NONE,0,100,0,1,0},
+	// this class is used with all classes that can use shotgun but the slot might be different
+	{TF2_SLOT_SHOTGUN,TF2_WEAPON_SHOTGUN,	"tf_weapon_shotgun",	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,500,2,2,0},
+	//{TF2_SLOT_OTHER,TF2_WEAPON_PDA_ENGI_DESTROY,	"tf_weapon_pda_engineer_destroy",	WEAP_FL_NONE,0,100,0,1,0},
 	{TF2_SLOT_OTHER,TF2_WEAPON_PDA_SPY,	"tf_weapon_pda_spy",	WEAP_FL_NONE,0,100,0,1,0},
 	{TF2_SLOT_OTHER,TF2_WEAPON_BUILDER,			"tf_weapon_builder",	WEAP_FL_NONE,0,100,0,1,0},
 	{TF2_SLOT_SCNDR,TF2_WEAPON_MEDIGUN,			"tf_weapon_medigun",	WEAP_FL_NONE,0,100,0,1,0},

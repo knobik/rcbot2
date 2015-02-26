@@ -686,6 +686,10 @@ void CBot :: currentlyDead ()
 	}*/
 
 	//attack();
+
+	// keep updating until alive
+	m_fSpawnTime = engine->Time();
+
 	return;
 }
 
@@ -2291,6 +2295,11 @@ void CBot :: doMove ()
 		// bots upward move speed (e.g in water)
 		m_fUpSpeed = 0;
 	}
+}
+
+bool CBot :: recentlySpawned ( float fTime )
+{
+	return ( ( m_fSpawnTime + fTime ) > engine->Time());
 }
 
 bool CBot :: FInViewCone ( edict_t *pEntity )

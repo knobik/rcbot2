@@ -487,6 +487,11 @@ public:
 	{
 		return (vOrigin-m_pController->GetLocalOrigin()).Length();
 	}
+	
+	int isDesiredClass ( int iclass )
+	{
+		return m_iDesiredClass == iclass;
+	}
 
 	virtual void handleWeapons ();
 
@@ -950,6 +955,9 @@ public:
 	bool recentlyHurt ( float fTime );
 
 	eBotAction getCurrentUtil ( void ) { return m_CurrentUtil;}
+
+	bool recentlySpawned ( float fTime );
+
 protected:
 
 	inline void setLookAt ( Vector vNew )

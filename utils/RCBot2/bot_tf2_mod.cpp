@@ -789,7 +789,7 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 				if ( ( slot == NULL ) || (*slot == 0 ) )
 					continue;
 
-				pszquality = kv->GetString("quality");
+				pszquality = kv->GetString("item_quality");
 
 				if ( pszquality && *pszquality )
 					iquality = (strcmp(pszquality,"unique")==0)?6:0;
@@ -908,12 +908,22 @@ CTF2Loadout *CTeamFortress2Mod::findRandomWeaponLoadOut ( int iclass, const char
 {
 	// find weapon slot
 	int islot;
-	CWeapon *pWeapon = CWeapons::getWeapon(classname);
+	// this is only used to find the slot
+	CWeapon *pWeapon = CWeapons::getWeapon(classname);//::getWeapon(classname);
 
 	if ( pWeapon == NULL )
 		return NULL;
 
 	islot = pWeapon->getSlot();
+
+	if ( islot == TF2_SLOT_SHOTGUN )
+	{
+		// find the slot for this shotgun
+		if ( iclass == TF_CLASS_ENGINEER )
+			islot = TF2_SLOT_PRMRY;
+		else
+			islot = TF2_SLOT_SCNDR;
+	}
 
 	if ( islot < 3 )
 	{

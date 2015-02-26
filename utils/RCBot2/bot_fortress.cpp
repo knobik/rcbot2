@@ -2824,10 +2824,15 @@ void CBotTF2 :: modThink ()
 		// Equip
 		if ( isAlive() )
 		{			
-			UTIL_TF2EquipRandomHat(m_pEdict,m_pVTable,m_pVTable_Attributes);
+			m_iClass = (TF_Class)CClassInterface::getTF2Class(m_pEdict);
 
-			m_fEquipHatTime = 0.0f;
-			m_bHatEquipped = true;
+			if ( isDesiredClass(m_iClass) )
+			{
+				UTIL_TF2EquipRandomHat(m_pEdict,m_pVTable,m_pVTable_Attributes);
+
+				m_fEquipHatTime = 0.0f;
+				m_bHatEquipped = true;
+			}
 		}
 	}
 
@@ -2851,9 +2856,9 @@ void CBotTF2 :: modThink ()
 
 	if ( m_pWeapons->hasWeapon(TF2_WEAPON_BUFF_ITEM) )
 	{
-		if ( m_bStatsCanUse && (CClassInterface::getRageMeter(m_pEdict) > 99.99f) )
+		if ( CClassInterface::getRageMeter(m_pEdict) > 99.99f )
 		{
-			if ( m_StatsCanUse.stats.m_iTeamMatesInRange > 1 )
+			if ( m_fCurrentDanger > 100.0f )
 			{
 				if ( m_fUseBuffItemTime < engine->Time() )
 				{
