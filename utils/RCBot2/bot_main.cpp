@@ -984,7 +984,10 @@ void CRCBotPlugin::LevelShutdown( void ) // !!!!this can get called multiple tim
 	CWaypointDistances::save();
 
 	if ( !rcbot_runplayercmd_hookonce.GetBool() )
+	{
 		UnhookPlayerRunCommand();
+		UnhookGiveNamedItem();
+	}
 
 	CBots::freeMapMemory();	
 	CWaypoints::init();

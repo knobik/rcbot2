@@ -1336,6 +1336,7 @@ private:
 	// three slots + nine classes
 	static vector<CTF2Loadout*> m_pLoadoutWeapons[3][9];
 	static vector<CTF2Loadout*> m_pHats;
+	static CTF2Loadout *m_StockWeapons[3][9]; //stock weapons
 
 };
 

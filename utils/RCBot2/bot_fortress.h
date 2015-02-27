@@ -971,6 +971,10 @@ private:
 	void *m_pVTable_Attributes;
 
 	float m_fUseBuffItemTime;
+	bool m_bAppliedLoadout;
+	bool m_bMeleeAttempt;
+	bool m_bPrimaryAttempt;
+	bool m_bSecondaryAttempt;
 	//dataStack<CTF2LoadoutAdded*> m_LoadoutsApplyAttributes;
 };
 

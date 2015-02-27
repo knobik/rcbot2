@@ -94,470 +94,31 @@ vector<CTF2Loadout*> CTeamFortress2Mod::m_pLoadoutWeapons[3][9];
 vector<CTF2Loadout*> CTeamFortress2Mod::m_pHats;
 extern ConVar bot_use_disp_dist;
 
-const char *g_pszAttributeNames[] = {
-{"reserved"},
-{"damage penalty"},
-{"damage bonus"},
-{"clip size penalty"},
-{"clip size bonus"},
-{"fire rate penalty"},
-{"fire rate bonus"},
-{"heal rate penalty"},
-{"heal rate bonus"},
-{"ubercharge rate penalty"},
-{"ubercharge rate bonus"},
-{"overheal bonus"},
-{"overheal decay penalty"},
-{"overheal decay bonus"},
-{"overheal decay disabled"},
-{"crit mod disabled"},
-{"heal on hit for rapidfire"},
-{"add uber charge on hit"},
-{"medigun charge is crit boost"},
-{"tmp dmgbuff on hit"},
-{"crit vs burning players"},
-{"dmg penalty vs nonburning"},
-{"no crit vs nonburning"},
-{"mod flamethrower push"},
-{"mod flamethrower back crit"},
-{"hidden secondary max ammo penalty"},
-{"max health additive bonus"},
-{"alt-fire disabled"},
-{"crit mod disabled hidden"},
-{"alt-fire is vampire"},
-{"fists have radial buff"},
-{"critboost on kill"},
-{"slow enemy on hit"},
-{"set cloak is feign death"},
-{"mult cloak meter consume rate"},
-{"mult cloak meter regen rate"},
-{"spread penalty"},
-{"hidden primary max ammo bonus"},
-{"mod bat launches balls"},
-{"dmg penalty vs nonstunned"},
-{"zoom speed mod disabled"},
-{"sniper charge per sec"},
-{"sniper no headshots"},
-{"scattergun no reload single"},
-{"scattergun has knockback"},
-{"bullets per shot bonus"},
-{"sniper zoom penalty"},
-{"sniper no charge"},
-{"set cloak is movement based"},
-{"no double jump"},
-{"absorb damage while cloaked"},
-{"revolver use hit locations"},
-{"backstab shield"},
-{"fire retardant"},
-{"move speed penalty"},
-{"obsolete ammo penalty"},
-{"jarate description"},
-{"health regen"},
-{"self dmg push force increased"},
-{"self dmg push force decreased"},
-{"dmg taken from fire reduced"},
-{"dmg taken from fire increased"},
-{"dmg taken from crit reduced"},
-{"dmg taken from crit increased"},
-{"dmg taken from blast reduced"},
-{"dmg taken from blast increased"},
-{"dmg taken from bullets reduced"},
-{"dmg taken from bullets increased"},
-{"increase player capture value"},
-{"health from healers reduced"},
-{"health from healers increased"},
-{"weapon burn dmg increased"},
-{"weapon burn dmg reduced"},
-{"weapon burn time increased"},
-{"weapon burn time reduced"},
-{"aiming movespeed increased"},
-{"maxammo primary increased"},
-{"maxammo primary reduced"},
-{"maxammo secondary increased"},
-{"maxammo secondary reduced"},
-{"maxammo metal increased"},
-{"maxammo metal reduced"},
-{"cloak consume rate increased"},
-{"cloak consume rate decreased"},
-{"cloak regen rate increased"},
-{"cloak regen rate decreased"},
-{"minigun spinup time increased"},
-{"minigun spinup time decreased"},
-{"max pipebombs increased"},
-{"max pipebombs decreased"},
-{"SRifle Charge rate increased"},
-{"SRifle Charge rate decreased"},
-{"Construction rate increased"},
-{"Construction rate decreased"},
-{"Repair rate increased"},
-{"Repair rate decreased"},
-{"Reload time increased"},
-{"Reload time decreased"},
-{"selfdmg on hit for rapidfire"},
-{"Blast radius increased"},
-{"Blast radius decreased"},
-{"Projectile range increased"},
-{"Projectile range decreased"},
-{"Projectile speed increased"},
-{"Projectile speed decreased"},
-{"overheal penalty"},
-{"weapon spread bonus"},
-{"move speed bonus"},
-{"health from packs increased"},
-{"health from packs decreased"},
-{"heal on hit for slowfire"},
-{"selfdmg on hit for slowfire"},
-{"ammo regen"},
-{"metal regen"},
-{"mod mini-crit airborne"},
-{"mod shovel damage boost"},
-{"mod soldier buff type"},
-{"dmg falloff increased"},
-{"dmg falloff decreased"},
-{"sticky detonate mode"},
-{"sticky arm time penalty"},
-{"stickies detonate stickies"},
-{"mod demo buff type"},
-{"speed boost when active"},
-{"mod wrench builds minisentry"},
-{"max health additive penalty"},
-{"sticky arm time bonus"},
-{"sticky air burst mode"},
-{"provide on active"},
-{"health drain"},
-{"medic regen bonus"},
-{"medic regen penalty"},
-{"community description"},
-{"soldier model index"},
-{"attach particle effect"},
-{"rocket jump damage reduction"},
-{"mod sentry killed revenge"},
-{"dmg bonus vs buildings"},
-{"dmg penalty vs players"},
-{"lunchbox adds maxhealth bonus"},
-{"hidden maxhealth non buffed"},
-{"selfmade description"},
-{"set item tint RGB"},
-{"custom employee number"},
-{"lunchbox adds minicrits"},
-{"taunt is highfive"},
-{"damage applies to sappers"},
-{"Wrench index"},
-{"building cost reduction"},
-{"bleeding duration"},
-{"turn to gold"},
-{"DEPRECATED socketed item definition id DEPRECATED"},
-{"custom texture lo"},
-{"cannot trade"},
-{"disguise on backstab"},
-{"cannot disguise"},
-{"silent killer"},
-{"disguise speed penalty"},
-{"add cloak on kill"},
-{"cloak blink time penalty"},
-{"quiet unstealth"},
-{"flame size penalty"},
-{"flame size bonus"},
-{"flame life penalty"},
-{"flame life bonus"},
-{"charged airblast"},
-{"add cloak on hit"},
-{"disguise damage reduction"},
-{"disguise no burn"},
-{"dmg from sentry reduced"},
-{"airblast cost increased"},
-{"airblast cost decreased"},
-{"purchased"},
-{"flame ammopersec increased"},
-{"flame ammopersec decreased"},
-{"jarate duration"},
-{"no death from headshots"},
-{"deploy time increased"},
-{"deploy time decreased"},
-{"minicrits become crits"},
-{"heal on kill"},
-{"no self blast dmg"},
-{"slow enemy on hit major"},
-{"aiming movespeed decreased"},
-{"duel loser account id"},
-{"event date"},
-{"gifter account id"},
-{"set supply crate series"},
-{"preserve ubercharge"},
-{"elevate quality"},
-{"active health regen"},
-{"active health degen"},
-{"referenced item id low"},
-{"referenced item id high"},
-{"referenced item def"},
-{"always tradable"},
-{"noise maker"},
-{"halloween item"},
-{"collection bits"},
-{"fires healing bolts"},
-{"enables aoe heal"},
-{"gesture speed increase"},
-{"charge time increased"},
-{"drop health pack on kill"},
-{"hit self on miss"},
-{"dmg from ranged reduced"},
-{"dmg from melee increased"},
-{"blast dmg to self increased"},
-{"Set DamageType Ignite"},
-{"minicrit vs burning player"},
-{"paint effect"},
-{"tradable after date"},
-{"force level display"},
-{"random level curve replacement"},
-{"kill eater"},
-{"apply z velocity on damage"},
-{"apply look velocity on damage"},
-{"sanguisuge"},
-{"mark for death"},
-{"decapitate type"},
-{"restore health on kill"},
-{"mult decloak rate"},
-{"mult sniper charge after bodyshot"},
-{"mult sniper charge after miss"},
-{"dmg bonus while half dead"},
-{"dmg penalty while half alive"},
-{"honorbound"},
-{"custom texture hi"},
-{"makers mark id"},
-{"unique craft index"},
-{"mod medic killed revenge"},
-{"medigun charge is megaheal"},
-{"mod medic killed minicrit boost"},
-{"mod medic healed damage bonus"},
-{"mod medic healed deploy time penalty"},
-{"mod shovel speed boost"},
-{"mod weapon blocks healing"},
-{"mult sniper charge after headshot"},
-{"minigun no spin sounds"},
-{"ubercharge rate bonus for healer"},
-{"reload time decreased while healed"},
-{"reload time increased hidden"},
-{"mod medic killed marked for death"},
-{"mod rage on hit penalty"},
-{"mod rage on hit bonus"},
-{"mod rage damage boost"},
-{"mult charge turn control"},
-{"no charge impact range"},
-{"charge impact damage increased"},
-{"charge recharge rate increased"},
-{"air dash count"},
-{"speed buff ally"},
-{"damage force reduction"},
-{"mult cloak rate"},
-{"airblast functionality flags"},
-{"airblast pushback scale"},
-{"mult airblast refire time"},
-{"airblast vertical pushback scale"},
-{"ammo becomes health"},
-{"boots falling stomp"},
-{"deflection size multiplier"},
-{"set item tint RGB 2"},
-{"saxxy award category"},
-{"melee bounds multiplier"},
-{"melee range multiplier"},
-{"mod mini-crit airborne deploy"},
-{"projectile penetration"},
-{"mod crit while airborne"},
-{"mult sniper charge penalty DISPLAY ONLY"},
-{"mod see enemy health"},
-{"powerup max charges"},
-{"powerup charges"},
-{"powerup duration"},
-{"critboost"},
-{"ubercharge"},
-{"cancel falling damage"},
-{"bidirectional teleport"},
-{"multiple sentries"},
-{"effect bar recharge rate increased"},
-{"maxammo grenades1 increased"},
-{"override projectile type"},
-{"energy weapon no ammo"},
-{"energy weapon charged shot"},
-{"energy weapon penetration"},
-{"energy weapon no hurt building"},
-{"energy weapon no deflect"},
-{"engy building health bonus"},
-{"engy sentry damage bonus"},
-{"no crit boost"},
-{"centerfire projectile"},
-{"unknown1"},
-{"unknown2"},
-{"kill eater score type"},
-{"kill eater score type 2"},
-{"kill eater 2"},
-{"has pipboy build interface"},
-{"sapper kills collect crits"},
-{"sniper only fire zoomed"},
-{"mod ammo per shot"},
-{"add onhit addammo"},
-{"electrical airblast DISPLAY ONLY"},
-{"mod use metal ammo type"},
-{"expiration date"},
-{"mod max primary clip override"},
-{"sniper full charge damage bonus"},
-{"sniper fires tracer DISPLAY ONLY"},
-{"sniper no headshot without full charge"},
-{"mod no reload DISPLAY ONLY"},
-{"sniper penetrate players when charged"},
-{"crit kill will gib"},
-{"recall"},
-{"unlimited quantity"},
-{"disable weapon hiding for animations"},
-{"applies snare effect"},
-{"uber duration bonus"},
-{"refill_ammo"},
-{"unknown3"},
-{"store sort override DEPRECATED"},
-{"faster reload rate"},
-{"increase buff duration"},
-{"robo sapper"},
-{"build rate bonus"},
-{"taunt is press and hold"},
-{"attack projectiles"},
-{"accuracy scales damage"},
-{"currency bonus"},
-{"increased jump height"},
-{"building instant upgrade"},
-{"disable fancy class select anim"},
-{"airblast vulnerability multiplier"},
-{"override footstep sound set"},
-{"spawn with physics toy"},
-{"fish damage override"},
-{"special dsp"},
-{"bombinomicon effect on death"},
-{"clip size bonus upgrade"},
-{"hide enemy health"},
-{"subtract victim medigun charge on hit"},
-{"subtract victim cloak on hit"},
-{"reveal cloaked victim on hit"},
-{"reveal disguised victim on hit"},
-{"jarate backstabber"},
-{"unknown4"},
-{"engy sentry fire rate increased"},
-{"engy sentry radius increased"},
-{"engy dispenser radius increased"},
-{"mod bat launches ornaments"},
-{"freeze backstab victim"},
-{"fire rate penalty HIDDEN"},
-{"energy weapon no drain"},
-{"ragdolls become ash"},
-{"engy disposable sentries"},
-{"alt fire teleport to spawn"},
-{"cannot pick up buildings"},
-{"stun enemies wielding same weapon"},
-{"unknown5"},
-{"airblast disabled"},
-{"increase buff duration HIDDEN"},
-{"crit forces victim to laugh"},
-{"melts in fire"},
-{"damage all connected"},
-{"become fireproof on hit by fire"},
-{"crit from behind"},
-{"crit does no damage"},
-{"add jingle to footsteps"},
-{"set icicle knife mode"},
-{"mod stun waist high airborne"},
-{"extinguish earns revenge crits"},
-{"burn damage earns rage"},
-{"tickle enemies wielding same weapon"},
-{"attach particle effect static"},
-{"taunt success sound"},
-{"accepted wedding ring account id 1"},
-{"accepted wedding ring account id 2"},
-{"tool escrow until date"},
-{"generate rage on damage"},
-{"aiming no flinch"},
-{"aiming knockback resistance"},
-{"sniper aiming movespeed decreased"},
-{"kill eater user 1"},
-{"kill eater user score type 1"},
-{"kill eater user 2"},
-{"kill eater user score type 2"},
-{"kill eater user 3"},
-{"kill eater user score type 3"},
-{"strange part new counter ID"},
-{"mvm completed challenges bitmask"},
-{"rage on kill"},
-{"kill eater kill type"},
-{"shot penetrate all players"},
-{"headshot damage increase"},
-{"mystery solving time decrease"},
-{"damage penalty on bodyshot"},
-{"sniper rage DISPLAY ONLY"},
-{"fire rate bonus HIDDEN"},
-{"explosive sniper shot"},
-{"melee attack rate bonus"},
-{"projectile penetration heavy"},
-{"rage on assists"},
-{"armor piercing"},
-{"cannot pick up intelligence"},
-{"chance of hunger decrease"},
-{"cannot be backstabbed"},
-{"squad surplus claimer id DEPRECATED"},
-{"share consumable with patient"},
-{"airblast vertical vulnerability multiplier"},
-{"vision opt in flags"},
-{"crit vs disguised players"},
-{"crit vs non burning players"},
-{"kill forces attacker to laugh"},
-{"damage bonus while undisguised"},
-{"projectile spread angle penalty"},
-{"dmg taken increased"},
-{"auto fires full clip"},
-{"self mark for death"},
-{"counts as assister is some kind of pet this update is going to be awesome"},
-{"mod flaregun fires pellets with knockback"},
-{"can overload"},
-{"hype on damage"},
-{"hype resets on jump"},
-{"pyro year number"},
-{"no primary ammo from dispensers"},
-{"pyrovision only DISPLAY ONLY"},
-{"unknown6"},
-{"clip size penalty HIDDEN"},
-{"sapper damage bonus"},
-{"sapper damage penalty"},
-{"sapper damage leaches health"},
-{"sapper health bonus"},
-{"sapper health penalty"},
-{"ring of fire while aiming"},
-{"uses ammo while aiming"},
-{"unknown7"},
-{"sapper degenerates buildings"},
-{"sapper damage penalty hidden"},
-{"cleaver description"},
-{"ragdolls plasma effect"},
-{"crit vs stunned players"},
-{"crit vs wet players"},
-{"override item level desc string"},
-{"clip size upgrade atomic"},
-{"unknown8"},
-{"major move speed bonus"},
-{"major increased jump height"},
-{"head scale"},
-{"pyrovision opt in DISPLAY ONLY"},
-{"halloweenvision opt in DISPLAY ONLY"},
-{"halloweenvision filter DISPLAY ONLY"},
-{"player skin override"},
-{"never craftable"},
-{"zombiezombiezombiezombie"},
-{"\0"}
+class CAttributeID
+{
+public:
+	CAttributeID ( int id, const char *attrib )
+	{
+		m_id = id;
+		m_attribute = attrib;
+	}
+
+	int m_id;
+	const char *m_attribute;
 };
 
-int UTIL_FindAttributeID ( const char *name )
+int UTIL_FindAttributeID ( vector<CAttributeID*> *list, const char *name )
 {
-	int i = 0;
+	unsigned int i;
 
-	while ( g_pszAttributeNames[i][0] != '\0' )
+	for ( i = 0; i < list->size(); i ++ )
 	{
-		if ( strcmp(name,g_pszAttributeNames[i]) == 0 )
-			return i;
-		i++;
+		CAttributeID *attrib = list->at(i);
+
+		if ( attrib && (strcmp(attrib->m_attribute,name) == 0) )
+		{
+			return attrib->m_id;
+		}
 	}
 
 	return -1;
@@ -688,21 +249,53 @@ CTF2Loadout *CTeamFortress2Mod :: getRandomHat ( void )
 	return NULL;
 }
 
+
 void CTeamFortress2Mod :: setupLoadOutWeapons ()
 {	
 	extern IFileSystem *filesystem;
 	KeyValues *mainkv = new KeyValues("tfweapons");
-
+	vector<CAttributeID*> attributes;
 	KeyValues *kv;
-	KeyValues *usedbyclass;
+	KeyValues *usedbyclass;	
+	KeyValues *attribs;
 	
 	CBotGlobals::botMessage(NULL,0,"Reading Weapon Loadout details from TF MOD...");
 	mainkv->LoadFromFile(filesystem,"scripts/items/items_game.txt","MOD");
 
 	kv = mainkv->FindKey("items");
 
+	attribs = mainkv->FindKey("attributes");
+
+	if ( attribs )
+	{
+		attribs = attribs->FindKey("1");
+
+		if ( attribs )
+		{
+			do 
+			{
+				int id;
+
+				const char *keyname = attribs->GetName();
+
+				const char *attrib_name;
+
+				if ( keyname && *keyname )
+				{
+					id = atoi ( keyname );
+
+					attrib_name = attribs->GetString("name");
+
+					attributes.push_back(new CAttributeID(id,attrib_name));
+				}
+			} while ((attribs = attribs->GetNextTrueSubKey()) != NULL );
+		}
+
+	}
+
 	if ( kv )
 	{
+
 		kv = kv->FindKey("default");
 
 		if ( kv )
@@ -851,7 +444,7 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 
 				if ( added )
 				{
-					KeyValues *attribs = kv->FindKey("attributes");
+					attribs = kv->FindKey("attributes");
 
 					if ( attribs )
 					{
@@ -866,7 +459,7 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 
 								if ( attribname && *attribname )
 								{
-									int iId = UTIL_FindAttributeID(attribname);
+									int iId = UTIL_FindAttributeID(&attributes,attribname);
 
 									if ( bIsWeapon && (strcmp(attribname,"damage penalty") == 0) )
 									{
@@ -893,6 +486,15 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 				}
 			}
 		}
+	}
+
+	for ( unsigned int i = 0; i < attributes.size(); i ++ )
+	{
+		CAttributeID *attrib = attributes[i];
+
+		delete attrib;
+
+		attributes[i] = NULL;
 	}
 
 	mainkv->deleteThis();
@@ -2182,7 +1784,7 @@ void CTF2Loadout :: addAttribute ( int id, float fval )
 }
 
 void  CTF2Loadout :: applyAttributes  ( CBaseEntity *pEnt )
-{
+{/*
 	extern IServerGameEnts *servergameents;
 
 	edict_t *pEdict = servergameents->BaseEntityToEdict(pEnt);
@@ -2193,7 +1795,7 @@ void  CTF2Loadout :: applyAttributes  ( CBaseEntity *pEnt )
 		float fval = m_Attributes[i]->m_flValue;
 
 		UTIL_ApplyAttribute(pEdict,g_pszAttributeNames[id],fval);		
-	}
+	}*/
 }
 
 void  CTF2Loadout :: applyAttributes  ( CEconItemView *cscript )

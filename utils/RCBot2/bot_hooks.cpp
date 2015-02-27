@@ -17,6 +17,7 @@
 #include "bot_kv.h"
 #include "bot_globals.h"
 #include "bot_getprop.h"
+#include "bot_weapons.h"
 #include "bot_hooks.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -178,11 +179,21 @@ CBaseEntity * __fastcall nTF2GiveNamedItem( CBaseEntity *_this, void *punused, c
 		Error("RCBOT: nTF2GiveNamedItem Failed. bad offset?");
 	}
 
-	if ( rcbot_customloadouts.GetBool() && pAdded && pBot && weap )
+	if ( pBot && cscript )
 		((CBotTF2*)pBot)->PostGiveNamedItem(pAdded,weap,cscript);		
 
 	return pAdded;
 
+}
+
+void UTIL_TF2EquipStockWeapon ( edict_t *pEdict, int islot, void *vTable, void *vTableAttributes )
+{
+	int iClass = CClassInterface::getTF2Class(pEdict);
+	/*
+	switch ( iClass )
+	{
+
+	}*/
 }
 
 void UTIL_TF2EquipRandomHat ( edict_t *pEdict, void *vTable, void *vTableAttributes )

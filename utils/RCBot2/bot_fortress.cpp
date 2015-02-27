@@ -2805,7 +2805,10 @@ void CBotTF2 :: PostGiveNamedItem ( CBaseEntity *pEntity, CTF2Loadout *loadout, 
 	m_pVTable_Attributes = cscript->m_pVTable_Attributes;
 
 	//m_toApply.push(new CTF2LoadoutAdded(pEntity,loadout));
-
+	if ( loadout )
+	{
+		m_bAppliedLoadout = true;
+	}
 }
 /*
 void CBotTF2 :: addLoadoutWeapon ( CTF2Loadout *weap )
@@ -2818,6 +2821,8 @@ void CBotTF2 :: modThink ()
 	static bool bNeedHealth;
 	static bool bNeedAmmo;
 	static bool bIsCloaked;
+
+	extern ConVar rcbot_customloadouts;
 	
 	if ( (m_fEquipHatTime > 0.0f) && (m_fEquipHatTime < engine->Time()) )
 	{
@@ -2835,6 +2840,25 @@ void CBotTF2 :: modThink ()
 			}
 		}
 	}
+	/*
+	if ( rcbot_customloadouts.GetBool() )
+	{
+		if ( !m_bMeleeAttempt && (m_pWeapons->getCurrentWeaponInSlot(TF2_SLOT_MELEE) == NULL) )
+		{
+			m_bMeleeAttempt = true;
+			UTIL_TF2EquipStockWeapon(m_pEdict,TF2_SLOT_MELEE,m_pVTable,m_pVTable_Attributes);
+		}
+		else if ( !m_bPrimaryAttempt && (m_pWeapons->getCurrentWeaponInSlot(TF2_SLOT_PRMRY) == NULL) )
+		{
+			m_bPrimaryAttempt = true;
+			UTIL_TF2EquipStockWeapon(m_pEdict,TF2_SLOT_PRMRY,m_pVTable,m_pVTable_Attributes);
+		}
+		else if ( !m_bSecondaryAttempt && (m_pWeapons->getCurrentWeaponInSlot(TF2_SLOT_SCNDR) == NULL) )
+		{
+			m_bSecondaryAttempt = true;
+			UTIL_TF2EquipStockWeapon(m_pEdict,TF2_SLOT_SCNDR,m_pVTable,m_pVTable_Attributes);
+		}
+	}*/
 
 	/*
 
