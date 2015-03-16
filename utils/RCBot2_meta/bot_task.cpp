@@ -3110,9 +3110,7 @@ void CBotTF2SnipeCrossBow::execute(CBot *pBot, CBotSchedule *pSchedule)
 				}
 			}
 
-			if (!pBot->isHoldingPrimaryAttack())
-				pBot->primaryAttack(true, 0.1f);
-			else
+			if (pBot->isHoldingPrimaryAttack())
 			{
 				// zoom in
 				//if (!CTeamFortress2Mod::TF2_IsPlayerZoomed(pBot->getEdict()))

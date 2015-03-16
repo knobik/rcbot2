@@ -236,7 +236,7 @@ void *CSignatureFunction::findPattern(const void *libPtr, const char *pattern, s
 
 	return NULL;
 }
-
+// Sourcemod - Metamod - Allied Modders.net
 void *CSignatureFunction::findSignature ( void *addrInBase, const char *signature )
 {
 	// First, preprocess the signature 

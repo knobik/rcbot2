@@ -386,6 +386,21 @@ bool RCBotPluginMeta::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxle
 	srand( (unsigned)time(NULL) );  // initialize the random seed
 	irand.seed( (unsigned)time(NULL) );
 
+	// Find the RCBOT2 Path from metamod VDF
+	extern IFileSystem *filesystem;
+	KeyValues *mainkv = new KeyValues("metamodplugin");
+	
+	const char *rcbot2path;
+	CBotGlobals::botMessage(NULL, 0, "Reading rcbot2 path from VDF...");
+	
+	mainkv->LoadFromFile(filesystem, "addons/metamod/rcbot2.vdf", "MOD");
+	
+	mainkv = mainkv->FindKey("Metamod Plugin");
+
+	if (mainkv)
+		rcbot2path = mainkv->GetString("rcbot2path", "\0");
+
+	mainkv->deleteThis();
 	//eventListener2 = new CRCBotEventListener();
 
 	// Initialize bot variables

@@ -416,24 +416,9 @@ public:
 // linux fix 1
 	virtual void onInventoryApplication (){}
 
-	inline float distanceFrom(edict_t *pEntity)
-	{
-		return (pEntity->GetCollideable()->GetCollisionOrigin()-m_pController->GetLocalOrigin()).Length();
-	//return distanceFrom(CBotGlobals::entityOrigin(pEntity));
-	}
 
-	inline float distanceFrom2D(edict_t *pEntity)
-	{
-		return (pEntity->GetCollideable()->GetCollisionOrigin()-m_pController->GetLocalOrigin()).Length2D();
-	//return distanceFrom(CBotGlobals::entityOrigin(pEntity));
-	}
 	// return distance from this origin
-// linux fix 2
-	inline float distanceFrom ( Vector vOrigin )
-	{
-		return (vOrigin-m_pController->GetLocalOrigin()).Length();
-	}
-	
+
 	int isDesiredClass ( int iclass )
 	{
 		return m_iDesiredClass == iclass;
@@ -445,6 +430,23 @@ public:
 	{
 		return m_pController->GetLocalOrigin();
 	}
+	// linux fix 2
+	inline float distanceFrom(Vector vOrigin)
+	{
+		return (vOrigin - m_pController->GetLocalOrigin()).Length();
+	}
+	inline float distanceFrom(edict_t *pEntity)
+	{
+		return (pEntity->GetCollideable()->GetCollisionOrigin() - m_pController->GetLocalOrigin()).Length();
+		//return distanceFrom(CBotGlobals::entityOrigin(pEntity));
+	}
+
+	inline float distanceFrom2D(edict_t *pEntity)
+	{
+		return (pEntity->GetCollideable()->GetCollisionOrigin() - m_pController->GetLocalOrigin()).Length2D();
+		//return distanceFrom(CBotGlobals::entityOrigin(pEntity));
+	}
+
 	/*
 	 * init()
 	 *

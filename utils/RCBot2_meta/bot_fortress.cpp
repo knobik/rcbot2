@@ -2932,7 +2932,7 @@ void CBotTF2 :: modThink ()
 	}
 	else if (m_pWeapons->hasWeapon(TF2_WEAPON_LUNCHBOX_DRINK))
 	{
-		if (!hasEnemy() && (CClassInterface::TF2_getEnergyDrinkMeter(m_pEdict) > 99.99f) )
+		if (!hasEnemy() && !hasFlag() && (CClassInterface::TF2_getEnergyDrinkMeter(m_pEdict) > 99.99f) )
 		{
 			if (m_fCurrentDanger > 49.0f)
 			{
@@ -6627,7 +6627,36 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 	{
 		if ( m_iClass == TF_CLASS_SNIPER )
 		{
-			if ( (v_desired_offset->z < 64.0f) && !hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
+			if (pWp->getID() == TF2_WEAPON_BOW)
+			{
+				if (pWp->getProjectileSpeed() > 0)
+				{
+					extern ConVar *sv_gravity;
+					CClient *pClient = CClients::get(pEntity);
+					Vector vVelocity;
+
+					if (CClassInterface::getVelocity(pEntity, &vVelocity))
+					{
+						if (pClient && (vVelocity == Vector(0, 0, 0)))
+							vVelocity = pClient->getVelocity();
+					}
+					else if (pClient)
+						vVelocity = pClient->getVelocity();
+
+					fTime = fDist2D / (pWp->getProjectileSpeed()*0.707);
+
+					if (rcbot_supermode.GetBool())
+						*v_desired_offset = *v_desired_offset + ((vVelocity*fTime));
+					else
+						*v_desired_offset = *v_desired_offset + ((vVelocity*fTime)*m_pProfile->m_fAimSkill);
+
+					if (sv_gravity != NULL)
+						v_desired_offset->z += ((pow(2, fTime) - 1.0f)*(sv_gravity->GetFloat()*0.1f));// - (getOrigin().z - v_origin.z);
+
+					v_desired_offset->z *= 0.5f;
+				}
+			}
+			else if ( (v_desired_offset->z < 64.0f) && !hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
 			{
 				if ( rcbot_supermode.GetBool() )
 					v_desired_offset->z += 15.0f;
@@ -6934,7 +6963,21 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 				return false; // don't attack the rocket anymore
 		}
 
-		if ( (m_iClass == TF_CLASS_SNIPER) && (pWeapon->getID() == TF2_WEAPON_SNIPERRIFLE) ) 
+		if ((m_iClass == TF_CLASS_SNIPER) && (pWeapon->getID() == TF2_WEAPON_BOW))
+		{
+			stopMoving();
+
+			if (m_fSnipeAttackTime > engine->Time())
+			{
+				primaryAttack(true);				
+			}
+			else
+			{
+				m_fSnipeAttackTime = engine->Time() + randomFloat(0.5f, 3.0f);
+				m_pButtons->letGo(IN_ATTACK);
+			}
+		}
+		else if ( (m_iClass == TF_CLASS_SNIPER) && (pWeapon->getID() == TF2_WEAPON_SNIPERRIFLE) ) 
 		{
 			stopMoving();
 
