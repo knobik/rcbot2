@@ -111,7 +111,7 @@ ConVar rcbot_getweaponslot_offset("rcbot_getweaponslot_offset", "268", 0, "offse
 ConVar rcbot_removewearable_offset("rcbot_removewearable_offset", "427", 0, "offset of the removewearable function");
 ConVar rcbot_weaponequip_offset("rcbot_weaponequip_offset", "261", 0, "offset for weapon equip function");
 ConVar rcbot_gamerules_offset("rcbot_gamerules_offset", "5", 0, "offset for gamerules object");
-//ConVar rcbot_util_learning("rcbot_util_learning","0",0,"Experimental");
+ConVar rcbot_weaponswitch_offset("rcbot_weaponswitch_offset", "264", 0, "offset for weapon Switch function");
 //ConVar rcbot_bot_add_cmd("rcbot_bot_add_cmd","bot",0,"command to add puppet bots");
 //ConVar rcbot_bot_add_cmd("rcbot_hook_engine","1",0,"command to add puppet bots");
 ConVar *sv_gravity = NULL;

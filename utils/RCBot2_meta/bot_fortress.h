@@ -61,6 +61,10 @@ class CBotUtility;
 #define TF2_TEAM_BLUE 3
 #define TF2_TEAM_RED 2
 
+#define RESIST_BULLETS 0
+#define RESIST_EXPLO 1
+#define RESIST_FIRE 2
+
 #define TF2_SENTRY_LEVEL1_HEALTH 150
 #define TF2_SENTRY_LEVEL2_HEALTH 180
 #define TF2_SENTRY_LEVEL3_HEALTH 216
@@ -982,6 +986,8 @@ private:
 	CTF2Loadout *m_pMelee;
 	CTF2Loadout *m_pPrimary;
 	CTF2Loadout *m_pSecondary;
+
+	int m_iDesiredResistType;
 	//dataStack<CTF2LoadoutAdded*> m_LoadoutsApplyAttributes;
 };
 

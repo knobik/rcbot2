@@ -454,11 +454,11 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 						continue;
 					}
 
-					if ( ((iclass == TF_CLASS_ENGINEER) && (islot == TF2_SLOT_MELEE)) || (strcmp(classname,"tf_weapon_wrench")==0) )
+					/*if ( ((iclass == TF_CLASS_ENGINEER) && (islot == TF2_SLOT_MELEE)) || (strcmp(classname,"tf_weapon_wrench")==0) )
 					{
 						// don't add any wrenches -- may cause bots unable to build sentries
 						continue;
-					}
+					}*/
 
 					CBotGlobals::botMessage(NULL, 0, "FOUND loadout : %s", loadout->GetString("name"));
 

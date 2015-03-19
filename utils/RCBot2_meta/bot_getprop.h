@@ -150,6 +150,10 @@ typedef enum
 	GETPROP_TF2_EXTRAWEARABLEVIEWMODEL,
 	GETPROP_TF2_ENERGYDRINKMETER,
 	GETPROP_TF2_MEDIEVALMODE,
+	GETPROP_TF2_ACTIVEWEAPON,
+	GETPROP_TF2_BUILDER_TYPE,
+	GETPROP_TF2_BUILDER_MODE,
+	GETPROP_TF2_CHARGE_RESIST_TYPE,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -374,6 +378,31 @@ public:
 		bool *m_bInitialized = g_GetProps[GETPROP_TF2_WEAPON_INITIALIZED].getBoolPointer(edict);
 
 		*m_bInitialized = true;
+	}
+	inline static edict_t *TF2_getActiveWeapon(edict_t *edict) { return g_GetProps[GETPROP_TF2_ACTIVEWEAPON].getEntity(edict); }
+	// set weapon
+	static bool TF2_setActiveWeapon(edict_t *edict, edict_t *pWeapon)
+	{
+		CBaseHandle *pHandle = g_GetProps[GETPROP_TF2_ACTIVEWEAPON].getEntityHandle(edict);
+		pHandle->Set(pWeapon->GetNetworkable()->GetEntityHandle());
+	}
+	inline static void TF2_SetBuilderType(edict_t *pBuilder, int itype)
+	{
+		int *pitype = g_GetProps[GETPROP_TF2_BUILDER_TYPE].getIntPointer(pBuilder);
+
+		*pitype = itype;
+			//, ]
+	}
+	inline static int getChargeResistType(edict_t *pMedigun)
+	{
+		return g_GetProps[GETPROP_TF2_CHARGE_RESIST_TYPE].getInt(pMedigun, 0);
+	}
+	inline static void TF2_SetBuilderMode(edict_t *pBuilder, int imode)
+	{
+		int *pitype = g_GetProps[GETPROP_TF2_BUILDER_MODE].getIntPointer(pBuilder);
+
+		*pitype = imode;
+		//GETPROP_TF2_BUILDER_MODE, ]
 	}
 	inline static bool TF2_IsMedievalMode(void*gamerules) { return g_GetProps[GETPROP_TF2_MEDIEVALMODE].getBool(gamerules, false, false);}
 	inline static float getTF2SpyCloakMeter ( edict_t *edict ) { return g_GetProps[GETPROP_TF2SPYMETER].getFloat(edict,0); }

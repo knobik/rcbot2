@@ -979,26 +979,40 @@ int CBotFortress :: engiBuildObject (int *iState, eEngiBuild iObject, float *fTi
 		}
 		break;
 	case 1:
+	{
+		CTraceFilterWorldAndPropsOnly filter;
+		QAngle eyes = CBotGlobals::playerAngles(m_pEdict);
+		QAngle turn;
+		Vector forward;
+		Vector building;
+		Vector vchosen;
+		Vector v_right, v_up, v_left;
+		Vector v_src = getEyePosition();
+		// find best place to turn it to
+		trace_t *tr = CBotGlobals::getTraceResult();
+		int iNextState = 2;
+
+//		CBotWeapon *pWeapon = getCurrentWeapon();
+
+		float bestfraction = 0.0f;
+
+		m_fWaitTurnSentry = 0.0f;
+		// unselect current weapon
+		selectWeapon(0);
+
+		engineerBuild(iObject, ENGI_BUILD);
+		/*
+		if (pWeapon->getID() != TF2_WEAPON_BUILDER)
 		{
-			CTraceFilterWorldAndPropsOnly filter;
-			QAngle eyes = CBotGlobals::playerAngles(m_pEdict);
-			QAngle turn;
-			Vector forward;
-			Vector building;
-			Vector vchosen;
-			Vector v_right,v_up,v_left;
-			Vector v_src = getEyePosition();
-			// find best place to turn it to
-			trace_t *tr = CBotGlobals::getTraceResult();
-			int iNextState = 2;
+			if (*iTries > 9)
+				return 0; // fail
 
-			float bestfraction = 0.0f;			
+			*iTries = *iTries + 1;
 
-			m_fWaitTurnSentry = 0.0f;
-			// unselect current weapon
-			selectWeapon(0);
-			engineerBuild(iObject,ENGI_BUILD);
+			return 1; // continue;
+		}*/
 
+		*iTries = 0;
 			iNextState = 8;
 			eyes.x = 0; // nullify pitch / we want yaw only
 			AngleVectors(eyes,&forward,&v_right,&v_up);
@@ -1689,6 +1703,7 @@ void CBotTF2 :: spawnInit()
 {
 	CBotFortress::spawnInit();
 
+	m_iDesiredResistType = 0;
 	m_pMelee = NULL;
 	m_pPrimary = NULL;
 	m_pSecondary = NULL;
@@ -2837,17 +2852,21 @@ void CBotTF2 :: modThink ()
 			{
 				extern ConVar rcbot_melee_only;
 
-				if (m_pMelee == NULL)
+				if ((m_iClass == TF_CLASS_ENGINEER) && !CTeamFortress2Mod::isMedievalMode())
+					m_pMelee = NULL;
+				else if (m_pMelee == NULL)
 					m_pMelee = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_MELEE);
 
 				// only add primary / secondary weapons if they are given them by the map
-				/*if (RCBotPluginMeta::TF2_getPlayerWeaponSlot(m_pEdict, TF2_SLOT_PRMRY) && 
+				/*if (RCBotPluginMeta::TF2_getPlayerWeaponSlot(m_pEdict, TF2_SLOT_PRMRY) &&
 					RCBotPluginMeta::TF2_getPlayerWeaponSlot(m_pEdict, TF2_SLOT_SCNDR))
-				{*/
+					{*/
 				if (m_pPrimary == NULL)
 					m_pPrimary = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_PRMRY);
 
-				if (m_pSecondary == NULL)
+				if ((m_iClass == TF_CLASS_SPY) && !CTeamFortress2Mod::isMedievalMode())
+					m_pSecondary = NULL;
+				else if (m_pSecondary == NULL)
 					m_pSecondary = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_SCNDR);
 				/*}
 				else
@@ -2856,7 +2875,10 @@ void CBotTF2 :: modThink ()
 					m_pSecondary = NULL;
 				}*/
 
-				if (m_pHat == NULL)
+				// adding this will remove the builder -- don't do it!!!
+				if ((m_iClass == TF_CLASS_ENGINEER) && !CTeamFortress2Mod::isMedievalMode())
+					m_pHat = NULL;
+				else if (m_pHat == NULL)
 					m_pHat = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_HAT); 
 
 				if ( m_pMisc == NULL )
@@ -4040,7 +4062,7 @@ void CBotTF2 :: checkBeingHealed ()
 // Preconditions :  Current weapon is Medigun
 //					pPlayer is not NULL
 //
-bool CBotTF2 :: healPlayer ()
+bool CBotTF2::healPlayer()
 {
 	static CBotWeapon *pWeap;
 	static IPlayerInfo *p;
@@ -4050,11 +4072,11 @@ bool CBotTF2 :: healPlayer ()
 	static QAngle eyes;
 	static float fSpeed;
 	static CClient *pClient;
-	
-	if ( !m_pHeal )
+
+	if (!m_pHeal)
 		return false;
-	
-	if ( getHealFactor(m_pHeal) == 0.0f )
+
+	if (getHealFactor(m_pHeal) == 0.0f)
 		return false;
 
 	vOrigin = CBotGlobals::entityOrigin(m_pHeal);
@@ -4064,45 +4086,72 @@ bool CBotTF2 :: healPlayer ()
 	//	return false;
 	p = playerinfomanager->GetPlayerInfo(m_pHeal);
 
-	if ( !p || p->IsDead() || !p->IsConnected() || p->IsObserver() )
+	if (!p || p->IsDead() || !p->IsConnected() || p->IsObserver())
 		return false;
 
-	if ( m_fMedicUpdatePosTime < engine->Time() )
+	if (m_fMedicUpdatePosTime < engine->Time())
 	{
 		float fRand;
 
-		fRand = randomFloat(1.0f,2.0f);
+
+		fRand = randomFloat(1.0f, 2.0f);
 
 		pClient = CClients::get(m_pHeal);
 
-		if ( pClient )
+		if (pClient)
 			fSpeed = pClient->getSpeed();
 
-		m_fMedicUpdatePosTime = engine->Time() + (fRand * (1.0f-(fSpeed/320)));
+		m_fMedicUpdatePosTime = engine->Time() + (fRand * (1.0f - (fSpeed / 320)));
 
-		if ( p && (p->GetLastUserCommand().buttons & IN_ATTACK) )
+		if (p && (p->GetLastUserCommand().buttons & IN_ATTACK))
 		{
 			// keep out of cross fire
 			eyes = CBotGlobals::playerAngles(m_pHeal);
-			AngleVectors(eyes,&vForward);
+			AngleVectors(eyes, &vForward);
 			vForward = vForward / vForward.Length();
-			vOrigin = vOrigin - (vForward*150);
+			vOrigin = vOrigin - (vForward * 150);
 			m_fHealingMoveTime = engine->Time();
 		}
-		else if ( fSpeed > 100.0f )
+		else if (fSpeed > 100.0f)
 			m_fHealingMoveTime = engine->Time();
 
-		if ( m_fHealingMoveTime == 0.0f )
+		if (m_fHealingMoveTime == 0.0f)
 			m_fHealingMoveTime = engine->Time();
 
-		m_vMedicPosition = vOrigin;		
+		m_vMedicPosition = vOrigin;
+
+
+		{
+			if (m_pNearestPipeGren.get() || m_NearestEnemyRocket.get())
+			{
+				m_iDesiredResistType = RESIST_EXPLO;
+			}
+			else if (CTeamFortress2Mod::TF2_IsPlayerOnFire(m_pHeal) || CTeamFortress2Mod::TF2_IsPlayerOnFire(m_pEdict))
+			{
+				m_iDesiredResistType = RESIST_FIRE;
+			}
+			else if (randomInt(0, 1) == 1)
+			{
+				m_iDesiredResistType = RESIST_BULLETS;
+			}
+		}
 	}
 
 	/*if ( CTeamFortress2Mod::hasRoundStarted() && (m_fHealingMoveTime + 8.0f < engine->Time()) )
 	{
-		m_pLastHeal 
-		return false;
+	m_pLastHeal
+	return false;
 	}*/
+	edict_t *pMedigun;
+
+	if ( (pWeap->getID() == TF2_WEAPON_MEDIGUN) && ((pMedigun = pWeap->getWeaponEntity()) != NULL) )
+	{
+		if (CClassInterface::getChargeResistType(pMedigun) != m_iDesiredResistType)
+		{
+			if (randomInt(0, 1) == 1)
+				m_pButtons->tap(IN_RELOAD);
+		}
+	}
 
 	if ( distanceFrom(m_vMedicPosition) < 100 )
 		stopMoving();
@@ -6653,7 +6702,7 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 					if (sv_gravity != NULL)
 						v_desired_offset->z += ((pow(2, fTime) - 1.0f)*(sv_gravity->GetFloat()*0.1f));// - (getOrigin().z - v_origin.z);
 
-					v_desired_offset->z *= 0.5f;
+					v_desired_offset->z *= 0.6f;
 				}
 			}
 			else if ( (v_desired_offset->z < 64.0f) && !hasSomeConditions(CONDITION_SEE_ENEMY_GROUND) )
@@ -7680,6 +7729,7 @@ void CBotTF2 :: sapperDestroyed ( edict_t *pSapper )
 CBotTF2::CBotTF2() 
 { 
 		CBotFortress(); 
+		m_iDesiredResistType = 0;
 		m_pHat = NULL;
 		m_pMisc = NULL;
 		m_pSecondary = NULL;
