@@ -1429,11 +1429,12 @@ CBotUseLunchBoxDrink::CBotUseLunchBoxDrink()
 {
 	m_fTime = 0.0f;
 }
-void CBotUseLunchBoxDrink::execute(CBot *pBot, CBotSchedule *pSchedule)
+void CBotUseBuffItem::execute(CBot *pBot, CBotSchedule *pSchedule)
 {
 	CBotWeapon *pWeapon;
 
 	pBot->wantToShoot(false);
+	pBot->wantToChangeWeapon(false);
 
 	if (m_fTime == 0)
 		m_fTime = engine->Time() + 5.0f;
@@ -1464,11 +1465,12 @@ CBotUseBuffItem :: CBotUseBuffItem ()
 {
 	m_fTime = 0.0f;
 }
-void CBotUseBuffItem :: execute (CBot *pBot,CBotSchedule *pSchedule)
+void CBotUseLunchBoxDrink::execute(CBot *pBot, CBotSchedule *pSchedule)
 {
 	CBotWeapon *pWeapon;
 
 	pBot->wantToShoot(false);
+	pBot->wantToChangeWeapon(false);
 
 	if ( m_fTime == 0 )
 		m_fTime = engine->Time() + 5.0f;

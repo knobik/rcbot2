@@ -129,4 +129,6 @@ extern CAttributeList_GetAttributeByID *g_pAttribList_GetAttributeByID;
 extern CGameRulesObject *g_pGameRules_Obj;
 extern CCreateGameRulesObject *g_pGameRules_Create_Obj;
 
+void *GetGameRules();
+
 #endif

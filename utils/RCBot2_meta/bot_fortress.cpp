@@ -2857,23 +2857,28 @@ void CBotTF2 :: modThink ()
 				else if (m_pMelee == NULL)
 					m_pMelee = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_MELEE);
 
-				// only add primary / secondary weapons if they are given them by the map
-				/*if (RCBotPluginMeta::TF2_getPlayerWeaponSlot(m_pEdict, TF2_SLOT_PRMRY) &&
-					RCBotPluginMeta::TF2_getPlayerWeaponSlot(m_pEdict, TF2_SLOT_SCNDR))
-					{*/
-				if (m_pPrimary == NULL)
-					m_pPrimary = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_PRMRY);
+				extern ConVar *mp_stalemate_meleeonly;
 
-				if ((m_iClass == TF_CLASS_SPY) && !CTeamFortress2Mod::isMedievalMode())
-					m_pSecondary = NULL;
-				else if (m_pSecondary == NULL)
-					m_pSecondary = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_SCNDR);
-				/*}
+				if (!mp_stalemate_meleeonly || !mp_stalemate_meleeonly->GetBool() || !CTeamFortress2Mod::isSuddenDeath())
+				{
+					// only add primary / secondary weapons if they are given them by the map
+					/*if (RCBotPluginMeta::TF2_getPlayerWeaponSlot(m_pEdict, TF2_SLOT_PRMRY) &&
+						RCBotPluginMeta::TF2_getPlayerWeaponSlot(m_pEdict, TF2_SLOT_SCNDR))
+						{*/
+					if (m_pPrimary == NULL)
+						m_pPrimary = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_PRMRY);
+
+					if ((m_iClass == TF_CLASS_SPY) && !CTeamFortress2Mod::isMedievalMode())
+						m_pSecondary = NULL;
+					else if (m_pSecondary == NULL)
+						m_pSecondary = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_SCNDR);
+				}
 				else
 				{
+					// sudden death
 					m_pPrimary = NULL;
 					m_pSecondary = NULL;
-				}*/
+				}
 
 				// adding this will remove the builder -- don't do it!!!
 				if ((m_iClass == TF_CLASS_ENGINEER) && !CTeamFortress2Mod::isMedievalMode())
@@ -3395,7 +3400,8 @@ void CBotTF2::handleWeapons()
 		if ( m_bWantToChangeWeapon && (pWeapon != NULL) && (pWeapon != getCurrentWeapon()) && pWeapon->getWeaponIndex() )
 		{
 			//selectWeaponSlot(pWeapon->getWeaponInfo()->getSlot());
-			selectWeapon(pWeapon->getWeaponIndex());
+			select_CWeapon(pWeapon->getWeaponInfo());
+			//selectWeapon(pWeapon->getWeaponIndex());
 		}
 		else
 		{
@@ -4553,6 +4559,8 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 
 	if ( iClass == TF_CLASS_ENGINEER )
 	{
+		bool bCanBuild = m_pWeapons->hasWeapon(TF2_WEAPON_BUILDER);
+
 		bMoveObjs = rcbot_move_obj.GetBool();
 
 		iSentryLevel = 0;
@@ -4662,33 +4670,37 @@ void CBotTF2 :: getTasks ( unsigned int iIgnore )
 		ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_ENTRANCE, !m_bIsCarryingObj && (iMetal>=125) && (m_pTeleEntrance.get()!=NULL) && !CTeamFortress2Mod::m_ObjectiveResource.isWaypointAreaValid(m_iTeleEntranceArea),randomFloat(0.7,0.9));
 		//ADD_UTILITY(BOT_UTIL_ENGI_DESTROY_EXIT, (iMetal>=125) && (m_pTeleExit.get()!=NULL) && !CPoints::isValidArea(m_iTeleExitArea),randomFloat(0.7,0.9));
 
-		ADD_UTILITY(BOT_UTIL_BUILDSENTRY,!m_bIsCarryingObj && !bHasFlag && !m_pSentryGun && (iMetal>=130),0.9);
-		ADD_UTILITY(BOT_UTIL_BUILDDISP,!m_bIsCarryingObj && !bHasFlag&& m_pSentryGun && (CClassInterface::getSentryHealth(m_pSentryGun)>125) && !m_pDispenser && (iMetal>=100),fSentryUtil);
-		
-		if ( CTeamFortress2Mod::isAttackDefendMap() && (iTeam == TF2_TEAM_BLUE) )
+		if (bCanBuild)
 		{
-			ADD_UTILITY(BOT_UTIL_BUILDTELEXT,(fSentryHealthPercent > 0.99f) && !m_bIsCarryingObj && !bHasFlag&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7f,0.9f));
-			ADD_UTILITY(BOT_UTIL_BUILDTELENT,!bSentryHasEnemy && (fSentryHealthPercent > 0.99f) && !m_bIsCarryingObj && !bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.7f);
-		}
-		else
-		{
-			ADD_UTILITY(BOT_UTIL_BUILDTELENT,(fSentryHealthPercent > 0.99f) && !m_bIsCarryingObj && !bHasFlag&&((m_pSentryGun.get()&&(iSentryLevel>1))||(m_pSentryGun.get()==NULL))&&m_bEntranceVectorValid&&!m_pTeleEntrance&&(iMetal>=125),0.7f);
-			ADD_UTILITY(BOT_UTIL_BUILDTELEXT,!bSentryHasEnemy && (fSentryHealthPercent > 0.99f) && !m_bIsCarryingObj && !bHasFlag&&m_pSentryGun&&(iSentryLevel>1)&&!m_pTeleExit&&(iMetal>=125),randomFloat(0.7,0.9));
-		}
+			ADD_UTILITY(BOT_UTIL_BUILDSENTRY, !m_bIsCarryingObj && !bHasFlag && !m_pSentryGun && (iMetal >= 130), 0.9);
+			ADD_UTILITY(BOT_UTIL_BUILDDISP, !m_bIsCarryingObj && !bHasFlag&& m_pSentryGun && (CClassInterface::getSentryHealth(m_pSentryGun) > 125) && !m_pDispenser && (iMetal >= 100), fSentryUtil);
 
-		if ( (m_fSpawnTime + 5.0f) > engine->Time() )
-		{
-			
-			dataUnconstArray<int> *failed;
-			Vector vOrigin = getOrigin();
+			if (CTeamFortress2Mod::isAttackDefendMap() && (iTeam == TF2_TEAM_BLUE))
+			{
+				ADD_UTILITY(BOT_UTIL_BUILDTELEXT, (fSentryHealthPercent > 0.99f) && !m_bIsCarryingObj && !bHasFlag&&!m_pTeleExit && (iMetal >= 125), randomFloat(0.7f, 0.9f));
+				ADD_UTILITY(BOT_UTIL_BUILDTELENT, !bSentryHasEnemy && (fSentryHealthPercent > 0.99f) && !m_bIsCarryingObj && !bHasFlag&&m_bEntranceVectorValid&&!m_pTeleEntrance && (iMetal >= 125), 0.7f);
+			}
+			else
+			{
+				ADD_UTILITY(BOT_UTIL_BUILDTELENT, (fSentryHealthPercent > 0.99f) && !m_bIsCarryingObj && !bHasFlag && ((m_pSentryGun.get() && (iSentryLevel > 1)) || (m_pSentryGun.get() == NULL)) && m_bEntranceVectorValid&&!m_pTeleEntrance && (iMetal >= 125), 0.7f);
+				ADD_UTILITY(BOT_UTIL_BUILDTELEXT, !bSentryHasEnemy && (fSentryHealthPercent > 0.99f) && !m_bIsCarryingObj && !bHasFlag&&m_pSentryGun && (iSentryLevel > 1) && !m_pTeleExit && (iMetal >= 125), randomFloat(0.7, 0.9));
+			}
 
-			m_pNavigator->getFailedGoals(&failed);
 
-			failedlist = CWaypointLocations :: resetFailedWaypoints ( failed );
+			if ((m_fSpawnTime + 5.0f) > engine->Time())
+			{
 
-			pWaypointResupply = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vOrigin,1024.0f,-1,false,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_RESUPPLY));//CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,vOrigin,iTeam,&fResupplyDist,failedlist));
+				dataUnconstArray<int> *failed;
+				Vector vOrigin = getOrigin();
 
-			ADD_UTILITY_DATA(BOT_UTIL_BUILDTELENT_SPAWN,!m_bIsCarryingObj && (pWaypointResupply!=NULL) && !bHasFlag&&!m_pTeleEntrance&&(iMetal>=125),0.95f,CWaypoints::getWaypointIndex(pWaypointResupply));
+				m_pNavigator->getFailedGoals(&failed);
+
+				failedlist = CWaypointLocations::resetFailedWaypoints(failed);
+
+				pWaypointResupply = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(vOrigin, 1024.0f, -1, false, false, true, NULL, false, getTeam(), true, false, Vector(0, 0, 0), CWaypointTypes::W_FL_RESUPPLY));//CWaypoints::getWaypoint(CWaypoints::getClosestFlagged(CWaypointTypes::W_FL_RESUPPLY,vOrigin,iTeam,&fResupplyDist,failedlist));
+
+				ADD_UTILITY_DATA(BOT_UTIL_BUILDTELENT_SPAWN, !m_bIsCarryingObj && (pWaypointResupply != NULL) && !bHasFlag&&!m_pTeleEntrance && (iMetal >= 125), 0.95f, CWaypoints::getWaypointIndex(pWaypointResupply));
+			}
 		}
 		// to do -- split into two
 		ADD_UTILITY(BOT_UTIL_UPGSENTRY,!m_bIsCarryingObj && (m_fRemoveSapTime<engine->Time()) &&!bHasFlag &&( m_pSentryGun.get()!=NULL) && !CClassInterface::getTF2BuildingIsMini(m_pSentryGun) && (((iSentryLevel<3)&&(iMetal>=(200-CClassInterface::getTF2SentryUpgradeMetal(m_pSentryGun)))) || ((fSentryHealthPercent<1.0f)&&(iMetal>75)) || (CClassInterface::getSentryEnemy(m_pSentryGun)!=NULL) ),0.8+((1.0f-fSentryHealthPercent)*0.2));
@@ -6744,6 +6756,7 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 			{
 				case TF2_WEAPON_ROCKETLAUNCHER:
 				// fall through
+				case TF2_WEAPON_COWMANGLER:
 				case TF2_WEAPON_FLAREGUN:
 				case TF2_WEAPON_GRENADELAUNCHER:
 				{
@@ -6785,7 +6798,7 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 
 							if ((pWp->getID() == TF2_WEAPON_GRENADELAUNCHER) && hasSomeConditions(CONDITION_SEE_ENEMY_GROUND))
 								v_desired_offset->z -= randomFloat(8.0f,32.0f); // aim for ground - with grenade launcher
-							else if ( (pWp->getID() == TF2_WEAPON_ROCKETLAUNCHER) || (v_origin.z > (getOrigin().z+16.0f)) )
+							else if ((pWp->getID() == TF2_WEAPON_ROCKETLAUNCHER) || (pWp->getID() == TF2_WEAPON_COWMANGLER) || (v_origin.z > (getOrigin().z + 16.0f)))
 								v_desired_offset->z += randomFloat(8.0f,32.0f); // aim for body, not ground
 						}
 				}

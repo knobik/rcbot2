@@ -891,6 +891,8 @@ public:
 
 	bool isWaypointAreaValid ( int iWptArea, int iWptFlags );
 
+	static bool isSuddenDeath(void);
+
 	static bool isHealthKit ( edict_t *pEntity );
 
 	static bool isAmmo ( edict_t *pEntity );

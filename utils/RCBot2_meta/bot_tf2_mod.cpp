@@ -253,6 +253,25 @@ CTF2Loadout *CTeamFortress2Mod :: getRandomHat ( int iClass )
 	return NULL;
 }
 
+bool CTeamFortress2Mod::isSuddenDeath()
+{
+	extern ConVar *mp_stalemate_enable;
+	
+	// Bot weapon Randomizer -- leonardo
+	if (!mp_stalemate_enable || !mp_stalemate_enable->GetBool() || isMapType(TF_MAP_ARENA))
+		return false;
+
+	void *pGameRules = GetGameRules();
+
+	if (pGameRules)
+	{
+		int iRoundState = CClassInterface::TF2_getRoundState(pGameRules);
+		 
+		return iRoundState == RoundState_Stalemate;
+	}
+
+	return false;
+}
 
 void CTeamFortress2Mod :: setupLoadOutWeapons ()
 {	
@@ -321,36 +340,6 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 					prefab = prefabs->FindKey(&szPrefab[6]);
 				}
 
-				if ( prefab )
-					usedbyclass = prefab->FindKey("used_by_classes");
-				else
-					usedbyclass = kv->FindKey("used_by_classes");
-
-				if ( usedbyclass )
-				{
-					if ( usedbyclass->FindKey("scout") )
-						iclass |= (1<<TF_CLASS_SCOUT);
-					if ( usedbyclass->FindKey("sniper") )
-						iclass |= (1 << TF_CLASS_SNIPER);
-					if ( usedbyclass->FindKey("soldier") )
-						iclass |= (1 << TF_CLASS_SOLDIER);
-					if (usedbyclass->FindKey("demoman"))
-						iclass |= (1 << TF_CLASS_DEMOMAN);
-					if (usedbyclass->FindKey("medic"))
-						iclass |= (1 << TF_CLASS_MEDIC);;
-					if ( usedbyclass->FindKey("heavy") )
-						iclass |= (1 << TF_CLASS_HWGUY);
-					if ( usedbyclass->FindKey("pyro") )
-						iclass |= (1 << TF_CLASS_PYRO);
-					if ( usedbyclass->FindKey("spy") )
-						iclass |= (1 << TF_CLASS_SPY);
-					if ( usedbyclass->FindKey("engineer") )
-						iclass |= (1 << TF_CLASS_ENGINEER);
-				}
-
-				if ( iclass == 0 )
-					continue;
-
 				int iindex = atoi(kv->GetName());
 				const char *pszquality;
 				int iquality = 0;
@@ -384,6 +373,33 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 				const char *slot = loadout->GetString("item_slot");
 
 				if ( ( slot == NULL ) || (*slot == 0 ) )
+					continue;
+
+				usedbyclass = loadout->FindKey("used_by_classes");
+
+				if (usedbyclass)
+				{
+					if (usedbyclass->FindKey("scout") && ((usedbyclass->GetInt("scout", 0) == 1) || (strcmp(usedbyclass->GetString("scout"), loadout->GetString("item_slot"))==0)))
+						iclass |= (1 << TF_CLASS_SCOUT);
+					if (usedbyclass->FindKey("sniper") && ((usedbyclass->GetInt("sniper", 0) == 1) || (strcmp(usedbyclass->GetString("sniper"), loadout->GetString("item_slot")) == 0)))
+						iclass |= (1 << TF_CLASS_SNIPER);
+					if (usedbyclass->FindKey("soldier") && ((usedbyclass->GetInt("soldier", 0) == 1) || (strcmp(usedbyclass->GetString("soldier"), loadout->GetString("item_slot")) == 0)))
+						iclass |= (1 << TF_CLASS_SOLDIER);
+					if (usedbyclass->FindKey("demoman") && ((usedbyclass->GetInt("demoman", 0) == 1) || (strcmp(usedbyclass->GetString("demoman"), loadout->GetString("item_slot")) == 0)))
+						iclass |= (1 << TF_CLASS_DEMOMAN);
+					if (usedbyclass->FindKey("medic") && ((usedbyclass->GetInt("medic", 0) == 1) || (strcmp(usedbyclass->GetString("medic"), loadout->GetString("item_slot")) == 0)))
+						iclass |= (1 << TF_CLASS_MEDIC);;
+					if (usedbyclass->FindKey("heavy") && ((usedbyclass->GetInt("heavy", 0) == 1) || (strcmp(usedbyclass->GetString("heavy"), loadout->GetString("item_slot")) == 0)))
+						iclass |= (1 << TF_CLASS_HWGUY);
+					if (usedbyclass->FindKey("pyro") && ((usedbyclass->GetInt("pyro", 0) == 1) || (strcmp(usedbyclass->GetString("pyro"), loadout->GetString("item_slot")) == 0)))
+						iclass |= (1 << TF_CLASS_PYRO);
+					if (usedbyclass->FindKey("spy") && ((usedbyclass->GetInt("spy", 0) == 1) || (strcmp(usedbyclass->GetString("spy"), loadout->GetString("item_slot")) == 0)))
+						iclass |= (1 << TF_CLASS_SPY);
+					if (usedbyclass->FindKey("engineer") && ((usedbyclass->GetInt("engineer", 0) == 1) || (strcmp(usedbyclass->GetString("engineer"), loadout->GetString("item_slot")) == 0)))
+						iclass |= (1 << TF_CLASS_ENGINEER);
+				}
+
+				if (iclass == 0)
 					continue;
 
 				pszquality = loadout->GetString("item_quality");
@@ -586,8 +602,6 @@ CTF2Loadout *CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(int iclass, int is
 
 bool CTeamFortress2Mod::isMedievalMode()
 {
-	extern void *GetGameRules();
-
 	return CClassInterface::TF2_IsMedievalMode(GetGameRules());
 }
 /*

@@ -154,6 +154,7 @@ typedef enum
 	GETPROP_TF2_BUILDER_TYPE,
 	GETPROP_TF2_BUILDER_MODE,
 	GETPROP_TF2_CHARGE_RESIST_TYPE,
+	GETPROP_TF2_ROUNDSTATE,
 	GET_PROPDATA_MAX
 }getpropdata_id;
 
@@ -283,9 +284,9 @@ public:
 		return false;
 	}
 
-	inline int getInt ( edict_t *edict, int defaultvalue ) 
+	inline int getInt(void *edict, int defaultvalue, bool bIsEdict = true)
 	{ 
-		getData(edict); 
+		getData(edict, bIsEdict);
 		
 		if ( !m_data ) 
 			return defaultvalue; 
@@ -344,7 +345,7 @@ class CTFObjectiveResource;
 class CTeamRoundTimer;
 class CAttributeList;
 #define DEFINE_GETPROP(id,classname,value,preoffs)\
- g_GetProps[id] = CClassInterfaceValue( CClassInterfaceValue ( classname, value, preoffs ) );
+ g_GetProps[id] = CClassInterfaceValue( CClassInterfaceValue ( classname, value, preoffs ) )
 
 class CClassInterface
 {
@@ -405,6 +406,7 @@ public:
 		//GETPROP_TF2_BUILDER_MODE, ]
 	}
 	inline static bool TF2_IsMedievalMode(void*gamerules) { return g_GetProps[GETPROP_TF2_MEDIEVALMODE].getBool(gamerules, false, false);}
+	inline static int TF2_getRoundState(void *gamerules) { return g_GetProps[GETPROP_TF2_ROUNDSTATE].getInt(gamerules, 0, 0); }
 	inline static float getTF2SpyCloakMeter ( edict_t *edict ) { return g_GetProps[GETPROP_TF2SPYMETER].getFloat(edict,0); }
 	inline static int getWaterLevel ( edict_t *edict ) { return g_GetProps[GETPROP_WATERLEVEL].getInt(edict,0); }
 	inline static void updateSimulationTime ( edict_t *edict )
@@ -414,6 +416,7 @@ public:
 		if ( m_flSimulationTime )
 			*m_flSimulationTime = gpGlobals->curtime;
 	}
+
 	inline static bool *getDODCPVisible ( edict_t *pResource ) { return g_GetProps[GETPROP_DOD_CP_VISIBLE].getBoolPointer(pResource); }
 	static bool getTF2SpyDisguised( edict_t *edict, int *_class, int *_team, int *_index, int *_health ) 
 	{ 

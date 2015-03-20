@@ -483,10 +483,11 @@ void CClassInterface:: init ()
 		DEFINE_GETPROP(GETPROP_TF2_EXTRAWEARABLEVIEWMODEL, "CTFWeaponBase", "m_hExtraWearableViewModel", 0); 
 		DEFINE_GETPROP(GETPROP_TF2_ENERGYDRINKMETER, "CTFPlayer", "m_flEnergyDrinkMeter", 0);
 		DEFINE_GETPROP(GETPROP_TF2_MEDIEVALMODE, "CTFGameRulesProxy", "m_bPlayingMedieval", 0);
-		DEFINE_GETPROP(GETPROP_TF2_ACTIVEWEAPON, "CTFPlayer", "m_hActiveWeapon", 0)
-		DEFINE_GETPROP(GETPROP_TF2_BUILDER_TYPE, "CTFWeaponBuilder", "m_iObjectType", 0)
-		DEFINE_GETPROP(GETPROP_TF2_BUILDER_MODE, "CTFWeaponBuilder", "m_iObjectMode", 0)
-		DEFINE_GETPROP(GETPROP_TF2_CHARGE_RESIST_TYPE, "CWeaponMedigun", "m_nChargeResistType", 0)
+		DEFINE_GETPROP(GETPROP_TF2_ACTIVEWEAPON, "CTFPlayer", "m_hActiveWeapon", 0);
+		DEFINE_GETPROP(GETPROP_TF2_BUILDER_TYPE, "CTFWeaponBuilder", "m_iObjectType", 0);
+		DEFINE_GETPROP(GETPROP_TF2_BUILDER_MODE, "CTFWeaponBuilder", "m_iObjectMode", 0);
+		DEFINE_GETPROP(GETPROP_TF2_CHARGE_RESIST_TYPE, "CWeaponMedigun", "m_nChargeResistType", 0);
+		DEFINE_GETPROP(GETPROP_TF2_ROUNDSTATE, "CTFGameRulesProxy", "m_iRoundState", 0);
 
 		for ( unsigned int i = 0; i < GET_PROPDATA_MAX; i ++ )
 		{
