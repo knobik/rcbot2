@@ -301,7 +301,7 @@ void CBotFortress :: setup ()
 	CBot::setup();
 }
 
-inline bool CBotFortress::someoneCalledMedic()
+bool CBotFortress::someoneCalledMedic()
 {
 	return (getClass()==TF_CLASS_MEDIC) && 
 			(m_pLastCalledMedic.get() != NULL) && 
@@ -489,6 +489,9 @@ float CBotFortress :: getHealFactor ( edict_t *pPlayer )
 		if ( ((m_fLastCalledMedicTime + 5.0f) > engine->Time()) && ( m_pLastCalledMedic == pPlayer ) )
 			fFactor += 0.5f;
 
+		// More priority to flag carriers and cappers
+		if (CTeamFortress2Mod::isFlagCarrier(pPlayer) || CTeamFortress2Mod::isCapping(pPlayer) )
+			fFactor *= 1.5f;
 	}
 
 	return fFactor;
@@ -2833,7 +2836,37 @@ void CBotTF2 :: addLoadoutWeapon ( CTF2Loadout *weap )
 	m_LoadoutsApplyAttributes.Push(weap);
 }
 */
-void CBotTF2 :: modThink ()
+void CBotTF2::upgradeWeapon(int iSlot)
+{
+	CTF2Loadout *wep = NULL;
+	// (const char *pszClassname, int iIndex, int iQuality, int iMinLevel, int iMaxLevel)
+	CTF2Loadout copy(wep->m_pszClassname, wep->m_iIndex, wep->m_iQuality, wep->m_iMinLevel, wep->m_iMaxLevel);
+	
+	switch (iSlot)
+	{
+	case TF2_SLOT_MELEE:
+		wep = m_pMelee;
+		break;
+	case TF2_SLOT_PRMRY:
+		wep = m_pPrimary;
+		break;
+	case TF2_SLOT_SCNDR:
+		wep = m_pSecondary;
+		break;
+	}
+
+	RCBotPluginMeta::TF2_RemoveWeaponSlot(m_pEdict,iSlot);
+
+	copy = *wep;
+	copy.m_bCanBeUsedInMedieval = wep->m_bCanBeUsedInMedieval;
+	
+	//copy.m_Attributes
+		
+	RCBotPluginMeta::givePlayerLoadOut(m_pEdict, &copy, iSlot, m_pVTable, m_pVTable_Attributes);
+}
+
+
+void CBotTF2::modThink()
 {
 	static bool bNeedHealth;
 	static bool bNeedAmmo;
@@ -2841,11 +2874,11 @@ void CBotTF2 :: modThink ()
 
 	extern ConVar rcbot_customloadouts;
 
-	if ( rcbot_customloadouts.GetBool() &&  m_pVTable && m_pVTable_Attributes && (m_fEquipHatTime > 0.0f) && (m_fEquipHatTime < engine->Time()))
+	if (rcbot_customloadouts.GetBool() && m_pVTable && m_pVTable_Attributes && (m_fEquipHatTime > 0.0f) && (m_fEquipHatTime < engine->Time()))
 	{
 		// Equip
-		if ( isAlive() )
-		{			
+		if (isAlive())
+		{
 			m_iClass = (TF_Class)CClassInterface::getTF2Class(m_pEdict);
 
 			if (isDesiredClass(m_iClass))
@@ -2884,9 +2917,9 @@ void CBotTF2 :: modThink ()
 				if ((m_iClass == TF_CLASS_ENGINEER) && !CTeamFortress2Mod::isMedievalMode())
 					m_pHat = NULL;
 				else if (m_pHat == NULL)
-					m_pHat = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_HAT); 
+					m_pHat = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_HAT);
 
-				if ( m_pMisc == NULL )
+				if (m_pMisc == NULL)
 					m_pMisc = CTeamFortress2Mod::findRandomWeaponLoadOutInSlot(m_iClass, TF2_SLOT_MISC);
 
 				if (m_pMelee != NULL)
@@ -2897,7 +2930,7 @@ void CBotTF2 :: modThink ()
 					RCBotPluginMeta::givePlayerLoadOut(m_pEdict, m_pSecondary, TF2_SLOT_SCNDR, m_pVTable, m_pVTable_Attributes);
 				if (m_pHat != NULL)
 					RCBotPluginMeta::givePlayerLoadOut(m_pEdict, m_pHat, TF2_SLOT_HAT, m_pVTable, m_pVTable_Attributes);
-				if ( m_pMisc != NULL )
+				if (m_pMisc != NULL)
 					RCBotPluginMeta::givePlayerLoadOut(m_pEdict, m_pMisc, TF2_SLOT_MISC, m_pVTable, m_pVTable_Attributes);
 
 				m_fEquipHatTime = 0.0f;
@@ -2908,71 +2941,44 @@ void CBotTF2 :: modThink ()
 	/*
 	if ( rcbot_customloadouts.GetBool() )
 	{
-		if ( !m_bMeleeAttempt && (m_pWeapons->getCurrentWeaponInSlot(TF2_SLOT_MELEE) == NULL) )
-		{
-			m_bMeleeAttempt = true;
-			UTIL_TF2EquipStockWeapon(m_pEdict,TF2_SLOT_MELEE,m_pVTable,m_pVTable_Attributes);
-		}
-		else if ( !m_bPrimaryAttempt && (m_pWeapons->getCurrentWeaponInSlot(TF2_SLOT_PRMRY) == NULL) )
-		{
-			m_bPrimaryAttempt = true;
-			UTIL_TF2EquipStockWeapon(m_pEdict,TF2_SLOT_PRMRY,m_pVTable,m_pVTable_Attributes);
-		}
-		else if ( !m_bSecondaryAttempt && (m_pWeapons->getCurrentWeaponInSlot(TF2_SLOT_SCNDR) == NULL) )
-		{
-			m_bSecondaryAttempt = true;
-			UTIL_TF2EquipStockWeapon(m_pEdict,TF2_SLOT_SCNDR,m_pVTable,m_pVTable_Attributes);
-		}
+	if ( !m_bMeleeAttempt && (m_pWeapons->getCurrentWeaponInSlot(TF2_SLOT_MELEE) == NULL) )
+	{
+	m_bMeleeAttempt = true;
+	UTIL_TF2EquipStockWeapon(m_pEdict,TF2_SLOT_MELEE,m_pVTable,m_pVTable_Attributes);
+	}
+	else if ( !m_bPrimaryAttempt && (m_pWeapons->getCurrentWeaponInSlot(TF2_SLOT_PRMRY) == NULL) )
+	{
+	m_bPrimaryAttempt = true;
+	UTIL_TF2EquipStockWeapon(m_pEdict,TF2_SLOT_PRMRY,m_pVTable,m_pVTable_Attributes);
+	}
+	else if ( !m_bSecondaryAttempt && (m_pWeapons->getCurrentWeaponInSlot(TF2_SLOT_SCNDR) == NULL) )
+	{
+	m_bSecondaryAttempt = true;
+	UTIL_TF2EquipStockWeapon(m_pEdict,TF2_SLOT_SCNDR,m_pVTable,m_pVTable_Attributes);
+	}
 	}*/
 
 	/*
 
 	if ( m_toApply.size() > 0 )
 	{
-		CTF2LoadoutAdded *p = m_toApply.top();
+	CTF2LoadoutAdded *p = m_toApply.top();
 
-		p->m_loadout->applyAttributes(p->m_pEnt);
+	p->m_loadout->applyAttributes(p->m_pEnt);
 
-		m_toApply.pop();
+	m_toApply.pop();
 
-		delete p;
+	delete p;
 	}
 	*/
-/*	if ( !m_LoadoutsApplyAttributes.IsEmpty() )
-	{
+	/*	if ( !m_LoadoutsApplyAttributes.IsEmpty() )
+		{
 		CTF2Loadout
-	}*/
+		}*/
 
-	if ( m_pWeapons->hasWeapon(TF2_WEAPON_BUFF_ITEM) )
-	{
-		if ( CClassInterface::getRageMeter(m_pEdict) > 99.99f )
-		{
-			if ( m_fCurrentDanger > 99.0f )
-			{
-				if ( m_fUseBuffItemTime < engine->Time() )
-				{
-					m_fUseBuffItemTime = engine->Time() + 30.0f;
-					m_pSchedules->addFront(new CBotSchedule(new CBotUseBuffItem()));
-				}
-			}
-		}
-	}
-	else if (m_pWeapons->hasWeapon(TF2_WEAPON_LUNCHBOX_DRINK))
-	{
-		if (!hasEnemy() && !hasFlag() && (CClassInterface::TF2_getEnergyDrinkMeter(m_pEdict) > 99.99f) )
-		{
-			if (m_fCurrentDanger > 49.0f)
-			{
-				if (m_fUseBuffItemTime < engine->Time())
-				{
-					m_fUseBuffItemTime = engine->Time() + 20.0f;
-					m_pSchedules->addFront(new CBotSchedule(new CBotUseLunchBoxDrink()));
-				}
-			}
-		}
-	}
 
-	if ( CTeamFortress2Mod::isLosingTeam(m_iTeam) )
+
+	if (CTeamFortress2Mod::isLosingTeam(m_iTeam))
 		wantToShoot(false);
 	//if ( m_pWeapons ) // done in bot.cpp 
 	//	m_pWeapons->update(false); // don't override ammo types from engine
@@ -2981,41 +2987,41 @@ void CBotTF2 :: modThink ()
 	bNeedAmmo = hasSomeConditions(CONDITION_NEED_AMMO);
 
 	// mod specific think code here
-	CBotFortress :: modThink();
+	CBotFortress::modThink();
 
 	checkBeingHealed();
 
-	if ( wantToListen() )
+	if (wantToListen())
 	{
-		if ( ( m_pNearestAllySentry.get() != NULL ) && ( CClassInterface::getSentryEnemy(m_pNearestAllySentry) != NULL ) )
+		if ((m_pNearestAllySentry.get() != NULL) && (CClassInterface::getSentryEnemy(m_pNearestAllySentry) != NULL))
 		{
 			m_PlayerListeningTo = m_pNearestAllySentry;
 			m_bListenPositionValid = true;
-			m_fListenTime = engine->Time() + randomFloat(1.0f,2.0f);
+			m_fListenTime = engine->Time() + randomFloat(1.0f, 2.0f);
 			setLookAtTask(LOOK_NOISE);
 			m_fLookSetTime = m_fListenTime;
 			m_vListenPosition = CBotGlobals::entityOrigin(m_pNearestAllySentry.get());
 		}
 	}
 
-	if ( CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE) )
+	if (CTeamFortress2Mod::isMapType(TF_MAP_CARTRACE))
 	{
-		if ( getTeam() == TF2_TEAM_BLUE )
+		if (getTeam() == TF2_TEAM_BLUE)
 		{
-		    m_pDefendPayloadBomb = m_pRedPayloadBomb;
-		    m_pPushPayloadBomb = m_pBluePayloadBomb;
+			m_pDefendPayloadBomb = m_pRedPayloadBomb;
+			m_pPushPayloadBomb = m_pBluePayloadBomb;
 		}
 		else
 		{
-		    m_pDefendPayloadBomb = m_pBluePayloadBomb;
-		    m_pPushPayloadBomb = m_pRedPayloadBomb;
+			m_pDefendPayloadBomb = m_pBluePayloadBomb;
+			m_pPushPayloadBomb = m_pRedPayloadBomb;
 		}
 	}
-	else if ( CTeamFortress2Mod::isMapType(TF_MAP_CART) )
+	else if (CTeamFortress2Mod::isMapType(TF_MAP_CART))
 	{
-		if ( getTeam() == TF2_TEAM_BLUE )
+		if (getTeam() == TF2_TEAM_BLUE)
 		{
-		    m_pPushPayloadBomb = m_pBluePayloadBomb;
+			m_pPushPayloadBomb = m_pBluePayloadBomb;
 			m_pDefendPayloadBomb = NULL;
 		}
 		else
@@ -3026,42 +3032,42 @@ void CBotTF2 :: modThink ()
 	}
 
 	// when respawned -- check if I should change class
-	if ( m_bCheckClass && !m_pPlayerInfo->IsDead())
+	if (m_bCheckClass && !m_pPlayerInfo->IsDead())
 	{
 		m_bCheckClass = false;
 
-		if ( bot_change_class.GetBool() && (m_fChangeClassTime < engine->Time()) && (!CTeamFortress2Mod::isMapType(TF_MAP_MVM) || !CTeamFortress2Mod::hasRoundStarted() ) )
+		if (bot_change_class.GetBool() && (m_fChangeClassTime < engine->Time()) && (!CTeamFortress2Mod::isMapType(TF_MAP_MVM) || !CTeamFortress2Mod::hasRoundStarted()))
 		{
-				// get score for this class
-				float scoreValue = CClassInterface::getTF2Score(m_pEdict);
+			// get score for this class
+			float scoreValue = CClassInterface::getTF2Score(m_pEdict);
 
-				if ( m_iClass == TF_CLASS_ENGINEER )
+			if (m_iClass == TF_CLASS_ENGINEER)
+			{
+				if (m_pSentryGun.get())
 				{
-					if ( m_pSentryGun.get() )
-					{
-						scoreValue *= 2.0f * CTeamFortress2Mod::getSentryLevel(m_pSentryGun);
-						scoreValue *= ((m_fLastSentryEnemyTime + 15.0f) < engine->Time()) ? 2.0f : 1.0f;
-					}
-					if ( m_pTeleEntrance.get() && m_pTeleExit.get() )
-						scoreValue *= CTeamFortress2Mod::isAttackDefendMap()?2.0f:1.5f;
-					if ( m_pDispenser.get() )
-						scoreValue *= 1.25f;
-					 // less chance of changing class if bot has these up
-					m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat()/2,bot_max_cc_time.GetFloat()/2);
+					scoreValue *= 2.0f * CTeamFortress2Mod::getSentryLevel(m_pSentryGun);
+					scoreValue *= ((m_fLastSentryEnemyTime + 15.0f) < engine->Time()) ? 2.0f : 1.0f;
 				}
+				if (m_pTeleEntrance.get() && m_pTeleExit.get())
+					scoreValue *= CTeamFortress2Mod::isAttackDefendMap() ? 2.0f : 1.5f;
+				if (m_pDispenser.get())
+					scoreValue *= 1.25f;
+				// less chance of changing class if bot has these up
+				m_fChangeClassTime = engine->Time() + randomFloat(bot_min_cc_time.GetFloat() / 2, bot_max_cc_time.GetFloat() / 2);
+			}
 
-				// if I think I could do better
-				if ( randomFloat(0.0f,1.0f) > (scoreValue / CTeamFortress2Mod::getHighestScore()) )
-				{
-					chooseClass(); // edits m_iDesiredClass
-					
-					// change class
-					selectClass();				
-				}
+			// if I think I could do better
+			if (randomFloat(0.0f, 1.0f) > (scoreValue / CTeamFortress2Mod::getHighestScore()))
+			{
+				chooseClass(); // edits m_iDesiredClass
+
+				// change class
+				selectClass();
+			}
 		}
 	}
 
-	m_fIdealMoveSpeed = CTeamFortress2Mod::TF2_GetPlayerSpeed(m_pEdict,m_iClass)*rcbot_speed_boost.GetFloat();
+	m_fIdealMoveSpeed = CTeamFortress2Mod::TF2_GetPlayerSpeed(m_pEdict, m_iClass)*rcbot_speed_boost.GetFloat();
 
 	// refind my weapons, if i couldn't select them
 	//if ( m_bFixWeapons || (m_iPrevWeaponSelectFailed>2) )
@@ -3073,24 +3079,24 @@ void CBotTF2 :: modThink ()
 
 
 	/* spy check code */
-	if ( ((m_iClass != TF_CLASS_SPY)||(!isDisguised())) && ((m_pEnemy.get() == NULL) || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) && (m_pPrevSpy.get() != NULL) && (m_fSeeSpyTime > engine->Time()) && 
-		!m_bIsCarryingObj && CBotGlobals::isAlivePlayer(m_pPrevSpy) && !CTeamFortress2Mod::TF2_IsPlayerInvuln(getEdict()) ) 
+	if (((m_iClass != TF_CLASS_SPY) || (!isDisguised())) && ((m_pEnemy.get() == NULL) || !hasSomeConditions(CONDITION_SEE_CUR_ENEMY)) && (m_pPrevSpy.get() != NULL) && (m_fSeeSpyTime > engine->Time()) &&
+		!m_bIsCarryingObj && CBotGlobals::isAlivePlayer(m_pPrevSpy) && !CTeamFortress2Mod::TF2_IsPlayerInvuln(getEdict()))
 	{
-		if ( ( m_iClass != TF_CLASS_ENGINEER ) || !hasSomeConditions(CONDITION_BUILDING_SAPPED) )
+		if ((m_iClass != TF_CLASS_ENGINEER) || !hasSomeConditions(CONDITION_BUILDING_SAPPED))
 		{
 			// check for spies within radius of bot / use aim skill as a skill factor
-			float fPossibleDistance = (engine->Time()-m_fLastSeeSpyTime) * 
-				(m_pProfile->m_fAimSkill * 310.0f) * (m_fCurrentDanger/MAX_BELIEF);
+			float fPossibleDistance = (engine->Time() - m_fLastSeeSpyTime) *
+				(m_pProfile->m_fAimSkill * 310.0f) * (m_fCurrentDanger / MAX_BELIEF);
 
 			// increase distance for pyro, he can use flamethrower !
-			if ( m_iClass == TF_CLASS_PYRO ) 
+			if (m_iClass == TF_CLASS_PYRO)
 				fPossibleDistance += 200.0f;
 
-			if ( (m_vLastSeeSpy-getOrigin()).Length() < fPossibleDistance )
+			if ((m_vLastSeeSpy - getOrigin()).Length() < fPossibleDistance)
 			{
 				updateCondition(CONDITION_PARANOID);
 
-				if ( m_pNavigator->hasNextPoint() && !m_pSchedules->isCurrentSchedule(SCHED_TF_SPYCHECK) )
+				if (m_pNavigator->hasNextPoint() && !m_pSchedules->isCurrentSchedule(SCHED_TF_SPYCHECK))
 				{
 					CBotSchedule *newSchedule = new CBotSchedule(new CSpyCheckAir());
 
@@ -3106,28 +3112,108 @@ void CBotTF2 :: modThink ()
 	else
 		removeCondition(CONDITION_PARANOID);
 
-	if ( hasFlag() )
+	if (hasFlag())
 		removeCondition(CONDITION_COVERT);
 
-	if ( m_iClass == TF_CLASS_HWGUY )
+	switch (m_iClass)
 	{
-		static bool bRevMiniGun;
+	case TF_CLASS_SCOUT:
+		if ( m_pWeapons->hasWeapon(TF2_WEAPON_LUNCHBOX_DRINK))
+		{
+			int pcond = CClassInterface::getTF2Conditions(m_pEdict);
+
+			if ((pcond & TF2_PLAYER_BONKED) == TF2_PLAYER_BONKED)
+			{
+				wantToShoot(false);
+				// clear enemy
+				m_pEnemy = NULL;
+				m_pOldEnemy = NULL;
+			}
+			else if (!hasEnemy() && !hasFlag() && (CClassInterface::TF2_getEnergyDrinkMeter(m_pEdict) > 99.99f))
+			{
+				if (m_fCurrentDanger > 49.0f)
+				{
+					if (m_fUseBuffItemTime < engine->Time())
+					{
+						m_fUseBuffItemTime = engine->Time() + 20.0f;
+						m_pSchedules->addFront(new CBotSchedule(new CBotUseLunchBoxDrink()));
+					}
+				}
+			}
+		}
 		
+		break;
+	case TF_CLASS_SNIPER:
+		if (CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict))
+		{
+			m_fFov = 20.0f; // Jagger
+
+			//if ( !wantToZoom() )
+
+			if (moveToIsValid() && !hasEnemy())
+				secondaryAttack();
+		}
+		else
+			m_fFov = BOT_DEFAULT_FOV;
+
+		break;
+	case TF_CLASS_SOLDIER:
+		if (m_pWeapons->hasWeapon(TF2_WEAPON_BUFF_ITEM))
+		{
+			if (CClassInterface::getRageMeter(m_pEdict) > 99.99f)
+			{
+				if (m_fCurrentDanger > 99.0f)
+				{
+					if (m_fUseBuffItemTime < engine->Time())
+					{
+						m_fUseBuffItemTime = engine->Time() + 30.0f;
+						m_pSchedules->addFront(new CBotSchedule(new CBotUseBuffItem()));
+					}
+				}
+			}
+		}
+		break;
+	case TF_CLASS_DEMOMAN:
+		if (m_iTrapType != TF_TRAP_TYPE_NONE)
+		{
+			if (m_pEnemy)
+			{
+				if ((CBotGlobals::entityOrigin(m_pEnemy) - m_vStickyLocation).Length() < BLAST_RADIUS)
+					detonateStickies();
+			}
+		}
+		break;
+	case TF_CLASS_MEDIC:
+		if (!hasFlag() && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal))
+		{
+			if (!m_pSchedules->hasSchedule(SCHED_HEAL))
+			{
+				m_pSchedules->freeMemory();
+				m_pSchedules->add(new CBotTF2HealSched(m_pHeal));
+			}
+
+			wantToShoot(false);
+		}
+		break;
+	case TF_CLASS_HWGUY:
+	{
+		bool bRevMiniGun;
+
 		bRevMiniGun = false;
 
 		// hwguys dont rev minigun if they have the flag
-		if ( wantToShoot() && !m_bHasFlag )
+		if (wantToShoot() && !m_bHasFlag)
 		{
 			CBotWeapon *pWeapon = getCurrentWeapon();
 
-			if ( pWeapon && (pWeapon->getID() == TF2_WEAPON_MINIGUN) )
+			if (pWeapon && (pWeapon->getID() == TF2_WEAPON_MINIGUN))
 			{
-				if ( !CTeamFortress2Mod::TF2_IsPlayerOnFire(m_pEdict) &&
-					!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) )
+				if (!CTeamFortress2Mod::TF2_IsPlayerOnFire(m_pEdict) &&
+					!CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict))
 				{
-					if ( m_fCurrentDanger >= TF2_HWGUY_REV_BELIEF )
+					if (m_fCurrentDanger >= TF2_HWGUY_REV_BELIEF)
 					{
-						if ( pWeapon->getAmmo(this) > 100 )
+						if (pWeapon->getAmmo(this) > 100)
 						{
 							bRevMiniGun = true;
 						}
@@ -3137,159 +3223,120 @@ void CBotTF2 :: modThink ()
 		}
 
 		// Rev the minigun
-		if ( bRevMiniGun )
+		if (bRevMiniGun)
 		{
 			// record time when bot started revving up
-			if ( m_fRevMiniGunTime == 0 )
+			if (m_fRevMiniGunTime == 0)
 			{
-				float fMinTime = (m_fCurrentDanger/200)*10;
+				float fMinTime = (m_fCurrentDanger / 200) * 10;
 
 				m_fRevMiniGunTime = engine->Time();
-				m_fNextRevMiniGunTime = randomFloat(fMinTime,fMinTime+5.0f);
+				m_fNextRevMiniGunTime = randomFloat(fMinTime, fMinTime + 5.0f);
 			}
 
 			// rev for 10 seconds
-			if ( (m_fRevMiniGunTime + m_fNextRevMiniGunTime) > engine->Time() )
+			if ((m_fRevMiniGunTime + m_fNextRevMiniGunTime) > engine->Time())
 			{
 				secondaryAttack(true);
 				//m_fIdealMoveSpeed = 30.0f; Improve Max Speed here
 
-				if ( m_fCurrentDanger < 1 )
+				if (m_fCurrentDanger < 1)
 				{
 					m_fRevMiniGunTime = 0.0f;
 					m_fNextRevMiniGunTime = 0.0f;
 				}
 			}
-			else if ( (m_fRevMiniGunTime + (2.0f*m_fNextRevMiniGunTime)) < engine->Time() )
+			else if ((m_fRevMiniGunTime + (2.0f*m_fNextRevMiniGunTime)) < engine->Time())
 			{
 				m_fRevMiniGunTime = 0.0;
 			}
 		}
-	}
-	else if ( m_iClass == TF_CLASS_DEMOMAN )
-	{
-		if ( m_iTrapType != TF_TRAP_TYPE_NONE )
+
+		if (m_pButtons->holdingButton(IN_ATTACK) || m_pButtons->holdingButton(IN_ATTACK2))
 		{
-			if ( m_pEnemy )
-			{
-				if ( (CBotGlobals::entityOrigin(m_pEnemy)-m_vStickyLocation).Length()<BLAST_RADIUS )
-					detonateStickies();
-			}
-		}
-	}
-	else if ( m_iClass == TF_CLASS_SNIPER )
-	{
-		if ( CTeamFortress2Mod::TF2_IsPlayerZoomed(m_pEdict) )
-		{
-			m_fFov = 20.0f; // Jagger
-
-			//if ( !wantToZoom() )
-
-			if ( moveToIsValid() && !hasEnemy() )
-				secondaryAttack();
-		}
-		else
-			m_fFov = BOT_DEFAULT_FOV;
-
-		
-
-	}
-	else if ( m_iClass == TF_CLASS_HWGUY )
-	{
-		if ( m_pButtons->holdingButton(IN_ATTACK) || m_pButtons->holdingButton(IN_ATTACK2) )
-		{
-			if ( m_pButtons->holdingButton(IN_JUMP) )
+			if (m_pButtons->holdingButton(IN_JUMP))
 				m_pButtons->letGo(IN_JUMP);
 		}
 	}
-	else if ( m_iClass == TF_CLASS_ENGINEER )
+
+	break;
+	case TF_CLASS_ENGINEER:
+
 		checkBuildingsValid(false);
-	else if ( m_iClass == TF_CLASS_SPY )
-	{
-		if ( !hasFlag() )
+
+		if (!m_pSchedules->hasSchedule(SCHED_REMOVESAPPER))
+		{
+			if ((m_fRemoveSapTime < engine->Time()) && m_pNearestAllySentry && CBotGlobals::entityIsValid(m_pNearestAllySentry) && CTeamFortress2Mod::isSentrySapped(m_pNearestAllySentry))
+			{
+				m_pSchedules->freeMemory();
+				m_pSchedules->add(new CBotRemoveSapperSched(m_pNearestAllySentry, ENGI_SENTRY));
+				updateCondition(CONDITION_PARANOID);
+			}
+			else if ((m_fRemoveSapTime < engine->Time()) && m_pSentryGun && CBotGlobals::entityIsValid(m_pSentryGun) && CTeamFortress2Mod::isSentrySapped(m_pSentryGun))
+			{
+				if (distanceFrom(m_pSentryGun) < 1024.0f) // only go back if I can remove the sapper
+				{
+					m_pSchedules->freeMemory();
+					m_pSchedules->add(new CBotRemoveSapperSched(m_pSentryGun, ENGI_SENTRY));
+					updateCondition(CONDITION_PARANOID);
+				}
+			}
+		}
+		break;
+	case TF_CLASS_SPY:
+		if (!hasFlag())
 		{
 			extern ConVar rcbot_tf2_debug_spies_cloakdisguise;
 
-			if ( rcbot_tf2_debug_spies_cloakdisguise.GetBool() && (m_fSpyDisguiseTime < engine->Time()) )
+			if (rcbot_tf2_debug_spies_cloakdisguise.GetBool() && (m_fSpyDisguiseTime < engine->Time()))
 			{
 				// if previously detected or isn't disguised
-				if ( (m_fDisguiseTime == 0.0f) || !isDisguised() )
+				if ((m_fDisguiseTime == 0.0f) || !isDisguised())
 				{
 					int iteam = CTeamFortress2Mod::getEnemyTeam(getTeam());
 
-					spyDisguise(iteam,getSpyDisguiseClass(iteam));
+					spyDisguise(iteam, getSpyDisguiseClass(iteam));
 				}
 
 				m_fSpyDisguiseTime = engine->Time() + 5.0f;
 			}
 
 			bIsCloaked = CTeamFortress2Mod::TF2_IsPlayerCloaked(m_pEdict);
-			
-			if ( bIsCloaked && wantToUnCloak() )
+
+			if (bIsCloaked && wantToUnCloak())
 			{
 				spyUnCloak();
 			}
-			else if ( !bIsCloaked && wantToCloak() )
+			else if (!bIsCloaked && wantToCloak())
 			{
 				spyCloak();
 			}
-			else if ( bIsCloaked || isDisguised() && !hasEnemy() )
+			else if (bIsCloaked || isDisguised() && !hasEnemy())
 			{
 				updateCondition(CONDITION_COVERT);
 			}
 			/*else if ( bIsCloaked && m_pEnemy && )
 			{
-				if ( CClassInterface::getTF2SpyCloakMeter(m_pEdict) < 
+			if ( CClassInterface::getTF2SpyCloakMeter(m_pEdict) <
 			}*/
 
 
-			if ( m_pNearestEnemySentry && ( m_fSpySapTime < engine->Time() ) && !CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry) && !m_pSchedules->hasSchedule(SCHED_SPY_SAP_BUILDING) )
+			if (m_pNearestEnemySentry && (m_fSpySapTime < engine->Time()) && !CTeamFortress2Mod::isSentrySapped(m_pNearestEnemySentry) && !m_pSchedules->hasSchedule(SCHED_SPY_SAP_BUILDING))
 			{
-				m_fSpySapTime = engine->Time() + randomFloat(1.0f,4.0f);
+				m_fSpySapTime = engine->Time() + randomFloat(1.0f, 4.0f);
 				m_pSchedules->freeMemory();
-				m_pSchedules->add(new CBotSpySapBuildingSched(m_pNearestEnemySentry,ENGI_SENTRY));
+				m_pSchedules->add(new CBotSpySapBuildingSched(m_pNearestEnemySentry, ENGI_SENTRY));
 			}
-			else if ( m_pNearestEnemyTeleporter && ( m_fSpySapTime < engine->Time() ) && !CTeamFortress2Mod::isTeleporterSapped(m_pNearestEnemyTeleporter) && !m_pSchedules->hasSchedule(SCHED_SPY_SAP_BUILDING) )
+			else if (m_pNearestEnemyTeleporter && (m_fSpySapTime < engine->Time()) && !CTeamFortress2Mod::isTeleporterSapped(m_pNearestEnemyTeleporter) && !m_pSchedules->hasSchedule(SCHED_SPY_SAP_BUILDING))
 			{
-				m_fSpySapTime = engine->Time() + randomFloat(1.0f,4.0f);
+				m_fSpySapTime = engine->Time() + randomFloat(1.0f, 4.0f);
 				m_pSchedules->freeMemory();
-				m_pSchedules->add(new CBotSpySapBuildingSched(m_pNearestEnemyTeleporter,ENGI_TELE));
+				m_pSchedules->add(new CBotSpySapBuildingSched(m_pNearestEnemyTeleporter, ENGI_TELE));
 			}
 		}
-	}
-	else if ( m_iClass == TF_CLASS_ENGINEER )
-	{
-		if ( !m_pSchedules->hasSchedule(SCHED_REMOVESAPPER) )
-		{
-			if ( (m_fRemoveSapTime<engine->Time()) && m_pNearestAllySentry && CBotGlobals::entityIsValid(m_pNearestAllySentry) && CTeamFortress2Mod::isSentrySapped(m_pNearestAllySentry) )
-			{
-					m_pSchedules->freeMemory();
-					m_pSchedules->add(new CBotRemoveSapperSched(m_pNearestAllySentry,ENGI_SENTRY));
-					updateCondition(CONDITION_PARANOID);
-			}
-			else if ( (m_fRemoveSapTime<engine->Time()) && m_pSentryGun && CBotGlobals::entityIsValid(m_pSentryGun) && CTeamFortress2Mod::isSentrySapped(m_pSentryGun) )
-			{
-				if ( distanceFrom(m_pSentryGun) < 1024.0f ) // only go back if I can remove the sapper
-				{
-					m_pSchedules->freeMemory();
-					m_pSchedules->add(new CBotRemoveSapperSched(m_pSentryGun,ENGI_SENTRY));
-					updateCondition(CONDITION_PARANOID);
-				}
-			}
-		}
-	}
-	else if ( m_iClass == TF_CLASS_MEDIC )
-	{
-		if ( !hasFlag() && m_pHeal && CBotGlobals::entityIsAlive(m_pHeal) )
-		{		
-			if ( !m_pSchedules->hasSchedule(SCHED_HEAL) )
-			{
-				m_pSchedules->freeMemory();
-				m_pSchedules->add(new CBotTF2HealSched(m_pHeal));
-			}
-
-			wantToShoot(false);
-		}
+		break;
+	default:
+		break;
 	}
 
 	// look for tasks / more important tasks here
@@ -3667,8 +3714,10 @@ bool CBotTF2 :: wantToFollowEnemy()
 {
 	edict_t *pEnemy = m_pLastEnemy.get();
 
-	if ( CTeamFortress2Mod::isLosingTeam(CTeamFortress2Mod::getEnemyTeam(m_iTeam)) )
+	if (CTeamFortress2Mod::isLosingTeam(CTeamFortress2Mod::getEnemyTeam(m_iTeam)))
 		return true;
+	else if ((m_iClass == TF_CLASS_SCOUT) && ((CClassInterface::getTF2Conditions(m_pEdict)&TF2_PLAYER_BONKED) == TF2_PLAYER_BONKED))
+		return false; // currently can't shoot 
 	else if ( !wantToInvestigateSound() ) // maybe capturing point right now
 		return false;
 	else if ( (pEnemy != NULL) && CBotGlobals::isPlayer(pEnemy) && CTeamFortress2Mod::TF2_IsPlayerInvuln(m_pEdict) && (m_iClass != TF_CLASS_MEDIC) )
@@ -6704,6 +6753,7 @@ void CBotTF2 :: modAim ( edict_t *pEntity, Vector &v_origin, Vector *v_desired_o
 					else if (pClient)
 						vVelocity = pClient->getVelocity();
 
+					// the arrow will arc
 					fTime = fDist2D / (pWp->getProjectileSpeed()*0.707);
 
 					if (rcbot_supermode.GetBool())
@@ -7035,7 +7085,11 @@ bool CBotTF2 :: handleAttack ( CBotWeapon *pWeapon, edict_t *pEnemy )
 			}
 			else
 			{
-				m_fSnipeAttackTime = engine->Time() + randomFloat(0.5f, 3.0f);
+				float fDistFactor = distanceFrom(pEnemy) / pWeapon->getPrimaryMaxRange();
+				float fRandom = randomFloat(m_pProfile->m_fAimSkill, 1.0f);
+				float fSkill = 1.0f - fRandom;
+				
+				m_fSnipeAttackTime = engine->Time() + (fSkill*1.0f) + ((4.0f*fDistFactor)*fSkill);
 				m_pButtons->letGo(IN_ATTACK);
 			}
 		}

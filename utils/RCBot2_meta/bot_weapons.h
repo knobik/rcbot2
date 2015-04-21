@@ -548,6 +548,11 @@ public:
 		m_pWeaponInfo = pWeapon;
 	}
 
+	inline float getPrimaryMaxRange()
+	{
+		return m_pWeaponInfo->primaryMaxRange();
+	}
+
 	inline bool primaryInRange ( float fDistance )
 	{
 		return m_pWeaponInfo->primaryInRange(fDistance);

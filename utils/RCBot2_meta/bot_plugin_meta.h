@@ -94,6 +94,14 @@ public: //hooks
 		const char *pszAddress,
 		char *reject,
 		int maxrejectlen);
+	bf_write *Hook_MessageBegin(IRecipientFilter *filter, int msg_type);
+	void Hook_MessageEnd();
+
+	void Hook_WriteChar(int val);
+	void Hook_WriteShort(int val);
+	void Hook_WriteByte(int val);
+	void Hook_WriteFloat(float val);
+	bool Hook_WriteString(const char *pStr);
 
 	static CBaseEntity *TF2_getPlayerWeaponSlot(edict_t *pPlayer, int iSlot);
 	static void TF2_removeWearable(edict_t *pPlayer, CBaseEntity *pWearable);
@@ -103,6 +111,8 @@ public: //hooks
 	static bool givePlayerLoadOut(edict_t *pPlayer, CTF2Loadout *pLoadout, int iSlot, void *pVTable, void *pVTable_Attributes);
 	static void giveRandomLoadout(edict_t *pPlayer, int iClass, int iSlot, void *pVTable, void *pVTable_Attributes);
 	static void TF2_equipWearable(edict_t *pPlayer, CBaseEntity *pWearable);
+	static bool TF2_ClearAttributeCache(edict_t *pEdict);
+	static void HudTextMessage(edict_t *pEntity, const char *szMessage);
 #if SOURCE_ENGINE >= SE_ORANGEBOX
 	void Hook_ClientCommand(edict_t *pEntity, const CCommand &args);
 #else

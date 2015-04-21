@@ -42,6 +42,7 @@
 #include "bot_waypoint_locations.h"
 //#include "bot_hooks.h"
 #include "in_buttons.h"
+#include "bot_plugin_meta.h"
 
 // setup static client array
 CClient CClients::m_Clients[MAX_PLAYERS];
@@ -54,6 +55,8 @@ extern IVDebugOverlay *debugoverlay;
 void CToolTip::send(edict_t *pPlayer)
 {
 	//CRCBotPlugin::HudTextMessage(pPlayer,m_pszMessage);
+
+	RCBotPluginMeta::HudTextMessage(pPlayer, m_pszMessage);
 
 	if ( m_pszSound )
 		engine->ClientCommand(pPlayer,"play %s",m_pszSound);

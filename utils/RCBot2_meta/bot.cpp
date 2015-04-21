@@ -2765,9 +2765,13 @@ void CBot :: changeAngles ( float fSpeed, float *fIdeal, float *fCurrent, float 
 
 	extern ConVar bot_anglespeed;
 
-	alphaspeed = (fSpeed/20);
-	alpha = alphaspeed * bot_anglespeed.GetFloat();
+	if (bot_anglespeed.GetFloat() < 0.01f)
+		bot_anglespeed.SetValue(0.16f);
 
+	alphaspeed = (fSpeed/20);
+
+	alpha = alphaspeed * bot_anglespeed.GetFloat();
+	
 	diff = ideal - current;
 
 	if ( diff < -180.0f )

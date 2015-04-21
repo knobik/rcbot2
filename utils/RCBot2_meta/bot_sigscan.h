@@ -76,7 +76,7 @@ class CSetRuntimeAttributeValue : public CSignatureFunction
 public:
 	CSetRuntimeAttributeValue ( CRCBotKeyValueList *list, void *pAddrBase );
 
-	bool callme(edict_t *pEnt, CAttributeList *list, CEconItemAttributeDefinition *attrib,int value);
+	bool callme(edict_t *pEnt, CAttributeList *list, CEconItemAttributeDefinition *attrib,float value);
 };
 
 class CGetAttributeDefinitionByName : public CSignatureFunction
@@ -92,7 +92,7 @@ class CAttributeList_GetAttributeByID : public CSignatureFunction
 public:
 	CAttributeList_GetAttributeByID ( CRCBotKeyValueList *list, void *pAddrBase );
 
-	CEconItemAttributeDefinition *callme(CAttributeList *list, int id);
+	CEconItemAttribute *callme(CAttributeList *list, int id);
 };
 
 /*
@@ -131,4 +131,5 @@ extern CCreateGameRulesObject *g_pGameRules_Create_Obj;
 
 void *GetGameRules();
 
+bool TF2_setAttribute(edict_t *pEdict, const char *szName, float flVal);
 #endif

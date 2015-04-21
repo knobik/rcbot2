@@ -73,7 +73,112 @@ class CBotUtility;
 #define TF2_DISPENSER_LEVEL3_HEALTH 216
 
 // Naris @ Alliedmodders.net
+/*
+enum TFCond
+{
+	TFCond_Slowed = 0,
+	TFCond_Zoomed,
+	TFCond_Disguising,
+	TFCond_Disguised,
+	TFCond_Cloaked,
+	TFCond_Ubercharged,
+	TFCond_TeleportedGlow,
+	TFCond_Taunting,
+	TFCond_UberchargeFading,
+	TFCond_Unknown1, //9
+	TFCond_CloakFlicker = 9,
+	TFCond_Teleporting,
+	TFCond_Kritzkrieged,
+	TFCond_Unknown2, //12
+	TFCond_TmpDamageBonus = 12,
+	TFCond_DeadRingered,
+	TFCond_Bonked,
+	TFCond_Dazed,
+	TFCond_Buffed,
+	TFCond_Charging,
+	TFCond_DemoBuff,
+	TFCond_CritCola,
+	TFCond_InHealRadius,
+	TFCond_Healing,
+	TFCond_OnFire,
+	TFCond_Overhealed,
+	TFCond_Jarated,
+	TFCond_Bleeding,
+	TFCond_DefenseBuffed,
+	TFCond_Milked,
+	TFCond_MegaHeal,
+	TFCond_RegenBuffed,
+	TFCond_MarkedForDeath,
+	TFCond_NoHealingDamageBuff,
+	TFCond_SpeedBuffAlly, // 32
+	TFCond_HalloweenCritCandy,
+	TFCond_CritCanteen,
+	TFCond_CritDemoCharge,
+	TFCond_CritHype,
+	TFCond_CritOnFirstBlood,
+	TFCond_CritOnWin,
+	TFCond_CritOnFlagCapture,
+	TFCond_CritOnKill,
+	TFCond_RestrictToMelee,
+	TFCond_DefenseBuffNoCritBlock,
+	TFCond_Reprogrammed,
+	TFCond_CritMmmph,
+	TFCond_DefenseBuffMmmph,
+	TFCond_FocusBuff,
+	TFCond_DisguiseRemoved,
+	TFCond_MarkedForDeathSilent,
+	TFCond_DisguisedAsDispenser,
+	TFCond_Sapped,
+	TFCond_UberchargedHidden,
+	TFCond_UberchargedCanteen,
+	TFCond_HalloweenBombHead,
+	TFCond_HalloweenThriller,
+	TFCond_RadiusHealOnDamage,
+	TFCond_CritOnDamage,
+	TFCond_UberchargedOnTakeDamage,
+	TFCond_UberBulletResist,
+	TFCond_UberBlastResist,
+	TFCond_UberFireResist,
+	TFCond_SmallBulletResist,
+	TFCond_SmallBlastResist,
+	TFCond_SmallFireResist,
+	TFCond_Stealthed, // 64
+	TFCond_MedigunDebuff,
+	TFCond_StealthedUserBuffFade,
+	TFCond_BulletImmune,
+	TFCond_BlastImmune,
+	TFCond_FireImmune,
+	TFCond_PreventDeath,
+	TFCond_MVMBotRadiowave,
+	TFCond_HalloweenSpeedBoost,
+	TFCond_HalloweenQuickHeal,
+	TFCond_HalloweenGiant,
+	TFCond_HalloweenTiny,
+	TFCond_HalloweenInHell,
+	TFCond_HalloweenGhostMode,
 
+	TFCond_DodgeChance = 79,
+	TFCond_Parachute,
+	TFCond_BlastJumping,
+	TFCond_HalloweenKart,
+	TFCond_HalloweenKartDash,
+	TFCond_BalloonHead,
+	TFCond_MeleeOnly,
+	TFCond_SwimmingCurse,
+	TFCond_HalloweenKartNoTurn,
+	TFCond_HalloweenKartCage,
+	TFCond_HasRune,
+	TFCond_RuneStrength,
+	TFCond_RuneHaste,
+	TFCond_RuneRegen,
+	TFCond_RuneResist,
+	TFCond_RuneVampire,
+	TFCond_RuneWarlock,
+	TFCond_RunePrecision, // 96
+	TFCond_RuneAgility,
+};*/
+
+#define TF2_PLAYER_BONKED		(1<<14)
 #define TF2_PLAYER_SLOWED       (1 << 0)    // 1
 #define TF2_PLAYER_ZOOMED       (1 << 1)    // 2
 #define TF2_PLAYER_DISGUISING   (1 << 2)    // 4
@@ -317,6 +422,39 @@ public:
 class CEconItemView
 {
 public:
+	void *m_pVTable; //0
+
+	uint16 m_iItemDefinitionIndex; //4
+
+	int32 m_iEntityQuality; //8
+	uint32 m_iEntityLevel; //12
+
+	uint64 m_iItemID; //16
+	uint32 m_iItemIDHigh; //24
+	uint32 m_iItemIDLow; //28
+	uint32 m_iAccountID; //32
+	uint32 m_iInventoryPosition; //36
+
+	void *m_pAlternateItemData; //40
+
+	bool	m_bColorInit; //44
+	uint32	m_unHalloweenRGB; //48
+	uint32	m_unHalloweenAltRGB; //52
+	uint32	m_unRGB; //56
+	uint32	m_unAltRGB; //60
+
+	bool m_bInitialized; //64
+
+	void *m_pVTable_Attributes; //68
+	CUtlVector<CEconItemAttribute, CUtlMemoryTF2Items<CEconItemAttribute> > m_Attributes; //72 (76, 80, 84, 88)
+	void *m_pAttributeManager; //92
+
+	bool m_bDoNotIterateStaticAttributes; //96
+};
+/*
+class CEconItemView
+{
+public:
 	void *m_pVTable;
 
 	uint16 m_iItemDefinitionIndex;
@@ -338,7 +476,7 @@ public:
 	CAttributeManager *m_pAttributeManager;
 	
 	bool m_bDoNotIterateStaticAttributes;
-};
+};*/
 
 
 
@@ -532,7 +670,7 @@ public:
 
 	bool wantToUnCloak();
 
-	inline bool someoneCalledMedic ();
+	bool someoneCalledMedic ();
 
 	void waitCloak ();
 
@@ -898,6 +1036,8 @@ public:
 	void healedPlayer ( edict_t *pPlayer, float fAmount );
 
 	void teleportedPlayer ( void );
+
+	void upgradeWeapon(int iSlot);
 
 	inline bool isCarrying () { return m_bIsCarryingObj; }
 

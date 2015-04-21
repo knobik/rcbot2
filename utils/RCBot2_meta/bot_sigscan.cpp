@@ -1,6 +1,13 @@
 #ifdef WIN32
 #include <Windows.h>
 #else
+
+#include "shake.h" //bir3yk
+#include "elf.h"
+
+#define PAGE_SIZE 4096
+#define PAGE_ALIGN_UP(x) ((x + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
+
 #include <sys/mman.h>
 #include <errno.h>
 #include <unistd.h>
@@ -20,8 +27,9 @@
 #include "bot.h"
 #include "bot_fortress.h"
 #include "bot_kv.h"
-
+#include "bot_getprop.h"
 #include "bot_sigscan.h"
+
 
 CGetEconItemSchema *g_pGetEconItemSchema = NULL;
 CSetRuntimeAttributeValue *g_pSetRuntimeAttributeValue = NULL;
@@ -243,7 +251,6 @@ void *CSignatureFunction::findSignature ( void *addrInBase, const char *signatur
 	unsigned char real_sig[511];
 
 	size_t real_bytes;
-	//size_t length = strlen(signature);
 
 	real_bytes = decodeHexString(real_sig, sizeof(real_sig), signature);
 
@@ -333,7 +340,7 @@ CSetRuntimeAttributeValue::CSetRuntimeAttributeValue ( CRCBotKeyValueList *list,
 #endif
 }
 
-bool CSetRuntimeAttributeValue::callme(edict_t *pEnt, CAttributeList *list, CEconItemAttributeDefinition *attrib,int value)
+bool CSetRuntimeAttributeValue::callme(edict_t *pEnt, CAttributeList *list, CEconItemAttributeDefinition *attrib,float value)
 {
 	int bret = 0;
 	void *thefunc = m_func;
@@ -342,10 +349,6 @@ bool CSetRuntimeAttributeValue::callme(edict_t *pEnt, CAttributeList *list, CEco
 
 	if ( list && attrib && thefunc )
 	{
-		//*(DWORD*)&CAttributeListSetValue = (DWORD)SetRuntimeAttributeValue;
-		//(*list.*CAttributeListSetValue)(attrib,value);
-		//void *preveax1 = 0x0;
-		
 #ifdef _WIN32
 		__asm 
 		{
@@ -411,7 +414,7 @@ CAttributeList_GetAttributeByID::CAttributeList_GetAttributeByID ( CRCBotKeyValu
 #endif
 }
 
-CEconItemAttributeDefinition *CAttributeList_GetAttributeByID::callme(CAttributeList *list, int id)
+CEconItemAttribute *CAttributeList_GetAttributeByID::callme(CAttributeList *list, int id)
 {
 	void *pret = NULL;
 
@@ -433,7 +436,113 @@ CEconItemAttributeDefinition *CAttributeList_GetAttributeByID::callme(CAttribute
 #endif
 	}
 
-	return (CEconItemAttributeDefinition*)pret;
+	return (CEconItemAttribute*)pret;
+}
+
+// TF2 Attributes - Flamin Sarge
+bool TF2_SetAttrib(edict_t *pedict, const char *strAttrib, float flVal)
+{
+	//CBaseEntity *pEntity;
+
+	if (!pedict || pedict->IsFree())
+		return false;
+
+	CAttributeList *pList = CClassInterface::getAttributeList(pedict);
+
+	CEconItemSchema *pSchema = g_pGetEconItemSchema->callme();
+
+	if (pSchema == NULL) 
+		return false;
+
+	CEconItemAttributeDefinition *pAttribDef = g_pGetAttributeDefinitionByName->callme(pSchema, strAttrib);
+
+	if ( (unsigned int)pAttribDef < 0x10000)
+	{
+		return false;
+	}
+
+	bool bSuccess = g_pSetRuntimeAttributeValue->callme(pedict, pList, pAttribDef, flVal);
+
+	//Just a note, the above SDKCall returns ((entindex + 4) * 4) | 0xA000), and you can AND it with 0x1FFF to get back the entindex if you want, though it's pointless)
+	//I don't know any other specifics, such as if the highest 3 bits actually matter
+	//And I don't know what happens when you hit ent index 2047
+	//	ClearAttributeCache(GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity"));
+	//	decl String:strClassname[64];
+	//	GetEntityClassname(entity, strClassname, sizeof(strClassname));
+	//	if (strncmp(strClassname, "tf_wea", 6, false) == 0 || StrEqual(strClassname, "tf_powerup_bottle", false))
+	//	{
+	//		new client = GetEntPropEnt(entity, Prop_Send, "m_hOwnerEntity");
+	//		if (client > 0 && client <= MaxClients && IsClientInGame(client)) ClearAttributeCache(client);
+	//	}
+
+	return bSuccess;
+}
+
+CEconItemAttribute *TF2Attrib_GetByName(edict_t *entity, const char *strAttrib)
+{	
+	if (entity->IsFree())
+	{
+		return NULL;
+	}
+
+	CAttributeList *pList = CClassInterface::getAttributeList(entity);
+
+	if (pList == NULL)
+		return NULL;
+
+	if (*(int*)((unsigned long)pList + 4) == 0x0)
+	{
+		throw "Invalid Attribute List?";
+
+		return NULL;
+	}
+
+	if (!g_pGetEconItemSchema)
+		return NULL;
+
+	CEconItemSchema *pSchema = g_pGetEconItemSchema->callme();
+
+	if (pSchema == NULL)
+		return NULL;
+	CEconItemAttributeDefinition *pAttribDef = g_pGetAttributeDefinitionByName->callme(pSchema, strAttrib);
+
+	if ((unsigned int)pAttribDef < 0x10000)
+		return NULL;
+
+	unsigned short int iDefIndex = *(unsigned short int*)(((unsigned long)pAttribDef) + 4);
+
+	CEconItemAttribute *pAttrib = g_pAttribList_GetAttributeByID->callme(pList, iDefIndex);
+
+	if ((unsigned int)pAttrib < 0x10000)
+		pAttrib = NULL;
+
+	return pAttrib;
+}
+
+bool TF2_setAttribute(edict_t *pEdict, const char *szName, float flVal)
+{
+	// Creates the new Attribute
+	CEconItemAttribute *pAttrib = NULL;
+
+	try
+	{
+		pAttrib = TF2Attrib_GetByName(pEdict, szName);
+	}
+
+	catch (const char *str)
+	{
+		if ( str && *str )
+			return false;
+	}
+
+	if (((unsigned int)pAttrib) < 0x10000)
+	{
+		return TF2_SetAttrib(pEdict, szName, flVal);
+	}
+	else
+		pAttrib->m_flValue = flVal;
+
+	return true;
 }
 
 /*
