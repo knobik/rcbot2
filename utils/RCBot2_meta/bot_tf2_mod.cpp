@@ -338,6 +338,15 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 				if ((strncmp(szPrefab, "valve", 5) == 0) && (strlen(szPrefab) > 6))
 				{				
 					prefab = prefabs->FindKey(&szPrefab[6]);
+
+					if (prefab == NULL)
+					{
+						// search prefabs for "valve"
+					}
+				}
+				else if ((szPrefab != NULL) && (*szPrefab != NULL))
+				{
+					prefab = prefabs->FindKey(szPrefab);
 				}
 
 				int iindex = atoi(kv->GetName());
@@ -493,6 +502,9 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 
 				if ( added )
 				{
+					//if ( prefab != NULL )
+					//	loadout = kv;
+
 					attribs = loadout->FindKey("attributes");
 
 					if ( attribs )
@@ -700,9 +712,9 @@ void CTeamFortress2Mod :: initMod ()
 	// Setup Weapons
 
 	CBots::controlBotSetup(true);
-
-	for ( i = 0; i < TF2_WEAPON_MAX; i ++ )
-		CWeapons::addWeapon(new CWeapon(TF2Weaps[i]));//.iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference,TF2Weaps[i].m_fProjSpeed));
+	i = 0;
+	while ( TF2Weaps[i].szWeaponName[0] != '\0' )  //for ( i = 0; i < TF2_WEAPON_MAX; i ++ )	
+		CWeapons::addWeapon(new CWeapon(TF2Weaps[i++]));//.iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference,TF2Weaps[i].m_fProjSpeed));
 
 	CRCBotTF2UtilFile::loadConfig();
 

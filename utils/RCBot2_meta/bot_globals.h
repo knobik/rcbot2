@@ -39,7 +39,7 @@
 #include "bot_commands.h" // for main rcbot command
 
 #define MAX_MAP_STRING_LEN 64
-
+#define MAX_PATH_LEN 512
 #define MAX_ENTITIES 2048
 
 class CBotGlobals
@@ -205,6 +205,8 @@ public:
 
 	////////
 	static CBotCommandContainer *m_pCommands;
+
+	static void readRCBotFolder();
 	
 private:
 	static eModId m_iCurrentMod;
@@ -220,6 +222,7 @@ private:
 	static int m_iWaypointDisplayType;
 	static bool m_bTeamplay;
 	static float m_fMapStartTime;
+	static char m_szRCBotFolder[MAX_PATH_LEN];
 
 	/*static Vector m_vForward;
 	static Vector m_vRight;

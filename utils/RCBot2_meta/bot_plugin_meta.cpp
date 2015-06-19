@@ -723,68 +723,9 @@ bool RCBotPluginMeta::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxle
 	//Hook FireEvent to our function
 	SH_ADD_HOOK_MEMFUNC(IGameEventManager2, FireEvent, gameevents, this, &RCBotPluginMeta::FireGameEvent, false);
 
-	//SH_MANUALHOOK_RECONFIGURE(MHook_PlayerRunCmd, 0, 0, 0);
-	SH_MANUALHOOK_RECONFIGURE(MHook_PlayerRunCmd,rcbot_runplayercmd_tf2.GetInt(),0,0);
-	SH_MANUALHOOK_RECONFIGURE(MHook_GiveNamedItem,rcbot_givenameditem_offset.GetInt(),0,0);
-
-	ENGINE_CALL(LogPrint)("All hooks started!\n");
-
-#if SOURCE_ENGINE >= SE_ORANGEBOX
-	g_pCVar = icvar;
-	ConVar_Register(0, &s_BaseAccessor);
-#else
-	ConCommandBaseMgr::OneTimeInit(&s_BaseAccessor);
-#endif
-
-	if ( !CBotGlobals::gameStart() )
-		return false;
-
-	//MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
-	//ConVar_Register( 0 );
-	//InitCVars( interfaceFactory ); // register any cvars we have defined
-
-	srand( (unsigned)time(NULL) );  // initialize the random seed
-	irand.seed( (unsigned)time(NULL) );
-
-	// Find the RCBOT2 Path from metamod VDF
-	extern IFileSystem *filesystem;
-	KeyValues *mainkv = new KeyValues("metamodplugin");
-	
-	const char *rcbot2path;
-	CBotGlobals::botMessage(NULL, 0, "Reading rcbot2 path from VDF...");
-	
-	mainkv->LoadFromFile(filesystem, "addons/metamod/rcbot2.vdf", "MOD");
-	
-	mainkv = mainkv->FindKey("Metamod Plugin");
-
-	if (mainkv)
-		rcbot2path = mainkv->GetString("rcbot2path", "\0");
-
-	mainkv->deleteThis();
-	//eventListener2 = new CRCBotEventListener();
-
-	// Initialize bot variables
-	CBotProfiles::setupProfiles();
-
-
-	//CBotEvents::setupEvents();
-	CWaypointTypes::setup();
-	CWaypoints::setupVisibility();
-
-	CBotConfigFile::reset();	
-	CBotConfigFile::load();
-
-	CBotMenuList::setupMenus();
-
-	//CRCBotPlugin::ShowLicense();	
-
-	//RandomSeed((unsigned int)time(NULL));
-
-	CClassInterface::init();
-
-	RCBOT2_Cvar_setup(g_pCVar);
-
 	// Read Signatures and Offsets
+
+	CBotGlobals::readRCBotFolder();
 
 	char filename[512];
 	// Load RCBOT2 hook data
@@ -850,8 +791,71 @@ bool RCBotPluginMeta::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxle
 
 	delete pKVL;
 
-	if ( fp )
+	if (fp)
 		fclose(fp);
+
+	//SH_MANUALHOOK_RECONFIGURE(MHook_PlayerRunCmd, 0, 0, 0);
+	SH_MANUALHOOK_RECONFIGURE(MHook_PlayerRunCmd,rcbot_runplayercmd_tf2.GetInt(),0,0);
+	SH_MANUALHOOK_RECONFIGURE(MHook_GiveNamedItem,rcbot_givenameditem_offset.GetInt(),0,0);
+
+	ENGINE_CALL(LogPrint)("All hooks started!\n");
+
+#if SOURCE_ENGINE >= SE_ORANGEBOX
+	g_pCVar = icvar;
+	ConVar_Register(0, &s_BaseAccessor);
+#else
+	ConCommandBaseMgr::OneTimeInit(&s_BaseAccessor);
+#endif
+
+	if ( !CBotGlobals::gameStart() )
+		return false;
+
+	//MathLib_Init( 2.2f, 2.2f, 0.0f, 2.0f );
+	//ConVar_Register( 0 );
+	//InitCVars( interfaceFactory ); // register any cvars we have defined
+
+	srand( (unsigned)time(NULL) );  // initialize the random seed
+	irand.seed( (unsigned)time(NULL) );
+
+	// Find the RCBOT2 Path from metamod VDF
+	extern IFileSystem *filesystem;
+	KeyValues *mainkv = new KeyValues("metamodplugin");
+	
+	const char *rcbot2path;
+	CBotGlobals::botMessage(NULL, 0, "Reading rcbot2 path from VDF...");
+	
+	mainkv->LoadFromFile(filesystem, "addons/metamod/rcbot2.vdf", "MOD");
+	
+	mainkv = mainkv->FindKey("Metamod Plugin");
+
+	if (mainkv)
+		rcbot2path = mainkv->GetString("rcbot2path", "\0");
+
+	mainkv->deleteThis();
+	//eventListener2 = new CRCBotEventListener();
+
+	// Initialize bot variables
+	CBotProfiles::setupProfiles();
+
+
+	//CBotEvents::setupEvents();
+	CWaypointTypes::setup();
+	CWaypoints::setupVisibility();
+
+	CBotConfigFile::reset();	
+	CBotConfigFile::load();
+
+	CBotMenuList::setupMenus();
+
+	//CRCBotPlugin::ShowLicense();	
+
+	//RandomSeed((unsigned int)time(NULL));
+
+	CClassInterface::init();
+
+	RCBOT2_Cvar_setup(g_pCVar);
+
+
 
 	return true;
 }

@@ -136,46 +136,6 @@ WeaponsData_t HL2DMWeaps[] =
 	{2,HL2DM_WEAPON_SHOTGUN,	g_szHL2DMWeapons[10],	WEAP_FL_PRIM_ATTACK,0,768,-1,2,0},
 	{1,HL2DM_WEAPON_PHYSCANNON,	g_szHL2DMWeapons[11],	WEAP_FL_GRAVGUN|WEAP_FL_PRIM_ATTACK,0,768,-1,4,0}
 };
-	
-/*
-const char *g_szTF2Weapons[] =
-{
-"tf_weapon_bat",
-"tf_weapon_bonesaw",
-"tf_weapon_bottle",
-"tf_weapon_builder",
-"tf_weapon_club",
-"tf_weapon_fireaxe",
-"tf_weapon_fists",
-"tf_weapon_flamethrower",
-"tf_weapon_grenadelauncher",
-"tf_weapon_invis",
-"tf_weapon_knife",
-"tf_weapon_medigun",
-"tf_weapon_minigun",
-"tf_weapon_objectselection",
-"tf_weapon_pda_engineer_build",
-"tf_weapon_pda_engineer_destroy",
-"tf_weapon_pda_spy",
-"tf_weapon_pipebomblauncher",
-"tf_weapon_pistol",
-"tf_weapon_pistol_scout",
-"tf_weapon_revolver",
-"tf_weapon_rocketlauncher",
-"tf_weapon_scattergun",
-"tf_weapon_shotgun_hwg",
-"tf_weapon_shotgun_primary",
-"tf_weapon_shotgun_pyro",
-"tf_weapon_shotgun_soldier",
-"tf_weapon_shovel",
-"tf_weapon_smg",
-"tf_weapon_sniperrifle",
-"tf_weapon_syringegun_medic",
-"tf_weapon_wrench",
-"tf_weapon_pda_engineer_destroy",
-"tf_weapon_pda_engineer_build",
-"obj_sentrygun"
-};*/
 
 //SENTRYGUN ID = 34
 
@@ -209,11 +169,13 @@ WeaponsData_t TF2Weaps[] =
 	{TF2_SLOT_SCNDR,TF2_WEAPON_PISTOL,				"tf_weapon_pistol",	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,2000,2,1,0},
 	{TF2_SLOT_SCNDR,TF2_WEAPON_PISTOL_SCOUT,		"tf_weapon_pistol_scout",	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1800,2,2,0},
 	{TF2_SLOT_SCNDR,TF2_WEAPON_REVOLVER,			"tf_weapon_revolver",	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1400,2,1,0},
-	{TF2_SLOT_PDA,TF2_WEAPON_PDA_ENGI_BUILD,		"tf_weapon_pda_engineer_build",	WEAP_FL_NONE,0,100,0,1,0},
+	{ TF2_SLOT_PRMRY, TF2_WEAPON_POMSON6000, "tf_weapon_drg_pomson", WEAP_FL_PRIM_ATTACK | WEAP_FL_UNDERWATER, 0, 800, 1, 2, 0 },
+	//{TF2_SLOT_PDA,TF2_WEAPON_PDA_ENGI_BUILD,		"tf_weapon_pda_engineer_build",	WEAP_FL_NONE,0,100,0,1,0},
 	// this class is used with all classes that can use shotgun but the slot might be different
 	{ TF2_SLOT_SCNDR, TF2_WEAPON_SHOTGUN, "tf_weapon_shotgun", WEAP_FL_KILLPIPEBOMBS | WEAP_FL_PRIM_ATTACK | WEAP_FL_UNDERWATER, 0, 500, 2, 2, 0 },
 	//{TF2_SLOT_OTHER,TF2_WEAPON_PDA_ENGI_DESTROY,	"tf_weapon_pda_engineer_destroy",	WEAP_FL_NONE,0,100,0,1,0},
-	{TF2_SLOT_PDA, TF2_WEAPON_PDA_SPY, "tf_weapon_pda_spy", WEAP_FL_NONE, 0, 100, 0, 1, 0 },
+	//{TF2_SLOT_PDA, TF2_WEAPON_PDA_SPY, "tf_weapon_pda_spy", WEAP_FL_NONE, 0, 100, 0, 1, 0 },
+	{ TF2_SLOT_PRMRY, TF2_WEAPON_FRONTIERJUSTICE, "tf_weapon_sentry_revenge", WEAP_FL_KILLPIPEBOMBS | WEAP_FL_PRIM_ATTACK | WEAP_FL_UNDERWATER, 0, 800, 1, 2, 0 },
 	{TF2_SLOT_PDA, TF2_WEAPON_BUILDER, "tf_weapon_builder", WEAP_FL_NONE, 0, 100, 0, 1, 0 },
 	{TF2_SLOT_SCNDR,TF2_WEAPON_MEDIGUN,			"tf_weapon_medigun",	WEAP_FL_NONE,0,100,0,1,0},
 	{TF2_SLOT_PDA, TF2_WEAPON_INVIS, "tf_weapon_invis", WEAP_FL_NONE, 0, 100, 0, 1, 0 },
@@ -233,63 +195,9 @@ WeaponsData_t TF2Weaps[] =
 	{TF2_SLOT_PRMRY,TF2_WEAPON_CROSSBOW,		"tf_weapon_crossbow",	WEAP_FL_PRIM_ATTACK,600,2500,1,3,0},
 	{TF2_SLOT_MELEE,TF2_WEAPON_CLEAVER,		"tf_weapon_cleaver",	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,150,0,1,0},
 	{TF2_SLOT_MELEE,TF2_WEAPON_BAT_GIFTWRAP,		"tf_weapon_bat_giftwrap",	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,150,0,1,0},
-	{TF2_SLOT_SCNDR,TF2_WEAPON_RAYGUN,		"tf_weapon_raygun",	WEAP_FL_PRIM_ATTACK,100,2000,2,2,0}
+	{TF2_SLOT_SCNDR,TF2_WEAPON_RAYGUN,		"tf_weapon_raygun",	WEAP_FL_PRIM_ATTACK,100,2000,2,2,0},
+	{0, 0, "\0", 0, 0, 0, 0, 0, 0}//signal last weapon
 };	
-
-/*
-int m_TF2AmmoIndices[] =
-{
-//  0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1 2 2 2 2 2 2 2 2 2 2 3 3
-//  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-	0,0,0,0,0,0,0,1,1,0,0,0,1,0,0,0,0,2,2,2,2,1,1,2,1,2,2,0,2,1,1,3
-};
-*/
-/*
-WeaponsData_t TF2Weaps[] =
-
-{
-
-	//slot, id , weapon name, flags, min dist, max dist, ammo index, preference
-
-	{3,TF2_WEAPON_BAT,				g_szTF2Weapons[0],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[0],1,0},
-	{3,TF2_WEAPON_BONESAW,			g_szTF2Weapons[1],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[1],1,0},
-	{3,TF2_WEAPON_BOTTLE,				g_szTF2Weapons[2],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[2],1,0},
-	{0,TF2_WEAPON_BUILDER,			g_szTF2Weapons[3],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[3],1,0},
-	{3,TF2_WEAPON_CLUB,				g_szTF2Weapons[4],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[4],1,0},
-	{3,TF2_WEAPON_FIREAXE,			g_szTF2Weapons[5],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[5],1,0},
-	{3,TF2_WEAPON_FISTS,				g_szTF2Weapons[6],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[6],1,0},
-	{1,TF2_WEAPON_FLAMETHROWER,		g_szTF2Weapons[7],	WEAP_FL_DEFLECTROCKETS|WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_HOLDATTACK|WEAP_FL_SPECIAL,0,400,m_TF2AmmoIndices[7],3,0},
-	{1,TF2_WEAPON_GRENADELAUNCHER,	g_szTF2Weapons[8],	WEAP_FL_PROJECTILE|WEAP_FL_PRIM_ATTACK|WEAP_FL_EXPLOSIVE|WEAP_FL_UNDERWATER,100,1200,m_TF2AmmoIndices[8],2,TF2_GRENADESPEED},
-	{0,TF2_WEAPON_INVIS,				g_szTF2Weapons[9],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[9],1,0},
-	{3,TF2_WEAPON_KNIFE,				g_szTF2Weapons[10],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,220,m_TF2AmmoIndices[10],2,0},
-	{2,TF2_WEAPON_MEDIGUN,			g_szTF2Weapons[11],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[11],1,0},
-	{1,TF2_WEAPON_MINIGUN,			g_szTF2Weapons[12],	WEAP_FL_PRIM_ATTACK|WEAP_FL_HOLDATTACK,0,1800,m_TF2AmmoIndices[12],2,0},
-	{0,TF2_WEAPON_OBJECTSSELECTION,	g_szTF2Weapons[13],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[13],1,0},
-	{0,TF2_WEAPON_PDA_ENGI_BUILD,		g_szTF2Weapons[14],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[14],1,0},
-	{0,TF2_WEAPON_PDA_ENGI_DESTROY,	g_szTF2Weapons[15],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[15],1,0},
-	{0,TF2_WEAPON_PDA_SPY,			g_szTF2Weapons[16],	WEAP_FL_NONE,0,100,m_TF2AmmoIndices[16],1,0},
-	{2,TF2_WEAPON_PIPEBOMBS,			g_szTF2Weapons[17],	WEAP_FL_NONE,0,1000,m_TF2AmmoIndices[17],1,0},
-	{2,TF2_WEAPON_PISTOL,				g_szTF2Weapons[18],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,2000,m_TF2AmmoIndices[18],1,0},
-	{2,TF2_WEAPON_PISTOL_SCOUT,		g_szTF2Weapons[19],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1800,m_TF2AmmoIndices[19],2,0},
-	{1,TF2_WEAPON_REVOLVER,			g_szTF2Weapons[20],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1400,m_TF2AmmoIndices[20],1,0},
-	{1,TF2_WEAPON_ROCKETLAUNCHER,		g_szTF2Weapons[21],	WEAP_FL_PRIM_ATTACK|WEAP_FL_EXPLOSIVE|WEAP_FL_UNDERWATER,BLAST_RADIUS,4096,m_TF2AmmoIndices[21],3,TF2_ROCKETSPEED},
-	{1,TF2_WEAPON_SCATTERGUN,			g_szTF2Weapons[22],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,m_TF2AmmoIndices[22],3,0},
-	{2,TF2_WEAPON_SHOTGUN_HWG,		g_szTF2Weapons[23],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,m_TF2AmmoIndices[23],2,0},
-	{1,TF2_WEAPON_SHOTGUN_PRIMARY,	g_szTF2Weapons[24],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,m_TF2AmmoIndices[24],2,0},
-	{2,TF2_WEAPON_SHOTGUN_PYRO,		g_szTF2Weapons[25],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,800,m_TF2AmmoIndices[25],2,0},
-	{2,TF2_WEAPON_SHOTGUN_SOLDIER,	g_szTF2Weapons[26],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,500,m_TF2AmmoIndices[26],2,0},
-	{3,TF2_WEAPON_SHOVEL,				g_szTF2Weapons[27],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[27],1,0},
-	{2,TF2_WEAPON_SMG,				g_szTF2Weapons[28],	WEAP_FL_KILLPIPEBOMBS|WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1000,m_TF2AmmoIndices[28],2,0},
-	{1,TF2_WEAPON_SNIPERRIFLE,		g_szTF2Weapons[29],	WEAP_FL_SCOPE|WEAP_FL_PRIM_ATTACK,1000,4000,m_TF2AmmoIndices[29],3,0},
-	{1,TF2_WEAPON_SYRINGEGUN,			g_szTF2Weapons[30],	WEAP_FL_PRIM_ATTACK|WEAP_FL_UNDERWATER,0,1000,m_TF2AmmoIndices[30],2,0},
-	{3,TF2_WEAPON_WRENCH,				g_szTF2Weapons[31],	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,m_TF2AmmoIndices[31],1,0},
-	{5,TF2_WEAPON_ENGIDESTROY,			g_szTF2Weapons[32],0,0,0,0,3,0},
-	{4,TF2_WEAPON_ENGIBUILD,			g_szTF2Weapons[33],0,0,0,0,3,0},
-	{0,TF2_WEAPON_SENTRYGUN,			g_szTF2Weapons[34],0,0,0,0,0,0},
-
-};*/
-
-
 
 bool CBotWeapon :: needToReload (CBot *pBot) 
 { 

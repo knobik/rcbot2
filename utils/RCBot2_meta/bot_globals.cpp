@@ -67,6 +67,7 @@ int CBotGlobals :: m_iEventVersion = 1;
 int CBotGlobals :: m_iWaypointDisplayType = 0;
 char CBotGlobals :: m_szMapName[MAX_MAP_STRING_LEN];
 bool CBotGlobals :: m_bTeamplay = false;
+char CBotGlobals :: m_szRCBotFolder[MAX_PATH_LEN];
 
 ///////////
 
@@ -160,6 +161,30 @@ int CBotGlobals ::numPlayersOnTeam(int iTeam, bool bAliveOnly)
 		}
 	}
 	return num;
+}
+
+void CBotGlobals::readRCBotFolder()
+{
+	KeyValues *mainkv = new KeyValues("Metamod Plugin");
+	
+	m_szRCBotFolder[0] = 0;
+
+	if (mainkv->LoadFromFile(filesystem, "addons/metamod/rcbot2.vdf", "MOD"))
+	{
+		const char *szRCBotFolder = mainkv->GetString("rcbot2path");
+
+		if (szRCBotFolder && *szRCBotFolder)
+		{
+			strncpy(m_szRCBotFolder, szRCBotFolder, MAX_PATH_LEN - 1);
+			m_szRCBotFolder[MAX_PATH_LEN - 1] = 0;
+			
+			unsigned int len = strlen(m_szRCBotFolder);
+
+			// don't need this
+			if (m_szRCBotFolder[len - 1] == '\\')
+				m_szRCBotFolder[len - 1] = 0;
+		}
+	}
 }
 
 float CBotGlobals :: grenadeWillLand ( Vector vOrigin, Vector vEnemy, float fProjSpeed, float fGrenadePrimeTime, float *fAngle )
@@ -953,38 +978,45 @@ FILE *CBotGlobals :: openFile ( char *szFile, char *szMode )
 
 void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const char *szFolder, const char *szExtension, bool bModDependent )
 {
+	if (m_szRCBotFolder[0] == 0)
+	{
 #ifdef HOMEFOLDER
-	char home[512];
+		char home[512];
 #endif
-	szOutput[0] = 0;
+		szOutput[0] = 0;
 
 #if defined(HOMEFOLDER) && defined(__linux)
-	char *lhome = getenv ("HOME");
+		char *lhome = getenv ("HOME");
 
-	if (lhome != NULL) 
-	{
-		strncpy(home,lhome,511);
-		home[511] = 0; 
-	}
-	else
-		strcpy(home,".");
+		if (lhome != NULL) 
+		{
+			strncpy(home,lhome,511);
+			home[511] = 0; 
+		}
+		else
+			strcpy(home,".");
 #endif
 
 #if defined(HOMEFOLDER) && defined(WIN32)
-	ExpandEnvironmentStringsA("%userprofile%",home,511);
+		ExpandEnvironmentStringsA("%userprofile%", home, 511);
 #endif
 
 #ifdef HOMEFOLDER
-	strcat(szOutput,home);
-	addDirectoryDelimiter(szOutput);
+		strcat(szOutput, home);
+		addDirectoryDelimiter(szOutput);
 #endif
 
-/*#ifndef HOMEFOLDER
-	strcat(szOutput,"..");
-#endif HOMEFOLDER*/
-	
-	strcat(szOutput,BOT_FOLDER);
-	addDirectoryDelimiter(szOutput);
+		/*#ifndef HOMEFOLDER
+			strcat(szOutput,"..");
+			#endif HOMEFOLDER*/
+
+		strcat(szOutput, BOT_FOLDER);
+	}
+	else
+		strcpy(szOutput, m_szRCBotFolder);
+
+	if ( (szOutput[strlen(szOutput)-1] != '\\') || (szOutput[strlen(szOutput)-1] != '/') )
+		addDirectoryDelimiter(szOutput);
 
 	if ( szFolder )
 	{
