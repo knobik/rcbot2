@@ -222,7 +222,7 @@ private:
 	static int m_iWaypointDisplayType;
 	static bool m_bTeamplay;
 	static float m_fMapStartTime;
-	static char m_szRCBotFolder[MAX_PATH_LEN];
+	static char *m_szRCBotFolder;
 
 	/*static Vector m_vForward;
 	static Vector m_vRight;

@@ -321,7 +321,6 @@ void CTeamFortress2Mod :: setupLoadOutWeapons ()
 
 	if ( kv )
 	{
-
 		kv = kv->FindKey("default");
 
 		if ( kv )
@@ -712,10 +711,14 @@ void CTeamFortress2Mod :: initMod ()
 	// Setup Weapons
 
 	CBots::controlBotSetup(true);
+
+	CWeapons::loadWeapons((m_szWeaponListName == NULL) ? "TF2" : m_szWeaponListName, TF2Weaps);
+	//CWeapons::loadWeapons("TF2", TF2Weaps);
+	/*
 	i = 0;
 	while ( TF2Weaps[i].szWeaponName[0] != '\0' )  //for ( i = 0; i < TF2_WEAPON_MAX; i ++ )	
 		CWeapons::addWeapon(new CWeapon(TF2Weaps[i++]));//.iSlot,TF2Weaps[i].szWeaponName,TF2Weaps[i].iId,TF2Weaps[i].m_iFlags,TF2Weaps[i].m_iAmmoIndex,TF2Weaps[i].minPrimDist,TF2Weaps[i].maxPrimDist,TF2Weaps[i].m_iPreference,TF2Weaps[i].m_fProjSpeed));
-
+		*/
 	CRCBotTF2UtilFile::loadConfig();
 
 	setupLoadOutWeapons();

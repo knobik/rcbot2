@@ -142,7 +142,7 @@ WeaponsData_t HL2DMWeaps[] =
 WeaponsData_t TF2Weaps[] =
 {
 
-//	slot, id , weapon name, flags, min dist, max dist, ammo index, preference
+//{"slot, id , weapon name, flags, min dist, max dist, ammo index, preference
 
 	{TF2_SLOT_MELEE,TF2_WEAPON_BAT,		"tf_weapon_bat",	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,0,1,0},
 	{TF2_SLOT_MELEE,TF2_WEAPON_BOTTLE,		"tf_weapon_bottle",	WEAP_FL_PRIM_ATTACK|WEAP_FL_MELEE|WEAP_FL_UNDERWATER,0,180,0,1,0},
@@ -534,6 +534,119 @@ CBotWeapon *CBotWeapons :: getCurrentWeaponInSlot ( int iSlot )
 	}
 
 	return NULL;
+}
+
+const char *szWeaponFlags[] = {
+	{ "primary_attack" },
+	{ "secondary_attack" },
+	{ "explosive" },
+	{ "melee" },
+	{ "underwater" },
+	{ "hold_attack" },
+	{ "special" },
+	{ "can_kill_pipes" },
+	{ "can_deflect_rockets" },
+	{ "is_grav_gun" },
+	{ "has_explosive_secondary" },
+	{ "is_zoomable" },
+	{ "is_deployable_dods" },
+	{ "has_melee_secondary" },
+	{ "has_fire_select_mode_dods" },
+	{ "cant_be_fired_unzoomed_undeployed_dods" },
+	{ "is_grenade" },
+	{ "has_high_recoil_dods" },
+	{ "has_scope" },
+	{ "weapon_fires_projectile" },
+	{ "\0" }
+};
+
+void CWeapons::loadWeapons(const char *szWeaponListName, WeaponsData_t *pDefault)
+{
+	if ((szWeaponListName != NULL) && (szWeaponListName[0] != 0))
+	{
+		KeyValues *kv = new KeyValues("Weapons");
+		char szFilename[1024];
+
+		CBotGlobals::buildFileName(szFilename, "weapons", BOT_CONFIG_FOLDER, "ini", false);
+
+		if (kv)
+		{
+			if (kv->LoadFromFile(filesystem, szFilename, NULL))
+			{
+				kv = kv->FindKey(szWeaponListName);
+
+				if (kv)
+				{
+					kv = kv->GetFirstSubKey();
+
+					if (0)
+						kv = kv->GetFirstTrueSubKey();
+
+					while (kv != NULL)
+					{
+						WeaponsData_t newWeapon;
+
+						memset(&newWeapon, 0, sizeof(WeaponsData_t));
+
+						const char *szKeyName = kv->GetName();
+
+						char lowered[64];
+
+						strncpy(lowered, szKeyName, 63);
+						lowered[63] = 0;
+
+						__strlow(lowered);
+
+						newWeapon.szWeaponName = CStrings::getString(lowered);
+						newWeapon.iId = kv->GetInt("id");
+						newWeapon.iSlot = kv->GetInt("slot");
+						newWeapon.minPrimDist = kv->GetFloat("minPrimDist");
+						newWeapon.maxPrimDist = kv->GetFloat("maxPrimDist");
+						newWeapon.m_fProjSpeed = kv->GetFloat("m_fProjSpeed");
+						newWeapon.m_iAmmoIndex = kv->GetInt("m_iAmmoIndex");
+						newWeapon.m_iPreference = kv->GetInt("m_iPreference");
+
+						KeyValues *flags = kv->FindKey("flags");
+
+						if (flags)
+						{
+							int i = 0;
+
+							while (szWeaponFlags[i][0] != '\0')
+							{
+								if (flags->FindKey(szWeaponFlags[i]) && (flags->GetInt(szWeaponFlags[i]) == 1))
+									newWeapon.m_iFlags |= (1 << i);
+
+								i++;
+							}
+						}
+
+						addWeapon(new CWeapon(&newWeapon));
+
+						kv = kv->GetNextTrueSubKey();
+					}
+				}
+
+			}
+
+
+			kv->deleteThis();
+
+		}
+	}
+
+	if (pDefault!=NULL)
+	{
+		// No weapons from INI file then add default
+		if (m_theWeapons.size() == 0)
+		{
+			while (pDefault->szWeaponName[0] != '\0')
+			{
+				addWeapon(new CWeapon(pDefault));
+				pDefault++;
+			}
+		}
+	}
 }
 
 void CBotWeapons :: clearWeapons ()

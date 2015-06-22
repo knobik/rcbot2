@@ -119,10 +119,6 @@ bool CDODMod :: shouldAttack ( int iTeam )
 ////////////////////////////////////////////////
 void CDODMod :: initMod ()
 {
-	unsigned int i;
-
-	// Setup Weapons
-
 ///-------------------------------------------------
 	CBotGlobals::botMessage(NULL,0,"Training DOD:S capture decision 'NN' ... hold on...");
 
@@ -177,8 +173,11 @@ void CDODMod :: initMod ()
 
 	CBots::controlBotSetup(true);
 
+	CWeapons::loadWeapons((m_szWeaponListName == NULL) ? "DOD" : m_szWeaponListName, DODWeaps);
+	//CWeapons::loadWeapons("DOD", DODWeaps);
+	/*
 	for ( i = 0; i < DOD_WEAPON_MAX; i ++ )
-		CWeapons::addWeapon(new CWeapon(DODWeaps[i]));
+		CWeapons::addWeapon(new CWeapon(DODWeaps[i]));*/
 
 	m_pResourceEntity = NULL;
 }

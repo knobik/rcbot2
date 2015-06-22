@@ -60,6 +60,7 @@ void CBotMods :: parseFile ()
 	eBotType bottype;
 	char steamfolder[256];
 	char gamefolder[256];
+	char weaponlist[64];
 
 	CBotGlobals::buildFileName(buffer,BOT_MOD_FILE,BOT_CONFIG_FOLDER,BOT_CONFIG_EXTENSION);
 
@@ -121,13 +122,13 @@ void CBotMods :: parseFile ()
 		{
 			if ( curmod )
 			{
-				curmod->setup(gamefolder,steamfolder,modtype,bottype);
+				curmod->setup(gamefolder, steamfolder, modtype, bottype, weaponlist);
 				m_Mods.push_back(curmod);
 			}
-
-			curmod = NULL;
-
 			
+			curmod = NULL;
+			weaponlist[0] = 0;
+
 			bottype = BOTTYPE_GENERIC;
 
 			modtype = MOD_CUSTOM;
@@ -219,11 +220,15 @@ void CBotMods :: parseFile ()
 		{
 			strncpy(gamefolder,val,255);
 		}
+		else if (curmod && !strcmpi(key, "weaponlist"))
+		{
+			strncpy(weaponlist, val, 63);
+		}
 	}
 
 	if ( curmod )
 	{
-		curmod->setup(gamefolder,steamfolder,modtype,bottype);
+		curmod->setup(gamefolder, steamfolder, modtype, bottype, weaponlist);
 		m_Mods.push_back(curmod);
 	}
 
@@ -266,6 +271,7 @@ void CBotMods :: createFile ()
 		fprintf(fp,"# ZOMBIE\n");
 		fprintf(fp,"# DOD\n");
 		fprintf(fp,"#\n");
+		fprintf(fp, "# weaponlists are changeable in config / weapons.ini\n");
 		fprintf(fp,"#\n");
 		fprintf(fp,"#mod = CSS\n");
 		fprintf(fp,"#steamdir = counter-strike source\n");
@@ -296,6 +302,7 @@ void CBotMods :: createFile ()
 		fprintf(fp,"steamdir = orangebox\n");
 		fprintf(fp,"gamedir = dod\n");
 		fprintf(fp,"bot = DOD\n");
+		fprintf(fp, "weaponlist = DOD\n");
 		fprintf(fp,"#\n");
 
 		fclose(fp);
@@ -330,12 +337,15 @@ void CBotMods :: readMods()
 
 //////////////////////////////////////////////////////////////////////////////
 
-void CBotMod :: setup ( const char *szModFolder, const char *szSteamFolder, eModId iModId, eBotType iBotType )
+void CBotMod :: setup ( const char *szModFolder, const char *szSteamFolder, eModId iModId, eBotType iBotType, const char *szWeaponListName )
 {
 	m_szModFolder = CStrings::getString(szModFolder);
 	m_szSteamFolder = CStrings::getString(szSteamFolder);
 	m_iModId = iModId;
 	m_iBotType = iBotType;
+
+	if (szWeaponListName && *szWeaponListName )
+		m_szWeaponListName = CStrings::getString(szWeaponListName);
 }
 
 /*CBot *CBotMod :: makeNewBots ()
@@ -405,6 +415,8 @@ CBotMod *CBotMods :: getMod ( char *szModFolder, char *szSteamFolder )
 void CBotMod :: initMod ()
 {
 	m_bPlayerHasSpawned = false;
+
+	CWeapons::loadWeapons(m_szWeaponListName, NULL);
 }
 
 void CBotMod :: mapInit ()
@@ -436,13 +448,12 @@ bool CHalfLifeDeathmatchMod :: playerSpawned ( edict_t *pPlayer )
 
 void CHalfLifeDeathmatchMod :: initMod ()
 {
-	unsigned int i;
-	// Setup Weapons
-
 	CBots::controlBotSetup(false);
 
-	for ( i = 0; i < HL2DM_WEAPON_MAX; i ++ )
-		CWeapons::addWeapon(new CWeapon(HL2DMWeaps[i]));//.iSlot,HL2DMWeaps[i].szWeaponName,HL2DMWeaps[i].iId,HL2DMWeaps[i].m_iFlags,HL2DMWeaps[i].m_iAmmoIndex,HL2DMWeaps[i].minPrimDist,HL2DMWeaps[i].maxPrimDist,HL2DMWeaps[i].m_iPreference,HL2DMWeaps[i].m_fProjSpeed));
+	CWeapons::loadWeapons((m_szWeaponListName==NULL)?"HL2DM":m_szWeaponListName, HL2DMWeaps);
+	
+//	for ( i = 0; i < HL2DM_WEAPON_MAX; i ++ )
+	//	CWeapons::addWeapon(new CWeapon(HL2DMWeaps[i]));//.iSlot,HL2DMWeaps[i].szWeaponName,HL2DMWeaps[i].iId,HL2DMWeaps[i].m_iFlags,HL2DMWeaps[i].m_iAmmoIndex,HL2DMWeaps[i].minPrimDist,HL2DMWeaps[i].maxPrimDist,HL2DMWeaps[i].m_iPreference,HL2DMWeaps[i].m_fProjSpeed));
 }
 
 void CHalfLifeDeathmatchMod :: mapInit ()

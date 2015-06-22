@@ -43,6 +43,7 @@
 #include "bot_strings.h"
 #include "bot_waypoint_locations.h"
 #include "bot_getprop.h"
+#include "bot_weapons.h"
 
 #include "ndebugoverlay.h"
 
@@ -67,7 +68,7 @@ int CBotGlobals :: m_iEventVersion = 1;
 int CBotGlobals :: m_iWaypointDisplayType = 0;
 char CBotGlobals :: m_szMapName[MAX_MAP_STRING_LEN];
 bool CBotGlobals :: m_bTeamplay = false;
-char CBotGlobals :: m_szRCBotFolder[MAX_PATH_LEN];
+char *CBotGlobals :: m_szRCBotFolder = NULL;
 
 ///////////
 
@@ -166,8 +167,6 @@ int CBotGlobals ::numPlayersOnTeam(int iTeam, bool bAliveOnly)
 void CBotGlobals::readRCBotFolder()
 {
 	KeyValues *mainkv = new KeyValues("Metamod Plugin");
-	
-	m_szRCBotFolder[0] = 0;
 
 	if (mainkv->LoadFromFile(filesystem, "addons/metamod/rcbot2.vdf", "MOD"))
 	{
@@ -175,15 +174,10 @@ void CBotGlobals::readRCBotFolder()
 
 		if (szRCBotFolder && *szRCBotFolder)
 		{
-			strncpy(m_szRCBotFolder, szRCBotFolder, MAX_PATH_LEN - 1);
-			m_szRCBotFolder[MAX_PATH_LEN - 1] = 0;
-			
-			unsigned int len = strlen(m_szRCBotFolder);
-
-			// don't need this
-			if (m_szRCBotFolder[len - 1] == '\\')
-				m_szRCBotFolder[len - 1] = 0;
+			m_szRCBotFolder = CStrings::getString(szRCBotFolder);
 		}
+
+		mainkv->deleteThis();
 	}
 }
 
@@ -978,7 +972,7 @@ FILE *CBotGlobals :: openFile ( char *szFile, char *szMode )
 
 void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const char *szFolder, const char *szExtension, bool bModDependent )
 {
-	if (m_szRCBotFolder[0] == 0)
+	if (m_szRCBotFolder == NULL)
 	{
 #ifdef HOMEFOLDER
 		char home[512];
@@ -1015,7 +1009,7 @@ void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const ch
 	else
 		strcpy(szOutput, m_szRCBotFolder);
 
-	if ( (szOutput[strlen(szOutput)-1] != '\\') || (szOutput[strlen(szOutput)-1] != '/') )
+	if ( (szOutput[strlen(szOutput)-1] != '\\') && (szOutput[strlen(szOutput)-1] != '/') )
 		addDirectoryDelimiter(szOutput);
 
 	if ( szFolder )

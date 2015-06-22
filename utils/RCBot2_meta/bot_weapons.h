@@ -228,27 +228,27 @@ extern WeaponsData_t DODWeaps[];
 class CWeapon
 {
 public:
-	CWeapon ( WeaponsData_t data )
+	CWeapon ( WeaponsData_t *data )
 	{
-		m_iSlot = data.iSlot;
-		setID(data.iId);
-		setName(data.szWeaponName);
+		m_iSlot = data->iSlot;
+		setID(data->iId);
+		setName(data->szWeaponName);
 
-		setFlags(data.m_iFlags);
+		setFlags(data->m_iFlags);
 
 		// shoot distance (default)
-		m_fPrimMinWeaponShootDist = data.minPrimDist;
-		m_fPrimMaxWeaponShootDist = data.maxPrimDist;
+		m_fPrimMinWeaponShootDist = data->minPrimDist;
+		m_fPrimMaxWeaponShootDist = data->maxPrimDist;
 
 		m_fSecMinWeaponShootDist = 0.0f;
 		m_fSecMaxWeaponShootDist = 512.0f;
 
-		m_fProjectileSpeed = data.m_fProjSpeed;
+		m_fProjectileSpeed = data->m_fProjSpeed;
 
-		m_iAmmoIndex1 = data.m_iAmmoIndex;
+		m_iAmmoIndex1 = data->m_iAmmoIndex;
 		m_iAmmoIndex2 = -1;
 
-		m_iPreference = data.m_iPreference;
+		m_iPreference = data->m_iPreference;
 	}
 
 	/*CWeapon( int iSlot, const char *szWeaponName, int iId, int iFlags = 0, int iAmmoIndex = -1, float minPrim =0.0f, float maxPrim = 4096.0f, int iPref = 0, int iAmmoIndex2 = -1 )
@@ -520,6 +520,9 @@ public:
 	static void freeMemory ();
 
 	static edict_t *findWeapon ( edict_t *pPlayer, const char *szWeaponName );
+
+	static void loadWeapons(const char *szWeaponListName, WeaponsData_t *pDefault);
+
 private:
 	// available weapons in game
 	static vector<CWeapon*> m_theWeapons;
