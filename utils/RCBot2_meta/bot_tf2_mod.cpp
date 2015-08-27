@@ -707,7 +707,7 @@ void CTeamFortress2Mod ::modFrame ()
 
 void CTeamFortress2Mod :: initMod ()
 {
-	unsigned int i;
+//	unsigned int i;
 	// Setup Weapons
 
 	CBots::controlBotSetup(true);
@@ -1631,8 +1631,13 @@ void CTeamFortress2Mod::updatePointMaster()
 		if ( pMaster )
 		{
 			extern ConVar rcbot_const_point_master_offset;
-			CBaseEntity *pent = pMaster->GetUnknown()->GetBaseEntity();
-			unsigned long mempoint = ((unsigned long)pent)+rcbot_const_point_master_offset.GetInt();
+
+			extern IServerGameEnts *servergameents;
+
+			CBaseEntity *pMasterEntity = servergameents->EdictToBaseEntity(pMaster);
+			unsigned long full_size = sizeof(pMasterEntity);
+
+			unsigned long mempoint = ((unsigned long)pMasterEntity) + rcbot_const_point_master_offset.GetInt();
 
 			m_PointMaster = (CTeamControlPointMaster*)mempoint;
 

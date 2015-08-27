@@ -318,6 +318,29 @@ public:
 	bool *m_bInSetup;
 };
 
+class variant_t
+{
+	union
+	{
+		bool bVal;
+		string_t iszVal;
+		int iVal;
+		float flVal;
+		float vecVal[3];
+		color32 rgbaVal;
+	};
+	CHandle<CBaseEntity> eVal; // this can't be in the union because it has a constructor. 
+	fieldtype_t fieldType;
+};
+
+class CEventAction;
+
+class COutputEvent
+{
+	variant_t m_Value;
+	CEventAction *m_ActionList;
+	DECLARE_SIMPLE_DATADESC();
+};
 
 class CTeamControlPointMaster
 {
@@ -348,27 +371,15 @@ public:
 
 	bool m_bFirstRoundAfterRestart;
 
+	COutputEvent m_OnWonByTeam1;
+	COutputEvent m_OnWonByTeam2;
+	
+	float m_flPartialCapturePointsRate;
+	float m_flLastOwnershipChangeTime;
+
 };
 
-
-class CEventAction;
 class CSoundPatch;
-
-class variant_t
-{
-	union
-	{
-		bool bVal;
-		string_t iszVal;
-		int iVal;
-		float flVal;
-		float vecVal[3];
-		color32 rgbaVal;
-	};
-	CHandle<CBaseEntity> eVal; // this can't be in the union because it has a constructor.
-
-	fieldtype_t fieldType;
-};
 
 class CBaseEntityOutput
 {
@@ -377,6 +388,7 @@ public:
 	// end variant_t
 	CEventAction *m_ActionList;
 };
+
 // From latest GITHUB
 class CTeamControlPoint
 {

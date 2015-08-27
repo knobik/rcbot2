@@ -794,7 +794,6 @@ bool RCBotPluginMeta::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxle
 	if (fp)
 		fclose(fp);
 
-	//SH_MANUALHOOK_RECONFIGURE(MHook_PlayerRunCmd, 0, 0, 0);
 	SH_MANUALHOOK_RECONFIGURE(MHook_PlayerRunCmd,rcbot_runplayercmd_tf2.GetInt(),0,0);
 	SH_MANUALHOOK_RECONFIGURE(MHook_GiveNamedItem,rcbot_givenameditem_offset.GetInt(),0,0);
 
@@ -1110,8 +1109,8 @@ void RCBotPluginMeta::Hook_GameFrame(bool simulating)
 	if ( simulating && CBotGlobals::IsMapRunning() )
 	{
 		CBots::botThink();
-		if ( !CBots::controlBots() )
-			gameclients->PostClientMessagesSent();
+		//if ( !CBots::controlBots() )
+			//gameclients->PostClientMessagesSent();
 		CBots::handleAutomaticControl();
 		CClients::clientThink();
 
