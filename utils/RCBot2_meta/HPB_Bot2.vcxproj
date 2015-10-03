@@ -80,8 +80,9 @@
     <CustomBuildStep>
       <Command>copy $(TargetPath) "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\rcbot2meta.dll"
 copy $(TargetPath) "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\rcbot2meta.dll"
+copy $(TargetPath) "C:\Program Files (x86)\Steam\SteamApps\common\Day of Defeat Source\dod\addons\rcbot2meta.dll"
 </Command>
-      <Outputs>C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\rcbot2meta.dll;C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\rcbot2meta.dll;%(Outputs)</Outputs>
+      <Outputs>C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\rcbot2meta.dll;C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\rcbot2meta.dll;C:\Program Files (x86)\Steam\SteamApps\common\Day of Defeat Source\dod\addons\rcbot2meta.dll;%(Outputs)</Outputs>
     </CustomBuildStep>
     <Midl>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -103,7 +104,7 @@ copy $(TargetPath) "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 De
       <ObjectFileName>.\Debug/</ObjectFileName>
       <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
-      <WarningLevel>Level4</WarningLevel>
+      <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
@@ -176,7 +177,7 @@ copy "$(ProjectDir)\update.txt" "C:\Program Files (x86)\Steam\steamapps\paul.mur
       <ObjectFileName>.\Release/</ObjectFileName>
       <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
