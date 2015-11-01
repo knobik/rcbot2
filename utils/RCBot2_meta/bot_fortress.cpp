@@ -2900,6 +2900,7 @@ void CBotTF2::modThink()
 				{
 					m_pSchedules->freeMemory(); // Could mess up weapons
 					m_pWeapons->resetSignature();
+					m_pWeapons->update(overrideAmmoTypes());
 				}
 			}
 		}
