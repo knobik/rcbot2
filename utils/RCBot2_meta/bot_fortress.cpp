@@ -3937,6 +3937,10 @@ bool CBotTF2 :: setVisible ( edict_t *pEntity, bool bVisible )
 			m_pBluePayloadBomb = pEntity;
 			CTeamFortress2Mod::updateBluePayloadBomb(pEntity);
 		}
+		else if (CTeamFortress2Mod::isMapType(TF_MAP_MVM) && CTeamFortress2Mod::isTankBoss(pEntity))
+		{
+			CTeamFortress2Mod::checkMVMTankBoss(pEntity);
+		}
 	}
 
 	if ( bValid && bVisible )
@@ -5805,10 +5809,16 @@ bool CBotTF2 :: executeAction ( CBotUtility *util )//eBotAction id, CWaypoint *p
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(m_vDispenser,150,-1,true,false,true,NULL,false,getTeam(),true,false,Vector(0,0,0),CWaypointTypes::W_FL_SENTRY));
 				
 				// no use going back to this waypoint
-				if ( pWaypoint && (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea) )
+				if (pWaypoint && (pWaypoint->getArea() > 0) && (pWaypoint->getArea() != m_iCurrentAttackArea) && (pWaypoint->getArea() != m_iCurrentDefendArea))
+				{
 					pWaypoint = NULL;
+					m_bDispenserVectorValid = false;
+				}
+				else if (pWaypoint == NULL)
+					m_bDispenserVectorValid = false;
 			}
-			else if ( m_pSentryGun.get() != NULL )
+			
+			if ((pWaypoint == NULL) && (m_pSentryGun.get() != NULL))
 				pWaypoint = CWaypoints::getWaypoint(CWaypointLocations::NearestWaypoint(CBotGlobals::entityOrigin(m_pSentryGun),150,-1,true,false,true,NULL,false,getTeam(),true));			
 
 			if ( pWaypoint )
@@ -7203,7 +7213,7 @@ void CBotTF2::waitRemoveSap ()
 
 void CBotTF2::roundReset(bool bFullReset)
 {
-	if (CTeamFortress2Mod::isMapType(TF_MAP_MVM) && CTeamFortress2Mod::isLosingTeam(m_iTeam))
+	if (CTeamFortress2Mod::isMapType(TF_MAP_MVM) && !CTeamFortress2Mod::wonLastRound(m_iTeam))
 		m_fSpawnTime = engine->Time();
 
 	m_pRedPayloadBomb = NULL;

@@ -81,6 +81,7 @@ MyEHandle CTeamFortress2Mod::m_pPayLoadBombBlue = MyEHandle(NULL);
 MyEHandle CTeamFortress2Mod::m_pPayLoadBombRed = MyEHandle(NULL);
 bool CTeamFortress2Mod::m_bRoundOver = false;
 int CTeamFortress2Mod::m_iWinningTeam = 0;
+int CTeamFortress2Mod::m_iLastWinningTeam = 0;
 Vector CTeamFortress2Mod::m_vFlagLocationBlue = Vector(0,0,0);
 Vector CTeamFortress2Mod::m_vFlagLocationRed = Vector(0,0,0);
 bool CTeamFortress2Mod::m_bFlagLocationValidBlue = false;
@@ -93,7 +94,10 @@ bool CTeamFortress2Mod::m_bMVMAlarmSounded = false;
 float CTeamFortress2Mod::m_fMVMCapturePointRadius = 0.0f;
 int CTeamFortress2Mod::m_iCapturePointWptID = -1;
 int CTeamFortress2Mod::m_iFlagPointWptID = -1;
-vector<CTF2Loadout*> CTeamFortress2Mod::m_pLoadoutWeapons[TF2_SLOT_MAX][9];
+vector<CTF2Loadout*> CTeamFortress2Mod::m_pLoadoutWeapons[TF2_SLOT_MAX][9]; 
+MyEHandle CTeamFortress2Mod::m_pNearestTankBoss = NULL;
+float CTeamFortress2Mod::m_fNearestTankDistance = 0.0f;
+Vector CTeamFortress2Mod::m_vNearestTankLocation = Vector(0, 0, 0);
 
 extern ConVar bot_use_disp_dist;
 
@@ -137,7 +141,6 @@ CTF2Loadout :: CTF2Loadout ( const char *pszClassname, int iIndex, int iQuality,
 	m_bCanBeUsedInMedieval = false;
 
 }
-
 void CSCICopy(CEconItemView *olditem, CEconItemView *newitem)
 {
 	memset(newitem, 0, sizeof(CEconItemView));
@@ -165,13 +168,6 @@ void CSCICopy(CEconItemView *olditem, CEconItemView *newitem)
 	copymember(m_unHalloweenAltRGB);
 	copymember(m_unRGB);
 	copymember(m_unAltRGB);
-
-	copymember(m_pWeaponSkinBase);
-	copymember(m_pWeaponSkinBaseCompositor);
-
-	copymember(m_Unk1);
-	copymember(m_Unk2);
-	copymember(m_Unk3);
 
 	copymember(m_iTeamNumber);
 
@@ -745,11 +741,15 @@ void CTeamFortress2Mod :: mapInit ()
 {
 	CBotMod::mapInit();
 
+	m_vNearestTankLocation = Vector(0, 0, 0);
+
 	unsigned int i = 0;
 	string_t mapname = gpGlobals->mapname;
 
 	const char *szmapname = mapname.ToCStr();
 
+	m_iLastWinningTeam = 0;
+	m_iWinningTeam = 0;
 	m_pResourceEntity = NULL;
 	m_ObjectiveResource.m_ObjectiveResource = NULL;
 	m_ObjectiveResource.reset();
@@ -1005,6 +1005,7 @@ int CTeamFortress2Mod :: getDispenserLevel ( edict_t *pDispenser )
 	//if ( pSentry && pSentry->
 }
 
+
 int CTeamFortress2Mod :: getEnemyTeam ( int iTeam )
 {
 	return (iTeam == TF2_TEAM_BLUE)?TF2_TEAM_RED:TF2_TEAM_BLUE;
@@ -1058,7 +1059,7 @@ bool CTeamFortress2Mod ::isBoss ( edict_t *pEntity, float *fFactor )
 	{
 		if ( m_pBoss.get() == pEntity )
 			return true;
-		else if (strcmp(pEntity->GetClassName(),"tank_boss")==0)
+		else if (isTankBoss(pEntity))
 		{
 			if ( fFactor != NULL )
 				*fFactor = 200.0f;
@@ -1085,6 +1086,11 @@ float CTeamFortress2Mod :: getTeleportTime ( edict_t *pOwner )
 bool CTeamFortress2Mod :: isSentry ( edict_t *pEntity, int iTeam, bool checkcarrying )
 {
 	return (!iTeam || (iTeam == getTeam(pEntity))) && (strcmp(pEntity->GetClassName(),"obj_sentrygun")==0) && (checkcarrying||!CClassInterface::isSentryGunBeingPlaced(pEntity));
+}
+
+bool CTeamFortress2Mod::isTankBoss(edict_t *pEntity)
+{
+	return (strcmp(pEntity->GetClassName(), "tank_boss") == 0);
 }
 
 bool CTeamFortress2Mod :: isTeleporter ( edict_t *pEntity, int iTeam, bool checkcarrying )
@@ -1311,16 +1317,41 @@ bool CTeamFortress2Mod :: isPayloadBomb ( edict_t *pEntity, int iTeam )
 	return ((strncmp(pEntity->GetClassName(),"mapobj_cart_dispenser",21)==0) && (CClassInterface::getTeam(pEntity)==iTeam));
 }
 
+
+void CTeamFortress2Mod::checkMVMTankBoss(edict_t *pEntity)
+{
+	float fTankDistance = CBotGlobals::entityOrigin(pEntity).DistTo(m_vMVMCapturePoint);
+
+	if ( CBotGlobals::entityIsAlive(pEntity) && ((m_fNearestTankDistance == 0.0f) || (fTankDistance < m_fNearestTankDistance)))
+	{
+		m_fNearestTankDistance = fTankDistance;
+		m_pNearestTankBoss = pEntity;
+		m_vNearestTankLocation = CBotGlobals::entityOrigin(pEntity);
+	}
+}
+
 CWaypoint *CTeamFortress2Mod :: getBestWaypointMVM ( CBot *pBot, int iFlags )
 {
 	Vector vFlagLocation;
 
 	bool bFlagLocationValid = CTeamFortress2Mod::getFlagLocation(TF2_TEAM_BLUE,&vFlagLocation);		
 
+	float fTankDistance = 0.0f;
+
+	edict_t *pTank;
+	// check tank boss is valid
+	if ((pTank=m_pNearestTankBoss.get()) != NULL)
+	{
+		if (CBotGlobals::entityIsAlive(pTank) == false)
+			m_pNearestTankBoss = NULL;
+	}
+
 	if ( hasRoundStarted() && m_bMVMFlagStartValid && m_bMVMCapturePointValid && bFlagLocationValid )
 	{
 		if ( m_bMVMAlarmSounded )
 			return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&m_vMVMCapturePoint,-1,true,m_iCapturePointWptID);
+		else if ((m_pNearestTankBoss.get() != NULL) && (m_fNearestTankDistance < vFlagLocation.DistTo(m_vMVMCapturePoint)))
+			return CWaypoints::randomWaypointGoalBetweenArea(iFlags, TF2_TEAM_RED, 0, false, pBot, true, &m_vNearestTankLocation, &m_vMVMCapturePoint, true, -1, m_iCapturePointWptID);
 		else if ( ((m_vMVMFlagStart-vFlagLocation).Length()<1024.0f) )
 			return CWaypoints::randomWaypointGoalNearestArea(iFlags,TF2_TEAM_RED,0,false,pBot,true,&vFlagLocation,-1,true);
 		else 
@@ -1721,6 +1752,9 @@ void CTeamFortress2Mod :: roundReset ()
 
 	}
 
+	m_pNearestTankBoss = NULL;
+	m_fNearestTankDistance = 0.0f;
+
 	m_iWinningTeam = 0;
 	m_bRoundOver = false;
 	m_bHasRoundStarted = false;
@@ -1737,7 +1771,7 @@ void CTeamFortress2Mod :: roundReset ()
 
 			if ( pGoal )
 			{
-				m_vMVMFlagStart = m_vFlagLocationBlue = pGoal->getOrigin();
+				m_vNearestTankLocation = m_vMVMFlagStart = m_vFlagLocationBlue = pGoal->getOrigin();
 				m_bMVMFlagStartValid = m_bFlagLocationValidBlue = true;
 				m_iFlagPointWptID = CWaypoints::getWaypointIndex(pGoal);
 			}			
