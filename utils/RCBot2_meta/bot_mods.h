@@ -80,6 +80,31 @@ typedef enum
 	BOTTYPE_MAX
 }eBotType;
 
+
+// tf2
+class CAttributeID
+{
+public:
+	CAttributeID(int id, const char *attrib)
+	{
+		m_id = id;
+		m_attribute = attrib;
+	}
+
+	int m_id;
+	const char *m_attribute;
+};
+
+class CAttributeLookup
+{
+public:
+	static void addAttribute(const char *szAttrib, int id);
+	static int findAttributeID(const char *szAttrib);
+	static void freeMemory();
+private:
+	static vector<CAttributeID*> attributes;
+};
+
 class CBotMod
 {
 public:

@@ -3174,13 +3174,13 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 
 		extern ConVar *sv_cheats;
 	
-		const char *pparg[1];
+		//const char *pparg[1];
 
-		pparg[0] = cmd;
+		//pparg[0] = cmd;
 
 		sprintf(cmd,"%s -name \"%s\"\n",BOT_ADD_PUPPET_COMMAND,szOVName);
 
-		CCommand *com = new CCommand(1,pparg);
+		//CCommand *com = new CCommand(1,pparg);
 
 		int *m_nFlags = (int*)((unsigned long)sv_cheats + BOT_CONVAR_FLAGS_OFFSET); // 20 is offset to flags
 
@@ -3191,7 +3191,13 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 			sv_cheats->SetValue(1);
 
 		m_bControlNext = true;
-		((ConCommand*)puppet_bot_cmd)->Dispatch(*com);
+		//((ConCommand*)puppet_bot_cmd)->Dispatch(*com);
+
+
+		//nightc0re
+		engine->ServerCommand(cmd);
+		engine->ServerExecute();
+
 
 		if ( pMod->needCheatsHack() )
 			sv_cheats->SetValue(0);
@@ -3200,7 +3206,7 @@ bool CBots :: createBot (const char *szClass, const char *szTeam, const char *sz
 
 		///sv_cheats->
 
-		delete com;
+		//delete com;
 /*
 		if ( szTeam && *szTeam )
 		{
