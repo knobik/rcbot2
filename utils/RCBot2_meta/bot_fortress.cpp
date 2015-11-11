@@ -7213,9 +7213,6 @@ void CBotTF2::waitRemoveSap ()
 
 void CBotTF2::roundReset(bool bFullReset)
 {
-	if (CTeamFortress2Mod::isMapType(TF_MAP_MVM) && !CTeamFortress2Mod::wonLastRound(m_iTeam))
-		m_fSpawnTime = engine->Time();
-
 	m_pRedPayloadBomb = NULL;
 	m_pBluePayloadBomb = NULL;
 	m_fLastKnownTeamFlagTime = 0.0f;
@@ -7258,6 +7255,18 @@ void CBotTF2::roundReset(bool bFullReset)
 	//CPoints::getAreas(getTeam(),&m_iCurrentDefendArea,&m_iCurrentAttackArea);
 
 	//m_pPayloadBomb = NULL;
+
+	if (CTeamFortress2Mod::isMapType(TF_MAP_MVM))
+	{
+		if (!CTeamFortress2Mod::wonLastRound(m_iTeam))
+		{
+			//lost - reset spawn time
+			m_fSpawnTime = engine->Time();
+			m_fSentryPlaceTime = 0.0f;
+			m_fDispenserPlaceTime = 0.0f;
+		}
+	}
+
 }
 
 void CBotTF2::updateAttackDefendPoints()
@@ -7587,14 +7596,32 @@ void CBotTF2::MannVsMachineWaveComplete()
 	if ( (m_iClass != TF_CLASS_ENGINEER) || !isCarrying() )
 		m_pSchedules->freeMemory();
 
+	m_fLastKnownTeamFlagTime = 0.0f;
+	m_pPrevSpy = NULL;
+
+	flagReset();
+	teamFlagReset();
+
+	m_pNavigator->clear();
+
 	setLastEnemy(NULL);
 	
 	reload();
 	
-	m_fSentryPlaceTime = 1.0f;
-	m_fLastSentryEnemyTime = 0.0f;
-	
-	m_fDispenserPlaceTime = 1.0f;
+	if (m_pSentryGun.get() != NULL)
+	{
+		CWaypoint *pBest = CTeamFortress2Mod::getBestWaypointMVM(this, CWaypointTypes::W_FL_SENTRY);
+
+		if (!pBest || (pBest->distanceFrom(CBotGlobals::entityOrigin(m_pSentryGun)) > 768))
+		{
+			//move
+			m_fSentryPlaceTime = 1.0f;
+			m_fDispenserPlaceTime = 1.0f;
+			m_fLastSentryEnemyTime = 0.0f;
+			m_iSentryKills = 0;
+			m_fDispenserHealAmount = 0;
+		}
+	}
 }
 
 void CBotTF2::MannVsMachineAlarmTriggered(Vector vLoc)
