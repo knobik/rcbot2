@@ -1921,8 +1921,8 @@ void CBot :: updateStatistics ()
 	}
 
 	edict_t *pPlayer = INDEXENT(m_iStatsIndex++);
-
-	if (!pPlayer || !pPlayer->IsFree())
+	 
+	if (!pPlayer || pPlayer->IsFree())
 		return; // not valid
 
 	if ( pPlayer == m_pEdict )

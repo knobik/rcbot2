@@ -78,9 +78,9 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <CustomBuildStep>
-      <Command>copy $(TargetPath) "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\rcbot2meta.dll"
-copy $(TargetPath) "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\rcbot2meta.dll"
-copy $(TargetPath) "C:\Program Files (x86)\Steam\SteamApps\common\Day of Defeat Source\dod\addons\rcbot2meta.dll"
+      <Command>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\rcbot2meta.dll"
+copy "$(TargetPath)" "C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\rcbot2meta.dll"
+copy "$(TargetPath)" "C:\Program Files (x86)\Steam\SteamApps\common\Day of Defeat Source\dod\addons\rcbot2meta.dll"
 </Command>
       <Outputs>C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\rcbot2meta.dll;C:\Program Files (x86)\Steam\SteamApps\common\Half-Life 2 Deathmatch\hl2mp\addons\rcbot2meta.dll;C:\Program Files (x86)\Steam\SteamApps\common\Day of Defeat Source\dod\addons\rcbot2meta.dll;%(Outputs)</Outputs>
     </CustomBuildStep>

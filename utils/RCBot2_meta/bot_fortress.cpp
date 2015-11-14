@@ -7264,6 +7264,7 @@ void CBotTF2::roundReset(bool bFullReset)
 			m_fSpawnTime = engine->Time();
 			m_fSentryPlaceTime = 0.0f;
 			m_fDispenserPlaceTime = 0.0f;
+			spawnInit(); // bots will respawn
 		}
 	}
 
@@ -7626,15 +7627,34 @@ void CBotTF2::MannVsMachineWaveComplete()
 
 void CBotTF2::MannVsMachineAlarmTriggered(Vector vLoc)
 {
-
 	if ( m_iClass == TF_CLASS_ENGINEER )
 	{
 		edict_t *pSentry;
 
 		if ( (pSentry = m_pSentryGun.get()) != NULL )
 		{
-			if ( CTeamFortress2Mod::getSentryLevel(pSentry) < 3 )
+			if (CTeamFortress2Mod::getSentryLevel(pSentry) < 3)
+			{				
 				return;
+			}
+			else
+			{
+				if ((m_fLastSentryEnemyTime + 5.0f) > engine->Time())
+				{
+					CWaypoint *pWaypoint = CTeamFortress2Mod::getBestWaypointMVM(this, CWaypointTypes::W_FL_SENTRY);
+
+					Vector vSentry = CBotGlobals::entityOrigin(pSentry);
+
+					float fDist = pWaypoint->distanceFrom(vSentry);
+
+					if (fDist > 1024.0f)
+					{
+						// move sentry
+						m_iSentryKills = 0;
+						m_fSentryPlaceTime = 1.0f;
+					}
+				}
+			}
 
 			// don't defend work on sentry!!!
 		}
