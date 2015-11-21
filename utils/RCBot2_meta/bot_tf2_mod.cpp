@@ -1539,7 +1539,10 @@ edict_t *CTeamFortress2Mod::getBuilding (eEngiBuild object, edict_t *pOwner)
 	static short int i;
 	static tf_tele_t *tele;
 
-	i = ENTINDEX(pOwner)+1;
+	i = ENTINDEX(pOwner)-1;
+
+	if (i < 0)
+		return NULL;
 
 	switch ( object )
 	{
@@ -1793,7 +1796,6 @@ void CTeamFortress2Mod :: roundReset ()
 	m_iFlagCarrierTeam = 0;
 	m_pPayLoadBombBlue = NULL;
 	m_pPayLoadBombRed = NULL;
-
 
 	if ( isMapType(TF_MAP_MVM) )	
 	{

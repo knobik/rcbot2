@@ -665,7 +665,7 @@ void CBot :: reachedCoverSpot (int flags)
 // something now visiable or not visible anymore
 bool CBot :: setVisible ( edict_t *pEntity, bool bVisible )
 {
-	bool bValid = (pEntity->GetUnknown()!=NULL);
+	bool bValid = CBotGlobals::entityIsValid(pEntity);// (pEntity->GetUnknown() != NULL);
 
 	if ( bValid && bVisible )
 	{

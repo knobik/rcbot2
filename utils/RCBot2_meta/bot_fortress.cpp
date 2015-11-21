@@ -5166,21 +5166,24 @@ bool CBotTF2 ::deployStickies(eDemoTrapType type, Vector vStand, Vector vLocatio
 				*fTime = engine->Time() + randomFloat(1.0f,1.5f);
 				*iState = 1;
 				*iStickyNum = *iStickyNum - 1;
+				m_iTrapType = type;
 			}
 		}
 
 		if ( (*iStickyNum == 0) || (iPipesLeft==0)  )
-		{
-			m_iTrapType = type;
+		{			
 			if ( IN_RANGE(wptindex,1,MAX_CONTROL_POINTS+1) )
 				m_iTrapCPIndex = CTeamFortress2Mod::m_ObjectiveResource.m_WaypointAreaToIndexTranslation[wptindex];
 			else
 				m_iTrapCPIndex = -1;
 			m_vStickyLocation = vLocation;
+
+			// complete
+			return true;
 		}
 	}
 
-	return m_iTrapType!=TF_TRAP_TYPE_NONE;
+	return false;
 }
 
 void CBotTF2::detonateStickies(bool isJumping)
