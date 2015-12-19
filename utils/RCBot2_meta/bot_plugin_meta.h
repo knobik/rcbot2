@@ -54,6 +54,7 @@ class CUserCmd;
 class IMoveHelper;
 class CEconItemView;
 class CTF2Loadout;
+class CEconWearable;
 
 #if defined WIN32 && !defined snprintf
 #define snprintf _snprintf
@@ -89,6 +90,9 @@ public: //hooks
 	bool FireGameEvent( IGameEvent *pevent, bool bDontBroadcast );
 	void Hook_PlayerRunCmd(CUserCmd *ucmd, IMoveHelper *moveHelper);
 	CBaseEntity *Hook_GiveNamedItem(const char *name, int subtype, CEconItemView *cscript, bool b);
+	void Hook_EquipWearable(CEconWearable *pItem);
+	void Hook_EquipWeapon(CBaseEntity *pWeapon);
+
 	bool Hook_ClientConnect(edict_t *pEntity, 
 		const char *pszName,
 		const char *pszAddress,

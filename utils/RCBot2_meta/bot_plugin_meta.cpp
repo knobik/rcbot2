@@ -54,7 +54,7 @@
 #include "bot_waypoint_visibility.h"
 #include "bot_kv.h"
 #include "bot_sigscan.h"
-
+#include "bot_profiling.h"
 //#include "ndebugoverlay.h"
 CBotTF2 *g_pLastBot;
 
@@ -81,6 +81,11 @@ SH_DECL_HOOK1_void(IServerGameClients, ClientCommand, SH_NOATTRIB, 0, edict_t *)
 SH_DECL_MANUALHOOK2_void(MHook_PlayerRunCmd, 0, 0, 0, CUserCmd*, IMoveHelper*); 
 SH_DECL_MANUALHOOK4(MHook_GiveNamedItem, 0, 0, 0,CBaseEntity*, const char *,int,CEconItemView*,bool); 
 
+SH_DECL_MANUALHOOK1_void(MHook_EquipWearable, 0, 0, 0, CEconWearable*);
+SH_DECL_MANUALHOOK1_void(MHook_EquipWeapon, 0, 0, 0, CBaseEntity*);
+
+//SH_DECL_MANUALHOOK1(MHook_WeaponEquip,0,0,0)
+
 /*
 SH_DECL_HOOK1_void(bf_write, WriteChar, SH_NOATTRIB, 0, int);
 SH_DECL_HOOK1_void(bf_write, WriteShort, SH_NOATTRIB, 0, int);
@@ -97,12 +102,12 @@ bf_write *current_msg = NULL;
 char current_msg_buffer[BUF_SIZ];
 */
 
-CBaseEntity* (CBaseEntity::*TF2EquipWearable)(CBaseEntity*) = 0x0;
+//CBaseEntity* (CBaseEntity::*TF2EquipWearable)(CBaseEntity*) = 0x0;
 CBaseEntity* (CBaseEntity::*TF2PlayerWeaponSlot)(int) = 0x0;
 void (CAttributeManager::*OnAttributeValuesChanged)(void) = 0x0;
 void (CBaseEntity::*TF2RemoveWearable)(CBaseEntity*) = 0x0;
 void (CBaseEntity::*TF2RemovePlayerItem)(CBaseEntity*) = 0x0;
-void (CBaseEntity::*TF2WeaponEquip)(CBaseEntity*) = 0x0;
+//void (CBaseEntity::*TF2WeaponEquip)(CBaseEntity*) = 0x0;
 CAttributeList *(CBaseEntity::*TF2GetAttributeList)(void) = 0x0;
 
 IServerGameDLL *server = NULL;
@@ -277,10 +282,13 @@ bool RCBotPluginMeta :: ClearAttributeCache(edict_t *pedict)
 void RCBotPluginMeta::TF2_equipWearable(edict_t *pPlayer, CBaseEntity *pWearable)
 {
 	CBaseEntity *pEnt = servergameents->EdictToBaseEntity(pPlayer);
-	unsigned int *mem = (unsigned int*)*(unsigned int*)pEnt;
-	int offset = rcbot_equipwearable_offset.GetInt();
-	*(unsigned int*)&TF2EquipWearable = mem[offset];
-	(*pEnt.*TF2EquipWearable)(pWearable);
+	//unsigned int *mem = (unsigned int*)*(unsigned int*)pEnt;
+	//int offset = rcbot_equipwearable_offset.GetInt();
+	//*(unsigned int*)&TF2EquipWearable = mem[offset];
+
+	SH_MCALL(pEnt, MHook_EquipWearable)((CEconWearable*)pWearable);
+
+	//(*pEnt.*TF2EquipWearable)(pWearable);
 }
 /*			
 "CAttributeManager::OnAttributeValuesChanged"	//use instead of ClearCache/NotifyManagerOfAttributeValueChanges
@@ -403,12 +411,14 @@ void RCBotPluginMeta::HudTextMessage(edict_t *pEntity, const char *szMessage)
 void RCBotPluginMeta::TF2_equipWeapon(edict_t *pPlayer, CBaseEntity *pWeapon)
 {
 	CBaseEntity *pEnt = servergameents->EdictToBaseEntity(pPlayer);
-	unsigned int *mem = (unsigned int*)*(unsigned int*)pEnt;
-	int offset = rcbot_weaponequip_offset.GetInt();
+	//unsigned int *mem = (unsigned int*)*(unsigned int*)pEnt;
+	//int offset = rcbot_weaponequip_offset.GetInt();
 
-	*(unsigned int*)&TF2WeaponEquip = mem[offset];
+	//*(unsigned int*)&TF2WeaponEquip = mem[offset];
 
-	(*pEnt.*TF2WeaponEquip)(pWeapon);
+	//(*pEnt.*TF2WeaponEquip)(pWeapon);
+
+	SH_MCALL(pEnt, MHook_EquipWeapon)(pWeapon);
 }
 
 void RCBotPluginMeta::TF2_removePlayerItem(edict_t *pPlayer, CBaseEntity *pItem)
@@ -540,6 +550,16 @@ void RCBotPluginMeta::Hook_PlayerRunCmd(CUserCmd *ucmd, IMoveHelper *moveHelper)
 //g_pSM->LogMessage(NULL, "H %i %i %f %f %f %f %i", ucmd->command_number, ucmd->tick_count, ucmd->viewangles.x, ucmd->viewangles.y, ucmd->viewangles.z, ucmd->forwardmove, ucmd->buttons); 
 
 RETURN_META(MRES_IGNORED); 
+}
+
+void RCBotPluginMeta::Hook_EquipWeapon(CBaseEntity *pWeapon)
+{
+	RETURN_META(MRES_IGNORED);
+}
+
+void RCBotPluginMeta::Hook_EquipWearable(CEconWearable *pItem)
+{
+	RETURN_META(MRES_IGNORED);
 }
 
 CBaseEntity *RCBotPluginMeta::Hook_GiveNamedItem( const char *name, int subtype, CEconItemView *cscript, bool b )
@@ -829,8 +849,15 @@ bool RCBotPluginMeta::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxle
 		else if (pMod->getModId() == MOD_DOD)
 			SH_MANUALHOOK_RECONFIGURE(MHook_PlayerRunCmd, rcbot_runplayercmd_dods.GetInt(), 0, 0);
 	}
-	if (pMod->getModId() == MOD_TF2) 
-		SH_MANUALHOOK_RECONFIGURE(MHook_GiveNamedItem,rcbot_givenameditem_offset.GetInt(),0,0);
+	if (pMod->getModId() == MOD_TF2)
+	{
+		SH_MANUALHOOK_RECONFIGURE(MHook_GiveNamedItem, rcbot_givenameditem_offset.GetInt(), 0, 0);
+
+		SH_MANUALHOOK_RECONFIGURE(MHook_EquipWearable, rcbot_equipwearable_offset.GetInt(), 0, 0);
+
+		SH_MANUALHOOK_RECONFIGURE(MHook_EquipWeapon, rcbot_weaponequip_offset.GetInt(), 0, 0);
+		
+	}
 
 	ENGINE_CALL(LogPrint)("All hooks started!\n");
 
@@ -1104,8 +1131,14 @@ void RCBotPluginMeta::Hook_ClientPutInServer(edict_t *pEntity, char const *playe
 	{
 		if (CBots::controlBots())
 			SH_ADD_MANUALHOOK_MEMFUNC(MHook_PlayerRunCmd, pEnt, this, &RCBotPluginMeta::Hook_PlayerRunCmd, false);
-		if ( pMod->getModId() == MOD_TF2 )
+		if (pMod->getModId() == MOD_TF2)
+		{
 			SH_ADD_MANUALHOOK_MEMFUNC(MHook_GiveNamedItem, pEnt, this, &RCBotPluginMeta::Hook_GiveNamedItem, false);
+
+			SH_ADD_MANUALHOOK_MEMFUNC(MHook_EquipWearable, pEnt, this, &RCBotPluginMeta::Hook_EquipWearable, false);
+
+			SH_ADD_MANUALHOOK_MEMFUNC(MHook_EquipWeapon, pEnt, this, &RCBotPluginMeta::Hook_EquipWeapon, false);
+		}
 	}
 }
 
@@ -1119,8 +1152,14 @@ void RCBotPluginMeta::Hook_ClientDisconnect(edict_t *pEntity)
 
 		if (CBots::controlBots())
 			SH_REMOVE_MANUALHOOK_MEMFUNC(MHook_PlayerRunCmd, pEnt, this, &RCBotPluginMeta::Hook_PlayerRunCmd, false);
-		if (pMod->getModId() == MOD_TF2)		
-			SH_REMOVE_MANUALHOOK_MEMFUNC(MHook_GiveNamedItem, pEnt, this, &RCBotPluginMeta::Hook_GiveNamedItem, false); 
+		if (pMod->getModId() == MOD_TF2)
+		{
+			SH_REMOVE_MANUALHOOK_MEMFUNC(MHook_GiveNamedItem, pEnt, this, &RCBotPluginMeta::Hook_GiveNamedItem, false);
+
+			SH_REMOVE_MANUALHOOK_MEMFUNC(MHook_EquipWearable, pEnt, this, &RCBotPluginMeta::Hook_EquipWearable, false);
+
+			SH_REMOVE_MANUALHOOK_MEMFUNC(MHook_EquipWeapon, pEnt, this, &RCBotPluginMeta::Hook_EquipWeapon, false);
+		}
 	}
 
 	CClients::clientDisconnected(pEntity);
