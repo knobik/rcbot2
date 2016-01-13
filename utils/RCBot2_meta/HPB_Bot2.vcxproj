@@ -141,16 +141,11 @@ copy "$(TargetPath)" "C:\Program Files (x86)\Steam\SteamApps\common\Day of Defea
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <CustomBuildStep>
-      <Command>copy "$(TargetPath)" "c:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\half-life deathmatch source\bin\HPB_Bot2.dll"
-copy "$(TargetPath)" "c:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\team fortress 2\bin\HPB_Bot2.dll"
-copy "$(TargetPath)" "c:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\synergy\bin\HPB_Bot2.dll"
-copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\half-life 2 deathmatch\bin\HPB_Bot2.dll"
-copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\day of defeat source\bin\HPB_Bot2.dll"
-copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\Day of Defeat Source\bin\HPB_Bot2.dll"
-copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\Half-Life 2 Deathmatch\bin\HPB_Bot2.dll"
-copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\team fortress 2\bin\HPB_Bot2.dll"
-copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\xxrcinstall\files\HPB_Bot2.dll"
+      <Command>copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\Day of Defeat Source\dod\addons\rcbot2meta.dll"
+copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\common\Half-Life 2 Deathmatch\hl2mp\addons\rcbot2meta.dll"
+copy "$(TargetPath)" "C:\Program Files (x86)\Steam\SteamApps\common\team fortress 2\tf\addons\rcbot2meta.dll"
 copy "$(ProjectDir)\update.txt" "C:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\xxrcinstall\files\rcbot2\manual\version.txt"
+copy "$(TargetPath)" "C:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\xxrcinstall\files\rcbot2meta.dll"
 </Command>
       <Outputs>c:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\half-life deathmatch source\bin\HPB_Bot2.dll;c:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\team fortress 2\bin\HPB_Bot2.dll;c:\Program Files (x86)\Steam\steam-apps\paul.murphy%40ntlworld.com\synergy\bin\HPB_Bot2.dll;C:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\half-life 2 deathmatch\bin\HPB_Bot2.dll;C:\Program Files (x86)\Steam\steamapps\paul.murphy%40ntlworld.com\day of defeat source\bin\HPB_Bot2.dll;C:\Program Files (x86)\Steam\steamapps\common\Day of Defeat Source\bin\HPB_Bot2.dll;C:\Program Files (x86)\Steam\steamapps\common\Half-Life 2 Deathmatch\bin\HPB_Bot2.dll;C:\Program Files (x86)\Steam\steamapps\common\team fortress 2\bin\HPB_Bot2.dll;%(Outputs)</Outputs>
     </CustomBuildStep>

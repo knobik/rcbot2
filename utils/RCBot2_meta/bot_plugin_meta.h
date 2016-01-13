@@ -92,7 +92,7 @@ public: //hooks
 	CBaseEntity *Hook_GiveNamedItem(const char *name, int subtype, CEconItemView *cscript, bool b);
 	void Hook_EquipWearable(CEconWearable *pItem);
 	void Hook_EquipWeapon(CBaseEntity *pWeapon);
-
+	void Hook_RemovePlayerItem(CBaseEntity *pWeapon);
 	bool Hook_ClientConnect(edict_t *pEntity, 
 		const char *pszName,
 		const char *pszAddress,

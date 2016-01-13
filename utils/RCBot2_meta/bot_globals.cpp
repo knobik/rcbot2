@@ -168,6 +168,9 @@ void CBotGlobals::readRCBotFolder()
 {
 	KeyValues *mainkv = new KeyValues("Metamod Plugin");
 
+	// Find the RCBOT2 Path from metamod VDF
+	CBotGlobals::botMessage(NULL, 0, "Reading rcbot2 path from VDF...");
+
 	if (mainkv->LoadFromFile(filesystem, "addons/metamod/rcbot2.vdf", "MOD"))
 	{
 		const char *szRCBotFolder = mainkv->GetString("rcbot2path");
@@ -976,6 +979,7 @@ void CBotGlobals :: buildFileName ( char *szOutput, const char *szFile, const ch
 	{
 #ifdef HOMEFOLDER
 		char home[512];
+		home[0] = 0;
 #endif
 		szOutput[0] = 0;
 

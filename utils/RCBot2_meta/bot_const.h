@@ -192,9 +192,13 @@ typedef enum
 #define BUILDNUM "365"*/
 #define BOT_NAME "RCBot"
 #ifdef __linux__
-#define BOT_VER "TF2/HL2DM/DOD:S 1.01 META linux 481 (BUILD " __DATE__ "-" __TIME__ ")" //bir3yk
+#define BOT_VER "TF2/HL2DM/DOD:S 1.02 META linux 483 (BUILD " __DATE__ "-" __TIME__ ")" //bir3yk
 #else
-#define BOT_VER "TF2/HL2DM/DOD:S 1.01 META win32 481 (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
+#ifdef _DEBUG
+#define BOT_VER "TF2/HL2DM/DOD:S 1.02 META win32 483 DEBUG (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
+#else
+#define BOT_VER "TF2/HL2DM/DOD:S 1.02 META win32 483 RELEASE (BUILD " ## __DATE__ ## "-" ## __TIME__ ## ")"
+#endif
 #endif
 #define BOT_NAME_VER "RCbot version"
 #define BOT_VER_CVAR "rcbot_ver"

@@ -84,6 +84,8 @@ SH_DECL_MANUALHOOK4(MHook_GiveNamedItem, 0, 0, 0,CBaseEntity*, const char *,int,
 SH_DECL_MANUALHOOK1_void(MHook_EquipWearable, 0, 0, 0, CEconWearable*);
 SH_DECL_MANUALHOOK1_void(MHook_EquipWeapon, 0, 0, 0, CBaseEntity*);
 
+SH_DECL_MANUALHOOK1_void(MHook_RemovePlayerItem, 0, 0, 0, CBaseEntity*);
+
 //SH_DECL_MANUALHOOK1(MHook_WeaponEquip,0,0,0)
 
 /*
@@ -424,12 +426,14 @@ void RCBotPluginMeta::TF2_equipWeapon(edict_t *pPlayer, CBaseEntity *pWeapon)
 void RCBotPluginMeta::TF2_removePlayerItem(edict_t *pPlayer, CBaseEntity *pItem)
 {
 	CBaseEntity *pEnt = servergameents->EdictToBaseEntity(pPlayer);
-	unsigned int *mem = (unsigned int*)*(unsigned int*)pEnt;
-	int offset = rcbot_rmplayeritem_offset.GetInt();
+	//unsigned int *mem = (unsigned int*)*(unsigned int*)pEnt;
+	//int offset = rcbot_rmplayeritem_offset.GetInt();
 
-	*(unsigned int*)&TF2RemovePlayerItem = mem[offset];
+	//*(unsigned int*)&TF2RemovePlayerItem = mem[offset];
 
-	(*pEnt.*TF2RemovePlayerItem)(pItem);
+	//(*pEnt.*TF2RemovePlayerItem)(pItem);
+
+	SH_MCALL(pEnt, MHook_RemovePlayerItem)(pItem);
 }
 
 
@@ -553,6 +557,11 @@ RETURN_META(MRES_IGNORED);
 }
 
 void RCBotPluginMeta::Hook_EquipWeapon(CBaseEntity *pWeapon)
+{
+	RETURN_META(MRES_IGNORED);
+}
+
+void RCBotPluginMeta::Hook_RemovePlayerItem(CBaseEntity *pWeapon)
 {
 	RETURN_META(MRES_IGNORED);
 }
@@ -857,6 +866,7 @@ bool RCBotPluginMeta::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxle
 
 		SH_MANUALHOOK_RECONFIGURE(MHook_EquipWeapon, rcbot_weaponequip_offset.GetInt(), 0, 0);
 		
+		SH_MANUALHOOK_RECONFIGURE(MHook_RemovePlayerItem, rcbot_rmplayeritem_offset.GetInt(), 0, 0);
 	}
 
 	ENGINE_CALL(LogPrint)("All hooks started!\n");
@@ -870,21 +880,7 @@ bool RCBotPluginMeta::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxle
 	srand( (unsigned)time(NULL) );  // initialize the random seed
 	irand.seed( (unsigned)time(NULL) );
 
-	// Find the RCBOT2 Path from metamod VDF
-	extern IFileSystem *filesystem;
-	KeyValues *mainkv = new KeyValues("metamodplugin");
-	
-	const char *rcbot2path;
-	CBotGlobals::botMessage(NULL, 0, "Reading rcbot2 path from VDF...");
-	
-	mainkv->LoadFromFile(filesystem, "addons/metamod/rcbot2.vdf", "MOD");
-	
-	mainkv = mainkv->FindKey("Metamod Plugin");
 
-	if (mainkv)
-		rcbot2path = mainkv->GetString("rcbot2path", "\0");
-
-	mainkv->deleteThis();
 	//eventListener2 = new CRCBotEventListener();
 
 	// Initialize bot variables
@@ -1138,6 +1134,8 @@ void RCBotPluginMeta::Hook_ClientPutInServer(edict_t *pEntity, char const *playe
 			SH_ADD_MANUALHOOK_MEMFUNC(MHook_EquipWearable, pEnt, this, &RCBotPluginMeta::Hook_EquipWearable, false);
 
 			SH_ADD_MANUALHOOK_MEMFUNC(MHook_EquipWeapon, pEnt, this, &RCBotPluginMeta::Hook_EquipWeapon, false);
+
+			SH_ADD_MANUALHOOK_MEMFUNC(MHook_RemovePlayerItem, pEnt, this, &RCBotPluginMeta::Hook_RemovePlayerItem, false);
 		}
 	}
 }
@@ -1159,6 +1157,8 @@ void RCBotPluginMeta::Hook_ClientDisconnect(edict_t *pEntity)
 			SH_REMOVE_MANUALHOOK_MEMFUNC(MHook_EquipWearable, pEnt, this, &RCBotPluginMeta::Hook_EquipWearable, false);
 
 			SH_REMOVE_MANUALHOOK_MEMFUNC(MHook_EquipWeapon, pEnt, this, &RCBotPluginMeta::Hook_EquipWeapon, false);
+
+			SH_REMOVE_MANUALHOOK_MEMFUNC(MHook_RemovePlayerItem, pEnt, this, &RCBotPluginMeta::Hook_RemovePlayerItem, false);
 		}
 	}
 
